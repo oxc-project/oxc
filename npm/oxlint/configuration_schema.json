@@ -85,6 +85,15 @@
         }
       ]
     },
+    "DefaultCaseConfig": {
+      "properties": {
+        "commentPattern": {
+          "title": "Comment pattern",
+          "description": "A regex pattern to match comments that indicate the default case is omitted.",
+          "type": "string"
+        }
+      }
+    },
     "GlobalValue": {
       "type": "string",
       "enum": [
@@ -340,6 +349,27 @@
             }
           ],
           "markdownDescription": "### What it does\nDisallow \"for\" loop update causing the counter to move in the wrong direction.\n\n### Why is this bad?\nA for loop that is known to run infinitely or never run is considered a bug.\n\n### Example\n```javascript\nfor (var i = 0; i < 10; i--) {}\n\nfor (var = 10; i >= 0; i++) {}\n```\n"
+        },
+        "func-names": {
+          "description": "### What it does\n\nRequire or disallow named function expressions.\n\n### Why is this bad?\n\nLeaving the name off a function will cause `<anonymous>` to appear in\nstack traces of errors thrown in it or any function called within it.\nThis makes it more difficult to find where an error is thrown.  If you\nprovide the optional name for a function expression then you will get\nthe name of the function expression in the stack trace.\n\n## Configuration\nThis rule has a string option:\n- `\"always\"` requires a function expression to have a name under all\n  circumstances.\n- `\"as-needed\"` requires a function expression to have a name only when\n   one will not be automatically inferred by the runtime.\n- `\"never\"` requires a function expression to not have a name under any\n   circumstances.\n\n### Example\n\nExamples of **incorrect** code for this rule:\n\n```javascript\n/*oxlint func-names: \"error\" */\n\n// default is \"always\" and there is an anonymous function\nFoo.prototype.bar = function() {};\n\n/*oxlint func-names: [\"error\", \"always\"] */\n\n// there is an anonymous function\nFoo.prototype.bar = function() {};\n\n/*oxlint func-names: [\"error\", \"as-needed\"] */\n\n// there is an anonymous function\n// where the name isn’t assigned automatically per the ECMAScript specs\nFoo.prototype.bar = function() {};\n\n/*oxlint func-names: [\"error\", \"never\"] */\n\n// there is a named function\nFoo.prototype.bar = function bar() {};\n```\n\nExamples of **correct* code for this rule:\n\n```javascript\n/*oxlint func-names: \"error\" */\n\nFoo.prototype.bar = function bar() {};\n\n/*oxlint func-names: [\"error\", \"always\"] */\n\nFoo.prototype.bar = function bar() {};\n\n/*oxlint func-names: [\"error\", \"as-needed\"] */\n\nvar foo = function(){};\n\n/*oxlint func-names: [\"error\", \"never\"] */\n\nFoo.prototype.bar = function() {};\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/func-names"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nRequire or disallow named function expressions.\n\n### Why is this bad?\n\nLeaving the name off a function will cause `<anonymous>` to appear in\nstack traces of errors thrown in it or any function called within it.\nThis makes it more difficult to find where an error is thrown.  If you\nprovide the optional name for a function expression then you will get\nthe name of the function expression in the stack trace.\n\n## Configuration\nThis rule has a string option:\n- `\"always\"` requires a function expression to have a name under all\n  circumstances.\n- `\"as-needed\"` requires a function expression to have a name only when\n   one will not be automatically inferred by the runtime.\n- `\"never\"` requires a function expression to not have a name under any\n   circumstances.\n\n### Example\n\nExamples of **incorrect** code for this rule:\n\n```javascript\n/*oxlint func-names: \"error\" */\n\n// default is \"always\" and there is an anonymous function\nFoo.prototype.bar = function() {};\n\n/*oxlint func-names: [\"error\", \"always\"] */\n\n// there is an anonymous function\nFoo.prototype.bar = function() {};\n\n/*oxlint func-names: [\"error\", \"as-needed\"] */\n\n// there is an anonymous function\n// where the name isn’t assigned automatically per the ECMAScript specs\nFoo.prototype.bar = function() {};\n\n/*oxlint func-names: [\"error\", \"never\"] */\n\n// there is a named function\nFoo.prototype.bar = function bar() {};\n```\n\nExamples of **correct* code for this rule:\n\n```javascript\n/*oxlint func-names: \"error\" */\n\nFoo.prototype.bar = function bar() {};\n\n/*oxlint func-names: [\"error\", \"always\"] */\n\nFoo.prototype.bar = function bar() {};\n\n/*oxlint func-names: [\"error\", \"as-needed\"] */\n\nvar foo = function(){};\n\n/*oxlint func-names: [\"error\", \"never\"] */\n\nFoo.prototype.bar = function() {};\n```\n"
         },
         "getter-return": {
           "description": "### What it does\nRequires all getters to have a return statement\n\n### Why is this bad?\nGetters should always return a value. If they don't, it's probably a mistake.\n\n### Example\n```javascript\nclass Person{\n    get name(){\n        // no return\n    }\n}\n```\n",
@@ -635,6 +665,27 @@
           ],
           "markdownDescription": "### What it does\n\nForbid a module from importing itself. This can sometimes happen during refactoring.\n\n### Example\n\n```javascript\n// foo.js\nimport foo from './foo.js'\nconst foo = require('./foo')\n```\n"
         },
+        "import/no-webpack-loader-syntax": {
+          "description": "### What it does\n\nForbid Webpack loader syntax in imports.\n\n### Why is this bad?\n\nThis loader syntax is non-standard, so it couples the code to Webpack. The recommended way to\nspecify Webpack loader configuration is in a [Webpack configuration file](https://webpack.js.org/concepts/loaders/#configuration).\n\n### Example\n```javascript\nimport myModule from 'my-loader!my-module';\nimport theme from 'style!css!./theme.css';\n\nvar myModule = require('my-loader!./my-module');\nvar theme = require('style!css!./theme.css');\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-webpack-loader-syntax"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nForbid Webpack loader syntax in imports.\n\n### Why is this bad?\n\nThis loader syntax is non-standard, so it couples the code to Webpack. The recommended way to\nspecify Webpack loader configuration is in a [Webpack configuration file](https://webpack.js.org/concepts/loaders/#configuration).\n\n### Example\n```javascript\nimport myModule from 'my-loader!my-module';\nimport theme from 'style!css!./theme.css';\n\nvar myModule = require('my-loader!./my-module');\nvar theme = require('style!css!./theme.css');\n```\n"
+        },
         "jest/consistent-test-it": {
           "description": "### What it does\n\nJest allows you to choose how you want to define your tests, using the `it` or\nthe `test` keywords, with multiple permutations for each:\n\n- **it:** `it`, `xit`, `fit`, `it.only`, `it.skip`.\n- **test:** `test`, `xtest`, `test.only`, `test.skip`.\n\n### Example\n\n```javascript\n/*eslint jest/consistent-test-it: [\"error\", {\"fn\": \"test\"}]*/\ntest('foo'); // valid\ntest.only('foo'); // valid\n\nit('foo'); // invalid\nit.only('foo'); // invalid\n```\n\n```javascript\n/*eslint jest/consistent-test-it: [\"error\", {\"fn\": \"it\"}]*/\nit('foo'); // valid\nit.only('foo'); // valid\ntest('foo'); // invalid\ntest.only('foo'); // invalid\n```\n\n```javascript\n/*eslint jest/consistent-test-it: [\"error\", {\"fn\": \"it\", \"withinDescribe\": \"test\"}]*/\nit('foo'); // valid\ndescribe('foo', function () {\n    test('bar'); // valid\n});\n\ntest('foo'); // invalid\ndescribe('foo', function () {\n    it('bar'); // invalid\n});\n```\n\n#### Options\n\nThis rule can be configured as follows\n```json5\n{\n    type: 'object',\n    properties: {\n        fn: {\n            enum: ['it', 'test'],\n        },\n        withinDescribe: {\n            enum: ['it', 'test'],\n        },\n    },\n    additionalProperties: false,\n}\n```\n\n##### fn\nDecides whether to use `test` or `it`.\n\n##### withinDescribe\nDecides whether to use `test` or `it` within a `describe` scope.\n\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/consistent-test-it.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/consistent-test-it\": \"error\"\n  }\n}\n",
           "anyOf": [
@@ -657,7 +708,7 @@
           "markdownDescription": "### What it does\n\nJest allows you to choose how you want to define your tests, using the `it` or\nthe `test` keywords, with multiple permutations for each:\n\n- **it:** `it`, `xit`, `fit`, `it.only`, `it.skip`.\n- **test:** `test`, `xtest`, `test.only`, `test.skip`.\n\n### Example\n\n```javascript\n/*eslint jest/consistent-test-it: [\"error\", {\"fn\": \"test\"}]*/\ntest('foo'); // valid\ntest.only('foo'); // valid\n\nit('foo'); // invalid\nit.only('foo'); // invalid\n```\n\n```javascript\n/*eslint jest/consistent-test-it: [\"error\", {\"fn\": \"it\"}]*/\nit('foo'); // valid\nit.only('foo'); // valid\ntest('foo'); // invalid\ntest.only('foo'); // invalid\n```\n\n```javascript\n/*eslint jest/consistent-test-it: [\"error\", {\"fn\": \"it\", \"withinDescribe\": \"test\"}]*/\nit('foo'); // valid\ndescribe('foo', function () {\n    test('bar'); // valid\n});\n\ntest('foo'); // invalid\ndescribe('foo', function () {\n    it('bar'); // invalid\n});\n```\n\n#### Options\n\nThis rule can be configured as follows\n```json5\n{\n    type: 'object',\n    properties: {\n        fn: {\n            enum: ['it', 'test'],\n        },\n        withinDescribe: {\n            enum: ['it', 'test'],\n        },\n    },\n    additionalProperties: false,\n}\n```\n\n##### fn\nDecides whether to use `test` or `it`.\n\n##### withinDescribe\nDecides whether to use `test` or `it` within a `describe` scope.\n\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/consistent-test-it.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/consistent-test-it\": \"error\"\n  }\n}\n"
         },
         "jest/expect-expect": {
-          "description": "### What it does\n\nThis rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.\n\n### Why is this bad?\n\n People may forget to add assertions.\n\n### Example\n\n```javascript\nit('should be a test', () => {\n    console.log('no assertion');\n});\ntest('should assert something', () => {});\n```\n",
+          "description": "### What it does\n\nThis rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.\n\n### Why is this bad?\n\n People may forget to add assertions.\n\n### Example\n\n```javascript\nit('should be a test', () => {\n    console.log('no assertion');\n});\ntest('should assert something', () => {});\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/expect-expect.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/expect-expect\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -675,7 +726,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nThis rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.\n\n### Why is this bad?\n\n People may forget to add assertions.\n\n### Example\n\n```javascript\nit('should be a test', () => {\n    console.log('no assertion');\n});\ntest('should assert something', () => {});\n```\n"
+          "markdownDescription": "### What it does\n\nThis rule triggers when there is no call made to `expect` in a test, ensure that there is at least one `expect` call made in a test.\n\n### Why is this bad?\n\n People may forget to add assertions.\n\n### Example\n\n```javascript\nit('should be a test', () => {\n    console.log('no assertion');\n});\ntest('should assert something', () => {});\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/expect-expect.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/expect-expect\": \"error\"\n  }\n}\n```\n"
         },
         "jest/max-expects": {
           "description": "### What it does\nAs more assertions are made, there is a possible tendency for the test to be\nmore likely to mix multiple objectives. To avoid this, this rule reports when\nthe maximum number of assertions is exceeded.\n\n### Why is this bad?\n\nThis rule enforces a maximum number of `expect()` calls.\nThe following patterns are considered warnings (with the default option of `{ \"max\": 5 } `):\n\n### Example\n\n```javascript\ntest('should not pass', () => {\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n});\n\nit('should not pass', () => {\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n    expect(true).toBeDefined();\n});\n```\n",
@@ -720,7 +771,7 @@
           "markdownDescription": "### What it does\n\nThis rule enforces a maximum depth to nested `describe()` calls to improve code\nclarity in your tests.\n\nThe following patterns are considered warnings (with the default option of\n`{ \"max\": 5 } `):\n\n### Example\n\n```javascript\n\n// invalid\ndescribe('foo', () => {\n    describe('bar', () => {\n        describe('baz', () => {\n            describe('qux', () => {\n                describe('quxx', () => {\n                    describe('too many', () => {\n                        it('should get something', () => {\n                            expect(getSomething()).toBe('Something');\n                        });\n                    });\n                });\n            });\n        });\n    });\n});\n\ndescribe('foo', function () {\n    describe('bar', function () {\n        describe('baz', function () {\n            describe('qux', function () {\n                describe('quxx', function () {\n                    describe('too many', function () {\n                        it('should get something', () => {\n                            expect(getSomething()).toBe('Something');\n                        });\n                    });\n                });\n            });\n        });\n    });\n});\n\n// valid\ndescribe('foo', () => {\n    describe('bar', () => {\n        it('should get something', () => {\n            expect(getSomething()).toBe('Something');\n        });\n    });\n    describe('qux', () => {\n        it('should get something', () => {\n            expect(getSomething()).toBe('Something');\n        });\n    });\n});\n\ndescribe('foo2', function () {\n    it('should get something', () => {\n        expect(getSomething()).toBe('Something');\n    });\n});\n\ndescribe('foo', function () {\n    describe('bar', function () {\n        describe('baz', function () {\n            describe('qux', function () {\n                describe('this is the limit', function () {\n                    it('should get something', () => {\n                        expect(getSomething()).toBe('Something');\n                    });\n                });\n            });\n        });\n    });\n});\n```\n\n"
         },
         "jest/no-alias-methods": {
-          "description": "### What it does\n\nThis rule ensures that only the canonical name as used in the Jest documentation is used in the code.\n\n### Why is this bad?\n\nThese aliases are going to be removed in the next major version of Jest - see [jestjs/jest#13164](https://github.com/jestjs/jest/issues/13164) for more.\nThis rule will makes it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.\n\n### Example\n```javascript\nexpect(a).toBeCalled();\nexpect(a).toBeCalledTimes();\nexpect(a).toBeCalledWith();\nexpect(a).lastCalledWith();\nexpect(a).nthCalledWith();\nexpect(a).toReturn();\nexpect(a).toReturnTimes();\nexpect(a).toReturnWith();\nexpect(a).lastReturnedWith();\nexpect(a).nthReturnedWith();\nexpect(a).toThrowError();\n```\n",
+          "description": "### What it does\n\nThis rule ensures that only the canonical name as used in the Jest documentation is used in the code.\n\n### Why is this bad?\n\nThese aliases are going to be removed in the next major version of Jest - see [jestjs/jest#13164](https://github.com/jestjs/jest/issues/13164) for more.\nThis rule will makes it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.\n\n### Example\n```javascript\nexpect(a).toBeCalled();\nexpect(a).toBeCalledTimes();\nexpect(a).toBeCalledWith();\nexpect(a).lastCalledWith();\nexpect(a).nthCalledWith();\nexpect(a).toReturn();\nexpect(a).toReturnTimes();\nexpect(a).toReturnWith();\nexpect(a).lastReturnedWith();\nexpect(a).nthReturnedWith();\nexpect(a).toThrowError();\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-alias-methods.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-alias-methods\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -738,10 +789,10 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nThis rule ensures that only the canonical name as used in the Jest documentation is used in the code.\n\n### Why is this bad?\n\nThese aliases are going to be removed in the next major version of Jest - see [jestjs/jest#13164](https://github.com/jestjs/jest/issues/13164) for more.\nThis rule will makes it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.\n\n### Example\n```javascript\nexpect(a).toBeCalled();\nexpect(a).toBeCalledTimes();\nexpect(a).toBeCalledWith();\nexpect(a).lastCalledWith();\nexpect(a).nthCalledWith();\nexpect(a).toReturn();\nexpect(a).toReturnTimes();\nexpect(a).toReturnWith();\nexpect(a).lastReturnedWith();\nexpect(a).nthReturnedWith();\nexpect(a).toThrowError();\n```\n"
+          "markdownDescription": "### What it does\n\nThis rule ensures that only the canonical name as used in the Jest documentation is used in the code.\n\n### Why is this bad?\n\nThese aliases are going to be removed in the next major version of Jest - see [jestjs/jest#13164](https://github.com/jestjs/jest/issues/13164) for more.\nThis rule will makes it easier to search for all occurrences of the method within code, and it ensures consistency among the method names used.\n\n### Example\n```javascript\nexpect(a).toBeCalled();\nexpect(a).toBeCalledTimes();\nexpect(a).toBeCalledWith();\nexpect(a).lastCalledWith();\nexpect(a).nthCalledWith();\nexpect(a).toReturn();\nexpect(a).toReturnTimes();\nexpect(a).toReturnWith();\nexpect(a).lastReturnedWith();\nexpect(a).nthReturnedWith();\nexpect(a).toThrowError();\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-alias-methods.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-alias-methods\": \"error\"\n  }\n}\n```\n"
         },
         "jest/no-commented-out-tests": {
-          "description": "### What it does\n\nThis rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Why is this bad?\n\nYou may forget to uncomment some tests. This rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Example\n\n```javascript\n// describe('foo', () => {});\n// it('foo', () => {});\n// test('foo', () => {});\n\n// describe.skip('foo', () => {});\n// it.skip('foo', () => {});\n// test.skip('foo', () => {});\n```\n",
+          "description": "### What it does\n\nThis rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Why is this bad?\n\nYou may forget to uncomment some tests. This rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Example\n\n```javascript\n// describe('foo', () => {});\n// it('foo', () => {});\n// test('foo', () => {});\n\n// describe.skip('foo', () => {});\n// it.skip('foo', () => {});\n// test.skip('foo', () => {});\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-commented-out-tests.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-commented-out-tests\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -759,10 +810,10 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nThis rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Why is this bad?\n\nYou may forget to uncomment some tests. This rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Example\n\n```javascript\n// describe('foo', () => {});\n// it('foo', () => {});\n// test('foo', () => {});\n\n// describe.skip('foo', () => {});\n// it.skip('foo', () => {});\n// test.skip('foo', () => {});\n```\n"
+          "markdownDescription": "### What it does\n\nThis rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Why is this bad?\n\nYou may forget to uncomment some tests. This rule raises a warning about commented out tests. It's similar to\nno-disabled-tests rule.\n\n### Example\n\n```javascript\n// describe('foo', () => {});\n// it('foo', () => {});\n// test('foo', () => {});\n\n// describe.skip('foo', () => {});\n// it.skip('foo', () => {});\n// test.skip('foo', () => {});\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-commented-out-tests.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-commented-out-tests\": \"error\"\n  }\n}\n```\n"
         },
         "jest/no-conditional-expect": {
-          "description": "### What it does\n\nThis rule prevents the use of expect in conditional blocks, such as ifs & catch(s).\nThis includes using expect in callbacks to functions named catch, which are assumed to be promises.\n\n### Why is this bad?\n\nJest only considers a test to have failed if it throws an error, meaning if calls to assertion functions like expect occur in conditional code such as a catch statement, tests can end up passing but not actually test anything.\nAdditionally, conditionals tend to make tests more brittle and complex, as they increase the amount of mental thinking needed to understand what is actually being tested.\n\n### Example\n```javascript\nit('foo', () => {\n  doTest && expect(1).toBe(2);\n});\n\nit('bar', () => {\n  if (!skipTest) {\n    expect(1).toEqual(2);\n  }\n});\n\nit('throws an error', async () => {\n```\n",
+          "description": "### What it does\n\nThis rule prevents the use of expect in conditional blocks, such as ifs & catch(s).\nThis includes using expect in callbacks to functions named catch, which are assumed to be promises.\n\n### Why is this bad?\n\nJest only considers a test to have failed if it throws an error, meaning if calls to assertion functions like expect occur in conditional code such as a catch statement, tests can end up passing but not actually test anything.\nAdditionally, conditionals tend to make tests more brittle and complex, as they increase the amount of mental thinking needed to understand what is actually being tested.\n\n### Example\n```javascript\nit('foo', () => {\n  doTest && expect(1).toBe(2);\n});\n\nit('bar', () => {\n  if (!skipTest) {\n    expect(1).toEqual(2);\n  }\n});\n\nit('throws an error', async () => {\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-conditional-expect\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -780,7 +831,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nThis rule prevents the use of expect in conditional blocks, such as ifs & catch(s).\nThis includes using expect in callbacks to functions named catch, which are assumed to be promises.\n\n### Why is this bad?\n\nJest only considers a test to have failed if it throws an error, meaning if calls to assertion functions like expect occur in conditional code such as a catch statement, tests can end up passing but not actually test anything.\nAdditionally, conditionals tend to make tests more brittle and complex, as they increase the amount of mental thinking needed to understand what is actually being tested.\n\n### Example\n```javascript\nit('foo', () => {\n  doTest && expect(1).toBe(2);\n});\n\nit('bar', () => {\n  if (!skipTest) {\n    expect(1).toEqual(2);\n  }\n});\n\nit('throws an error', async () => {\n```\n"
+          "markdownDescription": "### What it does\n\nThis rule prevents the use of expect in conditional blocks, such as ifs & catch(s).\nThis includes using expect in callbacks to functions named catch, which are assumed to be promises.\n\n### Why is this bad?\n\nJest only considers a test to have failed if it throws an error, meaning if calls to assertion functions like expect occur in conditional code such as a catch statement, tests can end up passing but not actually test anything.\nAdditionally, conditionals tend to make tests more brittle and complex, as they increase the amount of mental thinking needed to understand what is actually being tested.\n\n### Example\n```javascript\nit('foo', () => {\n  doTest && expect(1).toBe(2);\n});\n\nit('bar', () => {\n  if (!skipTest) {\n    expect(1).toEqual(2);\n  }\n});\n\nit('throws an error', async () => {\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-conditional-expect\": \"error\"\n  }\n}\n```\n"
         },
         "jest/no-confusing-set-timeout": {
           "description": "### What it does\n\nDisallow confusing usages of jest.setTimeout\n\n### Why is this bad?\n\n- being called anywhere other than in global scope\n- being called multiple times\n- being called after other Jest functions like hooks, `describe`, `test`, or `it`\n\n\n### Example\n\nAll of these are invalid case:\n```javascript\nescribe('test foo', () => {\n  jest.setTimeout(1000);\n  it('test-description', () => {\n    // test logic;\n  });\n});\n\ndescribe('test bar', () => {\n  it('test-description', () => {\n    jest.setTimeout(1000);\n    // test logic;\n  });\n});\n\ntest('foo-bar', () => {\n  jest.setTimeout(1000);\n});\n\ndescribe('unit test', () => {\n  beforeEach(() => {\n    jest.setTimeout(1000);\n  });\n});\n```\n",
@@ -909,7 +960,7 @@
           "markdownDescription": "### What it does\n\nPrevents using exports if a file has one or more tests in it.\n\n### Why is this bad?\n\nThis rule aims to eliminate duplicate runs of tests by exporting things from test files.\n If you import from a test file, then all the tests in that file will be run in each imported instance.\nso bottom line, don't export from a test, but instead move helper functions into a separate file when they need to be shared across tests.\n\n### Example\n```javascript\nexport function myHelper() {}\ndescribe('a test', () => {\n  expect(1).toBe(1);\n});\n```\n"
         },
         "jest/no-focused-tests": {
-          "description": "### What it does\nThis rule reminds you to remove `.only` from your tests by raising a warning\nwhenever you are using the exclusivity feature.\n\n### Why is this bad?\n\nJest has a feature that allows you to focus tests by appending `.only` or\nprepending `f` to a test-suite or a test-case. This feature is really helpful to\ndebug a failing test, so you don’t have to execute all of your tests. After you\nhave fixed your test and before committing the changes you have to remove\n`.only` to ensure all tests are executed on your build system.\n\n### Example\n\n```javascript\ndescribe.only('foo', () => {});\nit.only('foo', () => {});\ndescribe['only']('bar', () => {});\nit['only']('bar', () => {});\ntest.only('foo', () => {});\ntest['only']('bar', () => {});\nfdescribe('foo', () => {});\nfit('foo', () => {});\nfit.each`\ntable\n`();\n```\n",
+          "description": "### What it does\nThis rule reminds you to remove `.only` from your tests by raising a warning\nwhenever you are using the exclusivity feature.\n\n### Why is this bad?\n\nJest has a feature that allows you to focus tests by appending `.only` or\nprepending `f` to a test-suite or a test-case. This feature is really helpful to\ndebug a failing test, so you don’t have to execute all of your tests. After you\nhave fixed your test and before committing the changes you have to remove\n`.only` to ensure all tests are executed on your build system.\n\n### Example\n\n```javascript\ndescribe.only('foo', () => {});\nit.only('foo', () => {});\ndescribe['only']('bar', () => {});\nit['only']('bar', () => {});\ntest.only('foo', () => {});\ntest['only']('bar', () => {});\nfdescribe('foo', () => {});\nfit('foo', () => {});\nfit.each`\ntable\n`();\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-focused-tests.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-focused-tests\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -927,7 +978,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\nThis rule reminds you to remove `.only` from your tests by raising a warning\nwhenever you are using the exclusivity feature.\n\n### Why is this bad?\n\nJest has a feature that allows you to focus tests by appending `.only` or\nprepending `f` to a test-suite or a test-case. This feature is really helpful to\ndebug a failing test, so you don’t have to execute all of your tests. After you\nhave fixed your test and before committing the changes you have to remove\n`.only` to ensure all tests are executed on your build system.\n\n### Example\n\n```javascript\ndescribe.only('foo', () => {});\nit.only('foo', () => {});\ndescribe['only']('bar', () => {});\nit['only']('bar', () => {});\ntest.only('foo', () => {});\ntest['only']('bar', () => {});\nfdescribe('foo', () => {});\nfit('foo', () => {});\nfit.each`\ntable\n`();\n```\n"
+          "markdownDescription": "### What it does\nThis rule reminds you to remove `.only` from your tests by raising a warning\nwhenever you are using the exclusivity feature.\n\n### Why is this bad?\n\nJest has a feature that allows you to focus tests by appending `.only` or\nprepending `f` to a test-suite or a test-case. This feature is really helpful to\ndebug a failing test, so you don’t have to execute all of your tests. After you\nhave fixed your test and before committing the changes you have to remove\n`.only` to ensure all tests are executed on your build system.\n\n### Example\n\n```javascript\ndescribe.only('foo', () => {});\nit.only('foo', () => {});\ndescribe['only']('bar', () => {});\nit['only']('bar', () => {});\ntest.only('foo', () => {});\ntest['only']('bar', () => {});\nfdescribe('foo', () => {});\nfit('foo', () => {});\nfit.each`\ntable\n`();\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-focused-tests.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-focused-tests\": \"error\"\n  }\n}\n```\n"
         },
         "jest/no-hooks": {
           "description": "### What it does\nJest provides global functions for setup and teardown tasks, which are called before/after each test case\nand each test suite. The use of these hooks promotes shared state between tests.\n\n### Why is this bad?\n\nThis rule reports for the following function calls:\n* beforeAll\n* beforeEach\n* afterAll\n* afterEach\n\n### Example\n\n```javascript\nfunction setupFoo(options) { /* ... */ }\nfunction setupBar(options) { /* ... */ }\n\ndescribe('foo', () => {\n    let foo;\n    beforeEach(() => {\n        foo = setupFoo();\n    });\n    afterEach(() => {\n        foo = null;\n    });\n    it('does something', () => {\n        expect(foo.doesSomething()).toBe(true);\n    });\n    describe('with bar', () => {\n        let bar;\n        beforeEach(() => {\n            bar = setupBar();\n        });\n        afterEach(() => {\n            bar = null;\n        });\n        it('does something with bar', () => {\n            expect(foo.doesSomething(bar)).toBe(true);\n        });\n    });\n});\n```\n",
@@ -951,7 +1002,7 @@
           "markdownDescription": "### What it does\nJest provides global functions for setup and teardown tasks, which are called before/after each test case\nand each test suite. The use of these hooks promotes shared state between tests.\n\n### Why is this bad?\n\nThis rule reports for the following function calls:\n* beforeAll\n* beforeEach\n* afterAll\n* afterEach\n\n### Example\n\n```javascript\nfunction setupFoo(options) { /* ... */ }\nfunction setupBar(options) { /* ... */ }\n\ndescribe('foo', () => {\n    let foo;\n    beforeEach(() => {\n        foo = setupFoo();\n    });\n    afterEach(() => {\n        foo = null;\n    });\n    it('does something', () => {\n        expect(foo.doesSomething()).toBe(true);\n    });\n    describe('with bar', () => {\n        let bar;\n        beforeEach(() => {\n            bar = setupBar();\n        });\n        afterEach(() => {\n            bar = null;\n        });\n        it('does something with bar', () => {\n            expect(foo.doesSomething(bar)).toBe(true);\n        });\n    });\n});\n```\n"
         },
         "jest/no-identical-title": {
-          "description": "### What it does\n\nThis rule looks at the title of every test and test suite.\nIt will report when two test suites or two test cases at the same level of a test suite have the same title.\n\n### Why is this bad?\n\nHaving identical titles for two different tests or test suites may create confusion.\nFor example, when a test with the same title as another test in the same test suite fails, it is harder to know which one failed and thus harder to fix.\n\n### Example\n```javascript\n describe('baz', () => {\n   //...\n });\n\n describe('baz', () => {\n   // Has the same title as a previous test suite\n   // ...\n });\n```\n",
+          "description": "### What it does\n\nThis rule looks at the title of every test and test suite.\nIt will report when two test suites or two test cases at the same level of a test suite have the same title.\n\n### Why is this bad?\n\nHaving identical titles for two different tests or test suites may create confusion.\nFor example, when a test with the same title as another test in the same test suite fails, it is harder to know which one failed and thus harder to fix.\n\n### Example\n```javascript\n describe('baz', () => {\n   //...\n });\n\n describe('baz', () => {\n   // Has the same title as a previous test suite\n   // ...\n });\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-identical-title.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-identical-title\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -969,7 +1020,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nThis rule looks at the title of every test and test suite.\nIt will report when two test suites or two test cases at the same level of a test suite have the same title.\n\n### Why is this bad?\n\nHaving identical titles for two different tests or test suites may create confusion.\nFor example, when a test with the same title as another test in the same test suite fails, it is harder to know which one failed and thus harder to fix.\n\n### Example\n```javascript\n describe('baz', () => {\n   //...\n });\n\n describe('baz', () => {\n   // Has the same title as a previous test suite\n   // ...\n });\n```\n"
+          "markdownDescription": "### What it does\n\nThis rule looks at the title of every test and test suite.\nIt will report when two test suites or two test cases at the same level of a test suite have the same title.\n\n### Why is this bad?\n\nHaving identical titles for two different tests or test suites may create confusion.\nFor example, when a test with the same title as another test in the same test suite fails, it is harder to know which one failed and thus harder to fix.\n\n### Example\n```javascript\n describe('baz', () => {\n   //...\n });\n\n describe('baz', () => {\n   // Has the same title as a previous test suite\n   // ...\n });\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-identical-title.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-identical-title\": \"error\"\n  }\n}\n```\n"
         },
         "jest/no-interpolation-in-snapshots": {
           "description": "### What it does\n\nPrevents the use of string interpolations in snapshots.\n\n### Why is this bad?\n\nInterpolation prevents snapshots from being updated. Instead, properties should\nbe overloaded with a matcher by using\n[property matchers](https://jestjs.io/docs/en/snapshot-testing#property-matchers).\n\n### Example\n\n```javascript\nexpect(something).toMatchInlineSnapshot(\n  `Object {\n    property: ${interpolated}\n  }`,\n);\n\nexpect(something).toMatchInlineSnapshot(\n  { other: expect.any(Number) },\n  `Object {\n    other: Any<Number>,\n    property: ${interpolated}\n  }`,\n);\n\nexpect(errorThrowingFunction).toThrowErrorMatchingInlineSnapshot(\n  `${interpolated}`,\n);\n```\n",
@@ -1119,7 +1170,7 @@
           "markdownDescription": "### What it does\n\nPrevents `expect` statements outside of a `test` or `it` block. An `expect`\nwithin a helper function (but outside of a `test` or `it` block) will not\ntrigger this rule.\n\nStatements like `expect.hasAssertions()` will NOT trigger this rule since these\ncalls will execute if they are not in a test block.\n\n### Example\n```javascript\ndescribe('a test', () => {\n    expect(1).toBe(1);\n});\n```\n"
         },
         "jest/no-test-prefixes": {
-          "description": "### What it does\n\nRequire using `.only` and `.skip` over `f` and `x`.\n\n### Why is this bad?\n\nJest allows you to choose how you want to define focused and skipped tests,\nwith multiple permutations for each:\n- only & skip: it.only, test.only, describe.only, it.skip, test.skip, describe.skip.\n- 'f' & 'x': fit, fdescribe, xit, xtest, xdescribe.\n\nThis rule enforces usages from the only & skip list.\n\n### Example\n```javascript\nfit('foo'); // invalid\nfdescribe('foo'); // invalid\nxit('foo'); // invalid\nxtest('foo'); // invalid\nxdescribe('foo'); // invalid\n```\n",
+          "description": "### What it does\n\nRequire using `.only` and `.skip` over `f` and `x`.\n\n### Why is this bad?\n\nJest allows you to choose how you want to define focused and skipped tests,\nwith multiple permutations for each:\n- only & skip: it.only, test.only, describe.only, it.skip, test.skip, describe.skip.\n- 'f' & 'x': fit, fdescribe, xit, xtest, xdescribe.\n\nThis rule enforces usages from the only & skip list.\n\n### Example\n```javascript\nfit('foo'); // invalid\nfdescribe('foo'); // invalid\nxit('foo'); // invalid\nxtest('foo'); // invalid\nxdescribe('foo'); // invalid\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-test-prefixes.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-test-prefixes\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -1137,7 +1188,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nRequire using `.only` and `.skip` over `f` and `x`.\n\n### Why is this bad?\n\nJest allows you to choose how you want to define focused and skipped tests,\nwith multiple permutations for each:\n- only & skip: it.only, test.only, describe.only, it.skip, test.skip, describe.skip.\n- 'f' & 'x': fit, fdescribe, xit, xtest, xdescribe.\n\nThis rule enforces usages from the only & skip list.\n\n### Example\n```javascript\nfit('foo'); // invalid\nfdescribe('foo'); // invalid\nxit('foo'); // invalid\nxtest('foo'); // invalid\nxdescribe('foo'); // invalid\n```\n"
+          "markdownDescription": "### What it does\n\nRequire using `.only` and `.skip` over `f` and `x`.\n\n### Why is this bad?\n\nJest allows you to choose how you want to define focused and skipped tests,\nwith multiple permutations for each:\n- only & skip: it.only, test.only, describe.only, it.skip, test.skip, describe.skip.\n- 'f' & 'x': fit, fdescribe, xit, xtest, xdescribe.\n\nThis rule enforces usages from the only & skip list.\n\n### Example\n```javascript\nfit('foo'); // invalid\nfdescribe('foo'); // invalid\nxit('foo'); // invalid\nxtest('foo'); // invalid\nxdescribe('foo'); // invalid\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-test-prefixes.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/no-test-prefixes\": \"error\"\n  }\n}\n```\n"
         },
         "jest/no-test-return-statement": {
           "description": "### What it does\n\nDisallow explicitly returning from tests.\n\n### Why is this bad?\n\nTests in Jest should be void and not return values.\nIf you are returning Promises then you should update the test to use\n`async/await`.\n\n### Example\n```javascript\n```\n",
@@ -1560,7 +1611,7 @@
           "markdownDescription": "### What it does\n\nThis rule triggers a warning if a test case (`test` and `it`) or a hook\n(`beforeAll`, `beforeEach`, `afterEach`, `afterAll`) is not located in a\ntop-level `describe` block.\n\n### Example\n\n```javascript\n// invalid\nAbove a describe block\ntest('my test', () => {});\ndescribe('test suite', () => {\n    it('test', () => {});\n});\n// Below a describe block\ndescribe('test suite', () => {});\ntest('my test', () => {});\n// Same for hooks\nbeforeAll('my beforeAll', () => {});\ndescribe('test suite', () => {});\nafterEach('my afterEach', () => {});\n\n//valid\n// Above a describe block\n// In a describe block\ndescribe('test suite', () => {\n    test('my test', () => {});\n});\n\n// In a nested describe block\ndescribe('test suite', () => {\n    test('my test', () => {});\ndescribe('another test suite', () => {\n    test('my other test', () => {});\n});\n});\n```\n\n### Options\n\nYou can also enforce a limit on the number of describes allowed at the top-level\nusing the `maxNumberOfTopLevelDescribes` option:\n\n```json\n{\n  \"jest/require-top-level-describe\": [\n    \"error\",\n    {\n      \"maxNumberOfTopLevelDescribes\": 2\n    }\n  ]\n}\n```\n\n"
         },
         "jest/valid-describe-callback": {
-          "description": "### What it does\n\nThis rule validates that the second parameter of a `describe()` function is a\ncallback function. This callback function:\n- should not be\n[async](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)\n- should not contain any parameters\n- should not contain any `return` statements\n\n### Why is this bad?\n\nUsing an improper `describe()` callback function can lead to unexpected test\nerrors.\n\n### Example\n\n```javascript\n// Async callback functions are not allowed\ndescribe('myFunction()', async () => {\n  // ...\n});\n\n// Callback function parameters are not allowed\ndescribe('myFunction()', done => {\n  // ...\n});\n\n// Returning a value from a describe block is not allowed\ndescribe('myFunction', () =>\n  it('returns a truthy value', () => {\n    expect(myFunction()).toBeTruthy();\n}));\n```\n",
+          "description": "### What it does\n\nThis rule validates that the second parameter of a `describe()` function is a\ncallback function. This callback function:\n- should not be\n[async](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)\n- should not contain any parameters\n- should not contain any `return` statements\n\n### Why is this bad?\n\nUsing an improper `describe()` callback function can lead to unexpected test\nerrors.\n\n### Example\n\n```javascript\n// Async callback functions are not allowed\ndescribe('myFunction()', async () => {\n  // ...\n});\n\n// Callback function parameters are not allowed\ndescribe('myFunction()', done => {\n  // ...\n});\n\n// Returning a value from a describe block is not allowed\ndescribe('myFunction', () =>\n  it('returns a truthy value', () => {\n    expect(myFunction()).toBeTruthy();\n}));\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/valid-describe-callback.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/valid-describe-callback\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -1578,10 +1629,10 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nThis rule validates that the second parameter of a `describe()` function is a\ncallback function. This callback function:\n- should not be\n[async](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)\n- should not contain any parameters\n- should not contain any `return` statements\n\n### Why is this bad?\n\nUsing an improper `describe()` callback function can lead to unexpected test\nerrors.\n\n### Example\n\n```javascript\n// Async callback functions are not allowed\ndescribe('myFunction()', async () => {\n  // ...\n});\n\n// Callback function parameters are not allowed\ndescribe('myFunction()', done => {\n  // ...\n});\n\n// Returning a value from a describe block is not allowed\ndescribe('myFunction', () =>\n  it('returns a truthy value', () => {\n    expect(myFunction()).toBeTruthy();\n}));\n```\n"
+          "markdownDescription": "### What it does\n\nThis rule validates that the second parameter of a `describe()` function is a\ncallback function. This callback function:\n- should not be\n[async](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)\n- should not contain any parameters\n- should not contain any `return` statements\n\n### Why is this bad?\n\nUsing an improper `describe()` callback function can lead to unexpected test\nerrors.\n\n### Example\n\n```javascript\n// Async callback functions are not allowed\ndescribe('myFunction()', async () => {\n  // ...\n});\n\n// Callback function parameters are not allowed\ndescribe('myFunction()', done => {\n  // ...\n});\n\n// Returning a value from a describe block is not allowed\ndescribe('myFunction', () =>\n  it('returns a truthy value', () => {\n    expect(myFunction()).toBeTruthy();\n}));\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/valid-describe-callback.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/valid-describe-callback\": \"error\"\n  }\n}\n```\n"
         },
         "jest/valid-expect": {
-          "description": "### What it does\n\nThis rule triggers a warning if `expect()` is called with more than one argument\nor without arguments. It would also issue a warning if there is nothing called\non `expect()`, e.g.:\n\n### Example\n```javascript\nexpect();\nexpect('something');\nexpect(true).toBeDefined;\nexpect(Promise.resolve('Hi!')).resolves.toBe('Hi!');\n```\n",
+          "description": "### What it does\n\nThis rule triggers a warning if `expect()` is called with more than one argument\nor without arguments. It would also issue a warning if there is nothing called\non `expect()`, e.g.:\n\n### Example\n```javascript\nexpect();\nexpect('something');\nexpect(true).toBeDefined;\nexpect(Promise.resolve('Hi!')).resolves.toBe('Hi!');\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/valid-expect.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/valid-expect\": \"error\"\n  }\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -1599,7 +1650,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\nThis rule triggers a warning if `expect()` is called with more than one argument\nor without arguments. It would also issue a warning if there is nothing called\non `expect()`, e.g.:\n\n### Example\n```javascript\nexpect();\nexpect('something');\nexpect(true).toBeDefined;\nexpect(Promise.resolve('Hi!')).resolves.toBe('Hi!');\n```\n"
+          "markdownDescription": "### What it does\n\nThis rule triggers a warning if `expect()` is called with more than one argument\nor without arguments. It would also issue a warning if there is nothing called\non `expect()`, e.g.:\n\n### Example\n```javascript\nexpect();\nexpect('something');\nexpect(true).toBeDefined;\nexpect(Promise.resolve('Hi!')).resolves.toBe('Hi!');\n```\n\nThis rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/valid-expect.md),\nto use it, add the following configuration to your `.eslintrc.json`:\n\n```json\n{\n  \"rules\": {\n     \"vitest/valid-expect\": \"error\"\n  }\n}\n```\n"
         },
         "jest/valid-title": {
           "description": "### What it does\n\nChecks that the title of Jest blocks are valid by ensuring that titles are:\n\n- not empty,\n- is a string,\n- not prefixed with their block name,\n- have no leading or trailing spaces\n\n### Example\n```javascript\ndescribe('', () => {});\ndescribe('foo', () => {\n  it('', () => {});\n});\nit('', () => {});\ntest('', () => {});\nxdescribe('', () => {});\nxit('', () => {});\nxtest('', () => {});\n```\n",
@@ -2043,7 +2094,7 @@
           "markdownDescription": "### What it does\n\nEnforce that anchors have content and that the content is accessible to screen readers.\nAccessible means that it is not hidden using the `aria-hidden` prop.\n\nAlternatively, you may use the `title` prop or the `aria-label` prop.\n\n### Why is this bad?\n\n\n### Example\n\n#### good\n\n```\n<a>Anchor Content!</a>\n <a><TextWrapper /></a>\n <a dangerouslySetInnerHTML={{ __html: 'foo' }} />\n <a title='foo' />\n <a aria-label='foo' />\n```\n\n#### bad\n\n```\n<a />\n<a><TextWrapper aria-hidden /></a>\n```\n\n"
         },
         "jsx_a11y/anchor-is-valid": {
-          "description": "### What it does\nThe HTML <a> element, with a valid href attribute, is formally defined as representing a **hyperlink**.\nThat is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.\n\nWhile before it was possible to attach logic to an anchor element, with the advent of JSX libraries,\nit's now  easier to attach logic to any HTML element, anchors included.\n\nThis rule is designed to prevent users to attach logic at the click of anchors, and also makes\nsure that the `href` provided to the anchor element is valid. If the anchor has logic attached to it,\nthe rules suggests to turn it to a `button`, because that's likely what the user wants.\n\nAnchor `<a></a>` elements should be used for navigation, while `<button></button>` should be\nused for user interaction.\n\nConsider the following:\n\n```javascript\n<a href=\"javascript:void(0)\" onClick={foo}>Perform action</a>\n<a href=\"#\" onClick={foo}>Perform action</a>\n<a onClick={foo}>Perform action</a>\n````\n\nAll these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:\n\n```javascript\n<button onClick={foo}>Perform action</button>\n```\n`\n### Why is this bad?\nThere are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:\n- it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link\nin another tab, but the default \"click\" behaviour is prevented\n- it can source of invalid links, and crawlers can't navigate the website, risking to penalise SEO ranking\n\n### Example\n\n#### Valid\n\n```javascript\n<a href={`https://www.javascript.com`}>navigate here</a>\n```\n\n```javascript\n<a href={somewhere}>navigate here</a>\n```\n\n```javascript\n<a {...spread}>navigate here</a>\n```\n\n#### Invalid\n\n```javascript\n<a href={null}>navigate here</a>\n```\n```javascript\n<a href={undefined}>navigate here</a>\n```\n```javascript\n<a href>navigate here</a>\n```\n```javascript\n<a href=\"javascript:void(0)\">navigate here</a>\n```\n```javascript\n<a href=\"https://example.com\" onClick={something}>navigate here</a>\n```\n\n### Reference\n\n- [WCAG 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard)\n",
+          "description": "### What it does\nThe HTML `<a>` element, with a valid href attribute, is formally defined as representing a **hyperlink**.\nThat is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.\n\nWhile before it was possible to attach logic to an anchor element, with the advent of JSX libraries,\nit's now  easier to attach logic to any HTML element, anchors included.\n\nThis rule is designed to prevent users to attach logic at the click of anchors, and also makes\nsure that the `href` provided to the anchor element is valid. If the anchor has logic attached to it,\nthe rules suggests to turn it to a `button`, because that's likely what the user wants.\n\nAnchor `<a></a>` elements should be used for navigation, while `<button></button>` should be\nused for user interaction.\n\nConsider the following:\n\n```javascript\n<a href=\"javascript:void(0)\" onClick={foo}>Perform action</a>\n<a href=\"#\" onClick={foo}>Perform action</a>\n<a onClick={foo}>Perform action</a>\n````\n\nAll these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:\n\n```javascript\n<button onClick={foo}>Perform action</button>\n```\n`\n### Why is this bad?\nThere are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:\n- it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link\nin another tab, but the default \"click\" behaviour is prevented\n- it can source of invalid links, and crawlers can't navigate the website, risking to penalise SEO ranking\n\n### Example\n\n#### Valid\n\n```javascript\n<a href={`https://www.javascript.com`}>navigate here</a>\n```\n\n```javascript\n<a href={somewhere}>navigate here</a>\n```\n\n```javascript\n<a {...spread}>navigate here</a>\n```\n\n#### Invalid\n\n```javascript\n<a href={null}>navigate here</a>\n```\n```javascript\n<a href={undefined}>navigate here</a>\n```\n```javascript\n<a href>navigate here</a>\n```\n```javascript\n<a href=\"javascript:void(0)\">navigate here</a>\n```\n```javascript\n<a href=\"https://example.com\" onClick={something}>navigate here</a>\n```\n\n### Reference\n\n- [WCAG 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard)\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -2061,7 +2112,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\nThe HTML <a> element, with a valid href attribute, is formally defined as representing a **hyperlink**.\nThat is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.\n\nWhile before it was possible to attach logic to an anchor element, with the advent of JSX libraries,\nit's now  easier to attach logic to any HTML element, anchors included.\n\nThis rule is designed to prevent users to attach logic at the click of anchors, and also makes\nsure that the `href` provided to the anchor element is valid. If the anchor has logic attached to it,\nthe rules suggests to turn it to a `button`, because that's likely what the user wants.\n\nAnchor `<a></a>` elements should be used for navigation, while `<button></button>` should be\nused for user interaction.\n\nConsider the following:\n\n```javascript\n<a href=\"javascript:void(0)\" onClick={foo}>Perform action</a>\n<a href=\"#\" onClick={foo}>Perform action</a>\n<a onClick={foo}>Perform action</a>\n````\n\nAll these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:\n\n```javascript\n<button onClick={foo}>Perform action</button>\n```\n`\n### Why is this bad?\nThere are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:\n- it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link\nin another tab, but the default \"click\" behaviour is prevented\n- it can source of invalid links, and crawlers can't navigate the website, risking to penalise SEO ranking\n\n### Example\n\n#### Valid\n\n```javascript\n<a href={`https://www.javascript.com`}>navigate here</a>\n```\n\n```javascript\n<a href={somewhere}>navigate here</a>\n```\n\n```javascript\n<a {...spread}>navigate here</a>\n```\n\n#### Invalid\n\n```javascript\n<a href={null}>navigate here</a>\n```\n```javascript\n<a href={undefined}>navigate here</a>\n```\n```javascript\n<a href>navigate here</a>\n```\n```javascript\n<a href=\"javascript:void(0)\">navigate here</a>\n```\n```javascript\n<a href=\"https://example.com\" onClick={something}>navigate here</a>\n```\n\n### Reference\n\n- [WCAG 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard)\n"
+          "markdownDescription": "### What it does\nThe HTML `<a>` element, with a valid href attribute, is formally defined as representing a **hyperlink**.\nThat is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.\n\nWhile before it was possible to attach logic to an anchor element, with the advent of JSX libraries,\nit's now  easier to attach logic to any HTML element, anchors included.\n\nThis rule is designed to prevent users to attach logic at the click of anchors, and also makes\nsure that the `href` provided to the anchor element is valid. If the anchor has logic attached to it,\nthe rules suggests to turn it to a `button`, because that's likely what the user wants.\n\nAnchor `<a></a>` elements should be used for navigation, while `<button></button>` should be\nused for user interaction.\n\nConsider the following:\n\n```javascript\n<a href=\"javascript:void(0)\" onClick={foo}>Perform action</a>\n<a href=\"#\" onClick={foo}>Perform action</a>\n<a onClick={foo}>Perform action</a>\n````\n\nAll these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:\n\n```javascript\n<button onClick={foo}>Perform action</button>\n```\n`\n### Why is this bad?\nThere are **many reasons** why an anchor should not have a logic and have a correct `href` attribute:\n- it can disrupt the correct flow of the user navigation e.g. a user that wants to open the link\nin another tab, but the default \"click\" behaviour is prevented\n- it can source of invalid links, and crawlers can't navigate the website, risking to penalise SEO ranking\n\n### Example\n\n#### Valid\n\n```javascript\n<a href={`https://www.javascript.com`}>navigate here</a>\n```\n\n```javascript\n<a href={somewhere}>navigate here</a>\n```\n\n```javascript\n<a {...spread}>navigate here</a>\n```\n\n#### Invalid\n\n```javascript\n<a href={null}>navigate here</a>\n```\n```javascript\n<a href={undefined}>navigate here</a>\n```\n```javascript\n<a href>navigate here</a>\n```\n```javascript\n<a href=\"javascript:void(0)\">navigate here</a>\n```\n```javascript\n<a href=\"https://example.com\" onClick={something}>navigate here</a>\n```\n\n### Reference\n\n- [WCAG 2.1.1](https://www.w3.org/WAI/WCAG21/Understanding/keyboard)\n"
         },
         "jsx_a11y/aria-activedescendant-has-tabindex": {
           "description": "### What it does\n\nEnforce elements with aria-activedescendant are tabbable.\n\n### Example\n```jsx\n// Good\n<CustomComponent />\n<CustomComponent aria-activedescendant={someID} />\n<CustomComponent aria-activedescendant={someID} tabIndex={0} />\n<CustomComponent aria-activedescendant={someID} tabIndex={-1} />\n<div />\n<input />\n<div tabIndex={0} />\n<div aria-activedescendant={someID} tabIndex={0} />\n<div aria-activedescendant={someID} tabIndex=\"0\" />\n<div aria-activedescendant={someID} tabIndex={1} />\n<div aria-activedescendant={someID} tabIndex={-1} />\n<div aria-activedescendant={someID} tabIndex=\"-1\" />\n<input aria-activedescendant={someID} />\n<input aria-activedescendant={someID} tabIndex={0} />\n<input aria-activedescendant={someID} tabIndex={-1} />\n\n// Bad\n<div aria-activedescendant={someID} />\n```\n",
@@ -2085,7 +2136,7 @@
           "markdownDescription": "### What it does\n\nEnforce elements with aria-activedescendant are tabbable.\n\n### Example\n```jsx\n// Good\n<CustomComponent />\n<CustomComponent aria-activedescendant={someID} />\n<CustomComponent aria-activedescendant={someID} tabIndex={0} />\n<CustomComponent aria-activedescendant={someID} tabIndex={-1} />\n<div />\n<input />\n<div tabIndex={0} />\n<div aria-activedescendant={someID} tabIndex={0} />\n<div aria-activedescendant={someID} tabIndex=\"0\" />\n<div aria-activedescendant={someID} tabIndex={1} />\n<div aria-activedescendant={someID} tabIndex={-1} />\n<div aria-activedescendant={someID} tabIndex=\"-1\" />\n<input aria-activedescendant={someID} />\n<input aria-activedescendant={someID} tabIndex={0} />\n<input aria-activedescendant={someID} tabIndex={-1} />\n\n// Bad\n<div aria-activedescendant={someID} />\n```\n"
         },
         "jsx_a11y/aria-props": {
-          "description": "### What it does\nEnforces that elements do not use invalid ARIA attributes.\n\n### Why is this bad?\nUsing invalid ARIA attributes can mislead screen readers and other assistive technologies.\nIt may cause the accessibility features of the website to fail, making it difficult\nfor users with disabilities to use the site effectively.\n\n### Example\n```javascript\n// Bad\n<input aria-labeledby=\"address_label\" />\n\n// Good\n<input aria-labelledby=\"address_label\" />\n```\n",
+          "description": "### What it does\nEnforces that elements do not use invalid ARIA attributes.\n\n### Why is this bad?\nUsing invalid ARIA attributes can mislead screen readers and other assistive technologies.\nIt may cause the accessibility features of the website to fail, making it difficult\nfor users with disabilities to use the site effectively.\n\nThis rule includes fixes for some common typos.\n\n### Example\n```javascript\n// Bad\n<input aria-labeledby=\"address_label\" />\n\n// Good\n<input aria-labelledby=\"address_label\" />\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -2103,7 +2154,7 @@
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\nEnforces that elements do not use invalid ARIA attributes.\n\n### Why is this bad?\nUsing invalid ARIA attributes can mislead screen readers and other assistive technologies.\nIt may cause the accessibility features of the website to fail, making it difficult\nfor users with disabilities to use the site effectively.\n\n### Example\n```javascript\n// Bad\n<input aria-labeledby=\"address_label\" />\n\n// Good\n<input aria-labelledby=\"address_label\" />\n```\n"
+          "markdownDescription": "### What it does\nEnforces that elements do not use invalid ARIA attributes.\n\n### Why is this bad?\nUsing invalid ARIA attributes can mislead screen readers and other assistive technologies.\nIt may cause the accessibility features of the website to fail, making it difficult\nfor users with disabilities to use the site effectively.\n\nThis rule includes fixes for some common typos.\n\n### Example\n```javascript\n// Bad\n<input aria-labeledby=\"address_label\" />\n\n// Good\n<input aria-labelledby=\"address_label\" />\n```\n"
         },
         "jsx_a11y/aria-role": {
           "description": "### What it does\nElements with ARIA roles must use a valid, non-abstract ARIA role. A reference to role definitions can be found at [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.\n\n### Why is this bad?\nThe intent of this Success Criterion is to ensure that Assistive Technologies (AT) can gather information about,\nactivate (or set) and keep up to date on the status of user interface controls in the content(such as screen readers, screen magnifiers, and speech recognition software, used by people with disabilities).\n\nWhen standard controls from accessible technologies are used, this process is straightforward. If the user interface elements are used according to specification the conditions of this provision will be met.\n\nIf custom controls are created, however, or interface elements are programmed (in code or script) to have a different role and/or function than usual,\nthen additional measures need to be taken to ensure that the controls provide important information to assistive technologies and allow themselves to be controlled by assistive technologies.\nA particularly important state of a user interface control is whether or not it has focus. The focus state of a control can be programmatically determined, and notifications about change of focus are sent to user agents and assistive technology.\nOther examples of user interface control state are whether or not a checkbox or radio button has been selected, or whether or not a collapsible tree or list node is expanded or collapsed.\n\n### Rule options\nThis rule takes one optional object argument of type object:\n```\n{\n    \"rules\": {\n        \"jsx-a11y/aria-role\": [ 2, {\n            \"allowedInvalidRoles\": [\"text\"],\n            \"ignoreNonDOM\": true\n        }],\n    }\n }\n```\nallowedInvalidRules is an optional string array of custom roles that should be allowed in addition to the ARIA spec, such as for cases when you need to use a non-standard role.\n\nFor the ignoreNonDOM option, this determines if developer created components are checked.\n\n### Example\n// good\n```javascript\n<div role=\"button\"></div>     <!-- Good: \"button\" is a valid ARIA role -->\n<div role={role}></div>       <!-- Good: role is a variable & cannot be determined until runtime. -->\n<div></div>                   <!-- Good: No ARIA role -->\n<Foo role={role}></Foo>       <!-- Good: ignoreNonDOM is set to true -->\n```\n\n// bad\n```javascript\n <div role=\"datepicker\"></div> <!-- Bad: \"datepicker\" is not an ARIA role -->\n <div role=\"range\"></div>      <!-- Bad: \"range\" is an _abstract_ ARIA role -->\n <div role=\"\"></div>           <!-- Bad: An empty ARIA role is not allowed -->\n <Foo role={role}></Foo>       <!-- Bad: ignoreNonDOM is set to false or not set -->\n```\n",
@@ -3848,6 +3899,27 @@
           ],
           "markdownDescription": "### What it does\nDisallow the use of the __iterator__ property\n\n### Why is this bad?\nThe __iterator__ property was a SpiderMonkey extension to JavaScript that could be used to create custom iterators that are compatible with JavaScript’s for in and for each constructs. However, this property is now obsolete, so it should not be used. Here’s an example of how this used to work:\n\n### Example\n```javascript\nFoo.prototype.__iterator__ = function() {\n    return new FooIterator(this);\n}\n```\n"
         },
+        "no-label-var": {
+          "description": "### What it does\n\nDisallow labels that share a name with a variable.\n\n### Why is this bad?\n\nThis rule aims to create clearer code by disallowing the bad practice of creating a label\nthat shares a name with a variable that is in scope.\n\n### Example\n```javascript\nvar x = foo;\nfunction bar() {\nx:\n  for (;;) {\n    break x;\n  }\n}\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-label-var"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nDisallow labels that share a name with a variable.\n\n### Why is this bad?\n\nThis rule aims to create clearer code by disallowing the bad practice of creating a label\nthat shares a name with a variable that is in scope.\n\n### Example\n```javascript\nvar x = foo;\nfunction bar() {\nx:\n  for (;;) {\n    break x;\n  }\n}\n```\n"
+        },
         "no-loss-of-precision": {
           "description": "### What it does\n\nDisallow precision loss of number literal\n\n### Why is this bad?\n\nIt can lead to unexpected results in certain situations\nFor example, when performing mathematical operations\n\n### Example\n\n```javascript\nvar x = 2e999;\n```\n",
           "anyOf": [
@@ -4456,6 +4528,27 @@
             }
           ],
           "markdownDescription": "### What it does\n\nDisallow unused private class members\n\n### Why is this bad?\n\nPrivate class members that are declared and not used anywhere in the code are most likely an error due to incomplete refactoring. Such class members take up space in the code and can lead to confusion by readers.\n\n### Example\n```javascript\n\n/// bad\nclass A {\n\t\t#unusedMember = 5;\n\t}\n\n\tclass B {\n\t\t\t#usedOnlyInWrite = 5;\n\t\t\tmethod() {\n\t\t\t\t\tthis.#usedOnlyInWrite = 42;\n\t\t\t}\n\t}\n\n\tclass C {\n\t\t\t#usedOnlyToUpdateItself = 5;\n\t\t\tmethod() {\n\t\t\t\t\tthis.#usedOnlyToUpdateItself++;\n\t\t\t}\n\t}\n\n\tclass D {\n\t\t\t#unusedMethod() {}\n\t}\n\n\tclass E {\n\t\t\tget #unusedAccessor() {}\n\t\t\tset #unusedAccessor(value) {}\n\t}\n\n/// Good\nclass A {\n\t\t#usedMember = 42;\n\t\tmethod() {\n\t\t\t\treturn this.#usedMember;\n\t\t}\n\t}\n\tclass B {\n\t\t\t#usedMethod() {\n\t\t\t\t\treturn 42;\n\t\t\t}\n\t\t\tanotherMethod() {\n\t\t\t\t\treturn this.#usedMethod();\n\t\t\t}\n\t}\n\tclass C {\n\t\t\tget #usedAccessor() {}\n\t\t\tset #usedAccessor(value) {}\n\n\t\t\tmethod() {\n\t\t\t\t\tthis.#usedAccessor = 42;\n\t\t\t}\n\t}\n\n```\n"
+        },
+        "no-unused-vars": {
+          "description": "### What it does\n\nDisallows variable declarations or imports that are not used in code.\n\n### Why is this bad?\n\nVariables that are declared and not used anywhere in the code are most\nlikely an error due to incomplete refactoring. Such variables take up\nspace in the code and can lead to confusion by readers.\n\nA variable `foo` is considered to be used if any of the following are\ntrue:\n\n* It is called (`foo()`) or constructed (`new foo()`)\n* It is read (`var bar = foo`)\n* It is passed into a function as an argument (`doSomething(foo)`)\n* It is read inside of a function that is passed to another function\n  (`doSomething(function() { foo(); })`)\n\nA variable is _not_ considered to be used if it is only ever declared\n(`var foo = 5`) or assigned to (`foo = 7`).\n\n#### Ignored Files\nThis rule ignores `.d.ts` files and `.vue` files entirely. Variables,\nclasses, interfaces, and types declared in `.d.ts` files are generally\nused by other files, which are not checked by Oxlint. Since Oxlint does\nnot support parsing Vue templates, this rule cannot tell if a variable\nis used or unused in a Vue file.\n\n#### Exported\n\nThe original ESLint rule recognizes `/* exported variableName */`\ncomments as a way to indicate that a variable is used in another script\nand should not be considered unused. Since ES6 modules are now a TC39\nstandard, Oxlint does not support this feature.\n\n### Example\n\nExamples of **incorrect** code for this rule:\n\n```javascript\n/*eslint no-unused-vars: \"error\"*/\n/*global some_unused_var*/\n\n// It checks variables you have defined as global\nsome_unused_var = 42;\n\nvar x;\n\n// Write-only variables are not considered as used.\nvar y = 10;\ny = 5;\n\n// A read for a modification of itself is not considered as used.\nvar z = 0;\nz = z + 1;\n\n// By default, unused arguments cause warnings.\n(function(foo) {\n    return 5;\n})();\n\n// Unused recursive functions also cause warnings.\nfunction fact(n) {\n    if (n < 2) return 1;\n    return n * fact(n - 1);\n}\n\n// When a function definition destructures an array, unused entries from\n// the array also cause warnings.\nfunction getY([x, y]) {\n    return y;\n}\n```\n\nExamples of **correct** code for this rule:\n```javascript\n/*eslint no-unused-vars: \"error\"*/\n\nvar x = 10;\nalert(x);\n\n// foo is considered used here\nmyFunc(function foo() {\n    // ...\n}.bind(this));\n\n(function(foo) {\n    return foo;\n})();\n\nvar myFunc;\nmyFunc = setTimeout(function() {\n    // myFunc is considered used\n    myFunc();\n}, 50);\n\n// Only the second argument from the destructured array is used.\nfunction getY([, y]) {\n    return y;\n}\n```\n\nExamples of **incorrect** code for `/* exported variableName */` operation:\n```javascript\n/* exported global_var */\n\n// Not respected, use ES6 modules instead.\nvar global_var = 42;\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-unused-vars"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nDisallows variable declarations or imports that are not used in code.\n\n### Why is this bad?\n\nVariables that are declared and not used anywhere in the code are most\nlikely an error due to incomplete refactoring. Such variables take up\nspace in the code and can lead to confusion by readers.\n\nA variable `foo` is considered to be used if any of the following are\ntrue:\n\n* It is called (`foo()`) or constructed (`new foo()`)\n* It is read (`var bar = foo`)\n* It is passed into a function as an argument (`doSomething(foo)`)\n* It is read inside of a function that is passed to another function\n  (`doSomething(function() { foo(); })`)\n\nA variable is _not_ considered to be used if it is only ever declared\n(`var foo = 5`) or assigned to (`foo = 7`).\n\n#### Ignored Files\nThis rule ignores `.d.ts` files and `.vue` files entirely. Variables,\nclasses, interfaces, and types declared in `.d.ts` files are generally\nused by other files, which are not checked by Oxlint. Since Oxlint does\nnot support parsing Vue templates, this rule cannot tell if a variable\nis used or unused in a Vue file.\n\n#### Exported\n\nThe original ESLint rule recognizes `/* exported variableName */`\ncomments as a way to indicate that a variable is used in another script\nand should not be considered unused. Since ES6 modules are now a TC39\nstandard, Oxlint does not support this feature.\n\n### Example\n\nExamples of **incorrect** code for this rule:\n\n```javascript\n/*eslint no-unused-vars: \"error\"*/\n/*global some_unused_var*/\n\n// It checks variables you have defined as global\nsome_unused_var = 42;\n\nvar x;\n\n// Write-only variables are not considered as used.\nvar y = 10;\ny = 5;\n\n// A read for a modification of itself is not considered as used.\nvar z = 0;\nz = z + 1;\n\n// By default, unused arguments cause warnings.\n(function(foo) {\n    return 5;\n})();\n\n// Unused recursive functions also cause warnings.\nfunction fact(n) {\n    if (n < 2) return 1;\n    return n * fact(n - 1);\n}\n\n// When a function definition destructures an array, unused entries from\n// the array also cause warnings.\nfunction getY([x, y]) {\n    return y;\n}\n```\n\nExamples of **correct** code for this rule:\n```javascript\n/*eslint no-unused-vars: \"error\"*/\n\nvar x = 10;\nalert(x);\n\n// foo is considered used here\nmyFunc(function foo() {\n    // ...\n}.bind(this));\n\n(function(foo) {\n    return foo;\n})();\n\nvar myFunc;\nmyFunc = setTimeout(function() {\n    // myFunc is considered used\n    myFunc();\n}, 50);\n\n// Only the second argument from the destructured array is used.\nfunction getY([, y]) {\n    return y;\n}\n```\n\nExamples of **incorrect** code for `/* exported variableName */` operation:\n```javascript\n/* exported global_var */\n\n// Not respected, use ES6 modules instead.\nvar global_var = 42;\n```\n"
         },
         "no-useless-catch": {
           "description": "### What it does\n\nDisallow unnecessary catch clauses\n\n### Why is this bad?\n\nA catch clause that only rethrows the original error is redundant,\nand has no effect on the runtime behavior of the program.\nThese redundant clauses can be a source of confusion and code bloat,\nso it’s better to disallow these unnecessary catch clauses.\n\n### Example\n```javascript\ntry {\n  doSomethingThatMightThrow();\n} catch (e) {\n  throw e;\n}\n```\n",
@@ -5108,6 +5201,90 @@
           ],
           "markdownDescription": "### What it does\n\nDisallow the use of Math.pow in favor of the ** operator\n\n### Why is this bad?\n\nIntroduced in ES2016, the infix exponentiation operator ** is an alternative for the\nstandard Math.pow function. Infix notation is considered to be more readable and thus more\npreferable than the function notation.\n\n### Example\n```javascript\nMath.pow(a, b)\n```\n"
         },
+        "prefer-numeric-literals": {
+          "description": "### What it does\n\nDisallow parseInt() and Number.parseInt() in favor of binary, octal, and hexadecimal\nliterals.\n\n### Why is this bad?\n\nThe parseInt() and Number.parseInt() functions can be used to turn binary, octal, and\nhexadecimal strings into integers. As binary, octal, and hexadecimal literals are supported\nin ES6, this rule encourages use of those numeric literals instead of parseInt() or\nNumber.parseInt().\n\n### Example\n```javascript\nparseInt(\"111110111\", 2) === 503;\nparseInt(`111110111`, 2) === 503;\nparseInt(\"767\", 8) === 503;\nparseInt(\"1F7\", 16) === 503;\nNumber.parseInt(\"111110111\", 2) === 503;\nNumber.parseInt(\"767\", 8) === 503;\nNumber.parseInt(\"1F7\", 16) === 503;\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/prefer-numeric-literals"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nDisallow parseInt() and Number.parseInt() in favor of binary, octal, and hexadecimal\nliterals.\n\n### Why is this bad?\n\nThe parseInt() and Number.parseInt() functions can be used to turn binary, octal, and\nhexadecimal strings into integers. As binary, octal, and hexadecimal literals are supported\nin ES6, this rule encourages use of those numeric literals instead of parseInt() or\nNumber.parseInt().\n\n### Example\n```javascript\nparseInt(\"111110111\", 2) === 503;\nparseInt(`111110111`, 2) === 503;\nparseInt(\"767\", 8) === 503;\nparseInt(\"1F7\", 16) === 503;\nNumber.parseInt(\"111110111\", 2) === 503;\nNumber.parseInt(\"767\", 8) === 503;\nNumber.parseInt(\"1F7\", 16) === 503;\n```\n"
+        },
+        "promise/avoid-new": {
+          "description": "### What it does\n\nDisallow creating new promises outside of utility libs.\n\n### Why is this bad?\n\nIf you dislike the new promise style promises.\n\n### Example\n```javascript\nnew Promise((resolve, reject) => { ... });\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/avoid-new"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nDisallow creating new promises outside of utility libs.\n\n### Why is this bad?\n\nIf you dislike the new promise style promises.\n\n### Example\n```javascript\nnew Promise((resolve, reject) => { ... });\n```\n"
+        },
+        "promise/no-new-statics": {
+          "description": "### What it does\n\nDisallow calling new on a Promise static method.\n\n### Why is this bad?\n\nCalling a Promise static method with new is invalid, resulting in a TypeError at runtime.\n\n### Example\n```javascript\nnew Promise.resolve(value);\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-new-statics"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nDisallow calling new on a Promise static method.\n\n### Why is this bad?\n\nCalling a Promise static method with new is invalid, resulting in a TypeError at runtime.\n\n### Example\n```javascript\nnew Promise.resolve(value);\n```\n"
+        },
+        "promise/param-names": {
+          "description": "### What it does\n\nEnforce standard parameter names for Promise constructors.\n\n### Why is this bad?\n\nEnsures that new Promise() is instantiated with the parameter names resolve, reject to\navoid confusion with order such as reject, resolve. The Promise constructor uses the\nRevealingConstructor pattern. Using the same parameter names as the language specification\nmakes code more uniform and easier to understand.\n\n### Example\n```javascript\nnew Promise(function (reject, resolve) { ... }) // incorrect order\nnew Promise(function (ok, fail) { ... }) // non-standard parameter names\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/param-names"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nEnforce standard parameter names for Promise constructors.\n\n### Why is this bad?\n\nEnsures that new Promise() is instantiated with the parameter names resolve, reject to\navoid confusion with order such as reject, resolve. The Promise constructor uses the\nRevealingConstructor pattern. Using the same parameter names as the language specification\nmakes code more uniform and easier to understand.\n\n### Example\n```javascript\nnew Promise(function (reject, resolve) { ... }) // incorrect order\nnew Promise(function (ok, fail) { ... }) // non-standard parameter names\n```\n"
+        },
         "radix": {
           "description": "### What it does\nEnforce the consistent use of the radix argument when using `parseInt()`.\n\n### Why is this bad?\nUsing the `parseInt()` function without specifying the radix can lead to unexpected results.\n\n### Example\n```javascript\n// error\nvar num = parseInt(\"071\");      // 57\n\n// success\nvar num = parseInt(\"071\", 10);  // 71\n```\n",
           "anyOf": [
@@ -5170,6 +5347,48 @@
             }
           ],
           "markdownDescription": "### What it does\nThis rule enforces onChange or readonly attribute for checked property of input elements.\nIt also warns when checked and defaultChecked properties are used together.\n\n### Example\n```javascript\n// Bad\n<input type=\"checkbox\" checked />\n<input type=\"checkbox\" checked defaultChecked />\n<input type=\"radio\" checked defaultChecked />\n\nReact.createElement('input', { checked: false });\nReact.createElement('input', { type: 'checkbox', checked: true });\nReact.createElement('input', { type: 'checkbox', checked: true, defaultChecked: true });\n\n// Good\n<input type=\"checkbox\" checked onChange={() => {}} />\n<input type=\"checkbox\" checked readOnly />\n<input type=\"checkbox\" checked onChange readOnly />\n<input type=\"checkbox\" defaultChecked />\n\nReact.createElement('input', { type: 'checkbox', checked: true, onChange() {} });\nReact.createElement('input', { type: 'checkbox', checked: true, readOnly: true });\nReact.createElement('input', { type: 'checkbox', checked: true, onChange() {}, readOnly: true });\nReact.createElement('input', { type: 'checkbox', defaultChecked: true });\n```\n"
+        },
+        "react/jsx-boolean-value": {
+          "description": "### What it does\n\nEnforce a consistent boolean attribute style in your code.\n\n### Example\n```javascript\nconst Hello = <Hello personal={true} />;\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/jsx-boolean-value"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nEnforce a consistent boolean attribute style in your code.\n\n### Example\n```javascript\nconst Hello = <Hello personal={true} />;\n```\n"
+        },
+        "react/jsx-curly-brace-presence": {
+          "description": "# Disallow unnecessary JSX expressions when literals alone are\nsufficient or enforce JSX expressions on literals in JSX children or\nattributes (`react/jsx-curly-brace-presence`)\n\n\t🔧 This rule is automatically fixable by the [`--fix` CLI option](https://oxc-project.github.io/docs/guide/usage/linter/cli.html#fix-problems).\n\nThis rule allows you to enforce curly braces or disallow unnecessary\ncurly braces in JSX props and/or children.\n\nFor situations where JSX expressions are unnecessary, please refer to\n[the React doc](https://facebook.github.io/react/docs/jsx-in-depth.html)\nand [this page about JSX\ngotchas](https://github.com/facebook/react/blob/v15.4.0-rc.3/docs/docs/02.3-jsx-gotchas.md#html-entities).\n\n\t## Rule Details\n\nBy default, this rule will check for and warn about unnecessary curly\nbraces in both JSX props and children. For the sake of backwards\ncompatibility, prop values that are JSX elements are not considered by\ndefault.\n\nYou can pass in options to enforce the presence of curly braces on JSX\nprops, children, JSX prop values that are JSX elements, or any\ncombination of the three. The same options are available for not\nallowing unnecessary curly braces as well as ignoring the check.\n\n**Note**: it is _highly recommended_ that you configure this rule with\nan object, and that you set \"propElementValues\" to \"always\". The ability\nto omit curly braces around prop values that are JSX elements is\nobscure, and intentionally undocumented, and should not be relied upon.\n\n\t## Rule Options\n\n\t```js\n\t...\n\t\"react/jsx-curly-brace-presence\": [<enabled>, { \"props\": <string>, \"children\": <string>, \"propElementValues\": <string> }]\n\t...\n\t```\n\n\tor alternatively\n\n\t```js\n\t...\n\t\"react/jsx-curly-brace-presence\": [<enabled>, <string>]\n\t...\n\t```\n\n\t### Valid options for `<string>`\n\nThey are `always`, `never` and `ignore` for checking on JSX props and\nchildren.\n\n\t- `always`: always enforce curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements\n\t- `never`: never allow unnecessary curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements\n\t- `ignore`: ignore the rule for JSX props, children, and/or JSX prop values that are JSX Elements\n\n\tIf passed in the option to fix, this is how a style violation will get fixed\n\n\t- `always`: wrap a JSX attribute in curly braces/JSX expression and/or a JSX child the same way but also with double quotes\n\t- `never`: get rid of curly braces from a JSX attribute and/or a JSX child\n\n\t- All fixing operations use double quotes.\n\n\tFor examples:\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"always\", children: \"always\" }`:\n\n\t```jsx\n\t<App>Hello world</App>;\n\t<App prop='Hello world'>{'Hello world'}</App>;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App>{\"Hello world\"}</App>;\n\t<App prop={\"Hello world\"}>{'Hello world'}</App>;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"never\", children: \"never\" }`:\n\n\t```jsx\n\t<App>{'Hello world'}</App>;\n\t<App prop={'Hello world'} attr={\"foo\"} />;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App>Hello world</App>;\n\t<App prop=\"Hello world\" attr=\"foo\" />;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"always\", children: \"always\", \"propElementValues\": \"always\" }`:\n\n\t```jsx\n\t<App prop=<div /> />;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App prop={<div />} />;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"never\", children: \"never\", \"propElementValues\": \"never\" }`:\n\n\t```jsx\n\t<App prop={<div />} />;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App prop=<div /> />;\n\t```\n\n\t### Alternative syntax\n\n\tThe options are also `always`, `never`, and `ignore` for the same meanings.\n\nIn this syntax, only a string is provided and the default will be set to\nthat option for checking on both JSX props and children.\n\n\tFor examples:\n\n\tExamples of **incorrect** code for this rule, when configured with `\"always\"`:\n\n\t```jsx\n\t<App>Hello world</App>;\n\t<App prop='Hello world' attr=\"foo\">Hello world</App>;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App>{\"Hello world\"}</App>;\n\t<App prop={\"Hello world\"} attr={\"foo\"}>{\"Hello world\"}</App>;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `\"never\"`:\n\n\t```jsx\n\t<App prop={'foo'} attr={\"bar\"}>{'Hello world'}</App>;\n\t```\n\n\tIt can fixed to:\n\n\t```jsx\n\t<App prop=\"foo\" attr=\"bar\">Hello world</App>;\n\t```\n\n\t## Edge cases\n\nThe fix also deals with template literals, strings with quotes, and\nstrings with escapes characters.\n\n- If the rule is set to get rid of unnecessary curly braces and the\n  template literal inside a JSX expression has no expression, it will\n  throw a warning and be fixed with double quotes. For example:\n\n\t```jsx\n\t<App prop={`Hello world`}>{`Hello world`}</App>;\n\t```\n\n\twill be warned and fixed to:\n\n\t```jsx\n\t<App prop=\"Hello world\">Hello world</App>;\n\t```\n\n- If the rule is set to enforce curly braces and the strings have\n  quotes, it will be fixed with double quotes for JSX children and the\n  normal way for JSX attributes. Also, double quotes will be escaped in\n  the fix.\n\n\tFor example:\n\n\t```jsx\n\t<App prop='Hello \"foo\" world'>Hello 'foo' \"bar\" world</App>;\n\t```\n\n\twill warned and fixed to:\n\n\t```jsx\n\t<App prop={\"Hello \\\"foo\\\" world\"}>{\"Hello 'foo' \\\"bar\\\" world\"}</App>;\n\t```\n\n- If the rule is set to get rid of unnecessary curly braces(JSX\n  expression) and there are characters that need to be escaped in its JSX\n  form, such as quote characters, [forbidden JSX text\n  characters](https://facebook.github.io/jsx/), escaped characters and\n  anything that looks like HTML entity names, the code will not be warned\n  because the fix may make the code less readable.\n\n\tExamples of **correct** code for this rule, even when configured with `\"never\"`:\n\n\t```jsx\n\t<Color text={\"\\u00a0\"} />\n\t<App>{\"Hello \\u00b7 world\"}</App>;\n\t<style type=\"text/css\">{'.main { margin-top: 0; }'}</style>;\n\t/**\n\t * there's no way to inject a whitespace into jsx without a container so this\n\t * will always be allowed.\n\t */\n\t<App>{' '}</App>\n\t<App>{'     '}</App>\n\t<App>{/* comment */ <Bpp />}</App> // the comment makes the container necessary\n\t```\n\n\t## When Not To Use It\n\nYou should turn this rule off if you are not concerned about maintaining\nconsistency regarding the use of curly braces in JSX props and/or\nchildren as well as the use of unnecessary JSX expressions.\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/jsx-curly-brace-presence"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "# Disallow unnecessary JSX expressions when literals alone are\nsufficient or enforce JSX expressions on literals in JSX children or\nattributes (`react/jsx-curly-brace-presence`)\n\n\t🔧 This rule is automatically fixable by the [`--fix` CLI option](https://oxc-project.github.io/docs/guide/usage/linter/cli.html#fix-problems).\n\nThis rule allows you to enforce curly braces or disallow unnecessary\ncurly braces in JSX props and/or children.\n\nFor situations where JSX expressions are unnecessary, please refer to\n[the React doc](https://facebook.github.io/react/docs/jsx-in-depth.html)\nand [this page about JSX\ngotchas](https://github.com/facebook/react/blob/v15.4.0-rc.3/docs/docs/02.3-jsx-gotchas.md#html-entities).\n\n\t## Rule Details\n\nBy default, this rule will check for and warn about unnecessary curly\nbraces in both JSX props and children. For the sake of backwards\ncompatibility, prop values that are JSX elements are not considered by\ndefault.\n\nYou can pass in options to enforce the presence of curly braces on JSX\nprops, children, JSX prop values that are JSX elements, or any\ncombination of the three. The same options are available for not\nallowing unnecessary curly braces as well as ignoring the check.\n\n**Note**: it is _highly recommended_ that you configure this rule with\nan object, and that you set \"propElementValues\" to \"always\". The ability\nto omit curly braces around prop values that are JSX elements is\nobscure, and intentionally undocumented, and should not be relied upon.\n\n\t## Rule Options\n\n\t```js\n\t...\n\t\"react/jsx-curly-brace-presence\": [<enabled>, { \"props\": <string>, \"children\": <string>, \"propElementValues\": <string> }]\n\t...\n\t```\n\n\tor alternatively\n\n\t```js\n\t...\n\t\"react/jsx-curly-brace-presence\": [<enabled>, <string>]\n\t...\n\t```\n\n\t### Valid options for `<string>`\n\nThey are `always`, `never` and `ignore` for checking on JSX props and\nchildren.\n\n\t- `always`: always enforce curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements\n\t- `never`: never allow unnecessary curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements\n\t- `ignore`: ignore the rule for JSX props, children, and/or JSX prop values that are JSX Elements\n\n\tIf passed in the option to fix, this is how a style violation will get fixed\n\n\t- `always`: wrap a JSX attribute in curly braces/JSX expression and/or a JSX child the same way but also with double quotes\n\t- `never`: get rid of curly braces from a JSX attribute and/or a JSX child\n\n\t- All fixing operations use double quotes.\n\n\tFor examples:\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"always\", children: \"always\" }`:\n\n\t```jsx\n\t<App>Hello world</App>;\n\t<App prop='Hello world'>{'Hello world'}</App>;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App>{\"Hello world\"}</App>;\n\t<App prop={\"Hello world\"}>{'Hello world'}</App>;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"never\", children: \"never\" }`:\n\n\t```jsx\n\t<App>{'Hello world'}</App>;\n\t<App prop={'Hello world'} attr={\"foo\"} />;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App>Hello world</App>;\n\t<App prop=\"Hello world\" attr=\"foo\" />;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"always\", children: \"always\", \"propElementValues\": \"always\" }`:\n\n\t```jsx\n\t<App prop=<div /> />;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App prop={<div />} />;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `{ props: \"never\", children: \"never\", \"propElementValues\": \"never\" }`:\n\n\t```jsx\n\t<App prop={<div />} />;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App prop=<div /> />;\n\t```\n\n\t### Alternative syntax\n\n\tThe options are also `always`, `never`, and `ignore` for the same meanings.\n\nIn this syntax, only a string is provided and the default will be set to\nthat option for checking on both JSX props and children.\n\n\tFor examples:\n\n\tExamples of **incorrect** code for this rule, when configured with `\"always\"`:\n\n\t```jsx\n\t<App>Hello world</App>;\n\t<App prop='Hello world' attr=\"foo\">Hello world</App>;\n\t```\n\n\tThey can be fixed to:\n\n\t```jsx\n\t<App>{\"Hello world\"}</App>;\n\t<App prop={\"Hello world\"} attr={\"foo\"}>{\"Hello world\"}</App>;\n\t```\n\n\tExamples of **incorrect** code for this rule, when configured with `\"never\"`:\n\n\t```jsx\n\t<App prop={'foo'} attr={\"bar\"}>{'Hello world'}</App>;\n\t```\n\n\tIt can fixed to:\n\n\t```jsx\n\t<App prop=\"foo\" attr=\"bar\">Hello world</App>;\n\t```\n\n\t## Edge cases\n\nThe fix also deals with template literals, strings with quotes, and\nstrings with escapes characters.\n\n- If the rule is set to get rid of unnecessary curly braces and the\n  template literal inside a JSX expression has no expression, it will\n  throw a warning and be fixed with double quotes. For example:\n\n\t```jsx\n\t<App prop={`Hello world`}>{`Hello world`}</App>;\n\t```\n\n\twill be warned and fixed to:\n\n\t```jsx\n\t<App prop=\"Hello world\">Hello world</App>;\n\t```\n\n- If the rule is set to enforce curly braces and the strings have\n  quotes, it will be fixed with double quotes for JSX children and the\n  normal way for JSX attributes. Also, double quotes will be escaped in\n  the fix.\n\n\tFor example:\n\n\t```jsx\n\t<App prop='Hello \"foo\" world'>Hello 'foo' \"bar\" world</App>;\n\t```\n\n\twill warned and fixed to:\n\n\t```jsx\n\t<App prop={\"Hello \\\"foo\\\" world\"}>{\"Hello 'foo' \\\"bar\\\" world\"}</App>;\n\t```\n\n- If the rule is set to get rid of unnecessary curly braces(JSX\n  expression) and there are characters that need to be escaped in its JSX\n  form, such as quote characters, [forbidden JSX text\n  characters](https://facebook.github.io/jsx/), escaped characters and\n  anything that looks like HTML entity names, the code will not be warned\n  because the fix may make the code less readable.\n\n\tExamples of **correct** code for this rule, even when configured with `\"never\"`:\n\n\t```jsx\n\t<Color text={\"\\u00a0\"} />\n\t<App>{\"Hello \\u00b7 world\"}</App>;\n\t<style type=\"text/css\">{'.main { margin-top: 0; }'}</style>;\n\t/**\n\t * there's no way to inject a whitespace into jsx without a container so this\n\t * will always be allowed.\n\t */\n\t<App>{' '}</App>\n\t<App>{'     '}</App>\n\t<App>{/* comment */ <Bpp />}</App> // the comment makes the container necessary\n\t```\n\n\t## When Not To Use It\n\nYou should turn this rule off if you are not concerned about maintaining\nconsistency regarding the use of curly braces in JSX props and/or\nchildren as well as the use of unnecessary JSX expressions.\n"
         },
         "react/jsx-key": {
           "description": "### What it does\n\nEnforce `key` prop for elements in array\n\n### Example\n```javascript\n// Bad\n[1, 2, 3].map(x => <App />);\n[1, 2, 3]?.map(x => <BabelEslintApp />)\n\n// Good\n[1, 2, 3].map(x => <App key={x} />);\n[1, 2, 3]?.map(x => <BabelEslintApp key={x} />)\n```\n",
@@ -5507,7 +5726,7 @@
           ],
           "markdownDescription": "### What it does\nDisallow usage of unknown DOM property.\n\n### Why is this bad?\nYou can use unknown property name that has no effect.\n\n### Example\n```jsx\n // Unknown properties\n const Hello = <div class=\"hello\">Hello World</div>;\n const Alphabet = <div abc=\"something\">Alphabet</div>;\n\n // Invalid aria-* attribute\n const IconButton = <div aria-foo=\"bar\" />;\n```\n"
         },
-        "react/prefer-es-6-class": {
+        "react/prefer-es6-class": {
           "description": "### What it does\n\nReact offers you two ways to create traditional components: using the ES5\ncreate-react-class module or the new ES6 class system.\n\n### Why is this bad?\n\nThis rule enforces a consistent React class style.\n\n### Example\n```javascript\nvar Hello = createReactClass({\n  render: function() {\n    return <div>Hello {this.props.name}</div>;\n  }\n});\n```\n",
           "anyOf": [
             {
@@ -5518,7 +5737,7 @@
                 "$ref": "#/definitions/AllowWarnDeny"
               },
               "additionalItems": {
-                "$ref": "#/definitions/prefer-es-6-class"
+                "$ref": "#/definitions/prefer-es6-class"
               }
             },
             {
@@ -5990,6 +6209,27 @@
           ],
           "markdownDescription": "### What it does\nThis rule enforces that functions do have an explicit return type annotation.\n\n### Why is this bad?\nExplicit return types do make it visually more clear what type is returned by a function.\nThey can also speed up TypeScript type checking performance in large codebases with many large functions.\n\n### Example\n```javascript\n```\n"
         },
+        "typescript/no-confusing-non-null-assertion": {
+          "description": "### What it does\nDisallow non-null assertion in locations that may be confusing.\n\n### Why is this bad?\nUsing a non-null assertion (!) next to an assign or equals check (= or == or ===) creates code that is confusing as it looks similar to a not equals check (!= !==).\n\n### Example\n```javascript\n   a! == b; // a non-null assertions(`!`) and an equals test(`==`)\n   a !== b; // not equals test(`!==`)\n   a! === b; // a non-null assertions(`!`) and an triple equals test(`===`)\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-confusing-non-null-assertion"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\nDisallow non-null assertion in locations that may be confusing.\n\n### Why is this bad?\nUsing a non-null assertion (!) next to an assign or equals check (= or == or ===) creates code that is confusing as it looks similar to a not equals check (!= !==).\n\n### Example\n```javascript\n   a! == b; // a non-null assertions(`!`) and an equals test(`==`)\n   a !== b; // not equals test(`!==`)\n   a! === b; // a non-null assertions(`!`) and an triple equals test(`===`)\n```\n"
+        },
         "typescript/no-duplicate-enum-values": {
           "description": "### What it does\nDisallow duplicate enum member values.\n\n### Why is this bad?\nAlthough TypeScript supports duplicate enum member values, people usually expect members to have unique values within the same enum. Duplicate values can lead to bugs that are hard to track down.\n\n### Example\n```javascript\nenum E {\n```\n",
           "anyOf": [
@@ -6094,6 +6334,27 @@
             }
           ],
           "markdownDescription": "### What it does\n\nDisallow extra non-null assertions.\n\n### Why is this bad?\nThe `!` non-null assertion operator in TypeScript is used to assert that a value's type does not include null or undefined. Using the operator any more than once on a single value does nothing.\n\n### Example\n```javascript\nconst foo: { bar: number } | null = null;\nconst bar = foo!!!.bar;\n```\n"
+        },
+        "typescript/no-extraneous-class": {
+          "description": "### What it does\n\nThis rule reports when a class has no non-static members,\nsuch as for a class used exclusively as a static namespace.\nThis rule also reports classes that have only a constructor and no fields.\nThose classes can generally be replaced with a standalone function.\n\n### Why is this bad?\n\nUsers who come from a OOP paradigm may wrap their utility functions in an extra class,\ninstead of putting them at the top level of an ECMAScript module.\nDoing so is generally unnecessary in JavaScript and TypeScript projects.\n\nWrapper classes add extra cognitive complexity to code without adding any structural improvements\n\nWhatever would be put on them, such as utility functions, are already organized by virtue of being in a module.\n\nAs an alternative, you can import * as ... the module to get all of them in a single object.\nIDEs can't provide as good suggestions for static class or namespace imported properties when you start typing property names\n\nIt's more difficult to statically analyze code for unused variables, etc.\nwhen they're all on the class (see: Finding dead code (and dead types) in TypeScript).\n\n### Example\n```javascript\nclass StaticConstants {\n\tstatic readonly version = 42;\n\n\tstatic isProduction() {\n\t  return process.env.NODE_ENV === 'production';\n\t}\n  }\n\n  class HelloWorldLogger {\n\tconstructor() {\n\t  console.log('Hello, world!');\n\t}\n  }\n\n  abstract class Foo {}\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-extraneous-class"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nThis rule reports when a class has no non-static members,\nsuch as for a class used exclusively as a static namespace.\nThis rule also reports classes that have only a constructor and no fields.\nThose classes can generally be replaced with a standalone function.\n\n### Why is this bad?\n\nUsers who come from a OOP paradigm may wrap their utility functions in an extra class,\ninstead of putting them at the top level of an ECMAScript module.\nDoing so is generally unnecessary in JavaScript and TypeScript projects.\n\nWrapper classes add extra cognitive complexity to code without adding any structural improvements\n\nWhatever would be put on them, such as utility functions, are already organized by virtue of being in a module.\n\nAs an alternative, you can import * as ... the module to get all of them in a single object.\nIDEs can't provide as good suggestions for static class or namespace imported properties when you start typing property names\n\nIt's more difficult to statically analyze code for unused variables, etc.\nwhen they're all on the class (see: Finding dead code (and dead types) in TypeScript).\n\n### Example\n```javascript\nclass StaticConstants {\n\tstatic readonly version = 42;\n\n\tstatic isProduction() {\n\t  return process.env.NODE_ENV === 'production';\n\t}\n  }\n\n  class HelloWorldLogger {\n\tconstructor() {\n\t  console.log('Hello, world!');\n\t}\n  }\n\n  abstract class Foo {}\n```\n"
         },
         "typescript/no-import-type-side-effects": {
           "description": "### What it does\n\nEnforce the use of top-level import type qualifier when an import only has specifiers with inline type qualifiers.\n\n### Why is this bad?\n\nThe `--verbatimModuleSyntax` compiler option causes TypeScript to do simple and predictable transpilation on import declarations.\nNamely, it completely removes import declarations with a top-level type qualifier, and it removes any import specifiers with an inline type qualifier.\n\nThe latter behavior does have one potentially surprising effect in that in certain cases TS can leave behind a \"side effect\" import at runtime:\n```javascript\nimport { type A, type B } from 'mod';\n```\nis transpiled to\n\n```javascript\nimport {} from 'mod';\nwhich is the same as\nimport 'mod';\n```\nFor the rare case of needing to import for side effects, this may be desirable - but for most cases you will not want to leave behind an unnecessary side effect import.\n\n### Example\n```javascript\nimport { type A } from 'mod';\nimport { type A as AA } from 'mod';\nimport { type A, type B } from 'mod';\nimport { type A as AA, type B as BB } from 'mod';\n```\n",
@@ -6430,6 +6691,27 @@
             }
           ],
           "markdownDescription": "### What it does\nExplicit enum value must only be a literal value (string, number, boolean, etc).\n\n### Why is this bad?\nTypeScript allows the value of an enum member to be many different kinds of valid JavaScript expressions.\nHowever, because enums create their own scope whereby each enum member becomes a variable in that scope, developers are often surprised at the resultant values.\n\n### Example\n```javascript\nconst imOutside = 2;\nconst b = 2;\nenum Foo {\n  outer = imOutside,\n  a = 1,\n  b = a,\n  c = b,\n}\n```\n"
+        },
+        "typescript/prefer-namespace-keyword": {
+          "description": "### What it does\nThis rule reports when the module keyword is used instead of namespace.\nThis rule does not report on the use of TypeScript module declarations to describe external APIs (declare module 'foo' {}).\n\n### Why is this bad?\nNamespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (import/export).\nFor projects still using custom modules / namespaces, it's preferred to refer to them as namespaces.\n\n### Example\n```typescript\nmodule Example {}\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/prefer-namespace-keyword"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\nThis rule reports when the module keyword is used instead of namespace.\nThis rule does not report on the use of TypeScript module declarations to describe external APIs (declare module 'foo' {}).\n\n### Why is this bad?\nNamespaces are an outdated way to organize TypeScript code. ES2015 module syntax is now preferred (import/export).\nFor projects still using custom modules / namespaces, it's preferred to refer to them as namespaces.\n\n### Example\n```typescript\nmodule Example {}\n```\n"
         },
         "typescript/prefer-ts-expect-error": {
           "description": "### What it does\n\nEnforce using @ts-expect-error over @ts-ignore.\n\n### Why is this bad?\nTypeScript allows you to suppress all errors on a line by placing a comment starting with @ts-ignore or @ts-expect-error immediately before the erroring line.\nThe two directives work the same, except @ts-expect-error causes a type error if placed before a line that's not erroring in the first place.\n\nThis means it's easy for @ts-ignores to be forgotten about, and remain in code even after the error they were suppressing is fixed.\nThis is dangerous, as if a new error arises on that line it'll be suppressed by the forgotten about @ts-ignore, and so be missed.\n\n### Example\n```javascript\n// @ts-ignore\nconst str: string = 1;\n\n/**\n* Explaining comment\n*\n* @ts-ignore */\nconst multiLine: number = 'value';\n```\n",
@@ -6892,6 +7174,27 @@
             }
           ],
           "markdownDescription": "### What it does\n\nIt warns when you use a non-function value as the second argument of `removeEventListener`.\n\n### Why is this bad?\n\nThe [`removeEventListener`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener) function must be called with a reference to the same function that was passed to [`addEventListener`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener). Calling `removeEventListener` with an inline function or the result of an inline `.bind()` call is indicative of an error, and won't actually remove the listener.\n\n### Example\n```javascript\n// Bad\nel.removeEventListener('click', () => {});\nel.removeEventListener('click', function () {});\n\n// Good\nel.removeEventListener('click', handler);\nel.removeEventListener('click', handler.bind(this));\n```\n"
+        },
+        "unicorn/no-length-as-slice-end": {
+          "description": "### What it does\n\nDisallow using `length` as the end argument of a `slice` call.\n\n### Why is this bad?\n\nPassing `length` as the end argument of a `slice` call is unnecessary and can be confusing.\n\n### Example\n```javascript\n// Bad\nfoo.slice(1, foo.length)\n\n// Good\nfoo.slice(1)\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-length-as-slice-end"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nDisallow using `length` as the end argument of a `slice` call.\n\n### Why is this bad?\n\nPassing `length` as the end argument of a `slice` call is unnecessary and can be confusing.\n\n### Example\n```javascript\n// Bad\nfoo.slice(1, foo.length)\n\n// Good\nfoo.slice(1)\n```\n"
         },
         "unicorn/no-lonely-if": {
           "description": "### What it does\n\nDisallow `if` statements as the only statement in `if` blocks without `else`.\n\n### Why is this bad?\n\nIt can be confusing to have an `if` statement without an `else` clause as the only statement in an `if` block.\n\n### Example\n```javascript\n// Bad\nif (foo) {\n        if (bar) {\n    }\n}\nif (foo) if (bar) baz();\n\n// Good\nif (foo && bar) {\n}\nif (foo && bar) baz();\n```\n",
@@ -7375,6 +7678,27 @@
             }
           ],
           "markdownDescription": "### What it does\n\nDisallows useless default cases in switch statements.\n\n### Why is this bad?\n\nAn empty case before the last default case is useless.\n\n### Example\n```javascript\n// bad\nswitch (foo) {\n\tcase 1:\n\tdefault:\n\t\thandleDefaultCase();\n\t\tbreak;\n}\n// good:\nswitch (foo) {\n\tcase 1:\n\tcase 2:\n\t\thandleCase1And2();\n\t\tbreak;\n}\n```\n"
+        },
+        "unicorn/no-useless-undefined": {
+          "description": "### What it does\nDo not use useless `undefined`.\n\n### Why is this bad?\n`undefined` is the default value for new variables, parameters, return statements, etc… so specifying it doesn't make any difference.\n\n\n### Example\n```javascript\n// bad\nlet foo = undefined;\n// good:\nlet foo;\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-useless-undefined"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\nDo not use useless `undefined`.\n\n### Why is this bad?\n`undefined` is the default value for new variables, parameters, return statements, etc… so specifying it doesn't make any difference.\n\n\n### Example\n```javascript\n// bad\nlet foo = undefined;\n// good:\nlet foo;\n```\n"
         },
         "unicorn/no-zero-fractions": {
           "description": "### What it does\n\nPrevents the use of zero fractions.\n\n### Why is this bad?\n\nThere is no difference in JavaScript between, for example, `1`, `1.0` and `1.`, so prefer the former for consistency and brevity.\n\n### Example\n```javascript\n// Bad\nconst foo = 1.0;\nconst foo = -1.0;\nconst foo = 123_456.000_000;\n\n// Good\nconst foo = 1;\nconst foo = -1;\nconst foo = 123456;\nconst foo = 1.1;\n```\n",
@@ -8257,6 +8581,27 @@
             }
           ],
           "markdownDescription": "### What it does\nEnforce comparing `typeof` expressions against valid strings\n\n### Why is this bad?\nIt is usually a typing mistake to compare the result of a typeof operator to other string literals.\n### Example\n```javascript\nrequireStringLiterals: false\nincorrect:\ntypeof foo === \"strnig\"\ncorrect:\ntypeof foo === \"string\"\ntypeof foo === baz\n\nrequireStringLiterals: true\nincorrect:\ntypeof foo === baz\n```\n"
+        },
+        "vitest/no-import-node-test": {
+          "description": "### What it does\n\nThis rule warns when `node:test` is imported (usually accidentally). With `--fix`, it will replace the import with `vitest`.\n\n### Examples\n\n```javascript\n// invalid\nimport { test } from 'node:test'\nimport { expect } from 'vitest'\n\ntest('foo', () => {\n  expect(1).toBe(1)\n})\n```\n\n```javascript\n// valid\nimport { test, expect } from 'vitest'\n\ntest('foo', () => {\n  expect(1).toBe(1)\n})\n```\n",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AllowWarnDeny"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/AllowWarnDeny"
+              },
+              "additionalItems": {
+                "$ref": "#/definitions/no-import-node-test"
+              }
+            },
+            {
+              "type": "array",
+              "items": true
+            }
+          ],
+          "markdownDescription": "### What it does\n\nThis rule warns when `node:test` is imported (usually accidentally). With `--fix`, it will replace the import with `vitest`.\n\n### Examples\n\n```javascript\n// invalid\nimport { test } from 'node:test'\nimport { expect } from 'vitest'\n\ntest('foo', () => {\n  expect(1).toBe(1)\n})\n```\n\n```javascript\n// valid\nimport { test, expect } from 'vitest'\n\ntest('foo', () => {\n  expect(1).toBe(1)\n})\n```\n"
         }
       }
     },
@@ -8379,6 +8724,10 @@
       "title": "Config for autocomplete-valid",
       "additionalProperties": true
     },
+    "avoid-new": {
+      "title": "Config for avoid-new",
+      "additionalProperties": true
+    },
     "bad-array-method-on-arguments": {
       "title": "Config for bad-array-method-on-arguments",
       "additionalProperties": true
@@ -8477,7 +8826,11 @@
     },
     "default-case": {
       "title": "Config for default-case",
-      "additionalProperties": true
+      "allOf": [
+        {
+          "$ref": "#/definitions/DefaultCaseConfig"
+        }
+      ]
     },
     "default-case-last": {
       "title": "Config for default-case-last",
@@ -8539,6 +8892,10 @@
       "title": "Config for for-direction",
       "additionalProperties": true
     },
+    "func-names": {
+      "title": "Config for func-names",
+      "additionalProperties": true
+    },
     "getter-return": {
       "title": "Config for getter-return",
       "additionalProperties": true
@@ -8577,6 +8934,14 @@
     },
     "inline-script-id": {
       "title": "Config for inline-script-id",
+      "additionalProperties": true
+    },
+    "jsx-boolean-value": {
+      "title": "Config for jsx-boolean-value",
+      "additionalProperties": true
+    },
+    "jsx-curly-brace-presence": {
+      "title": "Config for jsx-curly-brace-presence",
       "additionalProperties": true
     },
     "jsx-key": {
@@ -8795,6 +9160,10 @@
       "title": "Config for no-conditional-expect",
       "additionalProperties": true
     },
+    "no-confusing-non-null-assertion": {
+      "title": "Config for no-confusing-non-null-assertion",
+      "additionalProperties": true
+    },
     "no-confusing-set-timeout": {
       "title": "Config for no-confusing-set-timeout",
       "additionalProperties": true
@@ -8987,6 +9356,10 @@
       "title": "Config for no-extra-non-null-assertion",
       "additionalProperties": true
     },
+    "no-extraneous-class": {
+      "title": "Config for no-extraneous-class",
+      "additionalProperties": true
+    },
     "no-fallthrough": {
       "title": "Config for no-fallthrough",
       "additionalProperties": true
@@ -9035,6 +9408,10 @@
       "title": "Config for no-import-assign",
       "additionalProperties": true
     },
+    "no-import-node-test": {
+      "title": "Config for no-import-node-test",
+      "additionalProperties": true
+    },
     "no-import-type-side-effects": {
       "title": "Config for no-import-type-side-effects",
       "additionalProperties": true
@@ -9071,8 +9448,16 @@
       "title": "Config for no-jasmine-globals",
       "additionalProperties": true
     },
+    "no-label-var": {
+      "title": "Config for no-label-var",
+      "additionalProperties": true
+    },
     "no-large-snapshots": {
       "title": "Config for no-large-snapshots",
+      "additionalProperties": true
+    },
+    "no-length-as-slice-end": {
+      "title": "Config for no-length-as-slice-end",
       "additionalProperties": true
     },
     "no-lonely-if": {
@@ -9137,6 +9522,10 @@
     },
     "no-new-native-nonconstructor": {
       "title": "Config for no-new-native-nonconstructor",
+      "additionalProperties": true
+    },
+    "no-new-statics": {
+      "title": "Config for no-new-statics",
       "additionalProperties": true
     },
     "no-new-wrappers": {
@@ -9395,6 +9784,10 @@
       "title": "Config for no-unused-private-class-members",
       "additionalProperties": true
     },
+    "no-unused-vars": {
+      "title": "Config for no-unused-vars",
+      "additionalProperties": true
+    },
     "no-unwanted-polyfillio": {
       "title": "Config for no-unwanted-polyfillio",
       "additionalProperties": true
@@ -9443,6 +9836,10 @@
       "title": "Config for no-useless-switch-case",
       "additionalProperties": true
     },
+    "no-useless-undefined": {
+      "title": "Config for no-useless-undefined",
+      "additionalProperties": true
+    },
     "no-var": {
       "title": "Config for no-var",
       "additionalProperties": true
@@ -9453,6 +9850,10 @@
     },
     "no-void": {
       "title": "Config for no-void",
+      "additionalProperties": true
+    },
+    "no-webpack-loader-syntax": {
+      "title": "Config for no-webpack-loader-syntax",
       "additionalProperties": true
     },
     "no-with": {
@@ -9477,6 +9878,10 @@
     },
     "only-used-in-recursion": {
       "title": "Config for only-used-in-recursion",
+      "additionalProperties": true
+    },
+    "param-names": {
+      "title": "Config for param-names",
       "additionalProperties": true
     },
     "prefer-add-event-listener": {
@@ -9543,8 +9948,8 @@
       "title": "Config for prefer-equality-matcher",
       "additionalProperties": true
     },
-    "prefer-es-6-class": {
-      "title": "Config for prefer-es-6-class",
+    "prefer-es6-class": {
+      "title": "Config for prefer-es6-class",
       "additionalProperties": true
     },
     "prefer-event-target": {
@@ -9611,6 +10016,10 @@
       "title": "Config for prefer-modern-math-apis",
       "additionalProperties": true
     },
+    "prefer-namespace-keyword": {
+      "title": "Config for prefer-namespace-keyword",
+      "additionalProperties": true
+    },
     "prefer-native-coercion-functions": {
       "title": "Config for prefer-native-coercion-functions",
       "additionalProperties": true
@@ -9621,6 +10030,10 @@
     },
     "prefer-number-properties": {
       "title": "Config for prefer-number-properties",
+      "additionalProperties": true
+    },
+    "prefer-numeric-literals": {
+      "title": "Config for prefer-numeric-literals",
       "additionalProperties": true
     },
     "prefer-optional-catch-binding": {
