@@ -79,6 +79,7 @@ mod eslint {
     pub mod no_iterator;
     pub mod no_label_var;
     pub mod no_loss_of_precision;
+    pub mod no_magic_numbers;
     pub mod no_multi_str;
     pub mod no_new;
     pub mod no_new_native_nonconstructor;
@@ -474,7 +475,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
-    eslint::no_multi_str,
     eslint::no_label_var,
     eslint::require_await,
     eslint::no_compare_neg_zero,
@@ -509,6 +509,8 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_irregular_whitespace,
     eslint::no_iterator,
     eslint::no_loss_of_precision,
+    eslint::no_magic_numbers,
+    eslint::no_multi_str,
     eslint::no_new,
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
