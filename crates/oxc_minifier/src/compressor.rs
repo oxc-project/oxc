@@ -1,5 +1,4 @@
 use oxc_allocator::Allocator;
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder};
 
 use crate::{

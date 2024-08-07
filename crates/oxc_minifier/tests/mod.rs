@@ -1,18 +1,12 @@
-mod closure;
+mod ast_passes;
 mod mangler;
-mod oxc;
-// mod tdewolff;
-// mod terser;
+mod plugins;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
-pub(crate) fn test_same(source_text: &str, options: CompressOptions) {
-    test(source_text, source_text, options);
-}
 
 pub(crate) fn test(source_text: &str, expected: &str, options: CompressOptions) {
     let source_type = SourceType::default();

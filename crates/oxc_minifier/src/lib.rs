@@ -1,3 +1,5 @@
+#![allow(clippy::wildcard_imports)]
+
 //! ECMAScript Minifier
 
 mod ast_passes;
@@ -5,6 +7,7 @@ mod ast_util;
 mod compressor;
 mod keep_var;
 mod options;
+mod plugins;
 mod tri;
 mod ty;
 
@@ -13,9 +16,10 @@ use oxc_ast::ast::Program;
 use oxc_mangler::{Mangler, ManglerBuilder};
 
 pub use crate::{
-    ast_passes::{RemoveDeadCode, RemoveSyntax, ReplaceGlobalDefines, ReplaceGlobalDefinesConfig},
+    ast_passes::{RemoveDeadCode, RemoveSyntax},
     compressor::Compressor,
     options::CompressOptions,
+    plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig},
 };
 
 #[derive(Debug, Clone, Copy)]

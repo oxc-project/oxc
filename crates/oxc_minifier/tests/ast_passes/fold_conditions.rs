@@ -1,4 +1,4 @@
-use crate::CompressOptions;
+use oxc_minifier::CompressOptions;
 
 fn test(source_text: &str, expected: &str) {
     let options = CompressOptions::all_true();

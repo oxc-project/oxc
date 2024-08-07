@@ -1592,7 +1592,6 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "walkdir",
 ]
 
 [[package]]
