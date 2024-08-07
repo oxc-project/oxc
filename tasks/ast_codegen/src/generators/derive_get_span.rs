@@ -63,11 +63,11 @@ fn derive<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
         impl_trait(
             &trait_ident,
             &method_ident,
-            generics,
-            typ,
+            &generics,
+            &typ,
             &self_type,
             &result_type,
-            derive_enum(it, &method_ident),
+            &derive_enum(it, &method_ident),
         )
     };
 
@@ -77,11 +77,11 @@ fn derive<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
         impl_trait(
             &trait_ident,
             &method_ident,
-            generics,
-            typ,
+            &generics,
+            &typ,
             &self_type,
             &result_type,
-            derive_struct::<MUT>(it, &method_ident),
+            &derive_struct::<MUT>(it, &method_ident),
         )
     };
     let impls: Vec<TokenStream> = ctx
@@ -137,11 +137,11 @@ fn derive_struct<const MUT: bool>(def: &StructDef, method: &Ident) -> TokenStrea
 fn impl_trait(
     trait_ident: &Ident,
     method_ident: &Ident,
-    generics: Option<Generics>,
-    target_type: Type,
+    generics: &Option<Generics>,
+    target_type: &Type,
     self_: &TokenStream,
     result_type: &TokenStream,
-    body: TokenStream,
+    body: &TokenStream,
 ) -> TokenStream {
     quote! {
         endl!();
