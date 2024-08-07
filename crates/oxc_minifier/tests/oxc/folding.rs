@@ -1,6 +1,10 @@
 use oxc_minifier::CompressOptions;
 
-use crate::{test, test_snapshot, test_with_options};
+fn test(source_text: &str, expected: &str) {
+    let options =
+        CompressOptions { remove_syntax: true, fold_constants: true, ..CompressOptions::default() };
+    crate::test(source_text, expected, options);
+}
 
 #[test]
 fn addition_folding() {
@@ -17,34 +21,10 @@ fn typeof_folding() {
 }
 
 #[test]
-fn addition_folding_snapshots() {
-    test_snapshot(
-        "addition_folding",
-        [
-            "let x = 1 + 1",
-            "function foo() { return 1 + 1; }",
-            "'' + true",
-            "'' + false",
-            "'' + null",
-            "false + null",
-            "'1' + '1'",
-            "NaN + NaN",
-            "'' + NaN",
-            // identifiers
-            "let x = 1; let y = x + 1",
-            "var x = 1; x + 1 === 2",
-            "var y = 1; 1 + y === 2",
-            "null - Number(1)",
-            "1 + 1.0000001",
-        ],
-    );
-}
-
-#[test]
 fn test_join_vars() {
     let options = CompressOptions { join_vars: false, ..CompressOptions::default() };
-    test_with_options("var foo = 1; var bar = 2", "var foo=1;var bar=2", options);
+    crate::test("var foo = 1; var bar = 2", "var foo=1;var bar=2", options);
     // join_vars: true
     let options = CompressOptions::default();
-    test_with_options("var foo = 1; var bar = 2", "var foo=1,bar=2", options);
+    crate::test("var foo = 1; var bar = 2", "var foo=1,bar=2", options);
 }

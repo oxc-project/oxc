@@ -1,6 +1,11 @@
 //! <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntaxTest.java>
 
-use crate::test;
+use crate::CompressOptions;
+
+fn test(source_text: &str, expected: &str) {
+    let options = CompressOptions::all_true();
+    crate::test(source_text, expected, options);
+}
 
 #[test]
 fn fold_return_result() {

@@ -1,4 +1,9 @@
-use crate::test;
+use crate::CompressOptions;
+
+fn test(source_text: &str, expected: &str) {
+    let options = CompressOptions::all_true();
+    crate::test(source_text, expected, options);
+}
 
 // TODO: PeepholeMinimizeConditions.java
 #[test]

@@ -1,4 +1,9 @@
-use crate::{test, test_with_options, CompressOptions};
+use crate::CompressOptions;
+
+fn test(source_text: &str, expected: &str) {
+    let options = CompressOptions::all_true();
+    crate::test(source_text, expected, options);
+}
 
 #[test]
 fn undefined_assignment() {
@@ -21,16 +26,12 @@ fn undefined_return() {
 #[test]
 fn console_removal() {
     let options = CompressOptions { drop_console: true, ..CompressOptions::default() };
-    test_with_options("console.log('hi')", "", options);
-    test_with_options("let x = console.error('oops')", "let x", options);
-    test_with_options(
-        "function f() { return console.warn('problem') }",
-        "function f(){return}",
-        options,
-    );
+    crate::test("console.log('hi')", "", options);
+    crate::test("let x = console.error('oops')", "let x", options);
+    crate::test("function f() { return console.warn('problem') }", "function f(){return}", options);
 
     // console isn't removed when drop_console is `false`. This is also the
     // default value.
     let options = CompressOptions::default();
-    test_with_options("console.log('hi')", "console.log('hi')", options);
+    crate::test("console.log('hi')", "console.log('hi')", options);
 }

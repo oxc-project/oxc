@@ -1,4 +1,9 @@
-use crate::test_same;
+use crate::CompressOptions;
+
+fn test_same(source_text: &str) {
+    let options = CompressOptions::all_true();
+    crate::test_same(source_text, options);
+}
 
 #[test]
 fn cjs() {
