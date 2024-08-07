@@ -1,6 +1,7 @@
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
+mod derive_clone_in;
 mod impl_get_span;
 mod visit;
 
@@ -43,6 +44,7 @@ pub(crate) use insert;
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
+pub use derive_clone_in::DeriveCloneIn;
 pub use impl_get_span::ImplGetSpanGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 

@@ -16,7 +16,7 @@ mod util;
 
 use fmt::{cargo_fmt, pprint};
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, VisitGenerator,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, DeriveCloneIn, Generator, VisitGenerator,
     VisitMutGenerator,
 };
 use passes::{CalcLayout, Linker, Pass};
@@ -297,6 +297,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .gen(AssertLayouts)
         .gen(AstKindGenerator)
         .gen(AstBuilderGenerator)
+        .gen(DeriveCloneIn)
         .gen(ImplGetSpanGenerator)
         .gen(VisitGenerator)
         .gen(VisitMutGenerator)
