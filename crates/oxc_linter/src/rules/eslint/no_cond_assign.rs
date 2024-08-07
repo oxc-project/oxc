@@ -77,7 +77,8 @@ impl Rule for NoCondAssign {
                         }
                         AstKind::Function(_)
                         | AstKind::ArrowFunctionExpression(_)
-                        | AstKind::Program(_) => break,
+                        | AstKind::Program(_)
+                        | AstKind::BlockStatement(_) => break,
                         _ => {}
                     }
                 }
@@ -159,6 +160,11 @@ fn test() {
         ("switch (foo) { case a = b: bar(); }", Some(serde_json::json!(["except-parens"]))),
         ("switch (foo) { case a = b: bar(); }", Some(serde_json::json!(["always"]))),
         ("switch (foo) { case baz + (a = b): bar(); }", Some(serde_json::json!(["always"]))),
+        // not in condition
+        ("if (obj.key) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("for (;;) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("while (obj.key) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("do { (obj.key=false) } while (obj.key)", Some(serde_json::json!(["always"]))),
     ];
 
     let fail = vec![
