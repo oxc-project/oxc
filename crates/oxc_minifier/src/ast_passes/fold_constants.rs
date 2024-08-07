@@ -6,12 +6,13 @@ use std::{cmp::Ordering, mem};
 
 use num_bigint::BigInt;
 
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, Visit, VisitMut};
+use oxc_ast::{ast::*, AstBuilder, Visit};
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{
     ast_util::{
@@ -22,6 +23,7 @@ use crate::{
     keep_var::KeepVar,
     tri::Tri,
     ty::Ty,
+    CompressorPass,
 };
 
 pub struct FoldConstants<'a> {
@@ -29,14 +31,14 @@ pub struct FoldConstants<'a> {
     evaluate: bool,
 }
 
-impl<'a> VisitMut<'a> for FoldConstants<'a> {
-    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
-        walk_mut::walk_statement(self, stmt);
+impl<'a> CompressorPass<'a> for FoldConstants<'a> {}
+
+impl<'a> Traverse<'a> for FoldConstants<'a> {
+    fn exit_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.fold_condition(stmt);
     }
 
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        walk_mut::walk_expression(self, expr);
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.fold_expression(expr);
         self.fold_conditional_expression(expr);
     }
@@ -50,10 +52,6 @@ impl<'a> FoldConstants<'a> {
     pub fn with_evaluate(mut self, yes: bool) -> Self {
         self.evaluate = yes;
         self
-    }
-
-    pub fn build(&mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
     }
 
     fn fold_expression_and_get_boolean_value(&mut self, expr: &mut Expression<'a>) -> Option<bool> {

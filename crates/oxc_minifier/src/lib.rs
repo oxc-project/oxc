@@ -16,7 +16,7 @@ use oxc_ast::ast::Program;
 use oxc_mangler::{Mangler, ManglerBuilder};
 
 pub use crate::{
-    ast_passes::{RemoveDeadCode, RemoveSyntax},
+    ast_passes::{CompressorPass, RemoveDeadCode, RemoveSyntax},
     compressor::Compressor,
     options::CompressOptions,
     plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig},
