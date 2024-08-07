@@ -2,10 +2,10 @@ use std::borrow::Cow;
 
 use oxc_span::CompactStr;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 // <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
-#[derive(Debug, Deserialize, Default, JsonSchema)]
+#[derive(Debug, Deserialize, Default, JsonSchema, Serialize)]
 pub struct ReactPluginSettings {
     #[serde(default)]
     #[serde(rename = "formComponents")]
@@ -30,7 +30,7 @@ impl ReactPluginSettings {
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, JsonSchema, Serialize)]
 #[serde(untagged)]
 enum CustomComponent {
     NameOnly(CompactStr),

@@ -26,7 +26,7 @@ use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
 pub use crate::{
-    config::OxlintConfig,
+    config::{OxlintConfig, OxlintRules},
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
@@ -140,6 +140,19 @@ impl Linter {
         }
 
         rules.into_iter().flat_map(|(_, ctx)| ctx.into_message()).collect::<Vec<_>>()
+    }
+
+    /// # Panics
+    pub fn print_config<W: Write>(&self, writer: &mut W) {
+        // merge rules with eslint_config
+        let additional_rules = OxlintRules::from_rules(self.rules.clone());
+        let rules = serde_json::to_value(additional_rules).unwrap();
+        let mut config = serde_json::to_value(&self.eslint_config.as_ref()).unwrap();
+        config.get_mut("rules").unwrap().as_object_mut().unwrap().extend(rules.as_object().unwrap().clone());
+
+        let json = serde_json::to_string_pretty(&config).unwrap();
+        // serialize the config to json and print it
+        writeln!(writer, "{}", json).unwrap();
     }
 
     /// # Panics

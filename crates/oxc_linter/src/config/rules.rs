@@ -6,9 +6,10 @@ use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
     Deserialize,
+    Serialize,
 };
 
-use crate::AllowWarnDeny;
+use crate::{AllowWarnDeny, RuleWithSeverity};
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -23,6 +24,21 @@ pub struct ESLintRule {
     pub rule_name: String,
     pub severity: AllowWarnDeny,
     pub config: Option<serde_json::Value>,
+}
+
+impl OxlintRules {
+    pub fn from_rules(rules: Vec<RuleWithSeverity>) -> Self {
+        let rules = rules
+            .into_iter()
+            .map(|rule| ESLintRule {
+                plugin_name: rule.plugin_name().to_string(),
+                rule_name: rule.name().to_string(),
+                severity: rule.severity,
+                config: None,
+            })
+            .collect();
+        Self(rules)
+    }
 }
 
 impl JsonSchema for OxlintRules {
@@ -80,6 +96,25 @@ impl<'de> Deserialize<'de> for OxlintRules {
         }
 
         deserializer.deserialize_any(OxlintRulesVisitor)
+    }
+}
+
+impl<'de> Serialize for OxlintRules {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let rules = self.0.iter().map(|rule| {
+            let key = format!("{}/{}", rule.plugin_name, rule.rule_name);
+            let value = match &rule.config {
+                Some(config) => serde_json::Value::Array(vec![serde_json::to_value(&rule.severity).unwrap(), config.clone()]),
+                None => serde_json::to_value(&rule.severity).unwrap(),
+            };
+            (key, value)
+        });
+
+        let map = rules.collect::<FxHashMap<_, _>>();
+        map.serialize(serializer)
     }
 }
 

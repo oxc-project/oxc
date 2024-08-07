@@ -41,6 +41,7 @@ impl Runner for LintRunner {
             enable_plugins,
             output_options,
             misc_options,
+            print_config,
             ..
         } = self.options;
 
@@ -136,6 +137,11 @@ impl Runner for LintRunner {
         let mut diagnostic_service =
             Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
 
+        if print_config {
+            let mut stdout = BufWriter::new(std::io::stdout());
+            lint_service.linter().print_config(&mut stdout);
+            return CliRunResult::None;
+        }
         // Spawn linting in another thread so diagnostics can be printed immediately from diagnostic_service.run.
         rayon::spawn({
             let tx_error = diagnostic_service.sender().clone();
@@ -511,5 +517,15 @@ mod test {
         let result = test(args);
         assert_eq!(result.number_of_files, 1);
         assert_eq!(result.number_of_errors, 1);
+    }
+
+    #[test]
+    fn test_print_config() {
+        let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js" , "--print-config"];
+let options = lint_command().run_inner(args).unwrap();
+        match LintRunner::new(options).run() {
+            CliRunResult::None => {},
+            other => panic!("{other:?}"),
+        }
     }
 }
