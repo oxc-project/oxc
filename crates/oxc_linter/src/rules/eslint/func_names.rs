@@ -269,43 +269,47 @@ fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a
 
     match parent_node.kind() {
         AstKind::MethodDefinition(definition) => {
-            if definition.r#static {
-                tokens.push("static".into());
+            if !definition.computed && definition.key.is_private_identifier() {
+                tokens.push(Cow::Borrowed("private"));
+            } else if let Some(accessibility) = definition.accessibility {
+                tokens.push(Cow::Borrowed(accessibility.as_str()));
             }
 
-            if !definition.computed && definition.key.is_private_identifier() {
-                tokens.push("private".into());
+            if definition.r#static {
+                tokens.push(Cow::Borrowed("static"));
             }
         }
         AstKind::PropertyDefinition(definition) => {
-            if definition.r#static {
-                tokens.push("static".into());
+            if !definition.computed && definition.key.is_private_identifier() {
+                tokens.push(Cow::Borrowed("private"));
+            } else if let Some(accessibility) = definition.accessibility {
+                tokens.push(Cow::Borrowed(accessibility.as_str()));
             }
 
-            if !definition.computed && definition.key.is_private_identifier() {
-                tokens.push("private".into());
+            if definition.r#static {
+                tokens.push(Cow::Borrowed("static"));
             }
         }
         _ => {}
     }
 
     if func.r#async {
-        tokens.push("async".into());
+        tokens.push(Cow::Borrowed("async"));
     }
 
     if func.generator {
-        tokens.push("generator".into());
+        tokens.push(Cow::Borrowed("generator"));
     }
 
     match parent_node.kind() {
         AstKind::MethodDefinition(method_definition) => match method_definition.kind {
-            MethodDefinitionKind::Constructor => tokens.push("constructor".into()),
-            MethodDefinitionKind::Get => tokens.push("getter".into()),
-            MethodDefinitionKind::Set => tokens.push("setter".into()),
-            MethodDefinitionKind::Method => tokens.push("method".into()),
+            MethodDefinitionKind::Constructor => tokens.push(Cow::Borrowed("constructor")),
+            MethodDefinitionKind::Get => tokens.push(Cow::Borrowed("getter")),
+            MethodDefinitionKind::Set => tokens.push(Cow::Borrowed("setter")),
+            MethodDefinitionKind::Method => tokens.push(Cow::Borrowed("method")),
         },
-        AstKind::PropertyDefinition(_) => tokens.push("method".into()),
-        _ => tokens.push("function".into()),
+        AstKind::PropertyDefinition(_) => tokens.push(Cow::Borrowed("method")),
+        _ => tokens.push(Cow::Borrowed("function")),
     }
 
     match parent_node.kind() {
@@ -342,10 +346,7 @@ fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a
 impl Rule for FuncNames {
     fn from_configuration(value: serde_json::Value) -> Self {
         let Some(default_value) = value.get(0) else {
-            return Self {
-                default_config: FuncNamesConfig::default(),
-                generators_config: FuncNamesConfig::default(),
-            };
+            return Self::default();
         };
 
         let default_config = FuncNamesConfig::try_from(default_value).unwrap();
@@ -639,6 +640,7 @@ fn test() {
             Some(serde_json::json!(["as-needed", { "generators": "never" }])),
         ), // { "ecmaVersion": 6 },
         ("class C { foo = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
+        ("class C { public foo = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
         ("class C { [foo] = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
         ("class C { #foo = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
         ("class C { foo = bar(function() {}) }", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 2022 },

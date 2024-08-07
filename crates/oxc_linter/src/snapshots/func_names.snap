@@ -283,6 +283,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────
    ╰────
 
+  ⚠ eslint(func-names): Unexpected unnamed public method foo.
+   ╭─[func_names.tsx:1:24]
+ 1 │ class C { public foo = function() {} }
+   ·                        ────────
+   ╰────
+
   ⚠ eslint(func-names): Unexpected unnamed method.
    ╭─[func_names.tsx:1:19]
  1 │ class C { [foo] = function() {} }
