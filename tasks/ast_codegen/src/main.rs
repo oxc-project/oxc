@@ -355,9 +355,9 @@ fn write_ci_filter(
         "\
         # To edit this generated file you have to edit `{file}`\n\
         # Auto-generated code, DO NOT EDIT DIRECTLY!\n\n\
-        src:"
+        src:\n"
     );
-    let mut push_item = |path: &str| output.push_str(format!("\n  - '{path}'").as_str());
+    let mut push_item = |path: &str| output.push_str(format!("  - '{path}'\n").as_str());
 
     for input in inputs {
         push_item(input);
