@@ -597,17 +597,17 @@ impl Argument<'_> {
 }
 
 impl<'a> AssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
-        self.as_simple_assignment_target().and_then(|it| it.get_identifier())
+    pub fn get_identifier(&self) -> Option<&'a str> {
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier)
     }
 
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        self.as_simple_assignment_target().and_then(|it| it.get_expression())
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
+    pub fn get_identifier(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
             match_member_expression!(Self) => self.to_member_expression().static_property_name(),

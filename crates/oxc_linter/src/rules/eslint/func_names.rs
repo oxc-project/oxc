@@ -7,9 +7,24 @@ use oxc_ast::ast::{
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::{Atom, Span};
+use oxc_syntax::identifier::is_identifier_name;
+use phf::phf_set;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
+
+fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected named {function_name}."))
+        .with_label(span)
+        .with_help("Remove the name on this function expression.")
+}
+
+fn unnamed_diagnostic(inferred_name_or_description: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected unnamed {inferred_name_or_description}."))
+        .with_label(span)
+        .with_help("Consider giving this function expression a name.")
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct FuncNames {
@@ -125,7 +140,7 @@ declare_oxc_lint!(
     /// ```
     FuncNames,
     style,
-    pending
+    conditional_fix_suggestion
 );
 
 /// Determines whether the current FunctionExpression node is a get, set, or
@@ -422,24 +437,85 @@ impl Rule for FuncNames {
             let func_name = get_function_name(func);
             let func_name_complete = get_function_name_with_kind(func, parent_node);
 
+            let span = Span::new(func.span.start, func.params.span.start);
             if func_name.is_some() {
-                ctx.diagnostic(
-                    OxcDiagnostic::warn(format!("Unexpected named {func_name_complete}."))
-                        .with_label(Span::new(func.span.start, func.params.span.start)),
+                ctx.diagnostic_with_suggestion(
+                    named_diagnostic(&func_name_complete, span),
+                    |fixer| func.id.as_ref().map_or(fixer.noop(), |id| fixer.delete(id)),
                 );
             } else {
-                ctx.diagnostic(
-                    OxcDiagnostic::warn(format!("Unexpected unnamed {func_name_complete}."))
-                        .with_label(Span::new(func.span.start, func.params.span.start)),
-                );
+                ctx.diagnostic_with_fix(unnamed_diagnostic(&func_name_complete, span), |fixer| {
+                    guess_function_name(ctx, parent_node.id()).map_or_else(
+                        || fixer.noop(),
+                        |name| fixer.insert_text_after(&span, format!(" {name}")),
+                    )
+                });
             }
         }
     }
 }
 
+fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: AstNodeId) -> Option<Cow<'a, str>> {
+    for parent_kind in ctx.nodes().iter_parents(parent_id).map(AstNode::kind) {
+        match parent_kind {
+            AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSSatisfiesExpression(_) => continue,
+            AstKind::AssignmentExpression(assign) => {
+                return assign.left.get_identifier().map(Cow::Borrowed)
+            }
+            AstKind::VariableDeclarator(decl) => {
+                return decl.id.get_identifier().as_ref().map(Atom::as_str).map(Cow::Borrowed)
+            }
+            AstKind::ObjectProperty(prop) => {
+                return prop.key.static_name().and_then(|name| {
+                    if is_valid_identifier_name(&name) {
+                        Some(name)
+                    } else {
+                        None
+                    }
+                })
+            }
+            AstKind::PropertyDefinition(prop) => {
+                return prop.key.static_name().and_then(|name| {
+                    if is_valid_identifier_name(&name) {
+                        Some(name)
+                    } else {
+                        None
+                    }
+                })
+            }
+            _ => return None,
+        }
+    }
+    None
+}
+
+const INVALID_NAMES: phf::set::Set<&'static str> = phf_set! {
+    "arguments",
+    "async",
+    "await",
+    "constructor",
+    "default",
+    "eval",
+    "null",
+    "undefined",
+    "yield",
+};
+
+fn is_valid_identifier_name(name: &str) -> bool {
+    !INVALID_NAMES.contains(name) && is_identifier_name(name)
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use serde_json::json;
+
+    let always = Some(json!(["always"]));
+    let as_needed = Some(json!(["as-needed"]));
+    let never = Some(json!(["never"]));
 
     let pass = vec![
         ("Foo.prototype.bar = function bar(){};", None),
@@ -450,107 +526,74 @@ fn test() {
         ("exports = { get foo() { return 1; }, set bar(val) { return val; } };", None),
         ("({ foo() { return 1; } });", None), // { "ecmaVersion": 6 },
         ("class A { constructor(){} foo(){} get bar(){} set baz(value){} static qux(){}}", None), // { "ecmaVersion": 6 },
-        ("function foo() {}", Some(serde_json::json!(["always"]))),
-        ("var a = function foo() {};", Some(serde_json::json!(["always"]))),
+        ("function foo() {}", always.clone()),
+        ("var a = function foo() {};", always.clone()),
         (
             "class A { constructor(){} foo(){} get bar(){} set baz(value){} static qux(){}}",
-            Some(serde_json::json!(["as-needed"])),
+            as_needed.clone(),
         ), // { "ecmaVersion": 6 },
-        ("({ foo() {} });", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("var foo = function(){};", Some(serde_json::json!(["as-needed"]))),
-        ("({foo: function(){}});", Some(serde_json::json!(["as-needed"]))),
-        ("(foo = function(){});", Some(serde_json::json!(["as-needed"]))),
-        ("({foo = function(){}} = {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("({key: foo = function(){}} = {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("[foo = function(){}] = [];", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("function fn(foo = function(){}) {}", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("function foo() {}", Some(serde_json::json!(["never"]))),
-        ("var a = function() {};", Some(serde_json::json!(["never"]))),
-        ("var a = function foo() { foo(); };", Some(serde_json::json!(["never"]))),
-        ("var foo = {bar: function() {}};", Some(serde_json::json!(["never"]))),
-        ("$('#foo').click(function() {});", Some(serde_json::json!(["never"]))),
-        ("Foo.prototype.bar = function() {};", Some(serde_json::json!(["never"]))),
+        ("({ foo() {} });", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("var foo = function(){};", as_needed.clone()),
+        ("({foo: function(){}});", as_needed.clone()),
+        ("(foo = function(){});", as_needed.clone()),
+        ("({foo = function(){}} = {});", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("({key: foo = function(){}} = {});", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("[foo = function(){}] = [];", as_needed.clone()),   // { "ecmaVersion": 6 },
+        ("function fn(foo = function(){}) {}", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("function foo() {}", never.clone()),
+        ("var a = function() {};", never.clone()),
+        ("var a = function foo() { foo(); };", never.clone()),
+        ("var foo = {bar: function() {}};", never.clone()),
+        ("$('#foo').click(function() {});", never.clone()),
+        ("Foo.prototype.bar = function() {};", never.clone()),
         (
             "class A { constructor(){} foo(){} get bar(){} set baz(value){} static qux(){}}",
-            Some(serde_json::json!(["never"])),
+            never.clone(),
         ), // { "ecmaVersion": 6 },
-        ("({ foo() {} });", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 6 },
-        ("export default function foo() {}", Some(serde_json::json!(["always"]))), // { "sourceType": "module", "ecmaVersion": 6 },
-        ("export default function foo() {}", Some(serde_json::json!(["as-needed"]))), // { "sourceType": "module", "ecmaVersion": 6 },
-        ("export default function foo() {}", Some(serde_json::json!(["never"]))), // { "sourceType": "module", "ecmaVersion": 6 },
-        ("export default function() {}", Some(serde_json::json!(["never"]))), // { "sourceType": "module", "ecmaVersion": 6 },
-        ("var foo = bar(function *baz() {});", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 6 },
+        ("({ foo() {} });", never.clone()), // { "ecmaVersion": 6 },
+        ("export default function foo() {}", always.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("export default function foo() {}", as_needed.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("export default function foo() {}", never.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("export default function() {}", never.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("var foo = bar(function *baz() {});", always.clone()), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *baz() {});", Some(json!(["always", { "generators": "always" }]))), // { "ecmaVersion": 6 },
         (
             "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["always", { "generators": "always" }])),
+            Some(json!(["always", { "generators": "as-needed" }])),
         ), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["always", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *baz() {});", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", as_needed.clone()),          // { "ecmaVersion": 6 },
         (
             "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["always", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["always", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        ("var foo = bar(function *baz() {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("var foo = function*() {};", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["as-needed", { "generators": "always" }])),
+            Some(json!(["as-needed", { "generators": "always" }])),
         ), // { "ecmaVersion": 6 },
         (
             "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["as-needed", { "generators": "as-needed" }])),
+            Some(json!(["as-needed", { "generators": "as-needed" }])),
         ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["as-needed", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["as-needed", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *baz() {});", Some(json!(["never", { "generators": "always" }]))), // { "ecmaVersion": 6 },
         (
             "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["never", { "generators": "always" }])),
+            Some(json!(["never", { "generators": "as-needed" }])),
         ), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["never", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["never", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        ("var foo = bar(function *() {});", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 6 },
-        ("var foo = function*() {};", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["never"]))),        // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["never", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["never", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["never", { "generators": "never" }]))), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["always", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["always", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["always", { "generators": "never" }]))), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["as-needed", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["as-needed", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["as-needed", { "generators": "never" }]))), // { "ecmaVersion": 6 },
-        ("class C { foo = function() {}; }", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 2022 },
-        ("class C { [foo] = function() {}; }", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 2022 },
-        ("class C { #foo = function() {}; }", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 2022 }
+        ("var foo = function*() {};", Some(json!(["never", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", never.clone()), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", never.clone()),       // { "ecmaVersion": 6 },
+        ("(function*() {}())", never.clone()),              // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["never", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["never", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["never", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["always", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["always", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["always", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["as-needed", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["as-needed", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["as-needed", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("class C { foo = function() {}; }", as_needed.clone()), // { "ecmaVersion": 2022 },
+        ("class C { [foo] = function() {}; }", as_needed.clone()), // { "ecmaVersion": 2022 },
+        ("class C { #foo = function() {}; }", as_needed.clone()), // { "ecmaVersion": 2022 }
     ];
 
     let fail = vec![
@@ -560,92 +603,133 @@ fn test() {
         ("var a = new Date(function() {});", None),
         ("var test = function(d, e, f) {};", None),
         ("new function() {}", None),
-        ("Foo.prototype.bar = function() {};", Some(serde_json::json!(["as-needed"]))),
-        ("(function(){}())", Some(serde_json::json!(["as-needed"]))),
-        ("f(function(){})", Some(serde_json::json!(["as-needed"]))),
-        ("var a = new Date(function() {});", Some(serde_json::json!(["as-needed"]))),
-        ("new function() {}", Some(serde_json::json!(["as-needed"]))),
-        ("var {foo} = function(){};", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("({ a: obj.prop = function(){} } = foo);", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("[obj.prop = function(){}] = foo;", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("var { a: [b] = function(){} } = foo;", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("function foo({ a } = function(){}) {};", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("var x = function foo() {};", Some(serde_json::json!(["never"]))),
-        ("Foo.prototype.bar = function foo() {};", Some(serde_json::json!(["never"]))),
-        ("({foo: function foo() {}})", Some(serde_json::json!(["never"]))),
-        ("export default function() {}", Some(serde_json::json!(["always"]))), // { "sourceType": "module", "ecmaVersion": 6 },
-        ("export default function() {}", Some(serde_json::json!(["as-needed"]))), // { "sourceType": "module", "ecmaVersion": 6 },
-        ("export default (function(){});", Some(serde_json::json!(["as-needed"]))), // { "sourceType": "module", "ecmaVersion": 6 },
-        ("var foo = bar(function *() {});", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 6 },
-        ("var foo = function*() {};", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["always"]))),        // { "ecmaVersion": 6 },
+        ("Foo.prototype.bar = function() {};", as_needed.clone()),
+        ("(function(){}())", as_needed.clone()),
+        ("f(function(){})", as_needed.clone()),
+        ("var a = new Date(function() {});", as_needed.clone()),
+        ("new function() {}", as_needed.clone()),
+        ("var {foo} = function(){};", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("({ a: obj.prop = function(){} } = foo);", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("[obj.prop = function(){}] = foo;", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("var { a: [b] = function(){} } = foo;", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("function foo({ a } = function(){}) {};", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("var x = function foo() {};", never.clone()),
+        ("Foo.prototype.bar = function foo() {};", never.clone()),
+        ("({foo: function foo() {}})", never.clone()),
+        ("export default function() {}", always.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("export default function() {}", as_needed.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("export default (function(){});", as_needed.clone()), // { "sourceType": "module", "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", always.clone()),   // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", always.clone()),         // { "ecmaVersion": 6 },
+        ("(function*() {}())", always.clone()),                // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["always", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["always", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["always", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["always", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["always", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", as_needed.clone()), // { "ecmaVersion": 6 },
+        ("(function*() {}())", as_needed.clone()),              // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["as-needed", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["as-needed", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["as-needed", { "generators": "always" }]))), // { "ecmaVersion": 6 },
         (
             "var foo = bar(function *() {});",
-            Some(serde_json::json!(["always", { "generators": "always" }])),
+            Some(json!(["as-needed", { "generators": "as-needed" }])),
         ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["always", { "generators": "always" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["always", { "generators": "always" }]))), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["always", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["always", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
-        ("var foo = bar(function *() {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["as-needed", { "generators": "always" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["as-needed", { "generators": "always" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["as-needed", { "generators": "always" }]))), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["as-needed", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "(function*() {}())",
-            Some(serde_json::json!(["as-needed", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["never", { "generators": "always" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = function*() {};",
-            Some(serde_json::json!(["never", { "generators": "always" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["never", { "generators": "always" }]))), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *() {});",
-            Some(serde_json::json!(["never", { "generators": "as-needed" }])),
-        ), // { "ecmaVersion": 6 },
-        ("(function*() {}())", Some(serde_json::json!(["never", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
-        ("var foo = bar(function *baz() {});", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["as-needed", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["never", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("var foo = function*() {};", Some(json!(["never", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["never", { "generators": "always" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *() {});", Some(json!(["never", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("(function*() {}())", Some(json!(["never", { "generators": "as-needed" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *baz() {});", never.clone()), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *baz() {});", Some(json!(["never", { "generators": "never" }]))), // { "ecmaVersion": 6 },
+        ("var foo = bar(function *baz() {});", Some(json!(["always", { "generators": "never" }]))), // { "ecmaVersion": 6 },
         (
             "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["never", { "generators": "never" }])),
+            Some(json!(["as-needed", { "generators": "never" }])),
         ), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["always", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        (
-            "var foo = bar(function *baz() {});",
-            Some(serde_json::json!(["as-needed", { "generators": "never" }])),
-        ), // { "ecmaVersion": 6 },
-        ("class C { foo = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
-        ("class C { public foo = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
-        ("class C { [foo] = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
-        ("class C { #foo = function() {} }", Some(serde_json::json!(["always"]))), // { "ecmaVersion": 2022 },
-        ("class C { foo = bar(function() {}) }", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 2022 },
-        ("class C { foo = function bar() {} }", Some(serde_json::json!(["never"]))), // { "ecmaVersion": 2022 }
+        ("class C { foo = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
+        ("class C { public foo = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
+        ("class C { [foo] = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
+        ("class C { #foo = function() {} }", always.clone()), // { "ecmaVersion": 2022 },
+        ("class C { foo = bar(function() {}) }", as_needed.clone()), // { "ecmaVersion": 2022 },
+        ("class C { foo = function bar() {} }", never.clone()), // { "ecmaVersion": 2022 }
     ];
 
-    Tester::new(FuncNames::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        // lb
+        ("const foo = function() {}", "const foo = function foo() {}", always.clone()),
+        (
+            "Foo.prototype.bar = function() {}",
+            "Foo.prototype.bar = function bar() {}",
+            always.clone(),
+        ),
+        ("let foo; foo = function() {}", "let foo; foo = function foo() {}", always.clone()),
+        (
+            "class C { public foo = function() {} }",
+            "class C { public foo = function foo() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public ['foo'] = function() {} }",
+            "class C { public ['foo'] = function foo() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public [`foo`] = function() {} }",
+            "class C { public [`foo`] = function foo() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public ['invalid identifier name'] = function() {} }",
+            "class C { public ['invalid identifier name'] = function() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public [foo] = function() {} }",
+            "class C { public [foo] = function() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public [undefined] = function() {} }",
+            "class C { public [undefined] = function() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public [null] = function() {} }",
+            "class C { public [null] = function() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public ['undefined'] = function() {} }",
+            "class C { public ['undefined'] = function() {} }",
+            always.clone(),
+        ),
+        (
+            "class C { public ['null'] = function() {} }",
+            "class C { public ['null'] = function() {} }",
+            always.clone(),
+        ),
+        (
+            "const x = { foo: function() {} }",
+            "const x = { foo: function foo() {} }",
+            always.clone(),
+        ),
+        (
+            "const x = { ['foo']: function() {} }",
+            "const x = { ['foo']: function foo() {} }",
+            always.clone(),
+        ),
+        // suggest removal when configured to "never"
+        ("const foo = function foo() {}", "const foo = function () {}", never.clone()),
+        (
+            "Foo.prototype.bar = function bar() {}",
+            "Foo.prototype.bar = function () {}",
+            never.clone(),
+        ),
+        ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never.clone()),
+    ];
+
+    Tester::new(FuncNames::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
