@@ -12,7 +12,7 @@ use syn::{
 use crate::util::NormalizeError;
 
 /// A single visit argument passed via `#[visit(args(...))]`
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VisitArg {
     pub ident: Ident,
     pub value: Expr,
@@ -33,7 +33,7 @@ impl Parse for VisitArg {
 
 /// A struct containing `#[visit(args(...))]` items
 ///                              ^^^^^^^^^
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct VisitArgs(Punctuated<VisitArg, Token![,]>);
 
 impl IntoIterator for VisitArgs {
@@ -51,7 +51,7 @@ impl Parse for VisitArgs {
 }
 
 /// A struct representing `#[visit(...)]` markers
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct VisitMarkers {
     pub visit_as: Option<Ident>,
     pub visit_args: Option<VisitArgs>,
@@ -60,6 +60,7 @@ pub struct VisitMarkers {
 }
 
 /// A struct representing `#[scope(...)]` markers
+#[derive(Debug)]
 pub struct ScopeMarkers {
     pub enter_before: bool,
 }

@@ -1,60 +1,7 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
 use std::path::Path;
 
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
-
-/// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
-pub struct SourceType {
-    /// JavaScript or TypeScript, default JavaScript
-    language: Language,
-
-    /// Script or Module, default Module
-    module_kind: ModuleKind,
-
-    /// Support JSX for JavaScript and TypeScript? default without JSX
-    variant: LanguageVariant,
-
-    /// Mark strict mode as always strict
-    /// See <https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode>
-    always_strict: bool,
-}
-
-/// JavaScript or TypeScript
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
-pub enum Language {
-    JavaScript,
-    TypeScript,
-    #[cfg_attr(feature = "serialize", serde(rename = "typescriptDefinition"))]
-    TypeScriptDefinition,
-}
-
-/// Script or Module
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
-pub enum ModuleKind {
-    Script,
-    Module,
-}
-
-/// JSX for JavaScript and TypeScript
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
-pub enum LanguageVariant {
-    Standard,
-    Jsx,
-}
+mod types;
+pub use types::*;
 
 #[derive(Debug)]
 pub struct UnknownExtension(pub String);

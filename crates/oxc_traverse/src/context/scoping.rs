@@ -14,8 +14,6 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use super::FinderRet;
-
 /// Traverse scope context.
 ///
 /// Contains the scope tree and symbols table, and provides methods to access them.
@@ -70,58 +68,24 @@ impl TraverseScoping {
         &mut self.symbols
     }
 
-    /// Walk up trail of scopes to find a scope.
-    ///
-    /// `finder` is called with `ScopeId`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeId) -> FinderRet<O>,
-    {
-        let mut scope_id = self.current_scope_id;
-        loop {
-            match finder(scope_id) {
-                FinderRet::Found(res) => return Some(res),
-                FinderRet::Stop => return None,
-                FinderRet::Continue => {}
-            }
-
-            if let Some(parent_scope_id) = self.scopes.get_parent_id(scope_id) {
-                scope_id = parent_scope_id;
-            } else {
-                return None;
-            }
-        }
+    /// Get iterator over scopes, starting with current scope and working up
+    pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.scopes.ancestors(self.current_scope_id)
     }
 
-    /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
+    /// Create new scope as child of provided scope.
     ///
-    /// `finder` is called with `ScopeFlags`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    pub fn find_scope_by_flags<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeFlags) -> FinderRet<O>,
-    {
-        self.find_scope(|scope_id| {
-            let flags = self.scopes.get_flags(scope_id);
-            finder(flags)
-        })
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
+        let flags = self.scopes.get_new_scope_flags(flags, parent_id);
+        self.scopes.add_scope(parent_id, AstNodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
-    pub fn create_scope_child_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
-        let flags = self.scopes.get_new_scope_flags(flags, self.current_scope_id);
-        self.scopes.add_scope(self.current_scope_id, AstNodeId::DUMMY, flags)
+    pub fn create_child_scope_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
+        self.create_child_scope(self.current_scope_id, flags)
     }
 
     /// Insert a scope into scope tree below a statement.
@@ -162,7 +126,7 @@ impl TraverseScoping {
         }
 
         // Create new scope as child of parent
-        let new_scope_id = self.create_scope_child_of_current(flags);
+        let new_scope_id = self.create_child_scope_of_current(flags);
 
         // Set scopes as children of new scope instead
         for &child_id in child_scope_ids {

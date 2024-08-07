@@ -195,6 +195,22 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_for_statement(stmt, ctx);
     }
 
+    pub fn transform_for_in_statement(
+        &mut self,
+        stmt: &mut ForInStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_in_statement(stmt, ctx);
+    }
+
+    pub fn transform_for_of_statement(
+        &mut self,
+        stmt: &mut ForOfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_of_statement(stmt, ctx);
+    }
+
     pub fn transform_tagged_template_expression(
         &mut self,
         expr: &mut TaggedTemplateExpression<'a>,

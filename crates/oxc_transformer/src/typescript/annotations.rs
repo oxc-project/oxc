@@ -7,7 +7,10 @@ use oxc_ast::ast::*;
 use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
-    operator::AssignmentOperator, reference::ReferenceFlag, scope::ScopeFlags, symbol::SymbolId,
+    operator::AssignmentOperator,
+    reference::ReferenceFlag,
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
 };
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
@@ -419,7 +422,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
         }
 
-        Self::replace_with_empty_block_if_ts(&mut stmt.consequent, ctx);
+        Self::replace_with_empty_block_if_ts(&mut stmt.consequent, ctx.current_scope_id(), ctx);
 
         if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
             stmt.alternate = None;
@@ -442,7 +445,35 @@ impl<'a> TypeScriptAnnotations<'a> {
         stmt: &mut ForStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
+    }
+
+    pub fn transform_for_in_statement(
+        &mut self,
+        stmt: &mut ForInStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
+    }
+
+    pub fn transform_for_of_statement(
+        &mut self,
+        stmt: &mut ForOfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
     }
 
     pub fn transform_while_statement(
@@ -450,7 +481,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         stmt: &mut WhileStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx.current_scope_id(), ctx);
     }
 
     pub fn transform_do_while_statement(
@@ -458,12 +489,25 @@ impl<'a> TypeScriptAnnotations<'a> {
         stmt: &mut DoWhileStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx.current_scope_id(), ctx);
     }
 
-    fn replace_with_empty_block_if_ts(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn replace_for_statement_body_with_empty_block_if_ts(
+        body: &mut Statement<'a>,
+        scope_id: &Cell<Option<ScopeId>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let scope_id = scope_id.get().unwrap_or(ctx.current_scope_id());
+        Self::replace_with_empty_block_if_ts(body, scope_id, ctx);
+    }
+
+    fn replace_with_empty_block_if_ts(
+        stmt: &mut Statement<'a>,
+        parent_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if stmt.is_typescript_syntax() {
-            let scope_id = ctx.create_scope_child_of_current(ScopeFlags::empty());
+            let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             let block = BlockStatement {
                 span: stmt.span(),
                 body: ctx.ast.vec(),

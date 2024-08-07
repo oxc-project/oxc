@@ -785,7 +785,7 @@ fn bracket_matching() {
 #[test]
 fn division_regex_ambiguity() {
     let source = r"
-      /as)df/; x();
+      /asdf/; x();
       a / 2; '  /  '
       while (true)
         /test'/

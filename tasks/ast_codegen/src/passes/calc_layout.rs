@@ -1,6 +1,3 @@
-/// We use compiler to infer 64bit type layouts.
-#[cfg(not(target_pointer_width = "64"))]
-compile_error!("`oxc_ast_codegen::layout` only supports 64 architectures.");
 use std::collections::HashMap;
 
 use itertools::Itertools;
@@ -10,12 +7,16 @@ use syn::Type;
 
 use crate::{
     layout::{KnownLayout, Layout},
-    schema::{REnum, RStruct, RType},
-    util::{NormalizeError, TypeAnalyzeResult, TypeExt, TypeWrapper},
-    CodegenCtx, Result, TypeRef,
+    rust_ast::{AstRef, AstType, Enum, Struct},
+    util::{NormalizeError, TypeAnalysis, TypeExt, TypeWrapper},
+    EarlyCtx, Result,
 };
 
 use super::{define_pass, Pass};
+
+/// We use compiler to infer 64bit type layouts.
+#[cfg(not(target_pointer_width = "64"))]
+compile_error!("`oxc_ast_codegen::calc_layout` only supports 64 architectures.");
 
 type WellKnown = HashMap<&'static str, PlatformLayout>;
 
@@ -28,7 +29,7 @@ impl Pass for CalcLayout {
         stringify!(CalcLayout)
     }
 
-    fn each(&mut self, ty: &mut RType, ctx: &CodegenCtx) -> crate::Result<bool> {
+    fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {
         calc_layout(ty, ctx)
     }
 }
@@ -65,14 +66,14 @@ impl From<(Layout, Layout)> for PlatformLayout {
 
 /// Calculates the layout of `ty` by mutating it.
 /// Returns `false` if the layout is unknown at this point.
-pub fn calc_layout(ty: &mut RType, ctx: &CodegenCtx) -> Result<bool> {
+pub fn calc_layout(ty: &mut AstType, ctx: &EarlyCtx) -> Result<bool> {
     let unknown_layout = ty
         .layout_32()
         .and_then(|x32| ty.layout_64().map(|x64| PlatformLayout(x64, x32)))
         .is_ok_and(|pl| pl.is_unknown());
     let layout = match ty {
-        RType::Enum(enum_) if unknown_layout => calc_enum_layout(enum_, ctx),
-        RType::Struct(struct_) if unknown_layout => calc_struct_layout(struct_, ctx),
+        AstType::Enum(enum_) if unknown_layout => calc_enum_layout(enum_, ctx),
+        AstType::Struct(struct_) if unknown_layout => calc_struct_layout(struct_, ctx),
         _ => return Ok(true),
     }?;
     if layout.is_unknown() {
@@ -84,8 +85,8 @@ pub fn calc_layout(ty: &mut RType, ctx: &CodegenCtx) -> Result<bool> {
     }
 }
 
-fn calc_enum_layout(ty: &mut REnum, ctx: &CodegenCtx) -> Result<PlatformLayout> {
-    fn collect_variant_layouts(ty: &REnum, ctx: &CodegenCtx) -> Result<Vec<PlatformLayout>> {
+fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
+    fn collect_variant_layouts(ty: &Enum, ctx: &EarlyCtx) -> Result<Vec<PlatformLayout>> {
         // all unit variants?
         if ty.item.variants.iter().all(|var| var.fields.is_empty()) {
             // all AST enums are `repr(u8)` so it would have a 1 byte layout/alignment,
@@ -145,8 +146,8 @@ fn calc_enum_layout(ty: &mut REnum, ctx: &CodegenCtx) -> Result<PlatformLayout> 
     Ok(PlatformLayout(Layout::from(x64), Layout::from(x32)))
 }
 
-fn calc_struct_layout(ty: &mut RStruct, ctx: &CodegenCtx) -> Result<PlatformLayout> {
-    fn collect_field_layouts(ty: &RStruct, ctx: &CodegenCtx) -> Result<Vec<PlatformLayout>> {
+fn calc_struct_layout(ty: &mut Struct, ctx: &EarlyCtx) -> Result<PlatformLayout> {
+    fn collect_field_layouts(ty: &Struct, ctx: &EarlyCtx) -> Result<Vec<PlatformLayout>> {
         if ty.item.fields.is_empty() {
             Ok(vec![PlatformLayout::zero()])
         } else {
@@ -199,8 +200,8 @@ fn calc_struct_layout(ty: &mut RStruct, ctx: &CodegenCtx) -> Result<PlatformLayo
     Ok(PlatformLayout(Layout::from(x64), Layout::from(x32)))
 }
 
-fn calc_type_layout(ty: &TypeAnalyzeResult, ctx: &CodegenCtx) -> Result<PlatformLayout> {
-    fn is_slice(ty: &TypeAnalyzeResult) -> bool {
+fn calc_type_layout(ty: &TypeAnalysis, ctx: &EarlyCtx) -> Result<PlatformLayout> {
+    fn is_slice(ty: &TypeAnalysis) -> bool {
         if let Type::Reference(typ) = &ty.typ {
             // TODO: support for &[T] slices.
             typ.elem.get_ident().as_ident().is_some_and(|id| id == "str")
@@ -216,10 +217,10 @@ fn calc_type_layout(ty: &TypeAnalyzeResult, ctx: &CodegenCtx) -> Result<Platform
         Layout::Layout(known)
     }
 
-    let get_layout = |type_ref: Option<&TypeRef>| -> Result<PlatformLayout> {
-        let result = if let Some(type_ref) = &type_ref {
-            if calc_layout(&mut type_ref.borrow_mut(), ctx)? {
-                type_ref.borrow().layouts().map(PlatformLayout::from)?
+    let get_layout = |ast_ref: Option<&AstRef>| -> Result<PlatformLayout> {
+        let result = if let Some(ast_ref) = &ast_ref {
+            if calc_layout(&mut ast_ref.borrow_mut(), ctx)? {
+                ast_ref.borrow().layouts().map(PlatformLayout::from)?
             } else {
                 PlatformLayout::UNKNOWN
             }
@@ -265,13 +266,15 @@ fn calc_type_layout(ty: &TypeAnalyzeResult, ctx: &CodegenCtx) -> Result<Platform
         }
         TypeWrapper::Ref if is_slice(ty) => PlatformLayout::wide_ptr(),
         TypeWrapper::Ref | TypeWrapper::Box | TypeWrapper::OptBox => PlatformLayout::ptr(),
-        TypeWrapper::None => get_layout(ty.type_ref.as_ref())?,
+        TypeWrapper::None => get_layout(ty.type_id.map(|id| ctx.ast_ref(id)).as_ref())?,
         TypeWrapper::Opt => {
-            let PlatformLayout(x64, x32) = get_layout(ty.type_ref.as_ref())?;
+            let PlatformLayout(x64, x32) =
+                get_layout(ty.type_id.map(|id| ctx.ast_ref(id)).as_ref())?;
             PlatformLayout(try_fold_option(x64), try_fold_option(x32))
         }
         TypeWrapper::Complex => {
-            let PlatformLayout(x64, x32) = get_layout(ty.type_ref.as_ref())?;
+            let PlatformLayout(x64, x32) =
+                get_layout(ty.type_id.map(|id| ctx.ast_ref(id)).as_ref())?;
             PlatformLayout(x64, x32)
         }
     };
@@ -344,27 +347,22 @@ lazy_static! {
         },
         // well known types
         // TODO: generate const assertions for these in the ast crate
-        Span: { _ => Layout::known(8, 4, 0), },
         Atom: {
             64 => Layout::wide_ptr_64(),
             32 => Layout::wide_ptr_32(),
         },
+        // External Bumpalo type
         Vec: {
             64 => Layout::known(32, 8, 1),
             32 => Layout::known(16, 4, 1),
         },
+        // Unsupported: we don't analyze `Cell` types
         Cell<Option<ScopeId>>: { _ => Layout::known(4, 4, 0), },
         Cell<Option<SymbolId>>: { _ => Layout::known(4, 4, 0), },
         Cell<Option<ReferenceId>>: { _ => Layout::known(4, 4, 0), },
+        // Unsupported: this is a `bitflags` generated type, we don't expand macros
         ReferenceFlag: { _ => Layout::known(1, 1, 0), },
-        AssignmentOperator: { _ => Layout::known(1, 1, 1), },
-        LogicalOperator: { _ => Layout::known(1, 1, 1), },
-        UnaryOperator: { _ => Layout::known(1, 1, 1), },
-        BinaryOperator: { _ => Layout::known(1, 1, 1), },
-        UpdateOperator: { _ => Layout::known(1, 1, 1), },
-        SourceType: { _ => Layout::known(4, 1, 1), },
+        // Unsupported: this is a `bitflags` generated type, we don't expand macros
         RegExpFlags: { _ => Layout::known(1, 1, 0), },
-        BigintBase: { _ => Layout::known(1, 1, 1), },
-        NumberBase: { _ => Layout::known(1, 1, 1), },
     };
 }

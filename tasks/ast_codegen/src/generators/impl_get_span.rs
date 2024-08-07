@@ -1,11 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::Variant;
 
 use crate::{
     output,
-    schema::{REnum, RStruct, RType},
-    CodegenCtx, Generator, GeneratorOutput,
+    schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
+    util::ToIdent,
+    Generator, GeneratorOutput, LateCtx,
 };
 
 use super::{define_generator, generated_header};
@@ -19,17 +19,15 @@ impl Generator for ImplGetSpanGenerator {
         stringify!(ImplGetSpanGenerator)
     }
 
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let impls: Vec<TokenStream> = ctx
-            .ty_table
+            .schema
+            .definitions
             .iter()
-            .map(|it| it.borrow())
-            .filter(|it| it.visitable())
-            .filter(|it| matches!(&**it, RType::Enum(_) | RType::Struct(_)))
-            .map(|kind| match &*kind {
-                RType::Enum(it) => impl_enum(it),
-                RType::Struct(it) => impl_struct(it),
-                _ => unreachable!("already filtered out!"),
+            .filter(|def| def.visitable())
+            .map(|def| match &def {
+                TypeDef::Enum(it) => impl_enum(it),
+                TypeDef::Struct(it) => impl_struct(it),
             })
             .collect();
 
@@ -51,13 +49,13 @@ impl Generator for ImplGetSpanGenerator {
     }
 }
 
-fn impl_enum(it @ REnum { item, .. }: &REnum) -> TokenStream {
-    let typ = it.as_type();
-    let generics = &item.generics;
-    let (matches, matches_mut): (Vec<TokenStream>, Vec<TokenStream>) = item
-        .variants
-        .iter()
-        .map(|Variant { ident, .. }| {
+fn impl_enum(def: &EnumDef) -> TokenStream {
+    let typ = def.to_type();
+    let generics = &def.generics();
+    let (matches, matches_mut): (Vec<TokenStream>, Vec<TokenStream>) = def
+        .all_variants()
+        .map(|var| {
+            let ident = var.ident();
             (quote!(Self :: #ident(it) => it.span()), quote!(Self :: #ident(it) => it.span_mut()))
         })
         .unzip();
@@ -83,13 +81,12 @@ fn impl_enum(it @ REnum { item, .. }: &REnum) -> TokenStream {
     }
 }
 
-fn impl_struct(it @ RStruct { item, .. }: &RStruct) -> TokenStream {
-    let typ = it.as_type();
-    let generics = &item.generics;
-    let inner_span_hint =
-        item.fields.iter().find(|it| it.attrs.iter().any(|a| a.path().is_ident("span")));
+fn impl_struct(def: &StructDef) -> TokenStream {
+    let typ = def.to_type();
+    let generics = &def.generics();
+    let inner_span_hint = def.fields.iter().find(|it| it.markers.span);
     let (span, span_mut) = if let Some(span_field) = inner_span_hint {
-        let ident = span_field.ident.as_ref().unwrap();
+        let ident = span_field.name.as_ref().map(ToIdent::to_ident).unwrap();
         (quote!(self.#ident.span()), quote!(self.#ident.span_mut()))
     } else {
         (quote!(self.span), quote!(&mut self.span))

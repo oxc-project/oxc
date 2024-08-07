@@ -5,18 +5,18 @@ use syn::{
     parse::{Parse, ParseBuffer},
     parse_quote,
     punctuated::Punctuated,
-    Attribute, Generics, Ident, Item, ItemConst, ItemEnum, ItemMacro, ItemStruct, ItemUse, Meta,
-    Path, Token, Type, Variant, Visibility,
+    Attribute, Generics, Ident, Item, ItemEnum, ItemMacro, ItemStruct, Meta, Path, Token, Type,
+    Variant, Visibility,
 };
 
-use crate::{layout::Layout, util::NormalizeError, TypeName};
+use crate::{
+    layout::Layout,
+    util::{unexpanded_macro_err, NormalizeError},
+};
 
-use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result, TypeDef, TypeRef};
+use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result};
 
-#[derive(Debug, Default, serde::Serialize)]
-pub struct Schema {
-    pub definitions: Vec<TypeDef>,
-}
+pub type AstRef = Rc<RefCell<AstType>>;
 
 #[derive(Debug, Clone)]
 pub enum Inherit {
@@ -40,12 +40,12 @@ pub struct EnumMeta {
 }
 
 #[derive(Debug)]
-pub struct REnum {
+pub struct Enum {
     pub item: ItemEnum,
     pub meta: EnumMeta,
 }
 
-impl REnum {
+impl Enum {
     pub fn with_meta(item: ItemEnum, meta: EnumMeta) -> Self {
         Self { item, meta }
     }
@@ -61,7 +61,7 @@ impl REnum {
     }
 }
 
-impl From<ItemEnum> for REnum {
+impl From<ItemEnum> for Enum {
     fn from(item: ItemEnum) -> Self {
         Self { item, meta: EnumMeta::default() }
     }
@@ -77,12 +77,12 @@ pub struct StructMeta {
 }
 
 #[derive(Debug)]
-pub struct RStruct {
+pub struct Struct {
     pub item: ItemStruct,
     pub meta: StructMeta,
 }
 
-impl RStruct {
+impl Struct {
     pub fn ident(&self) -> &Ident {
         &self.item.ident
     }
@@ -94,60 +94,54 @@ impl RStruct {
     }
 }
 
-impl From<ItemStruct> for RStruct {
+impl From<ItemStruct> for Struct {
     fn from(item: ItemStruct) -> Self {
         Self { item, meta: StructMeta::default() }
     }
 }
 
 #[derive(Debug)]
-pub enum RType {
-    Enum(REnum),
-    Struct(RStruct),
+pub enum AstType {
+    Enum(Enum),
+    Struct(Struct),
 
-    Use(ItemUse),
-    Const(ItemConst),
+    // we need this to expand `inherit` macro calls.
     Macro(ItemMacro),
 }
 
-impl ToTokens for RType {
+impl ToTokens for AstType {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
             Self::Enum(it) => it.item.to_tokens(tokens),
             Self::Struct(it) => it.item.to_tokens(tokens),
 
-            Self::Use(it) => it.to_tokens(tokens),
-            Self::Const(it) => it.to_tokens(tokens),
             Self::Macro(it) => it.to_tokens(tokens),
         }
     }
 }
 
-impl RType {
+impl AstType {
     pub fn ident(&self) -> Option<&Ident> {
         match self {
-            RType::Enum(ty) => Some(ty.ident()),
-            RType::Struct(ty) => Some(ty.ident()),
-
-            RType::Use(_) => None,
-            RType::Macro(tt) => tt.ident.as_ref(),
-            RType::Const(tt) => Some(&tt.ident),
+            AstType::Enum(ty) => Some(ty.ident()),
+            AstType::Struct(ty) => Some(ty.ident()),
+            AstType::Macro(tt) => tt.ident.as_ref(),
         }
     }
 
     pub fn as_type(&self) -> Option<Type> {
         match self {
-            RType::Enum(it) => Some(it.as_type()),
-            RType::Struct(it) => Some(it.as_type()),
-            _ => None,
+            AstType::Enum(it) => Some(it.as_type()),
+            AstType::Struct(it) => Some(it.as_type()),
+            AstType::Macro(_) => None,
         }
     }
 
     pub fn visitable(&self) -> bool {
         match self {
-            RType::Enum(it) => it.meta.visitable,
-            RType::Struct(it) => it.meta.visitable,
-            _ => false,
+            AstType::Enum(it) => it.meta.visitable,
+            AstType::Struct(it) => it.meta.visitable,
+            AstType::Macro(_) => false,
         }
     }
 
@@ -159,35 +153,35 @@ impl RType {
             }};
         }
         match self {
-            RType::Enum(it) => assign!(it),
-            RType::Struct(it) => assign!(it),
-            _ => return Err("Unsupported type!".to_string()),
+            AstType::Enum(it) => assign!(it),
+            AstType::Struct(it) => assign!(it),
+            AstType::Macro(it) => return Err(unexpanded_macro_err(it)),
         }
         Ok(())
     }
 
     pub fn set_ast(&mut self, value: bool) -> Result<()> {
         match self {
-            RType::Enum(it) => it.meta.ast = value,
-            RType::Struct(it) => it.meta.ast = value,
-            _ => return Err("Unsupported type!".to_string()),
+            AstType::Enum(it) => it.meta.ast = value,
+            AstType::Struct(it) => it.meta.ast = value,
+            AstType::Macro(it) => return Err(unexpanded_macro_err(it)),
         }
         Ok(())
     }
 
     pub fn layout_32(&self) -> Result<Layout> {
         match self {
-            RType::Enum(it) => Ok(it.meta.layout_32.clone()),
-            RType::Struct(it) => Ok(it.meta.layout_32.clone()),
-            _ => Err("Unsupported type!".to_string()),
+            AstType::Enum(it) => Ok(it.meta.layout_32.clone()),
+            AstType::Struct(it) => Ok(it.meta.layout_32.clone()),
+            AstType::Macro(it) => Err(unexpanded_macro_err(it)),
         }
     }
 
     pub fn layout_64(&self) -> Result<Layout> {
         match self {
-            RType::Enum(it) => Ok(it.meta.layout_64.clone()),
-            RType::Struct(it) => Ok(it.meta.layout_64.clone()),
-            _ => Err("Unsupported type!".to_string()),
+            AstType::Enum(it) => Ok(it.meta.layout_64.clone()),
+            AstType::Struct(it) => Ok(it.meta.layout_64.clone()),
+            AstType::Macro(it) => Err(unexpanded_macro_err(it)),
         }
     }
 
@@ -203,23 +197,21 @@ impl RType {
             }};
         }
         match self {
-            RType::Enum(it) => assign!(it),
-            RType::Struct(it) => assign!(it),
-            _ => return Err("Unsupported type!".to_string()),
+            AstType::Enum(it) => assign!(it),
+            AstType::Struct(it) => assign!(it),
+            AstType::Macro(it) => return Err(unexpanded_macro_err(it)),
         }
         Ok(())
     }
 }
 
-impl TryFrom<Item> for RType {
+impl TryFrom<Item> for AstType {
     type Error = String;
     fn try_from(item: Item) -> Result<Self> {
         match item {
-            Item::Enum(it) => Ok(RType::Enum(it.into())),
-            Item::Struct(it) => Ok(RType::Struct(it.into())),
-            Item::Macro(it) => Ok(RType::Macro(it)),
-            Item::Use(it) => Ok(RType::Use(it)),
-            Item::Const(it) => Ok(RType::Const(it)),
+            Item::Enum(it) => Ok(AstType::Enum(it.into())),
+            Item::Struct(it) => Ok(AstType::Struct(it.into())),
+            Item::Macro(it) => Ok(AstType::Macro(it)),
             _ => Err(String::from("Unsupported Item!")),
         }
     }
@@ -232,10 +224,10 @@ pub struct Module {
     // TODO: remove me
     #[allow(dead_code)]
     #[allow(clippy::struct_field_names)]
-    pub module: TypeName,
+    pub module: String,
     pub shebang: Option<String>,
     pub attrs: Vec<Attribute>,
-    pub items: Vec<TypeRef>,
+    pub items: Vec<AstRef>,
     pub loaded: bool,
 }
 
@@ -265,7 +257,7 @@ impl Module {
             .items
             .into_iter()
             .filter(|it| match it {
-                Item::Enum(_) | Item::Struct(_) | Item::Use(_) | Item::Const(_) => true,
+                Item::Enum(_) | Item::Struct(_) => true,
                 // These contain enums with inheritance
                 Item::Macro(m) if m.mac.path.is_ident("inherit_variants") => true,
                 _ => false,
@@ -297,20 +289,11 @@ impl Module {
         self.items.iter().try_for_each(analyze)?;
         Ok(self)
     }
-
-    pub fn build_in(&self, schema: &mut Schema) -> Result<()> {
-        if !self.loaded {
-            return Err(String::from(LOAD_ERROR));
-        }
-
-        schema.definitions.extend(self.items.iter().filter_map(|it| (&*it.borrow()).into()));
-        Ok(())
-    }
 }
 
-pub fn expand(type_def: &TypeRef) -> Result<()> {
-    let to_replace = match &*type_def.borrow() {
-        RType::Macro(mac) => {
+pub fn expand(ast_ref: &AstRef) -> Result<()> {
+    let to_replace = match &*ast_ref.borrow() {
+        AstType::Macro(mac) => {
             let (enum_, inherits) = mac
                 .mac
                 .parse_body_with(|input: &ParseBuffer| {
@@ -361,7 +344,7 @@ pub fn expand(type_def: &TypeRef) -> Result<()> {
                     ))
                 })
                 .normalize()?;
-            Some(RType::Enum(REnum::with_meta(
+            Some(AstType::Enum(Enum::with_meta(
                 enum_,
                 EnumMeta {
                     inherits: inherits.into_iter().map(Into::into).collect(),
@@ -373,21 +356,21 @@ pub fn expand(type_def: &TypeRef) -> Result<()> {
     };
 
     if let Some(to_replace) = to_replace {
-        *type_def.borrow_mut() = to_replace;
+        *ast_ref.borrow_mut() = to_replace;
     }
 
     Ok(())
 }
 
-pub fn analyze(type_def: &TypeRef) -> Result<()> {
+pub fn analyze(ast_ref: &AstRef) -> Result<()> {
     enum AstAttr {
         None,
         Mark,
         Visit,
     }
-    let ast_attr = match &*type_def.borrow() {
-        RType::Enum(REnum { item: ItemEnum { attrs, .. }, .. })
-        | RType::Struct(RStruct { item: ItemStruct { attrs, .. }, .. }) => {
+    let ast_attr = match &*ast_ref.borrow() {
+        AstType::Enum(Enum { item: ItemEnum { attrs, .. }, .. })
+        | AstType::Struct(Struct { item: ItemStruct { attrs, .. }, .. }) => {
             let attr = attrs.iter().find(|attr| attr.path().is_ident("ast"));
             let attr = match attr {
                 Some(Attribute { meta: Meta::Path(_), .. }) => AstAttr::Mark,
@@ -405,20 +388,20 @@ pub fn analyze(type_def: &TypeRef) -> Result<()> {
             };
             Some(attr)
         }
-        _ => None,
+        AstType::Macro(_) => None,
     };
 
     #[allow(clippy::match_same_arms)]
     match ast_attr {
         Some(AstAttr::Visit) => {
-            type_def.borrow_mut().set_ast(true)?;
-            type_def.borrow_mut().set_visitable(true)?;
+            ast_ref.borrow_mut().set_ast(true)?;
+            ast_ref.borrow_mut().set_visitable(true)?;
         }
         Some(AstAttr::Mark) => {
             // AST without visit!
-            type_def.borrow_mut().set_ast(true)?;
+            ast_ref.borrow_mut().set_ast(true)?;
         }
-        Some(AstAttr::None) => return Err(String::from("All `enums` and `structs` defined in the source of truth should be marked with an `#[ast]` attribute!")),
+        Some(AstAttr::None) => return Err(format!("All `enums` and `structs` defined in the source of truth should be marked with an `#[ast]` attribute(missing `#[ast]` on '{:?}')", ast_ref.borrow().ident())),
         None => { /* unrelated items like `use`, `type` and `macro` definitions */ }
     }
 

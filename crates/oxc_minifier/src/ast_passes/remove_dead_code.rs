@@ -58,7 +58,7 @@ impl<'a> RemoveDeadCode<'a> {
 
         let mut keep_var = KeepVar::new(self.ast);
 
-        for stmt in stmts.iter().skip(index) {
+        for stmt in stmts.iter().skip(index + 1) {
             keep_var.visit_statement(stmt);
         }
 

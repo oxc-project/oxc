@@ -145,11 +145,11 @@ pub struct JSXClosingFragment {
 #[serde(untagged)]
 pub enum JSXElementName<'a> {
     /// `<Apple />`
-    Identifier(Box<'a, JSXIdentifier<'a>>),
+    Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
     /// `<Apple:Orange />`
-    NamespacedName(Box<'a, JSXNamespacedName<'a>>),
+    NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 1,
     /// `<Apple.Orange />`
-    MemberExpression(Box<'a, JSXMemberExpression<'a>>),
+    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 2,
 }
 
 /// JSX Namespaced Name
@@ -205,8 +205,8 @@ pub struct JSXMemberExpression<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXMemberExpressionObject<'a> {
-    Identifier(Box<'a, JSXIdentifier<'a>>),
-    MemberExpression(Box<'a, JSXMemberExpression<'a>>),
+    Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
+    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 1,
 }
 
 /// JSX Expression Container
@@ -268,8 +268,8 @@ pub struct JSXEmptyExpression {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeItem<'a> {
-    Attribute(Box<'a, JSXAttribute<'a>>),
-    SpreadAttribute(Box<'a, JSXSpreadAttribute<'a>>),
+    Attribute(Box<'a, JSXAttribute<'a>>) = 0,
+    SpreadAttribute(Box<'a, JSXSpreadAttribute<'a>>) = 1,
 }
 
 /// JSX Attribute
@@ -315,8 +315,8 @@ pub struct JSXSpreadAttribute<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeName<'a> {
-    Identifier(Box<'a, JSXIdentifier<'a>>),
-    NamespacedName(Box<'a, JSXNamespacedName<'a>>),
+    Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
+    NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 1,
 }
 
 /// JSX Attribute Value
@@ -327,10 +327,10 @@ pub enum JSXAttributeName<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeValue<'a> {
-    StringLiteral(Box<'a, StringLiteral<'a>>),
-    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>),
-    Element(Box<'a, JSXElement<'a>>),
-    Fragment(Box<'a, JSXFragment<'a>>),
+    StringLiteral(Box<'a, StringLiteral<'a>>) = 0,
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>) = 1,
+    Element(Box<'a, JSXElement<'a>>) = 2,
+    Fragment(Box<'a, JSXFragment<'a>>) = 3,
 }
 
 /// JSX Identifier
@@ -359,20 +359,15 @@ pub struct JSXIdentifier<'a> {
 #[serde(untagged)]
 pub enum JSXChild<'a> {
     /// `<Foo>Some Text</Foo>`
-    Text(Box<'a, JSXText<'a>>),
+    Text(Box<'a, JSXText<'a>>) = 0,
     /// `<Foo><Child /></Foo>`
-    Element(Box<'a, JSXElement<'a>>),
+    Element(Box<'a, JSXElement<'a>>) = 1,
     /// `<Foo><></></Foo>`
-    Fragment(Box<'a, JSXFragment<'a>>),
+    Fragment(Box<'a, JSXFragment<'a>>) = 2,
     /// `<Foo>{expression}</Foo>`
-    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>),
+    ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>) = 3,
     /// `<Foo>{...spread}</Foo>`
-    Spread(Box<'a, JSXSpreadChild<'a>>),
-}
-impl<'a> JSXChild<'a> {
-    pub const fn is_expression_container(&self) -> bool {
-        matches!(self, Self::ExpressionContainer(_))
-    }
+    Spread(Box<'a, JSXSpreadChild<'a>>) = 4,
 }
 
 /// JSX Spread Child.

@@ -2,9 +2,9 @@ use std::borrow::Cow;
 
 use syn::parse_quote;
 
-use crate::{schema::Inherit, util::NormalizeError};
+use crate::{rust_ast::Inherit, util::NormalizeError, EarlyCtx};
 
-use super::{define_pass, CodegenCtx, Pass, RType, Result};
+use super::{define_pass, AstType, Pass, Result};
 
 pub trait Unresolved {
     fn unresolved(&self) -> bool;
@@ -39,9 +39,9 @@ impl Pass for Linker {
 
     /// # Panics
     /// On invalid inheritance.
-    fn each(&mut self, ty: &mut RType, ctx: &CodegenCtx) -> crate::Result<bool> {
+    fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {
         // Exit early if it isn't an enum, We only link to resolve enum inheritance!
-        let RType::Enum(ty) = ty else {
+        let AstType::Enum(ty) = ty else {
             return Ok(true);
         };
 
@@ -62,7 +62,7 @@ impl Pass for Linker {
                     let linkee = linkee.borrow();
                     let inherit_value = format!(r#""{}""#, linkee.ident().unwrap());
                     let variants = match &*linkee {
-                        RType::Enum(enum_) => {
+                        AstType::Enum(enum_) => {
                             if enum_.meta.inherits.unresolved() {
                                 return Ok(Err(it));
                             }
