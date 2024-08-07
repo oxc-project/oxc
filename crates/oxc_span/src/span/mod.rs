@@ -6,6 +6,7 @@ use std::{
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
 mod types;
+use oxc_allocator::{Allocator, CloneIn};
 pub use types::Span;
 
 /// An Empty span useful for creating AST nodes.
@@ -335,6 +336,14 @@ impl GetSpanMut for Span {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         self
+    }
+}
+
+impl<'a> CloneIn<'a> for Span {
+    type Cloned = Self;
+    #[inline]
+    fn clone_in(&self, _: &'a Allocator) -> Self {
+        *self
     }
 }
 
