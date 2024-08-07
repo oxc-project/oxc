@@ -9,6 +9,7 @@ mod utils;
 
 use std::rc::Rc;
 
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::TraverseCtx;
 use refresh::ReactRefresh;
@@ -88,6 +89,16 @@ impl<'a> React<'a> {
         }
     }
 
+    pub fn transform_statements(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.refresh_plugin {
+            self.refresh.transform_statements(stmts, ctx);
+        }
+    }
+
     pub fn transform_statements_on_exit(
         &mut self,
         stmts: &mut Vec<'a, Statement<'a>>,
@@ -113,10 +124,14 @@ impl<'a> React<'a> {
     }
 
     pub fn transform_call_expression(
-        &self,
+        &mut self,
         call_expr: &mut CallExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
+        if self.refresh_plugin {
+            // self.refresh.transform_call_expression(call_expr, ctx);
+        }
+
         if self.display_name_plugin {
             self.display_name.transform_call_expression(call_expr, ctx);
         }
@@ -132,6 +147,18 @@ impl<'a> React<'a> {
         }
         if self.jsx_source_plugin {
             self.jsx.jsx_source.transform_jsx_opening_element(elem, ctx);
+        }
+    }
+
+    pub fn transform_function(&mut self, func: &mut Function<'a>) {
+        if self.refresh_plugin {
+            // self.refresh.transform_function(func);
+        }
+    }
+
+    pub fn transform_arrow_expression(&mut self, func: &mut ArrowFunctionExpression<'a>) {
+        if self.refresh_plugin {
+            // self.refresh.transform_arrow_expression(func);
         }
     }
 }

@@ -127,6 +127,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_arrow_expression(expr);
+        self.x1_react.transform_arrow_expression(expr);
     }
 
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -194,6 +195,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_function(func);
+        self.x1_react.transform_function(func);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -245,8 +247,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_property_definition(def);
     }
 
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements(stmts);
+        self.x1_react.transform_statements(stmts, ctx);
         self.x3_es2015.enter_statements(stmts);
     }
 
