@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_minifier::RemoveDeadCode;
+use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -10,25 +10,58 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     if remove_dead_code {
-        RemoveDeadCode::new(&allocator).build(program);
+        Compressor::new(&allocator, CompressOptions::dead_code_elimination()).build(program);
     }
-    CodeGenerator::new().build(program).source_text
+    CodeGenerator::new()
+        .with_options(CodegenOptions { single_quote: true })
+        .build(program)
+        .source_text
 }
 
-pub(crate) fn test(source_text: &str, expected: &str) {
+fn test(source_text: &str, expected: &str) {
     let minified = print(source_text, true);
     let expected = print(expected, false);
     assert_eq!(minified, expected, "for source {source_text}");
 }
 
 #[test]
-fn remove_dead_code() {
+fn dce_if_statement() {
     test("if (true) { foo }", "{ foo }");
     test("if (true) { foo } else { bar }", "{ foo }");
     test("if (false) { foo } else { bar }", "{ bar }");
 
+    test("if (xxx) { foo } else if (false) { bar }", "if (xxx) { foo }");
+    test("if (xxx) { foo } else if (false) { bar } else { baz }", "if (xxx) { foo } else { baz }");
+    test("if (xxx) { foo } else if (false) { bar } else if (false) { baz }", "if (xxx) { foo }");
+    test(
+        "if (xxx) { foo } else if (false) { bar } else if (false) { baz } else { quaz }",
+        "if (xxx) { foo } else { quaz }",
+    );
+    test(
+        "if (xxx) { foo } else if (true) { bar } else if (false) { baz }",
+        "if (xxx) { foo } else { bar }",
+    );
+    test(
+        "if (xxx) { foo } else if (false) { bar } else if (true) { baz }",
+        "if (xxx) { foo } else { baz }",
+    );
+    test(
+        "if (xxx) { foo } else if (true) { bar } else if (true) { baz }",
+        "if (xxx) { foo } else { bar }",
+    );
+    test(
+        "if (xxx) { foo } else if (false) { var a; var b; } else if (false) { var c; var d; }",
+        "if (xxx) { foo } else var c, d;",
+    );
+
     test("if (!false) { foo }", "{ foo }");
     test("if (!true) { foo } else { bar }", "{ bar }");
+
+    test("if (!false && xxx) { foo }", "if (xxx) { foo; }");
+    test("if (!true && yyy) { foo } else { bar }", "{ bar }");
+
+    test("if (true || xxx) { foo }", "{ foo }");
+    test("if (false || xxx) { foo }", "if (xxx) { foo }");
 
     test("if ('production' == 'production') { foo } else { bar }", "{ foo }");
     test("if ('development' == 'production') { foo } else { bar }", "{ bar }");
@@ -36,19 +69,8 @@ fn remove_dead_code() {
     test("if ('production' === 'production') { foo } else { bar }", "{ foo }");
     test("if ('development' === 'production') { foo } else { bar }", "{ bar }");
 
-    test("false ? foo : bar;", "bar");
-    test("true ? foo : bar;", "foo");
-
-    test("!true ? foo : bar;", "bar");
-    test("!false ? foo : bar;", "foo");
-
-    test("!!false ? foo : bar;", "bar");
-    test("!!true ? foo : bar;", "foo");
-
-    test("const foo = true ? A : B", "const foo = A");
-    test("const foo = false ? A : B", "const foo = B");
-
     // Shadowed `undefined` as a variable should not be erased.
+    // This is a rollup test.
     test(
         "function foo(undefined) { if (!undefined) { } }",
         "function foo(undefined) { if (!undefined) { } }",
@@ -65,11 +87,77 @@ fn remove_dead_code() {
         ",
         "{foo; return }",
     );
+
+    // nested expression
+    test(
+        "const a = { fn: function() { if (true) { foo; } } }",
+        "const a = { fn: function() { { foo; } } }",
+    );
+}
+
+#[test]
+fn dce_conditional_expression() {
+    test("false ? foo : bar;", "bar");
+    test("true ? foo : bar;", "foo");
+
+    test("!true ? foo : bar;", "bar");
+    test("!false ? foo : bar;", "foo");
+
+    test("!!false ? foo : bar;", "bar");
+    test("!!true ? foo : bar;", "foo");
+
+    test("const foo = true ? A : B", "const foo = A");
+    test("const foo = false ? A : B", "const foo = B");
+}
+
+#[test]
+fn dce_logical_expression() {
+    test("false && bar()", "false");
+    test("true && bar()", "bar()");
+
+    test("const foo = false && bar()", "const foo = false");
+    test("const foo = true && bar()", "const foo = bar()");
+}
+
+#[test]
+fn dce_var_hoisting() {
+    test(
+        "function f() {
+          return () => {
+            var x;
+          }
+          REMOVE;
+          function KEEP() {}
+          REMOVE;
+        }",
+        "function f() {
+          return () => {
+            var x;
+          }
+          function KEEP() {}
+        }",
+    );
+    test(
+        "function f() {
+          return function g() {
+            var x;
+          }
+          REMOVE;
+          function KEEP() {}
+          REMOVE;
+        }",
+        "function f() {
+          return function g() {
+            var x;
+          }
+          function KEEP() {}
+        }",
+    );
 }
 
 // https://github.com/terser/terser/blob/master/test/compress/dead-code.js
 #[test]
-fn remove_dead_code_from_terser() {
+fn dce_from_terser() {
     test(
         "function f() {
             a();

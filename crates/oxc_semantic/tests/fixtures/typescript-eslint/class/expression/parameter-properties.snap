@@ -1,0 +1,135 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expression/parameter-properties.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "id": 3,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 3,
+                "name": "a",
+                "node": "FormalParameter(a)",
+                "references": [
+                  {
+                    "flag": "ReferenceFlag(Read)",
+                    "id": 0,
+                    "name": "a",
+                    "node_id": 28
+                  },
+                  {
+                    "flag": "ReferenceFlag(Read)",
+                    "id": 3,
+                    "name": "a",
+                    "node_id": 43
+                  }
+                ]
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 4,
+                "name": "b",
+                "node": "FormalParameter(b)",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 5,
+                "name": "c",
+                "node": "FormalParameter(c)",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 6,
+                "name": "d",
+                "node": "FormalParameter(d)",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 7,
+                "name": "e",
+                "node": "FormalParameter(e)",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 8,
+                "name": "f",
+                "node": "FormalParameter(f)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(<anonymous>)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "outer",
+        "node": "VariableDeclarator(outer)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 1,
+            "name": "outer",
+            "node_id": 32
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "Outer",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 2,
+            "name": "Outer",
+            "node_id": 40
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "A",
+        "node": "VariableDeclarator(A)",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 9,
+        "name": "unresolved",
+        "node": "VariableDeclarator(unresolved)",
+        "references": []
+      }
+    ]
+  }
+]

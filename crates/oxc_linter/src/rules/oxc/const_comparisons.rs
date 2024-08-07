@@ -13,7 +13,7 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
 fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(const-comparisons): Left-hand side of `&&` operator has no effect.")
+    OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
         .with_help(x2.to_string())
         .with_labels([
             span0.label("If this evaluates to `true`"),
@@ -22,7 +22,7 @@ fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic
 }
 
 fn redundant_right_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(const-comparisons): Right-hand side of `&&` operator has no effect.")
+    OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
         .with_help(x2.to_string())
         .with_labels([
             span0.label("If this evaluates to `true`"),
@@ -31,12 +31,10 @@ fn redundant_right_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnosti
 }
 
 fn impossible(span0: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(const-comparisons): Unexpected constant comparison")
-        .with_help(x4.to_string())
-        .with_labels([
-            span0.label(format!("Requires that {x2}")),
-            span1.label(format!("Requires that {x3}")),
-        ])
+    OxcDiagnostic::warn("Unexpected constant comparison").with_help(x4.to_string()).with_labels([
+        span0.label(format!("Requires that {x2}")),
+        span1.label(format!("Requires that {x3}")),
+    ])
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>

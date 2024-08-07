@@ -16,11 +16,9 @@ use crate::{
 };
 
 fn no_hook_on_top(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.",
-    )
-    .with_help("Hooks should come before test cases")
-    .with_label(span0)
+    OxcDiagnostic::warn("Suggest having hooks before any test cases.")
+        .with_help("Hooks should come before test cases")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

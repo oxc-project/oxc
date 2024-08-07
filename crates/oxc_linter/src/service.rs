@@ -19,7 +19,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
-    Fixer, LintContext, Linter, Message,
+    Fixer, Linter, Message,
 };
 
 pub struct LintServiceOptions {
@@ -227,7 +227,7 @@ impl Runtime {
                 self.process_source(path, &allocator, source_text, source_type, true, tx_error);
 
             // TODO: Span is wrong, ban this feature for file process by `PartialLoader`.
-            if !is_processed_by_partial_loader && self.linter.options().fix {
+            if !is_processed_by_partial_loader && self.linter.options().fix.is_some() {
                 let fix_result = Fixer::new(source_text, messages).fix();
                 fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
                 messages = fix_result.messages;
@@ -353,9 +353,7 @@ impl Runtime {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
-        let lint_ctx =
-            LintContext::new(path.to_path_buf().into_boxed_path(), Rc::new(semantic_ret.semantic));
-        self.linter.run(lint_ctx)
+        self.linter.run(path, Rc::new(semantic_ret.semantic))
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {

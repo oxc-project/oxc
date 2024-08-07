@@ -4,6 +4,146 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.7.0] - 2024-08-05
+
+- 85a7cea semantic: [**BREAKING**] Remove name from `reference` (#4329) (Dunqing)
+
+### Features
+
+- aaee07e ast: Add `AstKind::AssignmentTargetPattern`, `AstKind::ArrayAssignmentTarget` and `AstKind::ObjectAssignmentTarget` (#4456) (Dunqing)
+- 9df7b56 jsx-a11y/no-autofocus: Implement fixer support (#4171) (Jelle van der Waa)
+- b87bf70 linter: Add fix capabilties to existing lint rules (#4560) (DonIsaac)
+- ddd8b27 linter: Support conditional fix capabilities (#4559) (DonIsaac)
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+- 6543958 linter: Add auto-fix metadata to RuleMeta (#4557) (Don Isaac)
+- 85e8418 linter: Add react/jsx-curly-brace-presence (#3949) (Don Isaac)
+- 4c4da56 linter: Add typescript-eslint/prefer-keyword-namespce (#4438) (Aza Walker)
+- d8c2a83 linter: Eslint-plugin-vitest/no-import-node-test (#4440) (cinchen)
+- e3b0c40 linter: Eslint-plugin-vitest/no-identical-title (#4422) (cinchen)
+- c936782 linter: Eslint-plugin-vitest/no-conditional-expect (#4425) (cinchen)
+- 27fdd69 linter: Eslint-plugin-vitest/no-commented-out-tests (#4424) (cinchen)
+- 51f5025 linter: Add fixer for unicorn/prefer-string-starts-ends-with (#4378) (DonIsaac)
+- 3c0c709 linter: Add typescript-eslint/no-extraneous-class (#4357) (Jaden Rodriguez)
+- 7afa1f0 linter: Support suggestions and dangerous fixes (#4223) (DonIsaac)
+- acc5729 linter: Eslint-plugin-vitest/expect-expect (#4299) (cinchen)
+- 2213f93 linter: Eslint-plugin-vitest/no-alias-methods (#4301) (cinchen)
+- c296bc3 linter/eslint: Implement func-names (#4618) (Alexander S.)
+- e116ae0 linter/eslint: Implement fixer for prefer-numeric-literals (#4591) (Jelle van der Waa)
+- eaf834f linter/eslint: Implement prefer-numeric-literals (#4109) (Jelle van der Waa)
+- db2fd70 linter/eslint-plugin-promise: Implement no-webpack-loader-syntax (#4331) (Jelle van der Waa)
+- 5f1e070 linter/eslint-plugin-unicorn: Add fixer for prefer-code-point (#4353) (Jelle van der Waa)
+- ed49e16 linter/eslint-plugin-unicorn: Implement fixer for prefer-dom-node-append (#4306) (Jelle van der Waa)
+- e2b15ac linter/react: Implement react-jsx-boolean-value (#4613) (Jelle van der Waa)
+- 68efcd4 linter/react-perf: Handle new objects and arrays in prop assignment patterns (#4396) (DonIsaac)
+
+### Bug Fixes
+
+- 368112c ast: Remove `#[visit(ignore)]` from `ExportDefaultDeclarationKind`'s `TSInterfaceDeclaration` (#4497) (Dunqing)
+- d384f60 ci: Remove unused(?) .html file (#4545) (Yuji Sugiura)
+- 06aec77 linter: Invalid binary expression with overflow (#4647) (DonIsaac)
+- b2da22b linter: Invalid tags in rule docs (#4646) (DonIsaac)
+- 94440ad linter: Panic on invalid lang in `a11y/lang`. (#4630) (rzvxa)
+- e0b03f8 linter: Improve the boundary for eslint/for-direction (#4590) (heygsc)
+- 70b8cfa linter: Missing return in no-obj-calls recursion (#4594) (DonIsaac)
+- fe1356d linter: Change no-unused-vars to nursery (#4588) (DonIsaac)
+- 72337b1 linter: Change typescript-eslint/no-namespace to restriction (#4539) (Don Isaac)
+- 289dc39 linter: Overflow in no-obj-calls (#4397) (DonIsaac)
+- a664715 linter/eslint: Fix invalid regexp in no_regex_spaces test (#4605) (Yuji Sugiura)
+- 74fa75a linter/eslint: Drop quotes around max-params lint warning (#4608) (Jelle van der Waa)
+- 9fcd9ae linter/eslint: Fix invalid regexp in no_control_regex test (#4544) (leaysgur)
+- ac08de8 linter/react_perf: Allow new objects, array, fns, etc in top scope (#4395) (DonIsaac)
+- 73d2558 oxlint: Fix oxlint failed to build due to missing feature (Boshen)
+
+### Performance
+
+- 6ff200d linter: Change react rules and utils to use `Cow` and `CompactStr` instead of `String`  (#4603) (DonIsaac)
+- f259df0 linter: Make img-redundant-alt only build a regex once (#4604) (DonIsaac)
+- 7585e16 linter: Remove allocations for string comparisons (#4570) (DonIsaac)
+- b60bdf1 linter: `no_shadow_restricted_names` only look up name in hashmap once (#4472) (overlookmotel)
+- 81384f5 linter: Avoid unnecessary work in `nextjs:no_duplicate_head` rule (#4465) (overlookmotel)
+- f7da22d linter: Disable lint rules by file type (#4380) (DonIsaac)
+- 348c1ad semantic: Remove `span` field from `Reference` (#4464) (overlookmotel)
+- 6a9f4db semantic: Reduce storage size for symbol redeclarations (#4463) (overlookmotel)- a207923 Replace some CompactStr usages with Cows (#4377) (DonIsaac)
+
+### Refactor
+
+- 7a75e0f linter: Use diagnostic codes in lint rules (#4349) (DonIsaac)
+- ccb1835 semantic: Methods take `Span` as param, not `&Span` (#4470) (overlookmotel)
+- 7cd53f3 semantic: Var hoisting (#4379) (Dunqing)
+- c99b3eb syntax: Give `ScopeId` a niche (#4468) (overlookmotel)
+
+## [0.6.1] - 2024-07-17
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- 1f8968a linter: Add eslint-plugin-promise rules: avoid-new, no-new-statics, params-names (#4293) (Jelle van der Waa)
+- a4dc56c linter: Add fixer for unicorn/no_useless_promise_resolve_reject (#4244) (Burlin)
+- 6fb808f linter: Add typescript-eslint/no-confusing-non-null-assertion (#4224) (Jaden Rodriguez)
+- 126b66c linter: Support eslint-plugin-vitest/valid-describe-callback (#4185) (cinchen)
+- 05b9a73 linter: Support eslint-plugin-vitest/valid-expect (#4183) (cinchen)
+- 3e56b2b linter: Support eslint-plugin-vitest/no-test-prefixes (#4182) (cinchen)
+- 3016f03 linter: Let fixer functions return a `None` fix (#4210) (DonIsaac)
+- bbe6137 linter: Implement unicorn/no-useless-undefined (#4079) (Burlin)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+
+### Bug Fixes
+
+- 9df60da linter: Correct find first non whitespace logic in @typescript-eslint/consistent-type-imports (#4198) (mysteryven)
+- 67240dc linter: Not ignore adjacent spans when fixing (#4217) (mysteryven)
+- dd07a54 linter: Global variables should always check the builtin variables (#4209) (Jelle van der Waa)
+- 351ecf2 semantic: Incorrect resolve references for `TSTypeQuery` (#4310) (Dunqing)
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+
+### Performance
+
+- 0fdc88b linter: Optimize no-dupe-keys (#4292) (lucab)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- aa22073 codegen: Improve print API (#4196) (Boshen)
+- b5a8f3c linter: Use get_first_parameter_name from unicorn utils (#4255) (Jelle van der Waa)
+- 7089a3d linter: Split up fixer code into separate files (#4222) (DonIsaac)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- 7f1addd semantic: Correct scope in CatchClause (#4192) (Dunqing)
+
+## [0.6.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Features
+
+- fb549e1 linter: Add vitest/no-focused-tests rule (#4178) (mysteryven)
+- 6c49007 linter: Add fixer for @typescript-eslint/consistent-type-imports (#3984) (mysteryven)
+- 278c3e9 linter: Add fixer for jsx-a11y/aria-props (#4176) (DonIsaac)
+- 2188144 linter: Eslint-plugin-jest/prefer-hooks-in-order (#4052) (cinchen)
+- cc58614 linter: Better schemas for allow/warn/deny (#4150) (DonIsaac)
+- c5b4be0 linter: Add fixer for prefer-node-protocol (#4129) (DonIsaac)
+- 7ec0c0b linter/eslint: Implement no-label-var (#4087) (Jelle van der Waa)
+
+### Bug Fixes
+
+- ed4c54c eslint/radix: Detect yield Number.parseInt variant (#4110) (Jelle van der Waa)
+- e9ad03b linter: Fixer for no-debugger creates incorrect code (#4184) (DonIsaac)
+- bd69571 linter: Fix top level return panic in eslint/array_callback_return (#4167) (Boshen)
+- c8f5664 linter: Fix panic with unicode in unicorn/prefer_dom_node_dataset (#4166) (Boshen)
+- f2b3273 linter: Fix fixer panic in typescript/consistent_indexed_object_style (#4165) (Boshen)
+- 2334515 linter: Panic in `get_enclosing_function` (#4121) (DonIsaac)
+- 1b91d40 linter: Incorrect fixer for `no-unused-labels` (#4123) (Don Isaac)
+- 1729249 linter: Incorrect fix in `no-single-promise-in-promise-methods` rule; (#4094) (DonIsaac)
+- cc7e893 linter/tree-shaking: Avoid recursive function stackoverflow (#4191) (mysteryven)
+- 28eeee0 parser: Fix asi error diagnostic pointing at invalid text causing crash (#4163) (Boshen)
+- 0f02608 semantic: Bind `TSImportEqualsDeclaration`s (#4100) (Don Isaac)
+
+### Performance
+
+- ddfa343 diagnostic: Use `Cow<'static, str>` over `String` (#4175) (DonIsaac)
+
+### Refactor
+
+- 2687ebc react: Use find_binding helper for finding React binding (#4108) (Jelle van der Waa)
+
 ## [0.5.3] - 2024-07-07
 
 ### Features

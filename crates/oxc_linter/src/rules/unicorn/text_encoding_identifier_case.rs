@@ -10,10 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn text_encoding_identifier_case_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `{x1}` over `{x2}`."
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`.")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -106,7 +103,7 @@ fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool 
     let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
         return false;
     };
-    if ident.name.to_lowercase() != "charset" {
+    if !ident.name.eq_ignore_ascii_case("charset") {
         return false;
     }
 
@@ -119,7 +116,7 @@ fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool 
         return false;
     };
 
-    if name.name.to_lowercase() != "meta" {
+    if !name.name.eq_ignore_ascii_case("meta") {
         return false;
     }
 

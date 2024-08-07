@@ -6,31 +6,31 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn uppercase_prefix(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.")
+    OxcDiagnostic::warn("Unexpected number literal prefix in uppercase.")
         .with_help(format!("Use lowercase for the number literal prefix `{x1}`."))
         .with_label(span0)
 }
 
 fn uppercase_exponential_notation(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.",
-    )
-    .with_help("Use lowercase for `e` in exponential notations.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Unexpected exponential notation in uppercase.")
+        .with_help("Use lowercase for `e` in exponential notations.")
+        .with_label(span0)
 }
 
 fn lowercase_hexadecimal_digits(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(number-literal-case): Unexpected hexadecimal digits in lowercase.",
-    )
-    .with_help("Use uppercase for hexadecimal digits.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Unexpected hexadecimal digits in lowercase.")
+        .with_help("Use uppercase for hexadecimal digits.")
+        .with_label(span0)
 }
 
 fn uppercase_prefix_and_lowercase_hexadecimal_digits(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.")
-        .with_help(format!("Use lowercase for the number literal prefix `{x1}` and uppercase for hexadecimal digits."))
-        .with_label(span0)
+    OxcDiagnostic::warn(
+        "Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.",
+    )
+    .with_help(format!(
+        "Use lowercase for the number literal prefix `{x1}` and uppercase for hexadecimal digits."
+    ))
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -67,7 +67,8 @@ declare_oxc_lint!(
     /// const foo = 2e+5;
     /// ```
     NumberLiteralCase,
-    style
+    style,
+    fix
 );
 
 impl Rule for NumberLiteralCase {

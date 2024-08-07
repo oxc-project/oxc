@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- 3f53b6f ast: Make AST structs `repr(C)`. (#4614) (rzvxa)
+- 452e0ee ast: Remove defunct `visit_as` + `visit_args` attrs from `#[ast]` macro (#4599) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+### Refactor
+
+- abfccbd ast: Reduce `#[cfg_attr]` boilerplate in AST type defs (#4375) (overlookmotel)
+- 5f1c7ec ast: Rename the `visited_node` marker to `ast`. (#4289) (rzvxa)
+
 ## [0.17.0] - 2024-07-05
 
 ### Features

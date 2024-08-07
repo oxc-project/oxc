@@ -13,7 +13,7 @@ use crate::{
 };
 
 fn no_focused_tests_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-focused-tests): Unexpected focused test.")
+    OxcDiagnostic::warn("Unexpected focused test.")
         .with_help("Remove focus from test.")
         .with_label(span0)
 }
@@ -49,8 +49,20 @@ declare_oxc_lint!(
     /// table
     /// `();
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-focused-tests.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-focused-tests": "error"
+    ///   }
+    /// }
+    /// ```
     NoFocusedTests,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoFocusedTests {
@@ -75,16 +87,20 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     }
 
     if name.starts_with('f') {
-        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), |fixer| {
-            fixer.delete_range(Span::sized(call_expr.span.start, 1))
-        });
+        ctx.diagnostic_with_fix(
+            no_focused_tests_diagnostic(Span::new(
+                call_expr.span.start,
+                call_expr.span.start + u32::try_from(name.len()).unwrap_or(1),
+            )),
+            |fixer| fixer.delete_range(Span::sized(call_expr.span.start, 1)),
+        );
 
         return;
     }
 
     let only_node = members.iter().find(|member| member.is_name_equal("only"));
     if let Some(only_node) = only_node {
-        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), |fixer| {
+        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(only_node.span), |fixer| {
             let mut span = only_node.span.expand_left(1);
             if !matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
                 span = span.expand_right(1);
@@ -98,7 +114,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("describe()", None),
         ("it()", None),
         ("describe.skip()", None),
@@ -114,7 +130,7 @@ fn test() {
         ("test.concurrent()", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("describe.only()", None),
         // TODO: this need set setting like `settings: { jest: { globalAliases: { describe: ['context'] } } },`
         // ("context.only()", None),
@@ -137,11 +153,46 @@ fn test() {
         ("fit.each`table`()", None),
     ];
 
-    let fix = vec![
+    let mut fix = vec![
         ("describe.only('foo', () => {})", "describe('foo', () => {})", None),
         ("describe['only']('foo', () => {})", "describe('foo', () => {})", None),
         ("fdescribe('foo', () => {})", "describe('foo', () => {})", None),
     ];
+
+    let pass_vitest = vec![
+        (r#"it("test", () => {});"#, None),
+        (r#"describe("test group", () => {});"#, None),
+        (r#"it("test", () => {});"#, None),
+        (r#"describe("test group", () => {});"#, None),
+    ];
+
+    let fail_vitest = vec![
+        (
+            r#"
+            import { it } from 'vitest'; 
+            it.only("test", () => {});
+            "#,
+            None,
+        ),
+        (r#"describe.only("test", () => {});"#, None),
+        (r#"test.only("test", () => {});"#, None),
+        (r#"it.only.each([])("test", () => {});"#, None),
+        (r#"test.only.each``("test", () => {});"#, None),
+        (r#"it.only.each``("test", () => {});"#, None),
+    ];
+
+    let fix_vitest = vec![
+        (r#"it.only("test", () => {});"#, r#"it("test", () => {});"#, None),
+        (r#"describe.only("test", () => {});"#, r#"describe("test", () => {});"#, None),
+        (r#"test.only("test", () => {});"#, r#"test("test", () => {});"#, None),
+        (r#"it.only.each([])("test", () => {});"#, r#"it.each([])("test", () => {});"#, None),
+        (r#"test.only.each``("test", () => {});"#, r#"test.each``("test", () => {});"#, None),
+        (r#"it.only.each``("test", () => {});"#, r#"it.each``("test", () => {});"#, None),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+    fix.extend(fix_vitest);
 
     Tester::new(NoFocusedTests::NAME, pass, fail)
         .with_jest_plugin(true)

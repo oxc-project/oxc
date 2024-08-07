@@ -16,7 +16,6 @@ ignore:
   - "tasks"
   - "editor"
   - "napi"
-  - "fuzz"
   - "crates/oxc_ast/src/generated"
   - "crates/oxc_traverse"
   - "crates/oxc_wasm" # Remove this once wasm is completed

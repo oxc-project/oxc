@@ -9,7 +9,7 @@ use phf::phf_set;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_import_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-import-assign): do not assign to imported bindings")
+    OxcDiagnostic::warn("do not assign to imported bindings")
         .with_help("imported bindings are readonly")
         .with_label(span0)
 }
@@ -52,7 +52,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
 impl Rule for NoImportAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flag(symbol_id).is_import_binding() {
+        if symbol_table.get_flag(symbol_id).is_import() {
             let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));
             for reference in symbol_table.get_resolved_references(symbol_id) {
@@ -74,7 +74,7 @@ impl Rule for NoImportAssign {
                             || matches!(parent_parent_kind, AstKind::ChainExpression(_) if ctx.nodes().parent_kind(parent_parent_node.id()).is_some_and(is_unary_expression_with_delete_operator))
                         {
                             if let Some((span, _)) = expr.static_property_info() {
-                                if span != reference.span() {
+                                if span != ctx.semantic().reference_span(reference) {
                                     return ctx
                                         .diagnostic(no_import_assign_diagnostic(expr.span()));
                                 }
@@ -87,7 +87,9 @@ impl Rule for NoImportAssign {
                     || (is_namespace_specifier
                         && is_argument_of_well_known_mutation_function(reference.node_id(), ctx))
                 {
-                    ctx.diagnostic(no_import_assign_diagnostic(reference.span()));
+                    ctx.diagnostic(no_import_assign_diagnostic(
+                        ctx.semantic().reference_span(reference),
+                    ));
                 }
             }
         }
@@ -124,7 +126,7 @@ fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintCon
 
         if ((ident.name == "Object" && OBJECT_MUTATION_METHODS.contains(property_name))
             || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(property_name)))
-            && !ctx.scopes().has_binding(current_node.scope_id(), &ident.name)
+            && ident.reference_id.get().is_some_and(|id| !ctx.symbols().has_binding(id))
         {
             return expr
                 .arguments

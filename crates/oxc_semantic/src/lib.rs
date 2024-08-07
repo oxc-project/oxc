@@ -2,6 +2,7 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
+mod counter;
 mod diagnostics;
 mod jsdoc;
 mod label;
@@ -10,6 +11,7 @@ mod node;
 mod reference;
 mod scope;
 mod symbol;
+mod unresolved_stack;
 
 pub mod dot;
 
@@ -21,7 +23,7 @@ pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodeId, AstNodes};
 use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
 use oxc_cfg::ControlFlowGraph;
-use oxc_span::SourceType;
+use oxc_span::{GetSpan, SourceType, Span};
 pub use oxc_syntax::{
     module_record::ModuleRecord,
     scope::{ScopeFlags, ScopeId},
@@ -136,6 +138,20 @@ impl<'a> Semantic<'a> {
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+    }
+
+    pub fn reference_name(&self, reference: &Reference) -> &str {
+        let node = self.nodes.get_node(reference.node_id());
+        match node.kind() {
+            AstKind::IdentifierReference(id) => id.name.as_str(),
+            AstKind::JSXIdentifier(id) => id.name.as_str(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn reference_span(&self, reference: &Reference) -> Span {
+        let node = self.nodes.get_node(reference.node_id());
+        node.kind().span()
     }
 }
 
@@ -273,7 +289,7 @@ mod tests {
             (SourceType::default(), "let a, b; b = a = 1", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b, c; b = c = a", ReferenceFlag::read()),
-            // sequences return last value in sequence
+            // sequences return last read_write in sequence
             (SourceType::default(), "let a, b; b = (0, a++)", ReferenceFlag::read_write()),
             // loops
             (
@@ -300,7 +316,7 @@ mod tests {
                 "let a, b; if (b == a) { true } else { false }",
                 ReferenceFlag::read(),
             ),
-            // identifiers not in last value are also considered a read (at
+            // identifiers not in last read_write are also considered a read (at
             // least, or now)
             (SourceType::default(), "let a, b; b = (a, 0)", ReferenceFlag::read()),
             (SourceType::default(), "let a, b; b = (--a, 0)", ReferenceFlag::read_write()),

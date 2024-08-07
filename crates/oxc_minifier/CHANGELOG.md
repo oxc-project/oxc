@@ -4,6 +4,72 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- 229a0e9 minifier: Implement dot define for member expressions (#3959) (camc314)
+
+### Bug Fixes
+
+- bf48c7f minifier: Fix `keep_var` keeping vars from arrow functions (#4680) (Boshen)
+- 9be29af minifier: Temporarily fix shadowed `undefined` variable (#4678) (Boshen)
+- e8b662a minifier: Various fixes to pass minifier conformance (#4667) (Boshen)
+
+### Performance
+
+- 0f5e982 minifier: Only visit arrow expression after dropping `console.log` (#4677) (Boshen)
+
+### Refactor
+
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- a558492 codegen: Implement `BinaryExpressionVisitor` (#4548) (Boshen)
+
+### Bug Fixes
+
+- 6a94e3f codegen: Fixes for esbuild test cases (#4503) (Boshen)
+
+## [0.22.0] - 2024-07-23
+
+### Features
+
+- 0deb027 minfier: Dce `if (xxx) else if (false) { REMOVE }` (#4407) (Boshen)
+- e33ec18 minifier: Compress `typeof foo == "undefined"` into `typeof foo > "u"` (#4412) (Boshen)
+
+### Bug Fixes
+
+- 267f7c4 minifier: Skip `Object.defineProperty(exports, ...)` for `cjs-module-lexer` (#4409) (Boshen)
+
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- 5d17675 mangler: Add debug mode (#4314) (Boshen)
+- e3e663b mangler: Initialize crate and integrate into minifier (#4197) (Boshen)
+- c818472 minifier: Dce conditional expression `&&` or `||` (#4190) (Boshen)
+
+### Bug Fixes
+
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- f144082 minifier: RemoveDeadCode should visit nested expression (#4268) (underfin)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+
+## [0.20.0] - 2024-07-11
+
+### Features
+
+- 54cd04a minifier: Implement dce with var hoisting (#4160) (Boshen)
+- 44a894a minifier: Implement return statement dce (#4155) (Boshen)
+
 ## [0.19.0] - 2024-07-09
 
 - b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)

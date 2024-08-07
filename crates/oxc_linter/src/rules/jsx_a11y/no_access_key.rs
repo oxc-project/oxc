@@ -6,10 +6,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, AstNode};
 
 fn no_access_key_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.")
+    OxcDiagnostic::warn("No access key attribute allowed.")
         .with_help("Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.")
         .with_label(span0)
 }
@@ -42,7 +42,8 @@ impl Rule for NoAccessKey {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_lowercase(jsx_el, "accessKey")
+        if let Some(JSXAttributeItem::Attribute(attr)) =
+            has_jsx_prop_ignore_case(jsx_el, "accessKey")
         {
             match attr.value.as_ref() {
                 Some(JSXAttributeValue::StringLiteral(_)) => {

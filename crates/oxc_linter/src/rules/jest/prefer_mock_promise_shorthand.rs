@@ -9,7 +9,9 @@ use oxc_span::{Atom, Span};
 use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, utils::get_node_name};
 
 fn use_mock_shorthand(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises").with_help(format!("Prefer {x0:?}")).with_label(span1)
+    OxcDiagnostic::warn("Prefer mock resolved/rejected shorthands for promises")
+        .with_help(format!("Prefer {x0:?}"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -50,6 +52,7 @@ declare_oxc_lint!(
     ///
     PreferMockPromiseShorthand,
     style,
+    conditional_fix
 );
 
 impl Rule for PreferMockPromiseShorthand {
@@ -167,9 +170,9 @@ impl PreferMockPromiseShorthand {
     ) -> String {
         let mut content = fixer.codegen();
         content.print_str(prefer_name);
-        content.print(b'(');
+        content.print_char(b'(');
         if call_expr.arguments.is_empty() {
-            content.print_str(b"undefined");
+            content.print_str("undefined");
         } else {
             for argument in &call_expr.arguments {
                 if let Some(expr) = argument.as_expression() {

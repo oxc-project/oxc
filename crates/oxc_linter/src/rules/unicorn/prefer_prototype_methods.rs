@@ -12,14 +12,11 @@ use crate::{
 };
 
 fn known_method(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `{x1}.prototype.{x2}`."
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Prefer using `{x1}.prototype.{x2}`.")).with_label(span0)
 }
 
 fn unknown_method(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `{x1}.prototype`.")).with_label(span0)
+    OxcDiagnostic::warn(format!("Prefer using method from `{x1}.prototype`.")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,7 +44,8 @@ declare_oxc_lint!(
     /// const maxValue = Math.max.apply(Math, numbers);
     /// ```
     PreferPrototypeMethods,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferPrototypeMethods {

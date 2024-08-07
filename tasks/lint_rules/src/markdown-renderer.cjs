@@ -9,7 +9,7 @@ const renderIntroduction = ({ npm }) => `
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
 
-This is tracking issue for ${npm.map(n => "`" + n + "`").join(", ")}.
+This is tracking issue for ${npm.map((n) => "`" + n + "`").join(", ")}.
 `;
 
 /**

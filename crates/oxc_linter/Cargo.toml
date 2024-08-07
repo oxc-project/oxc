@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_linter"
-version                = "0.5.3"
+version                = "0.7.0"
 publish                = false
 authors.workspace      = true
 description.workspace  = true
@@ -22,10 +22,11 @@ doctest = false
 [dependencies]
 oxc_allocator   = { workspace = true }
 oxc_parser      = { workspace = true }
-oxc_span        = { workspace = true }
+oxc_span        = { workspace = true, features = ["schemars", "serialize"] }
 oxc_ast         = { workspace = true }
 oxc_cfg         = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_index       = { workspace = true }
 oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
@@ -33,6 +34,7 @@ oxc_codegen     = { workspace = true }
 oxc_resolver    = { workspace = true }
 
 rayon               = { workspace = true }
+bitflags            = { workspace = true }
 lazy_static         = { workspace = true }
 serde_json          = { workspace = true }
 serde               = { workspace = true, features = ["derive"] }

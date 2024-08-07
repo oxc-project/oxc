@@ -1,0 +1,44 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/function-declaration/type-predicate1.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(foo)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 1,
+            "name": "arg",
+            "node": "FormalParameter(arg)",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "id": 0,
+                "name": "arg",
+                "node_id": 16
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "foo",
+        "node": "Function(foo)",
+        "references": []
+      }
+    ]
+  }
+]

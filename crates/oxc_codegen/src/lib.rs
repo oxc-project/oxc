@@ -4,38 +4,48 @@
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
 mod annotation_comment;
+mod binary_expr_visitor;
 mod context;
 mod gen;
-mod gen_comment;
 mod operator;
 mod sourcemap_builder;
 
 use std::{borrow::Cow, ops::Range};
 
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
-    ast::{BlockStatement, Directive, Expression, Program, Statement},
+    ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
     Comment, Trivias,
 };
+use oxc_mangler::Mangler;
 use oxc_span::Span;
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
-    symbol::SymbolId,
 };
-use rustc_hash::FxHashMap;
 
+use crate::{
+    binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
+    sourcemap_builder::SourcemapBuilder,
+};
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
 };
-use crate::{operator::Operator, sourcemap_builder::SourcemapBuilder};
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a, false>;
 
 /// Code generator with whitespace removal.
 pub type WhitespaceRemover<'a> = Codegen<'a, true>;
+
+#[derive(Default, Clone, Copy)]
+pub struct CodegenOptions {
+    /// Use single quotes instead of double quotes.
+    pub single_quote: bool,
+}
 
 #[derive(Default, Clone, Copy)]
 pub struct CommentOptions {
@@ -49,11 +59,14 @@ pub struct CodegenReturn {
 }
 
 pub struct Codegen<'a, const MINIFY: bool> {
+    options: CodegenOptions,
     comment_options: CommentOptions,
 
     source_text: &'a str,
 
     trivias: Trivias,
+
+    mangler: Option<Mangler>,
 
     /// Output Code
     code: Vec<u8>,
@@ -63,6 +76,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     prev_reg_exp_end: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
+    binary_expr_stack: Vec<BinaryExpressionVisitor<'a>>,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -76,6 +90,9 @@ pub struct Codegen<'a, const MINIFY: bool> {
     /// Track the current indentation level
     indent: u32,
 
+    /// Fast path for [CodegenOptions::single_quote]
+    quote: u8,
+
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
 
@@ -83,6 +100,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     /// the first element of value is the start of the comment
     /// the second element of value includes the end of the comment and comment kind.
     move_comment_map: MoveCommentMap,
+    latest_consumed_comment_end: u32,
 }
 
 impl<'a, const MINIFY: bool> Default for Codegen<'a, MINIFY> {
@@ -108,13 +126,16 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     #[must_use]
     pub fn new() -> Self {
         Self {
+            options: CodegenOptions::default(),
             comment_options: CommentOptions::default(),
             source_text: "",
             trivias: Trivias::default(),
+            mangler: None,
             code: vec![],
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
+            binary_expr_stack: Vec::with_capacity(5),
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
@@ -122,9 +143,27 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indent: 0,
+            quote: b'"',
             sourcemap_builder: None,
             move_comment_map: MoveCommentMap::default(),
+            latest_consumed_comment_end: 0,
         }
+    }
+
+    /// Initialize the output code buffer to reduce memory reallocation.
+    /// Minification will reduce by at least half of the original size.
+    #[must_use]
+    pub fn with_capacity(mut self, source_text_len: usize) -> Self {
+        let capacity = if MINIFY { source_text_len / 2 } else { source_text_len };
+        self.code = Vec::with_capacity(capacity);
+        self
+    }
+
+    #[must_use]
+    pub fn with_options(mut self, options: CodegenOptions) -> Self {
+        self.options = options;
+        self.quote = if options.single_quote { b'\'' } else { b'"' };
+        self
     }
 
     #[must_use]
@@ -148,12 +187,9 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self
     }
 
-    /// Initialize the output code buffer to reduce memory reallocation.
-    /// Minification will reduce by at least half of the original size.
     #[must_use]
-    pub fn with_capacity(mut self, source_text_len: usize) -> Self {
-        let capacity = if MINIFY { source_text_len / 2 } else { source_text_len };
-        self.code = Vec::with_capacity(capacity);
+    pub fn with_mangler(mut self, mangler: Option<Mangler>) -> Self {
+        self.mangler = mangler;
         self
     }
 
@@ -168,20 +204,20 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     #[must_use]
     pub fn into_source_text(&mut self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked` are met.
-        #[allow(unsafe_code)]
-        unsafe {
-            String::from_utf8_unchecked(std::mem::take(&mut self.code))
-        }
+
+        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
     }
 
     /// Push a single character into the buffer
-    pub fn print(&mut self, ch: u8) {
+    #[inline]
+    pub fn print_char(&mut self, ch: u8) {
         self.code.push(ch);
     }
 
-    /// Push a single character into the buffer
-    pub fn print_str<T: AsRef<[u8]>>(&mut self, s: T) {
-        self.code.extend_from_slice(s.as_ref());
+    /// Push str into the buffer
+    #[inline]
+    pub fn print_str(&mut self, s: &str) {
+        self.code.extend(s.as_bytes());
     }
 }
 
@@ -198,30 +234,30 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     #[inline]
     fn print_soft_space(&mut self) {
         if !MINIFY {
-            self.print(b' ');
+            self.print_char(b' ');
         }
     }
 
     #[inline]
     pub fn print_hard_space(&mut self) {
-        self.print(b' ');
+        self.print_char(b' ');
     }
 
     #[inline]
     fn print_soft_newline(&mut self) {
         if !MINIFY {
-            self.print(b'\n');
+            self.print_char(b'\n');
         }
     }
 
     #[inline]
     fn print_semicolon(&mut self) {
-        self.print(b';');
+        self.print_char(b';');
     }
 
     #[inline]
     fn print_comma(&mut self) {
-        self.print(b',');
+        self.print_char(b',');
     }
 
     #[inline]
@@ -236,7 +272,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     fn peek_nth(&self, n: usize) -> Option<char> {
-        #[allow(unsafe_code)]
         // SAFETY: criteria of `from_utf8_unchecked` are met.
         unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
@@ -273,7 +308,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         if MINIFY {
             self.needs_semicolon = true;
         } else {
-            self.print_str(b";\n");
+            self.print_str(";\n");
         }
     }
 
@@ -287,17 +322,17 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     fn print_ellipsis(&mut self) {
-        self.print_str(b"...");
+        self.print_str("...");
     }
 
     #[inline]
     pub fn print_colon(&mut self) {
-        self.print(b':');
+        self.print_char(b':');
     }
 
     #[inline]
     fn print_equal(&mut self) {
-        self.print(b'=');
+        self.print_char(b'=');
     }
 
     fn print_sequence<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
@@ -309,7 +344,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
         self.add_source_mapping(span.start);
-        self.print(b'{');
+        self.print_char(b'{');
         if !single_line {
             self.print_soft_newline();
             self.indent();
@@ -320,12 +355,12 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             self.print_indent();
         }
         self.add_source_mapping(span.end);
-        self.print(b'}');
+        self.print_char(b'}');
     }
 
     fn print_block_start(&mut self, position: u32) {
         self.add_source_mapping(position);
-        self.print(b'{');
+        self.print_char(b'{');
         self.print_soft_newline();
         self.indent();
     }
@@ -334,7 +369,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.dedent();
         self.print_indent();
         self.add_source_mapping(position);
-        self.print(b'}');
+        self.print_char(b'}');
     }
 
     fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
@@ -360,7 +395,10 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
-            p.print_directives_and_statements(None, &stmt.body, ctx);
+            for stmt in &stmt.body {
+                p.print_semicolon_if_needed();
+                stmt.gen(p, ctx);
+            }
         });
         self.needs_semicolon = false;
     }
@@ -377,7 +415,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::lowest(), Context::default());
+        expr.gen_expr(self, Precedence::Lowest, Context::empty());
     }
 
     fn print_expressions<T: GenExpr<MINIFY>>(
@@ -395,17 +433,27 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
-    #[allow(clippy::needless_pass_by_value)]
-    fn print_symbol(&mut self, span: Span, _symbol_id: Option<SymbolId>, fallback: &str) {
-        // if let Some(mangler) = &self.mangler {
-        // if let Some(symbol_id) = symbol_id {
-        // let name = mangler.get_symbol_name(symbol_id);
-        // self.print_str(name.clone().as_bytes());
-        // return;
-        // }
-        // }
-        self.add_source_mapping_for_name(span, fallback);
-        self.print_str(fallback.as_bytes());
+    fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
+        if let Some(mangler) = &self.mangler {
+            if let Some(reference_id) = reference.reference_id.get() {
+                if let Some(name) = mangler.get_reference_name(reference_id) {
+                    // SAFETY: Hack the lifetime to be part of the allocator.
+                    return unsafe { std::mem::transmute_copy(&name) };
+                }
+            }
+        }
+        reference.name.as_str()
+    }
+
+    fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
+        if let Some(mangler) = &self.mangler {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                let name = mangler.get_symbol_name(symbol_id);
+                // SAFETY: Hack the lifetime to be part of the allocator.
+                return unsafe { std::mem::transmute_copy(&name) };
+            }
+        }
+        ident.name.as_str()
     }
 
     fn print_space_before_operator(&mut self, next: Operator) {
@@ -441,49 +489,21 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     #[inline]
-    fn wrap<F: FnMut(&mut Self)>(&mut self, _wrap: bool, mut f: F) {
-        // if wrap {
-        // self.print(b'(');
-        // }
+    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
+        if wrap {
+            self.print_char(b'(');
+        }
         f(self);
-        // if wrap {
-        // self.print(b')');
-        // }
+        if wrap {
+            self.print_char(b')');
+        }
     }
 
     #[inline]
-    fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
-        let quote = Self::choose_quote(s);
-        self.print(quote as u8);
-        f(self, quote);
-        self.print(quote as u8);
-    }
-
-    fn print_directives_and_statements(
-        &mut self,
-        directives: Option<&[Directive]>,
-        statements: &[Statement<'_>],
-        ctx: Context,
-    ) {
-        if let Some(directives) = directives {
-            if directives.is_empty() {
-                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
-                    if matches!(s.expression, Expression::StringLiteral(_)) {
-                        self.print_semicolon();
-                        self.print_soft_newline();
-                    }
-                }
-            } else {
-                for directive in directives {
-                    directive.gen(self, ctx);
-                    self.print_semicolon_if_needed();
-                }
-            }
-        }
-        for stmt in statements {
-            self.print_semicolon_if_needed();
-            stmt.gen(self, ctx);
-        }
+    fn wrap_quote<F: FnMut(&mut Self, u8)>(&mut self, mut f: F) {
+        self.print_char(self.quote);
+        f(self, self.quote);
+        self.print_char(self.quote);
     }
 
     fn add_source_mapping(&mut self, position: u32) {
@@ -495,24 +515,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
-        }
-    }
-
-    fn choose_quote(s: &str) -> char {
-        let mut single_cost = 0;
-        let mut double_cost = 0;
-        for c in s.chars() {
-            match c {
-                '\'' => single_cost += 1,
-                '"' => double_cost += 1,
-                _ => {}
-            }
-        }
-
-        if single_cost > double_cost {
-            '"'
-        } else {
-            '\''
         }
     }
 }

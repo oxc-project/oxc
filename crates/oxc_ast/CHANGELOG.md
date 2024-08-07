@@ -4,6 +4,139 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+- 85e8418 linter: Add react/jsx-curly-brace-presence (#3949) (Don Isaac)
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- c9c38a1 parser: Support peeking over bytes (#4304) (lucab)
+
+### Documentation
+
+- 0914e47 ast: Add doc comments to literal nodes (#4551) (DonIsaac)
+- c6a11be ast: Auto-generate doc comments for AstBuilder methods (#4471) (DonIsaac)
+
+## [0.22.1] - 2024-07-27
+
+### Features
+
+- 2477330 ast: Add `AstKind::TSExportAssignment` (#4501) (Dunqing)
+- aaee07e ast: Add `AstKind::AssignmentTargetPattern`, `AstKind::ArrayAssignmentTarget` and `AstKind::ObjectAssignmentTarget` (#4456) (Dunqing)
+- fd363d1 ast: Add AstKind::get_container_scope_id (#4450) (DonIsaac)
+
+### Bug Fixes
+
+- 368112c ast: Remove `#[visit(ignore)]` from `ExportDefaultDeclarationKind`'s `TSInterfaceDeclaration` (#4497) (Dunqing)
+
+### Documentation
+
+- f5f0ba8 ast: Add doc comments to more AST nodes (#4413) (Don Isaac)
+
+### Refactor
+
+- 9c5d2f9 ast/builder: Use `Box::new_in` over `.into_in` (#4428) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+- f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)
+
+### Features
+
+- d345b84 ast: Add `#[ast]` attribute to non-visited AST types. (#4309) (rzvxa)
+- 3c0c709 linter: Add typescript-eslint/no-extraneous-class (#4357) (Jaden Rodriguez)
+- 68efcd4 linter/react-perf: Handle new objects and arrays in prop assignment patterns (#4396) (DonIsaac)
+
+### Bug Fixes
+
+- aece1df ast: Visit `Program`s `hashbang` field first (#4368) (overlookmotel)
+
+### Performance
+- a207923 Replace some CompactStr usages with Cows (#4377) (DonIsaac)
+
+### Refactor
+
+- d213773 ast: Replace serde rename "lowercase" with "camelCase" (#4376) (overlookmotel)
+- abfccbd ast: Reduce `#[cfg_attr]` boilerplate in AST type defs (#4375) (overlookmotel)
+- 5f1c7ec ast: Rename the `visited_node` marker to `ast`. (#4289) (rzvxa)
+- 59aea73 ast: Scope is created only if CatchClause has param (#4346) (Dunqing)
+- 7a3e925 ast_codegen: Better visit marker parsing. (#4371) (rzvxa)
+
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- af4dc01 ast: Align ts ast scope with typescript (#4253) (Dunqing)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+- 92ee774 semantic: Add `ScopeFlags::CatchClause` for use in CatchClause (#4205) (Dunqing)
+
+### Bug Fixes
+
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- 3e099fe ast: Move `enter_scope` after `visit_binding_identifier` (#4246) (Dunqing)
+- aab7aaa ast/visit: Fire node events as the outermost one. (#4203) (rzvxa)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- 7f1addd semantic: Correct scope in CatchClause (#4192) (Dunqing)
+- 1458d81 visit: Add `#[inline]` to empty functions (#4330) (overlookmotel)
+
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Features
+
+- 67fe75e ast, ast_codegen: Pass the `scope_id` to the `enter_scope` event. (#4168) (rzvxa)
+
+### Bug Fixes
+
+- 48947a2 ast: Put `decorators` before everything else. (#4143) (rzvxa)
+
+### Documentation
+
+- bdcc298 ast: Update the note regarding the `ast_codegen` markers. (#4149) (rzvxa)
+
+### Refactor
+
+
 ## [0.19.0] - 2024-07-09
 
 - b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)

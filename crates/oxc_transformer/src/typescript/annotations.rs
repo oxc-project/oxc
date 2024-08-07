@@ -4,9 +4,13 @@ use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
+use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
-    operator::AssignmentOperator, reference::ReferenceFlag, scope::ScopeFlags, symbol::SymbolId,
+    operator::AssignmentOperator,
+    reference::ReferenceFlag,
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
 };
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
@@ -78,8 +82,19 @@ impl<'a> TypeScriptAnnotations<'a> {
                         false
                     } else {
                         decl.specifiers.retain(|specifier| {
-                            !specifier.export_kind.is_type()
-                                && !self.type_identifier_names.contains(&specifier.exported.name())
+                            !(specifier.export_kind.is_type()
+                                || self.type_identifier_names.contains(&specifier.exported.name())
+                                || {
+                                    if let ModuleExportName::IdentifierReference(ident) =
+                                        &specifier.local
+                                    {
+                                        ident.reference_id.get().is_some_and(|id| {
+                                            ctx.symbols().get_reference(id).is_type()
+                                        })
+                                    } else {
+                                        false
+                                    }
+                                })
                         });
 
                         !decl.specifiers.is_empty()
@@ -407,7 +422,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             }
         }
 
-        Self::replace_with_empty_block_if_ts(&mut stmt.consequent, ctx);
+        Self::replace_with_empty_block_if_ts(&mut stmt.consequent, ctx.current_scope_id(), ctx);
 
         if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
             stmt.alternate = None;
@@ -430,7 +445,35 @@ impl<'a> TypeScriptAnnotations<'a> {
         stmt: &mut ForStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
+    }
+
+    pub fn transform_for_in_statement(
+        &mut self,
+        stmt: &mut ForInStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
+    }
+
+    pub fn transform_for_of_statement(
+        &mut self,
+        stmt: &mut ForOfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
     }
 
     pub fn transform_while_statement(
@@ -438,7 +481,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         stmt: &mut WhileStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx.current_scope_id(), ctx);
     }
 
     pub fn transform_do_while_statement(
@@ -446,12 +489,25 @@ impl<'a> TypeScriptAnnotations<'a> {
         stmt: &mut DoWhileStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx.current_scope_id(), ctx);
     }
 
-    fn replace_with_empty_block_if_ts(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn replace_for_statement_body_with_empty_block_if_ts(
+        body: &mut Statement<'a>,
+        scope_id: &Cell<Option<ScopeId>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let scope_id = scope_id.get().unwrap_or(ctx.current_scope_id());
+        Self::replace_with_empty_block_if_ts(body, scope_id, ctx);
+    }
+
+    fn replace_with_empty_block_if_ts(
+        stmt: &mut Statement<'a>,
+        parent_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if stmt.is_typescript_syntax() {
-            let scope_id = ctx.create_scope_child_of_current(ScopeFlags::empty());
+            let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             let block = BlockStatement {
                 span: stmt.span(),
                 body: ctx.ast.vec(),
@@ -476,38 +532,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         self.has_jsx_fragment = true;
     }
 
-    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        let Some(specifiers) = &decl.specifiers else {
-            return;
-        };
-        let is_type = decl.import_kind.is_type();
-        for specifier in specifiers {
-            let mut specifier_is_type = is_type;
-            let id = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                    if s.import_kind.is_type() {
-                        specifier_is_type = true;
-                    }
-                    &s.local
-                }
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
-            };
-            if specifier_is_type {
-                self.type_identifier_names.insert(id.name.clone());
-            }
-        }
-    }
-
-    pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        let is_type = decl.export_kind.is_type();
-        for specifier in &decl.specifiers {
-            if is_type || specifier.export_kind.is_type() {
-                self.type_identifier_names.insert(specifier.local.name().clone());
-            }
-        }
-    }
-
     pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
         // NB: Namespace transform happens in `enter_program` visitor, and replaces retained
         // namespaces with functions. This visitor is called after, by which time any remaining
@@ -517,6 +541,15 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {
         if let Some(symbol_id) = ctx.scopes().get_root_binding(name) {
+            // `import T from 'mod'; const T = 1;` The T has a value redeclaration
+            // `import T from 'mod'; type T = number;` The T has a type redeclaration
+            // If the symbol is still a value symbol after SymbolFlags::Import is removed, then it's a value redeclaration.
+            // That means the import is shadowed, and we can safely remove the import.
+            let has_value_redeclaration =
+                (ctx.symbols().get_flag(symbol_id) - SymbolFlags::Import).is_value();
+            if has_value_redeclaration {
+                return false;
+            }
             if ctx
                 .symbols()
                 .get_resolved_references(symbol_id)
@@ -539,11 +572,7 @@ struct Assignment<'a> {
 impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
-        let reference_id = ctx.create_bound_reference(
-            self.name.to_compact_str(),
-            self.symbol_id,
-            ReferenceFlag::Read,
-        );
+        let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlag::Read);
         let id = IdentifierReference::new_read(self.span, self.name.clone(), Some(reference_id));
 
         ctx.ast.statement_expression(

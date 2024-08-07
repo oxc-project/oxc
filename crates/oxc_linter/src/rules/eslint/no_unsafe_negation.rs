@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnsafeNegation,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUnsafeNegation {
@@ -83,13 +84,13 @@ impl NoUnsafeNegation {
             // modify `!a instance of B` to `!(a instanceof B)`
             let modified_code = {
                 let mut codegen = fixer.codegen();
-                codegen.print(b'!');
+                codegen.print_char(b'!');
                 let Expression::UnaryExpression(left) = &expr.left else { unreachable!() };
-                codegen.print(b'(');
+                codegen.print_char(b'(');
                 codegen.print_expression(&left.argument);
                 expr.operator.gen(&mut codegen, Context::default());
                 codegen.print_expression(&expr.right);
-                codegen.print(b')');
+                codegen.print_char(b')');
                 codegen.into_source_text()
             };
             fixer.replace(expr.span, modified_code)

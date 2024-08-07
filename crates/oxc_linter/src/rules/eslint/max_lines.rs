@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule};
 
 fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(max-lines): File has too many lines ({count})."))
+    OxcDiagnostic::warn(format!("File has too many lines ({count})."))
         .with_help(format!("Maximum allowed is {max}."))
         .with_label(span)
 }

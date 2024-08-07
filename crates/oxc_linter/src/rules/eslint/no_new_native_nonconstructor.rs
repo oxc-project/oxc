@@ -6,10 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_new_native_nonconstructor_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(no-new-native-nonconstructor): `{x0}` cannot be called as a constructor."
-    ))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("`{x0}` cannot be called as a constructor.")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -9,10 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_hex_escape_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(no-hex-escape): Use Unicode escapes instead of hexadecimal escapes.",
-    )
-    .with_label(span0)
+    OxcDiagnostic::warn("Use Unicode escapes instead of hexadecimal escapes.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -34,7 +31,8 @@ declare_oxc_lint!(
     /// const foo = `\u001B${bar}`;
     /// ```
     NoHexEscape,
-    pedantic
+    pedantic,
+    fix
 );
 
 // \x -> \u00

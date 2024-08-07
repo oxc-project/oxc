@@ -4,18 +4,20 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use phf::{phf_map, phf_set};
+use rustc_hash::FxHashSet;
+use serde_json::Value;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(autocomplete-valid): `{autocomplete}` is not a valid value for autocomplete."))
+    OxcDiagnostic::warn(format!("`{autocomplete}` is not a valid value for autocomplete."))
         .with_help(format!("Change `{autocomplete}` to a valid value for autocomplete."))
         .with_label(span)
 }
@@ -43,7 +45,7 @@ declare_oxc_lint!(
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AutocompleteValidConfig {
-    input_components: Vec<String>,
+    input_components: FxHashSet<CompactStr>,
 }
 
 impl std::ops::Deref for AutocompleteValid {
@@ -56,7 +58,7 @@ impl std::ops::Deref for AutocompleteValid {
 
 impl std::default::Default for AutocompleteValidConfig {
     fn default() -> Self {
-        Self { input_components: vec!["input".to_string()] }
+        Self { input_components: FxHashSet::from_iter([CompactStr::new("input")]) }
     }
 }
 
@@ -157,21 +159,21 @@ fn is_valid_autocomplete_value(value: &str) -> bool {
 }
 
 impl Rule for AutocompleteValid {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let mut input_components: Vec<String> = vec!["input".to_string()];
-        if let Some(config) = value.get(0) {
-            if let Some(serde_json::Value::Array(components)) = config.get("inputComponents") {
-                input_components = components
+    fn from_configuration(config: Value) -> Self {
+        config
+            .get(0)
+            .and_then(|c| c.get("inputComponents"))
+            .and_then(Value::as_array)
+            .map(|components| {
+                components
                     .iter()
-                    .filter_map(|c| c.as_str().map(std::string::ToString::to_string))
-                    .collect();
-            }
-        }
-
-        // Add default input component
-        input_components.push("input".to_string());
-
-        Self(Box::new(AutocompleteValidConfig { input_components }))
+                    .filter_map(Value::as_str)
+                    .map(CompactStr::from)
+                    .chain(Some("input".into()))
+                    .collect()
+            })
+            .map(|input_components| Self(Box::new(AutocompleteValidConfig { input_components })))
+            .unwrap_or_default()
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -179,11 +181,11 @@ impl Rule for AutocompleteValid {
             let Some(name) = &get_element_type(ctx, jsx_el) else {
                 return;
             };
-            if !self.input_components.contains(name) {
+            if !self.input_components.contains(name.as_ref()) {
                 return;
             }
 
-            let Some(autocomplete_prop) = has_jsx_prop_lowercase(jsx_el, "autocomplete") else {
+            let Some(autocomplete_prop) = has_jsx_prop_ignore_case(jsx_el, "autocomplete") else {
                 return;
             };
             let attr = match autocomplete_prop {

@@ -6,51 +6,60 @@ source: crates/oxc_linter/src/tester.rs
  1 │ test('i need to write this test');
    · ────
    ╰────
+  help: Replace `` with `.todo`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test('i need to write this test',);
    · ────
    ╰────
+  help: Replace `` with `.todo`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test(`i need to write this test`);
    · ────
    ╰────
+  help: Replace `` with `.todo`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ it('foo', function () {})
    · ─────────────────────────
    ╰────
+  help: Replace `it('foo', function () {})` with `it.todo('foo')`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ it('foo', () => {})
    · ───────────────────
    ╰────
+  help: Replace `it('foo', () => {})` with `it.todo('foo')`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test.skip('i need to write this test', () => {});
    · ────────────────────────────────────────────────
    ╰────
+  help: Replace `test.skip('i need to write this test', () => {})` with `test.todo('i need to write this test')`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test.skip('i need to write this test', function() {});
    · ─────────────────────────────────────────────────────
    ╰────
+  help: Replace `test.skip('i need to write this test', function() {})` with `test.todo('i need to write this test')`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test[`skip`]('i need to write this test', function() {});
    · ────────────────────────────────────────────────────────
    ╰────
+  help: Replace `test[`skip`]('i need to write this test', function() {})` with `test['todo']('i need to write this test')`.
 
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]
  1 │ test[`skip`]('i need to write this test', function() {});
    · ────────────────────────────────────────────────────────
    ╰────
+  help: Replace `test[`skip`]('i need to write this test', function() {})` with `test['todo']('i need to write this test')`.

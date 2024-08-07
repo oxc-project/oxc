@@ -12,19 +12,19 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{
     ast_util::is_method_call,
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
 
 fn replace_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
+    OxcDiagnostic::warn("Disallow the use of the `null` literal")
         .with_help("Replace the `null` literal with `undefined`.")
         .with_label(span0)
 }
 
 fn remove_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
+    OxcDiagnostic::warn("Disallow the use of the `null` literal")
         .with_help("Remove the `null` literal.")
         .with_label(span0)
 }
@@ -55,7 +55,8 @@ declare_oxc_lint!(
     /// let foo
     /// ```
     NoNull,
-    style
+    style,
+    fix
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
@@ -220,7 +221,7 @@ impl Rule for NoNull {
     }
 }
 
-fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> Fix<'a> {
+fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
     fixer.replace(null.span, "undefined")
 }
 #[test]

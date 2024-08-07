@@ -1,0 +1,107 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-expressions/type-arguments2.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(makeBox)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 12
+              }
+            ]
+          },
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "value",
+            "node": "FormalParameter(value)",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "id": 1,
+                "name": "value",
+                "node_id": 19
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 4,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 3,
+                "name": "T",
+                "node_id": 31
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "makeBox",
+        "node": "Function(makeBox)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read | TSTypeQuery)",
+            "id": 2,
+            "name": "makeBox",
+            "node_id": 27
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 4,
+            "name": "makeBox",
+            "node_id": 36
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "BoxFunc",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 5,
+        "name": "makeStringBox",
+        "node": "VariableDeclarator(makeStringBox)",
+        "references": []
+      }
+    ]
+  }
+]

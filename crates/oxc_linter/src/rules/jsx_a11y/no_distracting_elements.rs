@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{rule::Rule, utils::get_element_type, LintContext};
 
 fn no_distracting_elements_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.")
+    OxcDiagnostic::warn("Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.")
         .with_help("Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.")
         .with_label(span0)
 }
@@ -60,9 +60,7 @@ impl Rule for NoDistractingElements {
             return;
         };
 
-        let name = element_type.as_str();
-
-        if let "marquee" | "blink" = name {
+        if let "marquee" | "blink" = element_type.as_ref() {
             ctx.diagnostic(no_distracting_elements_diagnostic(iden.span));
         }
     }

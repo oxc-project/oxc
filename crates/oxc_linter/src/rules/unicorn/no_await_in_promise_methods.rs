@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn no_await_in_promise_methods_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.{x1}()` should not be awaited."))
+    OxcDiagnostic::warn(format!("Promise in `Promise.{x1}()` should not be awaited."))
         .with_help("Remove the `await`")
         .with_label(span0)
 }

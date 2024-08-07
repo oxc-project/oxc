@@ -22,7 +22,7 @@ bb3: {
 
 digraph {
     0 [ label = "" ]
-    1 [ label = "LabeledStatement\nbreak <A>" ]
+    1 [ label = "LabeledStatement(A)\nbreak <A>" ]
     2 [ label = "unreachable" ]
     3 [ label = "" ]
     1 -> 0 [ label = "Error(Implicit)" ]

@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn prefer_function_type_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.")
+    OxcDiagnostic::warn("Enforce using function types instead of interfaces with call signatures.")
         .with_help(format!("The function type form `{x0}` is generally preferred when possible for being more succinct."))
         .with_label(span1)
 }
@@ -74,7 +74,8 @@ declare_oxc_lint!(
     /// type Intersection = ((data: string) => number) & ((id: number) => string);
     /// ```
     PreferFunctionType,
-    style
+    style,
+    conditional_fix
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
@@ -391,6 +392,10 @@ impl Rule for PreferFunctionType {
 
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

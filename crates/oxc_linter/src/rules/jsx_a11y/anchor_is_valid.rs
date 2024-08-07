@@ -9,32 +9,26 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn missing_href_attribute(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.",
-    )
-    .with_help("Provide an href for the `a` element.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")
+        .with_help("Provide an href for the `a` element.")
+        .with_label(span0)
 }
 
 fn incorrect_href(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(anchor-is-valid): Use an incorrect href for the 'a' element.",
-    )
-    .with_help("Provide a correct href for the `a` element.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Use an incorrect href for the 'a' element.")
+        .with_help("Provide a correct href for the `a` element.")
+        .with_label(span0)
 }
 
 fn cant_be_anchor(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(anchor-is-valid):  The a element has `href` and `onClick`.",
-    )
-    .with_help("Use a `button` element instead of an `a` element.")
-    .with_label(span0)
+    OxcDiagnostic::warn(" The a element has `href` and `onClick`.")
+        .with_help("Use a `button` element instead of an `a` element.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,7 +41,7 @@ struct AnchorIsValidConfig {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// The HTML <a> element, with a valid href attribute, is formally defined as representing a **hyperlink**.
+    /// The HTML `<a>` element, with a valid href attribute, is formally defined as representing a **hyperlink**.
     /// That is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.
     ///
     /// While before it was possible to attach logic to an anchor element, with the advent of JSX libraries,
@@ -140,7 +134,7 @@ impl Rule for AnchorIsValid {
             };
             if name == "a" {
                 if let Option::Some(herf_attr) =
-                    has_jsx_prop_lowercase(&jsx_el.opening_element, "href")
+                    has_jsx_prop_ignore_case(&jsx_el.opening_element, "href")
                 {
                     // Check if the 'a' element has a correct href attribute
                     match herf_attr {
@@ -148,7 +142,7 @@ impl Rule for AnchorIsValid {
                             Some(value) => {
                                 let is_empty = check_value_is_empty(value, &self.0.valid_hrefs);
                                 if is_empty {
-                                    if has_jsx_prop_lowercase(&jsx_el.opening_element, "onclick")
+                                    if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick")
                                         .is_some()
                                     {
                                         ctx.diagnostic(cant_be_anchor(ident.span));

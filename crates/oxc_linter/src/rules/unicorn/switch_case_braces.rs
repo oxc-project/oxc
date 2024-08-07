@@ -6,9 +6,11 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn switch_case_braces_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(switch-case-braces):  Empty switch case shouldn't have braces and not-empty case should have braces around it.")
-        .with_help("There is less visual clutter for empty cases and proper scope for non-empty cases.")
-        .with_label(span0)
+    OxcDiagnostic::warn(
+        " Empty switch case shouldn't have braces and not-empty case should have braces around it.",
+    )
+    .with_help("There is less visual clutter for empty cases and proper scope for non-empty cases.")
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,7 +35,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     SwitchCaseBraces,
-    style
+    style,
+    fix
 );
 
 impl Rule for SwitchCaseBraces {
@@ -77,19 +80,19 @@ impl Rule for SwitchCaseBraces {
                                     let mut formatter = fixer.codegen();
 
                                     if let Some(case_test) = &case.test {
-                                        formatter.print_str(b"case ");
+                                        formatter.print_str("case ");
                                         formatter.print_expression(case_test);
                                     } else {
-                                        formatter.print_str(b"default");
+                                        formatter.print_str("default");
                                     }
 
                                     formatter.print_colon();
                                     formatter.print_hard_space();
-                                    formatter.print(b'{');
+                                    formatter.print_char(b'{');
                                     case.consequent
                                         .iter()
                                         .for_each(|x| x.gen(&mut formatter, Context::default()));
-                                    formatter.print(b'}');
+                                    formatter.print_char(b'}');
 
                                     formatter.into_source_text()
                                 };

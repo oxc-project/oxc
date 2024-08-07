@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn no_conditional_expect_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect")
+    OxcDiagnostic::warn("Unexpected conditional expect")
         .with_help("Avoid calling `expect` conditionally`")
         .with_label(span0)
 }
@@ -49,6 +49,17 @@ declare_oxc_lint!(
     /// it('throws an error', async () => {
     //   await foo().catch(error => expect(error).toBeInstanceOf(error));
     // });
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-conditional-expect": "error"
+    ///   }
+    /// }
     /// ```
     NoConditionalExpect,
     correctness
@@ -163,7 +174,7 @@ fn check_parents<'a>(
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         (
             "
                 it('foo', () => {
@@ -431,7 +442,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             "
                 it('foo', () => {
@@ -886,5 +897,109 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoConditionalExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        "
+            it('foo', () => {
+                process.env.FAIL && setNum(1);
+
+                expect(num).toBe(2);
+            });
+        ",
+        "
+            function getValue() {
+                let num = 2;
+
+                process.env.FAIL && setNum(1);
+
+                return num;
+            }
+
+            it('foo', () => {
+                expect(getValue()).toBe(2);
+            });
+        ",
+        "
+            function getValue() {
+                let num = 2;
+
+                process.env.FAIL || setNum(1);
+
+                return num;
+            }
+
+            it('foo', () => {
+                expect(getValue()).toBe(2);
+            });
+        ",
+        "
+            it('foo', () => {
+                const num = process.env.FAIL ? 1 : 2;
+
+                expect(num).toBe(2);
+            });
+        ",
+        "
+            function getValue() {
+                return process.env.FAIL ? 1 : 2
+            }
+
+            it('foo', () => {
+                expect(getValue()).toBe(2);
+            });
+        ",
+    ];
+
+    let fail_vitest = vec![
+        "
+            it('foo', () => {
+                something && expect(something).toHaveBeenCalled();
+            })
+        ",
+        "
+            it('foo', () => {
+                a || (b && expect(something).toHaveBeenCalled());
+            })
+        ",
+        "
+            it.each``('foo', () => {
+                something || expect(something).toHaveBeenCalled();
+            });
+        ",
+        "
+            it.each()('foo', () => {
+                something || expect(something).toHaveBeenCalled();
+            })
+        ",
+        "
+            function getValue() {
+                something || expect(something).toHaveBeenCalled();
+            }
+            it('foo', getValue);
+        ",
+        "
+            it('foo', () => {
+                something ? expect(something).toHaveBeenCalled() : noop();
+            })
+        ",
+        "
+            function getValue() {
+                something ? expect(something).toHaveBeenCalled() : noop();
+            }
+
+            it('foo', getValue);
+        ",
+        "
+            it('foo', () => {
+                something ? noop() : expect(something).toHaveBeenCalled();
+            })
+        ",
+    ];
+
+    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
+    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+
+    Tester::new(NoConditionalExpect::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }

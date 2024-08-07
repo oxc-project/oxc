@@ -1,9 +1,46 @@
 use itertools::Itertools;
 use proc_macro2::{Group, TokenStream, TokenTree};
-use quote::{quote, ToTokens};
-use syn::{GenericArgument, Ident, PathArguments, Type, TypePath};
+use quote::{format_ident, ToTokens};
+use serde::Serialize;
+use syn::{spanned::Spanned, GenericArgument, Ident, ItemMacro, PathArguments, Type, TypePath};
 
-use crate::{CodegenCtx, TypeRef};
+use crate::{EarlyCtx, TypeId};
+
+pub trait NormalizeError<T> {
+    fn normalize(self) -> crate::Result<T>;
+    fn normalize_with<E>(self, err: E) -> crate::Result<T>
+    where
+        E: ToString;
+}
+
+impl<T, E> NormalizeError<T> for Result<T, E>
+where
+    E: ToString,
+{
+    fn normalize(self) -> crate::Result<T> {
+        self.map_err(|e| e.to_string())
+    }
+
+    fn normalize_with<U>(self, err: U) -> crate::Result<T>
+    where
+        U: ToString,
+    {
+        self.map_err(|_| err.to_string())
+    }
+}
+
+impl<T> NormalizeError<T> for Option<T> {
+    fn normalize(self) -> crate::Result<T> {
+        self.normalize_with(String::default())
+    }
+
+    fn normalize_with<E>(self, err: E) -> crate::Result<T>
+    where
+        E: ToString,
+    {
+        self.map_or_else(|| Err(err.to_string()), |r| Ok(r))
+    }
+}
 
 pub trait TokenStreamExt {
     fn replace_ident(self, needle: &str, replace: &Ident) -> TokenStream;
@@ -11,7 +48,7 @@ pub trait TokenStreamExt {
 
 pub trait TypeExt {
     fn get_ident(&self) -> TypeIdentResult;
-    fn analyze(&self, ctx: &CodegenCtx) -> TypeAnalyzeResult;
+    fn analyze(&self, ctx: &EarlyCtx) -> TypeAnalysis;
 }
 
 pub trait StrExt: AsRef<str> {
@@ -23,6 +60,10 @@ pub trait StrExt: AsRef<str> {
     fn to_plural(self) -> String;
 }
 
+pub trait ToIdent {
+    fn to_ident(&self) -> Ident;
+}
+
 #[derive(Debug)]
 pub enum TypeIdentResult<'a> {
     Ident(&'a Ident),
@@ -30,6 +71,8 @@ pub enum TypeIdentResult<'a> {
     Box(Box<TypeIdentResult<'a>>),
     Option(Box<TypeIdentResult<'a>>),
     Reference(Box<TypeIdentResult<'a>>),
+    /// We bailed on detecting wrapper
+    Complex(Box<TypeIdentResult<'a>>),
 }
 
 impl<'a> TypeIdentResult<'a> {
@@ -45,6 +88,10 @@ impl<'a> TypeIdentResult<'a> {
         Self::Option(Box::new(inner))
     }
 
+    fn complex(inner: Self) -> Self {
+        Self::Complex(Box::new(inner))
+    }
+
     fn reference(inner: Self) -> Self {
         Self::Reference(Box::new(inner))
     }
@@ -52,9 +99,11 @@ impl<'a> TypeIdentResult<'a> {
     pub fn inner_ident(&self) -> &'a Ident {
         match self {
             Self::Ident(it) => it,
-            Self::Vec(it) | Self::Box(it) | Self::Option(it) | Self::Reference(it) => {
-                it.inner_ident()
-            }
+            Self::Complex(it)
+            | Self::Vec(it)
+            | Self::Box(it)
+            | Self::Option(it)
+            | Self::Reference(it) => it.inner_ident(),
         }
     }
 
@@ -67,7 +116,9 @@ impl<'a> TypeIdentResult<'a> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+// TODO: remove me
+#[allow(dead_code)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub enum TypeWrapper {
     None,
     Box,
@@ -78,12 +129,17 @@ pub enum TypeWrapper {
     OptBox,
     OptVec,
     Ref,
+    /// We bailed on detecting the type wrapper
+    Complex,
 }
 
-#[derive(Debug)]
-pub struct TypeAnalyzeResult {
-    pub type_ref: Option<TypeRef>,
+#[derive(Debug, Clone, Serialize)]
+pub struct TypeAnalysis {
+    pub type_id: Option<TypeId>,
     pub wrapper: TypeWrapper,
+    // pub name: String,
+    #[serde(skip)]
+    pub typ: Type,
 }
 
 impl TypeExt for Type {
@@ -113,7 +169,7 @@ impl TypeExt for Type {
                                     if seg1.ident == "Option" {
                                         TypeIdentResult::option(inner)
                                     } else {
-                                        inner
+                                        TypeIdentResult::complex(inner)
                                     }
                                 }
                                 Some(GenericArgument::Lifetime(_)) => {
@@ -133,11 +189,16 @@ impl TypeExt for Type {
         }
     }
 
-    fn analyze(&self, ctx: &CodegenCtx) -> TypeAnalyzeResult {
+    fn analyze(&self, ctx: &EarlyCtx) -> TypeAnalysis {
         fn analyze<'a>(res: &'a TypeIdentResult) -> Option<(&'a Ident, TypeWrapper)> {
             let mut wrapper = TypeWrapper::None;
             let ident = match res {
                 TypeIdentResult::Ident(inner) => inner,
+                TypeIdentResult::Complex(inner) => {
+                    wrapper = TypeWrapper::Complex;
+                    let (inner, _) = analyze(inner)?;
+                    inner
+                }
                 TypeIdentResult::Box(inner) => {
                     wrapper = TypeWrapper::Box;
                     let (inner, inner_kind) = analyze(inner)?;
@@ -172,11 +233,11 @@ impl TypeExt for Type {
         }
         let type_ident = self.get_ident();
         let Some((type_ident, wrapper)) = analyze(&type_ident) else {
-            return TypeAnalyzeResult { type_ref: None, wrapper: TypeWrapper::Ref };
+            return TypeAnalysis { type_id: None, wrapper: TypeWrapper::Ref, typ: self.clone() };
         };
 
-        let type_ref = ctx.find(&type_ident.to_string());
-        TypeAnalyzeResult { type_ref, wrapper }
+        let type_id = ctx.type_id(&type_ident.to_string());
+        TypeAnalysis { type_id, wrapper, typ: self.clone() }
     }
 }
 
@@ -221,9 +282,26 @@ impl TokenStreamExt for TokenStream {
     }
 }
 
-pub fn write_all_to<S: AsRef<str>>(data: &[u8], path: S) -> std::io::Result<()> {
+impl<S> ToIdent for S
+where
+    S: AsRef<str>,
+{
+    fn to_ident(&self) -> Ident {
+        format_ident!("{}", self.as_ref())
+    }
+}
+
+pub fn write_all_to<S: AsRef<std::path::Path>>(data: &[u8], path: S) -> std::io::Result<()> {
     use std::{fs, io::Write};
-    let mut file = fs::File::create(path.as_ref())?;
+    let path = path.as_ref();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let mut file = fs::File::create(path)?;
     file.write_all(data)?;
     Ok(())
+}
+
+pub fn unexpanded_macro_err(mac: &ItemMacro) -> String {
+    format!("Unexpanded macro: {:?}:{:?}", mac.ident, mac.span())
 }

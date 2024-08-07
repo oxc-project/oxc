@@ -216,10 +216,8 @@ impl GetSpan for Modifiers<'_> {
         debug_assert!(!modifiers.is_empty());
         // SAFETY: One of Modifier's invariants is that Some(modifiers) always
         // contains a non-empty Vec; otherwise it must be `None`.
-        #[allow(unsafe_code)]
-        unsafe {
-            modifiers.iter().map(|m| m.span).reduce(|a, b| a.merge(&b)).unwrap_unchecked()
-        }
+
+        unsafe { modifiers.iter().map(|m| m.span).reduce(|a, b| a.merge(&b)).unwrap_unchecked() }
     }
 }
 
@@ -416,7 +414,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let kind = self.cur_kind();
 
-        if matches!(self.cur_kind(), Kind::Const) && permit_const_as_modifier {
+        if matches!(self.cur_kind(), Kind::Const) {
+            if !permit_const_as_modifier {
+                return None;
+            }
+
             // We need to ensure that any subsequent modifiers appear on the same line
             // so that when 'const' is a standalone declaration, we don't issue
             // an error.

@@ -9,50 +9,6 @@
 # The values provided in this template are the default values that will be used
 # when any section or field is not specified in your own configuration
 
-# Root options
-
-# If 1 or more target triples (and optionally, target_features) are specified,
-# only the specified targets will be checked when running `cargo deny check`.
-# This means, if a particular package is only ever used as a target specific
-# dependency, such as, for example, the `nix` crate only being used via the
-# `target_family = "unix"` configuration, that only having windows targets in
-# this list would mean the nix crate, as well as any of its exclusive
-# dependencies not shared by any other crates, would be ignored, as the target
-# list here is effectively saying which targets you are building for.
-targets = [
-  # The triple can be any string, but only the target triples built in to
-  # rustc (as of 1.40) can be checked against actual config expressions
-  #{ triple = "x86_64-unknown-linux-musl" },
-  # You can also specify which target_features you promise are enabled for a
-  # particular target. target_features are currently not validated against
-  # the actual valid features supported by the target architecture.
-  #{ triple = "wasm32-unknown-unknown", features = ["atomics"] },
-]
-# When creating the dependency graph used as the source of truth when checks are
-# executed, this field can be used to prune crates from the graph, removing them
-# from the view of cargo-deny. This is an extremely heavy hammer, as if a crate
-# is pruned from the graph, all of its dependencies will also be pruned unless
-# they are connected to another crate in the graph that hasn't been pruned,
-# so it should be used with care. The identifiers are [Package ID Specifications]
-# (https://doc.rust-lang.org/cargo/reference/pkgid-spec.html)
-#exclude = []
-# If true, metadata will be collected with `--all-features`. Note that this can't
-# be toggled off if true, if you want to conditionally enable `--all-features` it
-# is recommended to pass `--all-features` on the cmd line instead
-all-features = false
-# If true, metadata will be collected with `--no-default-features`. The same
-# caveat with `all-features` applies
-no-default-features = false
-# If set, these feature will be enabled when collecting metadata. If `--features`
-# is specified on the cmd line they will take precedence over this option.
-#features = []
-# When outputting inclusion graphs in diagnostics that include features, this
-# option can be used to specify the depth at which feature edges will be added.
-# This option is included since the graphs can be quite large and the addition
-# of features from the crate(s) to all of the graph roots can be far too verbose.
-# This option can be overridden via `--feature-depth` on the cmd line
-feature-depth = 1
-
 # This section is considered when running `cargo deny check advisories`
 # More documentation for the advisories section can be found here:
 # https://embarkstudios.github.io/cargo-deny/checks/advisories/cfg.html
@@ -61,14 +17,8 @@ feature-depth = 1
 db-path = "~/.cargo/advisory-db"
 # The url(s) of the advisory databases to use
 db-urls = ["https://github.com/rustsec/advisory-db"]
-# The lint level for security vulnerabilities
-vulnerability = "deny"
-# The lint level for unmaintained crates
-unmaintained = "warn"
 # The lint level for crates that have been yanked from their source registry
 yanked = "warn"
-# The lint level for crates with security notices.
-notice = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 ignore = [
@@ -94,8 +44,6 @@ ignore = [
 # More documentation for the licenses section can be found here:
 # https://embarkstudios.github.io/cargo-deny/checks/licenses/cfg.html
 [licenses]
-# The lint level for crates which do not have a detectable license
-unlicensed = "deny"
 # List of explicitly allowed licenses
 # See https://spdx.org/licenses/ for list of possible licenses
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
@@ -109,28 +57,6 @@ allow = [
   "Unicode-DFS-2016",
   #"Apache-2.0 WITH LLVM-exception",
 ]
-# List of explicitly disallowed licenses
-# See https://spdx.org/licenses/ for list of possible licenses
-# [possible values: any SPDX 3.11 short identifier (+ optional exception)].
-deny = [
-  #"Nokia",
-]
-# Lint level for licenses considered copyleft
-copyleft = "warn"
-# Blanket approval or denial for OSI-approved or FSF Free/Libre licenses
-# * both - The license will be approved if it is both OSI-approved *AND* FSF
-# * either - The license will be approved if it is either OSI-approved *OR* FSF
-# * osi - The license will be approved if it is OSI approved
-# * fsf - The license will be approved if it is FSF Free
-# * osi-only - The license will be approved if it is OSI-approved *AND NOT* FSF
-# * fsf-only - The license will be approved if it is FSF *AND NOT* OSI-approved
-# * neither - This predicate is ignored and the default lint level is used
-allow-osi-fsf-free = "neither"
-# Lint level used when no other predicates are matched
-# 1. License isn't in the allow or deny lists
-# 2. License isn't copyleft
-# 3. License isn't OSI/FSF, or allow-osi-fsf-free = "neither"
-default = "deny"
 # The confidence threshold for detecting a license from license text.
 # The higher the value, the more closely the license text must be to the
 # canonical license text of a valid SPDX license file.
@@ -272,3 +198,49 @@ github = [""]
 gitlab = [""]
 # 1 or more bitbucket.org organizations to allow git sources for
 bitbucket = [""]
+
+[graph]
+# If 1 or more target triples (and optionally, target_features) are specified,
+# only the specified targets will be checked when running `cargo deny check`.
+# This means, if a particular package is only ever used as a target specific
+# dependency, such as, for example, the `nix` crate only being used via the
+# `target_family = "unix"` configuration, that only having windows targets in
+# this list would mean the nix crate, as well as any of its exclusive
+# dependencies not shared by any other crates, would be ignored, as the target
+# list here is effectively saying which targets you are building for.
+targets = [
+  # The triple can be any string, but only the target triples built in to
+  # rustc (as of 1.40) can be checked against actual config expressions
+  #{ triple = "x86_64-unknown-linux-musl" },
+  # You can also specify which target_features you promise are enabled for a
+  # particular target. target_features are currently not validated against
+  # the actual valid features supported by the target architecture.
+  #{ triple = "wasm32-unknown-unknown", features = ["atomics"] },
+]
+# When creating the dependency graph used as the source of truth when checks are
+# executed, this field can be used to prune crates from the graph, removing them
+# from the view of cargo-deny. This is an extremely heavy hammer, as if a crate
+# is pruned from the graph, all of its dependencies will also be pruned unless
+# they are connected to another crate in the graph that hasn't been pruned,
+# so it should be used with care. The identifiers are [Package ID Specifications]
+# (https://doc.rust-lang.org/cargo/reference/pkgid-spec.html)
+#exclude = []
+# If true, metadata will be collected with `--all-features`. Note that this can't
+# be toggled off if true, if you want to conditionally enable `--all-features` it
+# is recommended to pass `--all-features` on the cmd line instead
+all-features = false
+# If true, metadata will be collected with `--no-default-features`. The same
+# caveat with `all-features` applies
+no-default-features = false
+
+# If set, these feature will be enabled when collecting metadata. If `--features`
+# is specified on the cmd line they will take precedence over this option.
+#features = []
+
+[output]
+# When outputting inclusion graphs in diagnostics that include features, this
+# option can be used to specify the depth at which feature edges will be added.
+# This option is included since the graphs can be quite large and the addition
+# of features from the crate(s) to all of the graph roots can be far too verbose.
+# This option can be overridden via `--feature-depth` on the cmd line
+feature-depth = 1

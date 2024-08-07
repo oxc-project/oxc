@@ -30,9 +30,20 @@ pub struct OxlintSettings {
 
 #[cfg(test)]
 mod test {
+    use std::borrow::Cow;
+
+    use oxc_span::CompactStr;
     use serde::Deserialize;
 
+    use crate::config::settings::react::ComponentAttrs;
+
     use super::OxlintSettings;
+
+    fn as_attrs<S: Into<CompactStr>, I: IntoIterator<Item = S>>(
+        attrs: I,
+    ) -> ComponentAttrs<'static> {
+        ComponentAttrs::from(Cow::Owned(attrs.into_iter().map(Into::into).collect()))
+    }
 
     #[test]
     fn test_parse_settings() {
@@ -62,21 +73,24 @@ mod test {
         }))
         .unwrap();
 
-        assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
-        assert_eq!(settings.jsx_a11y.components.get("Link"), Some(&"Anchor".to_string()));
+        assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".into()));
+        assert_eq!(settings.jsx_a11y.components.get("Link"), Some(&"Anchor".into()));
         assert!(settings.next.get_root_dirs().contains(&"app".to_string()));
-        assert_eq!(settings.react.get_form_component_attrs("CustomForm"), Some(vec![]));
         assert_eq!(
-            settings.react.get_form_component_attrs("SimpleForm"),
-            Some(vec!["endpoint".to_string()])
+            settings.react.get_form_component_attrs("CustomForm").unwrap(),
+            as_attrs::<CompactStr, _>(vec![])
         );
         assert_eq!(
-            settings.react.get_form_component_attrs("Form"),
-            Some(vec!["registerEndpoint".to_string(), "loginEndpoint".to_string()])
+            settings.react.get_form_component_attrs("SimpleForm").unwrap(),
+            as_attrs(["endpoint"])
         );
         assert_eq!(
-            settings.react.get_link_component_attrs("Link"),
-            Some(vec!["to".to_string(), "href".to_string()])
+            settings.react.get_form_component_attrs("Form").unwrap(),
+            as_attrs(["registerEndpoint", "loginEndpoint"])
+        );
+        assert_eq!(
+            settings.react.get_link_component_attrs("Link").unwrap(),
+            as_attrs(["to", "href"])
         );
         assert_eq!(settings.react.get_link_component_attrs("Noop"), None);
     }

@@ -109,6 +109,13 @@ impl<'a> From<Atom<'a>> for String {
     }
 }
 
+impl<'a> From<Atom<'a>> for Cow<'a, str> {
+    #[inline]
+    fn from(value: Atom<'a>) -> Self {
+        Cow::Borrowed(value.as_str())
+    }
+}
+
 impl<'a> Deref for Atom<'a> {
     type Target = str;
 
@@ -147,6 +154,17 @@ impl<'a> PartialEq<str> for Atom<'a> {
     }
 }
 
+impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
+    fn eq(&self, other: &Atom<'a>) -> bool {
+        self.as_ref() == other.as_str()
+    }
+}
+impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
+    fn eq(&self, other: &&Atom<'a>) -> bool {
+        self.as_ref() == other.as_str()
+    }
+}
+
 impl<'a> hash::Hash for Atom<'a> {
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         self.as_str().hash(hasher);
@@ -173,6 +191,7 @@ impl<'a> fmt::Display for Atom<'a> {
 /// Currently implemented as just a wrapper around [`compact_str::CompactString`],
 /// but will be reduced in size with a custom implementation later.
 #[derive(Clone, Eq)]
+#[cfg_attr(feature = "serialize", derive(serde::Deserialize))]
 pub struct CompactStr(CompactString);
 
 impl CompactStr {
@@ -208,7 +227,7 @@ impl CompactStr {
     #[inline]
     pub const fn new_const(s: &'static str) -> Self {
         assert!(s.len() <= MAX_INLINE_LEN);
-        Self(CompactString::new_inline(s))
+        Self(CompactString::const_new(s))
     }
 
     /// Get string content as a `&str` slice.
@@ -265,6 +284,26 @@ impl From<String> for CompactStr {
     }
 }
 
+impl<'s> From<&'s CompactStr> for Cow<'s, str> {
+    fn from(value: &'s CompactStr) -> Self {
+        Self::Borrowed(value.as_str())
+    }
+}
+
+impl From<CompactStr> for Cow<'_, str> {
+    fn from(value: CompactStr) -> Self {
+        value.0.into()
+    }
+}
+impl From<Cow<'_, str>> for CompactStr {
+    fn from(value: Cow<'_, str>) -> Self {
+        match value {
+            Cow::Borrowed(s) => CompactStr::new(s),
+            Cow::Owned(s) => CompactStr::from(s),
+        }
+    }
+}
+
 impl Deref for CompactStr {
     type Target = str;
 
@@ -294,6 +333,24 @@ impl<T: AsRef<str>> PartialEq<T> for CompactStr {
 impl PartialEq<CompactStr> for &str {
     fn eq(&self, other: &CompactStr) -> bool {
         *self == other.as_str()
+    }
+}
+
+impl PartialEq<CompactStr> for str {
+    fn eq(&self, other: &CompactStr) -> bool {
+        self == other.as_str()
+    }
+}
+
+impl PartialEq<str> for CompactStr {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
+    }
+}
+
+impl PartialEq<CompactStr> for Cow<'_, str> {
+    fn eq(&self, other: &CompactStr) -> bool {
+        self.as_ref() == other.as_str()
     }
 }
 
@@ -330,5 +387,38 @@ impl Serialize for CompactStr {
         S: Serializer,
     {
         serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for CompactStr {
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn schema_name() -> std::string::String {
+        "String".to_string()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        Cow::Borrowed("String")
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        <&str>::json_schema(gen)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::CompactStr;
+
+    #[test]
+    fn test_compactstr_eq() {
+        let foo = CompactStr::new("foo");
+        assert_eq!(foo, "foo");
+        assert_eq!(&foo, "foo");
+        assert_eq!("foo", foo);
+        assert_eq!("foo", &foo);
     }
 }

@@ -9,18 +9,18 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn missing_lang_prop(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.")
+    OxcDiagnostic::warn("Missing lang attribute.")
         .with_help("Add a lang attribute to the html element whose value represents the primary language of document.")
         .with_label(span0)
 }
 
 fn missing_lang_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(html-has-lang): Missing value for lang attribute")
+    OxcDiagnostic::warn("Missing value for lang attribute")
         .with_help("Must have meaningful value for `lang` prop.")
         .with_label(span0)
 }
@@ -70,7 +70,7 @@ impl Rule for HtmlHasLang {
             return;
         };
 
-        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
+        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(missing_lang_prop(identifier.span)),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {

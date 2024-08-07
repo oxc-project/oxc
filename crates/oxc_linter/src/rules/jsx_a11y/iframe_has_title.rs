@@ -9,12 +9,12 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn iframe_has_title_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.")
+    OxcDiagnostic::warn("Missing `title` attribute for the `iframe` element.")
         .with_help("Provide title property for iframe element.")
         .with_label(span0)
 }
@@ -75,7 +75,7 @@ impl Rule for IframeHasTitle {
             return;
         }
 
-        let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "title") else {
+        let Some(alt_prop) = has_jsx_prop_ignore_case(jsx_el, "title") else {
             ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
             return;
         };

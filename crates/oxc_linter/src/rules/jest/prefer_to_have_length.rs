@@ -17,10 +17,7 @@ use crate::{
 };
 
 fn use_to_have_length(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.",
-    )
-    .with_label(span0)
+    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -54,6 +51,7 @@ declare_oxc_lint!(
     ///
     PreferToHaveLength,
     style,
+    fix
 );
 
 impl Rule for PreferToHaveLength {
@@ -167,24 +165,24 @@ impl PreferToHaveLength {
             return formatter.into_source_text();
         };
 
-        formatter.print_str(b"expect(");
-        formatter.print_str(prop_ident.name.as_bytes());
-        formatter.print_str(b")");
+        formatter.print_str("expect(");
+        formatter.print_str(prop_ident.name.as_str());
+        formatter.print_str(")");
 
         if let Some(kind_val) = kind {
             if kind_val == "ComputedMember" {
                 let property = property_name.unwrap();
-                formatter.print_str(b"[\"");
-                formatter.print_str(property.as_bytes());
-                formatter.print_str(b"\"]");
+                formatter.print_str("[\"");
+                formatter.print_str(property);
+                formatter.print_str("\"]");
             } else if kind_val == "StaticMember" {
-                formatter.print_str(b".");
+                formatter.print_str(".");
                 let property = property_name.unwrap();
-                formatter.print_str(property.as_bytes());
+                formatter.print_str(property);
             }
         }
 
-        formatter.print_str(b".toHaveLength");
+        formatter.print_str(".toHaveLength");
         formatter.into_source_text()
     }
 }

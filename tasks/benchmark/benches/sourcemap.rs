@@ -16,17 +16,22 @@ fn bench_sourcemap(criterion: &mut Criterion) {
         group.bench_with_input(id, &file.source_text, |b, source_text| {
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, source_text, source_type).parse();
+
+            let CodegenReturn { source_text: output_txt, .. } = CodeGenerator::new()
+                .enable_source_map(file.file_name.as_str(), source_text)
+                .build(&ret.program);
+            let lines = output_txt.matches('\n').count() as u32;
+
             b.iter(|| {
-                let CodegenReturn { source_map, source_text } = CodeGenerator::new()
+                let CodegenReturn { source_map, .. } = CodeGenerator::new()
                     .enable_source_map(file.file_name.as_str(), source_text)
                     .build(&ret.program);
-                let line = source_text.matches('\n').count() as u32;
                 if let Some(sourcemap) = source_map {
-                    let mut concat_sourcemap_builder = ConcatSourceMapBuilder::default();
-                    for i in 0..1 {
-                        concat_sourcemap_builder.add_sourcemap(&sourcemap, line * i);
-                    }
-                    concat_sourcemap_builder.into_sourcemap().to_json_string().unwrap();
+                    let concat_sourcemap_builder = ConcatSourceMapBuilder::from_sourcemaps(&[
+                        (&sourcemap, 0),
+                        (&sourcemap, lines),
+                    ]);
+                    concat_sourcemap_builder.into_sourcemap().to_json_string();
                 }
             });
         });

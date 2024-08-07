@@ -22,6 +22,7 @@ on:
       - 'napi/parser/**/*.js'
       - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
+      - 'rust-toolchain.toml'
       - '.github/workflows/benchmark.yml'
       - 'tasks/benchmark/codspeed/*.mjs'
   push:
@@ -32,6 +33,7 @@ on:
       - 'napi/parser/**/*.js'
       - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
+      - 'rust-toolchain.toml'
       - '.github/workflows/benchmark.yml'
       - 'tasks/benchmark/codspeed/*.mjs'
 
@@ -58,7 +60,7 @@ jobs:
           - isolated_declarations
           - semantic
           - minifier
-          - codegen_sourcemap
+          - codegen
           - sourcemap
 
     steps:
@@ -97,7 +99,7 @@ jobs:
           rm target/codspeed/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@v2
+        uses: CodSpeedHQ/action@v3
         timeout-minutes: 30
         with:
           # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
@@ -119,16 +121,6 @@ jobs:
   build-linter:
     name: Build Linter Benchmark
     runs-on: ubuntu-latest
-    env:
-      # https://github.com/mozilla/sccache/blob/main/docs/S3.md
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
-      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
-      SCCACHE_REGION: auto
-      RUSTC_WRAPPER: ${{ vars.USE_SCCACHE == 'true' && 'sccache' || '' }}
-      CARGO_INCREMENTAL: 0
-      SCCACHE_LOCAL_RW_MODE:
     steps:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
@@ -208,7 +200,7 @@ jobs:
           node capture.mjs &
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@v2
+        uses: CodSpeedHQ/action@v3
         timeout-minutes: 30
         env:
           FIXTURE: ${{ matrix.fixture }}

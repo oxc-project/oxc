@@ -9,10 +9,7 @@ use oxc_syntax::class::ElementKind;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_private_class_members_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(no-unused-private-class-members): '{x0}' is defined but never used."
-    ))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("'{x0}' is defined but never used.")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -132,7 +129,9 @@ fn is_read(current_node_id: AstNodeId, nodes: &AstNodes) -> bool {
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTarget(_),
+                | AstKind::AssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::ArrayAssignmentTarget(_),
             )
             | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
                 return false;

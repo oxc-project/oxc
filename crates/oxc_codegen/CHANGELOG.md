@@ -4,6 +4,83 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- 4a56954 codegen: Print raw if value is number is Infinity (#4676) (Boshen)
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Performance
+
+- 8dd76e4 codegen: Reduce size of `LineOffsetTable` (#4643) (overlookmotel)
+- b8e6753 codegen: `u32` indexes in `LineOffsetTable` for source maps (#4641) (overlookmotel)
+
+### Refactor
+
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
+## [0.23.0] - 2024-08-01
+
+- 27fd062 sourcemap: [**BREAKING**] Avoid passing `Result`s (#4541) (overlookmotel)
+
+### Features
+
+- a558492 codegen: Implement `BinaryExpressionVisitor` (#4548) (Boshen)
+- 7446e98 codegen: Align more esbuild implementations (#4510) (Boshen)
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+
+### Bug Fixes
+
+- b58ed80 codegen: Enable more test cases (#4585) (Boshen)
+- 6a94e3f codegen: Fixes for esbuild test cases (#4503) (Boshen)
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- 7585e16 linter: Remove allocations for string comparisons (#4570) (DonIsaac)
+
+### Refactor
+
+
+## [0.22.0] - 2024-07-23
+
+### Bug Fixes
+
+- 44a10c4 codegen: Object shorthand with parens `({x: (x)})` -> `({ x })` (#4391) (Boshen)
+- 3d88f20 codegen: Print shorthand for all `{ x }` variants (#4374) (Boshen)
+- e624dff codegen,mangler: Do not print shorthand for `ObjectProperty` (#4350) (Boshen)
+
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- e3e663b mangler: Initialize crate and integrate into minifier (#4197) (Boshen)
+
+### Bug Fixes
+
+- bf3d8d3 codegen: Print annotation comment inside parens for new and call expressions (#4290) (Boshen)
+- 084ab76 codegen: Use `ryu-js` for f64 to string (Boshen)
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- c65198f codegen: Choose the right quote for jsx attribute string (#4236) (Boshen)
+- be82c28 codegen: Print `JSXAttributeValue::StringLiteral` directly (#4231) (Boshen)
+- 3df9e69 mangler: No shorthand `BindingProperty`; handle var hoisting and export variables (#4319) (Boshen)
+- 66b455a oxc_codegen: Avoid print same pure comments multiple time (#4230) (IWANABETHATGUY)- 1c117eb Avoid print extra semicolon after accessor property (#4199) (IWANABETHATGUY)
+
+### Refactor
+
+- d1c4be0 codegen: Clean up annotation_comment (Boshen)
+- 06197b8 codegen: Separate tests (Boshen)
+- aa22073 codegen: Improve print API (#4196) (Boshen)
+
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Refactor
+
+
 ## [0.18.0] - 2024-07-09
 
 ### Features

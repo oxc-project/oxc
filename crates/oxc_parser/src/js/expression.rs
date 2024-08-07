@@ -1,5 +1,3 @@
-use std::cell::Cell;
-
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
@@ -77,7 +75,7 @@ impl<'a> ParserImpl<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(BindingIdentifier { span, name, symbol_id: Cell::default() })
+        Ok(self.ast.binding_identifier(span, name))
     }
 
     pub(crate) fn parse_label_identifier(&mut self) -> Result<LabelIdentifier<'a>> {
@@ -86,7 +84,7 @@ impl<'a> ParserImpl<'a> {
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
-        Ok(LabelIdentifier { span, name })
+        Ok(self.ast.label_identifier(span, name))
     }
 
     pub(crate) fn parse_identifier_name(&mut self) -> Result<IdentifierName<'a>> {
@@ -94,13 +92,13 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
-        Ok(IdentifierName { span, name })
+        Ok(self.ast.identifier_name(span, name))
     }
 
     /// Parse keyword kind as identifier
     pub(crate) fn parse_keyword_identifier(&mut self, kind: Kind) -> IdentifierName<'a> {
         let (span, name) = self.parse_identifier_kind(kind);
-        IdentifierName { span, name }
+        self.ast.identifier_name(span, name)
     }
 
     #[inline]
@@ -130,7 +128,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let name = Atom::from(self.cur_string());
         self.bump_any();
-        PrivateIdentifier { span: self.end_span(span), name }
+        self.ast.private_identifier(self.end_span(span), name)
     }
 
     /// Section [Primary Expression](https://tc39.es/ecma262/#sec-primary-expression)
@@ -277,13 +275,13 @@ impl<'a> ParserImpl<'a> {
             _ => return Err(self.unexpected()),
         };
         self.bump_any();
-        Ok(BooleanLiteral { span: self.end_span(span), value })
+        Ok(self.ast.boolean_literal(self.end_span(span), value))
     }
 
     pub(crate) fn parse_literal_null(&mut self) -> NullLiteral {
         let span = self.start_span();
         self.bump_any(); // bump `null`
-        NullLiteral { span: self.end_span(span) }
+        self.ast.null_literal(self.end_span(span))
     }
 
     pub(crate) fn parse_literal_number(&mut self) -> Result<NumericLiteral<'a>> {
@@ -360,7 +358,7 @@ impl<'a> ParserImpl<'a> {
         let value = self.cur_string();
         let span = self.start_span();
         self.bump_any();
-        Ok(StringLiteral { span: self.end_span(span), value: value.into() })
+        Ok(self.ast.string_literal(self.end_span(span), value))
     }
 
     /// Section [Array Expression](https://tc39.es/ecma262/#prod-ArrayLiteral)
@@ -400,14 +398,14 @@ impl<'a> ParserImpl<'a> {
     ///     ,
     ///    Elision ,
     pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
-        ArrayExpressionElement::Elision(Elision { span: self.cur_token().span() })
+        self.ast.array_expression_element_elision(self.cur_token().span())
     }
 
     /// Section [Template Literal](https://tc39.es/ecma262/#prod-TemplateLiteral)
     /// `TemplateLiteral`[Yield, Await, Tagged] :
     ///     `NoSubstitutionTemplate`
     ///     `SubstitutionTemplate`[?Yield, ?Await, ?Tagged]
-    fn parse_template_literal(&mut self, tagged: bool) -> Result<TemplateLiteral<'a>> {
+    pub(crate) fn parse_template_literal(&mut self, tagged: bool) -> Result<TemplateLiteral<'a>> {
         let span = self.start_span();
         let mut expressions = self.ast.vec();
         let mut quasis = self.ast.vec();
@@ -907,12 +905,7 @@ impl<'a> ParserImpl<'a> {
             let left = self.parse_private_identifier();
             self.expect(Kind::In)?;
             let right = self.parse_unary_expression_or_higher(lhs_span)?;
-            Expression::PrivateInExpression(self.ast.alloc(PrivateInExpression {
-                span: self.end_span(lhs_span),
-                left,
-                operator: BinaryOperator::In,
-                right,
-            }))
+            self.ast.expression_private_in(self.end_span(lhs_span), left, BinaryOperator::In, right)
         } else {
             self.parse_unary_expression_or_higher(lhs_span)?
         };
@@ -1032,7 +1025,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let span = self.start_span();
-        let lhs = self.parse_binary_expression_or_higher(Precedence::lowest())?;
+        let lhs = self.parse_binary_expression_or_higher(Precedence::Comma)?;
         let kind = self.cur_kind();
 
         // `x => {}`

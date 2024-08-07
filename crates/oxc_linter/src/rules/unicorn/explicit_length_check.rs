@@ -17,7 +17,8 @@ use crate::{
 };
 
 fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is not zero.")).with_label(span0);
+    let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is not zero."))
+        .with_label(span0);
     if let Some(x) = x3 {
         d = d.with_help(x);
     }
@@ -25,9 +26,7 @@ fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnost
 }
 
 fn zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is zero."
-    ));
+    let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is zero."));
     if let Some(x) = x3 {
         d = d.with_help(x);
     }
@@ -78,7 +77,8 @@ declare_oxc_lint!(
     /// const isEmpty = foo.length === 0;
     /// ```
     ExplicitLengthCheck,
-    pedantic
+    pedantic,
+    conditional_fix
 );
 fn is_literal(expr: &Expression, value: f64) -> bool {
     matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
@@ -198,7 +198,7 @@ impl ExplicitLengthCheck {
             let start = ctx.source_text().as_bytes()[span.start as usize - 1];
             need_pad_start = start.is_ascii_alphabetic() || !start.is_ascii();
         }
-        if (span.end as usize) < ctx.source_text().as_bytes().len() {
+        if (span.end as usize) < ctx.source_text().len() {
             let end = ctx.source_text().as_bytes()[span.end as usize];
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }

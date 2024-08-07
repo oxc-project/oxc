@@ -6,22 +6,22 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn font_display_parameter_missing(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-next(google-font-display): A font-display parameter is missing (adding `&display=optional` is recommended).")
-        .with_help("See https://nextjs.org/docs/messages/google-font-display")
-        .with_label(span0)
+    OxcDiagnostic::warn(
+        "A font-display parameter is missing (adding `&display=optional` is recommended).",
+    )
+    .with_help("See https://nextjs.org/docs/messages/google-font-display")
+    .with_label(span0)
 }
 
 fn not_recommended_font_display_value(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-next(google-font-display): `{x1}` is not a recommended font-display value."
-    ))
-    .with_help("See https://nextjs.org/docs/messages/google-font-display")
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("`{x1}` is not a recommended font-display value."))
+        .with_help("See https://nextjs.org/docs/messages/google-font-display")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -55,7 +55,7 @@ impl Rule for GoogleFontDisplay {
             return;
         }
 
-        let Some(href_prop) = has_jsx_prop_lowercase(jsx_opening_element, "href") else {
+        let Some(href_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "href") else {
             return;
         };
 

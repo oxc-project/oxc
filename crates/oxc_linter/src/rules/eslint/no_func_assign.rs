@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_func_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-func-assign): '{x0}' is a function."))
+    OxcDiagnostic::warn(format!("'{x0}' is a function."))
         .with_label(span1.label(format!("{x0} is re-assigned here")))
 }
 
@@ -40,7 +40,7 @@ impl Rule for NoFuncAssign {
                 if reference.is_write() {
                     ctx.diagnostic(no_func_assign_diagnostic(
                         symbol_table.get_name(symbol_id),
-                        reference.span(),
+                        ctx.semantic().reference_span(reference),
                     ));
                 }
             }

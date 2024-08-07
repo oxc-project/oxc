@@ -7,7 +7,7 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_explicit_any_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-explicit-any): Unexpected any. Specify a different type.")
+    OxcDiagnostic::warn("Unexpected any. Specify a different type.")
         .with_help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.")
         .with_label(span0)
 }
@@ -82,7 +82,8 @@ declare_oxc_lint!(
     /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
     /// `false` by default.
     NoExplicitAny,
-    restriction
+    restriction,
+    conditional_fix
 );
 
 impl Rule for NoExplicitAny {
@@ -111,6 +112,10 @@ impl Rule for NoExplicitAny {
         let ignore_rest_args = cfg.get("ignoreRestArgs").and_then(Value::as_bool).unwrap_or(false);
 
         Self { fix_to_unknown, ignore_rest_args }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

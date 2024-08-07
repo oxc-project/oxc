@@ -14,8 +14,6 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use super::FinderRet;
-
 /// Traverse scope context.
 ///
 /// Contains the scope tree and symbols table, and provides methods to access them.
@@ -70,58 +68,24 @@ impl TraverseScoping {
         &mut self.symbols
     }
 
-    /// Walk up trail of scopes to find a scope.
-    ///
-    /// `finder` is called with `ScopeId`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeId) -> FinderRet<O>,
-    {
-        let mut scope_id = self.current_scope_id;
-        loop {
-            match finder(scope_id) {
-                FinderRet::Found(res) => return Some(res),
-                FinderRet::Stop => return None,
-                FinderRet::Continue => {}
-            }
-
-            if let Some(parent_scope_id) = self.scopes.get_parent_id(scope_id) {
-                scope_id = parent_scope_id;
-            } else {
-                return None;
-            }
-        }
+    /// Get iterator over scopes, starting with current scope and working up
+    pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.scopes.ancestors(self.current_scope_id)
     }
 
-    /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
+    /// Create new scope as child of provided scope.
     ///
-    /// `finder` is called with `ScopeFlags`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    pub fn find_scope_by_flags<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeFlags) -> FinderRet<O>,
-    {
-        self.find_scope(|scope_id| {
-            let flags = self.scopes.get_flags(scope_id);
-            finder(flags)
-        })
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
+        let flags = self.scopes.get_new_scope_flags(flags, parent_id);
+        self.scopes.add_scope(parent_id, AstNodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
-    pub fn create_scope_child_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
-        let flags = self.scopes.get_new_scope_flags(flags, self.current_scope_id);
-        self.scopes.add_scope(Some(self.current_scope_id), flags)
+    pub fn create_child_scope_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
+        self.create_child_scope(self.current_scope_id, flags)
     }
 
     /// Insert a scope into scope tree below a statement.
@@ -162,7 +126,7 @@ impl TraverseScoping {
         }
 
         // Create new scope as child of parent
-        let new_scope_id = self.create_scope_child_of_current(flags);
+        let new_scope_id = self.create_child_scope_of_current(flags);
 
         // Set scopes as children of new scope instead
         for &child_id in child_scope_ids {
@@ -245,7 +209,8 @@ impl TraverseScoping {
         let name = CompactStr::new(&self.find_uid_name(name));
 
         // Add binding to scope
-        let symbol_id = self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id);
+        let symbol_id =
+            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, AstNodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -263,12 +228,10 @@ impl TraverseScoping {
     /// Create a reference bound to a `SymbolId`
     pub fn create_bound_reference(
         &mut self,
-        name: CompactStr,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference =
-            Reference::new_with_symbol_id(SPAN, name, AstNodeId::dummy(), symbol_id, flag);
+        let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flag);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.resolved_references[symbol_id].push(reference_id);
         reference_id
@@ -282,7 +245,7 @@ impl TraverseScoping {
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_bound_reference(name.to_compact_str(), symbol_id, flag);
+        let reference_id = self.create_bound_reference(symbol_id, flag);
         IdentifierReference {
             span,
             name,
@@ -297,9 +260,9 @@ impl TraverseScoping {
         name: CompactStr,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new(SPAN, name.clone(), AstNodeId::dummy(), flag);
+        let reference = Reference::new(AstNodeId::DUMMY, flag);
         let reference_id = self.symbols.create_reference(reference);
-        self.scopes.add_root_unresolved_reference(name, reference_id);
+        self.scopes.add_root_unresolved_reference(name, (reference_id, flag));
         reference_id
     }
 
@@ -330,7 +293,7 @@ impl TraverseScoping {
         flag: ReferenceFlag,
     ) -> ReferenceId {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference(name, symbol_id, flag)
+            self.create_bound_reference(symbol_id, flag)
         } else {
             self.create_unbound_reference(name, flag)
         }
@@ -447,21 +410,8 @@ impl TraverseScoping {
     }
 
     fn name_is_unique(&self, name: &str) -> bool {
-        // Check if any bindings in program with this name
-        if self.symbols.names.iter().any(|n| n.as_str() == name) {
-            return false;
-        }
-
-        // Check for unbound references in program with this name
-        !self.symbols.references.iter().any(|reference| {
-            if reference.symbol_id().is_some() {
-                // Skip string comparison on bound references, as they'll also be in `symbols.names`
-                // which already checked above
-                false
-            } else {
-                reference.name().as_str() == name
-            }
-        })
+        !self.scopes.root_unresolved_references().contains_key(name)
+            && !self.symbols.names.iter().any(|n| n.as_str() == name)
     }
 }
 
@@ -482,7 +432,7 @@ fn create_uid_name_base(name: &str) -> CompactString {
     }
     // SAFETY: We started with a valid UTF8 `&str` and have only trimmed off ASCII characters,
     // so remainder must still be valid UTF8
-    #[allow(unsafe_code)]
+
     let name = unsafe { str::from_utf8_unchecked(bytes) };
 
     // Create `CompactString` prepending name with `_`, and with 1 byte excess capacity.
@@ -549,7 +499,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.scope_ids.push(clause.scope_id.get().unwrap());
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, _flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
         self.scope_ids.push(func.scope_id.get().unwrap());
     }
 
@@ -577,7 +527,15 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.scope_ids.push(decl.scope_id.get().unwrap());
     }
 
-    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
-        self.scope_ids.push(ty.scope_id.get().unwrap());
+    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
+        self.scope_ids.push(it.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
+        self.scope_ids.push(it.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
+        self.scope_ids.push(it.scope_id.get().unwrap());
     }
 }

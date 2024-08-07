@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="OXC Logo" src="https://raw.githubusercontent.com/oxc-project/oxc-assets/main/preview-universal.png" width="700">
+  <img alt="OXC Logo" src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/preview-universal.png" width="700">
 </p>
 
 <div align="center">
@@ -27,8 +27,8 @@ See more at [oxc.rs](https://oxc.rs)!
 ## 🙋Who's using Oxc?
 
 - [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transpiling.
-- [Rolldown][rolldown], [Rspack][rspack], and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
-- [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json) and [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint) uses oxlint for linting.
+- [Rolldown][rolldown] and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- Projects and companies like [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json), [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint), ByteDance and Shopee uses oxlint for linting.
 
 ## ⚡️ Linter Quick Start
 
@@ -43,7 +43,7 @@ npx oxlint@latest
 To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4800+ files in 0.7 seconds.
 
 <p float="left" align="left">
-  <img src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/linter-screenshot.png" width="60%">
+  <img src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/linter-screenshot.png" width="60%">
 </p>
 
 ## ⚡️ Performance
@@ -161,12 +161,20 @@ this lets you run the linter without a Node.js installation in your CI.
 Module resolution plays a crucial role in JavaScript tooling, especially for tasks like multi-file analysis or bundling. However, it can often become a performance bottleneck.
 To address this, we developed [oxc_resolver][docs-resolver-url].
 
-The resolver is production-ready and is currently being used in [Rspack][rspack] and [Rolldown][rolldown]. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
+The resolver is production-ready and is currently being used in [Rolldown][rolldown]. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
 
 ### 🔸 Transformer (Transpiler)
 
 A transformer is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
 We are currently focusing on the architecture. See [Milestone 1](https://github.com/oxc-project/oxc/issues/2859) for details.
+
+### 🔸 Isolated Declarations
+
+[TypeScript Isolated Declarations Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-beta/#isolated-declarations) without using the TypeScript compiler.
+
+Our [benchmark](https://github.com/oxc-project/bench-transformer) indications that our implementation is at least 20 times faster than the TypeScript compiler.
+
+The [npm package](https://www.npmjs.com/package/oxc-transform) or [crate](https://crates.io/crates/oxc_isolated_declarations) can be used for this task.
 
 ### 🔸 Minifier
 
@@ -218,6 +226,11 @@ This project was incubated with the assistance of these exceptional mentors and 
 - [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
 - [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 - [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
+
+Special thanks go to
+
+* [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
+* [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
 
 ## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 
@@ -283,5 +296,4 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [terser]: https://terser.org
 [vscode]: https://github.com/microsoft/vscode
 [@typescript-eslint]: https://typescript-eslint.io
-[rspack]: https://www.rspack.dev
 [rolldown]: https://rolldown.rs

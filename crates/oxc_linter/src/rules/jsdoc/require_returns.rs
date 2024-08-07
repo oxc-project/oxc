@@ -20,14 +20,12 @@ use crate::{
 };
 
 fn missing_returns_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.",
-    )
-    .with_help("Add `@returns` tag to the JSDoc comment.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Missing JSDoc `@returns` declaration for function.")
+        .with_help("Add `@returns` tag to the JSDoc comment.")
+        .with_label(span0)
 }
 fn duplicate_returns_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsdoc(require-returns): Duplicate `@returns` tags.")
+    OxcDiagnostic::warn("Duplicate `@returns` tags.")
         .with_help("Remove redundunt `@returns` tag.")
         .with_label(span0)
 }
@@ -228,12 +226,12 @@ impl Rule for RequireReturns {
             let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
             let resolved_returns_tag_name = settings.resolve_tag_name("returns");
 
-            if is_missing_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
+            if is_missing_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(missing_returns_diagnostic(*func_span));
                 continue;
             }
 
-            if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
+            if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(duplicate_returns_diagnostic(span));
             }
         }

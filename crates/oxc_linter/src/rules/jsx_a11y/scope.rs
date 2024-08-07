@@ -7,16 +7,14 @@ use crate::{
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn scope_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements",
-    )
-    .with_help("Must use scope prop only on <th> elements")
-    .with_label(span0)
+    OxcDiagnostic::warn("The scope prop can only be used on <th> elements")
+        .with_help("Must use scope prop only on <th> elements")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -51,7 +49,7 @@ impl Rule for Scope {
             return;
         };
 
-        let scope_attribute = match has_jsx_prop_lowercase(jsx_el, "scope") {
+        let scope_attribute = match has_jsx_prop_ignore_case(jsx_el, "scope") {
             Some(v) => match v {
                 JSXAttributeItem::Attribute(attr) => attr,
                 JSXAttributeItem::SpreadAttribute(_) => {

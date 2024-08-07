@@ -7,20 +7,20 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_element_type, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+        get_element_type, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
         object_has_accessible_child,
     },
     AstNode,
 };
 
 fn missing_content(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")
+    OxcDiagnostic::warn("Missing accessible content when using `a` elements.")
         .with_help("Provide screen reader accessible content when using `a` elements.")
         .with_label(span0)
 }
 
 fn remove_aria_hidden(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")
+    OxcDiagnostic::warn("Missing accessible content when using `a` elements.")
         .with_help("Remove the `aria-hidden` attribute to allow the anchor element and its content visible to assistive technologies.")
         .with_label(span0)
 }
@@ -79,7 +79,7 @@ impl Rule for AnchorHasContent {
                 }
 
                 for attr in ["title", "aria-label"] {
-                    if has_jsx_prop_lowercase(&jsx_el.opening_element, attr).is_some() {
+                    if has_jsx_prop_ignore_case(&jsx_el.opening_element, attr).is_some() {
                         return;
                     };
                 }

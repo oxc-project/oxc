@@ -13,9 +13,11 @@ use crate::{
 };
 
 fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")
-        .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
-        .with_label(span1)
+    OxcDiagnostic::warn(
+        "Disallow using `jest.mock()` factories without an explicit type parameter.",
+    )
+    .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -86,6 +88,7 @@ declare_oxc_lint!(
     ///
     NoUntypedMockFactory,
     style,
+    conditional_fix
 );
 
 impl Rule for NoUntypedMockFactory {
@@ -141,9 +144,9 @@ impl NoUntypedMockFactory {
                 ),
                 |fixer| {
                     let mut content = fixer.codegen();
-                    content.print_str(b"<typeof import('");
-                    content.print_str(string_literal.value.as_bytes());
-                    content.print_str(b"')>(");
+                    content.print_str("<typeof import('");
+                    content.print_str(string_literal.value.as_str());
+                    content.print_str("')>(");
                     let span = Span::sized(string_literal.span.start - 1, 1);
 
                     fixer.replace(span, content)

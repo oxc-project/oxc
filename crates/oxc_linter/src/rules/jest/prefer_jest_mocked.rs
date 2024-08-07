@@ -10,11 +10,9 @@ use phf::{phf_set, Set};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn use_jest_mocked(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.",
-    )
-    .with_help("Prefer `jest.mocked()`")
-    .with_label(span0)
+    OxcDiagnostic::warn("Prefer `jest.mocked()` over `fn as jest.Mock`.")
+        .with_help("Prefer `jest.mocked()`")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -53,6 +51,7 @@ declare_oxc_lint!(
     /// ```
     PreferJestMocked,
     style,
+    fix
 );
 
 impl Rule for PreferJestMocked {

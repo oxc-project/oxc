@@ -180,12 +180,44 @@ fn test_exports_in_namespace() {
             return foo();
         }
         export const x = 2
-    } 
+    }
     ",
     );
     test.has_some_symbol("bar").is_exported().test();
     let semantic = test.build();
     assert!(!semantic.module_record().exported_bindings.contains_key("bar"));
+
+    // namespace exported, member is not
+    let sources =
+        ["export namespace N { function foo() {} } ", "export namespace N { const foo = 1 } "];
+    for src in sources {
+        let test = SemanticTester::ts(src);
+        test.has_some_symbol("N").contains_flags(SymbolFlags::NameSpaceModule).is_exported().test();
+        test.has_some_symbol("foo").is_not_exported().test();
+    }
+
+    // namespace and member are both exported
+    let sources = [
+        "export namespace N { export function foo() {} } ",
+        "export namespace N { export const foo = 1 } ",
+    ];
+    for src in sources {
+        let test = SemanticTester::ts(src);
+        test.has_some_symbol("N").contains_flags(SymbolFlags::NameSpaceModule).is_exported().test();
+        test.has_some_symbol("foo").is_exported().test();
+    }
+
+    // namespace is not exported, but member is
+    let sources =
+        ["namespace N { export function foo() {} } ", "namespace N { export const foo = 1 } "];
+    for src in sources {
+        let test = SemanticTester::ts(src);
+        test.has_some_symbol("N")
+            .contains_flags(SymbolFlags::NameSpaceModule)
+            .is_not_exported()
+            .test();
+        test.has_some_symbol("foo").is_exported().test();
+    }
 }
 
 #[test]
@@ -207,11 +239,11 @@ fn test_export_in_invalid_scope() {
 fn test_import_assignment() {
     SemanticTester::ts("import Foo = require('./foo')")
         .has_root_symbol("Foo")
-        .contains_flags(SymbolFlags::ImportBinding)
+        .contains_flags(SymbolFlags::Import)
         .test();
 
     SemanticTester::ts("import { Foo } from './foo'; import Baz = Foo.Bar.Baz")
         .has_root_symbol("Baz")
-        .contains_flags(SymbolFlags::ImportBinding)
+        .contains_flags(SymbolFlags::Import)
         .test();
 }

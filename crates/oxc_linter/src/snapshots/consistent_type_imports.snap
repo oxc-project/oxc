@@ -296,6 +296,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────
  3 │               let foo: Foo;
    ╰────
+  help: Replace `import type Foo from 'foo';` with `import Foo from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -304,13 +305,14 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────────
  3 │               let foo: Foo;
    ╰────
+  help: Replace `import type { Foo } from 'foo';` with `import { Foo } from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
  1 │ 
  2 │               import Type from 'foo';
    ·               ───────────────────────
- 3 │         
+ 3 │ 
    ╰────
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -318,7 +320,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │               import { Type } from 'foo';
    ·               ───────────────────────────
- 3 │         
+ 3 │ 
    ╰────
 
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
@@ -326,7 +328,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │               import * as Type from 'foo';
    ·               ────────────────────────────
- 3 │         
+ 3 │ 
    ╰────
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
@@ -334,24 +336,27 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │               import type Type from 'foo';
    ·               ────────────────────────────
- 3 │         
+ 3 │ 
    ╰────
+  help: Replace `import type Type from 'foo';` with `import Type from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
  1 │ 
  2 │               import type { Type } from 'foo';
    ·               ────────────────────────────────
- 3 │         
+ 3 │ 
    ╰────
+  help: Replace `import type { Type } from 'foo';` with `import { Type } from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
  1 │ 
  2 │               import type * as Type from 'foo';
    ·               ─────────────────────────────────
- 3 │               
+ 3 │ 
    ╰────
+  help: Replace `import type * as Type from 'foo';` with `import * as Type from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -360,6 +365,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────────────────────
  3 │               import type // comment
    ╰────
+  help: Replace `import type /*comment*/ * as AllType from 'foo';` with `import /*comment*/ * as AllType from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:3:15]
@@ -368,14 +374,18 @@ source: crates/oxc_linter/src/tester.rs
  4 │ ╰─▶               DefType from 'foo';
  5 │                   import type /*comment*/ { Type } from 'foo';
    ╰────
+  help: Replace `import type // comment
+                      DefType from 'foo';` with `import // comment
+                      DefType from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.
    ╭─[consistent_type_imports.tsx:5:15]
  4 │               DefType from 'foo';
  5 │               import type /*comment*/ { Type } from 'foo';
    ·               ────────────────────────────────────────────
- 6 │               
+ 6 │ 
    ╰────
+  help: Replace `import type /*comment*/ { Type } from 'foo';` with `import /*comment*/ { Type } from 'foo';`.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports Rest are only used as type.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -424,6 +434,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────
  3 │               type T = A;
    ╰────
+  help: Replace `type A` with `A`.
 
   ⚠ typescript-eslint(consistent-type-imports): Imports A are only used as type.
    ╭─[consistent_type_imports.tsx:2:15]
@@ -446,7 +457,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ 
  2 │               import { A, B } from 'foo';
    ·               ───────────────────────────
- 3 │               
+ 3 │ 
    ╰────
 
   ⚠ typescript-eslint(consistent-type-imports): Imports A are only used as type.
@@ -615,4 +626,24 @@ source: crates/oxc_linter/src/tester.rs
  3 │               import { Foo, Bar } from 'foo';
    ·               ───────────────────────────────
  4 │               function test(foo: Foo) {}
+   ╰────
+
+  ⚠ typescript-eslint(consistent-type-imports): Imports Config, OnEvent, and URLHelper are only used as type.
+    ╭─[consistent_type_imports.tsx:5:13]
+  4 │                 } from '../../../fundamentals';
+  5 │ ╭─▶             import {
+  6 │ │                 Config,
+  7 │ │                 OnEvent,
+  8 │ │                 StorageProviderFactory,
+  9 │ │                 URLHelper,
+ 10 │ ╰─▶             } from '../../../fundamentals';
+ 11 │     
+    ╰────
+
+  ⚠ typescript-eslint(consistent-type-imports): Imports DefineParallelPluginResult are only used as type.
+   ╭─[consistent_type_imports.tsx:5:13]
+ 4 │             } from './plugin'
+ 5 │             import { defineParallelPlugin,DefineParallelPluginResult } from './plugin'
+   ·             ──────────────────────────────────────────────────────────────────────────
+ 6 │ 
    ╰────

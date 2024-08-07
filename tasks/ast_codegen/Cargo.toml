@@ -8,10 +8,10 @@ license.workspace = true
 [lints]
 workspace = true
 
-
 [[bin]]
-name = "oxc_ast_codegen"
-test = false
+name    = "oxc_ast_codegen"
+test    = false
+doctest = false
 
 [dependencies]
 syn = { workspace = true, features = [

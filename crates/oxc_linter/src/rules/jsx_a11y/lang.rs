@@ -10,12 +10,12 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn lang_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.")
+    OxcDiagnostic::warn("Lang attribute must have a valid value.")
         .with_help("Set a valid value for lang attribute.")
         .with_label(span0)
 }
@@ -75,7 +75,7 @@ impl Rule for Lang {
             return;
         };
 
-        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
+        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(lang_diagnostic(identifier.span)),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
@@ -94,8 +94,7 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             !container.expression.is_expression() || !container.expression.is_undefined()
         }
         Some(JSXAttributeValue::StringLiteral(str)) => {
-            let language_tag = LanguageTag::parse(str.value.as_str()).unwrap();
-            language_tag.is_valid()
+            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
         }
         _ => true,
     }
@@ -135,6 +134,7 @@ fn test() {
 
     let fail = vec![
         ("<html lang='foo' />", None, None, None),
+        ("<html lang='n'></html>", None, None, None),
         ("<html lang='zz-LL' />", None, None, None),
         ("<html lang={undefined} />", None, None, None),
         ("<Foo lang={undefined} />", None, Some(settings()), None),

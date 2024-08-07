@@ -16,6 +16,7 @@ mod pure_functions;
 
 pub struct NodeListenerOptions<'a, 'b> {
     pub checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
+    pub checked_called_nodes: RefCell<FxHashSet<SymbolId>>,
     pub ctx: &'b LintContext<'a>,
     pub has_valid_this: Cell<bool>,
     pub called_with_new: Cell<bool>,
@@ -27,6 +28,7 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
     pub fn new(ctx: &'b LintContext<'a>) -> Self {
         Self {
             checked_mutated_nodes: RefCell::new(FxHashSet::default()),
+            checked_called_nodes: RefCell::new(FxHashSet::default()),
             ctx,
             has_valid_this: Cell::new(false),
             called_with_new: Cell::new(false),
@@ -45,6 +47,10 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
 
     pub fn insert_mutated_node(&self, symbol_id: SymbolId) -> bool {
         self.checked_mutated_nodes.borrow_mut().insert(symbol_id)
+    }
+
+    pub fn insert_called_node(&self, symbol_id: SymbolId) -> bool {
+        self.checked_called_nodes.borrow_mut().insert(symbol_id)
     }
 }
 
@@ -415,7 +421,11 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
 
         BinaryOperator::ShiftRightZeroFill => match (left, right) {
             (Value::Number(a), Value::Number(b)) => {
-                Value::Number(f64::from((a as u32) >> (b as u32)))
+                if b >= a {
+                    Value::Number(0.0)
+                } else {
+                    Value::Number(f64::from((a as u32) >> (b as u32)))
+                }
             }
             _ => Value::Unknown,
         },
@@ -441,7 +451,12 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
         },
         BinaryOperator::ShiftLeft => match (left, right) {
             (Value::Number(a), Value::Number(b)) => {
-                Value::Number(f64::from((a as i32) << (b as i32)))
+                // NOTE: could overflow, in which case node produces `a`
+                if b >= 32.0 {
+                    Value::Number(a)
+                } else {
+                    Value::Number(f64::from((a as i32) << (b as i32)))
+                }
             }
             _ => Value::Unknown,
         },
@@ -583,7 +598,10 @@ fn test_calculate_binary_operation() {
 
     // "<<",
     let op = BinaryOperator::ShiftLeft;
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(0.0),), Value::Number(1.0));
     assert_eq!(fun(op, Value::Number(1.0), Value::Number(2.0),), Value::Number(4.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(31.0),), Value::Number(-2_147_483_648.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(f64::MAX),), Value::Number(1.0));
 
     // ">>",
     let op = BinaryOperator::ShiftRight;
@@ -591,7 +609,11 @@ fn test_calculate_binary_operation() {
 
     // ">>>",
     let op = BinaryOperator::ShiftRightZeroFill;
+    assert_eq!(fun(op, Value::Number(0.0), Value::Number(0.0),), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(0.0),), Value::Number(1.0));
     assert_eq!(fun(op, Value::Number(4.0), Value::Number(2.0),), Value::Number(1.0));
+    assert_eq!(fun(op, Value::Number(2.0), Value::Number(4.0),), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(4096.0), Value::Number(4096.0)), Value::Number(0.0));
 
     // "%",
     let op = BinaryOperator::Remainder;

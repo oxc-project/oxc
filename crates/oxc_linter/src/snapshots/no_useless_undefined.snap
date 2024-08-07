@@ -1,0 +1,122 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:5:13]
+ 4 │             bar,
+ 5 │             undefined,
+   ·             ─────────
+ 6 │             undefined,
+   ·             ─────────
+ 7 │             undefined,
+   ·             ─────────
+ 8 │             undefined,
+   ·             ─────────
+ 9 │         )
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:21]
+ 1 │ function foo([bar = undefined] = []) {}
+   ·                     ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:5:5]
+ 4 │                 bar,
+ 5 │                 undefined,
+   ·                 ─────────
+ 6 │                 undefined,
+   ·                 ─────────
+ 7 │                 undefined,
+   ·                 ─────────
+ 8 │                 undefined,
+   ·                 ─────────
+ 9 │             )
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:21]
+ 1 │ function foo([bar = undefined] = []) {}
+   ·                     ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:10]
+ 1 │ foo(bar, undefined, undefined);
+   ·          ─────────  ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ let a = undefined, b = 2;
+   ·         ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:7:21]
+ 6 │                     /* */
+ 7 │                     undefined
+   ·                     ─────────
+ 8 │                     /* */
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:7:21]
+ 6 │                     /* */
+ 7 │                     undefined
+   ·                     ─────────
+ 8 │                     /* */
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:6:17]
+ 5 │                 /* */
+ 6 │                 undefined
+   ·                 ─────────
+ 7 │                 /* */
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:10]
+ 1 │ foo.bind(undefined)
+   ·          ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:11]
+ 1 │ bind(foo, undefined)
+   ·           ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:17]
+ 1 │ foo.bind?.(bar, undefined)
+   ·                 ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:16]
+ 1 │ foo[bind](bar, undefined)
+   ·                ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:1:18]
+ 1 │ foo.notBind(bar, undefined)
+   ·                  ─────────
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.

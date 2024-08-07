@@ -1,8 +1,12 @@
-use std::{env, path::PathBuf, rc::Rc};
+use std::{
+    env,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{AllowWarnDeny, LintContext, LintOptions, Linter};
+use oxc_linter::{AllowWarnDeny, LintOptions, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -44,15 +48,11 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_jest_plugin(true)
                     .with_jsx_a11y_plugin(true)
                     .with_nextjs_plugin(true)
-                    .with_react_perf_plugin(true);
+                    .with_react_perf_plugin(true)
+                    .with_vitest_plugin(true);
                 let linter = Linter::from_options(lint_options).unwrap();
                 let semantic = Rc::new(semantic_ret.semantic);
-                b.iter(|| {
-                    linter.run(LintContext::new(
-                        PathBuf::from("").into_boxed_path(),
-                        Rc::clone(&semantic),
-                    ))
-                });
+                b.iter(|| linter.run(Path::new(std::ffi::OsStr::new("")), Rc::clone(&semantic)));
             },
         );
     }

@@ -1,0 +1,105 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/parameter.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(decorator)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function)",
+            "id": 3,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "a",
+                "node": "FormalParameter(a)",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 3,
+                "name": "b",
+                "node": "FormalParameter(<destructure>)",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 4,
+                "name": "c",
+                "node": "FormalParameter(<destructure>)",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 5,
+                "name": "d",
+                "node": "FormalParameter(d)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(A)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "decorator",
+        "node": "Function(decorator)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "decorator",
+            "node_id": 15
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 1,
+            "name": "decorator",
+            "node_id": 19
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 2,
+            "name": "decorator",
+            "node_id": 24
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 3,
+            "name": "decorator",
+            "node_id": 31
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "A",
+        "node": "Class(A)",
+        "references": []
+      }
+    ]
+  }
+]

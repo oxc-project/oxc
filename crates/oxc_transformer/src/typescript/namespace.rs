@@ -254,10 +254,9 @@ impl<'a> TypeScript<'a> {
         }
 
         if new_stmts.is_empty() {
-            // Delete the scope binding that `ctx.generate_uid_in_current_scope` created above,
+            // Delete the scope binding that `ctx.generate_uid` created above,
             // as no binding is actually being created
-            let current_scope_id = ctx.current_scope_id();
-            ctx.scopes_mut().remove_binding(current_scope_id, &CompactStr::from(name.as_str()));
+            ctx.scopes_mut().remove_binding(scope_id, &CompactStr::from(name.as_str()));
 
             return None;
         }

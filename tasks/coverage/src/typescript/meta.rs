@@ -73,10 +73,11 @@ impl CompilerSettings {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TestUnitData {
     pub name: String,
     pub content: String,
+    pub source_type: SourceType,
 }
 
 #[derive(Debug)]
@@ -110,6 +111,7 @@ impl TestCaseContent {
                     test_unit_data.push(TestUnitData {
                         name: file_name,
                         content: std::mem::take(&mut current_file_content),
+                        source_type: SourceType::default(),
                     });
                 }
                 current_file_name = Some(meta_value.to_string());
@@ -131,11 +133,37 @@ impl TestCaseContent {
         test_unit_data.push(TestUnitData {
             name: file_name,
             content: std::mem::take(&mut current_file_content),
+            source_type: SourceType::default(),
         });
 
         let settings = CompilerSettings::new(&current_file_options);
+
+        let is_module = test_unit_data.len() > 1;
+        let test_unit_data = test_unit_data
+            .into_iter()
+            .filter_map(|mut unit| {
+                let source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
+                unit.source_type = source_type.with_module(is_module);
+                Some(unit)
+            })
+            .collect::<Vec<_>>();
+
         let error_files = Self::get_error_files(path, &settings);
         Self { tests: test_unit_data, settings, error_files }
+    }
+
+    fn get_source_type(path: &Path, options: &CompilerSettings) -> Option<SourceType> {
+        let is_module = ["esnext", "es2022", "es2020", "es2015"]
+            .into_iter()
+            .any(|module| options.modules.contains(&module.to_string()));
+        Some(
+            SourceType::from_path(path)
+                .ok()?
+                .with_script(true)
+                .with_module(is_module)
+                .with_jsx(!options.jsx.is_empty())
+                .with_typescript_definition(options.declaration),
+        )
     }
 
     // TypeScript error files can be:

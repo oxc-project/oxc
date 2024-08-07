@@ -1,0 +1,73 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/interface-heritage2.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "id": 2,
+        "node": "TSModuleDeclaration(Member)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(Export | TypeAlias)",
+            "id": 2,
+            "name": "unreferenced",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 4,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "unreferenced",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(NameSpaceModule)",
+        "id": 1,
+        "name": "Member",
+        "node": "TSModuleDeclaration(Member)",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 3,
+        "name": "Foo",
+        "node": "TSInterfaceDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

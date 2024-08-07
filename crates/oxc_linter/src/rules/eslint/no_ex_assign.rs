@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_ex_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-ex-assign): Do not assign to the exception parameter.").with_help("If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.").with_label(span0)
+    OxcDiagnostic::warn("Do not assign to the exception parameter.").with_help("If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,7 +41,9 @@ impl Rule for NoExAssign {
         if symbol_table.get_flag(symbol_id).is_catch_variable() {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
-                    ctx.diagnostic(no_ex_assign_diagnostic(reference.span()));
+                    ctx.diagnostic(no_ex_assign_diagnostic(
+                        ctx.semantic().reference_span(reference),
+                    ));
                 }
             }
         }

@@ -158,7 +158,7 @@ impl Rule for RequireParam {
         }
 
         // Collected JSDoc `@param` tags
-        let tags_to_check = collect_tags(&jsdocs, &settings.resolve_tag_name("param"));
+        let tags_to_check = collect_tags(&jsdocs, settings.resolve_tag_name("param"));
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 
@@ -246,7 +246,7 @@ impl Rule for RequireParam {
                 .map(|span| LabeledSpan::new_with_span(None, *span))
                 .collect::<Vec<_>>();
             ctx.diagnostic(
-                OxcDiagnostic::warn("eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.")
+                OxcDiagnostic::warn("Missing JSDoc `@param` declaration for function parameters.")
                     .with_help("Add `@param` tag with name.")
                     .with_labels(labels),
             );

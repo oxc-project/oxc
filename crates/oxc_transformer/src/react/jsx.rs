@@ -218,7 +218,7 @@ impl<'a> AutomaticModuleBindings<'a> {
         source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::FunctionScopedVariable);
+        let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
         let local = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
@@ -365,8 +365,12 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
-        self.add_runtime_imports(program);
+    pub fn transform_program_on_exit(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.add_runtime_imports(program, ctx);
     }
 
     pub fn transform_jsx_element(
@@ -396,7 +400,7 @@ impl<'a> ReactJsx<'a> {
 
 // Add imports
 impl<'a> ReactJsx<'a> {
-    pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
+    pub fn add_runtime_imports(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.bindings.is_classic() {
             if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
                 program.body.insert(0, stmt);
@@ -404,7 +408,7 @@ impl<'a> ReactJsx<'a> {
             return;
         }
 
-        let imports = self.ctx.module_imports.get_import_statements();
+        let imports = self.ctx.module_imports.get_import_statements(ctx);
         let mut index = program
             .body
             .iter()
@@ -947,7 +951,7 @@ impl<'a> ReactJsx<'a> {
     /// * See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>
     /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
     fn decode_entities(s: &str) -> String {
-        let mut buffer = vec![];
+        let mut buffer = String::new();
         let mut chars = s.char_indices();
         let mut prev = 0;
         while let Some((i, c)) = chars.next() {
@@ -961,21 +965,38 @@ impl<'a> ReactJsx<'a> {
                     }
                 }
                 if let Some(end) = end {
-                    let word = &s[start + 1..end];
-                    buffer.extend_from_slice(s[prev..start].as_bytes());
+                    buffer.push_str(&s[prev..start]);
                     prev = end + 1;
-                    if let Some(c) = XML_ENTITIES.get(word) {
-                        buffer.extend_from_slice(c.to_string().as_bytes());
+                    let word = &s[start + 1..end];
+                    if let Some(decimal) = word.strip_prefix('#') {
+                        if let Some(hex) = decimal.strip_prefix('x') {
+                            if let Some(c) =
+                                u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+                            {
+                                // &x0123;
+                                buffer.push(c);
+                                continue;
+                            }
+                        } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32)
+                        {
+                            // &#0123;
+                            buffer.push(c);
+                            continue;
+                        }
+                    } else if let Some(c) = XML_ENTITIES.get(word) {
+                        // &quote;
+                        buffer.push(*c);
+                        continue;
                     }
+                    // fallback
+                    buffer.push('&');
+                    buffer.push_str(word);
+                    buffer.push(';');
                 }
             }
         }
-        buffer.extend_from_slice(s[prev..].as_bytes());
-        #[allow(unsafe_code)]
-        // SAFETY: The buffer is constructed from valid utf chars.
-        unsafe {
-            String::from_utf8_unchecked(buffer)
-        }
+        buffer.push_str(&s[prev..]);
+        buffer
     }
 }
 

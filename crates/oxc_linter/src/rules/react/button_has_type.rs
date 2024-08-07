@@ -12,18 +12,18 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_prop_value, has_jsx_prop_lowercase, is_create_element_call},
+    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
     AstNode,
 };
 
 fn missing_type_prop(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.")
+    OxcDiagnostic::warn("`button` elements must have an explicit `type` attribute.")
         .with_help("Add a `type` attribute to the `button` element.")
         .with_label(span0)
 }
 
 fn invalid_type_prop(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.")
+    OxcDiagnostic::warn("`button` elements must have a valid `type` attribute.")
         .with_help("Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.")
         .with_label(span0)
 }
@@ -77,7 +77,7 @@ impl Rule for ButtonHasType {
                     return;
                 }
 
-                has_jsx_prop_lowercase(jsx_el, "type").map_or_else(
+                has_jsx_prop_ignore_case(jsx_el, "type").map_or_else(
                     || {
                         ctx.diagnostic(missing_type_prop(identifier.span));
                     },
@@ -145,6 +145,10 @@ impl Rule for ButtonHasType {
                 .and_then(|val| val.get("reset").and_then(serde_json::Value::as_bool))
                 .unwrap_or(true),
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

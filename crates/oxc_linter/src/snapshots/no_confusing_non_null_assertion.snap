@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! == b;
+   · ───────
+   ╰────
+  help: Remove the "!", or prefix the "=" with it.
+
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like "a! === b", which looks very similar to not equal "a !=== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! === b;
+   · ────────
+   ╰────
+  help: Remove the "!", or prefix the "=" with it.
+
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a + b! == c;
+   · ───────────
+   ╰────
+  help: Wrap left-hand side in parentheses to avoid putting non-null assertion "!" and "=" together.
+
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (obj = new new OuterObj().InnerObj).Name! == c;
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Remove the "!", or prefix the "=" with it.
+
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (a==b)! ==c;
+   · ───────────
+   ╰────
+  help: Remove the "!", or prefix the "=" with it.
+
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and assignment like "a! = b", which looks very similar to not equal "a != b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! = b;
+   · ──────
+   ╰────
+  help: Remove the "!", or wrap the left-hand side in parentheses.
+
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and assignment like "a! = b", which looks very similar to not equal "a != b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (obj = new new OuterObj().InnerObj).Name! = c;
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Remove the "!", or wrap the left-hand side in parentheses.
+
+  ⚠ typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and assignment like "a! = b", which looks very similar to not equal "a != b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (a=b)! =c;
+   · ─────────
+   ╰────
+  help: Remove the "!", or wrap the left-hand side in parentheses.

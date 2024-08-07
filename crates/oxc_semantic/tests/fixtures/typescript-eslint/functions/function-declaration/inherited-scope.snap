@@ -1,0 +1,43 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/function-declaration/inherited-scope.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(foo)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "parentScoped",
+        "node": "VariableDeclarator(parentScoped)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "parentScoped",
+            "node_id": 11
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 1,
+        "name": "foo",
+        "node": "Function(foo)",
+        "references": []
+      }
+    ]
+  }
+]

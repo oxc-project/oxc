@@ -67,11 +67,13 @@ use oxc_semantic::{ScopeTree, SymbolTable};
 pub mod ancestor;
 pub use ancestor::Ancestor;
 mod context;
-pub use context::{FinderRet, TraverseAncestry, TraverseCtx, TraverseScoping};
+pub use context::{TraverseAncestry, TraverseCtx, TraverseScoping};
 #[allow(clippy::module_inception)]
 mod traverse;
 pub use traverse::Traverse;
 mod walk;
+
+mod compile_fail_tests;
 
 /// Traverse AST with a [`Traverse`] impl.
 ///
@@ -136,7 +138,7 @@ mod walk;
 ///     }
 /// }
 /// ```
-#[allow(unsafe_code)]
+
 pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     allocator: &'a Allocator,

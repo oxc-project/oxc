@@ -1,21 +1,12 @@
-use std::{
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::process::Command;
 
 use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use regex::{Captures, Regex, Replacer};
 use syn::parse_file;
 
-use crate::Result;
-
 static INSERT_MACRO_IDENT: &str = "insert";
-static INSERT_MACRO_IDENT_LEN: usize = INSERT_MACRO_IDENT.len();
-
 static ENDL_MACRO_IDENT: &str = "endl";
-static ENDL_MACRO_IDENT_LEN: usize = ENDL_MACRO_IDENT.len();
-
 static WHITE_SPACES: &str = "   ";
 
 struct InsertReplacer;
@@ -59,14 +50,7 @@ pub fn pprint(input: &TokenStream) -> String {
     result
 }
 
-/// Runs cargo fmt in the `root` path.
-pub fn cargo_fmt(root: &str) -> std::io::Result<()> {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("fmt")
-        .stdin(Stdio::inherit())
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .current_dir(root);
-    cmd.spawn()?;
-    Ok(())
+/// Runs cargo fmt.
+pub fn cargo_fmt() {
+    Command::new("cargo").arg("fmt").status().unwrap();
 }

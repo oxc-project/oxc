@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.7.0] - 2024-08-05
+
+### Features
+
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+- 7afa1f0 linter: Support suggestions and dangerous fixes (#4223) (DonIsaac)
+
+### Bug Fixes
+
+- fe1356d linter: Change no-unused-vars to nursery (#4588) (DonIsaac)
+- 72337b1 linter: Change typescript-eslint/no-namespace to restriction (#4539) (Don Isaac)
+- 732f4e2 linter: Fix `oxlint` allocator cfg (#4527) (overlookmotel)
+
+## [0.6.1] - 2024-07-17
+
+### Features
+
+- 1f8968a linter: Add eslint-plugin-promise rules: avoid-new, no-new-statics, params-names (#4293) (Jelle van der Waa)
+
 ## [0.5.1] - 2024-06-29
 
 ### Bug Fixes

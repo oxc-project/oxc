@@ -99,11 +99,11 @@ impl<'a> ParserImpl<'a> {
             self.end_span(start_span),
             decorators,
             id,
-            super_class,
-            body,
             type_parameters,
+            super_class,
             super_type_parameters,
             implements,
+            body,
             modifiers.contains_abstract(),
             modifiers.contains_declare(),
         ))
@@ -434,15 +434,8 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<ClassElement<'a>> {
         let type_annotation =
             if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
-        let value = if self.eat(Kind::Eq) {
-            // let current_flags = self.scope.current_flags();
-            // self.scope.set_current_flags(self.scope.current_flags());
-            let expr = self.parse_expr()?;
-            // self.scope.set_current_flags(current_flags);
-            Some(expr)
-        } else {
-            None
-        };
+        let decorators = self.consume_decorators();
+        let value = if self.eat(Kind::Eq) { Some(self.parse_expr()?) } else { None };
         self.asi()?;
 
         let r#type = if r#abstract {
@@ -464,7 +457,7 @@ impl<'a> ParserImpl<'a> {
             accessibility,
             optional,
             definite,
-            decorators: self.consume_decorators(),
+            decorators,
         };
         Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
     }

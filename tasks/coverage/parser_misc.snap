@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 24/24 (100.00%)
-Positive Passed: 24/24 (100.00%)
-Negative Passed: 12/12 (100.00%)
+AST Parsed     : 25/25 (100.00%)
+Positive Passed: 25/25 (100.00%)
+Negative Passed: 14/14 (100.00%)
 
   × Unexpected token
    ╭─[fail/oxc-169.js:2:1]
@@ -90,12 +90,11 @@ Negative Passed: 12/12 (100.00%)
    ·     ─────────
    ╰────
 
-  × Expected `with` but found `string`
+  × Unexpected token
     ╭─[fail/oxc-2394.ts:20:22]
  19 │ export type LocalInterface =
  20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
-    ·                      ────────┬────────
-    ·                              ╰── `with` expected
+    ·                      ─────────────────
  21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
     ╰────
 
@@ -165,6 +164,60 @@ Negative Passed: 12/12 (100.00%)
    ·                                  ▲
    ╰────
   help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[fail/oxc-4212-1.ts:1:16]
+ 1 │ class a { const enum b(); }
+   ·                ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[fail/oxc-4449.ts:2:11]
+ 1 │ // should fail
+ 2 │ enum A { [foo] }               // Computed property names are not allowed in enums
+   ·           ───
+ 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[fail/oxc-4449.ts:3:11]
+ 2 │ enum A { [foo] }               // Computed property names are not allowed in enums
+ 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
+   ·           ─
+ 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[fail/oxc-4449.ts:4:10]
+ 3 │ enum B { [1] }                 // An enum member cannot have a numeric name.
+ 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
+   ·          ─
+ 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[fail/oxc-4449.ts:5:11]
+ 4 │ enum C { 1 }                   // An enum member cannot have a numeric name.
+ 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
+   ·           ────────────
+ 6 │ enum E { `baz` = 2 }           // Enum member expected.
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[fail/oxc-4449.ts:6:10]
+ 5 │ enum D { [`test${foo}`] }      // Computed property names are not allowed in enums.
+ 6 │ enum E { `baz` = 2 }           // Enum member expected.
+   ·          ─────────
+ 7 │ enum F { ['baz' + 'baz'] }     // Computed property names are not allowed in enums.
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[fail/oxc-4449.ts:7:11]
+ 6 │ enum E { `baz` = 2 }           // Enum member expected.
+ 7 │ enum F { ['baz' + 'baz'] }     // Computed property names are not allowed in enums.
+   ·           ─────────────
+   ╰────
 
   × The keyword 'let' is reserved
    ╭─[fail/oxc.js:1:1]

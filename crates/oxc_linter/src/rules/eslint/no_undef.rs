@@ -1,13 +1,13 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-undef): Disallow the use of undeclared variables.")
+    OxcDiagnostic::warn("Disallow the use of undeclared variables.")
         .with_help(format!("'{x0}' is not defined."))
         .with_label(span1)
 }
@@ -49,16 +49,16 @@ impl Rule for NoUndef {
     fn run_once(&self, ctx: &LintContext) {
         let symbol_table = ctx.symbols();
 
-        for reference_id_list in ctx.scopes().root_unresolved_references().values() {
-            for &reference_id in reference_id_list {
+        for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
+            for reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
-                let name = reference.name();
+                let name = ctx.semantic().reference_name(reference);
 
                 if ctx.env_contains_var(name) {
                     continue;
                 }
 
-                if ctx.globals().is_enabled(name.as_str()) {
+                if ctx.globals().is_enabled(name) {
                     continue;
                 }
 
@@ -67,7 +67,7 @@ impl Rule for NoUndef {
                     continue;
                 }
 
-                ctx.diagnostic(no_undef_diagnostic(name, reference.span()));
+                ctx.diagnostic(no_undef_diagnostic(name, node.kind().span()));
             }
         }
     }

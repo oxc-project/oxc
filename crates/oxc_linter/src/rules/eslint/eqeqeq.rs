@@ -10,7 +10,7 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(eqeqeq): Expected {x1} and instead saw {x0}"))
+    OxcDiagnostic::warn(format!("Expected {x1} and instead saw {x0}"))
         .with_help(format!("Prefer {x1} operator"))
         .with_label(span2)
 }
@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// a == b
     /// ```
     Eqeqeq,
-    pedantic
+    pedantic,
+    conditional_fix
 );
 
 impl Rule for Eqeqeq {

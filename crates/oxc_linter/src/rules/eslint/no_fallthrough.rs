@@ -21,18 +21,18 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("eslint(no-fallthrough): Expected a 'break' statement before 'case'.")
-        .with_label(span)
+    OxcDiagnostic::warn("Expected a 'break' statement before 'case'.").with_label(span)
 }
 
 fn no_fallthrough_default_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("eslint(no-fallthrough): Expected a 'break' statement before 'default'.")
-        .with_label(span)
+    OxcDiagnostic::warn("Expected a 'break' statement before 'default'.").with_label(span)
 }
 
 fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("eslint(no-fallthrough): Found a comment that would permit fallthrough, but case cannot fall through.")
-        .with_label(span)
+    OxcDiagnostic::warn(
+        "Found a comment that would permit fallthrough, but case cannot fall through.",
+    )
+    .with_label(span)
 }
 
 const DEFAULT_FALLTHROUGH_COMMENT_PATTERN: &str = r"falls?\s?through";

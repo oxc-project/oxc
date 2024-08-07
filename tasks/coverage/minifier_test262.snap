@@ -2,9 +2,8 @@ commit: a1587416
 
 minifier_test262 Summary:
 AST Parsed     : 46406/46406 (100.00%)
-Positive Passed: 46401/46406 (99.99%)
-Expect to Parse: "language/expressions/new/S11.2.2_A3_T1.js"
-Expect to Parse: "language/expressions/new/S11.2.2_A3_T4.js"
-Expect to Parse: "language/types/reference/put-value-prop-base-primitive.js"
-Expect to Parse: "staging/explicit-resource-management/call-dispose-methods.js"
-Expect to Parse: "staging/explicit-resource-management/exception-handling.js"
+Positive Passed: 46402/46406 (99.99%)
+Expect to Parse: "language/expressions/logical-and/S11.11.1_A3_T4.js"
+Expect to Parse: "language/expressions/logical-not/S9.2_A1_T2.js"
+Expect to Parse: "language/statements/if/S12.5_A1.1_T1.js"
+Expect to Parse: "language/statements/if/S12.5_A1.1_T2.js"

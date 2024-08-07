@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -95,25 +97,27 @@ impl Default for JSDocPluginSettings {
 impl JSDocPluginSettings {
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if blocked
-    pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<String> {
+    pub fn check_blocked_tag_name(&self, tag_name: &str) -> Option<Cow<str>> {
         match self.tag_name_preference.get(tag_name) {
-            Some(TagNamePreference::FalseOnly(_)) => Some(format!("Unexpected tag `@{tag_name}`.")),
-            Some(TagNamePreference::ObjectWithMessage { message }) => Some(message.to_string()),
+            Some(TagNamePreference::FalseOnly(_)) => {
+                Some(Cow::Owned(format!("Unexpected tag `@{tag_name}`.")))
+            }
+            Some(TagNamePreference::ObjectWithMessage { message }) => Some(Cow::Borrowed(message)),
             _ => None,
         }
     }
 
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if replacement found or default aliased
-    pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<String> {
-        let reason = |preferred_name: &str| -> String {
-            format!("Replace tag `@{original_name}` with `@{preferred_name}`.")
+    pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<Cow<str>> {
+        let reason = |preferred_name: &str| -> Cow<str> {
+            Cow::Owned(format!("Replace tag `@{original_name}` with `@{preferred_name}`."))
         };
 
         match self.tag_name_preference.get(original_name) {
             Some(TagNamePreference::TagNameOnly(preferred_name)) => Some(reason(preferred_name)),
             Some(TagNamePreference::ObjectWithMessageAndReplacement { message, .. }) => {
-                Some(message.to_string())
+                Some(Cow::Borrowed(message))
             }
             _ => {
                 // https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md#default-preferred-aliases
@@ -163,13 +167,13 @@ impl JSDocPluginSettings {
 
     /// Resolve original, known tag name to user preferred name
     /// If not defined, return original name
-    pub fn resolve_tag_name(&self, original_name: &str) -> String {
+    pub fn resolve_tag_name<'s>(&'s self, original_name: &'s str) -> &'s str {
         match self.tag_name_preference.get(original_name) {
             Some(
                 TagNamePreference::TagNameOnly(replacement)
                 | TagNamePreference::ObjectWithMessageAndReplacement { replacement, .. },
-            ) => replacement.to_string(),
-            _ => original_name.to_string(),
+            ) => replacement,
+            _ => original_name,
         }
     }
 }
@@ -198,6 +202,7 @@ enum TagNamePreference {
 #[cfg(test)]
 mod test {
     use serde::Deserialize;
+    use std::borrow::Cow;
 
     use super::JSDocPluginSettings;
 
@@ -294,9 +299,9 @@ mod test {
         .unwrap();
         assert_eq!(
             settings.check_blocked_tag_name("foo"),
-            Some("Unexpected tag `@foo`.".to_string())
+            Some(Cow::Borrowed("Unexpected tag `@foo`."))
         );
-        assert_eq!(settings.check_blocked_tag_name("bar"), Some("do not use bar".to_string()));
+        assert_eq!(settings.check_blocked_tag_name("bar"), Some(Cow::Borrowed("do not use bar")));
         assert_eq!(settings.check_blocked_tag_name("baz"), None);
     }
 
@@ -316,10 +321,10 @@ mod test {
         .unwrap();
         assert_eq!(settings.check_preferred_tag_name("foo"), None,);
         assert_eq!(settings.check_preferred_tag_name("bar"), None);
-        assert_eq!(settings.check_preferred_tag_name("baz"), Some("baz is noop now".to_string()));
+        assert_eq!(settings.check_preferred_tag_name("baz"), Some("baz is noop now".into()));
         assert_eq!(
             settings.check_preferred_tag_name("qux"),
-            Some("Replace tag `@qux` with `@quux`.".to_string())
+            Some("Replace tag `@qux` with `@quux`.".into())
         );
     }
 }

@@ -99,14 +99,6 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_class_body(body);
     }
 
-    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        self.annotations.transform_import_declaration(decl);
-    }
-
-    pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        self.annotations.transform_export_named_declaration(decl);
-    }
-
     pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
         self.annotations.transform_ts_module_declaration(decl);
     }
@@ -201,6 +193,22 @@ impl<'a> TypeScript<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.transform_for_statement(stmt, ctx);
+    }
+
+    pub fn transform_for_in_statement(
+        &mut self,
+        stmt: &mut ForInStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_in_statement(stmt, ctx);
+    }
+
+    pub fn transform_for_of_statement(
+        &mut self,
+        stmt: &mut ForOfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_of_statement(stmt, ctx);
     }
 
     pub fn transform_tagged_template_expression(

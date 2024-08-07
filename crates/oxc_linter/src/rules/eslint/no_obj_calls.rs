@@ -13,7 +13,7 @@ const GLOBAL_THIS: &str = "globalThis";
 const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
 fn no_obj_calls_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-obj-calls): Disallow calling some global objects as functions")
+    OxcDiagnostic::warn("Disallow calling some global objects as functions")
         .with_help(format!("{x0} is not a function."))
         .with_label(span1)
 }
@@ -87,12 +87,15 @@ fn resolve_global_binding<'a, 'b: 'a>(
         let nodes = ctx.nodes();
         let symbols = ctx.symbols();
         scope.ancestors(scope_id).find_map(|id| scope.get_binding(id, &ident.name)).map_or_else(
+            // panic in debug builds, but fail gracefully in release builds
             || {
-                panic!(
+                debug_assert!(
+                    false,
                     "No binding id found for {}, but this IdentifierReference
                 is not a global",
                     &ident.name
                 );
+                None
             },
             |binding_id| {
                 let decl = nodes.get_node(symbols.get_declaration(binding_id));
@@ -104,12 +107,14 @@ fn resolve_global_binding<'a, 'b: 'a>(
                         }
                         match &parent_decl.init {
                             // handles "let a = JSON; let b = a; a();"
-                            Some(Expression::Identifier(parent_ident)) => {
-                                resolve_global_binding(parent_ident, decl_scope, ctx)
+                            Some(Expression::Identifier(parent_ident))
+                                if parent_ident.name != ident.name =>
+                            {
+                                return resolve_global_binding(parent_ident, decl_scope, ctx)
                             }
                             // handles "let a = globalThis.JSON; let b = a; a();"
                             Some(parent_expr) if parent_expr.is_member_expression() => {
-                                global_this_member(parent_expr.to_member_expression())
+                                return global_this_member(parent_expr.to_member_expression())
                             }
                             _ => None,
                         }
@@ -180,6 +185,13 @@ fn test() {
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         ("{const Math = () => {}; {let obj = new Math();}}", None),
         ("{const {parse} = JSON;parse('{}')}", None),
+        // https://github.com/oxc-project/oxc/issues/4389
+        (
+            r"
+        export const getConfig = getConfig;
+        getConfig();",
+            None,
+        ),
     ];
 
     let fail = vec![

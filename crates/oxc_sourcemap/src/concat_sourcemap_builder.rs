@@ -16,6 +16,66 @@ pub struct ConcatSourceMapBuilder {
 
 #[allow(clippy::cast_possible_truncation)]
 impl ConcatSourceMapBuilder {
+    /// Create new `ConcatSourceMapBuilder` with pre-allocated capacity.
+    ///
+    /// Allocating capacity before adding sourcemaps with `add_sourcemap` avoids memory copies
+    /// and increases performance.
+    ///
+    /// Alternatively, use `from_sourcemaps`.
+    pub fn with_capacity(
+        names_len: usize,
+        sources_len: usize,
+        tokens_len: usize,
+        token_chunks_len: usize,
+    ) -> Self {
+        Self {
+            names: Vec::with_capacity(names_len),
+            sources: Vec::with_capacity(sources_len),
+            source_contents: Vec::with_capacity(sources_len),
+            tokens: Vec::with_capacity(tokens_len),
+            token_chunks: Vec::with_capacity(token_chunks_len),
+            token_chunk_prev_name_id: 0,
+        }
+    }
+
+    /// Create new `ConcatSourceMapBuilder` from an array of `SourceMap`s and line offsets.
+    ///
+    /// This avoids memory copies versus creating builder with `ConcatSourceMapBuilder::default()`
+    /// and then adding sourcemaps individually with `add_sourcemap`.
+    ///
+    /// # Example
+    /// ```
+    /// let builder = ConcatSourceMapBuilder::from_sourcemaps(&[
+    ///   (&sourcemap1, 0),
+    ///   (&sourcemap2, 100),
+    /// ]);
+    /// let combined_sourcemap = builder.into_sourcemap();
+    /// ```
+    pub fn from_sourcemaps(sourcemap_and_line_offsets: &[(&SourceMap, u32)]) -> Self {
+        // Calculate length of `Vec`s required
+        let mut names_len = 0;
+        let mut sources_len = 0;
+        let mut tokens_len = 0;
+        for (sourcemap, _) in sourcemap_and_line_offsets {
+            names_len += sourcemap.names.len();
+            sources_len += sourcemap.sources.len();
+            tokens_len += sourcemap.tokens.len();
+        }
+
+        let mut builder = Self::with_capacity(
+            names_len,
+            sources_len,
+            tokens_len,
+            sourcemap_and_line_offsets.len(),
+        );
+
+        for (sourcemap, line_offset) in sourcemap_and_line_offsets.iter().copied() {
+            builder.add_sourcemap(sourcemap, line_offset);
+        }
+
+        builder
+    }
+
     pub fn add_sourcemap(&mut self, sourcemap: &SourceMap, line_offset: u32) {
         let source_offset = self.sources.len() as u32;
         let name_offset = self.names.len() as u32;
@@ -46,11 +106,15 @@ impl ConcatSourceMapBuilder {
         }
 
         // Extend `sources` and `source_contents`.
-        self.sources.reserve(sourcemap.sources.len());
-        for (index, source) in sourcemap.get_sources().enumerate() {
-            let source_content = sourcemap.get_source_content(index as u32).unwrap_or_default();
-            self.sources.push(source.into());
-            self.source_contents.push(source_content.into());
+        self.sources.extend(sourcemap.get_sources().map(Into::into));
+
+        if let Some(source_contents) = &sourcemap.source_contents {
+            // Clone `Arc` instead of generating a new `Arc` and copying string data because
+            // source texts are generally long strings. Cost of copying a large string is higher
+            // than cloning an `Arc`.
+            self.source_contents.extend(source_contents.iter().map(Arc::clone));
+        } else {
+            self.source_contents.extend((0..sourcemap.sources.len()).map(|_| Arc::default()));
         }
 
         // Extend `names`.
@@ -90,6 +154,25 @@ impl ConcatSourceMapBuilder {
 
 #[test]
 fn test_concat_sourcemap_builder() {
+    run_test(|sourcemap_and_line_offsets| {
+        let mut builder = ConcatSourceMapBuilder::default();
+        for (sourcemap, line_offset) in sourcemap_and_line_offsets.iter().copied() {
+            builder.add_sourcemap(sourcemap, line_offset);
+        }
+        builder
+    });
+}
+
+#[test]
+fn test_concat_sourcemap_builder_from_sourcemaps() {
+    run_test(ConcatSourceMapBuilder::from_sourcemaps);
+}
+
+#[cfg(test)]
+fn run_test<F>(create_builder: F)
+where
+    F: Fn(&[(&SourceMap, u32)]) -> ConcatSourceMapBuilder,
+{
     let sm1 = SourceMap::new(
         None,
         vec!["foo".into(), "foo2".into()],
@@ -108,18 +191,29 @@ fn test_concat_sourcemap_builder() {
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
         None,
     );
+    let sm3 = SourceMap::new(
+        None,
+        vec!["abc".into()],
+        None,
+        vec!["abc.js".into()],
+        None,
+        vec![Token::new(1, 2, 2, 2, Some(0), Some(0))],
+        None,
+    );
 
-    let mut builder = ConcatSourceMapBuilder::default();
-    builder.add_sourcemap(&sm1, 0);
-    builder.add_sourcemap(&sm2, 2);
+    let builder = create_builder(&[(&sm1, 0), (&sm2, 2), (&sm3, 2)]);
 
     let sm = SourceMap::new(
         None,
-        vec!["foo".into(), "foo2".into(), "bar".into()],
+        vec!["foo".into(), "foo2".into(), "bar".into(), "abc".into()],
         None,
-        vec!["foo.js".into(), "bar.js".into()],
+        vec!["foo.js".into(), "bar.js".into(), "abc.js".into()],
         None,
-        vec![Token::new(1, 1, 1, 1, Some(0), Some(0)), Token::new(3, 1, 1, 1, Some(1), Some(2))],
+        vec![
+            Token::new(1, 1, 1, 1, Some(0), Some(0)),
+            Token::new(3, 1, 1, 1, Some(1), Some(2)),
+            Token::new(3, 2, 2, 2, Some(2), Some(3)),
+        ],
         None,
     );
     let concat_sm = builder.into_sourcemap();
@@ -131,9 +225,10 @@ fn test_concat_sourcemap_builder() {
         concat_sm.token_chunks,
         Some(vec![
             TokenChunk::new(0, 1, 0, 0, 0, 0, 0, 0,),
-            TokenChunk::new(1, 2, 1, 1, 1, 1, 0, 0,)
+            TokenChunk::new(1, 2, 1, 1, 1, 1, 0, 0,),
+            TokenChunk::new(2, 3, 3, 1, 1, 1, 2, 1,)
         ])
     );
 
-    assert_eq!(sm.to_json_string().unwrap(), sm.to_json_string().unwrap());
+    assert_eq!(sm.to_json().mappings, concat_sm.to_json().mappings);
 }

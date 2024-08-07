@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_regex_spaces_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-regex-spaces): Spaces are hard to count.")
+    OxcDiagnostic::warn("Spaces are hard to count.")
         .with_help("Use a quantifier, e.g. {2}")
         .with_label(span0)
 }
@@ -228,7 +228,7 @@ fn test() {
         "var foo = RegExp(' [  ] [  ] ');",
         r"var foo = new RegExp(' \[   ');",
         r"var foo = new RegExp(' \[   \] ');",
-        r"var foo = /[\\q{    }]/v;",
+        "var foo = /[\\q{    }]/v;",
         "var foo = new RegExp('[  ');",
         "new RegExp('[[abc]  ]', flags + 'v')",
     ];

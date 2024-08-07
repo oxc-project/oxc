@@ -6,12 +6,12 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn google_font_preconnect_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(r#"eslint-plugin-next(google-font-preconnect): `rel="preconnect"` is missing from Google Font."#)
+    OxcDiagnostic::warn(r#"`rel="preconnect"` is missing from Google Font."#)
         .with_help("See: https://nextjs.org/docs/messages/google-font-preconnect")
         .with_label(span0)
 }
@@ -47,7 +47,7 @@ impl Rule for GoogleFontPreconnect {
             return;
         }
 
-        let Some(href_prop) = has_jsx_prop_lowercase(jsx_opening_element, "href") else {
+        let Some(href_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "href") else {
             return;
         };
         let Some(href_prop_value) = get_string_literal_prop_value(href_prop) else {
@@ -55,7 +55,7 @@ impl Rule for GoogleFontPreconnect {
         };
 
         let preconnect_missing =
-            has_jsx_prop_lowercase(jsx_opening_element, "rel").map_or(true, |rel_prop| {
+            has_jsx_prop_ignore_case(jsx_opening_element, "rel").map_or(true, |rel_prop| {
                 let rel_prop_value = get_string_literal_prop_value(rel_prop);
                 rel_prop_value != Some("preconnect")
             });

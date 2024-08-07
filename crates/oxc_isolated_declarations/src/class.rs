@@ -123,8 +123,8 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&function.type_parameters),
             self.ast.copy(&function.this_param),
             params,
-            Option::<FunctionBody>::None,
             return_type,
+            Option::<FunctionBody>::None,
         );
 
         self.ast.class_element_method_definition(
@@ -242,12 +242,13 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
             if param.accessibility.is_some() || param.readonly {
-                let type_annotation = if param.accessibility.is_some_and(|a| a.is_private()) {
-                    None
-                } else {
-                    // transformed params will definitely have type annotation
-                    self.ast.copy(&params.items[index].pattern.type_annotation)
-                };
+                let type_annotation =
+                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                        None
+                    } else {
+                        // transformed params will definitely have type annotation
+                        self.ast.copy(&params.items[index].pattern.type_annotation)
+                    };
                 if let Some(new_element) =
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 {
@@ -270,7 +271,7 @@ impl<'a> IsolatedDeclarations<'a> {
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if method.key.is_private_identifier()
-                    || method.accessibility.is_some_and(|a| a.is_private())
+                    || method.accessibility.is_some_and(TSAccessibility::is_private)
                     || (method.computed && !self.is_literal_key(&method.key))
                 {
                     continue;
@@ -359,7 +360,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.report_property_key(&method.key, method.computed) {
                         continue;
                     }
-                    if method.accessibility.is_some_and(|a| a.is_private()) {
+                    if method.accessibility.is_some_and(TSAccessibility::is_private) {
                         elements.push(self.transform_private_modifier_method(method));
                         continue;
                     }
@@ -490,11 +491,11 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             self.ast.vec(),
             self.ast.copy(&decl.id),
-            self.ast.copy(&decl.super_class),
-            body,
             self.ast.copy(&decl.type_parameters),
+            self.ast.copy(&decl.super_class),
             self.ast.copy(&decl.super_type_parameters),
             self.ast.copy(&decl.implements),
+            body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
         ))

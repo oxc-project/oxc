@@ -2,22 +2,26 @@ use itertools::Itertools;
 use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
-use crate::{schema::RType, util::TypeExt, CodegenCtx, Generator, GeneratorOutput, TypeRef};
+use crate::{
+    output,
+    schema::{GetIdent, ToType, TypeDef},
+    util::ToIdent,
+    Generator, GeneratorOutput, LateCtx,
+};
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct AstKindGenerator;
+define_generator! {
+    pub struct AstKindGenerator;
+}
 
-pub const BLACK_LIST: [&str; 69] = [
+pub const BLACK_LIST: [&str; 61] = [
     "Expression",
     "ObjectPropertyKind",
     "TemplateElement",
     "ComputedMemberExpression",
     "StaticMemberExpression",
     "PrivateFieldExpression",
-    "AssignmentTargetPattern",
-    "ArrayAssignmentTarget",
-    "ObjectAssignmentTarget",
     "AssignmentTargetRest",
     "AssignmentTargetMaybeDefault",
     "AssignmentTargetProperty",
@@ -41,7 +45,6 @@ pub const BLACK_LIST: [&str; 69] = [
     "TSEnumMemberName",
     "TSLiteral",
     "TSType",
-    "TSConditionalType",
     "TSTypeOperator",
     "TSArrayType",
     "TSTupleType",
@@ -52,7 +55,6 @@ pub const BLACK_LIST: [&str; 69] = [
     "TSSignature",
     "TSIndexSignature",
     "TSCallSignatureDeclaration",
-    "TSConstructSignatureDeclaration",
     "TSIndexSignatureName",
     "TSTypePredicate",
     "TSTypePredicateName",
@@ -64,9 +66,6 @@ pub const BLACK_LIST: [&str; 69] = [
     "TSImportAttributeName",
     "TSFunctionType",
     "TSConstructorType",
-    "TSMappedType",
-    "TSModuleReference",
-    "TSExportAssignment",
     "TSNamespaceExportDeclaration",
     "JSDocNullableType",
     "JSDocNonNullableType",
@@ -89,56 +88,47 @@ pub fn aliased_nodes() -> [(Ident, Type); 1] {
     [(pq!(ExpressionArrayElement), pq!(Expression<'a>))]
 }
 
-pub fn process_types(ty: &TypeRef) -> Vec<(Ident, Type)> {
-    let aliases = match &*ty.borrow() {
-        RType::Enum(enum_) => enum_
-            .item
+pub fn process_types(def: &TypeDef, _: &LateCtx) -> Vec<(Ident, Type)> {
+    let aliases = match def {
+        TypeDef::Enum(enum_) => enum_
             .variants
             .iter()
-            .filter_map(|it| {
-                it.attrs
-                    .iter()
-                    .find(|it| it.path().is_ident("visit_as"))
-                    .map(|attr| (it, attr))
-                    .map(|(it, attr)| {
-                        assert!(
-                            it.fields.len() == 1,
-                            "visit_as only supports single argument fields."
-                        );
-                        let field = it.fields.iter().next().unwrap();
-                        let type_name = field.ty.get_ident().inner_ident();
-                        (attr.parse_args().unwrap(), parse_quote!(#type_name<'a>))
-                    })
+            // .map(|it| (it, get_visit_markers(&it.attrs).transpose().unwrap()))
+            .filter(|it| it.markers.visit.as_ref().is_some_and(|mk| mk.visit_as.is_some()))
+            .filter_map(|var| {
+                var.markers.visit.as_ref().map(|markers| {
+                    let field = var.fields.first().unwrap();
+                    let type_name = field.typ.name().inner_name();
+                    (
+                        markers.visit_as.clone().expect("Already checked"),
+                        parse_quote!(#type_name<'a>),
+                    )
+                })
             })
             .collect_vec(),
-        RType::Struct(struct_) => struct_
-            .item
+        TypeDef::Struct(struct_) => struct_
             .fields
             .iter()
-            .filter_map(|it| {
-                it.attrs
-                    .iter()
-                    .find(|it| it.path().is_ident("visit_as"))
-                    .map(|attr| (it, attr))
-                    .map(|(field, attr)| {
-                        let type_name = field.ty.get_ident().inner_ident();
-                        (attr.parse_args().unwrap(), parse_quote!(#type_name<'a>))
-                    })
+            // .map(|it| (it, get_visit_markers(&it.attrs).transpose().unwrap()))
+            .filter(|it| it.markers.visit.as_ref().is_some_and(|mk| mk.visit_as.is_some()))
+            .filter_map(|field| {
+                field.markers.visit.as_ref().map(|markers| {
+                    let type_name = field.typ.name().inner_name().to_ident();
+                    (
+                        markers.visit_as.clone().expect("Already checked"),
+                        parse_quote!(#type_name<'a>),
+                    )
+                })
             })
             .collect_vec(),
-        _ => panic!(),
     };
 
-    Some(ty)
+    Some(def)
         .into_iter()
-        .map(|kind| {
-            if let kind @ (RType::Enum(_) | RType::Struct(_)) = &*kind.borrow() {
-                let ident = kind.ident().unwrap().clone();
-                let typ = kind.as_type().unwrap();
-                (ident, typ)
-            } else {
-                panic!()
-            }
+        .map(|def| {
+            let ident = def.ident();
+            let typ = def.to_type();
+            (ident, typ)
         })
         .chain(aliases)
         .collect()
@@ -146,18 +136,18 @@ pub fn process_types(ty: &TypeRef) -> Vec<(Ident, Type)> {
 
 impl Generator for AstKindGenerator {
     fn name(&self) -> &'static str {
-        "AstKindGenerator"
+        stringify!(AstKindGenerator)
     }
 
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let have_kinds: Vec<(Ident, Type)> = ctx
-            .ty_table
+            .schema.definitions
             .iter()
-            .filter(|it| it.borrow().visitable())
+            .filter(|it| it.visitable())
             .filter(
-                |maybe_kind| matches!(&*maybe_kind.borrow(), kind @ (RType::Enum(_) | RType::Struct(_)) if kind.visitable())
+                |maybe_kind| matches!(maybe_kind, kind @ (TypeDef::Enum(_) | TypeDef::Struct(_)) if kind.visitable())
             )
-            .flat_map(process_types)
+            .flat_map(|it| process_types(it, ctx))
             .filter(blacklist)
             .chain(aliased_nodes())
             .collect();
@@ -176,7 +166,7 @@ impl Generator for AstKindGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "ast_kind",
+            output(crate::AST_CRATE, "ast_kind.rs"),
             quote! {
                 #header
 

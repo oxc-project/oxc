@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
 fn no_shadow_restricted_names_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.")
+    OxcDiagnostic::warn("Shadowing of global properties such as 'undefined' is not allowed.")
         .with_help(format!("Shadowing of global properties '{x0}'."))
         .with_label(span1)
 }
@@ -36,17 +36,14 @@ declare_oxc_lint!(
     correctness
 );
 
-#[inline]
-fn check_and_diagnostic(s: &str, span: Span, ctx: &LintContext) {
-    if PRE_DEFINE_VAR.contains_key(s) {
-        ctx.diagnostic(no_shadow_restricted_names_diagnostic(s, span));
-    }
-}
-
 impl Rule for NoShadowRestrictedNames {
     fn run_once(&self, ctx: &LintContext<'_>) {
         ctx.symbols().iter().for_each(|symbol_id| {
             let name = ctx.symbols().get_name(symbol_id);
+
+            if !PRE_DEFINE_VAR.contains_key(name) {
+                return;
+            }
 
             if name == "undefined" {
                 // Allow to declare `undefined` variable but not allow to assign value to it.
@@ -63,9 +60,11 @@ impl Rule for NoShadowRestrictedNames {
                 }
             }
 
-            check_and_diagnostic(name, ctx.symbols().get_span(symbol_id), ctx);
-            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
-                check_and_diagnostic(name, *span, ctx);
+            let span = ctx.symbols().get_span(symbol_id);
+            ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
+
+            for &span in ctx.symbols().get_redeclarations(symbol_id) {
+                ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
             }
         });
     }

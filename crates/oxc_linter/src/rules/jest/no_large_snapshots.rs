@@ -17,13 +17,13 @@ use crate::{
 };
 
 fn no_snapshot(x0: usize, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-large-snapshots): Disallow large snapshots.")
+    OxcDiagnostic::warn("Disallow large snapshots.")
         .with_help(format!("`{x0:?}`s should begin with lowercase"))
         .with_label(span0)
 }
 
 fn too_long_snapshots(x0: usize, x1: usize, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-large-snapshots): Disallow large snapshots.")
+    OxcDiagnostic::warn("Disallow large snapshots.")
         .with_help(format!(
             "Expected Jest snapshot to be smaller than {x0:?} lines but was {x1:?} lines long"
         ))

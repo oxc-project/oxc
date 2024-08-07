@@ -101,7 +101,7 @@ pub fn should_ignore_as_avoid(
     exempted_tag_names: &[String],
 ) -> bool {
     let mut ignore_tag_names =
-        exempted_tag_names.iter().map(std::convert::Into::into).collect::<FxHashSet<_>>();
+        exempted_tag_names.iter().map(String::as_str).collect::<FxHashSet<_>>();
     if settings.ignore_replaces_docs {
         ignore_tag_names.insert(settings.resolve_tag_name("ignore"));
     }

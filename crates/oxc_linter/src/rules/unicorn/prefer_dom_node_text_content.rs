@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_dom_node_text_content_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.")
+    OxcDiagnostic::warn("Prefer `.textContent` over `.innerText`.")
         .with_help("Replace `.innerText` with `.textContent`.")
         .with_label(span0)
 }
@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// const text = foo.textContent;
     /// ```
     PreferDomNodeTextContent,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for PreferDomNodeTextContent {
@@ -67,7 +68,12 @@ impl Rule for PreferDomNodeTextContent {
             if identifier.name == "innerText"
                 && matches!(parent_node_kind, AstKind::PropertyKey(_))
                 && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
-                    || matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)))
+                    || matches!(
+                        grand_parent_node_kind,
+                        AstKind::ObjectAssignmentTarget(_)
+                            | AstKind::SimpleAssignmentTarget(_)
+                            | AstKind::AssignmentTarget(_)
+                    ))
             {
                 ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
                 return;
@@ -77,8 +83,13 @@ impl Rule for PreferDomNodeTextContent {
         // `({innerText} = node)`
         if let AstKind::IdentifierReference(identifier_ref) = node.kind() {
             if identifier_ref.name == "innerText"
-                && matches!(parent_node_kind, AstKind::AssignmentTarget(_))
-                && matches!(grand_parent_node_kind, AstKind::AssignmentExpression(_))
+                && matches!(
+                    parent_node_kind,
+                    AstKind::ObjectAssignmentTarget(_)
+                        | AstKind::AssignmentTarget(_)
+                        | AstKind::SimpleAssignmentTarget(_)
+                )
+                && matches!(grand_parent_node_kind, AstKind::AssignmentTargetPattern(_))
             {
                 ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
             }
@@ -123,5 +134,13 @@ fn test() {
         ("for (const [{innerText}] of elements);", None),
     ];
 
-    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).test_and_snapshot();
+    // TODO: implement a fixer for destructuring assignment cases
+    let fix = vec![
+        ("node.innerText;", "node.textContent;"),
+        ("node?.innerText;", "node?.textContent;"),
+        ("node.innerText = 'foo';", "node.textContent = 'foo';"),
+        ("innerText.innerText = 'foo';", "innerText.textContent = 'foo';"),
+    ];
+
+    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

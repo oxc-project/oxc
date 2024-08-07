@@ -1,5 +1,6 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::Idx;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
@@ -11,7 +12,7 @@ use crate::{
 };
 
 fn exceeded_max_assertion(x0: usize, x1: usize, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.")
+    OxcDiagnostic::warn("Enforces a maximum number assertion calls in a test body.")
         .with_help(format!("Too many assertion calls ({x0:?}) - maximum allowed is {x1:?}"))
         .with_label(span2)
 }

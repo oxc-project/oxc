@@ -9,11 +9,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
 
 fn no_children_prop_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-react(no-children-prop): Avoid passing children using a prop.",
-    )
-    .with_help("The canonical way to pass children in React is to use JSX elements")
-    .with_label(span0)
+    OxcDiagnostic::warn("Avoid passing children using a prop.")
+        .with_help("The canonical way to pass children in React is to use JSX elements")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -86,6 +84,10 @@ impl Rule for NoChildrenProp {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

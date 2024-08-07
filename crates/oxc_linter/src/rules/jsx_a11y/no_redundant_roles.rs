@@ -10,13 +10,13 @@ use phf::phf_map;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "eslint-plugin-jsx-a11y(no-redundant-roles): The element `{element}` has an implicit role of `{role}`. Defining this explicitly is redundant and should be avoided."
+        "The element `{element}` has an implicit role of `{role}`. Defining this explicitly is redundant and should be avoided."
     ))
     .with_help(format!("Remove the redundant role `{role}` from the element `{element}`."))
     .with_label(span)
@@ -55,7 +55,7 @@ impl Rule for NoRedundantRoles {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(component) = get_element_type(ctx, jsx_el) {
                 if let Some(JSXAttributeItem::Attribute(attr)) =
-                    has_jsx_prop_lowercase(jsx_el, "role")
+                    has_jsx_prop_ignore_case(jsx_el, "role")
                 {
                     if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
                         let roles: Vec<String> = role_values

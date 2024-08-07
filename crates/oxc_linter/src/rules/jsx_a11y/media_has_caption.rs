@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXExpression},
     AstKind,
@@ -5,11 +7,12 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
 
 fn media_has_caption_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element")
+    OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")
         .with_help("Media elements such as <audio> and <video> must have a <track> for captions.")
         .with_label(span0)
 }
@@ -19,17 +22,17 @@ pub struct MediaHasCaption(Box<MediaHasCaptionConfig>);
 
 #[derive(Debug, Clone)]
 pub struct MediaHasCaptionConfig {
-    audio: Vec<String>,
-    video: Vec<String>,
-    track: Vec<String>,
+    audio: Vec<Cow<'static, str>>,
+    video: Vec<Cow<'static, str>>,
+    track: Vec<Cow<'static, str>>,
 }
 
 impl Default for MediaHasCaptionConfig {
     fn default() -> Self {
         Self {
-            audio: vec!["audio".to_string()],
-            video: vec!["video".to_string()],
-            track: vec!["track".to_string()],
+            audio: vec![Cow::Borrowed("audio")],
+            video: vec![Cow::Borrowed("video")],
+            track: vec![Cow::Borrowed("track")],
         }
     }
 }
@@ -58,26 +61,38 @@ declare_oxc_lint!(
 );
 
 impl Rule for MediaHasCaption {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: Value) -> Self {
         let mut config = MediaHasCaptionConfig::default();
 
         if let Some(arr) = value.as_array() {
             for v in arr {
                 if let serde_json::Value::Object(rule_config) = v {
-                    if let Some(audio) = rule_config.get("audio").and_then(|v| v.as_array()) {
-                        config
-                            .audio
-                            .extend(audio.iter().filter_map(|v| v.as_str().map(String::from)));
+                    if let Some(audio) = rule_config.get("audio").and_then(Value::as_array) {
+                        config.audio.extend(
+                            audio
+                                .iter()
+                                .filter_map(Value::as_str)
+                                .map(String::from)
+                                .map(Into::into),
+                        );
                     }
-                    if let Some(video) = rule_config.get("video").and_then(|v| v.as_array()) {
-                        config
-                            .video
-                            .extend(video.iter().filter_map(|v| v.as_str().map(String::from)));
+                    if let Some(video) = rule_config.get("video").and_then(Value::as_array) {
+                        config.video.extend(
+                            video
+                                .iter()
+                                .filter_map(Value::as_str)
+                                .map(String::from)
+                                .map(Into::into),
+                        );
                     }
-                    if let Some(track) = rule_config.get("track").and_then(|v| v.as_array()) {
-                        config
-                            .track
-                            .extend(track.iter().filter_map(|v| v.as_str().map(String::from)));
+                    if let Some(track) = rule_config.get("track").and_then(Value::as_array) {
+                        config.track.extend(
+                            track
+                                .iter()
+                                .filter_map(Value::as_str)
+                                .map(String::from)
+                                .map(Into::into),
+                        );
                     }
                     break;
                 }
@@ -149,7 +164,7 @@ impl Rule for MediaHasCaption {
                                 if let JSXAttributeName::Identifier(iden) = &attr.name {
                                     if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
                                         return iden.name == "kind"
-                                            && s.value.to_lowercase() == "captions";
+                                            && s.value.eq_ignore_ascii_case("captions");
                                     }
                                 }
                             }
