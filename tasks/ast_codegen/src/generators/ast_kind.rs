@@ -3,10 +3,11 @@ use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
 use crate::{
+    codegen::LateCtx,
     output,
     schema::{GetIdent, ToType, TypeDef},
     util::ToIdent,
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -141,8 +142,8 @@ impl Generator for AstKindGenerator {
 
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let have_kinds: Vec<(Ident, Type)> = ctx
-            .schema.definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|it| it.visitable())
             .filter(
                 |maybe_kind| matches!(maybe_kind, kind @ (TypeDef::Enum(_) | TypeDef::Struct(_)) if kind.visitable())

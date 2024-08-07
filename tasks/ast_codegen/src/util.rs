@@ -4,7 +4,7 @@ use quote::{format_ident, ToTokens};
 use serde::Serialize;
 use syn::{spanned::Spanned, GenericArgument, Ident, ItemMacro, PathArguments, Type, TypePath};
 
-use crate::{EarlyCtx, TypeId};
+use crate::{codegen::EarlyCtx, TypeId};
 
 pub trait NormalizeError<T> {
     fn normalize(self) -> crate::Result<T>;

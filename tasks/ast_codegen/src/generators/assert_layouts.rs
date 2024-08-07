@@ -3,9 +3,10 @@ use quote::{format_ident, quote};
 use syn::Type;
 
 use crate::{
+    codegen::LateCtx,
     output,
     schema::{FieldDef, ToType, TypeDef},
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -21,9 +22,8 @@ impl Generator for AssertLayouts {
 
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let (assertions_64, assertions_32) = ctx
-            .schema
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .map(|def| {
                 let typ = def.to_type_elide();
                 assert_type(&typ, def)

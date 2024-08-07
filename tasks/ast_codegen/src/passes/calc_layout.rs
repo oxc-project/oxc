@@ -6,10 +6,11 @@ use quote::ToTokens;
 use syn::Type;
 
 use crate::{
+    codegen::EarlyCtx,
     layout::{KnownLayout, Layout},
     rust_ast::{AstRef, AstType, Enum, Struct},
     util::{NormalizeError, TypeAnalysis, TypeExt, TypeWrapper},
-    EarlyCtx, Result,
+    Result,
 };
 
 use super::{define_pass, Pass};

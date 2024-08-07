@@ -9,13 +9,14 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
 use crate::{
+    codegen::LateCtx,
     generators::generated_header,
     output,
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::define_generator;
@@ -31,9 +32,8 @@ impl Generator for AstBuilderGenerator {
 
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let fns = ctx
-            .schema
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|it| it.visitable())
             .map(|it| generate_builder_fn(it, ctx))
             .collect_vec();

@@ -7,12 +7,13 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident};
 
 use crate::{
+    codegen::LateCtx,
     generators::{ast_kind::BLACK_LIST as KIND_BLACK_LIST, insert},
     markers::{ScopeMarkers, VisitArg, VisitMarkers},
     output,
     schema::{EnumDef, GetIdent, StructDef, ToType, TypeDef},
     util::{StrExt, ToIdent, TokenStreamExt, TypeWrapper},
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -170,9 +171,8 @@ impl<'a> VisitBuilder<'a> {
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {
         let program = self
             .ctx
-            .schema
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|it| it.visitable())
             .find(|it| it.name() == "Program")
             .expect("Couldn't find the `Program` type!");
