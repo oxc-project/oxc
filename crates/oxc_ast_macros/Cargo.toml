@@ -22,5 +22,5 @@ doctest    = false
 
 [dependencies]
 quote       = { workspace = true }
-syn         = { workspace = true, features = ["full", "parsing", "proc-macro", "printing"] }
+syn         = { workspace = true, features = ["full", "parsing", "printing", "proc-macro"] }
 proc-macro2 = { workspace = true }

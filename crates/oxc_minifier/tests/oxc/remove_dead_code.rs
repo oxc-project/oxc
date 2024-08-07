@@ -24,12 +24,6 @@ fn test(source_text: &str, expected: &str) {
     assert_eq!(minified, expected, "for source {source_text}");
 }
 
-fn test_same(source_text: &str) {
-    let minified = print(source_text, true);
-    let expected = print(source_text, false);
-    assert_eq!(minified, expected, "for source {source_text}");
-}
-
 #[test]
 fn dce_if_statement() {
     test("if (true) { foo }", "{ foo }");
@@ -127,18 +121,36 @@ fn dce_logical_expression() {
 
 #[test]
 fn dce_var_hoisting() {
-    test_same(
+    test(
         "function f() {
           return () => {
             var x;
           }
+          REMOVE;
+          function KEEP() {}
+          REMOVE;
+        }",
+        "function f() {
+          return () => {
+            var x;
+          }
+          function KEEP() {}
         }",
     );
-    test_same(
+    test(
         "function f() {
           return function g() {
             var x;
           }
+          REMOVE;
+          function KEEP() {}
+          REMOVE;
+        }",
+        "function f() {
+          return function g() {
+            var x;
+          }
+          function KEEP() {}
         }",
     );
 }

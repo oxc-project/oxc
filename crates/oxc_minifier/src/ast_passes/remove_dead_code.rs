@@ -55,6 +55,9 @@ impl<'a> RemoveDeadCode<'a> {
         }
 
         let Some(index) = index else { return };
+        if index == stmts.len() - 1 {
+            return;
+        }
 
         let mut keep_var = KeepVar::new(self.ast);
 
@@ -62,7 +65,19 @@ impl<'a> RemoveDeadCode<'a> {
             keep_var.visit_statement(stmt);
         }
 
-        stmts.drain(index + 1..);
+        let mut i = 0;
+        stmts.retain(|s| {
+            i += 1;
+            if i - 1 <= index {
+                return true;
+            }
+            // keep function declaration
+            if matches!(s.as_declaration(), Some(Declaration::FunctionDeclaration(_))) {
+                return true;
+            }
+            false
+        });
+
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             stmts.push(stmt);
         }
