@@ -67,28 +67,34 @@ impl Rule for ForDirection {
                     let update_direction = get_update_direction(update, counter);
                     if update_direction == wrong_direction {
                         let update_span = get_update_span(update);
-                        let start = match update {
-                            Expression::UpdateExpression(update) => update.argument.span().end,
-                            Expression::AssignmentExpression(update) => update.left.span().end,
-                            _ => return,
-                        };
-                        let end = start + 2;
-                        let span: Span = Span::new(start, end);
-                        let new_operator_str = match update {
-                            Expression::UpdateExpression(update) => match update.operator {
-                                UpdateOperator::Increment => "--",
-                                UpdateOperator::Decrement => "++",
-                            },
-                            Expression::AssignmentExpression(update) => match update.operator {
-                                AssignmentOperator::Addition => "-=",
-                                AssignmentOperator::Subtraction => "+=",
-                                _ => return,
-                            },
-                            _ => return,
-                        };
                         ctx.diagnostic_with_dangerous_fix(
                             for_direction_diagnostic(test.span, update_span),
-                            |fixer| fixer.replace(span, new_operator_str),
+                            |fixer| {
+                                let mut start: u32 = 0;
+                                if let Expression::UpdateExpression(update) = update {
+                                    start = update.argument.span().end;
+                                } else if let Expression::AssignmentExpression(update) = update {
+                                    start = update.left.span().end;
+                                }
+                                let end = start + 2;
+                                let span = Span::new(start, end);
+                                let mut new_operator_str = "";
+                                if let Expression::UpdateExpression(update) = update {
+                                    if let UpdateOperator::Increment = update.operator {
+                                        new_operator_str = "--";
+                                    } else if let UpdateOperator::Decrement = update.operator {
+                                        new_operator_str = "++";
+                                    }
+                                } else if let Expression::AssignmentExpression(update) = update {
+                                    if let AssignmentOperator::Addition = update.operator {
+                                        new_operator_str = "-=";
+                                    } else if let AssignmentOperator::Subtraction = update.operator
+                                    {
+                                        new_operator_str = "+=";
+                                    }
+                                }
+                                fixer.replace(span, new_operator_str)
+                            },
                         );
                     }
                 }
