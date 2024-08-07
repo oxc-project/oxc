@@ -22,7 +22,9 @@ pub struct NoUnusedVarsOptions {
     /// names match this pattern will be ignored.
     ///
     /// By default, this pattern is `^_` unless options are configured with an
-    /// object. In this case it will default to [`None`].
+    /// object. In this case it will default to [`None`]. Note that this
+    /// behavior deviates from both ESLint and TypeScript-ESLint, which never
+    /// provide a default pattern.
     ///
     /// ## Example
     ///
