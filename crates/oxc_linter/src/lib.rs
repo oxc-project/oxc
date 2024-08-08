@@ -147,12 +147,12 @@ impl Linter {
         // merge rules with eslint_config
         let additional_rules = OxlintRules::from_rules(self.rules.clone());
         let rules = serde_json::to_value(additional_rules).unwrap();
-        let mut config = serde_json::to_value(&self.eslint_config.as_ref()).unwrap();
+        let mut config = serde_json::to_value(self.eslint_config.as_ref()).unwrap();
         config.get_mut("rules").unwrap().as_object_mut().unwrap().extend(rules.as_object().unwrap().clone());
 
         let json = serde_json::to_string_pretty(&config).unwrap();
         // serialize the config to json and print it
-        writeln!(writer, "{}", json).unwrap();
+        writeln!(writer, "{json}").unwrap();
     }
 
     /// # Panics

@@ -521,10 +521,17 @@ mod test {
 
     #[test]
     fn test_print_config() {
-        let args = &["-W", "correctness", "-A", "no-debugger", "fixtures/linter/debugger.js" , "--print-config"];
-let options = lint_command().run_inner(args).unwrap();
+        let args = &[
+            "-W",
+            "correctness",
+            "-A",
+            "no-debugger",
+            "fixtures/linter/debugger.js",
+            "--print-config",
+        ];
+        let options = lint_command().run_inner(args).unwrap();
         match LintRunner::new(options).run() {
-            CliRunResult::None => {},
+            CliRunResult::None => {}
             other => panic!("{other:?}"),
         }
     }

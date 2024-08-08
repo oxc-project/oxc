@@ -4,6 +4,7 @@ use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 use rustc_hash::FxHashSet;
 use schemars::{schema::SchemaObject, JsonSchema};
 use serde_json::{Number, Value};
+use serde::Serialize;
 
 use crate::{
     config::OxlintConfig, fixer::FixKind, rules::RULES, utils::is_jest_rule_adapted_to_vitest,
@@ -165,7 +166,7 @@ impl LintOptions {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize)]
 pub enum AllowWarnDeny {
     Allow, // Off
     Warn,  // Warn
@@ -251,7 +252,7 @@ impl JsonSchema for AllowWarnDeny {
         int_schema.number().maximum = Some(2.0);
         int_schema.metadata().description = Some(
             "Oxlint rule.
-    
+
 - 0: Turn off the rule.
 - 1: Turn the rule on as a warning (doesn't affect exit code).
 - 2: Turn the rule on as an error (will exit with a failure code)."

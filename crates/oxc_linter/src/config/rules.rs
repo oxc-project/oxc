@@ -99,7 +99,7 @@ impl<'de> Deserialize<'de> for OxlintRules {
     }
 }
 
-impl<'de> Serialize for OxlintRules {
+impl Serialize for OxlintRules {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -107,8 +107,8 @@ impl<'de> Serialize for OxlintRules {
         let rules = self.0.iter().map(|rule| {
             let key = format!("{}/{}", rule.plugin_name, rule.rule_name);
             let value = match &rule.config {
-                Some(config) => serde_json::Value::Array(vec![serde_json::to_value(&rule.severity).unwrap(), config.clone()]),
-                None => serde_json::to_value(&rule.severity).unwrap(),
+                Some(config) => serde_json::Value::Array(vec![serde_json::to_value(rule.severity).unwrap(), config.clone()]),
+                None => serde_json::to_value(rule.severity).unwrap(),
             };
             (key, value)
         });
