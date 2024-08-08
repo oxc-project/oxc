@@ -170,9 +170,10 @@ impl Generator for AstKindGenerator {
             quote! {
                 #header
 
-                use crate::ast::*;
                 use oxc_span::{GetSpan, Span};
+                endl!();
 
+                use crate::ast::*;
                 endl!();
 
                 #[derive(Debug, Clone, Copy)]

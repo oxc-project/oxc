@@ -3,9 +3,10 @@
 
 use std::mem::{align_of, offset_of, size_of};
 
-use crate::ast::*;
 use oxc_span::*;
 use oxc_syntax::{number::*, operator::*};
+
+use crate::ast::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {

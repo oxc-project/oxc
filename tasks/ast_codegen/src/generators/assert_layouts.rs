@@ -41,11 +41,11 @@ impl Generator for AssertLayouts {
 
                 endl!();
 
-                use crate::ast::*;
                 use oxc_span::*;
                 use oxc_syntax::{number::*, operator::*};
+                endl!();
 
-
+                use crate::ast::*;
                 endl!();
 
                 #[cfg(target_pointer_width = "64")]
