@@ -32,6 +32,7 @@ declare_oxc_lint!(
     /// ```
     NoEmpty,
     restriction,
+    pending // a suggestion could be added to remove the empty statement
 );
 
 impl Rule for NoEmpty {

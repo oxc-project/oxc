@@ -1591,8 +1591,8 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_traverse",
  "pico-args",
- "walkdir",
 ]
 
 [[package]]
@@ -1769,6 +1769,7 @@ dependencies = [
  "bitflags 2.6.0",
  "dashmap 6.0.1",
  "nonmax",
+ "oxc_allocator",
  "oxc_ast_macros",
  "oxc_index",
  "oxc_span",

@@ -47,7 +47,8 @@ declare_oxc_lint!(
     ///
     /// ```
     ThrowNewError,
-    style
+    style,
+    pending
 );
 
 impl Rule for ThrowNewError {

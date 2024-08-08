@@ -1,11 +1,12 @@
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::SPAN;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
-use crate::CompressOptions;
+use crate::{CompressOptions, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -13,52 +14,80 @@ use crate::CompressOptions;
 pub struct SubstituteAlternateSyntax<'a> {
     ast: AstBuilder<'a>,
     options: CompressOptions,
+    in_define_export: bool,
 }
 
-impl<'a> VisitMut<'a> for SubstituteAlternateSyntax<'a> {
-    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
+impl<'a> CompressorPass<'a> for SubstituteAlternateSyntax<'a> {}
+
+impl<'a> Traverse<'a> for SubstituteAlternateSyntax<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.compress_block(stmt);
         // self.compress_while(stmt);
-        walk_mut::walk_statement(self, stmt);
     }
 
-    fn visit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
-        walk_mut::walk_return_statement(self, stmt);
+    fn exit_return_statement(
+        &mut self,
+        stmt: &mut ReturnStatement<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         // We may fold `void 1` to `void 0`, so compress it after visiting
         Self::compress_return_statement(stmt);
     }
 
-    fn visit_variable_declaration(&mut self, decl: &mut VariableDeclaration<'a>) {
+    fn enter_variable_declaration(
+        &mut self,
+        decl: &mut VariableDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         for declarator in decl.declarations.iter_mut() {
-            self.visit_variable_declarator(declarator);
             Self::compress_variable_declarator(declarator);
         }
     }
 
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        // Bail cjs `Object.defineProperty(exports, ...)`
-        if Self::is_object_define_property_exports(expr) {
-            return;
+    /// Set `in_define_export` flag if this is a top-level statement of form:
+    /// ```js
+    /// Object.defineProperty(exports, 'Foo', {
+    ///   enumerable: true,
+    ///   get: function() { return Foo_1.Foo; }
+    /// });
+    /// ```
+    fn enter_call_expression(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Check if this call expression is a top level `ExpressionStatement`.
+        // NB: 1 = global, 2 = Program, 3 = ExpressionStatement
+        if ctx.ancestors_depth() == 3
+            && matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
+            && Self::is_object_define_property_exports(call_expr)
+        {
+            self.in_define_export = true;
         }
-        walk_mut::walk_expression(self, expr);
+    }
+
+    fn exit_call_expression(&mut self, _expr: &mut CallExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.in_define_export = false;
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
         if !self.compress_undefined(expr) {
             self.compress_boolean(expr);
         }
     }
 
-    fn visit_binary_expression(&mut self, expr: &mut BinaryExpression<'a>) {
-        walk_mut::walk_binary_expression(self, expr);
+    fn exit_binary_expression(
+        &mut self,
+        expr: &mut BinaryExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         self.compress_typeof_undefined(expr);
     }
 }
 
 impl<'a> SubstituteAlternateSyntax<'a> {
     pub fn new(ast: AstBuilder<'a>, options: CompressOptions) -> Self {
-        Self { ast, options }
-    }
-
-    pub fn build(&mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
+        Self { ast, options, in_define_export: false }
     }
 
     /* Utilities */
@@ -77,13 +106,22 @@ impl<'a> SubstituteAlternateSyntax<'a> {
     }
 
     /// Test `Object.defineProperty(exports, ...)`
-    fn is_object_define_property_exports(expr: &Expression<'a>) -> bool {
-        let Expression::CallExpression(call_expr) = expr else { return false };
+    fn is_object_define_property_exports(call_expr: &CallExpression<'a>) -> bool {
         let Some(Argument::Identifier(ident)) = call_expr.arguments.first() else { return false };
         if ident.name != "exports" {
             return false;
         }
-        call_expr.callee.is_specific_member_access("Object", "defineProperty")
+
+        // Use tighter check than `call_expr.callee.is_specific_member_access("Object", "defineProperty")`
+        // because we're looking for `Object.defineProperty` specifically, not e.g. `Object['defineProperty']`
+        if let Expression::StaticMemberExpression(callee) = &call_expr.callee {
+            if let Expression::Identifier(id) = &callee.object {
+                if id.name == "Object" && callee.property.name == "defineProperty" {
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     /* Statements */
@@ -115,11 +153,12 @@ impl<'a> SubstituteAlternateSyntax<'a> {
 
     /* Expressions */
 
-    /// Transforms boolean expression `true` => `!0` `false` => `!1`
-    /// Enabled by `compress.booleans`
+    /// Transforms boolean expression `true` => `!0` `false` => `!1`.
+    /// Enabled by `compress.booleans`.
+    /// Do not compress `true` in `Object.defineProperty(exports, 'Foo', {enumerable: true, ...})`.
     fn compress_boolean(&mut self, expr: &mut Expression<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
-        if self.options.booleans {
+        if self.options.booleans && !self.in_define_export {
             let num = self.ast.expression_numeric_literal(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },

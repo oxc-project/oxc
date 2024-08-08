@@ -1,6 +1,7 @@
 use std::path::Path;
 
 mod types;
+use oxc_allocator::{Allocator, CloneIn};
 pub use types::*;
 
 #[derive(Debug)]
@@ -14,6 +15,14 @@ impl Default for SourceType {
             variant: LanguageVariant::Standard,
             always_strict: false,
         }
+    }
+}
+
+impl<'a> CloneIn<'a> for SourceType {
+    type Cloned = Self;
+    #[inline]
+    fn clone_in(&self, _: &'a Allocator) -> Self {
+        *self
     }
 }
 

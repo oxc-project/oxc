@@ -1,27 +1,12 @@
-use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::Parser;
-use oxc_span::SourceType;
-
-fn print(source_text: &str, remove_dead_code: bool) -> String {
-    let source_type = SourceType::default();
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    if remove_dead_code {
-        Compressor::new(&allocator, CompressOptions::dead_code_elimination()).build(program);
-    }
-    CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
-        .build(program)
-        .source_text
-}
+use oxc_minifier::CompressOptions;
 
 fn test(source_text: &str, expected: &str) {
-    let minified = print(source_text, true);
-    let expected = print(expected, false);
-    assert_eq!(minified, expected, "for source {source_text}");
+    let options = CompressOptions::dead_code_elimination();
+    crate::test(source_text, expected, options);
+}
+
+fn test_same(source_text: &str) {
+    test(source_text, source_text);
 }
 
 #[test]
@@ -71,10 +56,10 @@ fn dce_if_statement() {
 
     // Shadowed `undefined` as a variable should not be erased.
     // This is a rollup test.
-    test(
-        "function foo(undefined) { if (!undefined) { } }",
-        "function foo(undefined) { if (!undefined) { } }",
-    );
+    test_same("function foo(undefined) { if (!undefined) { } }");
+
+    test("function foo() { if (undefined) { bar } }", "function foo() { }");
+    test_same("function foo() { { bar } }");
 
     test("if (true) { foo; } if (true) { foo; }", "{ foo; } { foo; }");
 

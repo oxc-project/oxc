@@ -1,4 +1,3 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, AstBuilder, Visit};
 use oxc_span::{Atom, Span, SPAN};
 

@@ -112,7 +112,7 @@ pub struct TraverseCtx<'a> {
 // Public methods
 impl<'a> TraverseCtx<'a> {
     /// Create new traversal context.
-    pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
+    pub fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
         let ancestry = TraverseAncestry::new();
         let scoping = TraverseScoping::new(scopes, symbols);
         let ast = AstBuilder::new(allocator);

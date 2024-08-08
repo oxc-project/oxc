@@ -26,6 +26,15 @@ impl TypeDef {
     pub fn visitable(&self) -> bool {
         with_either!(self, it => it.visitable)
     }
+
+    pub fn generated_derives(&self) -> &Vec<String> {
+        with_either!(self, it => &it.generated_derives)
+    }
+
+    pub fn generates_derive(&self, derive: &str) -> bool {
+        let generated_derives = self.generated_derives();
+        generated_derives.iter().any(|it| it == derive)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -41,6 +50,7 @@ pub struct StructDef {
     pub size_32: usize,
     pub align_32: usize,
     pub offsets_32: Option<Vec<usize>>,
+    pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub markers: OuterMarkers,
 }
@@ -60,6 +70,7 @@ pub struct EnumDef {
     pub size_32: usize,
     pub align_32: usize,
     pub offsets_32: Option<Vec<usize>>,
+    pub generated_derives: Vec<String>,
 }
 
 impl EnumDef {
@@ -67,6 +78,17 @@ impl EnumDef {
     /// based on the inheritance order.
     pub fn all_variants(&self) -> impl Iterator<Item = &VariantDef> {
         self.variants.iter().chain(self.inherits.iter().flat_map(|it| it.variants.iter()))
+    }
+
+    /// Are all the variants in this enum unit?
+    /// Example:
+    /// ```
+    /// enum E { A, B, C, D }
+    ///
+    /// ```
+    ///
+    pub fn is_unit(&self) -> bool {
+        self.all_variants().all(VariantDef::is_unit)
     }
 }
 
@@ -81,6 +103,10 @@ pub struct VariantDef {
 impl VariantDef {
     pub fn ident(&self) -> syn::Ident {
         self.name.to_ident()
+    }
+
+    pub fn is_unit(&self) -> bool {
+        self.fields.is_empty()
     }
 }
 

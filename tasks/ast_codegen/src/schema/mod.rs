@@ -148,6 +148,8 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &crate::Earl
         size_32,
         align_32,
         offsets_32,
+
+        generated_derives: parse_generate_derive(&item.attrs),
     }
 }
 
@@ -178,6 +180,8 @@ fn lower_ast_struct(
         align_32,
         offsets_32,
         markers: parse_outer_markers(&item.attrs).unwrap(),
+
+        generated_derives: parse_generate_derive(&item.attrs),
     }
 }
 
@@ -262,6 +266,23 @@ fn get_docs(attrs: &[syn::Attribute]) -> Vec<String> {
             }
         })
         .collect()
+}
+
+fn parse_generate_derive(attrs: &[syn::Attribute]) -> Vec<String> {
+    let mut derives = std::collections::HashSet::new();
+    for attr in attrs {
+        if !attr.path().is_ident("generate_derive") {
+            continue;
+        }
+
+        let args: syn::punctuated::Punctuated<syn::Ident, syn::Token![,]> =
+            attr.parse_args_with(syn::punctuated::Punctuated::parse_terminated).unwrap();
+
+        for arg in args {
+            derives.insert(arg.to_string());
+        }
+    }
+    Vec::from_iter(derives)
 }
 
 macro_rules! with_either {

@@ -25,7 +25,8 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     PreferStringSlice,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferStringSlice {

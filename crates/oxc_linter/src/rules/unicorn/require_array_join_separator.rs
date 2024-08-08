@@ -36,7 +36,8 @@ declare_oxc_lint!(
     /// foo.join(",")
     /// ```
     RequireArrayJoinSeparator,
-    style
+    style,
+    pending
 );
 
 fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -> bool {
