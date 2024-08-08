@@ -37,10 +37,10 @@ declare_oxc_lint!(
 fn is_nest_module(node: &AstNode, ctx: &LintContext<'_>) -> bool {
     ctx.nodes()
         .parent_node(node.id())
-        .map_or(false, |parent_node| is_valid_module(parent_node, ctx))
+        .map_or(false, |parent_node| is_valid_module(parent_node))
 }
 
-fn is_valid_module(node: &AstNode, _ctx: &LintContext<'_>) -> bool {
+fn is_valid_module(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::TSModuleDeclaration(module) if !is_invalid_module(module))
 }
 
