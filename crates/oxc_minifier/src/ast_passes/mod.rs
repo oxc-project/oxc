@@ -11,7 +11,20 @@ pub use remove_syntax::RemoveSyntax;
 pub use substitute_alternate_syntax::SubstituteAlternateSyntax;
 
 use oxc_ast::ast::Program;
+use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_traverse::{walk_program, Traverse, TraverseCtx};
+
+use crate::node_util::NodeUtil;
+
+impl<'a> NodeUtil for TraverseCtx<'a> {
+    fn symbols(&self) -> &SymbolTable {
+        self.scoping.symbols()
+    }
+
+    fn scopes(&self) -> &ScopeTree {
+        self.scoping.scopes()
+    }
+}
 
 pub trait CompressorPass<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>)

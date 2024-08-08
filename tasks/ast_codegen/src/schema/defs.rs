@@ -79,6 +79,17 @@ impl EnumDef {
     pub fn all_variants(&self) -> impl Iterator<Item = &VariantDef> {
         self.variants.iter().chain(self.inherits.iter().flat_map(|it| it.variants.iter()))
     }
+
+    /// Are all the variants in this enum unit?
+    /// Example:
+    /// ```
+    /// enum E { A, B, C, D }
+    ///
+    /// ```
+    ///
+    pub fn is_unit(&self) -> bool {
+        self.all_variants().all(VariantDef::is_unit)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -92,6 +103,10 @@ pub struct VariantDef {
 impl VariantDef {
     pub fn ident(&self) -> syn::Ident {
         self.name.to_ident()
+    }
+
+    pub fn is_unit(&self) -> bool {
+        self.fields.is_empty()
     }
 }
 

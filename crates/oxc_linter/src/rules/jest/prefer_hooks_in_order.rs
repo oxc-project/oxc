@@ -166,7 +166,7 @@ impl PreferHooksInOrder {
         call_expr: &'a CallExpression<'_>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
+        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             *previous_hook_index = -1;

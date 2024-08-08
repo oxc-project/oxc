@@ -3,9 +3,9 @@
 //! ECMAScript Minifier
 
 mod ast_passes;
-mod ast_util;
 mod compressor;
 mod keep_var;
+mod node_util;
 mod options;
 mod plugins;
 mod tri;
