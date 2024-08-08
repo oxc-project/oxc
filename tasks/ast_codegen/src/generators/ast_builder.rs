@@ -25,10 +25,6 @@ define_generator! {
 }
 
 impl Generator for AstBuilderGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(AstBuilderGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let fns = ctx
             .schema

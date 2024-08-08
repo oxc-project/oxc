@@ -26,10 +26,6 @@ define_generator! {
 }
 
 impl Generator for VisitGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(VisitGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         GeneratorOutput::Stream((
             output(crate::AST_CRATE, "visit.rs"),
@@ -39,10 +35,6 @@ impl Generator for VisitGenerator {
 }
 
 impl Generator for VisitMutGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(VisitMutGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         GeneratorOutput::Stream((
             output(crate::AST_CRATE, "visit_mut.rs"),

@@ -15,10 +15,6 @@ define_generator! {
 }
 
 impl Generator for AssertLayouts {
-    fn name(&self) -> &'static str {
-        stringify!(AssertLayouts)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let (assertions_64, assertions_32) = ctx
             .schema

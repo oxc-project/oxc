@@ -10,8 +10,6 @@ pub use calc_layout::CalcLayout;
 pub use linker::Linker;
 
 pub trait Pass {
-    fn name(&self) -> &'static str;
-
     /// Returns false if can't resolve
     fn once(&mut self, _ctx: &EarlyCtx) -> Result<bool> {
         Ok(true)
@@ -53,7 +51,7 @@ macro_rules! define_pass {
             type Context = $crate::EarlyCtx;
             type Output = ();
             fn name(&self) -> &'static str {
-                $crate::Pass::name(self)
+                stringify!($ident)
             }
 
             fn run(&mut self, ctx: &Self::Context) -> $crate::Result<Self::Output> {

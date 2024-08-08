@@ -16,10 +16,6 @@ define_generator! {
 }
 
 impl Generator for DeriveGetSpan {
-    fn name(&self) -> &'static str {
-        stringify!(DeriveGetSpan)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let trait_name = format_ident!("GetSpan");
         let method_name = format_ident!("span");
@@ -37,10 +33,6 @@ define_generator! {
 }
 
 impl Generator for DeriveGetSpanMut {
-    fn name(&self) -> &'static str {
-        stringify!(DeriveGetSpanMut)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let trait_name = format_ident!("GetSpanMut");
         let method_name = format_ident!("span_mut");

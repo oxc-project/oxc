@@ -33,10 +33,6 @@ define_pass! {
 }
 
 impl Pass for Linker {
-    fn name(&self) -> &'static str {
-        stringify!(Linker)
-    }
-
     /// # Panics
     /// On invalid inheritance.
     fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {

@@ -50,7 +50,6 @@ macro_rules! generated_header {
 pub(crate) use generated_header;
 
 pub trait Generator {
-    fn name(&self) -> &'static str;
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
 }
 
@@ -62,7 +61,7 @@ macro_rules! define_generator {
             type Output = $crate::GeneratorOutput;
 
             fn name(&self) -> &'static str {
-                $crate::Generator::name(self)
+                stringify!($ident)
             }
 
             fn run(&mut self, ctx: &$crate::LateCtx) -> $crate::Result<Self::Output> {

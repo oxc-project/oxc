@@ -25,10 +25,6 @@ define_pass! {
 }
 
 impl Pass for CalcLayout {
-    fn name(&self) -> &'static str {
-        stringify!(CalcLayout)
-    }
-
     fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {
         calc_layout(ty, ctx)
     }

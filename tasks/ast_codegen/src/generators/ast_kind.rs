@@ -135,10 +135,6 @@ pub fn process_types(def: &TypeDef, _: &LateCtx) -> Vec<(Ident, Type)> {
 }
 
 impl Generator for AstKindGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(AstKindGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let have_kinds: Vec<(Ident, Type)> = ctx
             .schema.definitions

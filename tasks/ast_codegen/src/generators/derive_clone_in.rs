@@ -16,10 +16,6 @@ define_generator! {
 }
 
 impl Generator for DeriveCloneIn {
-    fn name(&self) -> &'static str {
-        stringify!(DeriveCloneIn)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let impls: Vec<TokenStream> = ctx
             .schema
