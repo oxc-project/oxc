@@ -6,9 +6,14 @@ let Hello = function() {
 		children: "Hi"
 	});
 };
+_c = Hello;
 const Bar = function Baz() {
 	return _jsx(Hello, {});
 };
+_c2 = Bar;
 function sum() {}
 let Baz = 10;
 var Qux;
+var _c, _c2;
+$RefreshReg$(_c, "Hello");
+$RefreshReg$(_c2, "Bar");
