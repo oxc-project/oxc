@@ -172,6 +172,94 @@ impl<'a> ReactRefresh<'a> {
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }
+
+    fn create_signature_call_statement(
+        &mut self,
+        id: &BindingIdentifier<'a>,
+        scope_id: ScopeId,
+        body: &mut FunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        let arguments =
+            CalculateSignatureKey::new(self.ctx.source_text, scope_id, ctx).calculate(body)?;
+
+        let symbol_id =
+            ctx.generate_uid("s", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
+
+        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+
+        let binding_identifier = BindingIdentifier {
+            span: id.span,
+            name: symbol_name.clone(),
+            symbol_id: Cell::new(Some(symbol_id)),
+        };
+
+        let identifier_reference =
+            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
+
+        let sig_identifier_reference = ctx.create_reference_id(
+            SPAN,
+            self.refresh_sig.clone(),
+            Some(symbol_id),
+            ReferenceFlag::Read,
+        );
+
+        // _s();
+        let call_expression = ctx.ast.statement_expression(
+            SPAN,
+            ctx.ast.expression_call(
+                SPAN,
+                ctx.ast.vec(),
+                ctx.ast.expression_from_identifier_reference(identifier_reference.clone()),
+                Option::<TSTypeParameterInstantiation>::None,
+                false,
+            ),
+        );
+
+        body.statements.insert(0, call_expression);
+
+        // _s = refresh_sig();
+        self.signature_declarator_items.last_mut().unwrap().push(ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ctx.ast.binding_pattern(
+                ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier),
+                Option::<TSTypeAnnotation>::None,
+                false,
+            ),
+            Some(ctx.ast.expression_call(
+                SPAN,
+                ctx.ast.vec(),
+                ctx.ast.expression_from_identifier_reference(sig_identifier_reference.clone()),
+                Option::<TSTypeParameterInstantiation>::None,
+                false,
+            )),
+            false,
+        ));
+
+        // _s(App, signature_key, false, function() { return [] });
+        //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
+        let id_identifier =
+            ctx.create_reference_id(SPAN, id.name.clone(), Some(symbol_id), ReferenceFlag::Read);
+
+        Some(ctx.ast.statement_expression(
+            SPAN,
+            ctx.ast.expression_call(
+                SPAN,
+                {
+                    let mut items = ctx.ast.vec_with_capacity(arguments.len() + 1);
+                    items.push(ctx.ast.argument_expression(
+                        ctx.ast.expression_from_identifier_reference(id_identifier),
+                    ));
+                    items.extend(arguments);
+                    items
+                },
+                ctx.ast.expression_from_identifier_reference(identifier_reference),
+                Option::<TSTypeParameterInstantiation>::None,
+                false,
+            ),
+        ))
+    }
 }
 
 // Transform
@@ -426,98 +514,6 @@ impl<'a> ReactRefresh<'a> {
         Some(self.create_assignment_expression(id, ctx))
     }
 
-    pub fn transform_function_on_exit(
-        &mut self,
-        func: &mut Function<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
-        let id = func.id.as_ref().unwrap();
-
-        let arguments =
-            CalculateSignatureKey::new(self.ctx.source_text, func.scope_id.get().unwrap(), ctx)
-                .calculate(func.body.as_ref().unwrap())?;
-
-        let symbol_id =
-            ctx.generate_uid("s", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
-
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
-        let binding_identifier = BindingIdentifier {
-            span: id.span,
-            name: symbol_name.clone(),
-            symbol_id: Cell::new(Some(symbol_id)),
-        };
-
-        let identifier_reference =
-            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
-
-        let sig_identifier_reference = ctx.create_reference_id(
-            SPAN,
-            self.refresh_sig.clone(),
-            Some(symbol_id),
-            ReferenceFlag::Read,
-        );
-
-        // _s();
-        let call_expression = ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_call(
-                SPAN,
-                ctx.ast.vec(),
-                ctx.ast.expression_from_identifier_reference(identifier_reference.clone()),
-                Option::<TSTypeParameterInstantiation>::None,
-                false,
-            ),
-        );
-
-        if let Some(body) = func.body.as_mut() {
-            body.statements.insert(0, call_expression);
-        }
-
-        // _s = refresh_sig();
-        self.signature_declarator_items.last_mut().unwrap().push(ctx.ast.variable_declarator(
-            SPAN,
-            VariableDeclarationKind::Var,
-            ctx.ast.binding_pattern(
-                ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier),
-                Option::<TSTypeAnnotation>::None,
-                false,
-            ),
-            Some(ctx.ast.expression_call(
-                SPAN,
-                ctx.ast.vec(),
-                ctx.ast.expression_from_identifier_reference(sig_identifier_reference.clone()),
-                Option::<TSTypeParameterInstantiation>::None,
-                false,
-            )),
-            false,
-        ));
-
-        // _s(App, signature_key, false, function() { return [] });
-        //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
-        let id_identifier =
-            ctx.create_reference_id(SPAN, id.name.clone(), Some(symbol_id), ReferenceFlag::Read);
-        let bind_sig_statement = ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_call(
-                SPAN,
-                {
-                    let mut items = ctx.ast.vec();
-                    items.push(ctx.ast.argument_expression(
-                        ctx.ast.expression_from_identifier_reference(id_identifier),
-                    ));
-                    items.extend(arguments);
-                    items
-                },
-                ctx.ast.expression_from_identifier_reference(identifier_reference),
-                Option::<TSTypeParameterInstantiation>::None,
-                false,
-            ),
-        );
-
-        Some(bind_sig_statement)
-    }
-
     pub fn transform_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
@@ -581,125 +577,49 @@ impl<'a> ReactRefresh<'a> {
         Some(self.create_assignment_expression(id, ctx))
     }
 
+    // --------------------------- refresh sig ---------------------------
+
+    pub fn transform_function_on_exit(
+        &mut self,
+        func: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        let id = func.id.as_ref().unwrap();
+
+        self.create_signature_call_statement(
+            id,
+            func.scope_id.get().unwrap(),
+            func.body.as_mut().unwrap(),
+            ctx,
+        )
+    }
+
     pub fn transform_variable_declaration_on_exit(
         &mut self,
         decl: &mut VariableDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
-        let mut bind_sig_statements = ctx.ast.vec();
+    ) -> Vec<Statement<'a>> {
+        decl.declarations
+            .iter_mut()
+            .filter_map(|declarator| {
+                let id = declarator.id.get_binding_identifier()?;
+                let init = declarator.init.as_mut()?;
 
-        for declarator in decl.declarations.iter_mut() {
-            let Some(id) = declarator.id.get_binding_identifier() else {
-                continue;
-            };
+                let (scope_id, body) = match init {
+                    Expression::FunctionExpression(func) => {
+                        (func.scope_id.get(), func.body.as_mut().unwrap())
+                    }
+                    Expression::ArrowFunctionExpression(arrow) => {
+                        (arrow.scope_id.get(), &mut arrow.body)
+                    }
+                    _ => {
+                        return None;
+                    }
+                };
 
-            let Some(init) = declarator.init.as_mut() else {
-                continue;
-            };
-
-            let (scope_id, body) = match init {
-                Expression::FunctionExpression(func) => {
-                    (func.scope_id.get(), func.body.as_mut().unwrap())
-                }
-                Expression::ArrowFunctionExpression(arrow) => {
-                    (arrow.scope_id.get(), &mut arrow.body)
-                }
-                _ => {
-                    continue;
-                }
-            };
-
-            let Some(arguments) =
-                CalculateSignatureKey::new(self.ctx.source_text, scope_id.unwrap(), ctx)
-                    .calculate(body)
-            else {
-                continue;
-            };
-
-            let symbol_id =
-                ctx.generate_uid("s", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
-
-            let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
-            let binding_identifier = BindingIdentifier {
-                span: id.span,
-                name: symbol_name.clone(),
-                symbol_id: Cell::new(Some(symbol_id)),
-            };
-
-            let identifier_reference =
-                ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
-
-            let sig_identifier_reference = ctx.create_reference_id(
-                SPAN,
-                self.refresh_sig.clone(),
-                Some(symbol_id),
-                ReferenceFlag::Read,
-            );
-
-            // _s();
-            let call_expression = ctx.ast.statement_expression(
-                SPAN,
-                ctx.ast.expression_call(
-                    SPAN,
-                    ctx.ast.vec(),
-                    ctx.ast.expression_from_identifier_reference(identifier_reference.clone()),
-                    Option::<TSTypeParameterInstantiation>::None,
-                    false,
-                ),
-            );
-
-            body.statements.insert(0, call_expression);
-
-            // _s = refresh_sig();
-            self.signature_declarator_items.last_mut().unwrap().push(ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                ctx.ast.binding_pattern(
-                    ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier),
-                    Option::<TSTypeAnnotation>::None,
-                    false,
-                ),
-                Some(ctx.ast.expression_call(
-                    SPAN,
-                    ctx.ast.vec(),
-                    ctx.ast.expression_from_identifier_reference(sig_identifier_reference.clone()),
-                    Option::<TSTypeParameterInstantiation>::None,
-                    false,
-                )),
-                false,
-            ));
-
-            // _s(App, signature_key, false, function() { return [] });
-            //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
-            let id_identifier = ctx.create_reference_id(
-                SPAN,
-                id.name.clone(),
-                Some(symbol_id),
-                ReferenceFlag::Read,
-            );
-            let bind_sig_statement = ctx.ast.statement_expression(
-                SPAN,
-                ctx.ast.expression_call(
-                    SPAN,
-                    {
-                        let mut items = ctx.ast.vec();
-                        items.push(ctx.ast.argument_expression(
-                            ctx.ast.expression_from_identifier_reference(id_identifier),
-                        ));
-                        items.extend(arguments);
-                        items
-                    },
-                    ctx.ast.expression_from_identifier_reference(identifier_reference),
-                    Option::<TSTypeParameterInstantiation>::None,
-                    false,
-                ),
-            );
-
-            bind_sig_statements.push(bind_sig_statement);
-        }
-
-        bind_sig_statements
+                self.create_signature_call_statement(id, scope_id.unwrap(), body, ctx)
+            })
+            .collect()
     }
 }
 
