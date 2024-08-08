@@ -426,7 +426,7 @@ pub enum PropertyKey<'a> {
 /// Represents the kind of property in an object literal or class.
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum PropertyKind {
@@ -487,7 +487,7 @@ pub struct TemplateElement<'a> {
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[ast]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct TemplateElementValue<'a> {
     /// A raw interpretation where backslashes do not have special meaning.
@@ -1241,7 +1241,7 @@ pub struct VariableDeclaration<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum VariableDeclarationKind {
@@ -1730,7 +1730,7 @@ pub struct Function<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FunctionType {
     FunctionDeclaration = 0,
@@ -1774,7 +1774,7 @@ pub struct FormalParameter<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
@@ -1912,7 +1912,7 @@ pub struct Class<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum ClassType {
     /// Class declaration statement
@@ -2012,7 +2012,7 @@ pub struct MethodDefinition<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum MethodDefinitionType {
     MethodDefinition = 0,
@@ -2103,7 +2103,7 @@ pub struct PropertyDefinition<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum PropertyDefinitionType {
     PropertyDefinition = 0,
@@ -2112,7 +2112,7 @@ pub enum PropertyDefinitionType {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum MethodDefinitionKind {
@@ -2228,7 +2228,7 @@ pub use match_module_declaration;
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum AccessorPropertyType {
     AccessorProperty = 0,

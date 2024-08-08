@@ -2022,6 +2022,20 @@ impl<'a> GetSpan for JSXFragment<'a> {
     }
 }
 
+impl GetSpan for JSXOpeningFragment {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXClosingFragment {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl<'a> GetSpan for JSXElementName<'a> {
     fn span(&self) -> Span {
         match self {

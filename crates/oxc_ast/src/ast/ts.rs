@@ -383,7 +383,7 @@ pub struct TSTypeOperator<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSTypeOperatorOperator {
@@ -762,7 +762,7 @@ pub struct TSTypeAliasDeclaration<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSAccessibility {
@@ -884,7 +884,7 @@ pub struct TSCallSignatureDeclaration<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMethodSignatureKind {
@@ -1006,7 +1006,7 @@ pub struct TSModuleDeclaration<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
@@ -1203,7 +1203,7 @@ pub struct TSMappedType<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMappedTypeModifierOperator {
@@ -1394,7 +1394,7 @@ pub struct TSInstantiationExpression<'a> {
 /// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {

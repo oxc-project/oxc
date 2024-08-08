@@ -2022,6 +2022,20 @@ impl<'a> GetSpanMut for JSXFragment<'a> {
     }
 }
 
+impl GetSpanMut for JSXOpeningFragment {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXClosingFragment {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
 impl<'a> GetSpanMut for JSXElementName<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {

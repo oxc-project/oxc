@@ -103,7 +103,7 @@ pub struct RegExpLiteral<'a> {
 /// <https://tc39.es/ecma262/multipage/text-processing.html#sec-regexp-regular-expression-objects>
 #[ast]
 #[derive(Debug, Clone, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
@@ -114,7 +114,7 @@ pub struct RegExp<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
