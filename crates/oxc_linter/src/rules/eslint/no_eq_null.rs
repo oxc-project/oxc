@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// ```
     NoEqNull,
     restriction,
-    fix
+    fix_dangerous
 );
 
 impl Rule for NoEqNull {
@@ -50,7 +50,7 @@ impl Rule for NoEqNull {
                     & binary_expression.left.is_null()
                     & bad_operator
             {
-                ctx.diagnostic_with_fix(
+                ctx.diagnostic_with_dangerous_fix(
                     no_eq_null_diagnostic(Span::new(
                         binary_expression.span.start,
                         binary_expression.span.end,
