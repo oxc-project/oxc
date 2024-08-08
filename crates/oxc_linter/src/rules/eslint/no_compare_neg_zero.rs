@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// ```
     NoCompareNegZero,
     correctness,
-    fix
+    conditional_suggestion_fix
 );
 
 impl Rule for NoCompareNegZero {
@@ -40,21 +40,35 @@ impl Rule for NoCompareNegZero {
         };
         if Self::should_check(expr.operator) {
             let op = expr.operator.as_str();
-            if is_neg_zero(&expr.left) {
-                ctx.diagnostic_with_fix(no_compare_neg_zero_diagnostic(op, expr.span), |fixer| {
-                    let start = expr.left.span().start;
-                    let end = start + 1;
-                    let span = Span::new(start, end);
-                    fixer.replace(span, "")
-                });
-            }
-            if is_neg_zero(&expr.right) {
-                ctx.diagnostic_with_fix(no_compare_neg_zero_diagnostic(op, expr.span), |fixer| {
-                    let start = expr.right.span().start;
-                    let end = start + 1;
-                    let span = Span::new(start, end);
-                    fixer.replace(span, "")
-                });
+            if is_neg_zero(&expr.left) || is_neg_zero(&expr.right) {
+                if expr.operator == BinaryOperator::StrictEquality {
+                    ctx.diagnostic_with_suggestion(
+                        no_compare_neg_zero_diagnostic(op, expr.span),
+                        |fixer| {
+                            //replace x === -0 with Object.is(x, -0)
+                            let name = if expr.left.is_identifier_reference() {
+                                &expr.left.get_identifier_reference().unwrap().name
+                            } else {
+                                &expr.right.get_identifier_reference().unwrap().name
+                            };
+                            fixer.replace(expr.span, format!("Object.is({name}, -0)"))
+                        },
+                    );
+                } else {
+                    ctx.diagnostic_with_fix(
+                        no_compare_neg_zero_diagnostic(op, expr.span),
+                        |fixer| {
+                            let start = if is_neg_zero(&expr.left) {
+                                expr.left.span().start
+                            } else {
+                                expr.right.span().start
+                            };
+                            let end = start + 1;
+                            let span = Span::new(start, end);
+                            fixer.delete(&span)
+                        },
+                    );
+                }
             }
         }
     }
@@ -132,8 +146,8 @@ fn test() {
     ];
 
     let fix = vec![
-        ("x === -0", "x === 0", None),
-        ("-0 === x", "0 === x", None),
+        ("x === -0", "Object.is(x, -0)", None),
+        ("-0 === x", "Object.is(x, -0)", None),
         ("x == -0", "x == 0", None),
         ("-0 == x", "0 == x", None),
         ("x > -0", "x > 0", None),
