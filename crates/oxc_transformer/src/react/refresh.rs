@@ -166,11 +166,10 @@ impl<'a> ReactRefresh<'a> {
 
     fn create_signature_call_statement(
         &mut self,
-        id: &BindingIdentifier<'a>,
         scope_id: ScopeId,
         body: &mut FunctionBody<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
+    ) -> Option<impl FnOnce(Expression<'a>) -> Expression<'a> + '_> {
         let arguments =
             CalculateSignatureKey::new(self.ctx.source_text, scope_id, ctx).calculate(body)?;
 
@@ -180,7 +179,7 @@ impl<'a> ReactRefresh<'a> {
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         let binding_identifier = BindingIdentifier {
-            span: id.span,
+            span: SPAN,
             name: symbol_name.clone(),
             symbol_id: Cell::new(Some(symbol_id)),
         };
@@ -230,26 +229,21 @@ impl<'a> ReactRefresh<'a> {
 
         // _s(App, signature_key, false, function() { return [] });
         //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
-        let id_identifier =
-            ctx.create_reference_id(SPAN, id.name.clone(), Some(symbol_id), ReferenceFlag::Read);
 
-        Some(ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_call(
+        Some(move |first_argument_expression: Expression<'a>| {
+            self.ctx.ast.expression_call(
                 SPAN,
                 {
-                    let mut items = ctx.ast.vec_with_capacity(arguments.len() + 1);
-                    items.push(ctx.ast.argument_expression(
-                        ctx.ast.expression_from_identifier_reference(id_identifier),
-                    ));
+                    let mut items = self.ctx.ast.vec_with_capacity(arguments.len() + 1);
+                    items.push(self.ctx.ast.argument_expression(first_argument_expression));
                     items.extend(arguments);
                     items
                 },
-                ctx.ast.expression_from_identifier_reference(identifier_reference),
+                self.ctx.ast.expression_from_identifier_reference(identifier_reference),
                 Option::<TSTypeParameterInstantiation>::None,
                 false,
-            ),
-        ))
+            )
+        })
     }
 }
 
@@ -575,13 +569,19 @@ impl<'a> ReactRefresh<'a> {
         func: &mut Function<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        let id = func.id.as_ref().unwrap();
-
-        self.create_signature_call_statement(
-            id,
-            func.scope_id.get().unwrap(),
-            func.body.as_mut().unwrap(),
-            ctx,
+        let id = func.id.as_ref()?;
+        self.create_signature_call_statement(func.scope_id.get()?, func.body.as_mut()?, ctx).map(
+            |cb| {
+                ctx.ast.statement_expression(
+                    SPAN,
+                    cb(ctx.ast.expression_from_identifier_reference(ctx.create_reference_id(
+                        SPAN,
+                        id.name.clone(),
+                        id.symbol_id.get(),
+                        ReferenceFlag::Read,
+                    ))),
+                )
+            },
         )
     }
 
@@ -608,9 +608,49 @@ impl<'a> ReactRefresh<'a> {
                     }
                 };
 
-                self.create_signature_call_statement(id, scope_id.unwrap(), body, ctx)
+                self.create_signature_call_statement(scope_id.unwrap(), body, ctx).map(|cb| {
+                    ctx.ast.statement_expression(
+                        SPAN,
+                        cb(ctx.ast.expression_from_identifier_reference(ctx.create_reference_id(
+                            SPAN,
+                            id.name.clone(),
+                            id.symbol_id.get(),
+                            ReferenceFlag::Read,
+                        ))),
+                    )
+                })
             })
             .collect()
+    }
+
+    pub fn transform_expression_on_exit(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.parent().is_variable_declarator() {
+            // We had handled this case in `transform_variable_declaration_on_exit`.
+            return;
+        }
+
+        let get_expr = match expr {
+            Expression::FunctionExpression(func) => self.create_signature_call_statement(
+                func.scope_id.get().unwrap(),
+                func.body.as_mut().unwrap(),
+                ctx,
+            ),
+            Expression::ArrowFunctionExpression(arrow) => self.create_signature_call_statement(
+                arrow.scope_id.get().unwrap(),
+                &mut arrow.body,
+                ctx,
+            ),
+            _ => None,
+        };
+
+        if let Some(get_expr) = get_expr {
+            let original_expression = ctx.ast.move_expression(expr);
+            *expr = get_expr(original_expression);
+        }
     }
 }
 

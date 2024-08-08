@@ -150,6 +150,16 @@ impl<'a> React<'a> {
         }
     }
 
+    pub fn transform_expression_on_exit(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.refresh_plugin {
+            self.refresh.transform_expression_on_exit(expr, ctx);
+        }
+    }
+
     pub fn transform_function(&mut self, func: &mut Function<'a>) {
         if self.refresh_plugin {
             // self.refresh.transform_function(func);

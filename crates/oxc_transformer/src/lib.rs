@@ -166,6 +166,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x1_react.transform_expression_on_exit(expr, ctx);
         self.x3_es2015.transform_expression_on_exit(expr, ctx);
     }
 
