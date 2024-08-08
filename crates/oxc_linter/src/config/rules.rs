@@ -5,8 +5,7 @@ use rustc_hash::FxHashMap;
 use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
-    Deserialize,
-    Serialize,
+    Deserialize, Serialize,
 };
 
 use crate::{AllowWarnDeny, RuleWithSeverity};
@@ -107,7 +106,10 @@ impl Serialize for OxlintRules {
         let rules = self.0.iter().map(|rule| {
             let key = format!("{}/{}", rule.plugin_name, rule.rule_name);
             let value = match &rule.config {
-                Some(config) => serde_json::Value::Array(vec![serde_json::to_value(rule.severity).unwrap(), config.clone()]),
+                Some(config) => serde_json::Value::Array(vec![
+                    serde_json::to_value(rule.severity).unwrap(),
+                    config.clone(),
+                ]),
                 None => serde_json::to_value(rule.severity).unwrap(),
             };
             (key, value)

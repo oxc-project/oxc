@@ -3,8 +3,8 @@ use std::{convert::From, path::PathBuf};
 use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 use rustc_hash::FxHashSet;
 use schemars::{schema::SchemaObject, JsonSchema};
-use serde_json::{Number, Value};
 use serde::Serialize;
+use serde_json::{Number, Value};
 
 use crate::{
     config::OxlintConfig, fixer::FixKind, rules::RULES, utils::is_jest_rule_adapted_to_vitest,
