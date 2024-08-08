@@ -658,7 +658,7 @@ struct CalculateSignatureKey<'a, 'b> {
     key: String,
     source_text: &'a str,
     ctx: &'b mut TraverseCtx<'a>,
-    binding_names: Vec<Atom<'a>>,
+    callee_list: Vec<(Atom<'a>, Option<Atom<'a>>)>,
     scope_ids: Vec<ScopeId>,
     declarator_id_span: Option<Span>,
 }
@@ -671,7 +671,7 @@ impl<'a, 'b> CalculateSignatureKey<'a, 'b> {
             source_text,
             scope_ids: vec![scope_id],
             declarator_id_span: None,
-            binding_names: Vec::new(),
+            callee_list: Vec::new(),
         }
     }
 
@@ -693,11 +693,11 @@ impl<'a, 'b> CalculateSignatureKey<'a, 'b> {
 
         // Check if a corresponding binding exists where we emit the signature.
         let mut force_reset = false;
-        let mut custom_hooks_in_scope = self.ctx.ast.vec_with_capacity(self.binding_names.len());
+        let mut custom_hooks_in_scope = self.ctx.ast.vec_with_capacity(self.callee_list.len());
 
-        for binding_name in &self.binding_names {
+        for (binding_name, hook_name) in &self.callee_list {
             if let Some(symbol_id) =
-                self.ctx.scopes().find_binding(self.current_scope_id(), binding_name)
+                self.ctx.scopes().find_binding(self.ctx.current_scope_id(), binding_name)
             {
                 let ident = self.ctx.create_reference_id(
                     SPAN,
@@ -705,8 +705,20 @@ impl<'a, 'b> CalculateSignatureKey<'a, 'b> {
                     Some(symbol_id),
                     ReferenceFlag::Read,
                 );
-                let ident = self.ctx.ast.expression_from_identifier_reference(ident);
-                custom_hooks_in_scope.push(self.ctx.ast.array_expression_element_expression(ident));
+
+                let mut expr = self.ctx.ast.expression_from_identifier_reference(ident);
+
+                if let Some(hook_name) = hook_name {
+                    // binding_name.hook_name
+                    expr = Expression::from(self.ctx.ast.member_expression_static(
+                        SPAN,
+                        expr,
+                        self.ctx.ast.identifier_name(SPAN, hook_name),
+                        false,
+                    ));
+                }
+
+                custom_hooks_in_scope.push(self.ctx.ast.array_expression_element_expression(expr));
             } else {
                 force_reset = true;
             }
@@ -797,35 +809,38 @@ impl<'a, 'b> Visit<'a> for CalculateSignatureKey<'a, 'b> {
             _ => None,
         };
 
-        let Some(name) = name else {
+        let Some(hook_name) = name else {
             return;
         };
 
-        if !is_use_hook_name(&name) {
+        if !is_use_hook_name(&hook_name) {
             return;
         }
 
-        if !is_builtin_hook(&name) {
-            let binding_name = match &call_expr.callee {
-                Expression::Identifier(ident) => Some(ident.name.clone()),
+        if !is_builtin_hook(&hook_name) {
+            let callee = match &call_expr.callee {
+                Expression::Identifier(ident) => Some((ident.name.clone(), None)),
                 callee @ match_member_expression!(Expression) => {
-                    match callee.to_member_expression().object() {
-                        Expression::Identifier(ident) => Some(ident.name.clone()),
+                    let member_expr = callee.to_member_expression();
+                    match member_expr.object() {
+                        Expression::Identifier(ident) => {
+                            Some((ident.name.clone(), Some(hook_name.clone())))
+                        }
                         _ => None,
                     }
                 }
                 _ => None,
             };
 
-            if let Some(binding_name) = binding_name {
-                self.binding_names.push(binding_name);
+            if let Some(callee) = callee {
+                self.callee_list.push(callee);
             }
         }
 
         let args = &call_expr.arguments;
-        let args_key = if name == "useState" && args.len() > 0 {
+        let args_key = if hook_name == "useState" && args.len() > 0 {
             args[0].span().source_text(self.source_text)
-        } else if name == "useReducer" && args.len() > 1 {
+        } else if hook_name == "useReducer" && args.len() > 1 {
             args[1].span().source_text(self.source_text)
         } else {
             ""
@@ -835,7 +850,7 @@ impl<'a, 'b> Visit<'a> for CalculateSignatureKey<'a, 'b> {
             self.key.push_str("\\n");
         }
         self.key.push_str(&format!(
-            "{name}{{{}{}{args_key}{}}}",
+            "{hook_name}{{{}{}{args_key}{}}}",
             self.declarator_id_span.take().map_or("", |span| span.source_text(self.source_text)),
             if args_key.is_empty() { "" } else { "(" },
             if args_key.is_empty() { "" } else { ")" }

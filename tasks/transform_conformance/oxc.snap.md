@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 24/34
+Passed: 26/34
 
 # All Passed:
 
@@ -11,12 +11,10 @@ Passed: 24/34
 * enum-member-reference/input.ts
 * export-elimination/input.ts
 
-# babel-plugin-transform-react-jsx (20/27)
+# babel-plugin-transform-react-jsx (22/27)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
 * refresh/generates-signatures-for-function-expressions-calling-hooks/input.jsx
-* refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
 * refresh/registers-identifiers-used-in-react-create-element-at-definition-site/input.jsx
-* refresh/registers-top-level-variable-declarations-with-function-expressions/input.jsx
 * refresh/supports-typescript-namespace-syntax/input.tsx
 
