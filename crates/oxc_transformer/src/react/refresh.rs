@@ -164,7 +164,7 @@ impl<'a> ReactRefresh<'a> {
         ctx.ast.statement_expression(SPAN, expr)
     }
 
-    fn create_signature_call_statement(
+    fn create_signature_call_expression(
         &mut self,
         scope_id: ScopeId,
         body: &mut FunctionBody<'a>,
@@ -570,7 +570,7 @@ impl<'a> ReactRefresh<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         let id = func.id.as_ref()?;
-        self.create_signature_call_statement(func.scope_id.get()?, func.body.as_mut()?, ctx).map(
+        self.create_signature_call_expression(func.scope_id.get()?, func.body.as_mut()?, ctx).map(
             |cb| {
                 ctx.ast.statement_expression(
                     SPAN,
@@ -608,17 +608,26 @@ impl<'a> ReactRefresh<'a> {
                     }
                 };
 
-                self.create_signature_call_statement(scope_id.unwrap(), body, ctx).map(|cb| {
-                    ctx.ast.statement_expression(
-                        SPAN,
-                        cb(ctx.ast.expression_from_identifier_reference(ctx.create_reference_id(
+                let statement =
+                    self.create_signature_call_expression(scope_id.unwrap(), body, ctx).map(|cb| {
+                        if let Expression::ArrowFunctionExpression(arrow) = init {
+                            Self::transform_arrow_function_expression(arrow, ctx);
+                        }
+
+                        ctx.ast.statement_expression(
                             SPAN,
-                            id.name.clone(),
-                            id.symbol_id.get(),
-                            ReferenceFlag::Read,
-                        ))),
-                    )
-                })
+                            cb(ctx.ast.expression_from_identifier_reference(
+                                ctx.create_reference_id(
+                                    SPAN,
+                                    id.name.clone(),
+                                    id.symbol_id.get(),
+                                    ReferenceFlag::Read,
+                                ),
+                            )),
+                        )
+                    });
+
+                statement
             })
             .collect()
     }
@@ -634,16 +643,24 @@ impl<'a> ReactRefresh<'a> {
         }
 
         let get_expr = match expr {
-            Expression::FunctionExpression(func) => self.create_signature_call_statement(
+            Expression::FunctionExpression(func) => self.create_signature_call_expression(
                 func.scope_id.get().unwrap(),
                 func.body.as_mut().unwrap(),
                 ctx,
             ),
-            Expression::ArrowFunctionExpression(arrow) => self.create_signature_call_statement(
-                arrow.scope_id.get().unwrap(),
-                &mut arrow.body,
-                ctx,
-            ),
+            Expression::ArrowFunctionExpression(arrow) => {
+                let call_fn = self.create_signature_call_expression(
+                    arrow.scope_id.get().unwrap(),
+                    &mut arrow.body,
+                    ctx,
+                );
+
+                // If the signature is found, we will push a new statement to the arrow function body. So it's not an expression anymore.
+                if call_fn.is_some() {
+                    Self::transform_arrow_function_expression(arrow, ctx);
+                }
+                call_fn
+            }
             _ => None,
         };
 
@@ -651,6 +668,28 @@ impl<'a> ReactRefresh<'a> {
             let original_expression = ctx.ast.move_expression(expr);
             *expr = get_expr(original_expression);
         }
+    }
+
+    // transform arrow function expression to normal arrow function
+    // `() => 1` to `() => { return 1 }`
+    pub fn transform_arrow_function_expression(
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !arrow.expression {
+            return;
+        }
+
+        arrow.expression = false;
+
+        let Some(Statement::ExpressionStatement(statement)) = arrow.body.statements.pop() else {
+            unreachable!("arrow function body is never empty")
+        };
+
+        arrow
+            .body
+            .statements
+            .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
     }
 }
 
