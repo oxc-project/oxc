@@ -10,8 +10,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
-        PossibleJestNode,
+        collect_possible_jest_call_node, is_equality_matcher,
+        parse_expect_and_typeof_vitest_fn_call, PossibleJestNode,
     },
 };
 
@@ -33,12 +33,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     PreferToBeTruthy,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending,  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix-dangerous', 'suggestion', and 'suggestion-dangerous'
+    style,
     fix
 );
 
@@ -57,7 +52,7 @@ impl PreferToBeTruthy {
             return;
         };
         let Some(vitest_expect_fn_call) =
-            parse_expect_jest_fn_call(call_expr, possible_vitest_node, ctx)
+            parse_expect_and_typeof_vitest_fn_call(call_expr, possible_vitest_node, ctx)
         else {
             return;
         };
@@ -75,8 +70,8 @@ impl PreferToBeTruthy {
         };
 
         if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression() {
-            if arg.value == true {
-                let span = matcher.span;
+            if arg.value {
+                let span = Span::new(matcher.span.start, call_expr.span.end);
 
                 let is_cmp_mem_expr = match matcher.parent {
                     Some(Expression::ComputedMemberExpression(_)) => true,

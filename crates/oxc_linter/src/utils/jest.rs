@@ -26,6 +26,7 @@ pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "beforeEach",
     "describe",
     "expect",
+    "expectTypeOf",
     "fdescribe",
     "fit",
     "it",
@@ -40,6 +41,7 @@ pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum JestFnKind {
     Expect,
+    ExpectTypeOf,
     General(JestGeneralFnKind),
     Unknown,
 }
@@ -48,6 +50,7 @@ impl JestFnKind {
     pub fn from(name: &str) -> Self {
         match name {
             "expect" => Self::Expect,
+            "expectTypeOf" => Self::ExpectTypeOf,
             "jest" => Self::General(JestGeneralFnKind::Jest),
             "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
             "fit" | "it" | "test" | "xit" | "xtest" => Self::General(JestGeneralFnKind::Test),
@@ -113,7 +116,7 @@ pub fn parse_general_jest_fn_call<'a>(
 ) -> Option<ParsedGeneralJestFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
-    if let ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call) = jest_fn_call {
+    if let ParsedJestFnCallNew::GeneralJest(jest_fn_call) = jest_fn_call {
         return Some(jest_fn_call);
     }
     None
@@ -126,7 +129,7 @@ pub fn parse_expect_jest_fn_call<'a>(
 ) -> Option<ParsedExpectFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
-    if let ParsedJestFnCallNew::ExpectFnCall(jest_fn_call) = jest_fn_call {
+    if let ParsedJestFnCallNew::Expect(jest_fn_call) = jest_fn_call {
         return Some(jest_fn_call);
     }
     None
