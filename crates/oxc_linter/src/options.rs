@@ -167,6 +167,7 @@ impl LintOptions {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum AllowWarnDeny {
     Allow, // Off
     Warn,  // Warn
