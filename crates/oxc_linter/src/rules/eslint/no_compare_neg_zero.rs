@@ -40,25 +40,31 @@ impl Rule for NoCompareNegZero {
         };
         if Self::should_check(expr.operator) {
             let op = expr.operator.as_str();
-            if is_neg_zero(&expr.left) || is_neg_zero(&expr.right) {
+            let is_left_neg_zero = is_neg_zero(&expr.left);
+            let is_right_neg_zero = is_neg_zero(&expr.right);
+            if is_left_neg_zero || is_right_neg_zero {
                 if expr.operator == BinaryOperator::StrictEquality {
                     ctx.diagnostic_with_suggestion(
                         no_compare_neg_zero_diagnostic(op, expr.span),
                         |fixer| {
-                            //replace x === -0 with Object.is(x, -0)
-                            let name = if expr.left.is_identifier_reference() {
-                                &expr.left.get_identifier_reference().unwrap().name
+                            // replace `x === -0` with `Object.is(x, -0)`
+                            let value = if is_left_neg_zero {
+                                ctx.source_range(expr.right.span())
                             } else {
-                                &expr.right.get_identifier_reference().unwrap().name
+                                ctx.source_range(expr.left.span())
                             };
-                            fixer.replace(expr.span, format!("Object.is({name}, -0)"))
+                            fixer.replace(expr.span, format!("Object.is({value}, -0)"))
                         },
                     );
                 } else {
+                    // <https://tc39.es/ecma262/#%E2%84%9D>
+                    // <https://tc39.es/ecma262/#sec-numeric-types-number-lessThan>
+                    // The mathematical value of +0𝔽 and -0𝔽 is the mathematical value 0.
+                    // It's safe to replace -0 with 0
                     ctx.diagnostic_with_fix(
                         no_compare_neg_zero_diagnostic(op, expr.span),
                         |fixer| {
-                            let start = if is_neg_zero(&expr.left) {
+                            let start = if is_left_neg_zero {
                                 expr.left.span().start
                             } else {
                                 expr.right.span().start
