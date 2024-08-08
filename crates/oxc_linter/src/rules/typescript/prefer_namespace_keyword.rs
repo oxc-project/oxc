@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{TSModuleDeclarationKind, TSModuleDeclarationName},
+    ast::{TSModuleDeclaration, TSModuleDeclarationKind, TSModuleDeclarationName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -34,14 +34,32 @@ declare_oxc_lint!(
     fix
 );
 
+fn is_nest_module(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+    ctx.nodes()
+        .parent_node(node.id())
+        .map_or(false, |parent_node| is_valid_module(parent_node, ctx))
+}
+
+fn is_valid_module(node: &AstNode, _ctx: &LintContext<'_>) -> bool {
+    matches!(node.kind(), AstKind::TSModuleDeclaration(module) if !is_invalid_module(module))
+}
+
+fn is_invalid_module(module: &TSModuleDeclaration) -> bool {
+    module.id.is_string_literal()
+        || !matches!(module.id, TSModuleDeclarationName::Identifier(_))
+        || module.kind != TSModuleDeclarationKind::Module
+}
+
 impl Rule for PreferNamespaceKeyword {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
-        if module.id.is_string_literal()
-            || !matches!(module.id, TSModuleDeclarationName::Identifier(_))
-            || module.kind != TSModuleDeclarationKind::Module
-        {
+
+        if is_invalid_module(module) {
             return;
+        }
+
+        if is_nest_module(node, ctx) {
+            return ctx.diagnostic(prefer_namespace_keyword_diagnostic(module.span));
         }
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
@@ -74,6 +92,7 @@ fn test() {
 
     let fail = vec![
         "module foo {}",
+        "module A.B {}",
         "declare module foo {}",
         "
 			declare module foo {
@@ -88,6 +107,20 @@ fn test() {
 
     let fix = vec![
         ("module foo {}", "namespace foo {}", None),
+        ("module A.B {}", "namespace A.B {}", None),
+        (
+            "
+			declare module A {
+			  declare module B {}
+			}
+			      ",
+            "
+			declare namespace A {
+			  declare namespace B {}
+			}
+			      ",
+            None,
+        ),
         ("declare module foo {}", "declare namespace foo {}", None),
         (
             "
