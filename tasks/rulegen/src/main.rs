@@ -58,6 +58,9 @@ const TREE_SHAKING_PATH: &str =
 const PROMISE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/__tests__";
 
+const VITEST_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/veritem/eslint-plugin-vitest/main/tests";
+
 struct TestCase {
     source_text: String,
     code: Option<String>,
@@ -574,6 +577,7 @@ pub enum RuleKind {
     Node,
     TreeShaking,
     Promise,
+    Vitest,
 }
 
 impl RuleKind {
@@ -591,6 +595,7 @@ impl RuleKind {
             "n" => Self::Node,
             "tree-shaking" => Self::TreeShaking,
             "promise" => Self::Promise,
+            "vitest" => Self::Vitest,
             _ => Self::ESLint,
         }
     }
@@ -612,6 +617,7 @@ impl Display for RuleKind {
             Self::Node => write!(f, "eslint-plugin-n"),
             Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
             Self::Promise => write!(f, "eslint-plugin-promise"),
+            Self::Vitest => write!(f, "eslint-plugin-vitest"),
         }
     }
 }
@@ -639,6 +645,7 @@ fn main() {
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Oxc => String::new(),
     };
 
