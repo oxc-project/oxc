@@ -12,9 +12,9 @@
 
 use std::{cell::Cell, hash::Hash};
 
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::scope::ScopeId;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
