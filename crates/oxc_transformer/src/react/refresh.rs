@@ -33,6 +33,7 @@ pub struct ReactRefresh<'a> {
 
 impl<'a> ReactRefresh<'a> {
     pub fn new(options: &ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
+        // TODO: refresh_reg and refresh_sig need to support MemberExpression
         Self {
             refresh_reg: ctx.ast.atom(&options.refresh_reg),
             refresh_sig: ctx.ast.atom(&options.refresh_sig),
