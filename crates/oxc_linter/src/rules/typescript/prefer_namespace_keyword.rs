@@ -57,7 +57,7 @@ impl Rule for PreferNamespaceKeyword {
         }
 
         if is_nest_module(node, ctx) {
-            return ctx.diagnostic(prefer_namespace_keyword_diagnostic(module.span));
+            return;
         }
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
@@ -108,29 +108,29 @@ fn test() {
         ("module A.B {}", "namespace A.B {}", None),
         (
             "
-			module A {
-			  module B {}
+            module A {
+              module B {}
 			}
-			      ",
+            ",
             "
-			namespace A {
-			  namespace B {}
+            namespace A {
+              namespace B {}
 			}
-			      ",
+            ",
             None,
         ),
         ("declare module foo {}", "declare namespace foo {}", None),
         (
             "
-			declare module foo {
-			  declare module bar {}
-			}
-			      ",
+            declare module foo {
+              declare module bar {}
+            }
+                  ",
             "
-			declare namespace foo {
-			  declare namespace bar {}
-			}
-			      ",
+            declare namespace foo {
+              declare namespace bar {}
+            }
+                  ",
             None,
         ),
     ];
