@@ -1,9 +1,18 @@
+use crate::{GeneratorOutput, LateCtx};
+
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
 mod derive_clone_in;
 mod derive_get_span;
 mod visit;
+
+pub use assert_layouts::AssertLayouts;
+pub use ast_builder::AstBuilderGenerator;
+pub use ast_kind::AstKindGenerator;
+pub use derive_clone_in::DeriveCloneIn;
+pub use derive_get_span::{DeriveGetSpan, DeriveGetSpanMut};
+pub use visit::{VisitGenerator, VisitMutGenerator};
 
 /// Inserts a newline in the `TokenStream`.
 #[allow(unused)]
@@ -22,6 +31,7 @@ macro_rules! insert {
         format!(r#"insert!("{}");"#, txt).parse::<proc_macro2::TokenStream>().unwrap()
     }};
 }
+pub(crate) use insert;
 
 /// Creates a generated file warning + required information for a generated file.
 macro_rules! generated_header {
@@ -37,18 +47,7 @@ macro_rules! generated_header {
         }
     }};
 }
-
 pub(crate) use generated_header;
-pub(crate) use insert;
-
-pub use assert_layouts::AssertLayouts;
-pub use ast_builder::AstBuilderGenerator;
-pub use ast_kind::AstKindGenerator;
-pub use derive_clone_in::DeriveCloneIn;
-pub use derive_get_span::{DeriveGetSpan, DeriveGetSpanMut};
-pub use visit::{VisitGenerator, VisitMutGenerator};
-
-use crate::{GeneratorOutput, LateCtx};
 
 pub trait Generator {
     fn name(&self) -> &'static str;
@@ -72,5 +71,4 @@ macro_rules! define_generator {
         }
     };
 }
-
 pub(crate) use define_generator;
