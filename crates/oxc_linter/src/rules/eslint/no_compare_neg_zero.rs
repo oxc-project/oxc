@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -29,7 +29,8 @@ declare_oxc_lint!(
     /// if (x === -0) {}
     /// ```
     NoCompareNegZero,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoCompareNegZero {
@@ -39,8 +40,21 @@ impl Rule for NoCompareNegZero {
         };
         if Self::should_check(expr.operator) {
             let op = expr.operator.as_str();
-            if is_neg_zero(&expr.left) || is_neg_zero(&expr.right) {
-                ctx.diagnostic(no_compare_neg_zero_diagnostic(op, expr.span));
+            if is_neg_zero(&expr.left) {
+                ctx.diagnostic_with_fix(no_compare_neg_zero_diagnostic(op, expr.span), |fixer| {
+                    let start = expr.left.span().start;
+                    let end = start + 1;
+                    let span = Span::new(start, end);
+                    fixer.replace(span, "")
+                });
+            }
+            if is_neg_zero(&expr.right) {
+                ctx.diagnostic_with_fix(no_compare_neg_zero_diagnostic(op, expr.span), |fixer| {
+                    let start = expr.right.span().start;
+                    let end = start + 1;
+                    let span = Span::new(start, end);
+                    fixer.replace(span, "")
+                });
             }
         }
     }
@@ -117,5 +131,21 @@ fn test() {
         ("-0n <= x", None),
     ];
 
-    Tester::new(NoCompareNegZero::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("x === -0", "x === 0", None),
+        ("-0 === x", "0 === x", None),
+        ("x == -0", "x == 0", None),
+        ("-0 == x", "0 == x", None),
+        ("x > -0", "x > 0", None),
+        ("-0 > x", "0 > x", None),
+        ("x >= -0", "x >= 0", None),
+        ("-0 >= x", "0 >= x", None),
+        ("x < -0", "x < 0", None),
+        ("-0 < x", "0 < x", None),
+        ("x <= -0", "x <= 0", None),
+        ("-0 <= x", "0 <= x", None),
+        ("-0n <= x", "0n <= x", None),
+    ];
+
+    Tester::new(NoCompareNegZero::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
