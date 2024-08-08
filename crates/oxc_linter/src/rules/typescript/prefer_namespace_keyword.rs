@@ -110,13 +110,13 @@ fn test() {
         ("module A.B {}", "namespace A.B {}", None),
         (
             "
-			declare module A {
-			  declare module B {}
+			module A {
+			  module B {}
 			}
 			      ",
             "
-			declare namespace A {
-			  declare namespace B {}
+			namespace A {
+			  namespace B {}
 			}
 			      ",
             None,
