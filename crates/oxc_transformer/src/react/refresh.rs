@@ -1,16 +1,7 @@
 use std::cell::Cell;
 
 use oxc_ast::{
-    ast::{
-        Argument, BindingIdentifier, BindingRestElement, CallExpression, Declaration,
-        ExportDefaultDeclarationKind, Expression, FormalParameterKind, Function, FunctionBody,
-        FunctionType, IdentifierReference, Program, Statement, TSThisParameter, TSTypeAnnotation,
-        TSTypeParameterDeclaration, TSTypeParameterInstantiation, VariableDeclaration,
-        VariableDeclarationKind, VariableDeclarator,
-    },
-    match_expression, match_member_expression,
-    visit::walk::walk_variable_declarator,
-    Visit,
+    ast::*, match_expression, match_member_expression, visit::walk::walk_variable_declarator, Visit,
 };
 use oxc_semantic::{ReferenceFlag, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
