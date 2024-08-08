@@ -2,7 +2,7 @@ mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
 mod derive_clone_in;
-mod impl_get_span;
+mod derive_get_span;
 mod visit;
 
 /// Inserts a newline in the `TokenStream`.
@@ -45,7 +45,7 @@ pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
 pub use derive_clone_in::DeriveCloneIn;
-pub use impl_get_span::ImplGetSpanGenerator;
+pub use derive_get_span::{DeriveGetSpan, DeriveGetSpanMut};
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
 use crate::{GeneratorOutput, LateCtx};
