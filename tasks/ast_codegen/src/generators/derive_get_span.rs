@@ -3,10 +3,11 @@ use quote::{format_ident, quote};
 use syn::Ident;
 
 use crate::{
+    codegen::LateCtx,
     output,
     schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
     util::ToIdent,
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -54,9 +55,8 @@ fn derive(
     ctx: &LateCtx,
 ) -> TokenStream {
     let impls: Vec<TokenStream> = ctx
-        .schema
-        .definitions
-        .iter()
+        .schema()
+        .into_iter()
         .filter(|def| def.visitable())
         .map(|def| match &def {
             TypeDef::Enum(def) => derive_enum(def, trait_name, method_name, self_type, result_type),

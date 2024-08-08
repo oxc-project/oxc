@@ -1,4 +1,8 @@
-use crate::{GeneratorOutput, LateCtx};
+use std::path::PathBuf;
+
+use proc_macro2::TokenStream;
+
+use crate::codegen::LateCtx;
 
 mod assert_layouts;
 mod ast_builder;
@@ -21,6 +25,102 @@ macro_rules! endl {
         /* only works in the context of `quote` macro family! */
     };
 }
+
+pub trait Generator {
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
+}
+
+pub type GeneratedTokenStream = (/* output path */ PathBuf, TokenStream);
+pub type GeneratedDataStream = (/* output path */ PathBuf, Vec<u8>);
+
+// TODO: remove me
+#[allow(dead_code)]
+#[derive(Debug, Clone)]
+pub enum GeneratorOutput {
+    None,
+    Info(Vec<u8>),
+    Data(GeneratedDataStream),
+    Stream(GeneratedTokenStream),
+}
+
+// TODO: remove me
+#[allow(dead_code)]
+impl GeneratorOutput {
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    pub fn expect_none(&self) {
+        assert!(self.is_none());
+    }
+
+    pub fn to_info(&self) -> &[u8] {
+        if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn to_data(&self) -> &GeneratedDataStream {
+        if let Self::Data(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn to_stream(&self) -> &GeneratedTokenStream {
+        if let Self::Stream(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_info(self) -> Vec<u8> {
+        if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_data(self) -> GeneratedDataStream {
+        if let Self::Data(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_stream(self) -> GeneratedTokenStream {
+        if let Self::Stream(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+}
+
+macro_rules! define_generator {
+    ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
+        $vis struct $ident $($lifetime)? $($rest)*
+        impl $($lifetime)? $crate::codegen::Runner for $ident $($lifetime)? {
+            type Context = $crate::codegen::LateCtx;
+            type Output = $crate::GeneratorOutput;
+
+            fn name(&self) -> &'static str {
+                stringify!($ident)
+            }
+
+            fn run(&mut self, ctx: &$crate::codegen::LateCtx) -> $crate::Result<Self::Output> {
+                Ok(self.generate(ctx))
+            }
+        }
+    };
+}
+pub(crate) use define_generator;
 
 /// Similar to how `insert` macro works in the context of `quote` macro family, But this one can be
 /// used outside and accepts expressions.
@@ -47,27 +147,5 @@ macro_rules! generated_header {
         }
     }};
 }
+
 pub(crate) use generated_header;
-
-pub trait Generator {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
-}
-
-macro_rules! define_generator {
-    ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
-        $vis struct $ident $($lifetime)? $($rest)*
-        impl $($lifetime)? $crate::Runner for $ident $($lifetime)? {
-            type Context = $crate::LateCtx;
-            type Output = $crate::GeneratorOutput;
-
-            fn name(&self) -> &'static str {
-                stringify!($ident)
-            }
-
-            fn run(&mut self, ctx: &$crate::LateCtx) -> $crate::Result<Self::Output> {
-                Ok(self.generate(ctx))
-            }
-        }
-    };
-}
-pub(crate) use define_generator;
