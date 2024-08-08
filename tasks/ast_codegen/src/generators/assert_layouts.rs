@@ -38,7 +38,6 @@ impl Generator for AssertLayouts {
                 #header
 
                 use std::mem::{align_of, offset_of, size_of};
-
                 endl!();
 
                 use oxc_span::*;

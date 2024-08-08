@@ -93,31 +93,28 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
                     std::mem::transmute(t)
                 }
             }
+            endl!();
         }
     };
 
     quote! {
         #header
+
         #file_docs
         #clippy_attr
-
         endl!();
 
         use std::cell::Cell;
-
         endl!();
 
         use oxc_allocator::Vec;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
-
         endl!();
 
         use crate::{ast::*, ast_kind::#ast_kind_type};
-
         endl!();
 
         use #walk_mod::*;
-
         endl!();
 
         /// Syntax tree traversal
@@ -126,28 +123,25 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
             fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
             #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
-
             endl!();
 
             #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
             #[inline]
             fn leave_scope(&mut self) {}
-
             endl!();
 
             #may_alloc
 
             #(#visits)*
         }
-
         endl!();
 
         pub mod #walk_mod {
             use super::*;
+            endl!();
 
             #(#walks)*
-
         }
     }
 }
@@ -273,11 +267,11 @@ impl<'a> VisitBuilder<'a> {
         let walk_name = format_ident!("walk_{}", ident_snake);
 
         self.visits.push(quote! {
-            endl!();
             #[inline]
             fn #visit_name (&mut self, it: #as_param_type #extra_params) {
                 #walk_name(self, it #extra_args);
             }
+            endl!();
         });
 
         // We push an empty walk first, because we evaluate - and generate - each walk as we go,
@@ -328,11 +322,11 @@ impl<'a> VisitBuilder<'a> {
 
         // replace the placeholder walker with the actual one!
         self.walks[this_walker] = quote! {
-            endl!();
             #may_inline
             pub fn #walk_name <'a, V: #visit_trait<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
                 #walk_body
             }
+            endl!();
         };
 
         visit_name

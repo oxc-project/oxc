@@ -180,7 +180,6 @@ impl Generator for AstKindGenerator {
                 pub enum AstType {
                     #(#types),*,
                 }
-
                 endl!();
 
                 /// Untyped AST Node Kind
@@ -188,7 +187,6 @@ impl Generator for AstKindGenerator {
                 pub enum AstKind<'a> {
                     #(#kinds),*,
                 }
-
                 endl!();
 
                 impl<'a> GetSpan for AstKind<'a> {

@@ -78,11 +78,13 @@ fn derive(
 
     quote! {
         #header
+
         insert!("#![allow(clippy::match_same_arms)]");
         endl!();
 
         use oxc_span::{#trait_name, Span};
         endl!();
+
         use crate::ast::*;
         endl!();
 
