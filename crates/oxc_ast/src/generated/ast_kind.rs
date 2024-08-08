@@ -1,8 +1,9 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_codegen/src/generators/ast_kind.rs`
 
-use crate::ast::*;
 use oxc_span::{GetSpan, Span};
+
+use crate::ast::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AstType {

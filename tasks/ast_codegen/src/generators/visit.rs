@@ -7,12 +7,13 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident};
 
 use crate::{
+    codegen::LateCtx,
     generators::{ast_kind::BLACK_LIST as KIND_BLACK_LIST, insert},
     markers::{ScopeMarkers, VisitArg, VisitMarkers},
     output,
     schema::{EnumDef, GetIdent, StructDef, ToType, TypeDef},
     util::{StrExt, ToIdent, TokenStreamExt, TypeWrapper},
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -26,10 +27,6 @@ define_generator! {
 }
 
 impl Generator for VisitGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(VisitGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         GeneratorOutput::Stream((
             output(crate::AST_CRATE, "visit.rs"),
@@ -39,10 +36,6 @@ impl Generator for VisitGenerator {
 }
 
 impl Generator for VisitMutGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(VisitMutGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         GeneratorOutput::Stream((
             output(crate::AST_CRATE, "visit_mut.rs"),
@@ -93,31 +86,28 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
                     std::mem::transmute(t)
                 }
             }
+            endl!();
         }
     };
 
     quote! {
         #header
+
         #file_docs
         #clippy_attr
-
         endl!();
 
         use std::cell::Cell;
-
         endl!();
 
         use oxc_allocator::Vec;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
-
         endl!();
 
         use crate::{ast::*, ast_kind::#ast_kind_type};
-
         endl!();
 
         use #walk_mod::*;
-
         endl!();
 
         /// Syntax tree traversal
@@ -126,28 +116,25 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
             fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
             #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
-
             endl!();
 
             #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
             #[inline]
             fn leave_scope(&mut self) {}
-
             endl!();
 
             #may_alloc
 
             #(#visits)*
         }
-
         endl!();
 
         pub mod #walk_mod {
             use super::*;
+            endl!();
 
             #(#walks)*
-
         }
     }
 }
@@ -170,9 +157,8 @@ impl<'a> VisitBuilder<'a> {
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {
         let program = self
             .ctx
-            .schema
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|it| it.visitable())
             .find(|it| it.name() == "Program")
             .expect("Couldn't find the `Program` type!");
@@ -273,11 +259,11 @@ impl<'a> VisitBuilder<'a> {
         let walk_name = format_ident!("walk_{}", ident_snake);
 
         self.visits.push(quote! {
-            endl!();
             #[inline]
             fn #visit_name (&mut self, it: #as_param_type #extra_params) {
                 #walk_name(self, it #extra_args);
             }
+            endl!();
         });
 
         // We push an empty walk first, because we evaluate - and generate - each walk as we go,
@@ -328,11 +314,11 @@ impl<'a> VisitBuilder<'a> {
 
         // replace the placeholder walker with the actual one!
         self.walks[this_walker] = quote! {
-            endl!();
             #may_inline
             pub fn #walk_name <'a, V: #visit_trait<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
                 #walk_body
             }
+            endl!();
         };
 
         visit_name

@@ -4,9 +4,10 @@ use quote::{format_ident, quote};
 use syn::Ident;
 
 use crate::{
+    codegen::LateCtx,
     output,
     schema::{EnumDef, GetIdent, StructDef, TypeDef},
-    GeneratorOutput, LateCtx,
+    GeneratorOutput,
 };
 
 use super::{define_generator, generated_header, Generator};
@@ -16,15 +17,10 @@ define_generator! {
 }
 
 impl Generator for DeriveCloneIn {
-    fn name(&self) -> &'static str {
-        stringify!(DeriveCloneIn)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let impls: Vec<TokenStream> = ctx
-            .schema
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|def| def.generates_derive("CloneIn"))
             .map(|def| match &def {
                 TypeDef::Enum(it) => derive_enum(it),
@@ -41,6 +37,7 @@ impl Generator for DeriveCloneIn {
 
                 use oxc_allocator::{Allocator, CloneIn};
                 endl!();
+
                 use crate::ast::*;
                 endl!();
 
@@ -101,23 +98,23 @@ fn impl_clone_in(
 ) -> TokenStream {
     if has_lifetime {
         quote! {
-            endl!();
             impl <'old_alloc, 'new_alloc> CloneIn<'new_alloc> for #ty_ident<'old_alloc> {
                 type Cloned = #ty_ident<'new_alloc>;
                 fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
                     #body
                 }
             }
+            endl!();
         }
     } else {
         quote! {
-            endl!();
             impl <'alloc> CloneIn<'alloc> for #ty_ident {
                 type Cloned = #ty_ident;
                 fn clone_in(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {
                     #body
                 }
             }
+            endl!();
         }
     }
 }

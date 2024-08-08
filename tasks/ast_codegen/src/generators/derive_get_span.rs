@@ -1,12 +1,13 @@
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::Ident;
 
 use crate::{
+    codegen::LateCtx,
     output,
     schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
     util::ToIdent,
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -16,17 +17,11 @@ define_generator! {
 }
 
 impl Generator for DeriveGetSpan {
-    fn name(&self) -> &'static str {
-        stringify!(DeriveGetSpan)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let trait_name = format_ident!("GetSpan");
-        let method_name = format_ident!("span");
         let self_type = quote!(&self);
         let result_type = quote!(Span);
         let result_expr = quote!(self.span);
-        let out = derive(&trait_name, &method_name, &self_type, &result_type, &result_expr, ctx);
+        let out = derive("GetSpan", "span", &self_type, &result_type, &result_expr, ctx);
 
         GeneratorOutput::Stream((output(crate::AST_CRATE, "derive_get_span.rs"), out))
     }
@@ -37,39 +32,36 @@ define_generator! {
 }
 
 impl Generator for DeriveGetSpanMut {
-    fn name(&self) -> &'static str {
-        stringify!(DeriveGetSpanMut)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let trait_name = format_ident!("GetSpanMut");
-        let method_name = format_ident!("span_mut");
         let self_type = quote!(&mut self);
         let result_type = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);
-        let out = derive(&trait_name, &method_name, &self_type, &result_type, &result_expr, ctx);
+        let out = derive("GetSpanMut", "span_mut", &self_type, &result_type, &result_expr, ctx);
 
         GeneratorOutput::Stream((output(crate::AST_CRATE, "derive_get_span_mut.rs"), out))
     }
 }
 
 fn derive(
-    trait_name: &Ident,
-    method_name: &Ident,
+    trait_name: &str,
+    method_name: &str,
     self_type: &TokenStream,
     result_type: &TokenStream,
     result_expr: &TokenStream,
     ctx: &LateCtx,
 ) -> TokenStream {
+    let trait_ident = trait_name.to_ident();
+    let method_ident = method_name.to_ident();
     let impls: Vec<TokenStream> = ctx
-        .schema
-        .definitions
-        .iter()
-        .filter(|def| def.visitable())
+        .schema()
+        .into_iter()
+        .filter(|def| def.generates_derive(trait_name))
         .map(|def| match &def {
-            TypeDef::Enum(def) => derive_enum(def, trait_name, method_name, self_type, result_type),
+            TypeDef::Enum(def) => {
+                derive_enum(def, &trait_ident, &method_ident, self_type, result_type)
+            }
             TypeDef::Struct(def) => {
-                derive_struct(def, trait_name, method_name, self_type, result_type, result_expr)
+                derive_struct(def, &trait_ident, &method_ident, self_type, result_type, result_expr)
             }
         })
         .collect();
@@ -78,11 +70,13 @@ fn derive(
 
     quote! {
         #header
+
         insert!("#![allow(clippy::match_same_arms)]");
         endl!();
 
-        use oxc_span::{#trait_name, Span};
+        use oxc_span::{#trait_ident, Span};
         endl!();
+
         use crate::ast::*;
         endl!();
 

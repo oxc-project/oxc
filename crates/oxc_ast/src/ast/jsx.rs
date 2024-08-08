@@ -7,9 +7,9 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, GetSpanMut, Span};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]

@@ -2,11 +2,12 @@ use quote::ToTokens;
 use serde::Serialize;
 
 use crate::{
+    codegen,
     layout::KnownLayout,
     markers::{get_scope_attr, get_scope_markers, get_visit_markers},
     rust_ast as rust,
     util::{unexpanded_macro_err, TypeExt},
-    DefTable, Result,
+    Result, TypeId,
 };
 
 mod defs;
@@ -83,7 +84,22 @@ impl<'a> From<crate::util::TypeIdentResult<'a>> for TypeName {
 
 #[derive(Debug, Default, serde::Serialize)]
 pub struct Schema {
-    pub definitions: DefTable,
+    defs: Vec<TypeDef>,
+}
+
+impl Schema {
+    pub fn get(&self, id: TypeId) -> Option<&TypeDef> {
+        self.defs.get(id)
+    }
+}
+
+impl<'a> IntoIterator for &'a Schema {
+    type Item = &'a TypeDef;
+    type IntoIter = std::slice::Iter<'a, TypeDef>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.defs.iter()
+    }
 }
 
 fn parse_outer_markers(attrs: &Vec<syn::Attribute>) -> Result<OuterMarkers> {
@@ -99,18 +115,18 @@ fn parse_inner_markers(attrs: &Vec<syn::Attribute>) -> Result<InnerMarkers> {
 }
 
 // lower `AstType` to `TypeDef`.
-pub fn lower_ast_types(ctx: &crate::EarlyCtx) -> Schema {
-    let definitions = ctx
-        .mods
+pub fn lower_ast_types(ctx: &codegen::EarlyCtx) -> Schema {
+    let defs = ctx
+        .mods()
         .borrow()
         .iter()
         .flat_map(|it| &it.items)
         .map(|it| lower_ast_type(&it.borrow(), ctx))
         .collect();
-    Schema { definitions }
+    Schema { defs }
 }
 
-fn lower_ast_type(ty: &rust::AstType, ctx: &crate::EarlyCtx) -> TypeDef {
+fn lower_ast_type(ty: &rust::AstType, ctx: &codegen::EarlyCtx) -> TypeDef {
     match ty {
         rust::AstType::Enum(it) => TypeDef::Enum(lower_ast_enum(it, ctx)),
         rust::AstType::Struct(it) => TypeDef::Struct(lower_ast_struct(it, ctx)),
@@ -118,7 +134,7 @@ fn lower_ast_type(ty: &rust::AstType, ctx: &crate::EarlyCtx) -> TypeDef {
     }
 }
 
-fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &crate::EarlyCtx) -> EnumDef {
+fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &codegen::EarlyCtx) -> EnumDef {
     let (size_64, align_64, offsets_64) = meta
         .layout_64
         .clone()
@@ -155,7 +171,7 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &crate::Earl
 
 fn lower_ast_struct(
     it @ rust::Struct { item, meta }: &rust::Struct,
-    ctx: &crate::EarlyCtx,
+    ctx: &codegen::EarlyCtx,
 ) -> StructDef {
     let (size_64, align_64, offsets_64) = meta
         .layout_64
@@ -185,7 +201,7 @@ fn lower_ast_struct(
     }
 }
 
-fn lower_variant<F>(variant: &syn::Variant, enum_dbg_name: F, ctx: &crate::EarlyCtx) -> VariantDef
+fn lower_variant<F>(variant: &syn::Variant, enum_dbg_name: F, ctx: &codegen::EarlyCtx) -> VariantDef
 where
     F: Fn() -> String,
 {
@@ -205,7 +221,7 @@ where
     }
 }
 
-fn lower_inherit(inherit: &rust::Inherit, ctx: &crate::EarlyCtx) -> InheritDef {
+fn lower_inherit(inherit: &rust::Inherit, ctx: &codegen::EarlyCtx) -> InheritDef {
     match inherit {
         rust::Inherit::Linked { super_, variants } => InheritDef {
             super_: create_type_ref(super_, ctx),
@@ -220,7 +236,7 @@ fn lower_inherit(inherit: &rust::Inherit, ctx: &crate::EarlyCtx) -> InheritDef {
     }
 }
 
-fn lower_field(field: &syn::Field, ctx: &crate::EarlyCtx) -> FieldDef {
+fn lower_field(field: &syn::Field, ctx: &codegen::EarlyCtx) -> FieldDef {
     FieldDef {
         name: field.ident.as_ref().map(ToString::to_string),
         vis: Visibility::from(&field.vis),
@@ -230,7 +246,7 @@ fn lower_field(field: &syn::Field, ctx: &crate::EarlyCtx) -> FieldDef {
     }
 }
 
-fn create_type_ref(ty: &syn::Type, ctx: &crate::EarlyCtx) -> TypeRef {
+fn create_type_ref(ty: &syn::Type, ctx: &codegen::EarlyCtx) -> TypeRef {
     let ident = ty.get_ident();
     let id = ident.as_ident().and_then(|id| ctx.type_id(&id.to_string()));
     let transparent_id = ctx.type_id(&ident.inner_ident().to_string());

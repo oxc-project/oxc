@@ -3,10 +3,11 @@ use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
 use crate::{
+    codegen::LateCtx,
     output,
     schema::{GetIdent, ToType, TypeDef},
     util::ToIdent,
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -135,14 +136,10 @@ pub fn process_types(def: &TypeDef, _: &LateCtx) -> Vec<(Ident, Type)> {
 }
 
 impl Generator for AstKindGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(AstKindGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let have_kinds: Vec<(Ident, Type)> = ctx
-            .schema.definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|it| it.visitable())
             .filter(
                 |maybe_kind| matches!(maybe_kind, kind @ (TypeDef::Enum(_) | TypeDef::Struct(_)) if kind.visitable())
@@ -170,16 +167,16 @@ impl Generator for AstKindGenerator {
             quote! {
                 #header
 
-                use crate::ast::*;
                 use oxc_span::{GetSpan, Span};
+                endl!();
 
+                use crate::ast::*;
                 endl!();
 
                 #[derive(Debug, Clone, Copy)]
                 pub enum AstType {
                     #(#types),*,
                 }
-
                 endl!();
 
                 /// Untyped AST Node Kind
@@ -187,7 +184,6 @@ impl Generator for AstKindGenerator {
                 pub enum AstKind<'a> {
                     #(#kinds),*,
                 }
-
                 endl!();
 
                 impl<'a> GetSpan for AstKind<'a> {
