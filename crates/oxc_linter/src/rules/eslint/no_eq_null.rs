@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -31,7 +31,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEqNull,
-    restriction
+    restriction,
+    fix
 );
 
 impl Rule for NoEqNull {
@@ -49,10 +50,24 @@ impl Rule for NoEqNull {
                     & binary_expression.left.is_null()
                     & bad_operator
             {
-                ctx.diagnostic(no_eq_null_diagnostic(Span::new(
-                    binary_expression.span.start,
-                    binary_expression.span.end,
-                )));
+                ctx.diagnostic_with_fix(
+                    no_eq_null_diagnostic(Span::new(
+                        binary_expression.span.start,
+                        binary_expression.span.end,
+                    )),
+                    |fixer| {
+                        let start = binary_expression.left.span().end;
+                        let end = binary_expression.right.span().start;
+                        let span = Span::new(start, end);
+                        let new_operator_str =
+                            if binary_expression.operator == BinaryOperator::Equality {
+                                " === "
+                            } else {
+                                " !== "
+                            };
+                        fixer.replace(span, new_operator_str)
+                    },
+                );
             }
         }
     }
@@ -66,5 +81,11 @@ fn test() {
 
     let fail = vec!["if (x == null) { }", "if (x != null) { }", "do {} while (null == x)"];
 
-    Tester::new(NoEqNull::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("if (x == null) { }", "if (x === null) { }"),
+        ("if (x != null) { }", "if (x !== null) { }"),
+        ("do {} while (null == x)", "do {} while (null === x)"),
+    ];
+
+    Tester::new(NoEqNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
