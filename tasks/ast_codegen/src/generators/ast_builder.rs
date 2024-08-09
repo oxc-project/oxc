@@ -41,7 +41,11 @@ impl Generator for AstBuilderGenerator {
             quote! {
                 #header
 
-                insert!("#![allow(clippy::default_trait_access, clippy::too_many_arguments, clippy::fn_params_excessive_bools)]");
+                #![allow(
+                    clippy::default_trait_access,
+                    clippy::too_many_arguments,
+                    clippy::fn_params_excessive_bools,
+                )]
                 endl!();
 
                 use oxc_allocator::{Allocator, Box, IntoIn, Vec};

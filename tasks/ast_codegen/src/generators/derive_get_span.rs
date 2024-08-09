@@ -71,7 +71,7 @@ fn derive(
     quote! {
         #header
 
-        insert!("#![allow(clippy::match_same_arms)]");
+        #![allow(clippy::match_same_arms)]
         endl!();
 
         use oxc_span::#trait_ident;
