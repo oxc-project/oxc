@@ -445,10 +445,12 @@ mod promise {
     pub mod avoid_new;
     pub mod no_new_statics;
     pub mod param_names;
+    pub mod valid_params;
 }
 
 mod vitest {
     pub mod no_import_node_test;
+    pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_truthy;
 }
 
@@ -854,6 +856,8 @@ oxc_macros::declare_all_lint_rules! {
     promise::avoid_new,
     promise::no_new_statics,
     promise::param_names,
+    promise::valid_params,
     vitest::no_import_node_test,
+    vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_truthy,
 }

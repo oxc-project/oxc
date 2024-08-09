@@ -3,8 +3,9 @@
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::{GetSpanMut, Span};
+use oxc_span::GetSpanMut;
 
+#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl GetSpanMut for BooleanLiteral {

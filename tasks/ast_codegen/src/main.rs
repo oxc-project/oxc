@@ -15,7 +15,7 @@ mod rust_ast;
 mod schema;
 mod util;
 
-use fmt::{cargo_fmt, pprint};
+use fmt::{cargo_fmt, pretty_print};
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, DeriveCloneIn, DeriveGetSpan,
     DeriveGetSpanMut, GeneratedDataStream, GeneratedTokenStream, Generator, GeneratorOutput,
@@ -91,7 +91,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
         let path = schema_path.to_str().expect("invalid path for schema output.");
-        let schema = serde_json::to_string_pretty(&schema).normalize()?;
+        let schema = serde_json::to_string_pretty(&schema.defs).normalize()?;
         write_all_to(schema.as_bytes(), path)?;
     }
 
@@ -111,7 +111,7 @@ fn write_generated_streams(
         .map(|(path, stream)| {
             let path = path.into_os_string();
             let path = path.to_str().unwrap();
-            let content = pprint(&stream);
+            let content = pretty_print(&stream);
             write_all_to(content.as_bytes(), path)?;
             Ok(path.to_string().replace('\\', "/"))
         })

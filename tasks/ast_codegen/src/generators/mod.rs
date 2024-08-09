@@ -125,25 +125,26 @@ pub(crate) use define_generator;
 /// Similar to how `insert` macro works in the context of `quote` macro family, But this one can be
 /// used outside and accepts expressions.
 /// Wraps the result of the given expression in `insert!({value here});` and outputs it as `TokenStream`.
+#[allow(unused)]
 macro_rules! insert {
     ($fmt:literal $(, $args:expr)*) => {{
         let txt = format!($fmt, $($args)*);
         format!(r#"insert!("{}");"#, txt).parse::<proc_macro2::TokenStream>().unwrap()
     }};
 }
+#[allow(unused_imports)]
 pub(crate) use insert;
 
 /// Creates a generated file warning + required information for a generated file.
 macro_rules! generated_header {
     () => {{
         let file = file!().replace("\\", "/");
-        let edit_comment =
-            $crate::generators::insert!("// To edit this generated file you have to edit `{file}`");
         // TODO add generation date, AST source hash, etc here.
+        let edit_comment = format!("@ To edit this generated file you have to edit `{file}`");
         quote::quote! {
-            insert!("// Auto-generated code, DO NOT EDIT DIRECTLY!");
-            #edit_comment
-            endl!();
+            //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
+            #![doc = #edit_comment]
+            //!@@line_break
         }
     }};
 }

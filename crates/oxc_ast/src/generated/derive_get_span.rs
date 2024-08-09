@@ -3,8 +3,9 @@
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
+#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl GetSpan for BooleanLiteral {
