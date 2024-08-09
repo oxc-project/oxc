@@ -1,7 +1,7 @@
 //! Test cases created by oxc maintainers
 
 use super::NoUnusedVars;
-use crate::{tester::Tester, RuleMeta as _};
+use crate::{tester::Tester, FixKind, RuleMeta as _};
 use serde_json::json;
 
 #[test]
@@ -23,7 +23,56 @@ fn test_vars_simple() {
         ("let _a = 1", Some(json!([{ "argsIgnorePattern": "^_" }]))),
     ];
 
+    let fix = vec![
+        ("let a = 1;", "", None, FixKind::DangerousSuggestion),
+        // FIXME: b should be deleted as well.
+        ("let a = 1, b = 2;", "let b = 2", None, FixKind::DangerousSuggestion),
+        (
+            "let a = 1; let b: typeof a = 2; console.log(b)",
+            "let a = 1; let b: typeof a = 2; console.log(b)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1; let b = 2; console.log(a);",
+            "let a = 1;  console.log(a);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1; let b = 2; console.log(b);",
+            " let b = 2; console.log(b);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2; console.log(b);",
+            "let b = 2; console.log(b);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2; console.log(a);",
+            "let a = 1; console.log(a);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2, c = 3; console.log(a + c);",
+            "let a = 1, c = 3; console.log(a + c);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2, c = 3; console.log(b + c);",
+            "let b = 2, c = 3; console.log(b + c);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .expect_fix(fix)
         .with_snapshot_suffix("oxc-vars-simple")
         .test_and_snapshot();
 }
@@ -440,6 +489,7 @@ fn test_arguments() {
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
+        ("function foo(a: number) {} foo()", None),
         ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
     ];
 
