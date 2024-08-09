@@ -250,7 +250,7 @@ fn test() {
         "#,
         "
             import { test } from './test-utils';
-	    test('something');
+	        test('something');
         ",
     ];
 
@@ -262,10 +262,16 @@ fn test() {
         r#"xit.each([])("foo", function () {})"#,
         r#"it("has title but no callback")"#,
         r#"test("has title but no callback")"#,
-        r#"it("contains a call to pending", function () { pending() })"#,
-        "pending();",
         r#"
-            import { describe } from 'vitest'; 
+            import { it } from 'vitest';
+            it("contains a call to pending", function () { pending() })
+        "#,
+        "
+            import { it } from 'vitest';
+            pending();
+        ",
+        r#"
+            import { describe } from 'vitest';
             describe.skip("foo", function () {})
         "#,
     ];

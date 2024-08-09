@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 234
 ---
   ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
@@ -233,22 +234,26 @@ source: crates/oxc_linter/src/tester.rs
   help: Add function argument
 
   ⚠ eslint-plugin-vitest(no-disabled-tests): Call to pending()
-   ╭─[no_disabled_tests.tsx:1:48]
- 1 │ it("contains a call to pending", function () { pending() })
-   ·                                                ─────────
+   ╭─[no_disabled_tests.tsx:3:60]
+ 2 │             import { it } from 'vitest';
+ 3 │             it("contains a call to pending", function () { pending() })
+   ·                                                            ─────────
+ 4 │         
    ╰────
   help: Remove pending() call
 
   ⚠ eslint-plugin-vitest(no-disabled-tests): Call to pending()
-   ╭─[no_disabled_tests.tsx:1:1]
- 1 │ pending();
-   · ─────────
+   ╭─[no_disabled_tests.tsx:3:13]
+ 2 │             import { it } from 'vitest';
+ 3 │             pending();
+   ·             ─────────
+ 4 │         
    ╰────
   help: Remove pending() call
 
   ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:3:13]
- 2 │             import { describe } from 'vitest'; 
+ 2 │             import { describe } from 'vitest';
  3 │             describe.skip("foo", function () {})
    ·             ─────────────
  4 │         
