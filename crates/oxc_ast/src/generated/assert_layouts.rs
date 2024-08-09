@@ -3,9 +3,8 @@
 
 use std::mem::{align_of, offset_of, size_of};
 
+#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
-use oxc_span::*;
-use oxc_syntax::{number::*, operator::*};
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {

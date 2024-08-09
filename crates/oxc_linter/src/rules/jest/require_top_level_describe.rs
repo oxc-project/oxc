@@ -144,7 +144,7 @@ impl RequireTopLevelDescribe {
             return;
         };
 
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(ParsedGeneralJestFnCall { kind, .. })) =
+        let Some(ParsedJestFnCallNew::GeneralJest(ParsedGeneralJestFnCall { kind, .. })) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;

@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 82e2f6b ast_codegen: Process AST-related `syntax` types. (#4694) (rzvxa)
+- 6a36616 syntax: Derive `CloneIn` for the AST-related items. (#4730) (rzvxa)
+
+### Bug Fixes
+
+- 9f8f299 syntax: Prevent creating invalid u32 IDs (#4675) (overlookmotel)
+
+### Refactor
+
+- e24fb5b syntax: Add explicit enum discriminants to AST related types. (#4691) (rzvxa)
+- 3f3cb62 syntax, span: Reduce #[cfg_attr] boilerplate in type defs (#4698) (overlookmotel)
+
 ## [0.23.1] - 2024-08-06
 
 ### Bug Fixes

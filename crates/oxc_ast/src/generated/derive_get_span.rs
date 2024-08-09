@@ -3,8 +3,9 @@
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::{GetSpan, Span};
+use oxc_span::GetSpan;
 
+#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl GetSpan for BooleanLiteral {
@@ -2016,6 +2017,20 @@ impl<'a> GetSpan for JSXClosingElement<'a> {
 }
 
 impl<'a> GetSpan for JSXFragment<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXOpeningFragment {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl GetSpan for JSXClosingFragment {
     #[inline]
     fn span(&self) -> Span {
         self.span

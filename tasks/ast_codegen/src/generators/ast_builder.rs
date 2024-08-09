@@ -9,13 +9,14 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
 use crate::{
+    codegen::LateCtx,
     generators::generated_header,
     output,
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
     },
     util::{TypeAnalysis, TypeWrapper},
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::define_generator;
@@ -25,15 +26,10 @@ define_generator! {
 }
 
 impl Generator for AstBuilderGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(AstBuilderGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let fns = ctx
-            .schema
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|it| it.visitable())
             .map(|it| generate_builder_fn(it, ctx))
             .collect_vec();
@@ -44,23 +40,15 @@ impl Generator for AstBuilderGenerator {
             output(crate::AST_CRATE, "ast_builder.rs"),
             quote! {
                 #header
+
                 insert!("#![allow(clippy::default_trait_access, clippy::too_many_arguments, clippy::fn_params_excessive_bools)]");
                 endl!();
 
                 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-                use oxc_span::{Atom, SourceType, Span};
-                use oxc_syntax::{
-                    number::{BigintBase, NumberBase},
-                    operator::{
-                        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-                    },
-                };
-
                 endl!();
 
                 #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
-
                 endl!();
 
                 /// AST builder for creating AST nodes
@@ -68,7 +56,6 @@ impl Generator for AstBuilderGenerator {
                 pub struct AstBuilder<'a> {
                     pub allocator: &'a Allocator,
                 }
-
                 endl!();
 
                 impl<'a> AstBuilder<'a> {
@@ -133,11 +120,11 @@ fn generate_enum_inherit_builder_fn(
         enum_builder_name(enum_ident.to_string(), inherit.super_.name().inner_name().to_string());
 
     quote! {
-        endl!();
         #[inline]
         pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
             #enum_ident::from(inner)
         }
+        endl!();
     }
 }
 
@@ -189,12 +176,12 @@ fn generate_enum_variant_builder_fn(
     }
 
     quote! {
-        endl!();
         #docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
             #enum_ident::#var_ident(#inner)
         }
+        endl!();
 
         #from_variant_builder
     }
@@ -223,12 +210,12 @@ fn generate_enum_from_variant_builder_fn(
         " Convert {from_article} [`{var_type_name}`] into {to_article} [`{enum_ident}::{var_ident}`]",
     ));
     quote! {
-        endl!();
         #docs
         #[inline]
         pub fn #fn_name<T>(self, inner: T) -> #enum_type where T: IntoIn<'a, #var_type> {
             #enum_ident::#var_ident(inner.into_in(self.allocator))
         }
+        endl!();
     }
 }
 
@@ -298,13 +285,11 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
             .with_params(&params);
 
     quote! {
-        endl!();
         #fn_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type  #where_clause {
             #ident { #(#fields),* }
         }
-
         endl!();
 
         #alloc_docs
@@ -312,6 +297,7 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
         pub fn #alloc_fn_name #generic_params (self, #(#params),*) -> Box<'a, #as_type> #where_clause {
             Box::new_in(self.#fn_name(#(#args),*), self.allocator)
         }
+        endl!();
     }
 }
 
