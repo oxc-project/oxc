@@ -128,10 +128,6 @@ impl<'a> React<'a> {
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if self.refresh_plugin {
-            // self.refresh.transform_call_expression(call_expr, ctx);
-        }
-
         if self.display_name_plugin {
             self.display_name.transform_call_expression(call_expr, ctx);
         }
