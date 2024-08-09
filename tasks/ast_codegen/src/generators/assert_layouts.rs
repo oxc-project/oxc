@@ -1,11 +1,12 @@
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::Type;
 
 use crate::{
     codegen::LateCtx,
     output,
     schema::{FieldDef, ToType, TypeDef},
+    util::ToIdent,
     Generator, GeneratorOutput,
 };
 
@@ -96,7 +97,7 @@ fn with_offsets_assertion(
 
     let assertions = fields.iter().zip(offsets).filter(|(field, _)| field.vis.is_pub()).map(
         |(field, offset)| {
-            let field = field.name.as_ref().map(|it| format_ident!("{it}"));
+            let field = field.name.as_ref().map(ToIdent::to_ident);
             quote! {
                 assert!(offset_of!(#ty, #field) == #offset);
             }
