@@ -33,7 +33,7 @@ pub fn parse_jest_fn_call<'a>(
         parent_kind: Some(KnownMemberExpressionParentKind::Call),
         grandparent_kind: None,
     };
-    let chain = get_node_chain(&params);
+    let mut chain = get_node_chain(&params);
     let all_member_expr_except_last =
         chain.iter().rev().skip(1).all(|member| {
             matches!(member.parent_kind, Some(KnownMemberExpressionParentKind::Member))
@@ -57,16 +57,14 @@ pub fn parse_jest_fn_call<'a>(
 
         let name = resolved.original.unwrap_or(resolved.local);
         let kind = JestFnKind::from(name);
-        let mut members = Vec::new();
-        let mut iter = chain.into_iter();
-        let head = iter.next()?;
-        let rest = iter;
 
         // every member node must have a member expression as their parent
         // in order to be part of the call chain we're parsing
-        for member in rest {
-            members.push(member);
-        }
+        let (head, members) = {
+            let rest = chain.split_off(1);
+            let head = chain.into_iter().next().unwrap();
+            (head, rest)
+        };
 
         if matches!(kind, JestFnKind::Expect | JestFnKind::ExpectTypeOf) {
             let options = ExpectFnCallOptions {
@@ -465,6 +463,14 @@ struct NodeChainParams<'a> {
 /// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
 fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpressionProperty<'a>> {
     let mut chain = Vec::new();
+    recurse_extend_node_chain(params, &mut chain);
+    chain
+}
+
+fn recurse_extend_node_chain<'a>(
+    params: &NodeChainParams<'a>,
+    chain: &mut Vec<KnownMemberExpressionProperty<'a>>,
+) {
     let NodeChainParams { expr, parent, parent_kind, grandparent_kind } = params;
 
     match expr {
@@ -477,7 +483,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
                 grandparent_kind: *parent_kind,
             };
 
-            chain.extend(get_node_chain(&params));
+            recurse_extend_node_chain(&params, chain);
             if let Some((span, element)) = MemberExpressionElement::from_member_expr(member_expr) {
                 chain.push(KnownMemberExpressionProperty {
                     element,
@@ -504,8 +510,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
                 parent_kind: Some(KnownMemberExpressionParentKind::Call),
                 grandparent_kind: *parent_kind,
             };
-            let sub_chain = get_node_chain(&params);
-            chain.extend(sub_chain);
+            recurse_extend_node_chain(&params, chain);
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
             let params = NodeChainParams {
@@ -514,9 +519,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
                 parent_kind: Some(KnownMemberExpressionParentKind::TaggedTemplate),
                 grandparent_kind: *parent_kind,
             };
-
-            let sub_chain = get_node_chain(&params);
-            chain.extend(sub_chain);
+            recurse_extend_node_chain(&params, chain);
         }
         Expression::StringLiteral(string_literal) => {
             chain.push(KnownMemberExpressionProperty {
@@ -538,8 +541,6 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
         }
         _ => {}
     };
-
-    chain
 }
 
 // sorted list for binary search.
