@@ -274,7 +274,7 @@ fn get_docs(attrs: &[syn::Attribute]) -> Vec<String> {
                     return None;
                 }
                 match &lit.lit {
-                    syn::Lit::Str(lit) => Some(lit.value()),
+                    syn::Lit::Str(lit) => Some(lit.value().trim().to_string()),
                     _ => None,
                 }
             } else {
