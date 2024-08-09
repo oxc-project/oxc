@@ -15,7 +15,7 @@ use crate::context::Ctx;
 
 /// React Fast Refresh
 ///
-/// Transform React components to integrate Fast Refresh.
+/// Transform React functional components to integrate Fast Refresh.
 ///
 /// References:
 ///
