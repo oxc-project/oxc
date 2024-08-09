@@ -1,6 +1,7 @@
 mod jest;
 mod jsdoc;
 mod nextjs;
+mod promise;
 mod react;
 mod react_perf;
 mod tree_shaking;
@@ -8,7 +9,8 @@ mod unicorn;
 mod vitest;
 
 pub use self::{
-    jest::*, jsdoc::*, nextjs::*, react::*, react_perf::*, tree_shaking::*, unicorn::*, vitest::*,
+    jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*, tree_shaking::*, unicorn::*,
+    vitest::*,
 };
 
 /// Check if the Jest rule is adapted to Vitest.

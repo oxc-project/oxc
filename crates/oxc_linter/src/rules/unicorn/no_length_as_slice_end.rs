@@ -1,7 +1,7 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// foo.slice(1)
     /// ```
     NoLengthAsSliceEnd,
-    restriction
+    restriction,
+    fix
 );
 
 impl Rule for NoLengthAsSliceEnd {
@@ -76,10 +77,18 @@ impl Rule for NoLengthAsSliceEnd {
             return;
         }
 
-        ctx.diagnostic(no_length_as_slice_end_diagnostic(
-            call_expr.callee.get_member_expr().unwrap().static_property_info().unwrap().0,
-            second_argument.span,
-        ));
+        ctx.diagnostic_with_fix(
+            no_length_as_slice_end_diagnostic(
+                call_expr.callee.get_member_expr().unwrap().static_property_info().unwrap().0,
+                second_argument.span,
+            ),
+            |fixer| {
+                let start = call_expr.arguments[0].span().end;
+                let end = call_expr.arguments[1].span().end;
+                let span = Span::new(start, end);
+                fixer.delete(&span)
+            },
+        );
     }
 }
 
@@ -115,5 +124,14 @@ fn test() {
         "foo?.slice(1, foo?.length)",
     ];
 
-    Tester::new(NoLengthAsSliceEnd::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("foo.slice(1, foo.length)", "foo.slice(1)"),
+        ("foo?.slice(1, foo.length)", "foo?.slice(1)"),
+        ("foo.slice(1, foo.length,)", "foo.slice(1,)"),
+        ("foo.slice(1, (( foo.length )))", "foo.slice(1)"),
+        ("foo.slice(1, foo?.length)", "foo.slice(1)"),
+        ("foo?.slice(1, foo?.length)", "foo?.slice(1)"),
+    ];
+
+    Tester::new(NoLengthAsSliceEnd::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

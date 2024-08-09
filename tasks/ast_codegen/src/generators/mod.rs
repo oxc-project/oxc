@@ -144,7 +144,7 @@ macro_rules! generated_header {
         quote::quote! {
             //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
             #![doc = #edit_comment]
-            //!@@
+            //!@@line_break
         }
     }};
 }
