@@ -32,8 +32,15 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn report_property_key(&self, key: &PropertyKey<'a>, computed: bool) -> bool {
         if computed && !self.is_literal_key(key) {
-            self.error(computed_property_name(key.span()));
-            true
+            if self
+                .global_symbol_binding_tracker
+                .does_computed_property_reference_well_known_symbol(key)
+            {
+                false
+            } else {
+                self.error(computed_property_name(key.span()));
+                true
+            }
         } else {
             false
         }
