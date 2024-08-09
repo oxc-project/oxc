@@ -75,5 +75,6 @@ Available positional items:
 
 Available options:
         --rules               list all the rules that are currently registered
+        --print-config        print a generated configuration file
     -h, --help                Prints help information
     -V, --version             Prints version information
