@@ -38,6 +38,7 @@ impl Generator for DeriveCloneIn {
                 use oxc_allocator::{Allocator, CloneIn};
                 endl!();
 
+                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
                 endl!();
 

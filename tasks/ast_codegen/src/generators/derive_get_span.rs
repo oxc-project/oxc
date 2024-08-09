@@ -74,9 +74,10 @@ fn derive(
         insert!("#![allow(clippy::match_same_arms)]");
         endl!();
 
-        use oxc_span::{#trait_ident, Span};
+        use oxc_span::#trait_ident;
         endl!();
 
+        #[allow(clippy::wildcard_imports)]
         use crate::ast::*;
         endl!();
 

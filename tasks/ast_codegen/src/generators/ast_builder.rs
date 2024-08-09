@@ -45,13 +45,6 @@ impl Generator for AstBuilderGenerator {
                 endl!();
 
                 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-                use oxc_span::{Atom, SourceType, Span};
-                use oxc_syntax::{
-                    number::{BigintBase, NumberBase},
-                    operator::{
-                        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-                    },
-                };
                 endl!();
 
                 #[allow(clippy::wildcard_imports)]

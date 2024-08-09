@@ -3,6 +3,7 @@
 
 use oxc_allocator::{Allocator, CloneIn};
 
+#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl<'alloc> CloneIn<'alloc> for BooleanLiteral {

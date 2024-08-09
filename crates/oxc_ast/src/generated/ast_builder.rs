@@ -8,13 +8,6 @@
 )]
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{
-    number::{BigintBase, NumberBase},
-    operator::{
-        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-    },
-};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;

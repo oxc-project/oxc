@@ -36,10 +36,7 @@ impl Generator for AssertLayouts {
                 use std::mem::{align_of, offset_of, size_of};
                 endl!();
 
-                use oxc_span::*;
-                use oxc_syntax::{number::*, operator::*};
-                endl!();
-
+                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
                 endl!();
 
