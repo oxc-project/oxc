@@ -28,6 +28,8 @@ pub struct ReactRefresh<'a> {
     registrations: Vec<(SymbolId, Atom<'a>)>,
     ctx: Ctx<'a>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
+    /// Used to wrap call expression with signature.
+    /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
     last_signature: Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)>,
 }
 
@@ -66,18 +68,15 @@ impl<'a> ReactRefresh<'a> {
     ) -> bool {
         match expr {
             Expression::Identifier(ref ident) => {
-                if !is_componentish_name(&ident.name) {
-                    return false;
-                }
                 // For case like:
                 // export const Something = hoc(Foo)
                 // we don't want to wrap Foo inside the call.
                 // Instead we assume it's registered at definition.
-                return true;
+                return is_componentish_name(&ident.name);
             }
             Expression::FunctionExpression(_) => {}
             Expression::ArrowFunctionExpression(arrow) => {
-                // () => () => {}
+                // Don't transform `() => () => {}`
                 if arrow
                     .get_expression()
                     .is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_)))
@@ -86,9 +85,6 @@ impl<'a> ReactRefresh<'a> {
                 }
             }
             Expression::CallExpression(ref mut call_expr) => {
-                if call_expr.arguments.len() == 0 {
-                    return false;
-                }
                 let allowed_callee = matches!(
                     call_expr.callee,
                     Expression::Identifier(_)
@@ -98,6 +94,7 @@ impl<'a> ReactRefresh<'a> {
 
                 if allowed_callee {
                     let callee_span = call_expr.callee.span();
+
                     let Some(argument_expr) =
                         call_expr.arguments.first_mut().and_then(|e| e.as_expression_mut())
                     else {
@@ -240,7 +237,7 @@ impl<'a> ReactRefresh<'a> {
             false,
         ));
 
-        // Following is the signature call expression: will be generated in call site.
+        // Following is the signature call expression, will be generated in call site.
         // _s(App, signature_key, false, function() { return [] });
         //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
         Some((binding_identifier, arguments))
@@ -373,7 +370,12 @@ impl<'a> ReactRefresh<'a> {
                         // so they're worth handling despite possible false positives.
                         // More importantly, it handles the named case:
                         // export default memo(function Named() {})
-                        self.replace_inner_components("%default%", expression, false, ctx);
+                        self.replace_inner_components(
+                            "%default%",
+                            expression,
+                            /* is_variable_declarator */ false,
+                            ctx,
+                        );
 
                         None
                     }
@@ -417,12 +419,14 @@ impl<'a> ReactRefresh<'a> {
                     let bind_sig_statements = self.transform_function_on_exit(func, ctx);
                     new_stmts.push(stmt);
                     new_stmts.extend(bind_sig_statements);
+                    continue;
                 }
                 Statement::VariableDeclaration(decl) => {
                     let bind_sig_statements =
                         self.transform_variable_declaration_on_exit(decl, ctx);
                     new_stmts.push(stmt);
                     new_stmts.extend(bind_sig_statements);
+                    continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     if let Some(Declaration::FunctionDeclaration(func)) =
@@ -431,6 +435,7 @@ impl<'a> ReactRefresh<'a> {
                         let bind_sig_statements = self.transform_function_on_exit(func, ctx);
                         new_stmts.push(stmt);
                         new_stmts.extend(bind_sig_statements);
+                        continue;
                     } else if let Some(Declaration::VariableDeclaration(decl)) =
                         &mut export_decl.declaration
                     {
@@ -438,35 +443,27 @@ impl<'a> ReactRefresh<'a> {
                             self.transform_variable_declaration_on_exit(decl, ctx);
                         new_stmts.push(stmt);
                         new_stmts.extend(bind_sig_statements);
-                    } else {
-                        new_stmts.push(stmt);
+                        continue;
                     }
                 }
                 Statement::ExportDefaultDeclaration(export_decl) => {
-                    match &mut export_decl.declaration {
-                        ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
-                            if func.id.is_some() {
-                                if let Some(bind_sig_statement) =
-                                    self.transform_function_on_exit(func, ctx)
-                                {
-                                    new_stmts.push(stmt);
-                                    new_stmts.push(bind_sig_statement);
-                                } else {
-                                    new_stmts.push(stmt);
-                                }
-                            } else {
+                    if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
+                        &mut export_decl.declaration
+                    {
+                        if func.id.is_some() {
+                            if let Some(bind_sig_statement) =
+                                self.transform_function_on_exit(func, ctx)
+                            {
                                 new_stmts.push(stmt);
+                                new_stmts.push(bind_sig_statement);
+                                continue;
                             }
-                        }
-                        _ => {
-                            new_stmts.push(stmt);
                         }
                     }
                 }
-                _ => {
-                    new_stmts.push(stmt);
-                }
+                _ => {}
             };
+            new_stmts.push(stmt);
         }
 
         let declarations = self.signature_declarator_items.pop().unwrap();
@@ -547,7 +544,12 @@ impl<'a> ReactRefresh<'a> {
 
                 // Maybe a HOC.
                 // Try to determine if this is some form of import.
-                let found_inside = self.replace_inner_components(&id.name, init, true, ctx);
+                let found_inside = self.replace_inner_components(
+                    &id.name,
+                    init,
+                    /* is_variable_declarator */ true,
+                    ctx,
+                );
                 if !found_inside {
                     return None;
                 }
@@ -742,6 +744,7 @@ impl<'a> ReactRefresh<'a> {
     }
 }
 
+// TODO: Try to remove this struct, avoid double visiting
 struct CalculateSignatureKey<'a, 'b> {
     key: String,
     source_text: &'a str,
