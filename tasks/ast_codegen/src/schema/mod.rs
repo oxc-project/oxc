@@ -84,7 +84,7 @@ impl<'a> From<crate::util::TypeIdentResult<'a>> for TypeName {
 
 #[derive(Debug, Default, serde::Serialize)]
 pub struct Schema {
-    defs: Vec<TypeDef>,
+    pub defs: Vec<TypeDef>,
 }
 
 impl Schema {

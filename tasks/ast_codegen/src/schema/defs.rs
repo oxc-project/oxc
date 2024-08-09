@@ -9,6 +9,7 @@ use crate::{
 use super::{with_either, TypeName};
 
 #[derive(Debug, Serialize)]
+#[serde(untagged)]
 pub enum TypeDef {
     Struct(StructDef),
     Enum(EnumDef),
@@ -38,11 +39,14 @@ impl TypeDef {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(tag = "type", rename = "struct", rename_all = "camelCase")]
 pub struct StructDef {
     pub id: TypeId,
     pub name: String,
+    #[serde(skip)]
     pub visitable: bool,
     pub fields: Vec<FieldDef>,
+    #[serde(skip)]
     pub has_lifetime: bool,
     pub size_64: usize,
     pub align_64: usize,
@@ -50,12 +54,14 @@ pub struct StructDef {
     pub size_32: usize,
     pub align_32: usize,
     pub offsets_32: Option<Vec<usize>>,
+    #[serde(skip)]
     pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub markers: OuterMarkers,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(tag = "type", rename = "enum", rename_all = "camelCase")]
 pub struct EnumDef {
     pub id: TypeId,
     pub name: String,
@@ -97,6 +103,7 @@ pub struct VariantDef {
     pub name: String,
     pub fields: Vec<FieldDef>,
     pub discriminant: u8,
+    #[serde(skip)]
     pub markers: InnerMarkers,
 }
 
@@ -112,6 +119,7 @@ impl VariantDef {
 
 #[derive(Debug, Serialize)]
 pub struct InheritDef {
+    #[serde(rename = "super")]
     pub super_: TypeRef,
     pub variants: Vec<VariantDef>,
 }
@@ -120,13 +128,18 @@ pub struct InheritDef {
 pub struct FieldDef {
     /// `None` if unnamed
     pub name: Option<String>,
+    #[serde(skip)]
     pub vis: Visibility,
+    #[serde(rename = "type")]
     pub typ: TypeRef,
+    #[serde(skip)]
     pub markers: InnerMarkers,
+    #[serde(skip)]
     pub docs: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Visibility {
     None,
     Pub,
@@ -158,10 +171,11 @@ impl FieldDef {
 
 #[derive(Debug, Serialize)]
 pub struct TypeRef {
+    #[serde(skip)]
     pub(super) id: Option<TypeId>,
     pub(super) name: TypeName,
 
-    #[serde(skip)]
+    #[serde(rename = "id")]
     pub(super) transparent_id: Option<TypeId>,
 
     #[serde(skip)]
