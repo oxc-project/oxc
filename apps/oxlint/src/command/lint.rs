@@ -37,6 +37,10 @@ pub struct LintCommand {
     #[bpaf(long("rules"), switch, hide_usage)]
     pub list_rules: bool,
 
+    /// print a generated configuration file
+    #[bpaf(long("print-config"), switch, hide_usage)]
+    pub print_config: bool,
+
     #[bpaf(external)]
     pub misc_options: MiscOptions,
 

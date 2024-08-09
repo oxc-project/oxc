@@ -3,6 +3,7 @@ use std::{convert::From, path::PathBuf};
 use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 use rustc_hash::FxHashSet;
 use schemars::{schema::SchemaObject, JsonSchema};
+use serde::Serialize;
 use serde_json::{Number, Value};
 
 use crate::{
@@ -165,7 +166,8 @@ impl LintOptions {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum AllowWarnDeny {
     Allow, // Off
     Warn,  // Warn
@@ -251,7 +253,7 @@ impl JsonSchema for AllowWarnDeny {
         int_schema.number().maximum = Some(2.0);
         int_schema.metadata().description = Some(
             "Oxlint rule.
-    
+
 - 0: Turn off the rule.
 - 1: Turn the rule on as a warning (doesn't affect exit code).
 - 2: Turn the rule on as an error (will exit with a failure code)."

@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Default, JsonSchema)]
+#[derive(Debug, Deserialize, Default, JsonSchema, Serialize)]
 pub struct NextPluginSettings {
     #[serde(default)]
     #[serde(rename = "rootDir")]
@@ -21,7 +21,7 @@ impl NextPluginSettings {
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize, PartialEq, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, PartialEq, JsonSchema, Serialize)]
 #[serde(untagged)]
 enum OneOrMany<T> {
     One(T),
