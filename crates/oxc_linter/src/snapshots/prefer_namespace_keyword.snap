@@ -23,21 +23,19 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `module` with `namespace`.
 
   ⚠ typescript-eslint(prefer-namespace-keyword): Use 'namespace' instead of 'module' to declare custom TypeScript modules.
-   ╭─[prefer_namespace_keyword.tsx:2:4]
- 1 │     
- 2 │ ╭─▶             declare module foo {
- 3 │ │                 declare module bar {}
- 4 │ ╰─▶             }
- 5 │                       
+   ╭─[prefer_namespace_keyword.tsx:1:1]
+ 1 │ ╭─▶ declare module foo {
+ 2 │ │             declare module bar {}
+ 3 │ ╰─▶         }
    ╰────
   help: Replace `module` with `namespace`.
 
   ⚠ typescript-eslint(prefer-namespace-keyword): Use 'namespace' instead of 'module' to declare custom TypeScript modules.
-   ╭─[prefer_namespace_keyword.tsx:3:6]
- 2 │             declare module foo {
- 3 │               declare module bar {}
-   ·               ─────────────────────
- 4 │             }
+   ╭─[prefer_namespace_keyword.tsx:2:11]
+ 1 │ declare module foo {
+ 2 │           declare module bar {}
+   ·           ─────────────────────
+ 3 │         }
    ╰────
   help: Replace `module` with `namespace`.
 
