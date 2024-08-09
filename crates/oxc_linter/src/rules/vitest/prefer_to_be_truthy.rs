@@ -1,23 +1,10 @@
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, is_equality_matcher,
-        parse_expect_and_typeof_vitest_fn_call, PossibleJestNode,
-    },
+    utils::{collect_possible_jest_call_node, prefer_to_be_simply_bool},
 };
-
-fn use_to_be_truthy(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use `toBeTruthy` instead.").with_label(span0)
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToBeTruthy;
@@ -46,55 +33,7 @@ declare_oxc_lint!(
 impl Rule for PreferToBeTruthy {
     fn run_once(&self, ctx: &LintContext) {
         for possible_vitest_node in &collect_possible_jest_call_node(ctx) {
-            Self::run(possible_vitest_node, ctx);
-        }
-    }
-}
-
-impl PreferToBeTruthy {
-    fn run<'a>(possible_vitest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_vitest_node.node;
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Some(vitest_expect_fn_call) =
-            parse_expect_and_typeof_vitest_fn_call(call_expr, possible_vitest_node, ctx)
-        else {
-            return;
-        };
-        let Some(matcher) = vitest_expect_fn_call.matcher() else {
-            return;
-        };
-
-        if !is_equality_matcher(matcher) || vitest_expect_fn_call.args.len() == 0 {
-            return;
-        }
-
-        let Some(arg_expr) = vitest_expect_fn_call.args.first().and_then(Argument::as_expression)
-        else {
-            return;
-        };
-
-        if let Expression::BooleanLiteral(arg) = arg_expr.get_inner_expression() {
-            if arg.value {
-                let span = Span::new(matcher.span.start, call_expr.span.end);
-
-                let is_cmp_mem_expr = match matcher.parent {
-                    Some(Expression::ComputedMemberExpression(_)) => true,
-                    Some(
-                        Expression::StaticMemberExpression(_)
-                        | Expression::PrivateFieldExpression(_),
-                    ) => false,
-                    _ => return,
-                };
-
-                ctx.diagnostic_with_fix(use_to_be_truthy(span), |fixer| {
-                    let new_matcher =
-                        if is_cmp_mem_expr { "[\"toBeTruthy\"]()" } else { "toBeTruthy()" };
-
-                    fixer.replace(span, new_matcher)
-                });
-            }
+            prefer_to_be_simply_bool(possible_vitest_node, ctx, true);
         }
     }
 }
