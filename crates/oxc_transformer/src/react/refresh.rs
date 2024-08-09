@@ -258,8 +258,7 @@ impl<'a> ReactRefresh<'a> {
                 new_statements.push(assignment_expression);
             }
         }
-        // TODO *=
-        program.body.extend(new_statements);
+        program.body = new_statements;
     }
 
     pub fn transform_program_on_exit(
