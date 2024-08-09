@@ -164,7 +164,9 @@ impl Linter {
 
             if frameworks::has_vitest_imports(ctx.module_record()) {
                 test_flags.set(FrameworkFlags::Vitest, true);
-            } else if frameworks::is_jestlike_file(path) {
+            } else if frameworks::is_jestlike_file(path)
+                || frameworks::has_jest_imports(ctx.module_record())
+            {
                 test_flags.set(FrameworkFlags::Jest, self.options.jest_plugin);
                 // test_flags.set(FrameworkFlags::Vitest, self.options.vitest_plugin);
             }
