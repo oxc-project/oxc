@@ -80,6 +80,7 @@ fn assert_type(ty: &Type, def: &TypeDef) -> (TokenStream, TokenStream) {
 
 fn assert_size_align(ty: &Type, size: usize, align: usize) -> TokenStream {
     quote! {
+        ///@@
         assert!(size_of::<#ty>() == #size);
         assert!(align_of::<#ty>() == #align);
     }
