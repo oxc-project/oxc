@@ -194,10 +194,16 @@ impl ReactOptions {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReactRefreshOptions {
+    /// Specify the identifier of the refresh registration variable.
+    /// Defaults to `$RefreshReg$`.
     #[serde(default = "default_refresh_reg")]
     pub refresh_reg: String,
+
+    /// Specify the identifier of the refresh signature variable.
+    /// Defaults to `$RefreshSig$`.
     #[serde(default = "default_refresh_sig")]
     pub refresh_sig: String,
+
     #[serde(default)]
     pub emit_full_signatures: bool,
 }

@@ -51,11 +51,13 @@ impl<'a> ReactRefresh<'a> {
         &mut self,
         persistent_id: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
+    ) -> AssignmentTarget<'a> {
         let symbol_id = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
         self.registrations.push((symbol_id, persistent_id));
         let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-        ctx.create_reference_id(SPAN, name, Some(symbol_id), ReferenceFlag::Write)
+        let ident = ctx.create_reference_id(SPAN, name, Some(symbol_id), ReferenceFlag::Write);
+        let ident = ctx.ast.simple_assignment_target_from_identifier_reference(ident);
+        ctx.ast.assignment_target_simple(ident)
     }
 
     /// Similar to the `findInnerComponents` function in `react-refresh/babel`.
@@ -131,19 +133,17 @@ impl<'a> ReactRefresh<'a> {
             }
         }
 
-        let ident = self.create_registration(ctx.ast.atom(inferred_name), ctx);
         *expr = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
-            ctx.ast.assignment_target_simple(
-                ctx.ast.simple_assignment_target_from_identifier_reference(ident),
-            ),
+            self.create_registration(ctx.ast.atom(inferred_name), ctx),
             ctx.ast.move_expression(expr),
         );
 
         true
     }
 
+    /// Create an identifier reference from a binding identifier.
     fn create_identifier_reference_from_binding_identifier(
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -162,10 +162,7 @@ impl<'a> ReactRefresh<'a> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let reference = self.create_registration(id.name.clone(), ctx);
-        let left = ctx.ast.assignment_target_simple(
-            ctx.ast.simple_assignment_target_from_identifier_reference(reference),
-        );
+        let left = self.create_registration(id.name.clone(), ctx);
         let right = ctx.create_bound_reference_id(
             SPAN,
             id.name.clone(),
@@ -416,33 +413,33 @@ impl<'a> ReactRefresh<'a> {
         for mut stmt in stmts.drain(..) {
             match &mut stmt {
                 Statement::FunctionDeclaration(func) => {
-                    let bind_sig_statements = self.transform_function_on_exit(func, ctx);
+                    let call_signature_statement = self.transform_function_on_exit(func, ctx);
                     new_stmts.push(stmt);
-                    new_stmts.extend(bind_sig_statements);
+                    new_stmts.extend(call_signature_statement);
                     continue;
                 }
                 Statement::VariableDeclaration(decl) => {
-                    let bind_sig_statements =
+                    let call_signature_statements =
                         self.transform_variable_declaration_on_exit(decl, ctx);
                     new_stmts.push(stmt);
-                    new_stmts.extend(bind_sig_statements);
+                    new_stmts.extend(call_signature_statements);
                     continue;
                 }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     if let Some(Declaration::FunctionDeclaration(func)) =
                         &mut export_decl.declaration
                     {
-                        let bind_sig_statements = self.transform_function_on_exit(func, ctx);
+                        let call_signature_statement = self.transform_function_on_exit(func, ctx);
                         new_stmts.push(stmt);
-                        new_stmts.extend(bind_sig_statements);
+                        new_stmts.extend(call_signature_statement);
                         continue;
                     } else if let Some(Declaration::VariableDeclaration(decl)) =
                         &mut export_decl.declaration
                     {
-                        let bind_sig_statements =
+                        let call_signature_statements =
                             self.transform_variable_declaration_on_exit(decl, ctx);
                         new_stmts.push(stmt);
-                        new_stmts.extend(bind_sig_statements);
+                        new_stmts.extend(call_signature_statements);
                         continue;
                     }
                 }
@@ -721,8 +718,8 @@ impl<'a> ReactRefresh<'a> {
         );
     }
 
-    // transform arrow function expression to normal arrow function
-    // `() => 1` to `() => { return 1 }`
+    /// Transform arrow function expression to normal arrow function
+    /// `() => 1` to `() => { return 1 }`
     pub fn transform_arrow_function_expression(
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
