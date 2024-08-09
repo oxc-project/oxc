@@ -162,11 +162,11 @@ impl Linter {
         if self.options.jest_plugin || self.options.vitest_plugin {
             let mut test_flags = FrameworkFlags::empty();
 
-            if frameworks::is_jestlike_file(path) {
-                test_flags.set(FrameworkFlags::Jest, self.options.jest_plugin);
-                test_flags.set(FrameworkFlags::Vitest, self.options.vitest_plugin);
-            } else if frameworks::has_vitest_imports(ctx.module_record()) {
+            if frameworks::has_vitest_imports(ctx.module_record()) {
                 test_flags.set(FrameworkFlags::Vitest, true);
+            } else if frameworks::is_jestlike_file(path) {
+                test_flags.set(FrameworkFlags::Jest, self.options.jest_plugin);
+                // test_flags.set(FrameworkFlags::Vitest, self.options.vitest_plugin);
             }
 
             ctx = ctx.and_frameworks(test_flags);

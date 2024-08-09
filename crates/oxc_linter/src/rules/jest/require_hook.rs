@@ -247,7 +247,6 @@ impl RequireHook {
 fn tests() {
     use crate::tester::Tester;
 
-
     let pass = vec![
         ("describe()", None),
         ("describe(\"just a title\")", None),
@@ -533,14 +532,8 @@ fn tests() {
             None,
         ),
         ("let value = 1", None),
-        (
-            "let consoleErrorSpy, consoleWarnSpy = jest.spyOn(console, 'error');",
-            None,
-        ),
-        (
-            "let consoleErrorSpy = jest.spyOn(console, 'error'), consoleWarnSpy;",
-            None,
-        ),
+        ("let consoleErrorSpy, consoleWarnSpy = jest.spyOn(console, 'error');", None),
+        ("let consoleErrorSpy = jest.spyOn(console, 'error'), consoleWarnSpy;", None),
         (
             "
                 import { database, isCity } from '../database';
