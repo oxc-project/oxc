@@ -35,28 +35,26 @@ declare_oxc_lint!(
 );
 
 fn is_nest_module(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-    ctx.nodes().parent_node(node.id()).map_or(false, |parent_node| is_valid_module(parent_node))
+    ctx.nodes()
+        .parent_node(node.id())
+        .map_or(false, |parent_node| is_valid_module_node(parent_node))
 }
 
-fn is_valid_module(node: &AstNode) -> bool {
-    matches!(node.kind(), AstKind::TSModuleDeclaration(module) if !is_invalid_module(module))
+fn is_valid_module_node(node: &AstNode) -> bool {
+    matches!(node.kind(), AstKind::TSModuleDeclaration(module) if is_valid_module(module))
 }
 
-fn is_invalid_module(module: &TSModuleDeclaration) -> bool {
-    module.id.is_string_literal()
-        || !matches!(module.id, TSModuleDeclarationName::Identifier(_))
-        || module.kind != TSModuleDeclarationKind::Module
+fn is_valid_module(module: &TSModuleDeclaration) -> bool {
+    !module.id.is_string_literal()
+        && matches!(module.id, TSModuleDeclarationName::Identifier(_))
+        && module.kind == TSModuleDeclarationKind::Module
 }
 
 impl Rule for PreferNamespaceKeyword {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
 
-        if is_invalid_module(module) {
-            return;
-        }
-
-        if is_nest_module(node, ctx) {
+        if !is_valid_module(module) || is_nest_module(node, ctx) {
             return;
         }
 
@@ -110,12 +108,12 @@ fn test() {
             "
             module A {
               module B {}
-			}
+            }
             ",
             "
             namespace A {
               namespace B {}
-			}
+            }
             ",
             None,
         ),
@@ -125,12 +123,12 @@ fn test() {
             declare module foo {
               declare module bar {}
             }
-                  ",
+            ",
             "
             declare namespace foo {
               declare namespace bar {}
             }
-                  ",
+            ",
             None,
         ),
     ];
