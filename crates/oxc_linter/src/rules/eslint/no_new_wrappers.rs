@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -30,7 +30,8 @@ declare_oxc_lint!(
     /// var stringObject = new String('Hello world');
     /// ```
     NoNewWrappers,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for NoNewWrappers {
@@ -44,7 +45,15 @@ impl Rule for NoNewWrappers {
         if (ident.name == "String" || ident.name == "Number" || ident.name == "Boolean")
             && ctx.semantic().is_reference_to_global_variable(ident)
         {
-            ctx.diagnostic(no_new_wrappers_diagnostic(ident.name.as_str(), expr.span));
+            ctx.diagnostic_with_fix(
+                no_new_wrappers_diagnostic(ident.name.as_str(), expr.span),
+                |fixer| {
+                    let start = expr.span().start;
+                    let end = start + 4;
+                    let span = Span::new(start, end);
+                    fixer.delete(&span)
+                },
+            );
         }
     }
 }
@@ -91,5 +100,27 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoNewWrappers::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("var a = new String('hello');", "var a = String('hello');"),
+        ("var a = new Number(10);", "var a = Number(10);"),
+        ("var a = new Boolean(false);", "var a = Boolean(false);"),
+        (
+            "
+                const a = new String('bar');
+                {
+                    const String = CustomString;
+                    const b = new String('foo');
+                }
+            ",
+            "
+                const a = String('bar');
+                {
+                    const String = CustomString;
+                    const b = String('foo');
+                }
+            ",
+        ),
+    ];
+
+    Tester::new(NoNewWrappers::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
