@@ -159,16 +159,4 @@ impl<'a> React<'a> {
             self.refresh.transform_expression_on_exit(expr, ctx);
         }
     }
-
-    pub fn transform_function(&mut self, func: &mut Function<'a>) {
-        if self.refresh_plugin {
-            // self.refresh.transform_function(func);
-        }
-    }
-
-    pub fn transform_arrow_expression(&mut self, func: &mut ArrowFunctionExpression<'a>) {
-        if self.refresh_plugin {
-            // self.refresh.transform_arrow_expression(func);
-        }
-    }
 }
