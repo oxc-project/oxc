@@ -3,6 +3,7 @@
 
 use oxc_span::{GetSpan, Span};
 
+#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 #[derive(Debug, Clone, Copy)]

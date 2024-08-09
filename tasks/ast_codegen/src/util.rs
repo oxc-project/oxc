@@ -282,12 +282,32 @@ impl TokenStreamExt for TokenStream {
     }
 }
 
+// From https://doc.rust-lang.org/reference/keywords.html
+#[rustfmt::skip]
+static RESERVED_NAMES: &[&str] = &[
+    // Strict keywords
+    "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if",
+    "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self",
+    "static", "struct", "super", "trait", "true", "type", "unsafe", "use", "where", "while", "async",
+    "await", "dyn",
+    // Reserved keywords
+    "abstract", "become", "box", "do", "final", "macro", "override", "priv", "typeof", "unsized",
+    "virtual", "yield", "try",
+    // Weak keywords
+    "macro_rules", "union", // "dyn" also listed as a weak keyword, but is already on strict list
+];
+
 impl<S> ToIdent for S
 where
     S: AsRef<str>,
 {
     fn to_ident(&self) -> Ident {
-        format_ident!("{}", self.as_ref())
+        let name = self.as_ref();
+        if RESERVED_NAMES.contains(&name) {
+            format_ident!("r#{name}")
+        } else {
+            format_ident!("{name}")
+        }
     }
 }
 

@@ -84,7 +84,7 @@ impl<'a> From<crate::util::TypeIdentResult<'a>> for TypeName {
 
 #[derive(Debug, Default, serde::Serialize)]
 pub struct Schema {
-    defs: Vec<TypeDef>,
+    pub defs: Vec<TypeDef>,
 }
 
 impl Schema {
@@ -238,7 +238,10 @@ fn lower_inherit(inherit: &rust::Inherit, ctx: &codegen::EarlyCtx) -> InheritDef
 
 fn lower_field(field: &syn::Field, ctx: &codegen::EarlyCtx) -> FieldDef {
     FieldDef {
-        name: field.ident.as_ref().map(ToString::to_string),
+        name: field
+            .ident
+            .as_ref()
+            .map(|ident| ident.to_string().trim_start_matches("r#").to_string()),
         vis: Visibility::from(&field.vis),
         typ: create_type_ref(&field.ty, ctx),
         markers: parse_inner_markers(&field.attrs).unwrap(),
@@ -274,7 +277,7 @@ fn get_docs(attrs: &[syn::Attribute]) -> Vec<String> {
                     return None;
                 }
                 match &lit.lit {
-                    syn::Lit::Str(lit) => Some(lit.value()),
+                    syn::Lit::Str(lit) => Some(lit.value().trim().to_string()),
                     _ => None,
                 }
             } else {
