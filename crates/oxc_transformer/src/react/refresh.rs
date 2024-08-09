@@ -741,7 +741,7 @@ impl<'a> ReactRefresh<'a> {
     }
 }
 
-// TODO: Try to remove this struct, avoid double visiting
+// TODO: Try to remove this struct, avoid double visit
 struct CalculateSignatureKey<'a, 'b> {
     key: String,
     source_text: &'a str,
