@@ -90,15 +90,12 @@ fn test() {
         "module foo {}",
         "module A.B {}",
         "declare module foo {}",
-        "
-			declare module foo {
-			  declare module bar {}
-			}
-			      ",
+        "declare module foo {
+          declare module bar {}
+        }",
         "declare global {
             module foo {}
-        }
-        ",
+        }",
     ];
 
     let fix = vec![
