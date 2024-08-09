@@ -1,8 +1,9 @@
 commit: 12619ffe
 
-Passed: 418/927
+Passed: 453/927
 
 # All Passed:
+* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
@@ -444,34 +445,15 @@ Passed: 418/927
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (90/151)
-* catch-clause/param-type/input.ts
+# babel-plugin-transform-typescript (109/151)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
-* enum/boolean-value/input.ts
-* enum/const/input.ts
-* enum/constant-folding/input.ts
-* enum/enum-merging-inner-references/input.ts
-* enum/enum-merging-inner-references-shadow/input.ts
-* enum/export/input.ts
-* enum/inferred/input.ts
-* enum/inner-references/input.ts
 * enum/mix-references/input.ts
-* enum/non-foldable-constant/input.ts
-* enum/non-scoped/input.ts
-* enum/outer-references/input.ts
-* enum/scoped/input.ts
-* enum/string-value/input.ts
-* enum/string-value-template/input.ts
-* enum/string-values-computed/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
-* exports/export-const-enums/input.ts
 * exports/export-import=/input.ts
 * exports/interface/input.ts
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-* imports/enum-id/input.ts
-* imports/enum-value/input.ts
 * imports/import=-module/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/type-only-export-specifier-2/input.ts
@@ -507,27 +489,9 @@ Passed: 418/927
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-preset-react (6/9)
-* preset-options/development-runtime-automatic/input.js
-* preset-options/empty-options/input.js
-* preset-options/runtime-automatic/input.js
-
-# babel-plugin-transform-react-jsx (133/142)
-* autoImport/after-polyfills-script-not-supported/input.js
-* autoImport/auto-import-react-source-type-script/input.js
-* autoImport/complicated-scope-script/input.js
-* pure/false-default-pragma-automatic-runtime/input.js
-* pure/true-default-pragma-automatic-runtime/input.js
-* pure/unset-default-pragma-automatic-runtime/input.js
+# babel-plugin-transform-react-jsx (141/142)
 * react-automatic/does-not-add-source-self-automatic/input.mjs
-* runtime/defaults-to-automatic/input.js
-* runtime/runtime-automatic/input.js
 
-# babel-plugin-transform-react-jsx-development (4/10)
-* cross-platform/fragments/input.js
-* cross-platform/handle-fragments-with-key/input.js
-* cross-platform/handle-nonstatic-children/input.js
-* cross-platform/handle-static-children/input.js
-* cross-platform/within-derived-classes-constructor/input.js
+# babel-plugin-transform-react-jsx-development (9/10)
 * cross-platform/within-ts-module-block/input.ts
 

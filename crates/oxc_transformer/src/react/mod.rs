@@ -62,9 +62,13 @@ impl<'a> React<'a> {
 
 // Transforms
 impl<'a> React<'a> {
-    pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
+    pub fn transform_program_on_exit(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.jsx_plugin {
-            self.jsx.transform_program_on_exit(program);
+            self.jsx.transform_program_on_exit(program, ctx);
         }
     }
 

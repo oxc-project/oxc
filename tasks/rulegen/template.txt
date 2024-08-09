@@ -28,7 +28,7 @@ declare_oxc_lint!(
              
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix-dangerous', 'suggestion', and 'suggestion-dangerous'
+             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 );
 
 impl Rule for {{pascal_rule_name}} {

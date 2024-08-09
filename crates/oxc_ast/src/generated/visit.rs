@@ -21,7 +21,9 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{ast::*, ast_kind::AstKind};
+#[allow(clippy::wildcard_imports)]
+use crate::ast::*;
+use crate::ast_kind::AstKind;
 
 use walk::*;
 

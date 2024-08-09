@@ -1,7 +1,8 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, Visit, VisitMut};
+use oxc_ast::{ast::*, AstBuilder, Visit};
+use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::keep_var::KeepVar;
+use crate::{keep_var::KeepVar, CompressorPass};
 
 /// Remove Dead Code from the AST.
 ///
@@ -12,15 +13,12 @@ pub struct RemoveDeadCode<'a> {
     ast: AstBuilder<'a>,
 }
 
-impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
-    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        self.dead_code_elimintation(stmts);
-        walk_mut::walk_statements(self, stmts);
-    }
+impl<'a> CompressorPass<'a> for RemoveDeadCode<'a> {}
 
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        walk_mut::walk_expression(self, expr);
+impl<'a> Traverse<'a> for RemoveDeadCode<'a> {
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
+        self.dead_code_elimination(stmts);
     }
 }
 
@@ -29,12 +27,8 @@ impl<'a> RemoveDeadCode<'a> {
         Self { ast }
     }
 
-    pub fn build(&mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
-    }
-
     /// Removes dead code thats comes after `return` statements after inlining `if` statements
-    fn dead_code_elimintation(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    fn dead_code_elimination(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         // Remove code after `return` and `throw` statements
         let mut index = None;
         'outer: for (i, stmt) in stmts.iter().enumerate() {
@@ -55,14 +49,29 @@ impl<'a> RemoveDeadCode<'a> {
         }
 
         let Some(index) = index else { return };
+        if index == stmts.len() - 1 {
+            return;
+        }
 
         let mut keep_var = KeepVar::new(self.ast);
 
-        for stmt in stmts.iter().skip(index) {
+        for stmt in stmts.iter().skip(index + 1) {
             keep_var.visit_statement(stmt);
         }
 
-        stmts.drain(index + 1..);
+        let mut i = 0;
+        stmts.retain(|s| {
+            i += 1;
+            if i - 1 <= index {
+                return true;
+            }
+            // keep function declaration
+            if matches!(s.as_declaration(), Some(Declaration::FunctionDeclaration(_))) {
+                return true;
+            }
+            false
+        });
+
         if let Some(stmt) = keep_var.get_variable_declaration_statement() {
             stmts.push(stmt);
         }

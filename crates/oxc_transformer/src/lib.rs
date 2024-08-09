@@ -114,7 +114,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x1_react.transform_program_on_exit(program);
+        self.x1_react.transform_program_on_exit(program, ctx);
         self.x0_typescript.transform_program_on_exit(program, ctx);
     }
 
@@ -293,6 +293,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_for_statement(stmt, ctx);
+    }
+
+    fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_for_of_statement(stmt, ctx);
+    }
+
+    fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_for_in_statement(stmt, ctx);
     }
 
     fn enter_ts_export_assignment(

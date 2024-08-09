@@ -1,5 +1,6 @@
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_ast_macros::CloneIn;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
@@ -11,7 +12,9 @@ pub struct ReferenceId(NonMaxU32);
 impl Idx for ReferenceId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
-        Self(NonMaxU32::new(idx as u32).unwrap())
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
     fn index(self) -> usize {
@@ -43,7 +46,7 @@ export type ReferenceFlag = {
 "#;
 
 bitflags! {
-    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, CloneIn)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlag: u8 {
         const None = 0;

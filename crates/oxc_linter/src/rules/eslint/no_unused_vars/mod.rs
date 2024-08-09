@@ -46,21 +46,19 @@ declare_oxc_lint!(
     /// A variable is _not_ considered to be used if it is only ever declared
     /// (`var foo = 5`) or assigned to (`foo = 7`).
     ///
+    /// #### Ignored Files
+    /// This rule ignores `.d.ts` files and `.vue` files entirely. Variables,
+    /// classes, interfaces, and types declared in `.d.ts` files are generally
+    /// used by other files, which are not checked by Oxlint. Since Oxlint does
+    /// not support parsing Vue templates, this rule cannot tell if a variable
+    /// is used or unused in a Vue file.
+    ///
     /// #### Exported
     ///
-    /// In environments outside of CommonJS or ECMAScript modules, you may use
-    /// `var` to create a global variable that may be used by other scripts. You
-    /// can use the `/* exported variableName */` comment block to indicate that
-    /// this variable is being exported and therefore should not be considered
-    /// unused.
-    ///
-    /// Note that `/* exported */` has no effect for any of the following:
-    /// * when the environment is `node` or `commonjs`
-    /// * when `parserOptions.sourceType` is `module`
-    /// * when `ecmaFeatures.globalReturn` is `true`
-    ///
-    /// The line comment `//exported variableName` will not work as `exported`
-    /// is not line-specific.
+    /// The original ESLint rule recognizes `/* exported variableName */`
+    /// comments as a way to indicate that a variable is used in another script
+    /// and should not be considered unused. Since ES6 modules are now a TC39
+    /// standard, Oxlint does not support this feature.
     ///
     /// ### Example
     ///
@@ -129,10 +127,11 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **correct** code for `/* exported variableName */` operation:
+    /// Examples of **incorrect** code for `/* exported variableName */` operation:
     /// ```javascript
     /// /* exported global_var */
     ///
+    /// // Not respected, use ES6 modules instead.
     /// var global_var = 42;
     /// ```
     NoUnusedVars,

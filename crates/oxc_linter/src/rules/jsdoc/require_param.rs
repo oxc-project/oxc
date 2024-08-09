@@ -158,7 +158,7 @@ impl Rule for RequireParam {
         }
 
         // Collected JSDoc `@param` tags
-        let tags_to_check = collect_tags(&jsdocs, &settings.resolve_tag_name("param"));
+        let tags_to_check = collect_tags(&jsdocs, settings.resolve_tag_name("param"));
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 

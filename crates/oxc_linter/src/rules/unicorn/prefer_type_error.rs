@@ -42,7 +42,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferTypeError,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferTypeError {

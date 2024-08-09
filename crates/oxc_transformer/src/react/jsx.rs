@@ -365,8 +365,12 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    pub fn transform_program_on_exit(&mut self, program: &mut Program<'a>) {
-        self.add_runtime_imports(program);
+    pub fn transform_program_on_exit(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.add_runtime_imports(program, ctx);
     }
 
     pub fn transform_jsx_element(
@@ -396,7 +400,7 @@ impl<'a> ReactJsx<'a> {
 
 // Add imports
 impl<'a> ReactJsx<'a> {
-    pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
+    pub fn add_runtime_imports(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.bindings.is_classic() {
             if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
                 program.body.insert(0, stmt);
@@ -404,7 +408,7 @@ impl<'a> ReactJsx<'a> {
             return;
         }
 
-        let imports = self.ctx.module_imports.get_import_statements();
+        let imports = self.ctx.module_imports.get_import_statements(ctx);
         let mut index = program
             .body
             .iter()

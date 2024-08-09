@@ -1,9 +1,10 @@
 use itertools::Itertools;
 use proc_macro2::{Group, TokenStream, TokenTree};
-use quote::ToTokens;
-use syn::{GenericArgument, Ident, PathArguments, Type, TypePath};
+use quote::{format_ident, ToTokens};
+use serde::Serialize;
+use syn::{spanned::Spanned, GenericArgument, Ident, ItemMacro, PathArguments, Type, TypePath};
 
-use crate::{CodegenCtx, TypeRef};
+use crate::{codegen::EarlyCtx, TypeId};
 
 pub trait NormalizeError<T> {
     fn normalize(self) -> crate::Result<T>;
@@ -47,7 +48,7 @@ pub trait TokenStreamExt {
 
 pub trait TypeExt {
     fn get_ident(&self) -> TypeIdentResult;
-    fn analyze(&self, ctx: &CodegenCtx) -> TypeAnalyzeResult;
+    fn analyze(&self, ctx: &EarlyCtx) -> TypeAnalysis;
 }
 
 pub trait StrExt: AsRef<str> {
@@ -59,15 +60,19 @@ pub trait StrExt: AsRef<str> {
     fn to_plural(self) -> String;
 }
 
+pub trait ToIdent {
+    fn to_ident(&self) -> Ident;
+}
+
 #[derive(Debug)]
 pub enum TypeIdentResult<'a> {
-    /// We bailed on detecting wrapper
-    Complex(Box<TypeIdentResult<'a>>),
     Ident(&'a Ident),
     Vec(Box<TypeIdentResult<'a>>),
     Box(Box<TypeIdentResult<'a>>),
     Option(Box<TypeIdentResult<'a>>),
     Reference(Box<TypeIdentResult<'a>>),
+    /// We bailed on detecting wrapper
+    Complex(Box<TypeIdentResult<'a>>),
 }
 
 impl<'a> TypeIdentResult<'a> {
@@ -113,7 +118,7 @@ impl<'a> TypeIdentResult<'a> {
 
 // TODO: remove me
 #[allow(dead_code)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Serialize)]
 pub enum TypeWrapper {
     None,
     Box,
@@ -128,10 +133,12 @@ pub enum TypeWrapper {
     Complex,
 }
 
-#[derive(Debug)]
-pub struct TypeAnalyzeResult {
-    pub type_ref: Option<TypeRef>,
+#[derive(Debug, Clone, Serialize)]
+pub struct TypeAnalysis {
+    pub type_id: Option<TypeId>,
     pub wrapper: TypeWrapper,
+    // pub name: String,
+    #[serde(skip)]
     pub typ: Type,
 }
 
@@ -182,7 +189,7 @@ impl TypeExt for Type {
         }
     }
 
-    fn analyze(&self, ctx: &CodegenCtx) -> TypeAnalyzeResult {
+    fn analyze(&self, ctx: &EarlyCtx) -> TypeAnalysis {
         fn analyze<'a>(res: &'a TypeIdentResult) -> Option<(&'a Ident, TypeWrapper)> {
             let mut wrapper = TypeWrapper::None;
             let ident = match res {
@@ -226,15 +233,11 @@ impl TypeExt for Type {
         }
         let type_ident = self.get_ident();
         let Some((type_ident, wrapper)) = analyze(&type_ident) else {
-            return TypeAnalyzeResult {
-                type_ref: None,
-                wrapper: TypeWrapper::Ref,
-                typ: self.clone(),
-            };
+            return TypeAnalysis { type_id: None, wrapper: TypeWrapper::Ref, typ: self.clone() };
         };
 
-        let type_ref = ctx.find(&type_ident.to_string());
-        TypeAnalyzeResult { type_ref, wrapper, typ: self.clone() }
+        let type_id = ctx.type_id(&type_ident.to_string());
+        TypeAnalysis { type_id, wrapper, typ: self.clone() }
     }
 }
 
@@ -279,6 +282,35 @@ impl TokenStreamExt for TokenStream {
     }
 }
 
+// From https://doc.rust-lang.org/reference/keywords.html
+#[rustfmt::skip]
+static RESERVED_NAMES: &[&str] = &[
+    // Strict keywords
+    "as", "break", "const", "continue", "crate", "else", "enum", "extern", "false", "fn", "for", "if",
+    "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return", "self", "Self",
+    "static", "struct", "super", "trait", "true", "type", "unsafe", "use", "where", "while", "async",
+    "await", "dyn",
+    // Reserved keywords
+    "abstract", "become", "box", "do", "final", "macro", "override", "priv", "typeof", "unsized",
+    "virtual", "yield", "try",
+    // Weak keywords
+    "macro_rules", "union", // "dyn" also listed as a weak keyword, but is already on strict list
+];
+
+impl<S> ToIdent for S
+where
+    S: AsRef<str>,
+{
+    fn to_ident(&self) -> Ident {
+        let name = self.as_ref();
+        if RESERVED_NAMES.contains(&name) {
+            format_ident!("r#{name}")
+        } else {
+            format_ident!("{name}")
+        }
+    }
+}
+
 pub fn write_all_to<S: AsRef<std::path::Path>>(data: &[u8], path: S) -> std::io::Result<()> {
     use std::{fs, io::Write};
     let path = path.as_ref();
@@ -288,4 +320,8 @@ pub fn write_all_to<S: AsRef<std::path::Path>>(data: &[u8], path: S) -> std::io:
     let mut file = fs::File::create(path)?;
     file.write_all(data)?;
     Ok(())
+}
+
+pub fn unexpanded_macro_err(mac: &ItemMacro) -> String {
+    format!("Unexpanded macro: {:?}:{:?}", mac.ident, mac.span())
 }

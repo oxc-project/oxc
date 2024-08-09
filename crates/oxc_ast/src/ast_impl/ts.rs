@@ -126,8 +126,29 @@ impl<'a> TSType<'a> {
 }
 
 impl TSAccessibility {
-    pub fn is_private(&self) -> bool {
-        matches!(self, TSAccessibility::Private)
+    #[inline]
+    pub fn is_private(self) -> bool {
+        matches!(self, Self::Private)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Public => "public",
+            Self::Private => "private",
+            Self::Protected => "protected",
+        }
+    }
+}
+
+impl From<TSAccessibility> for &'static str {
+    fn from(accessibility: TSAccessibility) -> Self {
+        accessibility.as_str()
+    }
+}
+
+impl fmt::Display for TSAccessibility {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -200,20 +221,20 @@ impl<'a> TSModuleReference<'a> {
 impl<'a> Decorator<'a> {
     /// Get the name of the decorator
     /// ```ts
+    /// // The name of the decorator is `decorator`
     /// @decorator
     /// @decorator.a.b
     /// @decorator(xx)
     /// @decorator.a.b(xx)
-    /// The name of the decorator is `decorator`
     /// ```
-    pub fn name(&self) -> Option<&str> {
+    pub fn name(&self) -> Option<&'a str> {
         match &self.expression {
-            Expression::Identifier(ident) => Some(&ident.name),
+            Expression::Identifier(ident) => Some(ident.name.as_str()),
             expr @ match_member_expression!(Expression) => {
                 expr.to_member_expression().static_property_name()
             }
             Expression::CallExpression(call) => {
-                call.callee.get_member_expr().map(|member| member.static_property_name())?
+                call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
             }
             _ => None,
         }

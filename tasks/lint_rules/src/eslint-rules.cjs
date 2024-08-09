@@ -56,6 +56,16 @@ const {
 } = require("eslint-plugin-react-perf");
 // https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
 const { rules: pluginNextAllRules } = require("@next/eslint-plugin-next");
+// https://github.com/eslint-community/eslint-plugin-promise/blob/main/index.js
+const {
+  rules: pluginPromiseRules,
+  configs: pluginPromiseConfigs
+} = require("eslint-plugin-promise");
+// https://github.com/veritem/eslint-plugin-vitest/blob/main/src/index.ts
+const {
+  rules: pluginVitestRules,
+  configs: pluginVitestConfigs
+} = require("eslint-plugin-vitest");
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginTypeScriptRules = (linter) => {
@@ -217,6 +227,35 @@ const loadPluginNextRules = (linter) => {
   }
 };
 
+/** @param {import("eslint").Linter} linter */
+const loadPluginPromiseRules = (linter) => {
+  const pluginPromiseRecommendedRules = new Map(
+    Object.entries(pluginPromiseConfigs.recommended.rules),
+  );
+  for (const [name, rule] of Object.entries(pluginPromiseRules)) {
+    const prefixedName = `promise/${name}`;
+
+    rule.meta.docs.recommended =
+      pluginPromiseRecommendedRules.has(prefixedName);
+
+    linter.defineRule(prefixedName, rule);
+  }
+}
+
+/** @param {import("eslint").Linter} linter */
+const loadPluginVitestRules = (linter) => {
+  const pluginVitestRecommendedRules = new Map(
+    Object.entries(pluginVitestConfigs.recommended.rules)
+  );
+  for (const [name, rule] of Object.entries(pluginVitestRules)) {
+    const prefixedName = `vitest/${name}`;
+
+    rule.meta.docs.recommended = pluginVitestRecommendedRules.has(prefixedName);
+
+    linter.defineRule(prefixedName, rule);
+  }
+}
+
 /**
  * @typedef {{
  *   npm: string[];
@@ -242,6 +281,8 @@ exports.ALL_TARGET_PLUGINS = new Map([
   ],
   ["react-perf", { npm: ["eslint-plugin-react-perf"], issueNo: 2041 }],
   ["nextjs", { npm: ["@next/eslint-plugin-next"], issueNo: 1929 }],
+  ["promise", { npm: ["eslint-plugin-promise"], issueNo: 4655 }],
+  ["vitest", { npm: ["eslint-plugin-vitest"], issueNo: 4656 }],
 ]);
 
 // All rules(including deprecated, recommended) are loaded initially.
@@ -262,4 +303,6 @@ exports.loadTargetPluginRules = (linter) => {
   loadPluginReactRules(linter);
   loadPluginReactPerfRules(linter);
   loadPluginNextRules(linter);
+  loadPluginPromiseRules(linter);
+  loadPluginVitestRules(linter);
 };

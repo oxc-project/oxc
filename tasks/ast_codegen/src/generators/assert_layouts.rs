@@ -1,10 +1,13 @@
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
-use syn::{PathArguments, Type};
+use quote::quote;
+use syn::Type;
 
 use crate::{
-    defs::{FieldDef, TypeDef},
-    output, CodegenCtx, Generator, GeneratorOutput,
+    codegen::LateCtx,
+    output,
+    schema::{FieldDef, ToType, TypeDef},
+    util::ToIdent,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -14,27 +17,12 @@ define_generator! {
 }
 
 impl Generator for AssertLayouts {
-    fn name(&self) -> &'static str {
-        stringify!(AssertLayouts)
-    }
-
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let (assertions_64, assertions_32) = ctx
-            .schema
-            .borrow()
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .map(|def| {
-                let typ =
-                    ctx.find(def.name()).and_then(|ty| ty.borrow().as_type()).map(|mut ty| {
-                        if let Type::Path(ty) = &mut ty {
-                            if let Some(seg) = ty.path.segments.first_mut() {
-                                seg.arguments = PathArguments::None;
-                            }
-                        }
-                        ty
-                    });
-                let typ = typ.unwrap();
+                let typ = def.to_type_elide();
                 assert_type(&typ, def)
             })
             .collect::<(Vec<TokenStream>, Vec<TokenStream>)>();
@@ -48,20 +36,19 @@ impl Generator for AssertLayouts {
 
                 use std::mem::{align_of, offset_of, size_of};
 
-                endl!();
-
+                ///@@line_break
+                #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
-                endl!();
-
+                ///@@line_break
                 #[cfg(target_pointer_width = "64")]
                 const _: () = { #(#assertions_64)* };
-                endl!();
 
+                ///@@line_break
                 #[cfg(target_pointer_width = "32")]
                 const _: () = { #(#assertions_32)* };
-                endl!();
 
+                ///@@line_break
                 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
                 const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
             },
@@ -94,6 +81,7 @@ fn assert_type(ty: &Type, def: &TypeDef) -> (TokenStream, TokenStream) {
 
 fn assert_size_align(ty: &Type, size: usize, align: usize) -> TokenStream {
     quote! {
+        ///@@line_break
         assert!(size_of::<#ty>() == #size);
         assert!(align_of::<#ty>() == #align);
     }
@@ -107,12 +95,14 @@ fn with_offsets_assertion(
 ) -> TokenStream {
     let Some(offsets) = offsets else { return tk };
 
-    let assertions = fields.iter().zip(offsets).map(|(field, offset)| {
-        let field = field.name.as_ref().map(|it| format_ident!("{it}"));
-        quote! {
-            assert!(offset_of!(#ty, #field) == #offset);
-        }
-    });
+    let assertions = fields.iter().zip(offsets).filter(|(field, _)| field.vis.is_pub()).map(
+        |(field, offset)| {
+            let field = field.name.as_ref().map(ToIdent::to_ident);
+            quote! {
+                assert!(offset_of!(#ty, #field) == #offset);
+            }
+        },
+    );
     tk.extend(assertions);
     tk
 }

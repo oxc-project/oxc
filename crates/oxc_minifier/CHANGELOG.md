@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 229a0e9 minifier: Implement dot define for member expressions (#3959) (camc314)
+
+### Bug Fixes
+
+- 94d3c31 minifier: Avoid removing function declaration from `KeepVar` (#4722) (Boshen)
+- bf43148 minifier: Do not `remove_syntax` in dead_code_elimination (Boshen)
+- bf48c7f minifier: Fix `keep_var` keeping vars from arrow functions (#4680) (Boshen)
+- 9be29af minifier: Temporarily fix shadowed `undefined` variable (#4678) (Boshen)
+- e8b662a minifier: Various fixes to pass minifier conformance (#4667) (Boshen)
+
+### Performance
+
+- 0f5e982 minifier: Only visit arrow expression after dropping `console.log` (#4677) (Boshen)
+
+### Refactor
+
+- fbfd852 minifier: Add `NodeUtil` trait for accessing symbols on ast nodes (#4734) (Boshen)
+- e0832f8 minifier: Use `oxc_traverse` for AST passes (#4725) (Boshen)
+- 17602db minifier: Move tests and files around (Boshen)
+- 3289477 minifier: Clean up tests (#4724) (Boshen)
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- 229a0e9 minifier: Implement dot define for member expressions (#3959) (camc314)
+
+### Bug Fixes
+
+- bf48c7f minifier: Fix `keep_var` keeping vars from arrow functions (#4680) (Boshen)
+- 9be29af minifier: Temporarily fix shadowed `undefined` variable (#4678) (Boshen)
+- e8b662a minifier: Various fixes to pass minifier conformance (#4667) (Boshen)
+
+### Performance
+
+- 0f5e982 minifier: Only visit arrow expression after dropping `console.log` (#4677) (Boshen)
+
+### Refactor
+
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
 ## [0.23.0] - 2024-08-01
 
 ### Features

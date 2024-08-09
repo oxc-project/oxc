@@ -1,7 +1,5 @@
-#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, AstBuilder, Visit};
 use oxc_span::{Atom, Span, SPAN};
-use oxc_syntax::scope::ScopeFlags;
 
 pub struct KeepVar<'a> {
     ast: AstBuilder<'a>,
@@ -9,20 +7,40 @@ pub struct KeepVar<'a> {
 }
 
 impl<'a> Visit<'a> for KeepVar<'a> {
-    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
-        if decl.kind.is_var() {
-            decl.id.bound_names(&mut |ident| {
-                self.vars.push((ident.name.clone(), ident.span));
-            });
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        // Only visit blocks where vars could be hoisted
+        match it {
+            Statement::BlockStatement(it) => self.visit_block_statement(it),
+            Statement::BreakStatement(it) => self.visit_break_statement(it),
+            Statement::ContinueStatement(it) => self.visit_continue_statement(it),
+            // Statement::DebuggerStatement(it) => self.visit_debugger_statement(it),
+            Statement::DoWhileStatement(it) => self.visit_do_while_statement(it),
+            // Statement::EmptyStatement(it) => self.visit_empty_statement(it),
+            // Statement::ExpressionStatement(it) => self.visit_expression_statement(it),
+            Statement::ForInStatement(it) => self.visit_for_in_statement(it),
+            Statement::ForOfStatement(it) => self.visit_for_of_statement(it),
+            Statement::ForStatement(it) => self.visit_for_statement(it),
+            Statement::IfStatement(it) => self.visit_if_statement(it),
+            Statement::LabeledStatement(it) => self.visit_labeled_statement(it),
+            // Statement::ReturnStatement(it) => self.visit_return_statement(it),
+            Statement::SwitchStatement(it) => self.visit_switch_statement(it),
+            // Statement::ThrowStatement(it) => self.visit_throw_statement(it),
+            Statement::TryStatement(it) => self.visit_try_statement(it),
+            Statement::WhileStatement(it) => self.visit_while_statement(it),
+            Statement::WithStatement(it) => self.visit_with_statement(it),
+            // match_declaration!(Statement) => visitor.visit_declaration(it.to_declaration()),
+            // match_module_declaration!(Statement) => {
+            // visitor.visit_module_declaration(it.to_module_declaration())
+            // }
+            Statement::VariableDeclaration(decl) => {
+                if decl.kind.is_var() {
+                    decl.bound_names(&mut |ident| {
+                        self.vars.push((ident.name.clone(), ident.span));
+                    });
+                }
+            }
+            _ => {}
         }
-    }
-
-    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
-        /* skip functions */
-    }
-
-    fn visit_class(&mut self, _it: &Class<'a>) {
-        /* skip classes */
     }
 }
 

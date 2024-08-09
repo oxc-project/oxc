@@ -27,10 +27,10 @@ fn bench_sourcemap(criterion: &mut Criterion) {
                     .enable_source_map(file.file_name.as_str(), source_text)
                     .build(&ret.program);
                 if let Some(sourcemap) = source_map {
-                    let mut concat_sourcemap_builder = ConcatSourceMapBuilder::default();
-                    for i in 0..2 {
-                        concat_sourcemap_builder.add_sourcemap(&sourcemap, lines * i);
-                    }
+                    let concat_sourcemap_builder = ConcatSourceMapBuilder::from_sourcemaps(&[
+                        (&sourcemap, 0),
+                        (&sourcemap, lines),
+                    ]);
                     concat_sourcemap_builder.into_sourcemap().to_json_string();
                 }
             });

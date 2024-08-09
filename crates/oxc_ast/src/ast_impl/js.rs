@@ -452,7 +452,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_name(&self) -> Option<&str> {
+    pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
                 expr.static_property_name().map(|name| name.as_str())
@@ -462,13 +462,13 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_info(&self) -> Option<(Span, &str)> {
+    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, &lit.value)),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
                     if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some((lit.span, &lit.quasis[0].value.raw))
+                        Some((lit.span, lit.quasis[0].value.raw.as_str()))
                     } else {
                         None
                     }
@@ -476,7 +476,7 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, &expr.property.name))
+                Some((expr.property.span, expr.property.name.as_str()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -597,17 +597,17 @@ impl Argument<'_> {
 }
 
 impl<'a> AssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
-        self.as_simple_assignment_target().and_then(|it| it.get_identifier())
+    pub fn get_identifier(&self) -> Option<&'a str> {
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier)
     }
 
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        self.as_simple_assignment_target().and_then(|it| it.get_expression())
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
+    pub fn get_identifier(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
             match_member_expression!(Self) => self.to_member_expression().static_property_name(),

@@ -148,6 +148,9 @@ new-n-rule name:
 new-promise-rule name:
     cargo run -p rulegen {{name}} promise
 
+new-vitest-rule name:
+    cargo run -p rulegen {{name}} vitest
+
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}

@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// array.some(Boolean);
     /// ```
     PreferNativeCoercionFunctions,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferNativeCoercionFunctions {

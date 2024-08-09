@@ -246,13 +246,11 @@ impl RequireHook {
 #[test]
 fn tests() {
     use crate::tester::Tester;
-    use std::path::PathBuf;
 
-    let jest_path = "/require_hook.test.ts";
 
     let pass = vec![
-        ("describe()", None, None, None),
-        ("describe(\"just a title\")", None, None, None),
+        ("describe()", None),
+        ("describe(\"just a title\")", None),
         (
             "
                 describe('a test', () =>
@@ -262,8 +260,6 @@ fn tests() {
                 );
             ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -271,8 +267,6 @@ fn tests() {
                     //
                 });
             ",
-            None,
-            None,
             None,
         ),
         (
@@ -284,8 +278,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -294,8 +286,6 @@ fn tests() {
                     expect(myFn()).toBe(1);
                 });
             ",
-            None,
-            None,
             None,
         ),
         (
@@ -309,8 +299,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -322,8 +310,6 @@ fn tests() {
                     });
                 });
             ",
-            None,
-            None,
             None,
         ),
         (
@@ -337,8 +323,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -348,8 +332,6 @@ fn tests() {
                     });
                 });
             ",
-            None,
-            None,
             None,
         ),
         (
@@ -366,8 +348,6 @@ fn tests() {
                     });
                 });
             ",
-            None,
-            None,
             None,
         ),
         (
@@ -386,8 +366,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -397,8 +375,6 @@ fn tests() {
                     consoleErrorSpy = jest.spyOn(console, 'error');
                 });
             ",
-            None,
-            None,
             None,
         ),
         (
@@ -410,8 +386,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -422,8 +396,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -443,8 +415,6 @@ fn tests() {
                     expect(isCity('San Juan')).toBeTruthy();
                 });
             ",
-            None,
-            None,
             None,
         ),
         (
@@ -468,8 +438,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            None,
         ),
         (
             "
@@ -482,8 +450,6 @@ fn tests() {
                 });
             ",
             Some(serde_json::json!([{ "allowedFunctionCalls": ["enableAutoDestroy"] }])),
-            None,
-            None,
         ),
         (
             "
@@ -503,13 +469,11 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            None,
         ),
     ];
 
     let fail = vec![
-        ("setup();", None, None, Some(PathBuf::from(jest_path))),
+        ("setup();", None),
         (
             "
                 describe('some tests', () => {
@@ -517,8 +481,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -529,8 +491,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -551,8 +511,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -563,8 +521,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -575,21 +531,15 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
-        ("let value = 1", None, None, Some(PathBuf::from(jest_path))),
+        ("let value = 1", None),
         (
             "let consoleErrorSpy, consoleWarnSpy = jest.spyOn(console, 'error');",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "let consoleErrorSpy = jest.spyOn(console, 'error'), consoleWarnSpy;",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -645,8 +595,6 @@ fn tests() {
                 clearCityDatabase();
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -659,8 +607,6 @@ fn tests() {
                 });
             ",
             Some(serde_json::json!([{ "allowedFunctionCalls": ["someOtherName"] }])),
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
         (
             "
@@ -680,8 +626,6 @@ fn tests() {
                 });
             ",
             None,
-            None,
-            Some(PathBuf::from(jest_path)),
         ),
     ];
 

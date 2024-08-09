@@ -1,7 +1,8 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
+use oxc_ast::{ast::*, AstBuilder};
+use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::CompressOptions;
+use crate::{CompressOptions, CompressorPass};
 
 /// Remove syntax from the AST.
 ///
@@ -13,30 +14,34 @@ pub struct RemoveSyntax<'a> {
     options: CompressOptions,
 }
 
-impl<'a> VisitMut<'a> for RemoveSyntax<'a> {
-    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+impl<'a> CompressorPass<'a> for RemoveSyntax<'a> {}
+
+impl<'a> Traverse<'a> for RemoveSyntax<'a> {
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         stmts.retain(|stmt| {
             !(matches!(stmt, Statement::EmptyStatement(_))
                 || self.drop_debugger(stmt)
                 || self.drop_console(stmt))
         });
-        walk_mut::walk_statements(self, stmts);
     }
 
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.strip_parenthesized_expression(expr);
         self.compress_console(expr);
-        walk_mut::walk_expression(self, expr);
+    }
+
+    fn exit_arrow_function_expression(
+        &mut self,
+        expr: &mut ArrowFunctionExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.recover_arrow_expression_after_drop_console(expr);
     }
 }
 
 impl<'a> RemoveSyntax<'a> {
     pub fn new(ast: AstBuilder<'a>, options: CompressOptions) -> Self {
         Self { ast, options }
-    }
-
-    pub fn build(&mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
     }
 
     fn strip_parenthesized_expression(&self, expr: &mut Expression<'a>) {
@@ -64,6 +69,12 @@ impl<'a> RemoveSyntax<'a> {
     fn compress_console(&mut self, expr: &mut Expression<'a>) {
         if self.options.drop_console && Self::is_console(expr) {
             *expr = self.ast.void_0();
+        }
+    }
+
+    fn recover_arrow_expression_after_drop_console(&self, expr: &mut ArrowFunctionExpression<'a>) {
+        if self.options.drop_console && expr.expression && expr.body.is_empty() {
+            expr.expression = false;
         }
     }
 

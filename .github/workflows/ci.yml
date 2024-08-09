@@ -274,10 +274,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: |
-            src:
-              - 'crates/oxc_ast/src/ast/**'
-              - 'tasks/ast_codegen/src/**'
+          filters: '.github/.generated_ast_watch_list.yml'
 
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'

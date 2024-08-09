@@ -277,7 +277,7 @@ impl Tester {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let options = LintOptions::default()
-            .with_fix(is_fix.then_some(FixKind::DangerousFix).unwrap_or_default())
+            .with_fix(is_fix.then_some(FixKind::All).unwrap_or_default())
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
             .with_vitest_plugin(self.vitest_plugin)
@@ -296,6 +296,8 @@ impl Tester {
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
+        } else if self.jest_plugin {
+            self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()
         };
