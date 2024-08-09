@@ -37,11 +37,11 @@ impl Generator for DeriveCloneIn {
 
                 use oxc_allocator::{Allocator, CloneIn};
 
-                ///@@
+                ///@@line_break
                 #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
-                ///@@
+                ///@@line_break
                 #(#impls)*
             },
         ))
@@ -99,7 +99,7 @@ fn impl_clone_in(
 ) -> TokenStream {
     if has_lifetime {
         quote! {
-            ///@@
+            ///@@line_break
             impl <'old_alloc, 'new_alloc> CloneIn<'new_alloc> for #ty_ident<'old_alloc> {
                 type Cloned = #ty_ident<'new_alloc>;
                 fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
@@ -109,7 +109,7 @@ fn impl_clone_in(
         }
     } else {
         quote! {
-            ///@@
+            ///@@line_break
             impl <'alloc> CloneIn<'alloc> for #ty_ident {
                 type Cloned = #ty_ident;
                 fn clone_in(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {

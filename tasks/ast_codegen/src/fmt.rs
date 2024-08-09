@@ -30,8 +30,8 @@ pub fn cargo_fmt() {
 ///
 /// * `///@ foo` becomes `// foo`.
 /// * `//!@ foo` becomes `// foo`.
-/// * `///@@` is removed - i.e. line break.
-/// * `//!@@` is removed - i.e. line break.
+/// * `///@@line_break` is removed - i.e. line break.
+/// * `//!@@line_break` is removed - i.e. line break.
 ///
 /// `quote!` macro ignores plain comments, but we can use these to generate plain comments
 /// in generated code.
@@ -43,7 +43,7 @@ pub fn cargo_fmt() {
 /// // or `quote!(#![doc = #comment])`
 /// ```
 ///
-/// `//!@@` can be used to insert a line break in a position where `///@@`
+/// `//!@@line_break` can be used to insert a line break in a position where `///@@line_break`
 /// is not valid syntax e.g. before an `#![allow(...)]`.
 struct CommentReplacer;
 
@@ -51,7 +51,7 @@ impl Replacer for CommentReplacer {
     fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
         assert_eq!(caps.len(), 2);
         let body = caps.get(1).unwrap().as_str();
-        if body != "@" {
+        if body != "@line_break" {
             dst.push_str("//");
             dst.push_str(body);
         }

@@ -47,21 +47,21 @@ impl Generator for AstBuilderGenerator {
                     clippy::fn_params_excessive_bools,
                 )]
 
-                ///@@
+                ///@@line_break
                 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
 
-                ///@@
+                ///@@line_break
                 #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
 
-                ///@@
+                ///@@line_break
                 /// AST builder for creating AST nodes
                 #[derive(Clone, Copy)]
                 pub struct AstBuilder<'a> {
                     pub allocator: &'a Allocator,
                 }
 
-                ///@@
+                ///@@line_break
                 impl<'a> AstBuilder<'a> {
                     #(#fns)*
                 }
@@ -124,7 +124,7 @@ fn generate_enum_inherit_builder_fn(
         enum_builder_name(enum_ident.to_string(), inherit.super_.name().inner_name().to_string());
 
     quote! {
-        ///@@
+        ///@@line_break
         #[inline]
         pub fn #fn_name(self, inner: #super_type) -> #enum_as_type {
             #enum_ident::from(inner)
@@ -180,7 +180,7 @@ fn generate_enum_variant_builder_fn(
     }
 
     quote! {
-        ///@@
+        ///@@line_break
         #docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
@@ -214,7 +214,7 @@ fn generate_enum_from_variant_builder_fn(
         " Convert {from_article} [`{var_type_name}`] into {to_article} [`{enum_ident}::{var_ident}`]",
     ));
     quote! {
-        ///@@
+        ///@@line_break
         #docs
         #[inline]
         pub fn #fn_name<T>(self, inner: T) -> #enum_type where T: IntoIn<'a, #var_type> {
@@ -289,14 +289,14 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
             .with_params(&params);
 
     quote! {
-        ///@@
+        ///@@line_break
         #fn_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type  #where_clause {
             #ident { #(#fields),* }
         }
 
-        ///@@
+        ///@@line_break
         #alloc_docs
         #[inline]
         pub fn #alloc_fn_name #generic_params (self, #(#params),*) -> Box<'a, #as_type> #where_clause {
