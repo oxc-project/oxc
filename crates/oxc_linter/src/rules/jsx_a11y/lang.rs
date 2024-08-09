@@ -26,7 +26,7 @@ pub struct Lang;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The lang prop on the <html> element must be a valid IETF's BCP 47 language tag.
+    /// The lang prop on the `<html>` element must be a valid IETF's BCP 47 language tag.
     ///
     /// ### Why is this bad?
     ///
@@ -39,13 +39,13 @@ declare_oxc_lint!(
     /// ### Example
     ///
     /// // good
-    /// ```javascript
+    /// ```jsx
     /// <html lang="en">
     /// <html lang="en-US">
     /// ```
     ///
     /// // bad
-    /// ```javascript
+    /// ```jsx
     /// <html>
     /// <html lang="foo">
     /// ````

@@ -1,8 +1,8 @@
-use std::fmt::Write;
+use std::{borrow::Cow, fmt::Write};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{rules::RULES, Linter, RuleCategory};
+use crate::{rules::RULES, Linter, RuleCategory, RuleFixMeta};
 
 pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
@@ -23,6 +23,7 @@ pub struct RuleTableRow {
     pub category: RuleCategory,
     pub documentation: Option<&'static str>,
     pub turned_on_by_default: bool,
+    pub autofix: RuleFixMeta,
 }
 
 impl Default for RuleTable {
@@ -49,6 +50,7 @@ impl RuleTable {
                     plugin: rule.plugin_name().to_string(),
                     category: rule.category(),
                     turned_on_by_default: default_rules.contains(name),
+                    autofix: rule.fix(),
                 }
             })
             .collect::<Vec<_>>();
@@ -88,7 +90,11 @@ impl RuleTable {
 }
 
 impl RuleTableSection {
-    pub fn render_markdown_table(&self) -> String {
+    /// Renders all the rules in this section as a markdown table.
+    ///
+    /// Provide [`Some`] prefix to render the rule name as a link. Provide
+    /// [`None`] to just display the rule name as text.
+    pub fn render_markdown_table(&self, link_prefix: Option<&str>) -> String {
         let mut s = String::new();
         let category = &self.category;
         let rows = &self.rows;
@@ -108,7 +114,12 @@ impl RuleTableSection {
             let plugin_name = &row.plugin;
             let (default, default_width) =
                 if row.turned_on_by_default { ("✅", 6) } else { ("", 7) };
-            writeln!(s, "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
+            let rendered_name = if let Some(prefix) = link_prefix {
+                Cow::Owned(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"))
+            } else {
+                Cow::Borrowed(rule_name)
+            };
+            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
         }
 
         s

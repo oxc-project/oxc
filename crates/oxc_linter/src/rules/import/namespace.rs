@@ -40,10 +40,12 @@ pub struct Namespace {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces names exist at the time they are dereferenced, when imported as a full namespace (i.e. import * as foo from './foo'; foo.bar(); will report if bar is not exported by ./foo.).
-    /// Will report at the import declaration if there are no exported names found.
-    /// Also, will report for computed references (i.e. foo["bar"]()).
-    /// Reports on assignment to a member of an imported namespace.
+    /// Enforces names exist at the time they are dereferenced, when imported as
+    /// a full namespace (i.e. `import * as foo from './foo'; foo.bar();` will
+    /// report if bar is not exported by `./foo.`).  Will report at the import
+    /// declaration if there are no exported names found.  Also, will report for
+    /// computed references (i.e. `foo["bar"]()`).  Reports on assignment to a
+    /// member of an imported namespace.
     Namespace,
     correctness
 );

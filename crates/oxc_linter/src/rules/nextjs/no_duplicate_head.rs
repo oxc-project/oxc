@@ -10,13 +10,13 @@ pub struct NoDuplicateHead;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Prevent duplicate usage of <Head> in pages/_document.js.
+    /// Prevent duplicate usage of `<Head>` in `pages/_document.js``.
     ///
     /// ### Why is this bad?
     /// This can cause unexpected behavior in your application.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// import Document, { Html, Head, Main, NextScript } from 'next/document'
     /// class MyDocument extends Document {
     ///   static async getInitialProps(ctx) {
