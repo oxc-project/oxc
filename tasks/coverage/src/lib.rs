@@ -5,6 +5,7 @@ mod suite;
 // Suites
 mod babel;
 mod misc;
+mod semantic;
 mod test262;
 mod typescript;
 // Tools

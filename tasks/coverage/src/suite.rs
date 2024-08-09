@@ -31,14 +31,45 @@ pub enum TestResult {
     Passed,
     IncorrectlyPassed,
     #[allow(unused)]
-    // (actual, expected)
+    /// (actual, expected)
     Mismatch(String, String),
+    /// Opposite of [`TestResult::Mismatch`]. Two things matched when they
+    /// shouldn't have.
+    ///
+    /// Last string is an optional explanation/message.
+    UnexpectedMatch(/* result, left and right are eq */ String, Option<&'static str>),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
     RuntimeError(String),
     CodegenError(/* reason */ &'static str),
+    SemanticError(String),
     DuplicatedComments(String),
     Snapshot(String),
+    Compound(Vec<TestResult>),
+}
+impl From<Vec<TestResult>> for TestResult {
+    #[inline]
+    fn from(value: Vec<TestResult>) -> Self {
+        TestResult::Compound(value)
+    }
+}
+impl From<TestResult> for Vec<TestResult> {
+    fn from(value: TestResult) -> Self {
+        match value {
+            TestResult::Compound(results) => results,
+            result => vec![result],
+        }
+    }
+}
+
+impl TestResult {
+    pub fn passed(&self) -> bool {
+        match self {
+            Self::Passed | Self::CorrectError(_, _) => true,
+            Self::Compound(results) => results.iter().all(Self::passed),
+            _ => false,
+        }
+    }
 }
 
 pub struct CoverageReport<'a, T> {
@@ -368,12 +399,30 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     fn print<W: Write>(&self, args: &AppArgs, writer: &mut W) -> std::io::Result<()> {
-        match self.test_result() {
+        self.print_result(self.test_result(), args, writer)
+    }
+
+    fn print_result<W: Write>(
+        &self,
+        result: &TestResult,
+        args: &AppArgs,
+        writer: &mut W,
+    ) -> std::io::Result<()> {
+        match result {
             TestResult::ParseError(error, _) => {
                 writer.write_all(
                     format!("Expect to Parse: {:?}\n", normalize_path(self.path())).as_bytes(),
                 )?;
                 writer.write_all(error.as_bytes())?;
+            }
+            TestResult::SemanticError(error) => {
+                writer.write_all(
+                    format!("Expected valid semantics: {:?}\n", normalize_path(self.path()))
+                        .as_bytes(),
+                )?;
+                writer.write_all(&[b'\t'])?;
+                writer.write_all(error.as_bytes())?;
+                writer.write_all(&[b'\n'])?;
             }
             TestResult::Mismatch(ast_string, expected_ast_string) => {
                 writer.write_all(
@@ -382,6 +431,25 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
                     println!("Mismatch: {:?}", normalize_path(self.path()));
+                }
+            }
+            TestResult::UnexpectedMatch(bad_match, reason) => {
+                if let Some(reason) = reason {
+                    writer.write_all(
+                        format!(
+                            "Unexpected match ({bad_match}) - {reason}: {:?}\n",
+                            normalize_path(self.path())
+                        )
+                        .as_bytes(),
+                    )?;
+                } else {
+                    writer.write_all(
+                        format!(
+                            "Unexpected match ({bad_match}): {:?}\n",
+                            normalize_path(self.path())
+                        )
+                        .as_bytes(),
+                    )?;
                 }
             }
             TestResult::RuntimeError(error) => {
@@ -412,6 +480,11 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     )
                     .as_bytes(),
                 )?;
+            }
+            TestResult::Compound(results) => {
+                for result in results {
+                    self.print_result(result, args, writer)?;
+                }
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
