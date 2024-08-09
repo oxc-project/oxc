@@ -109,7 +109,8 @@ fn naive_has_return(node: &Statement) -> bool {
             };
             matches!(last_child, Statement::ReturnStatement(_))
         }
-        node => matches!(node, Statement::ReturnStatement(_)),
+        Statement::ReturnStatement(_) => true,
+        _ => false,
     }
 }
 
