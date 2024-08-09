@@ -73,6 +73,8 @@ impl TestFiles {
             "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.269/build/pdf.mjs",
             // ES5 (3.9M)
             "https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.js",
+            // Jest test file from Jest's own repo (8.0K)
+            "https://raw.githubusercontent.com/jestjs/jest/main/e2e/__tests__/coverageReport.test.ts",
         ]
     }
 }
