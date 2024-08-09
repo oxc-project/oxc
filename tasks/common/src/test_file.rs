@@ -61,7 +61,7 @@ impl TestFiles {
         Self { files: vec![file] }
     }
 
-    fn complicated_urls() -> [&'static str; 5] {
+    fn complicated_urls() -> [&'static str; 6] {
         [
             // TypeScript syntax (2.81MB)
             "https://raw.githubusercontent.com/microsoft/TypeScript/v5.3.3/src/compiler/checker.ts",
