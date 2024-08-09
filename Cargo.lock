@@ -1483,14 +1483,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_js_regex"
-version = "0.0.0"
-dependencies = [
- "oxc_allocator",
- "oxc_span",
-]
-
-[[package]]
 name = "oxc_language_server"
 version = "0.0.1"
 dependencies = [
@@ -1692,6 +1684,18 @@ dependencies = [
  "oxc_tasks_common",
  "pico-args",
  "walkdir",
+]
+
+[[package]]
+name = "oxc_regexp_parser"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_span",
+ "phf",
+ "rustc-hash",
+ "unicode-id-start",
 ]
 
 [[package]]

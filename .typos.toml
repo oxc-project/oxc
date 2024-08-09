@@ -23,7 +23,10 @@ extend-exclude = [
 ]
 
 [default]
-extend-ignore-re = ["(?Rm)^.*(#|//)\\s*spellchecker:disable-line$"]
+extend-ignore-re = [
+  "(?Rm)^.*(#|//)\\s*spellchecker:disable-line$",
+  "(?s)(#|//)\\s*spellchecker:off.*?\\n\\s*(#|//)\\s*spellchecker:on",
+]
 
 [default.extend-words]
 trivias   = "trivias"
