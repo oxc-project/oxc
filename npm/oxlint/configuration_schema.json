@@ -5,13 +5,26 @@
   "type": "object",
   "properties": {
     "env": {
-      "$ref": "#/definitions/OxlintEnv"
+      "default": {
+        "builtin": true
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintEnv"
+        }
+      ]
     },
     "globals": {
-      "$ref": "#/definitions/OxlintGlobals"
+      "default": {},
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintGlobals"
+        }
+      ]
     },
     "rules": {
       "description": "See [Oxlint Rules](./rules)",
+      "default": {},
       "allOf": [
         {
           "$ref": "#/definitions/OxlintRules"
@@ -19,7 +32,34 @@
       ]
     },
     "settings": {
-      "$ref": "#/definitions/OxlintSettings"
+      "default": {
+        "jsx-a11y": {
+          "polymorphicPropName": null,
+          "components": {}
+        },
+        "next": {
+          "rootDir": []
+        },
+        "react": {
+          "formComponents": [],
+          "linkComponents": []
+        },
+        "jsdoc": {
+          "ignorePrivate": false,
+          "ignoreInternal": false,
+          "ignoreReplacesDocs": true,
+          "overrideReplacesDocs": true,
+          "augmentsExtendsReplacesDocs": false,
+          "implementsReplacesDocs": false,
+          "exemptDestructuredRootsFromChecks": false,
+          "tagNamePreference": {}
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintSettings"
+        }
+      ]
     }
   },
   "definitions": {
@@ -37,7 +77,7 @@
           ]
         },
         {
-          "description": "Oxlint rule.\n    \n- 0: Turn off the rule.\n- 1: Turn the rule on as a warning (doesn't affect exit code).\n- 2: Turn the rule on as an error (will exit with a failure code).",
+          "description": "Oxlint rule.\n\n- 0: Turn off the rule.\n- 1: Turn the rule on as a warning (doesn't affect exit code).\n- 2: Turn the rule on as an error (will exit with a failure code).",
           "type": "integer",
           "format": "uint32",
           "maximum": 2.0,
@@ -143,6 +183,7 @@
           "type": "boolean"
         },
         "tagNamePreference": {
+          "default": {},
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/TagNamePreference"
@@ -172,7 +213,12 @@
       "type": "object",
       "properties": {
         "rootDir": {
-          "$ref": "#/definitions/OneOrMany_for_String"
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneOrMany_for_String"
+            }
+          ]
         }
       }
     },
@@ -214,16 +260,53 @@
       "type": "object",
       "properties": {
         "jsdoc": {
-          "$ref": "#/definitions/JSDocPluginSettings"
+          "default": {
+            "ignorePrivate": false,
+            "ignoreInternal": false,
+            "ignoreReplacesDocs": true,
+            "overrideReplacesDocs": true,
+            "augmentsExtendsReplacesDocs": false,
+            "implementsReplacesDocs": false,
+            "exemptDestructuredRootsFromChecks": false,
+            "tagNamePreference": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSDocPluginSettings"
+            }
+          ]
         },
         "jsx-a11y": {
-          "$ref": "#/definitions/JSXA11yPluginSettings"
+          "default": {
+            "polymorphicPropName": null,
+            "components": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSXA11yPluginSettings"
+            }
+          ]
         },
         "next": {
-          "$ref": "#/definitions/NextPluginSettings"
+          "default": {
+            "rootDir": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NextPluginSettings"
+            }
+          ]
         },
         "react": {
-          "$ref": "#/definitions/ReactPluginSettings"
+          "default": {
+            "formComponents": [],
+            "linkComponents": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReactPluginSettings"
+            }
+          ]
         }
       }
     },
@@ -231,12 +314,14 @@
       "type": "object",
       "properties": {
         "formComponents": {
+          "default": [],
           "type": "array",
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
         },
         "linkComponents": {
+          "default": [],
           "type": "array",
           "items": {
             "$ref": "#/definitions/CustomComponent"
