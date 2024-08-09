@@ -1,6 +1,7 @@
 mod env;
 mod globals;
 mod rules;
+mod schema;
 mod settings;
 
 use std::path::Path;

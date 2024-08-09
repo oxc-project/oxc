@@ -1,8 +1,6 @@
-use std::{borrow::Cow, fmt, ops::Deref};
+use std::{fmt, ops::Deref};
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
-use rustc_hash::FxHashMap;
-use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
     Deserialize,
@@ -23,27 +21,6 @@ pub struct ESLintRule {
     pub rule_name: String,
     pub severity: AllowWarnDeny,
     pub config: Option<serde_json::Value>,
-}
-
-impl JsonSchema for OxlintRules {
-    fn schema_name() -> String {
-        "OxlintRules".to_owned()
-    }
-
-    fn schema_id() -> Cow<'static, str> {
-        Cow::Borrowed("OxlintRules")
-    }
-
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        #[allow(unused)]
-        #[derive(Debug, Clone, JsonSchema)]
-        #[serde(untagged)]
-        enum DummyRule {
-            Toggle(AllowWarnDeny),
-            ToggleAndConfig(Vec<serde_json::Value>),
-        }
-        gen.subschema_for::<FxHashMap<String, DummyRule>>()
-    }
 }
 
 // Manually implement Deserialize because the type is a bit complex...

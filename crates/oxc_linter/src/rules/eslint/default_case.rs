@@ -3,6 +3,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::{Regex, RegexBuilder};
+use schemars::{
+    schema::{Schema, SchemaObject},
+    JsonSchema,
+};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -18,6 +22,26 @@ pub struct DefaultCase(Box<DefaultCaseConfig>);
 #[derive(Debug, Default, Clone)]
 pub struct DefaultCaseConfig {
     comment_pattern: Option<Regex>,
+}
+impl JsonSchema for DefaultCaseConfig {
+    fn schema_name() -> String {
+        "DefaultCaseConfig".to_string()
+    }
+    fn json_schema(gen: &mut schemars::r#gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut schema = SchemaObject::default();
+        schema.object().properties.insert("commentPattern".to_string(), {
+            let mut schema = <String>::json_schema(gen);
+            if let Schema::Object(schema) = &mut schema {
+                schema.metadata().title = Some("Comment pattern".to_string());
+                schema.metadata().description = Some(
+                    "A regex pattern to match comments that indicate the default case is omitted."
+                        .to_string(),
+                );
+            }
+            schema.into()
+        });
+        schema.into()
+    }
 }
 
 impl std::ops::Deref for DefaultCase {
@@ -47,6 +71,7 @@ declare_oxc_lint!(
     /// ```
     DefaultCase,
     restriction,
+    DefaultCaseConfig
 );
 
 impl Rule for DefaultCase {
