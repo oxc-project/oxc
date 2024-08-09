@@ -24,7 +24,7 @@ use crate::context::Ctx;
 pub struct ReactRefresh<'a> {
     refresh_reg: Atom<'a>,
     refresh_sig: Atom<'a>,
-    emit_full_signatures: bool,
+    _emit_full_signatures: bool,
     registrations: Vec<(SymbolId, Atom<'a>)>,
     ctx: Ctx<'a>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
@@ -37,7 +37,7 @@ impl<'a> ReactRefresh<'a> {
         Self {
             refresh_reg: ctx.ast.atom(&options.refresh_reg),
             refresh_sig: ctx.ast.atom(&options.refresh_sig),
-            emit_full_signatures: options.emit_full_signatures,
+            _emit_full_signatures: options.emit_full_signatures,
             signature_declarator_items: Vec::new(),
             registrations: Vec::default(),
             ctx,
