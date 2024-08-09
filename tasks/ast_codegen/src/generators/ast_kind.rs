@@ -168,25 +168,25 @@ impl Generator for AstKindGenerator {
                 #header
 
                 use oxc_span::{GetSpan, Span};
-                endl!();
 
+                ///@@
                 #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
-                endl!();
 
+                ///@@
                 #[derive(Debug, Clone, Copy)]
                 pub enum AstType {
                     #(#types),*,
                 }
-                endl!();
 
+                ///@@
                 /// Untyped AST Node Kind
                 #[derive(Debug, Clone, Copy)]
                 pub enum AstKind<'a> {
                     #(#kinds),*,
                 }
-                endl!();
 
+                ///@@
                 impl<'a> GetSpan for AstKind<'a> {
                     #[allow(clippy::match_same_arms)]
                     fn span(&self) -> Span {

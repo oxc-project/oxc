@@ -58,6 +58,7 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
         TokenStream::default()
     } else {
         quote! {
+            ///@@
             #[inline]
             fn alloc<T>(&self, t: &T) -> &'a T {
                 ///@ SAFETY:
@@ -67,7 +68,6 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
                     std::mem::transmute(t)
                 }
             }
-            endl!();
         }
     };
 
@@ -89,47 +89,47 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
             clippy::semicolon_if_nothing_returned,
             clippy::match_wildcard_for_single_variants
         )]
-        endl!();
 
+        ///@@
         use std::cell::Cell;
-        endl!();
 
+        ///@@
         use oxc_allocator::Vec;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
-        endl!();
 
+        ///@@
         #[allow(clippy::wildcard_imports)]
         use crate::ast::*;
         use crate::ast_kind::#ast_kind_type;
-        endl!();
 
+        ///@@
         use #walk_mod::*;
-        endl!();
 
+        ///@@
         /// Syntax tree traversal
         pub trait #trait_name <'a>: Sized {
             #[inline]
             fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
             #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
-            endl!();
 
+            ///@@
             #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
             #[inline]
             fn leave_scope(&mut self) {}
-            endl!();
 
+            ///@@
             #may_alloc
 
             #(#visits)*
         }
-        endl!();
 
+        ///@@
         pub mod #walk_mod {
             use super::*;
-            endl!();
 
+            ///@@
             #(#walks)*
         }
     }
@@ -255,11 +255,11 @@ impl<'a> VisitBuilder<'a> {
         let walk_name = format_ident!("walk_{}", ident_snake);
 
         self.visits.push(quote! {
+            ///@@
             #[inline]
             fn #visit_name (&mut self, it: #as_param_type #extra_params) {
                 #walk_name(self, it #extra_args);
             }
-            endl!();
         });
 
         // We push an empty walk first, because we evaluate - and generate - each walk as we go,
@@ -310,11 +310,11 @@ impl<'a> VisitBuilder<'a> {
 
         // replace the placeholder walker with the actual one!
         self.walks[this_walker] = quote! {
+            ///@@
             #may_inline
             pub fn #walk_name <'a, V: #visit_trait<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
                 #walk_body
             }
-            endl!();
         };
 
         visit_name

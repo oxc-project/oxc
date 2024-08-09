@@ -72,15 +72,15 @@ fn derive(
         #header
 
         #![allow(clippy::match_same_arms)]
-        endl!();
 
+        ///@@
         use oxc_span::#trait_ident;
-        endl!();
 
+        ///@@
         #[allow(clippy::wildcard_imports)]
         use crate::ast::*;
-        endl!();
 
+        ///@@
         #(#impls)*
     }
 }
@@ -101,6 +101,7 @@ fn derive_enum(
     });
 
     quote! {
+        ///@@
         impl #generics #trait_name for #target_type {
             fn #method_name(#self_type) -> #result_type {
                 match self {
@@ -108,7 +109,6 @@ fn derive_enum(
                 }
             }
         }
-        endl!();
     }
 }
 
@@ -132,12 +132,12 @@ fn derive_struct(
     };
 
     quote! {
+        ///@@
         impl #generics #trait_name for #target_type {
             #[inline]
             fn #method_name(#self_type) -> #result_type {
                 #result_expr
             }
         }
-        endl!();
     }
 }

@@ -55,6 +55,7 @@ lazy_static! {
 ///
 /// We use `endl!();` because `quote!` macro ignores whitespace,
 /// so we have to use another means to generate line breaks.
+#[allow(dead_code)] // `endl!` macro is not currently used
 struct EndlReplacer;
 
 impl Replacer for EndlReplacer {
@@ -108,8 +109,8 @@ lazy_static! {
 /// Pretty print
 pub fn pprint(input: &TokenStream) -> String {
     let result = prettyplease::unparse(&parse_file(input.to_string().as_str()).unwrap());
-    let result = ENDL_REGEX.replace_all(&result, EndlReplacer);
-    // `insert!` macro is not currently used
+    // `insert!` and `endl!` macros are not currently used
+    // let result = ENDL_REGEX.replace_all(&result, EndlReplacer);
     // let result = INSERT_REGEX.replace_all(&result, InsertReplacer).to_string();
     let result = COMMENT_REGEX.replace_all(&result, CommentReplacer).to_string();
     result
