@@ -12,6 +12,7 @@ use std::{
 };
 
 use doc_page::render_rule_docs_page;
+use html::HtmlWriter;
 use oxc_linter::table::RuleTable;
 use pico_args::Arguments;
 use table::render_rules_table;

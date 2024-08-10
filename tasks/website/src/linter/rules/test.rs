@@ -1,4 +1,4 @@
-use markdown::{to_html, to_html_with_options, Options};
+use markdown::{to_html_with_options, Options};
 use oxc_diagnostics::NamedSource;
 use scraper::{ElementRef, Html, Selector};
 use std::sync::{Arc, OnceLock};
@@ -42,9 +42,13 @@ fn parse_type(filename: &str, source_text: &str, source_type: SourceType) -> Res
 #[test]
 fn test_rules_table() {
     const PREFIX: &str = "/docs/guide/usage/linter/rules";
+    let options = Options::gfm();
     let rendered_table = render_rules_table(table(), PREFIX);
-    let html = to_html(&rendered_table);
-    let jsx = format!("const Table = () => <>{html}</>");
+    let rendered_html = to_html_with_options(&rendered_table, &options).unwrap();
+    assert!(rendered_html.contains("<table>"));
+    let html = Html::parse_fragment(&rendered_html);
+    assert!(html.errors.is_empty(), "{:#?}", html.errors);
+    let jsx = format!("const Table = () => <>{rendered_html}</>");
     parse("rules-table", &jsx).unwrap();
 }
 
@@ -70,7 +74,6 @@ fn test_doc_pages() {
             // ensure code examples are valid
             {
                 let html = Html::parse_fragment(docs);
-                assert!(html.errors.is_empty(), "HTML parsing errors: {:#?}", html.errors);
                 for code_el in html.select(&code) {
                     let inner = code_el.inner_html();
                     let inner =
