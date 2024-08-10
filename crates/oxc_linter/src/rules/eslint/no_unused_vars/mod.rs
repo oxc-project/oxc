@@ -1,6 +1,7 @@
 mod allowed;
 mod binding_pattern;
 mod diagnostic;
+mod fixers;
 mod ignored;
 mod options;
 mod symbol;
@@ -135,7 +136,8 @@ declare_oxc_lint!(
     /// var global_var = 42;
     /// ```
     NoUnusedVars,
-    nursery
+    nursery,
+    dangerous_suggestion
 );
 
 impl Deref for NoUnusedVars {
@@ -207,9 +209,7 @@ impl NoUnusedVars {
             | AstKind::ImportExpression(_)
             | AstKind::ImportDefaultSpecifier(_)
             | AstKind::ImportNamespaceSpecifier(_) => {
-                if !is_ignored {
-                    ctx.diagnostic(diagnostic::imported(symbol));
-                }
+                ctx.diagnostic(diagnostic::imported(symbol));
             }
             AstKind::VariableDeclarator(decl) => {
                 if self.is_allowed_variable_declaration(symbol, decl) {
@@ -223,7 +223,12 @@ impl NoUnusedVars {
                     } else {
                         diagnostic::declared(symbol)
                     };
-                ctx.diagnostic(report);
+
+                ctx.diagnostic_with_suggestion(report, |fixer| {
+                    // NOTE: suggestions produced by this fixer are all flagged
+                    // as dangerous
+                    self.rename_or_remove_var_declaration(fixer, symbol, decl, declaration.id())
+                });
             }
             AstKind::FormalParameter(param) => {
                 if self.is_allowed_argument(ctx.semantic().as_ref(), symbol, param) {

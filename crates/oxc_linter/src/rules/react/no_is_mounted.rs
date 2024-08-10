@@ -25,7 +25,7 @@ declare_oxc_lint!(
     /// and it is on its way to being officially deprecated.///
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// class Hello extends React.Component {
     ///     someMethod() {
     ///         if (!this.isMounted()) {

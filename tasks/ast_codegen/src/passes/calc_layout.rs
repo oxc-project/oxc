@@ -6,10 +6,11 @@ use quote::ToTokens;
 use syn::Type;
 
 use crate::{
+    codegen::EarlyCtx,
     layout::{KnownLayout, Layout},
     rust_ast::{AstRef, AstType, Enum, Struct},
     util::{NormalizeError, TypeAnalysis, TypeExt, TypeWrapper},
-    EarlyCtx, Result,
+    Result,
 };
 
 use super::{define_pass, Pass};
@@ -25,10 +26,6 @@ define_pass! {
 }
 
 impl Pass for CalcLayout {
-    fn name(&self) -> &'static str {
-        stringify!(CalcLayout)
-    }
-
     fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {
         calc_layout(ty, ctx)
     }

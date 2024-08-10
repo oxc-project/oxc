@@ -28,11 +28,11 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Generic type parameters (<T>) in TypeScript may be "constrained" with an extends keyword.
+    /// Generic type parameters (`<T>`) in TypeScript may be "constrained" with an extends keyword.
     /// When no extends is provided, type parameters default a constraint to unknown. It is therefore redundant to extend from any or unknown.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```typescript
     /// interface FooAny<T extends any> {}
     /// interface FooUnknown<T extends unknown> {}
     /// type BarAny<T extends any> = {};

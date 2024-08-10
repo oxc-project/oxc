@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// Enforce `key` prop for elements in array
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// [1, 2, 3].map(x => <App />);
     /// [1, 2, 3]?.map(x => <BabelEslintApp />)

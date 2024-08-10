@@ -41,7 +41,7 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <html />
     ///

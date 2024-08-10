@@ -43,6 +43,8 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
+    /// array.reduce(reducer, initialValue);
+    /// array.reduceRight(reducer, initialValue);
     /// ```
     NoArrayReduce,
     restriction

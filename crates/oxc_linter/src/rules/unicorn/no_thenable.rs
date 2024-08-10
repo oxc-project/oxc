@@ -44,14 +44,16 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// const foo = {
-    ///     unicorn: 1,
-    ///     then() {},
-    /// };
+    ///     async function example() {
+    ///     const foo = {
+    ///         unicorn: 1,
+    ///         then() {},
+    ///     };
     ///
-    /// const {unicorn} = await foo;
+    ///     const { unicorn } = await foo;
     ///
-    /// console.log('after'); //<- This will never execute
+    ///     console.log('after'); //<- This will never execute
+    /// }
     /// ```
     NoThenable,
     correctness

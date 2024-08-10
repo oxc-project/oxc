@@ -19,8 +19,16 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     ///
-    /// ### Example
-    /// ```javascript
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```{{language}}
+    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```{{language}}
+    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
     {{pascal_rule_name}},
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
@@ -28,7 +36,7 @@ declare_oxc_lint!(
              
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix-dangerous', 'suggestion', and 'suggestion-dangerous'
+             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
 );
 
 impl Rule for {{pascal_rule_name}} {

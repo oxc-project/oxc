@@ -7,12 +7,13 @@ use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident};
 
 use crate::{
-    generators::{ast_kind::BLACK_LIST as KIND_BLACK_LIST, insert},
+    codegen::LateCtx,
+    generators::ast_kind::BLACK_LIST as KIND_BLACK_LIST,
     markers::{ScopeMarkers, VisitArg, VisitMarkers},
     output,
     schema::{EnumDef, GetIdent, StructDef, ToType, TypeDef},
     util::{StrExt, ToIdent, TokenStreamExt, TypeWrapper},
-    Generator, GeneratorOutput, LateCtx,
+    Generator, GeneratorOutput,
 };
 
 use super::{define_generator, generated_header};
@@ -26,10 +27,6 @@ define_generator! {
 }
 
 impl Generator for VisitGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(VisitGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         GeneratorOutput::Stream((
             output(crate::AST_CRATE, "visit.rs"),
@@ -39,10 +36,6 @@ impl Generator for VisitGenerator {
 }
 
 impl Generator for VisitMutGenerator {
-    fn name(&self) -> &'static str {
-        stringify!(VisitMutGenerator)
-    }
-
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         GeneratorOutput::Stream((
             output(crate::AST_CRATE, "visit_mut.rs"),
@@ -51,28 +44,10 @@ impl Generator for VisitMutGenerator {
     }
 }
 
-const CLIPPY_ALLOW: &str = "\
-    unused_variables,\
-    clippy::extra_unused_type_parameters,\
-    clippy::explicit_iter_loop,\
-    clippy::self_named_module_files,\
-    clippy::semicolon_if_nothing_returned,\
-    clippy::match_wildcard_for_single_variants";
-
 fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
     let header = generated_header!();
-    // we evaluate it outside of quote to take advantage of expression evaluation
-    // otherwise the `\n\` wouldn't work!
-    let file_docs = insert! {"\
-        //! Visitor Pattern\n\
-        //!\n\
-        //! See:\n\
-        //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)\n\
-        //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
-    "};
 
     let (visits, walks) = VisitBuilder::new(ctx, MUT).build();
-    let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
 
     let walk_mod = if MUT { quote!(walk_mut) } else { quote!(walk) };
     let trait_name = if MUT { quote!(VisitMut) } else { quote!(Visit) };
@@ -83,12 +58,12 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
         TokenStream::default()
     } else {
         quote! {
+            ///@@line_break
             #[inline]
             fn alloc<T>(&self, t: &T) -> &'a T {
-                insert!("// SAFETY:");
-                insert!("// This should be safe as long as `src` is an reference from the allocator.");
-                insert!("// But honestly, I'm not really sure if this is safe.");
-
+                ///@ SAFETY:
+                ///@ This should be safe as long as `src` is an reference from the allocator.
+                ///@ But honestly, I'm not really sure if this is safe.
                 unsafe {
                     std::mem::transmute(t)
                 }
@@ -98,28 +73,39 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
 
     quote! {
         #header
-        #file_docs
-        #clippy_attr
 
-        endl!();
+        //! Visitor Pattern
+        //!
+        //! See:
+        //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
+        //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)
 
+        //!@@line_break
+        #![allow(
+            unused_variables,
+            clippy::extra_unused_type_parameters,
+            clippy::explicit_iter_loop,
+            clippy::self_named_module_files,
+            clippy::semicolon_if_nothing_returned,
+            clippy::match_wildcard_for_single_variants
+        )]
+
+        ///@@line_break
         use std::cell::Cell;
 
-        endl!();
-
+        ///@@line_break
         use oxc_allocator::Vec;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-        endl!();
+        ///@@line_break
+        #[allow(clippy::wildcard_imports)]
+        use crate::ast::*;
+        use crate::ast_kind::#ast_kind_type;
 
-        use crate::{ast::*, ast_kind::#ast_kind_type};
-
-        endl!();
-
+        ///@@line_break
         use #walk_mod::*;
 
-        endl!();
-
+        ///@@line_break
         /// Syntax tree traversal
         pub trait #trait_name <'a>: Sized {
             #[inline]
@@ -127,27 +113,24 @@ fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
             #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
 
-            endl!();
-
+            ///@@line_break
             #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
             #[inline]
             fn leave_scope(&mut self) {}
 
-            endl!();
-
+            ///@@line_break
             #may_alloc
 
             #(#visits)*
         }
 
-        endl!();
-
+        ///@@line_break
         pub mod #walk_mod {
             use super::*;
 
+            ///@@line_break
             #(#walks)*
-
         }
     }
 }
@@ -170,9 +153,8 @@ impl<'a> VisitBuilder<'a> {
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {
         let program = self
             .ctx
-            .schema
-            .definitions
-            .iter()
+            .schema()
+            .into_iter()
             .filter(|it| it.visitable())
             .find(|it| it.name() == "Program")
             .expect("Couldn't find the `Program` type!");
@@ -273,7 +255,7 @@ impl<'a> VisitBuilder<'a> {
         let walk_name = format_ident!("walk_{}", ident_snake);
 
         self.visits.push(quote! {
-            endl!();
+            ///@@line_break
             #[inline]
             fn #visit_name (&mut self, it: #as_param_type #extra_params) {
                 #walk_name(self, it #extra_args);
@@ -328,7 +310,7 @@ impl<'a> VisitBuilder<'a> {
 
         // replace the placeholder walker with the actual one!
         self.walks[this_walker] = quote! {
-            endl!();
+            ///@@line_break
             #may_inline
             pub fn #walk_name <'a, V: #visit_trait<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
                 #walk_body
@@ -495,13 +477,11 @@ impl<'a> VisitBuilder<'a> {
             });
 
         let node_events = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-            (
-                insert!(
-                    "// NOTE: {} doesn't exists!",
-                    if self.is_mut { "AstType" } else { "AstKind" }
-                ),
-                TokenStream::default(),
-            )
+            let comment = format!(
+                "@ NOTE: {} doesn't exists!",
+                if self.is_mut { "AstType" } else { "AstKind" }
+            );
+            (quote!(#![doc = #comment]), TokenStream::default())
         } else {
             let kind = self.kind_type(&ident);
             (

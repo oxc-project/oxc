@@ -3,8 +3,9 @@
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::{GetSpanMut, Span};
+use oxc_span::GetSpanMut;
 
+#[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
 impl GetSpanMut for BooleanLiteral {
@@ -2016,6 +2017,20 @@ impl<'a> GetSpanMut for JSXClosingElement<'a> {
 }
 
 impl<'a> GetSpanMut for JSXFragment<'a> {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXOpeningFragment {
+    #[inline]
+    fn span_mut(&mut self) -> &mut Span {
+        &mut self.span
+    }
+}
+
+impl GetSpanMut for JSXClosingFragment {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span

@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// This rule prevents using string literals in ref attributes.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// var Hello = createReactClass({
     ///   render: function() {

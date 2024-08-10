@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use syn::parse_quote;
 
-use crate::{rust_ast::Inherit, util::NormalizeError, EarlyCtx};
+use crate::{codegen::EarlyCtx, rust_ast::Inherit, util::NormalizeError};
 
 use super::{define_pass, AstType, Pass, Result};
 
@@ -33,10 +33,6 @@ define_pass! {
 }
 
 impl Pass for Linker {
-    fn name(&self) -> &'static str {
-        stringify!(Linker)
-    }
-
     /// # Panics
     /// On invalid inheritance.
     fn each(&mut self, ty: &mut AstType, ctx: &EarlyCtx) -> crate::Result<bool> {
