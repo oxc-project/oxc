@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// This rule aims to ensure that only meaningful interfaces are declared in the code.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// interface Foo {}
     /// interface Bar extends Foo {}
     /// ```
@@ -67,6 +67,10 @@ impl Rule for NoEmptyInterface {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

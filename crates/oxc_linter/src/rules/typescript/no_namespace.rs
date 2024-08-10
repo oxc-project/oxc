@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// declare namespace foo {}
     /// ```
     NoNamespace,
-    correctness
+    restriction
 );
 
 impl Rule for NoNamespace {
@@ -97,6 +97,10 @@ impl Rule for NoNamespace {
         if let Some(span) = span {
             ctx.diagnostic(no_namespace_diagnostic(span));
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

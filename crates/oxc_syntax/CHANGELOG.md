@@ -4,6 +4,59 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 82e2f6b ast_codegen: Process AST-related `syntax` types. (#4694) (rzvxa)
+- 6a36616 syntax: Derive `CloneIn` for the AST-related items. (#4730) (rzvxa)
+
+### Bug Fixes
+
+- 9f8f299 syntax: Prevent creating invalid u32 IDs (#4675) (overlookmotel)
+
+### Refactor
+
+- e24fb5b syntax: Add explicit enum discriminants to AST related types. (#4691) (rzvxa)
+- 3f3cb62 syntax, span: Reduce #[cfg_attr] boilerplate in type defs (#4698) (overlookmotel)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- 9f8f299 syntax: Prevent creating invalid u32 IDs (#4675) (overlookmotel)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- a558492 codegen: Implement `BinaryExpressionVisitor` (#4548) (Boshen)
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+
+## [0.22.1] - 2024-07-27
+
+### Bug Fixes
+
+- 1667491 syntax: Correct `is_reserved_keyword_or_global_object`'s incorrect function calling. (#4484) (Ethan Goh)
+- 82ba2a0 syntax: Fix unsound use of `NonZeroU32` (#4466) (overlookmotel)
+
+### Performance
+
+- 24beaeb semantic: Give `AstNodeId` a niche (#4469) (overlookmotel)
+- 6a9f4db semantic: Reduce storage size for symbol redeclarations (#4463) (overlookmotel)
+
+### Refactor
+
+- c99b3eb syntax: Give `ScopeId` a niche (#4468) (overlookmotel)
+- 96fc94f syntax: Use `NonMaxU32` for IDs (#4467) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+### Bug Fixes
+
+- f8565ae transformer/typescript: Unexpectedly removed class binding from ExportNamedDeclaration (#4351) (Dunqing)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// when they're all on the class (see: Finding dead code (and dead types) in TypeScript).
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// class StaticConstants {
     /// 	static readonly version = 42;
     ///

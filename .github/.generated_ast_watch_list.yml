@@ -1,0 +1,21 @@
+# To edit this generated file you have to edit `tasks/ast_codegen/src/main.rs`
+# Auto-generated code, DO NOT EDIT DIRECTLY!
+
+src:
+  - 'crates/oxc_ast/src/ast/literal.rs'
+  - 'crates/oxc_ast/src/ast/js.rs'
+  - 'crates/oxc_ast/src/ast/ts.rs'
+  - 'crates/oxc_ast/src/ast/jsx.rs'
+  - 'crates/oxc_syntax/src/number.rs'
+  - 'crates/oxc_syntax/src/operator.rs'
+  - 'crates/oxc_span/src/span/types.rs'
+  - 'crates/oxc_span/src/source_type/types.rs'
+  - 'crates/oxc_ast/src/generated/assert_layouts.rs'
+  - 'crates/oxc_ast/src/generated/ast_kind.rs'
+  - 'crates/oxc_ast/src/generated/ast_builder.rs'
+  - 'crates/oxc_ast/src/generated/derive_clone_in.rs'
+  - 'crates/oxc_ast/src/generated/derive_get_span.rs'
+  - 'crates/oxc_ast/src/generated/derive_get_span_mut.rs'
+  - 'crates/oxc_ast/src/generated/visit.rs'
+  - 'crates/oxc_ast/src/generated/visit_mut.rs'
+  - 'tasks/ast_codegen/src/**'

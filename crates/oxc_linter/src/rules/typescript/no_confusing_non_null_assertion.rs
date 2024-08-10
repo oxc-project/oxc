@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -19,7 +20,7 @@ declare_oxc_lint!(
     /// Using a non-null assertion (!) next to an assign or equals check (= or == or ===) creates code that is confusing as it looks similar to a not equals check (!= !==).
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     ///    a! == b; // a non-null assertions(`!`) and an equals test(`==`)
     ///    a !== b; // not equals test(`!==`)
     ///    a! === b; // a non-null assertions(`!`) and an triple equals test(`===`)
@@ -37,11 +38,19 @@ fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span)
     .with_label(span)
 }
 
-fn wrap_up_no_confusing_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "Confusing combinations of non-null assertion and equal test like \"a! = b\", which looks very similar to not equal \"a != b\"."
-    )
+fn wrap_up_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Confusing combinations of non-null assertion and equal test like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
+    ))
     .with_help("Wrap left-hand side in parentheses to avoid putting non-null assertion \"!\" and \"=\" together.")
+    .with_label(span)
+}
+
+fn confusing_non_null_assignment_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+            "Confusing combinations of non-null assertion and assignment like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
+    ))
+    .with_help("Remove the \"!\", or wrap the left-hand side in parentheses.")
     .with_label(span)
 }
 
@@ -61,10 +70,16 @@ fn get_depth_ends_in_bang(expr: &Expression<'_>) -> Option<u32> {
     }
 }
 
+fn is_confusable_operator(operator: BinaryOperator) -> bool {
+    matches!(operator, BinaryOperator::Equality | BinaryOperator::StrictEquality)
+}
+
 impl Rule for NoConfusingNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::BinaryExpression(binary_expr) => {
+            AstKind::BinaryExpression(binary_expr)
+                if is_confusable_operator(binary_expr.operator) =>
+            {
                 let Some(bang_depth) = get_depth_ends_in_bang(&binary_expr.left) else {
                     return;
                 };
@@ -75,16 +90,19 @@ impl Rule for NoConfusingNonNullAssertion {
                     ));
                 } else {
                     ctx.diagnostic(wrap_up_no_confusing_non_null_assertion_diagnostic(
+                        binary_expr.operator.as_str(),
                         binary_expr.span,
                     ));
                 }
             }
-            AstKind::AssignmentExpression(assignment_expr) => {
+            AstKind::AssignmentExpression(assignment_expr)
+                if assignment_expr.operator == AssignmentOperator::Assign =>
+            {
                 let Some(simple_target) = assignment_expr.left.as_simple_assignment_target() else {
                     return;
                 };
                 let SimpleAssignmentTarget::TSNonNullExpression(_) = simple_target else { return };
-                ctx.diagnostic(not_need_no_confusing_non_null_assertion_diagnostic(
+                ctx.diagnostic(confusing_non_null_assignment_assertion_diagnostic(
                     assignment_expr.operator.as_str(),
                     assignment_expr.span,
                 ));
@@ -92,13 +110,35 @@ impl Rule for NoConfusingNonNullAssertion {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 #[test]
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["a == b!;", "a = b!;", "a !== b;", "a != b;", "(a + b!) == c;"]; // "(a + b!) = c;"]; that's a parse error??
+    let pass = vec![
+        "a == b!;",
+        "a = b!;",
+        "a !== b;",
+        "a != b;",
+        "(a + b!) == c;",
+        "a! + b;",
+        "a! += b;",
+        "a! - b;",
+        "a! -= b;",
+        "a! / b;",
+        "a! /= b;",
+        "a! * b;",
+        "a! *= b;",
+        "a! ** b;",
+        "a! **= b;",
+        "a! != b;",
+        "a! !== b;",
+    ];
     let fail = vec![
         "a! == b;",
         "a! === b;",

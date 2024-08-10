@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// const foo = array.some(fn) ? bar : baz;
     /// ```
     PreferArraySome,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferArraySome {

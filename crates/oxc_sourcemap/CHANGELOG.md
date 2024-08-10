@@ -4,6 +4,68 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- e42ac3a sourcemap: Add `ConcatSourceMapBuilder::from_sourcemaps` (#4639) (overlookmotel)
+
+### Performance
+
+- ff43dff sourcemap: Speed up VLQ encoding (#4633) (overlookmotel)
+- a330773 sourcemap: Reduce string copying in `ConcatSourceMapBuilder` (#4638) (overlookmotel)
+- 372316b sourcemap: `ConcatSourceMapBuilder` extend `source_contents` in separate loop (#4634) (overlookmotel)
+- c7f1d48 sourcemap: Keep local copy of previous token in VLQ encode (#4596) (overlookmotel)
+- 590d795 sourcemap: Shorten main loop encoding VLQ (#4586) (overlookmotel)
+
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- e42ac3a sourcemap: Add `ConcatSourceMapBuilder::from_sourcemaps` (#4639) (overlookmotel)
+
+### Performance
+
+- ff43dff sourcemap: Speed up VLQ encoding (#4633) (overlookmotel)
+- a330773 sourcemap: Reduce string copying in `ConcatSourceMapBuilder` (#4638) (overlookmotel)
+- 372316b sourcemap: `ConcatSourceMapBuilder` extend `source_contents` in separate loop (#4634) (overlookmotel)
+- c7f1d48 sourcemap: Keep local copy of previous token in VLQ encode (#4596) (overlookmotel)
+- 590d795 sourcemap: Shorten main loop encoding VLQ (#4586) (overlookmotel)
+
+## [0.23.0] - 2024-08-01
+
+- 27fd062 sourcemap: [**BREAKING**] Avoid passing `Result`s (#4541) (overlookmotel)
+
+### Performance
+
+- d00014e sourcemap: Elide bounds checks in VLQ encoding (#4583) (overlookmotel)
+- 1fd9dd0 sourcemap: Use simd to escape JSON string (#4487) (Brooooooklyn)
+
+### Refactor
+
+- 7c42ffc sourcemap: Align Base64 chars lookup table to cache line (#4535) (overlookmotel)
+
+## [0.22.1] - 2024-07-27
+
+### Bug Fixes
+
+- 5db7bed sourcemap: Fix pre-calculation of required segments for building JSON (#4490) (overlookmotel)
+
+### Performance
+
+- 705e19f sourcemap: Reduce memory copies encoding JSON (#4489) (overlookmotel)
+- 4d10c6c sourcemap: Pre allocate String buf while encoding (#4476) (Brooooooklyn)
+
+### Refactor
+
+- c958a55 sourcemap: `push_list` method for building JSON (#4486) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+### Bug Fixes
+
+- 4cd5df0 sourcemap: Avoid negative line if token_chunks has same prev_dst_line (#4348) (underfin)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

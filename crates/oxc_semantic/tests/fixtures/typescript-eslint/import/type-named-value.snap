@@ -21,8 +21,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/type-nam
         "flag": "SymbolFlags(TypeImport)",
         "id": 0,
         "name": "foo",
-        "node": "ImportSpecifier",
-        "references": []
+        "node": "ImportSpecifier(foo)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type | TSTypeQuery)",
+            "id": 0,
+            "name": "foo",
+            "node_id": 11
+          }
+        ]
       },
       {
         "flag": "SymbolFlags(TypeAlias)",

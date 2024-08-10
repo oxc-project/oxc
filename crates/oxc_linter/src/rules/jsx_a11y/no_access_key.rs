@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, AstNode};
 
 fn no_access_key_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No access key attribute allowed.")
@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create accessibility complications so to avoid complications, access keys should not be used.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div accessKey="h" />
     ///
@@ -42,7 +42,8 @@ impl Rule for NoAccessKey {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_lowercase(jsx_el, "accessKey")
+        if let Some(JSXAttributeItem::Attribute(attr)) =
+            has_jsx_prop_ignore_case(jsx_el, "accessKey")
         {
             match attr.value.as_ref() {
                 Some(JSXAttributeValue::StringLiteral(_)) => {

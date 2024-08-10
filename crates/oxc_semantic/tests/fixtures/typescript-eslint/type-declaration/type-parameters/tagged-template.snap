@@ -22,14 +22,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flag": "SymbolFlags(TypeParameter)",
             "id": 2,
             "name": "T",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(T)",
             "references": []
           },
           {
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 3,
             "name": "arg",
-            "node": "FormalParameter",
+            "node": "FormalParameter(arg)",
             "references": []
           }
         ]
@@ -47,7 +47,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "references": [
           {
             "flag": "ReferenceFlag(Type)",
-            "id": 0,
+            "id": 1,
             "name": "StyledPaymentProps",
             "node_id": 31
           }
@@ -71,7 +71,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 4,
         "name": "StyledPayment",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(StyledPayment)",
         "references": []
       }
     ]

@@ -4,6 +4,135 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 51c1ca0 ast: Derive `CloneIn` for AST types, using `generate_derive`. (#4732) (rzvxa)
+- e12bd1e ast: Allow conversion from TSAccessibility into &'static str (#4711) (DonIsaac)
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- ec0b4cb ast_codegen: Add `derive_clone_in` generator. (#4731) (rzvxa)
+- 82e2f6b ast_codegen: Process AST-related `syntax` types. (#4694) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+- 07607d3 ast_codegen, span: Process `Span` through ast_codegen (#4703) (overlookmotel)
+- 125c5fd ast_codegen, span: Process `SourceType` through ast_codegen. (#4696) (rzvxa)
+- eaddc8f linter: Add fixer for eslint/func_names (#4714) (DonIsaac)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- 579b797 ast: Use type identifier instead of `CloneIn::Cloned` GAT. (#4738) (rzvxa)
+- 475266d ast: Use correct lifetimes for name-related methods (#4712) (DonIsaac)
+- 83b6ca9 ast: Add explicit enum discriminants. (#4689) (rzvxa)
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+- 2218340 ast, ast_codegen: Use `generate_derive` for implementing `GetSpan` and `GetSpanMut` traits. (#4735) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+- 85e8418 linter: Add react/jsx-curly-brace-presence (#3949) (Don Isaac)
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- c9c38a1 parser: Support peeking over bytes (#4304) (lucab)
+
+### Documentation
+
+- 0914e47 ast: Add doc comments to literal nodes (#4551) (DonIsaac)
+- c6a11be ast: Auto-generate doc comments for AstBuilder methods (#4471) (DonIsaac)
+
+## [0.22.1] - 2024-07-27
+
+### Features
+
+- 2477330 ast: Add `AstKind::TSExportAssignment` (#4501) (Dunqing)
+- aaee07e ast: Add `AstKind::AssignmentTargetPattern`, `AstKind::ArrayAssignmentTarget` and `AstKind::ObjectAssignmentTarget` (#4456) (Dunqing)
+- fd363d1 ast: Add AstKind::get_container_scope_id (#4450) (DonIsaac)
+
+### Bug Fixes
+
+- 368112c ast: Remove `#[visit(ignore)]` from `ExportDefaultDeclarationKind`'s `TSInterfaceDeclaration` (#4497) (Dunqing)
+
+### Documentation
+
+- f5f0ba8 ast: Add doc comments to more AST nodes (#4413) (Don Isaac)
+
+### Refactor
+
+- 9c5d2f9 ast/builder: Use `Box::new_in` over `.into_in` (#4428) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+- f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)
+
+### Features
+
+- d345b84 ast: Add `#[ast]` attribute to non-visited AST types. (#4309) (rzvxa)
+- 3c0c709 linter: Add typescript-eslint/no-extraneous-class (#4357) (Jaden Rodriguez)
+- 68efcd4 linter/react-perf: Handle new objects and arrays in prop assignment patterns (#4396) (DonIsaac)
+
+### Bug Fixes
+
+- aece1df ast: Visit `Program`s `hashbang` field first (#4368) (overlookmotel)
+
+### Performance
+- a207923 Replace some CompactStr usages with Cows (#4377) (DonIsaac)
+
+### Refactor
+
+- d213773 ast: Replace serde rename "lowercase" with "camelCase" (#4376) (overlookmotel)
+- abfccbd ast: Reduce `#[cfg_attr]` boilerplate in AST type defs (#4375) (overlookmotel)
+- 5f1c7ec ast: Rename the `visited_node` marker to `ast`. (#4289) (rzvxa)
+- 59aea73 ast: Scope is created only if CatchClause has param (#4346) (Dunqing)
+- 7a3e925 ast_codegen: Better visit marker parsing. (#4371) (rzvxa)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

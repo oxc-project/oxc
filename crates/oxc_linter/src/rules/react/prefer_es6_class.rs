@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// This rule enforces a consistent React class style.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// var Hello = createReactClass({
     ///   render: function() {
     ///     return <div>Hello {this.props.name}</div>;
@@ -73,6 +73,10 @@ impl Rule for PreferEs6Class {
                 class_expr.id.as_ref().map_or(class_expr.span, |id| id.span),
             ));
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

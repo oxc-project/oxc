@@ -1,4 +1,5 @@
 use convert_case::{Case, Casing};
+use itertools::Itertools as _;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
@@ -37,23 +38,30 @@ impl Parse for AllLintRulesMeta {
 #[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
-    let use_stmts = rules.iter().map(|rule| &rule.path).collect::<Vec<_>>();
-    let struct_names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
-    let plugin_names = rules.iter().map(|node| {
-        node.path
-            .segments
-            .iter()
-            .take(node.path.segments.len() - 1)
-            .map(|s| format!("{}", s.ident))
-            .collect::<Vec<_>>()
-            .join("/")
-    });
-    let ids = rules.iter().enumerate().map(|(i, _)| i).collect::<Vec<_>>();
+
+    let mut use_stmts = Vec::with_capacity(rules.len());
+    let mut struct_names = Vec::with_capacity(rules.len());
+    let mut plugin_names = Vec::with_capacity(rules.len());
+    let mut ids = Vec::with_capacity(rules.len());
+
+    for (i, rule) in rules.iter().enumerate() {
+        use_stmts.push(&rule.path);
+        struct_names.push(&rule.name);
+        plugin_names.push(
+            rule.path
+                .segments
+                .iter()
+                .take(rule.path.segments.len() - 1)
+                .map(|s| format!("{}", s.ident))
+                .join("/"),
+        );
+        ids.push(i);
+    }
 
     let expanded = quote! {
         #(pub use self::#use_stmts::#struct_names;)*
 
-        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
+        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
@@ -78,6 +86,13 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub fn category(&self) -> RuleCategory {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::CATEGORY),*
+                }
+            }
+
+            /// This [`Rule`]'s auto-fix capabilities.
+            pub fn fix(&self) -> RuleFixMeta {
+                match self {
+                    #(Self::#struct_names(_) => #struct_names::FIX),*
                 }
             }
 
@@ -116,6 +131,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub(super) fn run_once<'a>(&self, ctx: &LintContext<'a>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run_once(ctx)),*
+                }
+            }
+
+            pub(super) fn should_run(&self, ctx: &LintContext) -> bool {
+                match self {
+                    #(Self::#struct_names(rule) => rule.should_run(ctx)),*
                 }
             }
         }

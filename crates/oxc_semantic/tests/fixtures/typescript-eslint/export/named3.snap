@@ -13,7 +13,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/named3.t
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
         "id": 0,
         "name": "v",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(v)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",

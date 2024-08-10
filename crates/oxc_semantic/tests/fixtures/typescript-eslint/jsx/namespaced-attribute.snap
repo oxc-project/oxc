@@ -22,11 +22,11 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 5,
             "name": "props",
-            "node": "FormalParameter",
+            "node": "FormalParameter(props)",
             "references": [
               {
                 "flag": "ReferenceFlag(Read)",
-                "id": 0,
+                "id": 3,
                 "name": "props",
                 "node_id": 57
               }
@@ -50,14 +50,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "x",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(x)",
         "references": []
       },
       {
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 2,
         "name": "y",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(y)",
         "references": []
       },
       {
@@ -68,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
         "references": [
           {
             "flag": "ReferenceFlag(Type)",
-            "id": 0,
+            "id": 2,
             "name": "FooProps",
             "node_id": 45
           }

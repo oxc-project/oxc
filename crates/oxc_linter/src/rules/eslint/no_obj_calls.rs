@@ -80,44 +80,45 @@ fn resolve_global_binding<'a, 'b: 'a>(
     scope_id: ScopeId,
     ctx: &LintContext<'a>,
 ) -> Option<&'a str> {
+    let scope = ctx.scopes();
+    let nodes = ctx.nodes();
+    let symbols = ctx.symbols();
+
     if ctx.semantic().is_reference_to_global_variable(ident) {
-        Some(ident.name.as_str())
-    } else {
-        let scope = ctx.scopes();
-        let nodes = ctx.nodes();
-        let symbols = ctx.symbols();
-        scope.ancestors(scope_id).find_map(|id| scope.get_binding(id, &ident.name)).map_or_else(
-            || {
-                panic!(
-                    "No binding id found for {}, but this IdentifierReference
+        return Some(ident.name.as_str());
+    }
+
+    let Some(binding_id) = scope.find_binding(scope_id, &ident.name) else {
+        // Panic in debug builds, but fail gracefully in release builds.
+        debug_assert!(
+            false,
+            "No binding id found for {}, but this IdentifierReference
                 is not a global",
-                    &ident.name
-                );
-            },
-            |binding_id| {
-                let decl = nodes.get_node(symbols.get_declaration(binding_id));
-                let decl_scope = decl.scope_id();
-                match decl.kind() {
-                    AstKind::VariableDeclarator(parent_decl) => {
-                        if !parent_decl.id.kind.is_binding_identifier() {
-                            return Some(ident.name.as_str());
-                        }
-                        match &parent_decl.init {
-                            // handles "let a = JSON; let b = a; a();"
-                            Some(Expression::Identifier(parent_ident)) => {
-                                resolve_global_binding(parent_ident, decl_scope, ctx)
-                            }
-                            // handles "let a = globalThis.JSON; let b = a; a();"
-                            Some(parent_expr) if parent_expr.is_member_expression() => {
-                                global_this_member(parent_expr.to_member_expression())
-                            }
-                            _ => None,
-                        }
-                    }
-                    _ => None,
+            &ident.name
+        );
+        return None;
+    };
+
+    let decl = nodes.get_node(symbols.get_declaration(binding_id));
+    match decl.kind() {
+        AstKind::VariableDeclarator(parent_decl) => {
+            if !parent_decl.id.kind.is_binding_identifier() {
+                return Some(ident.name.as_str());
+            }
+            match &parent_decl.init {
+                // handles "let a = JSON; let b = a; a();"
+                Some(Expression::Identifier(parent_ident)) if parent_ident.name != ident.name => {
+                    let decl_scope = decl.scope_id();
+                    return resolve_global_binding(parent_ident, decl_scope, ctx);
                 }
-            },
-        )
+                // handles "let a = globalThis.JSON; let b = a; a();"
+                Some(parent_expr) if parent_expr.is_member_expression() => {
+                    return global_this_member(parent_expr.to_member_expression())
+                }
+                _ => None,
+            }
+        }
+        _ => None,
     }
 }
 
@@ -180,6 +181,13 @@ fn test() {
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         ("{const Math = () => {}; {let obj = new Math();}}", None),
         ("{const {parse} = JSON;parse('{}')}", None),
+        // https://github.com/oxc-project/oxc/issues/4389
+        (
+            r"
+        export const getConfig = getConfig;
+        getConfig();",
+            None,
+        ),
     ];
 
     let fail = vec![

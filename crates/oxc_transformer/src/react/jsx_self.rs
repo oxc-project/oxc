@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
-use oxc_traverse::{Ancestor, FinderRet, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -44,21 +44,23 @@ impl<'a> ReactJsxSelf<'a> {
 
     #[allow(clippy::unused_self)]
     fn is_inside_constructor(&self, ctx: &TraverseCtx<'a>) -> bool {
-        ctx.find_scope_by_flags(|flags| {
+        for scope_id in ctx.ancestor_scopes() {
+            let flags = ctx.scopes().get_flags(scope_id);
             if flags.is_block() || flags.is_arrow() {
-                return FinderRet::Continue;
+                continue;
             }
-            FinderRet::Found(flags.is_constructor())
-        })
-        .unwrap_or(false)
+            return flags.is_constructor();
+        }
+        unreachable!(); // Always hit `Program` and exit before loop ends
     }
 
     fn has_no_super_class(ctx: &TraverseCtx<'a>) -> bool {
-        ctx.find_ancestor(|ancestor| match ancestor {
-            Ancestor::ClassBody(class) => FinderRet::Found(class.super_class().is_none()),
-            _ => FinderRet::Continue,
-        })
-        .unwrap_or(true)
+        for ancestor in ctx.ancestors() {
+            if let Ancestor::ClassBody(class) = ancestor {
+                return class.super_class().is_none();
+            }
+        }
+        true
     }
 
     pub fn can_add_self_attribute(&self, ctx: &TraverseCtx<'a>) -> bool {

@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// const foo = '\cA';
     /// ```
     EscapeCase,
-    pedantic
+    pedantic,
+    fix
 );
 
 fn is_hex_char(c: char) -> bool {

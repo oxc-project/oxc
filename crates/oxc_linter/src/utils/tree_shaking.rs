@@ -421,7 +421,11 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
 
         BinaryOperator::ShiftRightZeroFill => match (left, right) {
             (Value::Number(a), Value::Number(b)) => {
-                Value::Number(f64::from((a as u32) >> (b as u32)))
+                if b >= a {
+                    Value::Number(0.0)
+                } else {
+                    Value::Number(f64::from((a as u32) >> (b as u32)))
+                }
             }
             _ => Value::Unknown,
         },
@@ -447,7 +451,12 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
         },
         BinaryOperator::ShiftLeft => match (left, right) {
             (Value::Number(a), Value::Number(b)) => {
-                Value::Number(f64::from((a as i32) << (b as i32)))
+                // NOTE: could overflow, in which case node produces `a`
+                if b >= 32.0 {
+                    Value::Number(a)
+                } else {
+                    Value::Number(f64::from((a as i32) << (b as i32)))
+                }
             }
             _ => Value::Unknown,
         },
@@ -589,7 +598,10 @@ fn test_calculate_binary_operation() {
 
     // "<<",
     let op = BinaryOperator::ShiftLeft;
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(0.0),), Value::Number(1.0));
     assert_eq!(fun(op, Value::Number(1.0), Value::Number(2.0),), Value::Number(4.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(31.0),), Value::Number(-2_147_483_648.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(f64::MAX),), Value::Number(1.0));
 
     // ">>",
     let op = BinaryOperator::ShiftRight;
@@ -597,7 +609,11 @@ fn test_calculate_binary_operation() {
 
     // ">>>",
     let op = BinaryOperator::ShiftRightZeroFill;
+    assert_eq!(fun(op, Value::Number(0.0), Value::Number(0.0),), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(0.0),), Value::Number(1.0));
     assert_eq!(fun(op, Value::Number(4.0), Value::Number(2.0),), Value::Number(1.0));
+    assert_eq!(fun(op, Value::Number(2.0), Value::Number(4.0),), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(4096.0), Value::Number(4096.0)), Value::Number(0.0));
 
     // "%",
     let op = BinaryOperator::Remainder;

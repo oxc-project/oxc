@@ -24,11 +24,11 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "flag": "SymbolFlags(TypeParameter)",
                 "id": 3,
                 "name": "Id",
-                "node": "TSTypeParameter",
+                "node": "TSTypeParameter(Id)",
                 "references": [
                   {
                     "flag": "ReferenceFlag(Type)",
-                    "id": 0,
+                    "id": 2,
                     "name": "Id",
                     "node_id": 28
                   }
@@ -45,7 +45,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "flag": "SymbolFlags(TypeParameter)",
             "id": 2,
             "name": "T",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(T)",
             "references": [
               {
                 "flag": "ReferenceFlag(Type)",
@@ -70,7 +70,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "references": [
           {
             "flag": "ReferenceFlag(Type)",
-            "id": 0,
+            "id": 1,
             "name": "X",
             "node_id": 25
           }

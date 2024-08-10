@@ -39,7 +39,8 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferRegexpTest,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferRegexpTest {

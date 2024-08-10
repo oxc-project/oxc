@@ -40,7 +40,7 @@ digraph {
     1 [ label = "VariableDeclaration" ]
     2 [ label = "" ]
     3 [ label = "ExpressionStatement" ]
-    4 [ label = "Condition(CallExpression)" ]
+    4 [ label = "Condition(CallExpression(a))" ]
     5 [ label = "" ]
     6 [ label = "" ]
     7 [ label = "" ]

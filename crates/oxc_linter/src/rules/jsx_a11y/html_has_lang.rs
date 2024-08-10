@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -41,7 +41,7 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <html />
     ///
@@ -70,7 +70,7 @@ impl Rule for HtmlHasLang {
             return;
         };
 
-        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
+        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(missing_lang_prop(identifier.span)),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {

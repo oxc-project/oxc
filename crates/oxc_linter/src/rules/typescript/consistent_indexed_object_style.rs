@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// ### Example
     /// With "record":
     ///
-    /// ```javascript
+    /// ```ts
     /// // bad
     /// interface Foo {
     ///  [key: string]: unknown;
@@ -48,12 +48,13 @@ declare_oxc_lint!(
     ///
     /// With "index-signature":
     ///
-    /// ```javascript
+    /// ```ts
     /// // bad
     /// type Foo = Record<string, unknown>;
     /// ```
     ConsistentIndexedObjectStyle,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for ConsistentIndexedObjectStyle {
@@ -243,6 +244,10 @@ impl Rule for ConsistentIndexedObjectStyle {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

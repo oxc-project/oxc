@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// async () => bar;
     /// ```
     NoUselessPromiseResolveReject,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for NoUselessPromiseResolveReject {
@@ -269,9 +270,8 @@ fn generate_fix<'a>(
 
     let mut replace_range = if is_reject { parent.kind().span() } else { call_expr.span() };
     let replacement_text = if is_reject {
-        let mut text =
-            if arg_text.is_empty() { "undefined".to_string() } else { arg_text.to_string() };
-        text = format!("throw {text}");
+        let text = if arg_text.is_empty() { "undefined" } else { arg_text };
+        let mut text = format!("throw {text}");
 
         if is_yield {
             replace_range = get_parenthesized_node(parent, ctx).kind().span();

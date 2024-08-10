@@ -102,14 +102,15 @@ declare_oxc_lint!(
     /// reduces the effectiveness of TypeScript overall.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// if (false) {
     ///   // @ts-ignore: Unreachable code error
     ///   console.log('hello');
     /// }
     /// ```
     BanTsComment,
-    pedantic
+    pedantic,
+    conditional_fix
 );
 
 impl Rule for BanTsComment {
@@ -194,7 +195,7 @@ impl Rule for BanTsComment {
                             if !re.is_match(description) {
                                 ctx.diagnostic(comment_description_not_match_pattern(
                                     directive,
-                                    &re.to_string(),
+                                    re.as_str(),
                                     comm.span,
                                 ));
                             }
@@ -203,6 +204,10 @@ impl Rule for BanTsComment {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

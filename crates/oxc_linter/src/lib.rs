@@ -31,7 +31,7 @@ pub use crate::{
     fixer::FixKind,
     frameworks::FrameworkFlags,
     options::{AllowWarnDeny, LintOptions},
-    rule::{RuleCategory, RuleMeta, RuleWithSeverity},
+    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
@@ -116,22 +116,11 @@ impl Linter {
         let ctx = self.create_ctx(path, semantic);
         let semantic = Rc::clone(ctx.semantic());
 
-        let ctx = ctx.with_fix(self.options.fix).with_eslint_config(&self.eslint_config);
         let rules = self
             .rules
             .iter()
-            .map(|rule| {
-                let rule_name = rule.name();
-                let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
-
-                (
-                    rule,
-                    ctx.clone()
-                        .with_plugin_name(plugin_name)
-                        .with_rule_name(rule_name)
-                        .with_severity(rule.severity),
-                )
-            })
+            .filter(|rule| rule.should_run(&ctx))
+            .map(|rule| (rule, self.ctx_for_rule(&ctx, rule)))
             .collect::<Vec<_>>();
 
         for (rule, ctx) in &rules {
@@ -157,7 +146,7 @@ impl Linter {
     pub fn print_rules<W: Write>(writer: &mut W) {
         let table = RuleTable::new();
         for section in table.sections {
-            writeln!(writer, "{}", section.render_markdown_table()).unwrap();
+            writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
         }
         writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
         writeln!(writer, "Total: {}", table.total).unwrap();
@@ -184,6 +173,18 @@ impl Linter {
         }
 
         ctx
+    }
+
+    fn ctx_for_rule<'a>(&self, ctx: &LintContext<'a>, rule: &RuleWithSeverity) -> LintContext<'a> {
+        let rule_name = rule.name();
+        let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
+
+        #[cfg(debug_assertions)]
+        let ctx = ctx.clone().with_rule_fix_capabilities(rule.rule.fix());
+        #[cfg(not(debug_assertions))]
+        let ctx = ctx.clone();
+
+        ctx.with_plugin_name(plugin_name).with_rule_name(rule_name).with_severity(rule.severity)
     }
 
     fn map_jest(&self, plugin_name: &'static str, rule_name: &str) -> &'static str {

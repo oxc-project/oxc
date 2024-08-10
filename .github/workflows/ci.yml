@@ -23,10 +23,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
-env:
-  CARGO_INCREMENTAL: 0
-  RUSTFLAGS: "-D warnings"
-
 jobs:
   test:
     name: Test
@@ -96,8 +92,28 @@ jobs:
           cargo test
           cargo ck
 
-  wasm:
-    name: Check Wasm
+  test-wasm32-wasip1-threads:
+    name: Test wasm32-wasip1-threads
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
+      CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
+      # Insta is not able to run on wasmtime, omit the packages that depend on it
+      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_js_regex -p oxc_module_lexer -- --nocapture"
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: Boshen/setup-rust@main
+        with:
+          cache-key: wasi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - run: rustup target add wasm32-wasip1-threads
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+      - run: cargo test --target wasm32-wasip1-threads ${{ env.TEST_FLAGS }}
+      - run: git diff --exit-code # Must commit everything
+
+  test-wasm32-unknown-unknown:
+    name: Check wasm32-unknown-unknown
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -125,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.23.2
+      - uses: crate-ci/typos@v1.23.6
         with:
           files: .
 
@@ -168,7 +184,7 @@ jobs:
         with:
           restore-cache: false
         if: steps.filter.outputs.src == 'true'
-      - uses: cargo-bins/cargo-binstall@main
+      - uses: cargo-bins/cargo-binstall@v1.9.0
         if: steps.filter.outputs.src == 'true'
       - run: cargo binstall --no-confirm cargo-shear@1
         if: steps.filter.outputs.src == 'true'
@@ -258,10 +274,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: |
-            src:
-              - 'crates/oxc_ast/src/ast/**'
-              - 'tasks/ast_codegen/src/**'
+          filters: '.github/.generated_ast_watch_list.yml'
 
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'

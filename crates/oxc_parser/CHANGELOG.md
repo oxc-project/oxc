@@ -4,6 +4,80 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- d25dea7 parser: Use `ast_builder` in more places. (#4612) (rzvxa)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- d25dea7 parser: Use `ast_builder` in more places. (#4612) (rzvxa)
+
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- 7446e98 codegen: Align more esbuild implementations (#4510) (Boshen)
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- 55a8763 parser: Faster decoding unicode escapes in identifiers (#4579) (overlookmotel)
+- ae1d38f parser: Fast path for ASCII when checking char after numeric literal (#4577) (overlookmotel)
+- 56ae615 parser: Make not at EOF the hot path in `Source` methods (#4576) (overlookmotel)
+- 25679e6 parser: Optimize `Lexer::hex_digit` (#4572) (overlookmotel)
+- bb33bcc parser: Speed up lexing non-decimal numbers (#4571) (overlookmotel)
+- ab8509e parser: Use `-` not `saturating_sub` (#4561) (overlookmotel)
+- c9c38a1 parser: Support peeking over bytes (#4304) (lucab)
+- 0870ee1 parser: Get and check lookahead token (#4534) (lucab)
+
+### Refactor
+
+- e68ed62 parser: Convert lexer byte handler for `|` to a single match (#4575) (overlookmotel)
+- bba824b parser: Convert `Lexer::read_minus` to a single match (#4574) (overlookmotel)
+- ef5418a parser: Convert `Lexer::read_left_angle` to a single match (#4573) (overlookmotel)
+- 9e5be78 parser: Add `Lexer::consume_2_chars` (#4569) (overlookmotel)
+- 649913e parser: Extract `u8` not `&u8` when iterating over bytes (#4568) (overlookmotel)
+- 59f00c0 parser: Rename function (#4566) (overlookmotel)
+- 8e3e910 parser: Rename vars (#4565) (overlookmotel)
+- 0c0601f parser: Rename function (#4564) (overlookmotel)
+- 0acc4a7 parser: Fetch 2 bytes in `?` byte handler (#4563) (overlookmotel)
+- 565eccf parser: Shorten lexer code (#4562) (overlookmotel)
+- 148bdb5 parser: Adjust function inlining (#4530) (overlookmotel)
+
+## [0.22.1] - 2024-07-27
+
+### Performance
+
+- 868fc87 parser: Optimize conditional advance on ASCII values (#4298) (lucab)
+
+## [0.22.0] - 2024-07-23
+
+- f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)
+
+### Bug Fixes
+
+- aece1df ast: Visit `Program`s `hashbang` field first (#4368) (overlookmotel)
+
+### Refactor
+
+- a2eabe1 parser: Use error codes for ts diagnostics (#4335) (DonIsaac)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

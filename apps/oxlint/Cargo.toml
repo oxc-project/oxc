@@ -1,6 +1,6 @@
 [package]
 name                   = "oxlint"
-version                = "0.6.1"
+version                = "0.7.0"
 publish                = false
 authors.workspace      = true
 description.workspace  = true
@@ -19,12 +19,12 @@ workspace = true
 doctest = false
 
 [[bin]]
-name = "oxlint"
-path = "src/main.rs"
-test = false
+name    = "oxlint"
+path    = "src/main.rs"
+test    = false
 doctest = false
 
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
+[target.'cfg(all(not(target_env = "msvc"), not(target_os = "windows")))'.dependencies]
 jemallocator = { workspace = true, optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]

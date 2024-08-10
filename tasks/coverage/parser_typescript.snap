@@ -1,9 +1,9 @@
 commit: d8086f14
 
 parser_typescript Summary:
-AST Parsed     : 6444/6456 (99.81%)
-Positive Passed: 6422/6456 (99.47%)
-Negative Passed: 1160/5653 (20.52%)
+AST Parsed     : 6446/6456 (99.85%)
+Positive Passed: 6423/6456 (99.49%)
+Negative Passed: 1167/5653 (20.64%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -668,7 +668,6 @@ Expect Syntax Error: "compiler/enumAssignmentCompat7.ts"
 Expect Syntax Error: "compiler/enumBasics1.ts"
 Expect Syntax Error: "compiler/enumBasics2.ts"
 Expect Syntax Error: "compiler/enumBasics3.ts"
-Expect Syntax Error: "compiler/enumIdentifierLiterals.ts"
 Expect Syntax Error: "compiler/enumLiteralAssignableToEnumInsideUnion.ts"
 Expect Syntax Error: "compiler/enumNoInitializerFollowsNonLiteralInitializer.ts"
 Expect Syntax Error: "compiler/enumPropertyAccess.ts"
@@ -1331,7 +1330,6 @@ Expect Syntax Error: "compiler/limitDeepInstantiations.ts"
 Expect Syntax Error: "compiler/literalFreshnessPropagationOnNarrowing.ts"
 Expect Syntax Error: "compiler/literalTypeNameAssertionNotTriggered.ts"
 Expect Syntax Error: "compiler/literals-negative.ts"
-Expect Syntax Error: "compiler/literalsInComputedProperties1.ts"
 Expect Syntax Error: "compiler/logicalNotExpression1.ts"
 Expect Syntax Error: "compiler/mappedTypeAsStringTemplate.ts"
 Expect Syntax Error: "compiler/mappedTypeGenericWithKnownKeys.ts"
@@ -3729,7 +3727,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName5.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName6.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName9.ts"
@@ -3738,7 +3735,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/par
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration9.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic1.ts"
@@ -3943,7 +3939,6 @@ Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName13.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName14.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName15.ts"
-Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName17.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName18.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName19.ts"
@@ -3954,13 +3949,11 @@ Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName23.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName24.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName25.ts"
-Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName26.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName28.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName29.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName31.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName32.ts"
-Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName37.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName40.ts"
@@ -4639,6 +4632,19 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
  2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
    ·       ────
    ╰────
+Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
+
+  × Identifier `x` has already been declared
+     ╭─[conformance/async/es6/asyncWithVarShadowing_es6.ts:130:14]
+ 129 │     }
+ 130 │     catch ({ x }) {
+     ·              ┬
+     ·              ╰── `x` has already been declared here
+ 131 │         var x;
+     ·             ┬
+     ·             ╰── It can not be redeclared here
+ 132 │     }
+     ╰────
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
 
   × Classes may not have a static property named prototype
@@ -4811,16 +4817,6 @@ Expect to Parse: "conformance/jsdoc/overloadTag3.ts"
    · ──────
  5 │     /**
    ╰────
-Expect to Parse: "conformance/moduleResolution/resolutionModeImportType1.ts"
-
-  × Expected `with` but found `assert`
-   ╭─[conformance/moduleResolution/resolutionModeImportType1.ts:2:38]
- 1 │ type Default = typeof import("foo").x;
- 2 │ type Import = typeof import("foo", { assert: { "resolution-mode": "import" } }).x;
-   ·                                      ───┬──
-   ·                                         ╰── `with` expected
- 3 │ type Require = typeof import("foo", { assert: { "resolution-mode": "require" } }).x;
-   ╰────
 Expect to Parse: "conformance/moduleResolution/untypedModuleImport.ts"
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4839,16 +4835,6 @@ Expect to Parse: "conformance/moduleResolution/untypedModuleImport_vsAmbient.ts"
    ·     ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: "conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts"
-
-  × Expected `with` but found `assert`
-   ╭─[conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts:2:23]
- 1 │ export type LocalInterface =
- 2 │     & import("pkg", { assert: {"resolution-mode": "require"} }).RequireInterface
-   ·                       ───┬──
-   ·                          ╰── `with` expected
- 3 │     & import("pkg", { assert: {"resolution-mode": "import"} }).ImportInterface;
-   ╰────
 Expect to Parse: "conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts"
 
   × Cannot use export statement outside a module
@@ -5378,11 +5364,11 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ╰────
 
   × Identifier `m1a` has already been declared
-   ╭─[compiler/augmentedTypesModules.ts:5:1]
+   ╭─[compiler/augmentedTypesModules.ts:5:8]
  4 │ 
  5 │ module m1a { var y = 2; } // error
-   · ────────────┬────────────
-   ·             ╰── `m1a` has already been declared here
+   ·        ─┬─
+   ·         ╰── `m1a` has already been declared here
  6 │ var m1a = 1; // error
    ·     ─┬─
    ·      ╰── It can not be redeclared here
@@ -5390,11 +5376,11 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
 
   × Identifier `m1b` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:8:1]
+    ╭─[compiler/augmentedTypesModules.ts:8:8]
   7 │ 
   8 │ module m1b { export var y = 2; } // error
-    · ────────────────┬───────────────
-    ·                 ╰── `m1b` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m1b` has already been declared here
   9 │ var m1b = 1; // error
     ·     ─┬─
     ·      ╰── It can not be redeclared here
@@ -5402,24 +5388,25 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ╰────
 
   × Identifier `m1d` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:16:1]
- 15 │     
- 16 │ ╭─▶ module m1d { // error
- 17 │ │       export class I { foo() { } }
- 18 │ ├─▶ }
-    · ╰──── `m1d` has already been declared here
- 19 │     var m1d = 1; // error
-    ·         ─┬─
-    ·          ╰── It can not be redeclared here
- 20 │     
+    ╭─[compiler/augmentedTypesModules.ts:16:8]
+ 15 │ 
+ 16 │ module m1d { // error
+    ·        ─┬─
+    ·         ╰── `m1d` has already been declared here
+ 17 │     export class I { foo() { } }
+ 18 │ }
+ 19 │ var m1d = 1; // error
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 20 │ 
     ╰────
 
   × Identifier `m2a` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:25:1]
+    ╭─[compiler/augmentedTypesModules.ts:25:8]
  24 │ 
  25 │ module m2a { var y = 2; }
-    · ────────────┬────────────
-    ·             ╰── `m2a` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m2a` has already been declared here
  26 │ function m2a() { }; // error since the module is instantiated
     ·          ─┬─
     ·           ╰── It can not be redeclared here
@@ -5427,11 +5414,11 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ╰────
 
   × Identifier `m2b` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:28:1]
+    ╭─[compiler/augmentedTypesModules.ts:28:8]
  27 │ 
  28 │ module m2b { export var y = 2; }
-    · ────────────────┬───────────────
-    ·                 ╰── `m2b` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m2b` has already been declared here
  29 │ function m2b() { };  // error since the module is instantiated
     ·          ─┬─
     ·           ╰── It can not be redeclared here
@@ -5439,11 +5426,11 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ╰────
 
   × Identifier `m2a` has already been declared
-   ╭─[compiler/augmentedTypesModules2.ts:5:1]
+   ╭─[compiler/augmentedTypesModules2.ts:5:8]
  4 │ 
  5 │ module m2a { var y = 2; }
-   · ────────────┬────────────
-   ·             ╰── `m2a` has already been declared here
+   ·        ─┬─
+   ·         ╰── `m2a` has already been declared here
  6 │ function m2a() { }; // error since the module is instantiated
    ·          ─┬─
    ·           ╰── It can not be redeclared here
@@ -5451,11 +5438,11 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
 
   × Identifier `m2b` has already been declared
-    ╭─[compiler/augmentedTypesModules2.ts:8:1]
+    ╭─[compiler/augmentedTypesModules2.ts:8:8]
   7 │ 
   8 │ module m2b { export var y = 2; }
-    · ────────────────┬───────────────
-    ·                 ╰── `m2b` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m2b` has already been declared here
   9 │ function m2b() { };  // error since the module is instantiated
     ·          ─┬─
     ·           ╰── It can not be redeclared here
@@ -5463,11 +5450,11 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ╰────
 
   × Identifier `m2cc` has already been declared
-    ╭─[compiler/augmentedTypesModules2.ts:14:1]
+    ╭─[compiler/augmentedTypesModules2.ts:14:8]
  13 │ 
  14 │ module m2cc { export var y = 2; }
-    · ────────────────┬────────────────
-    ·                 ╰── `m2cc` has already been declared here
+    ·        ──┬─
+    ·          ╰── `m2cc` has already been declared here
  15 │ function m2cc() { }; // error to have module first
     ·          ──┬─
     ·            ╰── It can not be redeclared here
@@ -6352,6 +6339,19 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
    · ──
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[compiler/constDeclarationShadowedByVarDeclaration.ts:4:11]
+ 3 │ {
+ 4 │     const x = 0;
+   ·           ┬
+   ·           ╰── `x` has already been declared here
+ 5 │ 
+ 6 │     var x = 0;
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 7 │ }
    ╰────
 
   × Identifier `y` has already been declared
@@ -7319,16 +7319,17 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
 
   × Identifier `F` has already been declared
-    ╭─[compiler/duplicateSymbolsExportMatching.ts:49:5]
- 48 │     module M {
- 49 │ ╭─▶     module F {
- 50 │ │           var t;
- 51 │ ├─▶     }
-    · ╰──── `F` has already been declared here
- 52 │         export function F() { } // Only one error for duplicate identifier (don't consider visibility)
-    ·                         ┬
-    ·                         ╰── It can not be redeclared here
- 53 │     }
+    ╭─[compiler/duplicateSymbolsExportMatching.ts:49:12]
+ 48 │ module M {
+ 49 │     module F {
+    ·            ┬
+    ·            ╰── `F` has already been declared here
+ 50 │         var t;
+ 51 │     }
+ 52 │     export function F() { } // Only one error for duplicate identifier (don't consider visibility)
+    ·                     ┬
+    ·                     ╰── It can not be redeclared here
+ 53 │ }
     ╰────
 
   × Empty parenthesized expression
@@ -7355,6 +7356,38 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  2 │ enum X { MyVal }
    ·      ┬
    ·      ╰── It can not be redeclared here
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:2:5]
+ 1 │ enum Nums {
+ 2 │     1.0,
+   ·     ───
+ 3 │     11e-1,
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:3:5]
+ 2 │     1.0,
+ 3 │     11e-1,
+   ·     ─────
+ 4 │     0.12e1,
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:4:5]
+ 3 │     11e-1,
+ 4 │     0.12e1,
+   ·     ──────
+ 5 │     "13e-1",
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:6:5]
+ 5 │     "13e-1",
+ 6 │     0xF00D
+   ·     ──────
+ 7 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -8986,6 +9019,22 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  10 │     a.length;
     ╰────
 
+  × TS(2452): An enum member cannot have a numeric name.
+    ╭─[compiler/literalsInComputedProperties1.ts:39:5]
+ 38 │ enum X {
+ 39 │     1 = 1,
+    ·     ─
+ 40 │     [2] = 2,
+    ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+    ╭─[compiler/literalsInComputedProperties1.ts:40:6]
+ 39 │     1 = 1,
+ 40 │     [2] = 2,
+    ·      ─
+ 41 │     "3" = 3,
+    ╰────
+
   × Invalid Character `!`
    ╭─[compiler/manyCompilerErrorsInTheTwoFiles.ts:1:13]
  1 │ const a =!@#!@$
@@ -9308,16 +9357,17 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
   help: Remove the duplicate modifier.
 
   × Identifier `z` has already been declared
-    ╭─[compiler/nameCollisions.ts:10:5]
-  9 │     
- 10 │ ╭─▶     module z {
- 11 │ │           var t;
- 12 │ ├─▶     }
-    · ╰──── `z` has already been declared here
- 13 │         var z; // error
-    ·             ┬
-    ·             ╰── It can not be redeclared here
- 14 │     
+    ╭─[compiler/nameCollisions.ts:10:12]
+  9 │ 
+ 10 │     module z {
+    ·            ┬
+    ·            ╰── `z` has already been declared here
+ 11 │         var t;
+ 12 │     }
+ 13 │     var z; // error
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 14 │ 
     ╰────
 
   × Identifier `C` has already been declared
@@ -18586,6 +18636,14 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ·                 ╰── `,` expected
    ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName6.ts:2:4]
+ 1 │ enum E {
+ 2 │   [e] = 1
+   ·    ─
+ 3 │ }
+   ╰────
+
   × Type parameter list cannot be empty.
    ╭─[conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
@@ -18635,6 +18693,30 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ·            ┬
    ·            ╰── `,` expected
  3 │ enum E1 { a, b: 1, c, d: 2 = 3 }
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts:2:3]
+ 1 │ enum E {
+ 2 │   1, 2, 3
+   ·   ─
+ 3 │ }
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts:2:6]
+ 1 │ enum E {
+ 2 │   1, 2, 3
+   ·      ─
+ 3 │ }
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts:2:9]
+ 1 │ enum E {
+ 2 │   1, 2, 3
+   ·         ─
+ 3 │ }
    ╰────
 
   × Unexpected token
@@ -20619,6 +20701,22 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ·               ─
    ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName16.ts:2:4]
+ 1 │ enum E {
+ 2 │   [e] = 1
+   ·    ─
+ 3 │ }
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName26.ts:3:6]
+ 2 │     // No ASI
+ 3 │     [e] = 0
+   ·      ─
+ 4 │     [e2] = 1
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName27.ts:4:9]
  3 │     [e]: number = 0
@@ -20627,6 +20725,14 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  5 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName30.ts:3:6]
+ 2 │     // no ASI, comma expected
+ 3 │     [e] = id++
+   ·      ─
+ 4 │     [e2] = 1
+   ╰────
 
   × Expected `,` but found `[`
    ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName30.ts:4:5]
@@ -20645,6 +20751,22 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  5 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts:3:6]
+ 2 │     // no ASI, comma expected
+ 3 │     [e] = id++,
+   ·      ─
+ 4 │     [e2] = 1
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts:4:6]
+ 3 │     [e] = id++,
+ 4 │     [e2] = 1
+   ·      ──
+ 5 │ }
+   ╰────
 
   × Expected `]` but found `,`
    ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName35.ts:2:7]

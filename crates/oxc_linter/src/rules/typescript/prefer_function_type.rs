@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// This rule suggests using a function type instead of an interface or object type literal with a single call signature.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// // error
     /// interface Example {
     ///   (): string;
@@ -74,7 +74,8 @@ declare_oxc_lint!(
     /// type Intersection = ((data: string) => number) & ((id: number) => string);
     /// ```
     PreferFunctionType,
-    style
+    style,
+    conditional_fix
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
@@ -391,6 +392,10 @@ impl Rule for PreferFunctionType {
 
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

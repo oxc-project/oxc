@@ -30,7 +30,19 @@ declare_oxc_lint!(
     /// The [`String#replaceAll()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replaceAll) method is both faster and safer as you don't have to use a regex and remember to escape it if the string is not a literal. And when used with a regex, it makes the intent clearer.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// array.reduceRight(reducer, initialValue);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// foo.replace(/a/, bar)
+    /// foo.replaceAll(/a/, bar)
+    ///
+    /// const pattern = "not-a-regexp"
+    /// foo.replace(pattern, bar)
     /// ```
     PreferStringReplaceAll,
     pedantic

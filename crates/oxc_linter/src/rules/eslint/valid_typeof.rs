@@ -34,22 +34,25 @@ declare_oxc_lint!(
     /// Enforce comparing `typeof` expressions against valid strings
     ///
     /// ### Why is this bad?
-    /// It is usually a typing mistake to compare the result of a typeof operator to other string literals.
+    /// It is usually a typing mistake to compare the result of a `typeof`
+    /// operator to other string literals.
+    ///
     /// ### Example
-    /// ```javascript
-    /// requireStringLiterals: false
-    /// incorrect:
+    /// ```js
+    /// // requireStringLiterals: false
+    /// // incorrect:
     /// typeof foo === "strnig"
-    /// correct:
+    /// // correct:
     /// typeof foo === "string"
     /// typeof foo === baz
     ///
-    /// requireStringLiterals: true
-    /// incorrect:
+    /// // requireStringLiterals: true
+    /// // incorrect:
     /// typeof foo === baz
     /// ```
     ValidTypeof,
     correctness,
+    conditional_fix
 );
 
 impl Rule for ValidTypeof {

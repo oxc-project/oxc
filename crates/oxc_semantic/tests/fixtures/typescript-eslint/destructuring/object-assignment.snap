@@ -13,13 +13,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/o
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "obj",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(obj)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "id": 2,
             "name": "obj",
-            "node_id": 23
+            "node_id": 27
           }
         ]
       }

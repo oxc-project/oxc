@@ -13,11 +13,11 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/children.ts
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "child",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(child)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "id": 2,
             "name": "child",
             "node_id": 14
           }

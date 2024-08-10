@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fmt::{Display, Write},
     str::FromStr,
 };
@@ -10,7 +11,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -72,7 +73,8 @@ declare_oxc_lint!(
     /// import e from 'bar.js';
     /// ```
     SortImports,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for SortImports {
@@ -208,9 +210,9 @@ impl SortImports {
 
         if self.ignore_case {
             current_local_member_name =
-                current_local_member_name.map(|name| name.to_lowercase()).map(CompactStr::from);
+                current_local_member_name.map(|name| name.to_lowercase().into());
             previous_local_member_name =
-                previous_local_member_name.map(|name| name.to_lowercase()).map(CompactStr::from);
+                previous_local_member_name.map(|name| name.to_lowercase().into());
         }
 
         // "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
@@ -240,8 +242,6 @@ impl SortImports {
                 if let Some((current_name, previous_name)) =
                     current_local_member_name.zip(previous_local_member_name)
                 {
-                    let current_name = current_name.as_str();
-                    let previous_name = previous_name.as_str();
                     if current_name < previous_name {
                         ctx.diagnostic(sort_imports_alphabetically_diagnostic(current.span));
                     }
@@ -443,7 +443,7 @@ impl Display for ImportKind {
     }
 }
 
-fn get_first_local_member_name(decl: &ImportDeclaration) -> Option<CompactStr> {
+fn get_first_local_member_name<'a>(decl: &ImportDeclaration<'a>) -> Option<Cow<'a, str>> {
     let specifiers = decl.specifiers.as_ref()?;
     specifiers.first().map(ImportDeclarationSpecifier::name)
 }

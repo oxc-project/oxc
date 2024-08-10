@@ -13,7 +13,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/text.tsx
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "Foo",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(Foo)",
         "references": []
       }
     ]

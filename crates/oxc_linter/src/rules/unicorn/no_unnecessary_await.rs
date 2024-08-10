@@ -22,11 +22,15 @@ declare_oxc_lint!(
     /// The `await` operator should only be used on `Promise` values.
     ///
     /// ### Example
+    ///
     /// ```javascript
-    /// await await promise;
+    /// async function bad() {
+    ///     await await promise;
+    /// }
     /// ```
     NoUnnecessaryAwait,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for NoUnnecessaryAwait {

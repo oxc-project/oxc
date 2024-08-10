@@ -29,10 +29,26 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// `dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.
+    /// `dangerouslySetInnerHTML` is a way to inject HTML into your React
+    /// component. This is dangerous because it can easily lead to XSS
+    /// vulnerabilities.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```jsx
+    /// import React from "react";
+    ///
+    /// const Hello = <div dangerouslySetInnerHTML={{ __html: "Hello World" }}></div>;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```jsx
+    /// import React from "react";
+    ///
+    /// const Hello = <div>Hello World</div>;
     /// ```
     NoDanger,
     restriction
@@ -64,7 +80,7 @@ impl Rule for NoDanger {
                 for prop in &obj_expr.properties {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
                         if let Some(prop_name) = obj_prop.key.static_name() {
-                            if prop_name.as_str() == "dangerouslySetInnerHTML" {
+                            if prop_name == "dangerouslySetInnerHTML" {
                                 ctx.diagnostic(no_danger_diagnostic(obj_prop.key.span()));
                             }
                         }
@@ -73,6 +89,10 @@ impl Rule for NoDanger {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

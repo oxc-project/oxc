@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, phf_set};
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, AstNode};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{role}` role is missing required aria props `{props}`."))
@@ -19,13 +19,17 @@ fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) 
 pub struct RoleHasRequiredAriaProps;
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces that elements with ARIA roles must have all required attributes for that role.
+    ///
+    /// Enforces that elements with ARIA roles must have all required attributes
+    /// for that role.
     ///
     /// ### Why is this bad?
-    /// Certain ARIA roles require specific attributes to express necessary semantics for assistive technology.
+    ///
+    /// Certain ARIA roles require specific attributes to express necessary
+    /// semantics for assistive technology.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div role="checkbox" />
     ///
@@ -50,7 +54,7 @@ static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, phf::Set<&'static str
 impl Rule for RoleHasRequiredAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") else {
+            let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") else {
                 return;
             };
             let JSXAttributeItem::Attribute(attr) = role_prop else {
@@ -63,7 +67,7 @@ impl Rule for RoleHasRequiredAriaProps {
             for role in roles {
                 if let Some(props) = ROLE_TO_REQUIRED_ARIA_PROPS.get(role) {
                     for prop in props {
-                        if has_jsx_prop_lowercase(jsx_el, prop).is_none() {
+                        if has_jsx_prop_ignore_case(jsx_el, prop).is_none() {
                             ctx.diagnostic(role_has_required_aria_props_diagnostic(
                                 attr.span, role, prop,
                             ));

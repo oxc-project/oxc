@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_traverse"
-version                = "0.21.0"
+version                = "0.24.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -17,7 +17,9 @@ include                = ["/src"]
 workspace = true
 
 [lib]
-test    = false
+test = false
+# Doctests must be enabled for this crate as they are used to run tests
+# which check the soundness of its code
 doctest = true
 
 [dependencies]
@@ -29,6 +31,3 @@ oxc_syntax    = { workspace = true }
 
 compact_str = { workspace = true }
 memoffset   = { workspace = true }
-
-[dev-dependencies]
-trybuild = { workspace = true }

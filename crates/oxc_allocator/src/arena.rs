@@ -36,8 +36,8 @@ impl<'alloc, T> Box<'alloc, T> {
 }
 
 impl<'alloc, T> Box<'alloc, T> {
-    pub fn new_in(x: T, alloc: &Allocator) -> Self {
-        Self(alloc.alloc(x).into(), PhantomData)
+    pub fn new_in(value: T, allocator: &Allocator) -> Self {
+        Self(NonNull::from(allocator.alloc(value)), PhantomData)
     }
 
     /// Create a fake `Box` with a dangling pointer.
@@ -124,7 +124,9 @@ impl<'alloc, T> Vec<'alloc, T> {
 
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        let mut vec = vec::Vec::new_in(&**allocator);
+        let iter = iter.into_iter();
+        let capacity = iter.size_hint().1.unwrap_or(0);
+        let mut vec = vec::Vec::with_capacity_in(capacity, &**allocator);
         vec.extend(iter);
         Self(vec)
     }

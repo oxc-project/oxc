@@ -24,7 +24,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 3,
                 "name": "a",
-                "node": "FormalParameter",
+                "node": "FormalParameter(a)",
                 "references": [
                   {
                     "flag": "ReferenceFlag(Read)",
@@ -34,7 +34,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                   },
                   {
                     "flag": "ReferenceFlag(Read)",
-                    "id": 1,
+                    "id": 3,
                     "name": "a",
                     "node_id": 41
                   }
@@ -44,35 +44,35 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 4,
                 "name": "b",
-                "node": "FormalParameter",
+                "node": "FormalParameter(b)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 5,
                 "name": "c",
-                "node": "FormalParameter",
+                "node": "FormalParameter(c)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 6,
                 "name": "d",
-                "node": "FormalParameter",
+                "node": "FormalParameter(d)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 7,
                 "name": "e",
-                "node": "FormalParameter",
+                "node": "FormalParameter(e)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 8,
                 "name": "f",
-                "node": "FormalParameter",
+                "node": "FormalParameter(f)",
                 "references": []
               }
             ]
@@ -92,11 +92,11 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "outer",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(outer)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "id": 1,
             "name": "outer",
             "node_id": 30
           }
@@ -110,7 +110,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "references": [
           {
             "flag": "ReferenceFlag(Type)",
-            "id": 0,
+            "id": 2,
             "name": "Outer",
             "node_id": 38
           }
@@ -127,7 +127,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 9,
         "name": "unresolved",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved)",
         "references": []
       }
     ]

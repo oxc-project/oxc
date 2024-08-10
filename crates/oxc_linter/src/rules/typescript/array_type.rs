@@ -26,6 +26,7 @@ declare_oxc_lint!(
     /// ```
     ArrayType,
     style,
+    fix
 );
 
 fn generic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
@@ -125,6 +126,10 @@ impl Rule for ArrayType {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

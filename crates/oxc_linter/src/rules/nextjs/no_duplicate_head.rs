@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Reference;
+use oxc_span::GetSpan;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -10,13 +10,13 @@ pub struct NoDuplicateHead;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Prevent duplicate usage of <Head> in pages/_document.js.
+    /// Prevent duplicate usage of `<Head>` in `pages/_document.js``.
     ///
     /// ### Why is this bad?
     /// This can cause unexpected behavior in your application.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// import Document, { Html, Head, Main, NextScript } from 'next/document'
     /// class MyDocument extends Document {
     ///   static async getInitialProps(ctx) {
@@ -57,19 +57,46 @@ impl Rule for NoDuplicateHead {
             return;
         }
 
+        // 1 x `<Head>` is fine, more than 1 is not.
+        // Avoid allocating a `Vec`, or looking up span in common case
+        // where only a single `<Head>` is found.
+        let mut first_node_id = None;
+        let mut labels = vec![];
         let nodes = ctx.nodes();
-        let labels = symbols
-            .get_resolved_references(symbol_id)
-            .filter(|r| r.is_read())
-            .filter(|r| {
-                let kind = nodes.ancestors(r.node_id()).nth(2).map(|node_id| nodes.kind(node_id));
-                matches!(kind, Some(AstKind::JSXOpeningElement(_)))
-            })
-            .map(Reference::span)
-            .map(LabeledSpan::underline)
-            .collect::<Vec<_>>();
+        let get_label = |node_id| {
+            let span = nodes.kind(node_id).span();
+            LabeledSpan::underline(span)
+        };
 
-        if labels.len() <= 1 {
+        for reference in symbols.get_resolved_references(symbol_id) {
+            if !reference.is_read() {
+                continue;
+            }
+
+            if !matches!(
+                nodes.ancestors(reference.node_id()).nth(2).map(|node_id| nodes.kind(node_id)),
+                Some(AstKind::JSXOpeningElement(_))
+            ) {
+                continue;
+            }
+
+            let node_id = reference.node_id();
+            #[allow(clippy::unnecessary_unwrap)]
+            if first_node_id.is_none() {
+                // First `<Head>` found
+                first_node_id = Some(node_id);
+            } else if labels.is_empty() {
+                // 2nd `<Head>` found - populate `labels` with both
+                let first_node_id = first_node_id.unwrap();
+                labels.extend([get_label(first_node_id), get_label(node_id)]);
+            } else {
+                // Further `<Head>` found - add to `node_ids`
+                labels.push(get_label(node_id));
+            }
+        }
+
+        // `labels` is empty if 0 or 1 `<Head>` found
+        if labels.is_empty() {
             return;
         }
 

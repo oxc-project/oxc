@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnsafeNegation,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUnsafeNegation {

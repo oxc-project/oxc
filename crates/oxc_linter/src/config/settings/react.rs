@@ -1,3 +1,6 @@
+use std::borrow::Cow;
+
+use oxc_span::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -14,12 +17,13 @@ pub struct ReactPluginSettings {
     // TODO: More properties should be added
 }
 
+pub type ComponentAttrs<'c> = Cow<'c, Vec<CompactStr>>;
 impl ReactPluginSettings {
-    pub fn get_form_component_attrs(&self, name: &str) -> Option<Vec<String>> {
+    pub fn get_form_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.form_components, name)
     }
 
-    pub fn get_link_component_attrs(&self, name: &str) -> Option<Vec<String>> {
+    pub fn get_link_component_attrs(&self, name: &str) -> Option<ComponentAttrs<'_>> {
         get_component_attrs_by_name(&self.link_components, name)
     }
 }
@@ -29,35 +33,40 @@ impl ReactPluginSettings {
 #[derive(Clone, Debug, Deserialize, JsonSchema)]
 #[serde(untagged)]
 enum CustomComponent {
-    NameOnly(String),
+    NameOnly(CompactStr),
     ObjectWithOneAttr {
-        name: String,
+        name: CompactStr,
         #[serde(alias = "formAttribute", alias = "linkAttribute")]
-        attribute: String,
+        attribute: CompactStr,
     },
     ObjectWithManyAttrs {
-        name: String,
+        name: CompactStr,
         #[serde(alias = "formAttribute", alias = "linkAttribute")]
-        attributes: Vec<String>,
+        attributes: Vec<CompactStr>,
     },
 }
 
-fn get_component_attrs_by_name(
-    components: &Vec<CustomComponent>,
+fn get_component_attrs_by_name<'c>(
+    components: &'c Vec<CustomComponent>,
     name: &str,
-) -> Option<Vec<String>> {
+) -> Option<ComponentAttrs<'c>> {
     for item in components {
-        let comp = match item {
-            CustomComponent::NameOnly(name) => (name, vec![]),
-            CustomComponent::ObjectWithOneAttr { name, attribute } => {
-                (name, vec![attribute.to_string()])
+        match item {
+            CustomComponent::NameOnly(comp_name) if comp_name == name => {
+                return Some(Cow::Owned(vec![]))
             }
-            CustomComponent::ObjectWithManyAttrs { name, attributes } => (name, attributes.clone()),
+            CustomComponent::ObjectWithOneAttr { name: comp_name, attribute }
+                if comp_name == name =>
+            {
+                return Some(Cow::Owned(vec![attribute.clone()]));
+            }
+            CustomComponent::ObjectWithManyAttrs { name: comp_name, attributes }
+                if comp_name == name =>
+            {
+                return Some(Cow::Borrowed(attributes));
+            }
+            _ => {}
         };
-
-        if comp.0 == name {
-            return Some(comp.1);
-        }
     }
 
     None

@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConsistentTypeDefinitions,
-    style
+    style,
+    fix
 );
 
 impl Rule for ConsistentTypeDefinitions {
@@ -213,6 +214,10 @@ impl Rule for ConsistentTypeDefinitions {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

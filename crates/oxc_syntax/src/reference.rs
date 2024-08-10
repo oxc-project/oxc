@@ -1,25 +1,34 @@
-use std::num::NonZeroU32;
-
 use bitflags::bitflags;
+use nonmax::NonMaxU32;
+use oxc_ast_macros::CloneIn;
 #[cfg(feature = "serialize")]
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use oxc_index::Idx;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct ReferenceId(NonZeroU32);
+pub struct ReferenceId(NonMaxU32);
 
 impl Idx for ReferenceId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
-        // SAFETY: + 1 is always non-zero.
-
-        unsafe { Self(NonZeroU32::new_unchecked(idx as u32 + 1)) }
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
     fn index(self) -> usize {
-        self.0.get() as usize - 1
+        self.0.get() as usize
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl Serialize for ReferenceId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u32(self.0.get())
     }
 }
 
@@ -37,7 +46,7 @@ export type ReferenceFlag = {
 "#;
 
 bitflags! {
-    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, CloneIn)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlag: u8 {
         const None = 0;

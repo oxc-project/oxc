@@ -38,7 +38,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
                 "flag": "SymbolFlags(BlockScopedVariable)",
                 "id": 1,
                 "name": "a",
-                "node": "VariableDeclarator",
+                "node": "VariableDeclarator(a)",
                 "references": []
               }
             ]
@@ -47,22 +47,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
         "flag": "ScopeFlags(StrictMode | CatchClause)",
         "id": 2,
         "node": "CatchClause",
-        "symbols": [
-          {
-            "flag": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-            "id": 0,
-            "name": "e",
-            "node": "CatchParameter",
-            "references": [
-              {
-                "flag": "ReferenceFlag(Read)",
-                "id": 0,
-                "name": "e",
-                "node_id": 8
-              }
-            ]
-          }
-        ]
+        "symbols": []
       }
     ],
     "flag": "ScopeFlags(StrictMode | Top)",
@@ -73,14 +58,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 2,
         "name": "unresolved",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved)",
         "references": []
       },
       {
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 3,
         "name": "dontReference2",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(dontReference2)",
         "references": []
       }
     ]

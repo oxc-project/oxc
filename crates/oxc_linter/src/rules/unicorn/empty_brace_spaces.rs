@@ -28,7 +28,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     EmptyBraceSpaces,
-    style
+    style,
+    fix
 );
 
 impl Rule for EmptyBraceSpaces {

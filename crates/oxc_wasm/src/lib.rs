@@ -16,6 +16,7 @@ use oxc::{
     span::SourceType,
     transformer::{TransformOptions, Transformer},
 };
+use oxc_index::Idx;
 use oxc_linter::Linter;
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
@@ -274,6 +275,7 @@ impl Oxc {
                         join_vars: compress_options.join_vars(),
                         loops: compress_options.loops(),
                         typeofs: compress_options.typeofs(),
+                        ..CompressOptions::default()
                     }
                 } else {
                     CompressOptions::all_false()
@@ -304,7 +306,8 @@ impl Oxc {
                 let flag = semantic.scopes().get_flags(*scope_id);
                 let next_scope_ids = semantic.scopes().get_child_ids(*scope_id);
 
-                scope_text.push_str(&format!("{space}Scope{:?} ({flag:?}) {{\n", *scope_id + 1));
+                scope_text
+                    .push_str(&format!("{space}Scope{:?} ({flag:?}) {{\n", scope_id.index() + 1));
                 let bindings = semantic.scopes().get_bindings(*scope_id);
                 let binding_space = " ".repeat((depth + 1) * 2);
                 if !bindings.is_empty() {

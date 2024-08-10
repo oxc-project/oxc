@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// calling setState() afterwards may replace the mutation you made
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     ///  // error
     ///  var Hello = createReactClass({
     ///    componentDidMount: function() {
@@ -116,6 +116,10 @@ impl Rule for NoDirectMutationState {
 
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

@@ -29,7 +29,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "Foo",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(Foo)",
         "references": []
       }
     ]

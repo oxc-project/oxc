@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -30,13 +30,50 @@ pub struct GoogleFontDisplay;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Enforce font-display behavior with Google Fonts.
     ///
     /// ### Why is this bad?
     ///
+    /// Specifying display=optional minimizes the risk of invisible text or
+    /// layout shift. If swapping to the custom font after it has loaded is
+    /// important to you, then use `display=swap`` instead.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```jsx
+    /// import Head from "next/head";
+    ///
+    /// export default Test = () => {
+    ///     return (
+    ///         <Head>
+    ///             <link
+    ///                 href="https://fonts.googleapis.com/css2?family=Krona+One"
+    ///                 rel="stylesheet"
+    ///             />
+    ///         </Head>
+    ///     );
+    /// };
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```jsx
+    /// import Head from "next/head";
+    ///
+    /// export default Test = () => {
+    ///     return (
+    ///         <Head>
+    ///             <link
+    ///                 href="https://fonts.googleapis.com/css2?family=Krona+One&display=optional"
+    ///                 rel="stylesheet"
+    ///             />
+    ///         </Head>
+    ///     );
+    /// };
+    /// ```
+    ///
     GoogleFontDisplay,
     correctness
 );
@@ -55,7 +92,7 @@ impl Rule for GoogleFontDisplay {
             return;
         }
 
-        let Some(href_prop) = has_jsx_prop_lowercase(jsx_opening_element, "href") else {
+        let Some(href_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "href") else {
             return;
         };
 
@@ -155,16 +192,16 @@ fn test() {
     let fail = vec![
         r#"import Head from "next/head";
 
-			      export default Test = () => {
-			       return (
-			         <Head>
-			           <link
-			             href="https://fonts.googleapis.com/css2?family=Krona+One"
-			             rel="stylesheet"
-			           />
-			         </Head>
-			       );
-			      };
+				export default Test = () => {
+				return (
+					<Head>
+					<link
+						href="https://fonts.googleapis.com/css2?family=Krona+One"
+						rel="stylesheet"
+					/>
+					</Head>
+				);
+				};
 			     "#,
         r#"import Head from "next/head";
 

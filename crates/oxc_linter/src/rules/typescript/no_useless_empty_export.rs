@@ -22,18 +22,19 @@ declare_oxc_lint!(
     /// ### Example
     ///
     /// ### Bad
-    /// ```javascript
+    /// ```ts
     /// export const value = 'Hello, world!';
     /// export {};
     /// ```
     ///
     /// ### Good
-    /// ```javascript
+    /// ```ts
     /// export const value = 'Hello, world!';
     /// ```
     ///
     NoUselessEmptyExport,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUselessEmptyExport {

@@ -30,12 +30,13 @@ declare_oxc_lint!(
     /// This rule reports when an as with an explicit literal type can be replaced with an as const.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// let bar: 2 = 2;
     /// let foo = { bar: 'baz' as 'baz' };
     /// ```
     PreferAsConst,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for PreferAsConst {
@@ -79,6 +80,10 @@ impl Rule for PreferAsConst {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

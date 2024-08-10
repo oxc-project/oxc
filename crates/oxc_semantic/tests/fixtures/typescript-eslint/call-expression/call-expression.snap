@@ -21,17 +21,17 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "foo",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(foo)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "id": 1,
             "name": "foo",
             "node_id": 15
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "id": 3,
             "name": "foo",
             "node_id": 21
           }
@@ -41,7 +41,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "a",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(a)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
@@ -51,7 +51,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "id": 2,
             "name": "a",
             "node_id": 20
           }

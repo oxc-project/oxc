@@ -1,6 +1,7 @@
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use std::{borrow::Borrow, hash::Hash};
 
 /// Predefine global variables.
 // TODO: list the keys we support
@@ -9,15 +10,25 @@ use serde::Deserialize;
 pub struct OxlintEnv(FxHashMap<String, bool>);
 
 impl OxlintEnv {
-    pub fn from_vec(env: Vec<String>) -> Self {
-        let map = env.into_iter().map(|key| (key, true)).collect();
-
-        Self(map)
+    pub fn contains<Q>(&self, key: &Q) -> bool
+    where
+        String: Borrow<Q>,
+        Q: ?Sized + Hash + Eq,
+    {
+        self.0.get(key).is_some_and(|v| *v)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &str> + '_ {
         // Filter out false values
-        self.0.iter().filter(|(_, v)| **v).map(|(k, _)| k.as_str())
+        self.0.iter().filter_map(|(k, v)| (*v).then_some(k.as_str()))
+    }
+}
+
+impl FromIterator<String> for OxlintEnv {
+    fn from_iter<T: IntoIterator<Item = String>>(iter: T) -> Self {
+        let map = iter.into_iter().map(|key| (key, true)).collect();
+
+        Self(map)
     }
 }
 
@@ -32,7 +43,6 @@ impl Default for OxlintEnv {
 
 #[cfg(test)]
 mod test {
-    use itertools::Itertools;
     use serde::Deserialize;
 
     use super::OxlintEnv;
@@ -44,15 +54,15 @@ mod test {
         }))
         .unwrap();
         assert_eq!(env.iter().count(), 2);
-        assert!(env.iter().contains(&"browser"));
-        assert!(env.iter().contains(&"node"));
-        assert!(!env.iter().contains(&"es6"));
-        assert!(!env.iter().contains(&"builtin"));
+        assert!(env.contains("browser"));
+        assert!(env.contains("node"));
+        assert!(!env.contains("es6"));
+        assert!(!env.contains("builtin"));
     }
     #[test]
     fn test_parse_env_default() {
         let env = OxlintEnv::default();
         assert_eq!(env.iter().count(), 1);
-        assert!(env.iter().contains(&"builtin"));
+        assert!(env.contains("builtin"));
     }
 }

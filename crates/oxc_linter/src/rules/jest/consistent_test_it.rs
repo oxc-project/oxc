@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
@@ -17,18 +17,18 @@ use crate::{
 };
 
 fn consistent_method(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Enforce `test` and `it` usage conventions".to_string())
+    OxcDiagnostic::warn("Enforce `test` and `it` usage conventions")
         .with_help(format!("Prefer using {x1:?} instead of {x2:?}"))
         .with_label(span0)
 }
 
 fn consistent_method_within_describe(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Enforce `test` and `it` usage conventions".to_string())
+    OxcDiagnostic::warn("Enforce `test` and `it` usage conventions")
         .with_help(format!("Prefer using {x1:?} instead of {x2:?} within describe"))
         .with_label(span0)
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum TestCaseName {
     Fit,
     IT,
@@ -36,16 +36,21 @@ enum TestCaseName {
     Xit,
     Xtest,
 }
+impl TestCaseName {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Fit => "fit",
+            Self::IT => "it",
+            Self::Test => "test",
+            Self::Xit => "xit",
+            Self::Xtest => "xtest",
+        }
+    }
+}
 
 impl std::fmt::Display for TestCaseName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Fit => write!(f, "fit"),
-            Self::IT => write!(f, "it"),
-            Self::Test => write!(f, "test"),
-            Self::Xit => write!(f, "xit"),
-            Self::Xtest => write!(f, "xtest"),
-        }
+        self.as_str().fmt(f)
     }
 }
 
@@ -164,6 +169,7 @@ declare_oxc_lint!(
     /// }
     ConsistentTestIt,
     style,
+    fix
 );
 
 impl Rule for ConsistentTestIt {
@@ -213,7 +219,7 @@ impl ConsistentTestIt {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
+        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;
@@ -227,69 +233,65 @@ impl ConsistentTestIt {
         }
 
         let is_test = matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
-        let fn_to_str = self.within_fn.to_string();
+        let fn_to_str = self.within_fn.as_str();
 
-        if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(&fn_to_str) {
-            let opposite_test_keyword = Self::get_opposite_test_case(&self.within_fn);
+        if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(fn_to_str) {
+            let opposite_test_keyword = Self::get_opposite_test_case(self.within_fn);
             if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),
                 &jest_fn_call.name,
-                &fn_to_str,
+                fn_to_str,
             ) {
                 ctx.diagnostic_with_fix(
-                    consistent_method(&fn_to_str, &opposite_test_keyword, span),
+                    consistent_method(fn_to_str, opposite_test_keyword, span),
                     |fixer| fixer.replace(span, prefer_test_name),
                 );
             }
         }
 
-        let describe_to_str = self.within_describe.to_string();
+        let describe_to_str = self.within_describe.as_str();
 
         if is_test
             && !describe_nesting_hash.is_empty()
-            && !jest_fn_call.name.ends_with(&describe_to_str)
+            && !jest_fn_call.name.ends_with(describe_to_str)
         {
-            let opposite_test_keyword = Self::get_opposite_test_case(&self.within_describe);
+            let opposite_test_keyword = Self::get_opposite_test_case(self.within_describe);
             if let Some((span, prefer_test_name)) = Self::get_prefer_test_name_and_span(
                 call_expr.callee.get_inner_expression(),
                 &jest_fn_call.name,
-                &describe_to_str,
+                describe_to_str,
             ) {
                 ctx.diagnostic_with_fix(
-                    consistent_method_within_describe(
-                        &describe_to_str,
-                        &opposite_test_keyword,
-                        span,
-                    ),
+                    consistent_method_within_describe(describe_to_str, opposite_test_keyword, span),
                     |fixer| fixer.replace(span, prefer_test_name),
                 );
             }
         }
     }
 
-    fn get_opposite_test_case(test_case_name: &TestCaseName) -> String {
+    fn get_opposite_test_case(test_case_name: TestCaseName) -> &'static str {
         if matches!(test_case_name, TestCaseName::Test) {
-            TestCaseName::IT.to_string()
+            TestCaseName::IT.as_str()
         } else {
-            TestCaseName::Test.to_string()
+            TestCaseName::Test.as_str()
         }
     }
 
-    fn get_prefer_test_name_and_span(
+    fn get_prefer_test_name_and_span<'s>(
         expr: &Expression,
         test_name: &str,
-        fix_jest_name: &str,
-    ) -> Option<(Span, String)> {
+        fix_jest_name: &'s str,
+    ) -> Option<(Span, Cow<'s, str>)> {
         match expr {
             Expression::Identifier(ident) => {
                 if ident.name.eq("fit") {
-                    return Some((ident.span, "test.only".to_string()));
+                    return Some((ident.span, Cow::Borrowed("test.only")));
                 }
 
                 let prefer_test_name = match test_name.chars().next() {
-                    Some('x') => format!("x{fix_jest_name}"),
-                    Some('f') => format!("f{fix_jest_name}"),
-                    _ => fix_jest_name.to_string(),
+                    Some('x') => Cow::Owned(format!("x{fix_jest_name}")),
+                    Some('f') => Cow::Owned(format!("f{fix_jest_name}")),
+                    _ => Cow::Borrowed(fix_jest_name),
                 };
                 Some((ident.span(), prefer_test_name))
             }

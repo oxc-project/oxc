@@ -11,9 +11,9 @@ use crate::{symbol::SymbolId, AstNodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
-type Bindings = FxIndexMap<CompactStr, SymbolId>;
+pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
 pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
-pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
+pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
 
 /// Scope Tree
 ///
@@ -32,12 +32,16 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    const ROOT_SCOPE_ID: ScopeId = ScopeId::new(0);
+
+    #[inline]
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.parent_ids.is_empty()
     }
 
     pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
@@ -67,10 +71,12 @@ impl ScopeTree {
         list.into_iter()
     }
 
+    #[inline]
     pub fn get_child_ids(&self, scope_id: ScopeId) -> Option<&Vec<ScopeId>> {
         self.child_ids.get(scope_id)
     }
 
+    #[inline]
     pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> Option<&mut Vec<ScopeId>> {
         self.child_ids.get_mut(scope_id)
     }
@@ -80,14 +86,16 @@ impl ScopeTree {
     }
 
     #[inline]
-    pub fn root_scope_id(&self) -> ScopeId {
-        ScopeId::new(0)
+    pub const fn root_scope_id(&self) -> ScopeId {
+        Self::ROOT_SCOPE_ID
     }
 
+    #[inline]
     pub fn root_flags(&self) -> ScopeFlags {
         self.flags[self.root_scope_id()]
     }
 
+    #[inline]
     pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
         &self.root_unresolved_references
     }
@@ -98,40 +106,34 @@ impl ScopeTree {
         self.root_unresolved_references.values().map(|v| v.iter().map(|(id, _)| *id))
     }
 
+    #[inline]
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
         self.flags[scope_id]
     }
 
+    #[inline]
     pub fn get_flags_mut(&mut self, scope_id: ScopeId) -> &mut ScopeFlags {
         &mut self.flags[scope_id]
     }
 
-    pub fn get_new_scope_flags(&self, flags: ScopeFlags, parent_scope_id: ScopeId) -> ScopeFlags {
-        let mut strict_mode = self.root_flags().is_strict_mode();
-        let parent_scope_flags = self.get_flags(parent_scope_id);
-
-        // Inherit strict mode for functions
+    pub fn get_new_scope_flags(
+        &self,
+        mut flags: ScopeFlags,
+        parent_scope_id: ScopeId,
+    ) -> ScopeFlags {
         // https://tc39.es/ecma262/#sec-strict-mode-code
-        if !strict_mode
-            && (parent_scope_flags.is_function() || parent_scope_flags.is_ts_module_block())
-            && parent_scope_flags.is_strict_mode()
-        {
-            strict_mode = true;
-        }
+        let parent_scope_flags = self.get_flags(parent_scope_id);
+        flags |= parent_scope_flags & ScopeFlags::StrictMode;
 
         // inherit flags for non-function scopes
-        let mut flags = flags;
         if !flags.contains(ScopeFlags::Function) {
             flags |= parent_scope_flags & ScopeFlags::Modifiers;
-        };
-
-        if strict_mode {
-            flags |= ScopeFlags::StrictMode;
         }
 
         flags
     }
 
+    #[inline]
     pub fn get_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
         self.parent_ids[scope_id]
     }
@@ -144,6 +146,7 @@ impl ScopeTree {
     }
 
     /// Get a variable binding by name that was declared in the top-level scope
+    #[inline]
     pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {
         self.get_binding(self.root_scope_id(), name)
     }
@@ -173,10 +176,12 @@ impl ScopeTree {
         None
     }
 
+    #[inline]
     pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings {
         &self.bindings[scope_id]
     }
 
+    #[inline]
     pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {
         self.node_ids[scope_id]
     }
@@ -187,11 +192,42 @@ impl ScopeTree {
         })
     }
 
+    /// Iterate over bindings declared inside a scope.
+    #[inline]
+    pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
+        self.bindings[scope_id].values().copied()
+    }
+
+    #[inline]
     pub(crate) fn get_bindings_mut(&mut self, scope_id: ScopeId) -> &mut Bindings {
         &mut self.bindings[scope_id]
     }
 
+    /// Create scope.
+    /// For root (`Program`) scope, use `add_root_scope`.
     pub fn add_scope(
+        &mut self,
+        parent_id: ScopeId,
+        node_id: AstNodeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let scope_id = self.add_scope_impl(Some(parent_id), node_id, flags);
+
+        // Set this scope as child of parent scope
+        self.child_ids[parent_id].push(scope_id);
+
+        scope_id
+    }
+
+    /// Create root (`Program`) scope.
+    pub fn add_root_scope(&mut self, node_id: AstNodeId, flags: ScopeFlags) -> ScopeId {
+        self.add_scope_impl(None, node_id, flags)
+    }
+
+    // `#[inline]` because almost always called from `add_scope` and want to avoid
+    // overhead of a function call there.
+    #[inline]
+    fn add_scope_impl(
         &mut self,
         parent_id: Option<ScopeId>,
         node_id: AstNodeId,
@@ -202,12 +238,6 @@ impl ScopeTree {
         self.flags.push(flags);
         self.bindings.push(Bindings::default());
         self.node_ids.push(node_id);
-
-        // Set this scope as child of parent scope.
-        if let Some(parent_id) = parent_id {
-            self.child_ids[parent_id].push(scope_id);
-        }
-
         scope_id
     }
 
@@ -217,5 +247,13 @@ impl ScopeTree {
 
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
         self.bindings[scope_id].shift_remove(name);
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.parent_ids.reserve(additional);
+        self.child_ids.reserve(additional);
+        self.flags.reserve(additional);
+        self.bindings.reserve(additional);
+        self.node_ids.reserve(additional);
     }
 }

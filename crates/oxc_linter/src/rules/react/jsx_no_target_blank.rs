@@ -9,7 +9,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -102,7 +102,7 @@ declare_oxc_lint!(
     /// target='_blank' attributes with rel='noreferrer'.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// /// correct
     /// var Hello = <p target="_blank"></p>
     /// var Hello = <a target="_blank" rel="noreferrer" href="https://example.com"></a>
@@ -150,14 +150,16 @@ impl Rule for JsxNoTargetBlank {
                                         .react
                                         .get_link_component_attrs(tag_name)
                                         .map_or(false, |link_attribute| {
-                                            link_attribute.contains(&attribute_name.to_string())
+                                            link_attribute
+                                                .contains(&CompactStr::new(attribute_name))
                                         })
                                     || ctx
                                         .settings()
                                         .react
                                         .get_form_component_attrs(tag_name)
                                         .map_or(false, |form_attribute| {
-                                            form_attribute.contains(&attribute_name.to_string())
+                                            form_attribute
+                                                .contains(&CompactStr::new(attribute_name))
                                         })
                                 {
                                     if let Some(val) = attribute.value.as_ref() {
@@ -243,6 +245,10 @@ impl Rule for JsxNoTargetBlank {
                 .unwrap_or(false),
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 fn check_is_external_link(link: &str) -> bool {
@@ -313,7 +319,7 @@ fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
             false
         });
     }
-    splits.any(|str| str.to_lowercase() == "noreferrer")
+    splits.any(|str| str.eq_ignore_ascii_case("noreferrer"))
 }
 
 fn match_rel_expression<'a>(
@@ -363,7 +369,7 @@ fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool
     let default = (false, "", false, false);
     match expr {
         Expression::StringLiteral(str) => {
-            (str.value.as_str().to_lowercase() == "_blank", "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
         }
         Expression::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
@@ -386,7 +392,7 @@ fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a st
     let default = (false, "", false, false);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            (str.value.as_str().to_lowercase() == "_blank", "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {

@@ -1,8 +1,10 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_codegen/src/generators/ast_kind.rs`
 
-use crate::ast::*;
 use oxc_span::{GetSpan, Span};
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AstType {
@@ -41,6 +43,9 @@ pub enum AstType {
     AssignmentExpression,
     AssignmentTarget,
     SimpleAssignmentTarget,
+    AssignmentTargetPattern,
+    ArrayAssignmentTarget,
+    ObjectAssignmentTarget,
     AssignmentTargetWithDefault,
     SequenceExpression,
     Super,
@@ -156,6 +161,7 @@ pub enum AstType {
     TSExternalModuleReference,
     TSNonNullExpression,
     Decorator,
+    TSExportAssignment,
     TSInstantiationExpression,
     JSXElement,
     JSXOpeningElement,
@@ -211,6 +217,9 @@ pub enum AstKind<'a> {
     AssignmentExpression(&'a AssignmentExpression<'a>),
     AssignmentTarget(&'a AssignmentTarget<'a>),
     SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>),
+    AssignmentTargetPattern(&'a AssignmentTargetPattern<'a>),
+    ArrayAssignmentTarget(&'a ArrayAssignmentTarget<'a>),
+    ObjectAssignmentTarget(&'a ObjectAssignmentTarget<'a>),
     AssignmentTargetWithDefault(&'a AssignmentTargetWithDefault<'a>),
     SequenceExpression(&'a SequenceExpression<'a>),
     Super(&'a Super),
@@ -326,6 +335,7 @@ pub enum AstKind<'a> {
     TSExternalModuleReference(&'a TSExternalModuleReference<'a>),
     TSNonNullExpression(&'a TSNonNullExpression<'a>),
     Decorator(&'a Decorator<'a>),
+    TSExportAssignment(&'a TSExportAssignment<'a>),
     TSInstantiationExpression(&'a TSInstantiationExpression<'a>),
     JSXElement(&'a JSXElement<'a>),
     JSXOpeningElement(&'a JSXOpeningElement<'a>),
@@ -382,6 +392,9 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::AssignmentExpression(it) => it.span(),
             Self::AssignmentTarget(it) => it.span(),
             Self::SimpleAssignmentTarget(it) => it.span(),
+            Self::AssignmentTargetPattern(it) => it.span(),
+            Self::ArrayAssignmentTarget(it) => it.span(),
+            Self::ObjectAssignmentTarget(it) => it.span(),
             Self::AssignmentTargetWithDefault(it) => it.span(),
             Self::SequenceExpression(it) => it.span(),
             Self::Super(it) => it.span(),
@@ -497,6 +510,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSExternalModuleReference(it) => it.span(),
             Self::TSNonNullExpression(it) => it.span(),
             Self::Decorator(it) => it.span(),
+            Self::TSExportAssignment(it) => it.span(),
             Self::TSInstantiationExpression(it) => it.span(),
             Self::JSXElement(it) => it.span(),
             Self::JSXOpeningElement(it) => it.span(),

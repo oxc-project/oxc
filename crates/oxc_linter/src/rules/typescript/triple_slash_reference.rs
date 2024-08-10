@@ -61,7 +61,7 @@ declare_oxc_lint!(
     /// Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// /// <reference lib="code" />
     /// globalThis.value;
     /// ```
@@ -161,6 +161,10 @@ impl Rule for TripleSlashReference {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

@@ -72,6 +72,7 @@ declare_oxc_lint!(
     /// ```
     PreferExpectResolves,
     style,
+    fix
 );
 
 impl Rule for PreferExpectResolves {

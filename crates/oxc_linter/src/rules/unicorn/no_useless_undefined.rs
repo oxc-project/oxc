@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// ```
     NoUselessUndefined,
     pedantic,
+    fix
 );
 
 // Create a static set for all function names

@@ -89,7 +89,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_rest_binding(&mut self) -> Result<BindingRestElement<'a>> {
-        // self.eat_decorators()?;
         let elem = self.parse_rest_element()?;
         if self.at(Kind::Comma) {
             if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
@@ -125,7 +124,7 @@ impl<'a> ParserImpl<'a> {
             .context(Context::In, Context::empty(), |p| p.parse_initializer(init_span, pattern))?;
         let span = self.end_span(span);
 
-        Ok(BindingRestElement { span, argument })
+        Ok(self.ast.binding_rest_element(span, argument))
     }
 
     /// `BindingProperty`[Yield, Await] :

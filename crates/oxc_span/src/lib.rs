@@ -9,5 +9,5 @@ mod span;
 pub use crate::{
     atom::{Atom, CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN},
     source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS},
-    span::{GetSpan, Span, SPAN},
+    span::{GetSpan, GetSpanMut, Span, SPAN},
 };

@@ -47,14 +47,63 @@ impl std::ops::Deref for ExplicitFunctionReturnType {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule enforces that functions do have an explicit return type annotation.
     ///
     /// ### Why is this bad?
-    /// Explicit return types do make it visually more clear what type is returned by a function.
-    /// They can also speed up TypeScript type checking performance in large codebases with many large functions.
+    ///
+    /// Explicit return types do make it visually more clear what type is
+    /// returned by a function. They can also speed up TypeScript type checking
+    /// performance in large codebases with many large functions.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```ts
+    /// // Should indicate that no value is returned (void)
+    /// function test() {
+    ///     return
+    /// }
+    ///
+    /// // Should indicate that a number is returned
+    /// var fn = function () {
+    ///     return 1
+    /// }
+    ///
+    /// // Should indicate that a string is returned
+    /// var arrowFn = () => 'test'
+    ///
+    /// class Test {
+    ///     // Should indicate that no value is returned (void)
+    ///     method() {
+    ///         return
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```ts
+    /// // No return value should be expected (void)
+    /// function test(): void {
+    ///     return
+    /// }
+    ///
+    /// // A return value of type number
+    /// var fn = function (): number {
+    ///     return 1
+    /// }
+    ///
+    /// // A return value of type string
+    /// var arrowFn = (): string => 'test'
+    ///
+    /// class Test {
+    ///     // No return value should be expected (void)
+    ///     method(): void {
+    ///         return
+    ///     }
+    /// }
     /// ```
     ExplicitFunctionReturnType,
     restriction,
@@ -249,6 +298,10 @@ impl Rule for ExplicitFunctionReturnType {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 impl ExplicitFunctionReturnType {
@@ -316,19 +369,19 @@ impl ExplicitFunctionReturnType {
                 let Some(name) = def.key.name() else { return false };
                 def.key.is_identifier()
                     && !def.computed
-                    && self.allowed_names.contains(name.as_str())
+                    && self.allowed_names.contains(name.as_ref())
             }
             AstKind::PropertyDefinition(def) => {
                 let Some(name) = def.key.name() else { return false };
                 def.key.is_identifier()
                     && !def.computed
-                    && self.allowed_names.contains(name.as_str())
+                    && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
                 let Some(name) = prop.key.name() else { return false };
                 prop.key.is_identifier()
                     && !prop.computed
-                    && self.allowed_names.contains(name.as_str())
+                    && self.allowed_names.contains(name.as_ref())
             }
             _ => false,
         }

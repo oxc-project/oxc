@@ -1,4 +1,12 @@
-include = ["*.toml", "crates/*/*.toml", "editor/*/*.toml", "napi/*/*.toml", "tasks/*/*.toml", "wasm/*/*.toml"]
+include = [
+  "*.toml",
+  ".cargo/config.toml",
+  "crates/*/*.toml",
+  "editor/*/*.toml",
+  "napi/*/*.toml",
+  "tasks/*/*.toml",
+  "wasm/*/*.toml",
+]
 
 [formatting]
 align_entries  = true

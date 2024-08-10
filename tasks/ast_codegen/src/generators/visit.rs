@@ -1,78 +1,53 @@
-use std::{
-    borrow::Cow,
-    collections::{HashMap, HashSet},
-    iter::Cloned,
-};
+use std::{borrow::Cow, collections::HashMap};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use proc_macro2::{TokenStream, TokenTree};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use syn::{
-    parenthesized,
-    parse::{Parse, ParseStream},
-    parse2, parse_quote,
-    punctuated::Punctuated,
-    spanned::Spanned,
-    token::Paren,
-    Arm, Attribute, Expr, Field, GenericArgument, Ident, Meta, MetaNameValue, Path, PathArguments,
-    Token, Type, Variant,
-};
+use syn::{parse_quote, Ident};
 
 use crate::{
-    generators::{ast_kind::BLACK_LIST as KIND_BLACK_LIST, insert},
-    schema::{Inherit, REnum, RStruct, RType},
-    util::{StrExt, TokenStreamExt, TypeExt, TypeIdentResult, TypeWrapper},
-    CodegenCtx, Generator, GeneratorOutput, Result, TypeRef,
+    codegen::LateCtx,
+    generators::ast_kind::BLACK_LIST as KIND_BLACK_LIST,
+    markers::{ScopeMarkers, VisitArg, VisitMarkers},
+    output,
+    schema::{EnumDef, GetIdent, StructDef, ToType, TypeDef},
+    util::{StrExt, ToIdent, TokenStreamExt, TypeWrapper},
+    Generator, GeneratorOutput,
 };
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct VisitGenerator;
-pub struct VisitMutGenerator;
+define_generator! {
+    pub struct VisitGenerator;
+}
+
+define_generator! {
+    pub struct VisitMutGenerator;
+}
 
 impl Generator for VisitGenerator {
-    fn name(&self) -> &'static str {
-        "VisitGenerator"
-    }
-
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit", generate_visit::<false>(ctx)))
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+        GeneratorOutput::Stream((
+            output(crate::AST_CRATE, "visit.rs"),
+            generate_visit::<false>(ctx),
+        ))
     }
 }
 
 impl Generator for VisitMutGenerator {
-    fn name(&self) -> &'static str {
-        "VisitMutGenerator"
-    }
-
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit_mut", generate_visit::<true>(ctx)))
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+        GeneratorOutput::Stream((
+            output(crate::AST_CRATE, "visit_mut.rs"),
+            generate_visit::<true>(ctx),
+        ))
     }
 }
 
-const CLIPPY_ALLOW: &str = "\
-    unused_variables,\
-    clippy::extra_unused_type_parameters,\
-    clippy::explicit_iter_loop,\
-    clippy::self_named_module_files,\
-    clippy::semicolon_if_nothing_returned,\
-    clippy::match_wildcard_for_single_variants";
-
-fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
+fn generate_visit<const MUT: bool>(ctx: &LateCtx) -> TokenStream {
     let header = generated_header!();
-    // we evaluate it outside of quote to take advantage of expression evaluation
-    // otherwise the `\n\` wouldn't work!
-    let file_docs = insert! {"\
-        //! Visitor Pattern\n\
-        //!\n\
-        //! See:\n\
-        //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)\n\
-        //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
-    "};
 
     let (visits, walks) = VisitBuilder::new(ctx, MUT).build();
-    let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
 
     let walk_mod = if MUT { quote!(walk_mut) } else { quote!(walk) };
     let trait_name = if MUT { quote!(VisitMut) } else { quote!(Visit) };
@@ -83,12 +58,12 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
         TokenStream::default()
     } else {
         quote! {
+            ///@@line_break
             #[inline]
             fn alloc<T>(&self, t: &T) -> &'a T {
-                insert!("// SAFETY:");
-                insert!("// This should be safe as long as `src` is an reference from the allocator.");
-                insert!("// But honestly, I'm not really sure if this is safe.");
-
+                ///@ SAFETY:
+                ///@ This should be safe as long as `src` is an reference from the allocator.
+                ///@ But honestly, I'm not really sure if this is safe.
                 unsafe {
                     std::mem::transmute(t)
                 }
@@ -98,28 +73,39 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
 
     quote! {
         #header
-        #file_docs
-        #clippy_attr
 
-        endl!();
+        //! Visitor Pattern
+        //!
+        //! See:
+        //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
+        //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)
 
+        //!@@line_break
+        #![allow(
+            unused_variables,
+            clippy::extra_unused_type_parameters,
+            clippy::explicit_iter_loop,
+            clippy::self_named_module_files,
+            clippy::semicolon_if_nothing_returned,
+            clippy::match_wildcard_for_single_variants
+        )]
+
+        ///@@line_break
         use std::cell::Cell;
 
-        endl!();
-
+        ///@@line_break
         use oxc_allocator::Vec;
         use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-        endl!();
+        ///@@line_break
+        #[allow(clippy::wildcard_imports)]
+        use crate::ast::*;
+        use crate::ast_kind::#ast_kind_type;
 
-        use crate::{ast::*, ast_kind::#ast_kind_type};
-
-        endl!();
-
+        ///@@line_break
         use #walk_mod::*;
 
-        endl!();
-
+        ///@@line_break
         /// Syntax tree traversal
         pub trait #trait_name <'a>: Sized {
             #[inline]
@@ -127,33 +113,30 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
             #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
 
-            endl!();
-
+            ///@@line_break
             #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
             #[inline]
             fn leave_scope(&mut self) {}
 
-            endl!();
-
+            ///@@line_break
             #may_alloc
 
             #(#visits)*
         }
 
-        endl!();
-
+        ///@@line_break
         pub mod #walk_mod {
             use super::*;
 
+            ///@@line_break
             #(#walks)*
-
         }
     }
 }
 
 struct VisitBuilder<'a> {
-    ctx: &'a CodegenCtx,
+    ctx: &'a LateCtx,
 
     is_mut: bool,
 
@@ -163,23 +146,20 @@ struct VisitBuilder<'a> {
 }
 
 impl<'a> VisitBuilder<'a> {
-    fn new(ctx: &'a CodegenCtx, is_mut: bool) -> Self {
+    fn new(ctx: &'a LateCtx, is_mut: bool) -> Self {
         Self { ctx, is_mut, visits: Vec::new(), walks: Vec::new(), cache: HashMap::new() }
     }
 
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {
-        let program = {
-            let types: Vec<&TypeRef> =
-                self.ctx.ty_table.iter().filter(|it| it.borrow().visitable()).collect_vec();
-            TypeRef::clone(
-                types
-                    .iter()
-                    .find(|it| it.borrow().ident().is_some_and(|ident| ident == "Program"))
-                    .expect("Couldn't find the `Program` type!"),
-            )
-        };
+        let program = self
+            .ctx
+            .schema()
+            .into_iter()
+            .filter(|it| it.visitable())
+            .find(|it| it.name() == "Program")
+            .expect("Couldn't find the `Program` type!");
 
-        self.get_visitor(&program, false, None);
+        self.get_visitor(program, false, None);
         (self.visits, self.walks)
     }
 
@@ -212,21 +192,20 @@ impl<'a> VisitBuilder<'a> {
 
     fn get_visitor(
         &mut self,
-        ty: &TypeRef,
+        def: &TypeDef,
         collection: bool,
-        visit_as: Option<&Ident>,
+        visit_as: Option<Ident>,
     ) -> Cow<'a, Ident> {
         let cache_ix = usize::from(collection);
         let (ident, as_type) = {
-            let ty = ty.borrow();
-            debug_assert!(ty.visitable(), "{ty:?}");
+            debug_assert!(def.visitable(), "{def:?}");
 
-            let ident = ty.ident().unwrap();
-            let as_type = ty.as_type().unwrap();
+            let ident = def.name().to_ident();
+            let as_type = def.to_type();
 
-            let ident = visit_as.unwrap_or(ident);
+            let ident = visit_as.clone().unwrap_or(ident);
 
-            (ident.clone(), if collection { parse_quote!(Vec<'a, #as_type>) } else { as_type })
+            (ident, if collection { parse_quote!(Vec<'a, #as_type>) } else { as_type })
         };
 
         // is it already generated?
@@ -276,7 +255,7 @@ impl<'a> VisitBuilder<'a> {
         let walk_name = format_ident!("walk_{}", ident_snake);
 
         self.visits.push(quote! {
-            endl!();
+            ///@@line_break
             #[inline]
             fn #visit_name (&mut self, it: #as_param_type #extra_params) {
                 #walk_name(self, it #extra_args);
@@ -289,7 +268,7 @@ impl<'a> VisitBuilder<'a> {
         self.walks.push(TokenStream::default());
 
         let (walk_body, may_inline) = if collection {
-            let singular_visit = self.get_visitor(ty, false, None);
+            let singular_visit = self.get_visitor(def, false, None);
             let iter = self.get_iter();
             (
                 quote! {
@@ -300,17 +279,17 @@ impl<'a> VisitBuilder<'a> {
                 true,
             )
         } else {
-            match &*ty.borrow() {
+            match def {
                 // TODO: this one is a hot-fix to prevent flattening aliased `Expression`s,
                 // Such as `ExpressionArrayElement` and `ClassHeritage`.
                 // Shouldn't be an edge case, <https://github.com/oxc-project/oxc/issues/4060>
-                RType::Enum(enum_)
-                    if enum_.item.ident == "Expression"
-                        && visit_as.is_some_and(|it| {
+                TypeDef::Enum(enum_)
+                    if enum_.name == "Expression"
+                        && visit_as.as_ref().is_some_and(|it| {
                             it == "ExpressionArrayElement" || it == "ClassHeritage"
                         }) =>
                 {
-                    let kind = self.kind_type(visit_as.unwrap());
+                    let kind = self.kind_type(visit_as.as_ref().unwrap());
                     (
                         quote! {
                             let kind = #kind;
@@ -321,9 +300,8 @@ impl<'a> VisitBuilder<'a> {
                         false,
                     )
                 }
-                RType::Enum(enum_) => self.generate_enum_walk(enum_, visit_as),
-                RType::Struct(struct_) => self.generate_struct_walk(struct_, visit_as),
-                _ => panic!(),
+                TypeDef::Enum(enum_) => self.generate_enum_walk(enum_, visit_as),
+                TypeDef::Struct(struct_) => self.generate_struct_walk(struct_, visit_as),
             }
         };
 
@@ -332,7 +310,7 @@ impl<'a> VisitBuilder<'a> {
 
         // replace the placeholder walker with the actual one!
         self.walks[this_walker] = quote! {
-            endl!();
+            ///@@line_break
             #may_inline
             pub fn #walk_name <'a, V: #visit_trait<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
                 #walk_body
@@ -344,26 +322,16 @@ impl<'a> VisitBuilder<'a> {
 
     fn generate_enum_walk(
         &mut self,
-        enum_: &REnum,
-        visit_as: Option<&Ident>,
+        enum_: &EnumDef,
+        visit_as: Option<Ident>,
     ) -> (TokenStream, /* inline */ bool) {
         let ident = enum_.ident();
         let mut non_exhaustive = false;
         let variants_matches = enum_
-            .item
             .variants
             .iter()
-            .filter(|it| !it.attrs.iter().any(|a| a.path().is_ident("inherit")))
-            .filter(|it| {
-                if it.attrs.iter().any(|a| {
-                    a.path().is_ident("visit")
-                        && a.meta
-                            .require_list()
-                            .unwrap()
-                            .parse_args::<Path>()
-                            .unwrap()
-                            .is_ident("ignore")
-                }) {
+            .filter(|var| {
+                if var.markers.visit.as_ref().is_some_and(|mk| mk.ignore) {
                     // We are ignoring some variants so the match is no longer exhaustive.
                     non_exhaustive = true;
                     false
@@ -371,31 +339,28 @@ impl<'a> VisitBuilder<'a> {
                     true
                 }
             })
-            .filter_map(|it| {
-                let typ = it
+            .filter_map(|var| {
+                let typ = var
                     .fields
                     .iter()
                     .exactly_one()
-                    .map(|f| &f.ty)
+                    .map(|f| &f.typ)
                     .map_err(|_| "We only support visited enum nodes with exactly one field!")
                     .unwrap();
-                let variant_name = &it.ident;
-                let typ = self.ctx.find(&typ.get_ident().inner_ident().to_string())?;
-                let borrowed = typ.borrow();
-                let visitable = borrowed.visitable();
+                let variant_name = &var.ident();
+                let type_id = typ.transparent_type_id()?;
+                let def = self.ctx.type_def(type_id)?;
+                let visitable = def.visitable();
                 if visitable {
-                    let visit = self.get_visitor(&typ, false, None);
-                    let (args_def, args) = it
-                        .attrs
-                        .iter()
-                        .find(|it| it.path().is_ident("visit_args"))
-                        .map(|it| it.parse_args_with(VisitArgs::parse))
-                        .map(|it| {
-                            it.into_iter()
-                                .flatten()
-                                .fold((Vec::new(), Vec::new()), Self::visit_args_fold)
-                        })
-                        .unwrap_or_default();
+                    let visit = self.get_visitor(def, false, None);
+                    let (args_def, args) = var
+                        .markers
+                        .visit
+                        .as_ref()
+                        .map(|mk| mk.visit_args.clone().unwrap_or_default())
+                        .into_iter()
+                        .flatten()
+                        .fold((Vec::new(), Vec::new()), Self::visit_args_fold);
                     let body = quote!(visitor.#visit(it #(#args)*));
                     let body = if args_def.is_empty() {
                         body
@@ -413,17 +378,17 @@ impl<'a> VisitBuilder<'a> {
             })
             .collect_vec();
 
-        let inherit_matches = enum_.meta.inherits.iter().filter_map(|it| {
-            let Inherit::Linked { super_, .. } = it else { panic!("Unresolved inheritance!") };
-            let type_name = super_.get_ident().as_ident().unwrap().to_string();
-            let typ = self.ctx.find(&type_name)?;
-            if typ.borrow().visitable() {
+        let inherit_matches = enum_.inherits.iter().filter_map(|it| {
+            let super_ = &it.super_;
+            let type_name = super_.name().as_name().unwrap().to_string();
+            let def = super_.type_id().and_then(|id| self.ctx.type_def(id))?;
+            if def.visitable() {
                 let snake_name = type_name.to_case(Case::Snake);
                 let match_macro = format_ident!("match_{snake_name}");
                 let match_macro = quote!(#match_macro!(#ident));
                 // HACK: edge case till we get attributes to work with inheritance.
                 let visit_as = if ident == "ArrayExpressionElement"
-                    && super_.get_ident().inner_ident() == "Expression"
+                    && super_.name().inner_name() == "Expression"
                 {
                     Some(format_ident!("ExpressionArrayElement"))
                 } else {
@@ -434,7 +399,7 @@ impl<'a> VisitBuilder<'a> {
                 } else {
                     format_ident!("to_{snake_name}")
                 };
-                let visit = self.get_visitor(&typ, false, visit_as.as_ref());
+                let visit = self.get_visitor(def, false, visit_as);
                 Some(quote!(#match_macro => visitor.#visit(it.#to_child())))
             } else {
                 None
@@ -448,7 +413,7 @@ impl<'a> VisitBuilder<'a> {
             if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
                 tk
             } else {
-                let kind = self.kind_type(ident);
+                let kind = self.kind_type(&ident);
                 quote! {
                     let kind = #kind;
                     visitor.enter_node(kind);
@@ -467,15 +432,13 @@ impl<'a> VisitBuilder<'a> {
 
     fn generate_struct_walk(
         &mut self,
-        struct_: &RStruct,
-        visit_as: Option<&Ident>,
+        struct_: &StructDef,
+        visit_as: Option<Ident>,
     ) -> (TokenStream, /* inline */ bool) {
         let ident = visit_as.unwrap_or_else(|| struct_.ident());
-        let scope_attr = struct_.item.attrs.iter().find(|it| it.path().is_ident("scope"));
-        let scope_events = scope_attr.map(parse_as_scope).transpose().unwrap().map_or_else(
-            Default::default,
-            |scope_args| {
-                let cond = scope_args.r#if.map(|cond| {
+        let scope_events =
+            struct_.markers.scope.as_ref().map_or_else(Default::default, |markers| {
+                let cond = markers.r#if.as_ref().map(|cond| {
                     let cond = cond.to_token_stream().replace_ident("self", &format_ident!("it"));
                     quote!(let scope_events_cond = #cond;)
                 });
@@ -490,10 +453,11 @@ impl<'a> VisitBuilder<'a> {
                         tk
                     }
                 };
-                let flags = scope_args
+                let flags = markers
                     .flags
-                    .map_or_else(|| quote!(ScopeFlags::empty()), |it| it.to_token_stream());
-                let flags = if let Some(strict_if) = scope_args.strict_if {
+                    .as_ref()
+                    .map_or_else(|| quote!(ScopeFlags::empty()), ToTokens::to_token_stream);
+                let flags = if let Some(strict_if) = &markers.strict_if {
                     let strict_if =
                         strict_if.to_token_stream().replace_ident("self", &format_ident!("it"));
                     quote! {{
@@ -510,19 +474,16 @@ impl<'a> VisitBuilder<'a> {
                 enter.extend(maybe_conditional(quote!(visitor.enter_scope(#flags, &it.scope_id);)));
                 let leave = maybe_conditional(quote!(visitor.leave_scope();));
                 (enter, leave)
-            },
-        );
+            });
 
         let node_events = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-            (
-                insert!(
-                    "// NOTE: {} doesn't exists!",
-                    if self.is_mut { "AstType" } else { "AstKind" }
-                ),
-                TokenStream::default(),
-            )
+            let comment = format!(
+                "@ NOTE: {} doesn't exists!",
+                if self.is_mut { "AstType" } else { "AstKind" }
+            );
+            (quote!(#![doc = #comment]), TokenStream::default())
         } else {
-            let kind = self.kind_type(ident);
+            let kind = self.kind_type(&ident);
             (
                 quote! {
                     let kind = #kind;
@@ -535,54 +496,41 @@ impl<'a> VisitBuilder<'a> {
         let mut enter_scope_at = 0;
         let mut enter_node_at = 0;
         let fields_visits: Vec<TokenStream> = struct_
-            .item
             .fields
             .iter()
             .enumerate()
-            .filter_map(|(ix, it)| {
-                let ty_res = it.ty.analyze(self.ctx);
-                let typ = ty_res.type_ref?;
-                if !typ.borrow().visitable() {
+            .filter_map(|(ix, field)| {
+                let analysis = field.typ.analysis();
+                let def = field.typ.transparent_type_id().and_then(|id| self.ctx.type_def(id))?;
+                if !def.visitable() {
                     return None;
                 }
-                let typ_wrapper = ty_res.wrapper;
-                let visit_as: Option<Ident> =
-                    it.attrs.iter().find(|it| it.path().is_ident("visit_as")).map(|it| {
-                        match &it.meta {
-                            Meta::List(meta) => {
-                                parse2(meta.tokens.clone()).expect("wrong `visit_as` input!")
-                            }
-                            _ => panic!("wrong use of `visit_as`!"),
-                        }
-                    });
+                let typ_wrapper = &analysis.wrapper;
+                let markers = &field.markers;
+                let visit_as = markers.visit.as_ref().and_then(|mk| mk.visit_as.clone());
+                let visit_args = markers.visit.as_ref().and_then(|mk| mk.visit_args.clone());
 
-                let have_enter_scope = it.attrs.iter().any(|it| {
-                    it.path().is_ident("scope")
-                        && it.parse_args_with(Ident::parse).is_ok_and(|id| id == "enter_before")
-                });
-                let have_enter_node = it.attrs.iter().any(|it| {
-                    it.path().is_ident("visit")
-                        && it.parse_args_with(Ident::parse).is_ok_and(|id| id == "enter_before")
-                });
+                let have_enter_scope = markers
+                    .scope
+                    .as_ref()
+                    .is_some_and(|it| matches!(it, ScopeMarkers { enter_before: true }));
+                let have_enter_node = markers
+                    .visit
+                    .as_ref()
+                    .is_some_and(|it| matches!(it, VisitMarkers { enter_before: true, .. }));
 
-                let args = it.attrs.iter().find(|it| it.meta.path().is_ident("visit_args"));
-                let (args_def, args) = args
-                    .map(|it| it.parse_args_with(VisitArgs::parse))
-                    .map(|it| {
-                        it.into_iter()
-                            .flatten()
-                            .fold((Vec::new(), Vec::new()), Self::visit_args_fold)
-                    })
+                let (args_def, args) = visit_args
+                    .map(|it| it.into_iter().fold((Vec::new(), Vec::new()), Self::visit_args_fold))
                     .unwrap_or_default();
                 let visit = self.get_visitor(
-                    &typ,
+                    def,
                     matches!(
                         typ_wrapper,
                         TypeWrapper::Vec | TypeWrapper::VecBox | TypeWrapper::OptVec
                     ),
-                    visit_as.as_ref(),
+                    visit_as,
                 );
-                let name = it.ident.as_ref().expect("expected named fields!");
+                let name = field.ident().expect("expected named fields!");
                 let borrowed_field = self.with_ref_pat(quote!(it.#name));
                 let mut result = match typ_wrapper {
                     TypeWrapper::Opt | TypeWrapper::OptBox | TypeWrapper::OptVec => quote! {
@@ -678,96 +626,5 @@ impl<'a> VisitBuilder<'a> {
         accumulator.0.push(quote!(let #id = #val;));
         accumulator.1.push(quote!(, #id));
         accumulator
-    }
-}
-
-#[derive(Debug)]
-struct VisitArgs(Punctuated<VisitArg, Token![,]>);
-
-impl IntoIterator for VisitArgs {
-    type Item = VisitArg;
-    type IntoIter = syn::punctuated::IntoIter<Self::Item>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-
-#[derive(Debug)]
-struct VisitArg {
-    ident: Ident,
-    value: Expr,
-}
-
-#[derive(Debug, Default)]
-struct ScopeArgs {
-    r#if: Option<Expr>,
-    flags: Option<Expr>,
-    strict_if: Option<Expr>,
-}
-
-impl Parse for VisitArgs {
-    fn parse(input: ParseStream) -> std::result::Result<Self, syn::Error> {
-        input.parse_terminated(VisitArg::parse, Token![,]).map(Self)
-    }
-}
-
-impl Parse for VisitArg {
-    fn parse(input: ParseStream) -> std::result::Result<Self, syn::Error> {
-        let nv: MetaNameValue = input.parse()?;
-        Ok(Self {
-            ident: nv.path.get_ident().map_or_else(
-                || Err(syn::Error::new(nv.span(), "Invalid `visit_args` input!")),
-                |it| Ok(it.clone()),
-            )?,
-            value: nv.value,
-        })
-    }
-}
-
-impl Parse for ScopeArgs {
-    fn parse(input: ParseStream) -> std::result::Result<Self, syn::Error> {
-        fn parse(input: ParseStream) -> std::result::Result<(String, Expr), syn::Error> {
-            let ident = if let Ok(ident) = input.parse::<Ident>() {
-                ident.to_string()
-            } else if input.parse::<Token![if]>().is_ok() {
-                String::from("if")
-            } else {
-                return Err(syn::Error::new(input.span(), "Invalid `#[scope]` input."));
-            };
-            let content;
-            parenthesized!(content in input);
-            Ok((ident, content.parse()?))
-        }
-
-        let parsed = input.parse_terminated(parse, Token![,])?;
-        Ok(parsed.into_iter().fold(Self::default(), |mut acc, (ident, expr)| {
-            match ident.as_str() {
-                "if" => acc.r#if = Some(expr),
-                "flags" => acc.flags = Some(expr),
-                "strict_if" => acc.strict_if = Some(expr),
-                _ => {}
-            }
-            acc
-        }))
-    }
-}
-
-fn parse_as_visit_args(attr: &Attribute) -> Vec<(Ident, TokenStream)> {
-    debug_assert!(attr.path().is_ident("visit_args"));
-    let mut result = Vec::new();
-    let args: MetaNameValue = attr.parse_args().expect("Invalid `visit_args` input!");
-    let ident = args.path.get_ident().unwrap().clone();
-    let value = args.value.to_token_stream();
-    result.push((ident, value));
-    result
-}
-
-fn parse_as_scope(attr: &Attribute) -> std::result::Result<ScopeArgs, syn::Error> {
-    debug_assert!(attr.path().is_ident("scope"));
-    if matches!(attr.meta, Meta::Path(_)) {
-        // empty!
-        Ok(ScopeArgs::default())
-    } else {
-        attr.parse_args_with(ScopeArgs::parse)
     }
 }

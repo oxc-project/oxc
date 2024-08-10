@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// This is dangerous, as if a new error arises on that line it'll be suppressed by the forgotten about @ts-ignore, and so be missed.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// // @ts-ignore
     /// const str: string = 1;
     ///
@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// const multiLine: number = 'value';
     /// ```
     PreferTsExpectError,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferTsExpectError {
@@ -70,6 +71,10 @@ impl Rule for PreferTsExpectError {
                 });
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

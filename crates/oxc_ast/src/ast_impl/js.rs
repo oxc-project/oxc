@@ -1,12 +1,9 @@
-// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
-// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
-
 use crate::ast::*;
 
-use std::{cell::Cell, fmt, hash::Hash};
+use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::{Atom, CompactStr, GetSpan, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     reference::{ReferenceFlag, ReferenceId},
@@ -87,6 +84,12 @@ impl<'a> Expression<'a> {
             )
     }
 
+    /// `true` if this [`Expression`] is a literal expression for a primitive value.
+    ///
+    /// Does not include [`TemplateLiteral`]s, [`object literals`], or [`array literals`].
+    ///
+    /// [`object literals`]: ObjectExpression
+    /// [`array literals`]: ArrayExpression
     pub fn is_literal(&self) -> bool {
         // Note: TemplateLiteral is not `Literal`
         matches!(
@@ -160,6 +163,8 @@ impl<'a> Expression<'a> {
     }
 
     /// Determines whether the given expr is a `null` or `undefined` or `void 0`
+    ///
+    /// Corresponds to a [nullish value check](https://developer.mozilla.org/en-US/docs/Glossary/Nullish).
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() || self.evaluate_to_undefined()
     }
@@ -288,6 +293,13 @@ impl<'a> IdentifierName<'a> {
     }
 }
 
+impl<'a> fmt::Display for IdentifierName<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.name.fmt(f)
+    }
+}
+
 impl<'a> Hash for IdentifierReference<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
@@ -307,6 +319,17 @@ impl<'a> IdentifierReference<'a> {
             reference_flag: ReferenceFlag::Read,
         }
     }
+
+    #[inline]
+    pub fn reference_id(&self) -> Option<ReferenceId> {
+        self.reference_id.get()
+    }
+}
+
+impl<'a> fmt::Display for IdentifierReference<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
+    }
 }
 
 impl<'a> Hash for BindingIdentifier<'a> {
@@ -321,6 +344,13 @@ impl<'a> BindingIdentifier<'a> {
     }
 }
 
+impl<'a> fmt::Display for BindingIdentifier<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
+    }
+}
+
 impl<'a> ArrayExpressionElement<'a> {
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
@@ -328,6 +358,7 @@ impl<'a> ArrayExpressionElement<'a> {
 }
 
 impl<'a> ObjectExpression<'a> {
+    /// Returns `true` if this object has a property named `__proto__`
     pub fn has_proto(&self) -> bool {
         use crate::syntax_directed_operations::PropName;
         self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
@@ -335,20 +366,17 @@ impl<'a> ObjectExpression<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
-    pub fn static_name(&self) -> Option<CompactStr> {
+    pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
-            Self::StaticIdentifier(ident) => Some(ident.name.to_compact_str()),
-            Self::StringLiteral(lit) => Some(lit.value.to_compact_str()),
-            Self::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
-            Self::NumericLiteral(lit) => Some(lit.value.to_string().into()),
-            Self::BigIntLiteral(lit) => Some(lit.raw.to_compact_str()),
-            Self::NullLiteral(_) => Some("null".into()),
-            Self::TemplateLiteral(lit) => lit
-                .expressions
-                .is_empty()
-                .then(|| lit.quasi())
-                .flatten()
-                .map(|quasi| quasi.to_compact_str()),
+            Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
+            Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
+            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
+            Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
+            Self::TemplateLiteral(lit) => {
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
+            }
             _ => None,
         }
     }
@@ -372,9 +400,9 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    pub fn name(&self) -> Option<CompactStr> {
+    pub fn name(&self) -> Option<Cow<'a, str>> {
         if self.is_private_identifier() {
-            self.private_name().map(|name| name.to_compact_str())
+            self.private_name().map(|name| Cow::Borrowed(name.as_str()))
         } else {
             self.static_name()
         }
@@ -424,7 +452,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_name(&self) -> Option<&str> {
+    pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
                 expr.static_property_name().map(|name| name.as_str())
@@ -434,13 +462,13 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_info(&self) -> Option<(Span, &str)> {
+    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, &lit.value)),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
                     if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some((lit.span, &lit.quasis[0].value.raw))
+                        Some((lit.span, lit.quasis[0].value.raw.as_str()))
                     } else {
                         None
                     }
@@ -448,7 +476,7 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, &expr.property.name))
+                Some((expr.property.span, expr.property.name.as_str()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -569,17 +597,17 @@ impl Argument<'_> {
 }
 
 impl<'a> AssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
-        self.as_simple_assignment_target().and_then(|it| it.get_identifier())
+    pub fn get_identifier(&self) -> Option<&'a str> {
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier)
     }
 
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        self.as_simple_assignment_target().and_then(|it| it.get_expression())
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
+    pub fn get_identifier(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
             match_member_expression!(Self) => self.to_member_expression().static_property_name(),
@@ -1195,6 +1223,13 @@ impl<'a> Hash for Class<'a> {
 }
 
 impl<'a> ClassElement<'a> {
+    /// Returns `true` if this is a [`ClassElement::StaticBlock`].
+    pub fn is_static_block(&self) -> bool {
+        matches!(self, Self::StaticBlock(_))
+    }
+
+    /// Returns `true` if this [`ClassElement`] is a static block or has a
+    /// static modifier.
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
@@ -1240,7 +1275,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    pub fn static_name(&self) -> Option<CompactStr> {
+    pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
@@ -1249,6 +1284,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    /// Returns `true` if this [`ClassElement`] is a property or accessor
     pub fn is_property(&self) -> bool {
         matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }
@@ -1427,8 +1463,8 @@ impl<'a> ImportDeclarationSpecifier<'a> {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
     }
-    pub fn name(&self) -> CompactStr {
-        self.local().name.to_compact_str()
+    pub fn name(&self) -> Cow<'a, str> {
+        Cow::Borrowed(self.local().name.as_str())
     }
 }
 

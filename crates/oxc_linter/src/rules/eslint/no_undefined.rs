@@ -29,15 +29,14 @@ declare_oxc_lint!(
     /// var undefined = "foo";
     ///
     /// if (foo === undefined) {
-    /// ...
+    ///     // ...
     /// }
     ///
     /// function baz(undefined) {
-    /// ...
+    ///     // ...
     /// }
     ///
     /// bar(undefined, "lorem");
-    ///
     /// ```
     ///
     /// ### Example of good code
@@ -47,7 +46,7 @@ declare_oxc_lint!(
     /// var Undefined = "foo";
     ///
     /// if (typeof foo === "undefined") {
-    /// ...
+    ///     // ...
     /// }
     ///
     /// global.undefined = "foo";

@@ -31,7 +31,8 @@ declare_oxc_lint!(
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,
-    restriction
+    restriction,
+    fix
 );
 
 impl Rule for PreferNodeProtocol {
@@ -66,15 +67,14 @@ impl Rule for PreferNodeProtocol {
         let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
             // `e.g. ignore "assert/"`
             if postfix.is_empty() {
-                string_lit_value.to_string()
+                string_lit_value.as_str()
             } else {
-                prefix.to_string()
+                prefix
             }
         } else {
-            string_lit_value.to_string()
+            string_lit_value.as_str()
         };
-        if module_name.starts_with("node:")
-            || NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_err()
+        if module_name.starts_with("node:") || NODEJS_BUILTINS.binary_search(&module_name).is_err()
         {
             return;
         }

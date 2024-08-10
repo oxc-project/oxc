@@ -1,6 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_cfg::BasicBlockId;
 use oxc_index::IndexVec;
+use oxc_span::GetSpan;
 pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 
 use crate::scope::ScopeId;
@@ -22,6 +23,7 @@ pub struct AstNode<'a> {
 }
 
 impl<'a> AstNode<'a> {
+    #[inline]
     pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
@@ -32,28 +34,41 @@ impl<'a> AstNode<'a> {
         Self { id, kind, scope_id, cfg_id, flags }
     }
 
+    #[inline]
     pub fn id(&self) -> AstNodeId {
         self.id
     }
 
+    #[inline]
     pub fn cfg_id(&self) -> BasicBlockId {
         self.cfg_id
     }
 
+    #[inline]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
     }
 
+    #[inline]
     pub fn scope_id(&self) -> ScopeId {
         self.scope_id
     }
 
+    #[inline]
     pub fn flags(&self) -> NodeFlags {
         self.flags
     }
 
+    #[inline]
     pub fn flags_mut(&mut self) -> &mut NodeFlags {
         &mut self.flags
+    }
+}
+
+impl GetSpan for AstNode<'_> {
+    #[inline]
+    fn span(&self) -> oxc_span::Span {
+        self.kind.span()
     }
 }
 
@@ -73,27 +88,34 @@ impl<'a> AstNodes<'a> {
         self.nodes.iter()
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
-        self.nodes.len() == 0
+        self.nodes.is_empty()
     }
 
     /// Walk up the AST, iterating over each parent node.
     ///
     /// The first node produced by this iterator is the first parent of the node
     /// pointed to by `node_id`. The last node will usually be a `Program`.
-    pub fn iter_parents(&self, node_id: AstNodeId) -> impl Iterator<Item = &AstNode<'a>> + '_ {
-        let curr = Some(self.get_node(node_id));
-        AstNodeParentIter { curr, nodes: self }
+    #[inline]
+    pub fn iter_parents(
+        &self,
+        node_id: AstNodeId,
+    ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
+        AstNodeParentIter { current_node_id: Some(node_id), nodes: self }
     }
 
+    #[inline]
     pub fn kind(&self, ast_node_id: AstNodeId) -> AstKind<'a> {
         self.nodes[ast_node_id].kind
     }
 
+    #[inline]
     pub fn parent_id(&self, ast_node_id: AstNodeId) -> Option<AstNodeId> {
         self.parent_ids[ast_node_id]
     }
@@ -106,28 +128,33 @@ impl<'a> AstNodes<'a> {
         self.parent_id(ast_node_id).map(|node_id| self.get_node(node_id))
     }
 
+    #[inline]
     pub fn get_node(&self, ast_node_id: AstNodeId) -> &AstNode<'a> {
         &self.nodes[ast_node_id]
     }
 
+    #[inline]
     pub fn get_node_mut(&mut self, ast_node_id: AstNodeId) -> &mut AstNode<'a> {
         &mut self.nodes[ast_node_id]
     }
 
     /// Get the root `AstNodeId`, It is always pointing to a `Program`.
     /// Returns `None` if root node isn't set.
+    #[inline]
     pub fn root(&self) -> Option<AstNodeId> {
         self.root
     }
 
     /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
     /// Returns `None` if root node isn't set.
+    #[inline]
     pub fn root_node(&self) -> Option<&AstNode<'a>> {
         self.root().map(|id| self.get_node(id))
     }
 
     /// Get the root node as mutable reference, It is always guaranteed to be a `Program`.
     /// Returns `None` if root node isn't set.
+    #[inline]
     pub fn root_node_mut(&mut self) -> Option<&mut AstNode<'a>> {
         self.root().map(|id| self.get_node_mut(id))
     }
@@ -143,6 +170,7 @@ impl<'a> AstNodes<'a> {
 
     /// Create and add an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
     /// Node must not be `Program`. Use `add_program_node` instead.
+    #[inline]
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
@@ -171,11 +199,16 @@ impl<'a> AstNodes<'a> {
         self.nodes.push(node);
         ast_node_id
     }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.nodes.reserve(additional);
+        self.parent_ids.reserve(additional);
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AstNodeParentIter<'s, 'a> {
-    curr: Option<&'s AstNode<'a>>,
+    current_node_id: Option<AstNodeId>,
     nodes: &'s AstNodes<'a>,
 }
 
@@ -183,9 +216,11 @@ impl<'s, 'a> Iterator for AstNodeParentIter<'s, 'a> {
     type Item = &'s AstNode<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let next = self.curr;
-        self.curr = self.curr.and_then(|curr| self.nodes.parent_node(curr.id()));
-
-        next
+        if let Some(node_id) = self.current_node_id {
+            self.current_node_id = self.nodes.parent_ids[node_id];
+            Some(self.nodes.get_node(node_id))
+        } else {
+            None
+        }
     }
 }

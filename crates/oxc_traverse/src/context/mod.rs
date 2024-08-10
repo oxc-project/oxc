@@ -23,9 +23,9 @@ pub use scoping::TraverseScoping;
 /// Passed to all AST visitor functions.
 ///
 /// Provides ability to:
-/// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`find_ancestor`].
+/// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`ancestors`].
 /// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`scopes_mut`], [`symbols_mut`],
-///   [`find_scope`], [`find_scope_by_flags`].
+///   [`ancestor_scopes`].
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
 ///
@@ -95,13 +95,12 @@ pub use scoping::TraverseScoping;
 ///
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
-/// [`find_ancestor`]: `TraverseCtx::find_ancestor`
+/// [`ancestors`]: `TraverseCtx::ancestors`
 /// [`scopes`]: `TraverseCtx::scopes`
 /// [`symbols`]: `TraverseCtx::symbols`
 /// [`scopes_mut`]: `TraverseCtx::scopes_mut`
 /// [`symbols_mut`]: `TraverseCtx::symbols_mut`
-/// [`find_scope`]: `TraverseCtx::find_scope`
-/// [`find_scope_by_flags`]: `TraverseCtx::find_scope_by_flags`
+/// [`ancestor_scopes`]: `TraverseCtx::ancestor_scopes`
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
@@ -110,17 +109,10 @@ pub struct TraverseCtx<'a> {
     pub ast: AstBuilder<'a>,
 }
 
-/// Return value of closure when using [`TraverseCtx::find_ancestor`] or [`TraverseCtx::find_scope`].
-pub enum FinderRet<T> {
-    Found(T),
-    Stop,
-    Continue,
-}
-
 // Public methods
 impl<'a> TraverseCtx<'a> {
     /// Create new traversal context.
-    pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
+    pub fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
         let ancestry = TraverseAncestry::new();
         let scoping = TraverseScoping::new(scopes, symbols);
         let ast = AstBuilder::new(allocator);
@@ -157,41 +149,12 @@ impl<'a> TraverseCtx<'a> {
         self.ancestry.ancestor(level)
     }
 
-    /// Walk up trail of ancestors to find a node.
+    /// Get iterator over ancestors, starting with closest ancestor.
     ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use oxc_ast::ast::ThisExpression;
-    /// use oxc_traverse::{Ancestor, FinderRet, Traverse, TraverseCtx};
-    ///
-    /// struct MyTraverse;
-    /// impl<'a> Traverse<'a> for MyTraverse {
-    ///     fn enter_this_expression(&mut self, this_expr: &mut ThisExpression, ctx: &mut TraverseCtx<'a>) {
-    ///         // Get name of function where `this` is bound.
-    ///         // NB: This example doesn't handle `this` in class fields or static blocks.
-    ///         let fn_id = ctx.find_ancestor(|ancestor| {
-    ///             match ancestor {
-    ///                 Ancestor::FunctionBody(func) => FinderRet::Found(func.id()),
-    ///                 Ancestor::FunctionParams(func) => FinderRet::Found(func.id()),
-    ///                 _ => FinderRet::Continue
-    ///             }
-    ///         });
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// Shortcut for `self.ancestry.find_ancestor`.
-    pub fn find_ancestor<'c, F, O>(&'c self, finder: F) -> Option<O>
-    where
-        F: Fn(&'c Ancestor<'a>) -> FinderRet<O>,
-    {
-        self.ancestry.find_ancestor(finder)
+    /// Shortcut for `ctx.ancestry.ancestors`.
+    #[inline]
+    pub fn ancestors<'b>(&'b self) -> impl Iterator<Item = &'b Ancestor<'a>> {
+        self.ancestry.ancestors()
     }
 
     /// Get depth in the AST.
@@ -252,47 +215,29 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.symbols_mut()
     }
 
-    /// Walk up trail of scopes to find a scope.
+    /// Get iterator over scopes, starting with current scope and working up.
     ///
-    /// `finder` is called with `ScopeId`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    ///
-    /// This is a shortcut for `ctx.scoping.find_scope`.
-    pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeId) -> FinderRet<O>,
-    {
-        self.scoping.find_scope(finder)
+    /// This is a shortcut for `ctx.scoping.parent_scopes`.
+    pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.scoping.ancestor_scopes()
     }
 
-    /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
+    /// Create new scope as child of provided scope.
     ///
-    /// `finder` is called with `ScopeFlags`.
+    /// `flags` provided are amended to inherit from parent scope's flags.
     ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    ///
-    /// This is a shortcut for `ctx.scoping.find_scope_by_flags`.
-    pub fn find_scope_by_flags<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeFlags) -> FinderRet<O>,
-    {
-        self.scoping.find_scope_by_flags(finder)
+    /// This is a shortcut for `ctx.scoping.create_child_scope`.
+    pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
+        self.scoping.create_child_scope(parent_id, flags)
     }
 
     /// Create new scope as child of current scope.
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
     ///
-    /// This is a shortcut for `ctx.scoping.create_scope_child_of_current`.
-    pub fn create_scope_child_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
-        self.scoping.create_scope_child_of_current(flags)
+    /// This is a shortcut for `ctx.scoping.create_child_scope_of_current`.
+    pub fn create_child_scope_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
+        self.scoping.create_child_scope_of_current(flags)
     }
 
     /// Insert a scope into scope tree below a statement.
@@ -351,11 +296,10 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
     pub fn create_bound_reference(
         &mut self,
-        name: CompactStr,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        self.scoping.create_bound_reference(name, symbol_id, flag)
+        self.scoping.create_bound_reference(symbol_id, flag)
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.

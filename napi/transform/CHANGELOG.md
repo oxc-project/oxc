@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Bug Fixes
+
+- 01d85de napi/transform: Update napi files (Boshen)
+
+### Refactor
+- 9b51e04 Overhaul napi transformer package (#4592) (DonIsaac)
+
+## [0.23.1] - 2024-08-06
+
+### Refactor
+- 9b51e04 Overhaul napi transformer package (#4592) (DonIsaac)
+
 ## [0.20.0] - 2024-07-11
 
 ### Features

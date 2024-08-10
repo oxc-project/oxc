@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -41,7 +41,7 @@ struct AnchorIsValidConfig {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// The HTML <a> element, with a valid href attribute, is formally defined as representing a **hyperlink**.
+    /// The HTML `<a>` element, with a valid href attribute, is formally defined as representing a **hyperlink**.
     /// That is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.
     ///
     /// While before it was possible to attach logic to an anchor element, with the advent of JSX libraries,
@@ -56,15 +56,17 @@ declare_oxc_lint!(
     ///
     /// Consider the following:
     ///
-    /// ```javascript
-    /// <a href="javascript:void(0)" onClick={foo}>Perform action</a>
-    /// <a href="#" onClick={foo}>Perform action</a>
-    /// <a onClick={foo}>Perform action</a>
+    /// ```jsx
+    /// <>
+    ///     <a href="javascript:void(0)" onClick={foo}>Perform action</a>
+    ///     <a href="#" onClick={foo}>Perform action</a>
+    ///     <a onClick={foo}>Perform action</a>
+    /// </>
     /// ````
     ///
     /// All these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:
     ///
-    /// ```javascript
+    /// ```jsx
     /// <button onClick={foo}>Perform action</button>
     /// ```
     /// `
@@ -78,34 +80,24 @@ declare_oxc_lint!(
     ///
     /// #### Valid
     ///
-    /// ```javascript
-    /// <a href={`https://www.javascript.com`}>navigate here</a>
-    /// ```
-    ///
-    /// ```javascript
-    /// <a href={somewhere}>navigate here</a>
-    /// ```
-    ///
-    /// ```javascript
-    /// <a {...spread}>navigate here</a>
+    /// ```jsx
+    /// <>
+    ///     <a href={`https://www.javascript.com`}>navigate here</a>
+    ///     <a href={somewhere}>navigate here</a>
+    ///     <a {...spread}>navigate here</a>
+    /// </>
     /// ```
     ///
     /// #### Invalid
     ///
-    /// ```javascript
-    /// <a href={null}>navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href={undefined}>navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href>navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href="javascript:void(0)">navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href="https://example.com" onClick={something}>navigate here</a>
+    /// ```jsx
+    /// <>
+    ///     <a href={null}>navigate here</a>
+    ///     <a href={undefined}>navigate here</a>
+    ///     <a href>navigate here</a>
+    ///     <a href="javascript:void(0)">navigate here</a>
+    ///     <a href="https://example.com" onClick={something}>navigate here</a>
+    /// </>
     /// ```
     ///
     /// ### Reference
@@ -134,7 +126,7 @@ impl Rule for AnchorIsValid {
             };
             if name == "a" {
                 if let Option::Some(herf_attr) =
-                    has_jsx_prop_lowercase(&jsx_el.opening_element, "href")
+                    has_jsx_prop_ignore_case(&jsx_el.opening_element, "href")
                 {
                     // Check if the 'a' element has a correct href attribute
                     match herf_attr {
@@ -142,7 +134,7 @@ impl Rule for AnchorIsValid {
                             Some(value) => {
                                 let is_empty = check_value_is_empty(value, &self.0.valid_hrefs);
                                 if is_empty {
-                                    if has_jsx_prop_lowercase(&jsx_el.opening_element, "onclick")
+                                    if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick")
                                         .is_some()
                                     {
                                         ctx.diagnostic(cant_be_anchor(ident.span));

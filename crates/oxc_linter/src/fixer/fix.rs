@@ -12,7 +12,7 @@ bitflags! {
     ///
     /// [`FixKind`] is designed to be interopable with [`bool`]. `true` turns
     /// into [`FixKind::Fix`] (applies only safe fixes) and `false` turns into
-    /// `FixKind::None` (do not apply any fixes or suggestions).
+    /// [`FixKind::None`] (do not apply any fixes or suggestions).
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct FixKind: u8 {
         /// An automatic code fix. Most of these are applied with `--fix`
@@ -33,6 +33,8 @@ bitflags! {
         const None = 0;
         const SafeFix = Self::Fix.bits();
         const DangerousFix = Self::Dangerous.bits() | Self::Fix.bits();
+        /// Fixes and Suggestions that are safe or dangerous.
+        const All = Self::Dangerous.bits() | Self::Fix.bits() | Self::Suggestion.bits();
     }
 }
 

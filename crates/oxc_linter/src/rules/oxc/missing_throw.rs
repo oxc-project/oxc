@@ -25,7 +25,8 @@ declare_oxc_lint!(
     /// const foo = () => { new Error() }
     /// ```
     MissingThrow,
-    correctness
+    correctness,
+    pending // TODO: add a suggestion that adds `throw`
 );
 
 impl Rule for MissingThrow {

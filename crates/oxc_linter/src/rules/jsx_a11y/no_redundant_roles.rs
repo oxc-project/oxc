@@ -10,7 +10,7 @@ use phf::phf_map;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -27,13 +27,15 @@ pub struct NoRedundantRoles;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces that the explicit role property is not the same as implicit/default role property on element.
+    ///
+    /// Enforces that the explicit `role` property is not the same as
+    /// implicit/default role property on element.
     ///
     /// ### Why is this bad?
     /// Redundant roles can lead to confusion and verbosity in the codebase.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <nav role="navigation" />
     ///
@@ -55,7 +57,7 @@ impl Rule for NoRedundantRoles {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(component) = get_element_type(ctx, jsx_el) {
                 if let Some(JSXAttributeItem::Attribute(attr)) =
-                    has_jsx_prop_lowercase(jsx_el, "role")
+                    has_jsx_prop_ignore_case(jsx_el, "role")
                 {
                     if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
                         let roles: Vec<String> = role_values

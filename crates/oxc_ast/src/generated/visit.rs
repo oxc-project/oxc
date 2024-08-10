@@ -21,7 +21,9 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{ast::*, ast_kind::AstKind};
+#[allow(clippy::wildcard_imports)]
+use crate::ast::*;
+use crate::ast_kind::AstKind;
 
 use walk::*;
 
@@ -2157,6 +2159,7 @@ pub mod walk {
         it: &TSImportAttributes<'a>,
     ) {
         // NOTE: AstKind doesn't exists!
+        visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_ts_import_attribute_list(&it.elements);
     }
 
@@ -2750,6 +2753,8 @@ pub mod walk {
         visitor: &mut V,
         it: &AssignmentTargetPattern<'a>,
     ) {
+        let kind = AstKind::AssignmentTargetPattern(visitor.alloc(it));
+        visitor.enter_node(kind);
         match it {
             AssignmentTargetPattern::ArrayAssignmentTarget(it) => {
                 visitor.visit_array_assignment_target(it)
@@ -2758,6 +2763,7 @@ pub mod walk {
                 visitor.visit_object_assignment_target(it)
             }
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2765,13 +2771,15 @@ pub mod walk {
         visitor: &mut V,
         it: &ArrayAssignmentTarget<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::ArrayAssignmentTarget(visitor.alloc(it));
+        visitor.enter_node(kind);
         for elements in it.elements.iter().flatten() {
             visitor.visit_assignment_target_maybe_default(elements);
         }
         if let Some(rest) = &it.rest {
             visitor.visit_assignment_target_rest(rest);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2815,11 +2823,13 @@ pub mod walk {
         visitor: &mut V,
         it: &ObjectAssignmentTarget<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::ObjectAssignmentTarget(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_assignment_target_properties(&it.properties);
         if let Some(rest) = &it.rest {
             visitor.visit_assignment_target_rest(rest);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3871,6 +3881,7 @@ pub mod walk {
         match it {
             TSEnumMemberName::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::StaticStringLiteral(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::StaticTemplateLiteral(it) => visitor.visit_template_literal(it),
             TSEnumMemberName::StaticNumericLiteral(it) => visitor.visit_numeric_literal(it),
             match_expression!(TSEnumMemberName) => visitor.visit_expression(it.to_expression()),
         }
@@ -4147,10 +4158,12 @@ pub mod walk {
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
+                visitor.visit_ts_interface_declaration(it)
+            }
             match_expression!(ExportDefaultDeclarationKind) => {
                 visitor.visit_expression(it.to_expression())
             }
-            _ => {}
         }
     }
 
@@ -4198,8 +4211,10 @@ pub mod walk {
         visitor: &mut V,
         it: &TSExportAssignment<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::TSExportAssignment(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_expression(&it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]

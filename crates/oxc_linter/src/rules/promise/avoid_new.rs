@@ -23,7 +23,7 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// new Promise((resolve, reject) => { ... });
+    /// new Promise((resolve, reject) => { /* ... */ });
     /// ```
     AvoidNew,
     restriction,

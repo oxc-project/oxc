@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -26,7 +26,7 @@ pub struct Lang;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The lang prop on the <html> element must be a valid IETF's BCP 47 language tag.
+    /// The lang prop on the `<html>` element must be a valid IETF's BCP 47 language tag.
     ///
     /// ### Why is this bad?
     ///
@@ -39,13 +39,13 @@ declare_oxc_lint!(
     /// ### Example
     ///
     /// // good
-    /// ```javascript
+    /// ```jsx
     /// <html lang="en">
     /// <html lang="en-US">
     /// ```
     ///
     /// // bad
-    /// ```javascript
+    /// ```jsx
     /// <html>
     /// <html lang="foo">
     /// ````
@@ -75,7 +75,7 @@ impl Rule for Lang {
             return;
         };
 
-        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
+        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(lang_diagnostic(identifier.span)),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
@@ -94,8 +94,7 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             !container.expression.is_expression() || !container.expression.is_undefined()
         }
         Some(JSXAttributeValue::StringLiteral(str)) => {
-            let language_tag = LanguageTag::parse(str.value.as_str()).unwrap();
-            language_tag.is_valid()
+            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
         }
         _ => true,
     }
@@ -135,6 +134,7 @@ fn test() {
 
     let fail = vec![
         ("<html lang='foo' />", None, None, None),
+        ("<html lang='n'></html>", None, None, None),
         ("<html lang='zz-LL' />", None, None, None),
         ("<html lang={undefined} />", None, None, None),
         ("<Foo lang={undefined} />", None, Some(settings()), None),

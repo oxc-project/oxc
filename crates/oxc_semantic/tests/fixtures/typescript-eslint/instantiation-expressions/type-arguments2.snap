@@ -15,7 +15,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "flag": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "T",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(T)",
             "references": [
               {
                 "flag": "ReferenceFlag(Type)",
@@ -29,11 +29,11 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "value",
-            "node": "FormalParameter",
+            "node": "FormalParameter(value)",
             "references": [
               {
                 "flag": "ReferenceFlag(Read)",
-                "id": 0,
+                "id": 1,
                 "name": "value",
                 "node_id": 19
               }
@@ -51,8 +51,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "flag": "SymbolFlags(TypeParameter)",
             "id": 4,
             "name": "T",
-            "node": "TSTypeParameter",
-            "references": []
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 3,
+                "name": "T",
+                "node_id": 31
+              }
+            ]
           }
         ]
       }
@@ -69,13 +76,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         "references": [
           {
             "flag": "ReferenceFlag(Read | TSTypeQuery)",
-            "id": 0,
+            "id": 2,
             "name": "makeBox",
             "node_id": 27
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "id": 4,
             "name": "makeBox",
             "node_id": 36
           }
@@ -92,7 +99,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 5,
         "name": "makeStringBox",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(makeStringBox)",
         "references": []
       }
     ]

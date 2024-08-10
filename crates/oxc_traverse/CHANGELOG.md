@@ -4,6 +4,71 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+- 75f2207 traverse: [**BREAKING**] Replace `find_scope` with `ancestor_scopes` returning iterator (#4693) (overlookmotel)
+
+- 506709f traverse: [**BREAKING**] Replace `find_ancestor` with `ancestors` returning iterator (#4692) (overlookmotel)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- e0832f8 minifier: Use `oxc_traverse` for AST passes (#4725) (Boshen)
+- 54f9897 traverse: Simpler code for entering/exiting unconditional scopes (#4685) (overlookmotel)
+- 83546d3 traverse: Enter node before entering scope (#4684) (overlookmotel)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+## [0.23.0] - 2024-08-01
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Refactor
+
+- e6a8af6 traverse: Speed up tests (#4538) (overlookmotel)
+
+## [0.22.1] - 2024-07-27
+
+### Bug Fixes
+
+- c04b9aa transformer: Add to `SymbolTable::declarations` for all symbols (#4460) (overlookmotel)
+
+### Performance
+
+- 348c1ad semantic: Remove `span` field from `Reference` (#4464) (overlookmotel)
+
+### Refactor
+
+- f17254a semantic: Populate `declarations` field in `SymbolTable::create_symbol` (#4461) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+- 85a7cea semantic: [**BREAKING**] Remove name from `reference` (#4329) (Dunqing)
+
+- f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)
+
+### Bug Fixes
+
+- aece1df ast: Visit `Program`s `hashbang` field first (#4368) (overlookmotel)
+
+### Performance
+
+- e70c67b semantic: Remove a branch from `add_scope` (#4384) (overlookmotel)
+- 7eb2864 traverse: Speed up finding UID binding name (#4356) (overlookmotel)
+
+### Refactor
+
+- 5f1c7ec ast: Rename the `visited_node` marker to `ast`. (#4289) (rzvxa)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

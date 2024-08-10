@@ -24,7 +24,7 @@ declare_oxc_lint!(
     /// [It has been deprecated in `StrictMode`.](https://legacy.reactjs.org/docs/strict-mode.html#warning-about-deprecated-finddomnode-usage)
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// class MyComponent extends Component {
     ///   componentDidMount() {
     ///     findDOMNode(this).scrollIntoView();
@@ -65,6 +65,10 @@ impl Rule for NoFindDomNode {
             return;
         };
         ctx.diagnostic(no_find_dom_node_diagnostic(span));
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

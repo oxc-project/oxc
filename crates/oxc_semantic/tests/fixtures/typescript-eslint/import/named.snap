@@ -21,7 +21,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/named.ts
         "flag": "SymbolFlags(Import)",
         "id": 0,
         "name": "v",
-        "node": "ImportSpecifier",
+        "node": "ImportSpecifier(v)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",

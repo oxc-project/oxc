@@ -26,24 +26,27 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// // Fail
-    /// await fs.readFile(file, 'UTF-8');
+    /// import fs from 'node:fs/promises';
+    /// async function bad() {
+    ///     await fs.readFile(file, 'UTF-8');
     ///
-    /// await fs.readFile(file, 'ASCII');
+    ///     await fs.readFile(file, 'ASCII');
     ///
-    /// const string = buffer.toString('utf-8');
+    ///     const string = buffer.toString('utf-8');
+    /// }
     ///
-    /// // pass
+    /// async function good() {
+    ///     await fs.readFile(file, 'utf8');
     ///
-    /// await fs.readFile(file, 'utf8');
+    ///     await fs.readFile(file, 'ascii');
     ///
-    /// await fs.readFile(file, 'ascii');
-    ///
-    /// const string = buffer.toString('utf8');
+    ///     const string = buffer.toString('utf8');
+    /// }
     ///
     /// ```
     TextEncodingIdentifierCase,
-    style
+    style,
+    pending
 );
 
 impl Rule for TextEncodingIdentifierCase {
@@ -103,7 +106,7 @@ fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool 
     let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
         return false;
     };
-    if ident.name.to_lowercase() != "charset" {
+    if !ident.name.eq_ignore_ascii_case("charset") {
         return false;
     }
 
@@ -116,7 +119,7 @@ fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool 
         return false;
     };
 
-    if name.name.to_lowercase() != "meta" {
+    if !name.name.eq_ignore_ascii_case("meta") {
         return false;
     }
 

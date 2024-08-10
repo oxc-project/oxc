@@ -20,7 +20,7 @@ declare_oxc_lint!(
     /// This rule will warn you if you try to use the ReactDOM.render() return value.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// vaa inst =ReactDOM.render(<App />, document.body);
     /// function render() {
@@ -77,6 +77,10 @@ impl Rule for NoRenderReturnValue {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

@@ -4,6 +4,59 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+- 75f2207 traverse: [**BREAKING**] Replace `find_scope` with `ancestor_scopes` returning iterator (#4693) (overlookmotel)
+
+- 506709f traverse: [**BREAKING**] Replace `find_ancestor` with `ancestors` returning iterator (#4692) (overlookmotel)
+
+### Bug Fixes
+
+- 4797eaa transformer: Strip TS statements from for in/of statement bodies (#4686) (overlookmotel)
+- 5327acd transformer/react: The `require` IdentifierReference does not have a `reference_id` (#4658) (Dunqing)
+- 3987665 transformer/typescript: Incorrect enum-related `symbol_id`/`reference_id` (#4660) (Dunqing)
+- 4efd54b transformer/typescript: Incorrect `SymbolFlags` for jsx imports (#4549) (Dunqing)
+
+### Refactor
+
+- 83546d3 traverse: Enter node before entering scope (#4684) (overlookmotel)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- 5327acd transformer/react: The `require` IdentifierReference does not have a `reference_id` (#4658) (Dunqing)
+- 3987665 transformer/typescript: Incorrect enum-related `symbol_id`/`reference_id` (#4660) (Dunqing)
+- 4efd54b transformer/typescript: Incorrect `SymbolFlags` for jsx imports (#4549) (Dunqing)
+
+## [0.23.0] - 2024-08-01
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Refactor
+
+- 96602bf transformer/typescript: Determine whether to remove `ExportSpeicifer` by `ReferenceFlags` (#4513) (Dunqing)
+
+## [0.22.1] - 2024-07-27
+
+### Bug Fixes
+
+- c04b9aa transformer: Add to `SymbolTable::declarations` for all symbols (#4460) (overlookmotel)
+- ecdee88 transformer/typescript: Incorrect eliminate exports when the referenced symbol is both value and type (#4507) (Dunqing)
+
+### Refactor
+
+- f17254a semantic: Populate `declarations` field in `SymbolTable::create_symbol` (#4461) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+- 85a7cea semantic: [**BREAKING**] Remove name from `reference` (#4329) (Dunqing)
+
+### Refactor
+
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

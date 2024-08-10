@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- 07607d3 ast_codegen, span: Process `Span` through ast_codegen (#4703) (overlookmotel)
+- 125c5fd ast_codegen, span: Process `SourceType` through ast_codegen. (#4696) (rzvxa)
+- 2e63618 span: Implement `CloneIn` for the AST-related items. (#4729) (rzvxa)
+
+### Performance
+
+- 6ff200d linter: Change react rules and utils to use `Cow` and `CompactStr` instead of `String`  (#4603) (DonIsaac)
+
+### Refactor
+
+- e1429e5 span: Reduce #[cfg_attr] boilerplate in type defs (#4702) (overlookmotel)
+
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+
+### Performance
+
+- 6ff200d linter: Change react rules and utils to use `Cow` and `CompactStr` instead of `String`  (#4603) (DonIsaac)
+
+## [0.22.1] - 2024-07-27
+
+### Features
+
+- e2735ca span: Add `contains_inclusive` method (#4491) (DonIsaac)
+
+## [0.22.0] - 2024-07-23
+
+### Bug Fixes
+- ea33f94 Impl PartialEq<str> for CompactStr (#4352) (DonIsaac)
+
+### Performance
+- a207923 Replace some CompactStr usages with Cows (#4377) (DonIsaac)
+
 ## [0.18.0] - 2024-07-09
 
 ### Features

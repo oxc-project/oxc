@@ -17,7 +17,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 1,
                 "name": "printName",
-                "node": "FormalParameter",
+                "node": "FormalParameter(printName)",
                 "references": [
                   {
                     "flag": "ReferenceFlag(Read)",
@@ -39,11 +39,11 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "printerName",
-                "node": "FormalParameter",
+                "node": "FormalParameter(printerName)",
                 "references": [
                   {
                     "flag": "ReferenceFlag(Read)",
-                    "id": 0,
+                    "id": 1,
                     "name": "printerName",
                     "node_id": 35
                   }
