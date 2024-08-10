@@ -222,16 +222,18 @@ impl<'a> InjectGlobalVariables<'a> {
         if let Expression::StaticMemberExpression(member) = expr {
             for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
                 if ReplaceGlobalDefines::is_dot_define(dot_define, member) {
-                    // Create `Atom` for replacement lazily on first replacement
+                    // If this is first replacement made for this dot define,
+                    // create `Atom` for replacement, and record in `replaced_dot_defines`
                     if value_atom.is_none() {
                         *value_atom = Some(self.ast.atom(dot_define.value.as_str()));
+
+                        self.replaced_dot_defines
+                            .push((dot_define.parts[0].clone(), dot_define.value.clone()));
                     }
                     let value_atom = value_atom.as_ref().unwrap().clone();
 
                     let value = self.ast.expression_identifier_reference(SPAN, value_atom);
                     *expr = value;
-                    self.replaced_dot_defines
-                        .push((dot_define.parts[0].clone(), dot_define.value.clone()));
                     break;
                 }
             }
