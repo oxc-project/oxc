@@ -15,6 +15,7 @@ mod options;
 // Presets: <https://babel.dev/docs/presets>
 mod env;
 mod es2015;
+mod es2016;
 mod react;
 mod typescript;
 
@@ -36,6 +37,7 @@ pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     env::EnvOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
+    es2016::ES2016Options,
     options::{BabelOptions, TransformOptions},
     react::{ReactJsxRuntime, ReactOptions},
     typescript::TypeScriptOptions,
@@ -43,6 +45,7 @@ pub use crate::{
 use crate::{
     context::{Ctx, TransformCtx},
     es2015::ES2015,
+    es2016::ES2016,
     react::React,
     typescript::TypeScript,
 };
@@ -59,6 +62,7 @@ pub struct Transformer<'a> {
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
     x3_es2015: ES2015<'a>,
+    x4_es2016: ES2016<'a>,
 }
 
 impl<'a> Transformer<'a> {
@@ -82,7 +86,8 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
             x1_react: React::new(options.react, Rc::clone(&ctx)),
-            x3_es2015: ES2015::new(options.es2015, ctx),
+            x3_es2015: ES2015::new(options.es2015, Rc::clone(&ctx)),
+            x4_es2016: ES2016::new(options.es2016, ctx),
         }
     }
 
@@ -161,6 +166,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr, ctx);
         self.x3_es2015.transform_expression(expr);
+        self.x4_es2016.transform_expression(expr);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

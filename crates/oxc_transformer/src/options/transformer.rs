@@ -7,6 +7,7 @@ use crate::{
     compiler_assumptions::CompilerAssumptions,
     env::{can_enable_plugin, EnvOptions, Versions},
     es2015::{ArrowFunctionsOptions, ES2015Options},
+    es2016::ES2016Options,
     options::babel::BabelOptions,
     react::ReactOptions,
     typescript::TypeScriptOptions,
@@ -34,6 +35,7 @@ pub struct TransformOptions {
     pub react: ReactOptions,
 
     pub es2015: ES2015Options,
+    pub es2016: ES2016Options,
 }
 
 impl TransformOptions {
@@ -104,6 +106,16 @@ impl TransformOptions {
             })
         });
 
+        let es2016 = ES2016Options::default().with_exponentiation_operator({
+            let plugin_name = "transform-exponentiation-operator";
+            enable_plugin(plugin_name, options, &env_options, &targets).map(|options| {
+                from_value::<bool>(options).unwrap_or_else(|err| {
+                    report_error(plugin_name, &err, false, &mut errors);
+                    false
+                })
+            })
+        });
+
         let typescript = {
             let plugin_name = "transform-typescript";
             from_value::<TypeScriptOptions>(get_plugin_options(plugin_name, options))
@@ -135,6 +147,7 @@ impl TransformOptions {
             typescript,
             react,
             es2015,
+            es2016,
         })
     }
 }

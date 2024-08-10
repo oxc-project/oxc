@@ -6,8 +6,8 @@ use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactOptions, TransformOptions, Transformer,
-    TypeScriptOptions,
+    ArrowFunctionsOptions, ES2015Options, ES2016Options, ReactOptions, TransformOptions,
+    Transformer, TypeScriptOptions,
 };
 
 // Instruction:
@@ -18,6 +18,7 @@ use oxc_transformer::{
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
     let path = Path::new(&name);
+    dbg!(&path);
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
@@ -39,6 +40,7 @@ fn main() {
     let transform_options = TransformOptions {
         typescript: TypeScriptOptions::default(),
         es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
+        es2016: ES2016Options { exponentiation_operator: true },
         react: ReactOptions {
             jsx_plugin: true,
             jsx_self_plugin: true,
