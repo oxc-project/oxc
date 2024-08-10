@@ -30,9 +30,9 @@ declare_oxc_lint!(
     /// var foo = void 0;
     ///
     /// // success
-    /// "var foo = bar()",
-    /// "foo.void()",
-    /// "foo.void = bar",
+    /// "var foo = bar()";
+    /// "foo.void()";
+    /// "foo.void = bar";
     /// ```
     NoVoid,
     restriction,

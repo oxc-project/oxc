@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// for (var i = 0; i < 10; i--) {}
     ///
-    /// for (var = 10; i >= 0; i++) {}
+    /// for (var i = 10; i >= 0; i++) {}
     /// ```
     ForDirection,
     correctness,

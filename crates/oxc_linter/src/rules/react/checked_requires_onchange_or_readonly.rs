@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// It also warns when checked and defaultChecked properties are used together.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <input type="checkbox" checked />
     /// <input type="checkbox" checked defaultChecked />

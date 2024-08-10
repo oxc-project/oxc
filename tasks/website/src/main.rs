@@ -12,7 +12,7 @@ fn main() {
         "linter-schema-json" => linter::print_schema_json(),
         "linter-schema-markdown" => linter::print_schema_markdown(),
         "linter-cli" => linter::print_cli(),
-        "linter-rules" => linter::print_rules(),
+        "linter-rules" => linter::print_rules(args),
         _ => println!("Missing task command."),
     }
 }

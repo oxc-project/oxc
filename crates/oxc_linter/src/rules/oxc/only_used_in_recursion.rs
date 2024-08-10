@@ -35,10 +35,10 @@ declare_oxc_lint!(
     /// It increase cognitive complexity and may impact performance.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// // Bad - the argument `b` is only used in recursive calls
     /// function f(a: number, b: number): number {
-    ///     if a == 0 {
+    ///     if (a == 0) {
     ///         return 1
     ///     } else {
     ///         return f(a - 1, b + 1)
@@ -47,7 +47,7 @@ declare_oxc_lint!(
     ///
     /// // Good - the argument `b` is omitted
     /// function f(a: number): number {
-    ///    if a == 0 {
+    ///    if (a == 0) {
     ///        return 1
     ///    } else {
     ///        return f(a - 1)
