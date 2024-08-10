@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.1] - 2024-08-10
+
+### Bug Fixes
+
+- f5eeebd ast_macros: Raise compile error on invalid `generate_derive` input. (#4766) (rzvxa)
+
+### Refactor
+
+- 7ea058d ast_codegen: Replace Windows-style line breaks with Unix-style (#4769) (overlookmotel)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features
