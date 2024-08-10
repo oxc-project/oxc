@@ -60,3 +60,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function foo() { hey.finally(x => {}) }
    ·                  ────────────────────
    ╰────
+
+  ⚠ eslint-plugin-promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:1]
+ 1 │ something().then(async () => await somethingElse())
+   · ───────────────────────────────────────────────────
+   ╰────

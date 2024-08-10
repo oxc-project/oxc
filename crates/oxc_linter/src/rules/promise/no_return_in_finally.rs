@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// })
     /// ```
     NoReturnInFinally,
-    correctness,
+    nursery,
 );
 
 impl Rule for NoReturnInFinally {

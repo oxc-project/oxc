@@ -39,12 +39,7 @@ impl Rule for PreferAwaitToThen {
             return;
         };
 
-        let Some(prop_name) = is_promise(call_expr) else {
-            return;
-        };
-
-        // Await statements cannot be added to the top level scope
-        if ctx.scopes().get_flags(node.scope_id()).is_top() {
+        if is_promise(call_expr).is_none() {
             return;
         }
 
@@ -73,7 +68,9 @@ fn test() {
         "a = async () => {
 			      try { await something() } catch (error) { somethingElse() }
 			    }",
-        "something().then(async () => await somethingElse())",
+        // <https://github.com/tc39/proposal-top-level-await>
+        // Top level await is allowed now, so comment this out
+        // "something().then(async () => await somethingElse())",
         "function foo() { hey.somethingElse(x => {}) }",
         "const isThenable = (obj) => {
 			      return obj && typeof obj.then === 'function';
@@ -90,6 +87,7 @@ fn test() {
         "async function a() { hey.then(function() { }).then(function() { }) }",
         "function foo() { hey.catch(x => {}) }",
         "function foo() { hey.finally(x => {}) }",
+        "something().then(async () => await somethingElse())",
     ];
 
     Tester::new(PreferAwaitToThen::NAME, pass, fail).test_and_snapshot();
