@@ -26,20 +26,22 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// // Fail
-    /// await fs.readFile(file, 'UTF-8');
+    /// import fs from 'node:fs/promises';
+    /// async function bad() {
+    ///     await fs.readFile(file, 'UTF-8');
     ///
-    /// await fs.readFile(file, 'ASCII');
+    ///     await fs.readFile(file, 'ASCII');
     ///
-    /// const string = buffer.toString('utf-8');
+    ///     const string = buffer.toString('utf-8');
+    /// }
     ///
-    /// // pass
+    /// async function good() {
+    ///     await fs.readFile(file, 'utf8');
     ///
-    /// await fs.readFile(file, 'utf8');
+    ///     await fs.readFile(file, 'ascii');
     ///
-    /// await fs.readFile(file, 'ascii');
-    ///
-    /// const string = buffer.toString('utf8');
+    ///     const string = buffer.toString('utf8');
+    /// }
     ///
     /// ```
     TextEncodingIdentifierCase,

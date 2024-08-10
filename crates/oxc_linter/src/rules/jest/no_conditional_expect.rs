@@ -47,8 +47,8 @@ declare_oxc_lint!(
     /// });
     ///
     /// it('throws an error', async () => {
-    //   await foo().catch(error => expect(error).toBeInstanceOf(error));
-    // });
+    ///   await foo().catch(error => expect(error).toBeInstanceOf(error));
+    /// });
     /// ```
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),

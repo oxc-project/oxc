@@ -57,9 +57,11 @@ declare_oxc_lint!(
     /// Consider the following:
     ///
     /// ```jsx
-    /// <a href="javascript:void(0)" onClick={foo}>Perform action</a>
-    /// <a href="#" onClick={foo}>Perform action</a>
-    /// <a onClick={foo}>Perform action</a>
+    /// <>
+    ///     <a href="javascript:void(0)" onClick={foo}>Perform action</a>
+    ///     <a href="#" onClick={foo}>Perform action</a>
+    ///     <a onClick={foo}>Perform action</a>
+    /// </>
     /// ````
     ///
     /// All these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:
@@ -79,19 +81,23 @@ declare_oxc_lint!(
     /// #### Valid
     ///
     /// ```jsx
-    /// <a href={`https://www.javascript.com`}>navigate here</a>
-    /// <a href={somewhere}>navigate here</a>
-    /// <a {...spread}>navigate here</a>
+    /// <>
+    ///     <a href={`https://www.javascript.com`}>navigate here</a>
+    ///     <a href={somewhere}>navigate here</a>
+    ///     <a {...spread}>navigate here</a>
+    /// </>
     /// ```
     ///
     /// #### Invalid
     ///
     /// ```jsx
-    /// <a href={null}>navigate here</a>
-    /// <a href={undefined}>navigate here</a>
-    /// <a href>navigate here</a>
-    /// <a href="javascript:void(0)">navigate here</a>
-    /// <a href="https://example.com" onClick={something}>navigate here</a>
+    /// <>
+    ///     <a href={null}>navigate here</a>
+    ///     <a href={undefined}>navigate here</a>
+    ///     <a href>navigate here</a>
+    ///     <a href="javascript:void(0)">navigate here</a>
+    ///     <a href="https://example.com" onClick={something}>navigate here</a>
+    /// </>
     /// ```
     ///
     /// ### Reference

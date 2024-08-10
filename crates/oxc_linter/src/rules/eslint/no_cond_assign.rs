@@ -29,12 +29,24 @@ enum NoCondAssignConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow assignment operators in conditional expressions
     ///
     /// ### Why is this bad?
     ///
+    /// In conditional statements, it is very easy to mistype a comparison
+    /// operator (such as `==`) as an assignment operator (such as `=`).
+    ///
+    /// There are valid reasons to use assignment operators in conditional
+    /// statements. However, it can be difficult to tell whether a specific
+    /// assignment was intentional.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// ```js
+    /// // Check the user's job title
+    /// if (user.jobTitle = "manager") {
+    ///     // user.jobTitle is now incorrect
+    /// }
     /// ```
     NoCondAssign,
     correctness

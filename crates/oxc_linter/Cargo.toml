@@ -57,3 +57,4 @@ schemars            = { workspace = true, features = ["indexmap2"] }
 static_assertions = { workspace = true }
 insta             = { workspace = true }
 project-root      = { workspace = true }
+markdown          = { version = "1.0.0-alpha.18" }

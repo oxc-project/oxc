@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// This rule enforces a consistent React class style.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// var Hello = createReactClass({
     ///   render: function() {
     ///     return <div>Hello {this.props.name}</div>;

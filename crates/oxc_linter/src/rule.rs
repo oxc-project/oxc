@@ -235,12 +235,22 @@ impl RuleWithSeverity {
 #[cfg(test)]
 mod test {
     use crate::rules::RULES;
+    use markdown::{to_html_with_options, Options};
 
     #[test]
     fn ensure_documentation() {
         assert!(!RULES.is_empty());
+        let options = Options::gfm();
+
         for rule in RULES.iter() {
-            assert!(rule.documentation().is_some_and(|s| !s.is_empty()), "{}", rule.name());
+            let name = rule.name();
+            assert!(
+                rule.documentation().is_some_and(|s| !s.is_empty()),
+                "Rule '{name}' is missing documentation."
+            );
+            // will panic if provided invalid markdown
+            let html = to_html_with_options(rule.documentation().unwrap(), &options).unwrap();
+            assert!(!html.is_empty());
         }
     }
 }

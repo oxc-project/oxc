@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// This rule aims to ensure that only meaningful interfaces are declared in the code.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// interface Foo {}
     /// interface Bar extends Foo {}
     /// ```

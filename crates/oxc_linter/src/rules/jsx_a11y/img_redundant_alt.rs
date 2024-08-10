@@ -79,7 +79,7 @@ declare_oxc_lint!(
     /// `<img>` and the components which you define in options.components with the exception of components which is hidden from screen reader.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <img src="foo" alt="Photo of foo being weird." />
     /// <img src="bar" alt="Image of me at a bar!" />

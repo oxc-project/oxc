@@ -103,7 +103,9 @@ declare_oxc_lint!(
     /// foo(firstArgument, ...[secondArgument], thirdArgument);
     /// const object = new Foo(firstArgument, ...[secondArgument], thirdArgument);
     /// const set = new Set([...iterable]);
-    /// const results = await Promise.all([...iterable]);
+    /// async function foo() {
+    ///     const results = await Promise.all([...iterable]);
+    /// }
     /// for (const foo of [...set]);
     /// function * foo() {
     /// 	yield * [...anotherGenerator()];
@@ -125,7 +127,9 @@ declare_oxc_lint!(
     /// foo(foo, ...bar);
     /// const object = new Foo(...foo, bar);
     /// const set = new Set(iterable);
-    /// const results = await Promise.all(iterable);
+    /// async function foo() {
+    ///    const results = await Promise.all(iterable);
+    /// }
     /// for (const foo of set);
     /// function * foo() {
     /// 	yield * anotherGenerator();

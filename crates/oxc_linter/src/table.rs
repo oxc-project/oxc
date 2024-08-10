@@ -125,3 +125,49 @@ impl RuleTableSection {
         s
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use markdown::{to_html_with_options, Options};
+    use std::sync::OnceLock;
+
+    static TABLE: OnceLock<RuleTable> = OnceLock::new();
+
+    fn table() -> &'static RuleTable {
+        TABLE.get_or_init(RuleTable::new)
+    }
+
+    #[test]
+    fn test_table_no_links() {
+        let options = Options::gfm();
+        for section in &table().sections {
+            let rendered_table = section.render_markdown_table(None);
+            assert!(!rendered_table.is_empty());
+            assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
+
+            let html = to_html_with_options(&rendered_table, &options).unwrap();
+            assert!(!html.is_empty());
+            assert!(html.contains("<table>"));
+        }
+    }
+
+    #[test]
+    fn test_table_with_links() {
+        const PREFIX: &str = "/foo/bar";
+        const PREFIX_WITH_SLASH: &str = "/foo/bar/";
+
+        let options = Options::gfm();
+
+        for section in &table().sections {
+            let rendered_table = section.render_markdown_table(Some(PREFIX));
+            assert!(!rendered_table.is_empty());
+            assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
+
+            let html = to_html_with_options(&rendered_table, &options).unwrap();
+            assert!(!html.is_empty());
+            assert!(html.contains("<table>"));
+            assert!(html.contains(PREFIX_WITH_SLASH));
+        }
+    }
+}

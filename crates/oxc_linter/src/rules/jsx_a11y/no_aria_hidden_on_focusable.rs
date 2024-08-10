@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// `aria-hidden="true"` on focusable elements can lead to confusion or unexpected behavior for screen reader users.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div aria-hidden="true" tabIndex="0" />
     ///
