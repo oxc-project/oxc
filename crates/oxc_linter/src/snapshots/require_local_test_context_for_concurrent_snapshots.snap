@@ -1,0 +1,90 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 234
+---
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(true).toMatchSnapshot() })
+   ·                                      ──────────────────────────────
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(true).toMatchInlineSnapshot("true") })
+   ·                                      ──────────────────────────────────────────
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:3:82]
+ 2 │                 import { describe, expect, it } from 'vitest';
+ 3 │                 describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchSnapshot() }) })
+   ·                                                                                  ──────────────────────────────
+ 4 │             
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:3:82]
+ 2 │                 import { describe, expect, it } from 'vitest';
+ 3 │                 describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })
+   ·                                                                                  ──────────────────────────────────────────
+ 4 │             
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:43]
+ 1 │ it.concurrent("something", (context) => { expect(true).toMatchSnapshot() })
+   ·                                           ──────────────────────────────
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:3:21]
+ 2 │                 it.concurrent("something", () => {
+ 3 │                     expect(true).toMatchSnapshot();
+   ·                     ──────────────────────────────
+ 4 │                     expect(true).toMatchSnapshot();
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:4:21]
+ 3 │                     expect(true).toMatchSnapshot();
+ 4 │                     expect(true).toMatchSnapshot();
+   ·                     ──────────────────────────────
+ 5 │                 })
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:4:21]
+ 3 │                     expect(true).toBe(true);
+ 4 │                     expect(true).toMatchSnapshot();
+   ·                     ──────────────────────────────
+ 5 │                 })
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })
+   ·                                      ────────────────────────────────────────────────────────────
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingSnapshot() })
+   ·                                      ────────────────────────────────────────────
+   ╰────
+  help: Use local Test Context instead
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): require local Test Context for concurrent snapshot tests
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })
+   ·                                      ───────────────────────────────────────────────────────
+   ╰────
+  help: Use local Test Context instead
