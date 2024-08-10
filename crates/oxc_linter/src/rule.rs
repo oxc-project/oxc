@@ -117,7 +117,7 @@ impl fmt::Display for RuleCategory {
 
 // NOTE: this could be packed into a single byte if we wanted. I don't think
 // this is needed, but we could do it if it would have a performance impact.
-/// Describes the auto-fixing capabilities of a [`Rule`].
+/// Describes the auto-fixing capabilities of a `Rule`.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RuleFixMeta {
     /// An auto-fix is not available.
@@ -132,12 +132,22 @@ pub enum RuleFixMeta {
 }
 
 impl RuleFixMeta {
-    /// Does this [`Rule`] have some kind of auto-fix available?
+    #[inline]
+    pub fn is_none(self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    /// Does this `Rule` have some kind of auto-fix available?
     ///
     /// Also returns `true` for suggestions.
     #[inline]
     pub fn has_fix(self) -> bool {
         matches!(self, Self::Fixable(_) | Self::Conditional(_))
+    }
+
+    #[inline]
+    pub fn is_pending(self) -> bool {
+        matches!(self, Self::FixPending)
     }
 
     pub fn supports_fix(self, kind: FixKind) -> bool {
@@ -163,9 +173,10 @@ impl RuleFixMeta {
                 let mut message =
                     if kind.is_dangerous() { format!("dangerous {noun}") } else { noun.into() };
 
-                let article = match message.chars().next().unwrap() {
-                    'a' | 'e' | 'i' | 'o' | 'u' => "An",
-                    _ => "A",
+                let article = match message.chars().next() {
+                    Some('a' | 'e' | 'i' | 'o' | 'u') => "An",
+                    Some(_) => "A",
+                    None => unreachable!(),
                 };
 
                 if matches!(self, Self::Conditional(_)) {

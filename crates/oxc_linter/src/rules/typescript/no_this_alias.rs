@@ -59,12 +59,14 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Generic type parameters (<T>) in TypeScript may be "constrained" with an extends keyword.
-    /// When no extends is provided, type parameters default a constraint to unknown. It is therefore redundant to extend from any or unknown.
+    /// Generic type parameters (`<T>`) in TypeScript may be "constrained" with
+    /// an extends keyword.  When no extends is provided, type parameters
+    /// default a constraint to unknown. It is therefore redundant to extend
+    /// from any or unknown.
     ///
-    /// the rule doesn't allow const {allowedName} = this
+    /// the rule doesn't allow `const {allowedName} = this`
     /// this is to keep 1:1 with eslint implementation
-    /// sampe with obj.<allowedName> = this
+    /// sampe with `obj.<allowedName> = this`
     /// ```
     NoThisAlias,
     correctness
