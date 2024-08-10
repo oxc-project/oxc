@@ -33,6 +33,7 @@ bitflags! {
         const None = 0;
         const SafeFix = Self::Fix.bits();
         const DangerousFix = Self::Dangerous.bits() | Self::Fix.bits();
+        const DangerousSuggestion = Self::Dangerous.bits() | Self::Suggestion.bits();
         /// Fixes and Suggestions that are safe or dangerous.
         const All = Self::Dangerous.bits() | Self::Fix.bits() | Self::Suggestion.bits();
     }

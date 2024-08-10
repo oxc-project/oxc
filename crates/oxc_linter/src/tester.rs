@@ -65,24 +65,96 @@ impl From<(&str, Option<Value>, Option<Value>, Option<PathBuf>)> for TestCase {
     }
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum ExpectFixKind {
+    /// We expect no fix to be applied
+    #[default]
+    None,
+    /// We expect some fix to be applied, but don't care what kind it is
+    Any,
+    /// We expect a fix of a certain [`FixKind`] to be applied
+    Specific(FixKind),
+}
+
+impl ExpectFixKind {
+    #[inline]
+    pub fn is_none(self) -> bool {
+        matches!(self, Self::None)
+    }
+
+    #[inline]
+    pub fn is_some(self) -> bool {
+        !self.is_none()
+    }
+}
+
+impl From<FixKind> for ExpectFixKind {
+    fn from(kind: FixKind) -> Self {
+        Self::Specific(kind)
+    }
+}
+impl From<ExpectFixKind> for FixKind {
+    fn from(expected_kind: ExpectFixKind) -> Self {
+        match expected_kind {
+            ExpectFixKind::None => FixKind::None,
+            ExpectFixKind::Any => FixKind::All,
+            ExpectFixKind::Specific(kind) => kind,
+        }
+    }
+}
+
+impl From<Option<FixKind>> for ExpectFixKind {
+    fn from(maybe_kind: Option<FixKind>) -> Self {
+        match maybe_kind {
+            Some(kind) => Self::Specific(kind),
+            None => Self::Any, // intentionally not None
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct ExpectFix {
     /// Source code being tested
     source: String,
     /// Expected source code after fix has been applied
     expected: String,
+    kind: ExpectFixKind,
     rule_config: Option<Value>,
 }
 
 impl<S: Into<String>> From<(S, S, Option<Value>)> for ExpectFix {
     fn from(value: (S, S, Option<Value>)) -> Self {
-        Self { source: value.0.into(), expected: value.1.into(), rule_config: value.2 }
+        Self {
+            source: value.0.into(),
+            expected: value.1.into(),
+            kind: ExpectFixKind::Any,
+            rule_config: value.2,
+        }
     }
 }
 
 impl<S: Into<String>> From<(S, S)> for ExpectFix {
     fn from(value: (S, S)) -> Self {
-        Self { source: value.0.into(), expected: value.1.into(), rule_config: None }
+        Self {
+            source: value.0.into(),
+            expected: value.1.into(),
+            kind: ExpectFixKind::Any,
+            rule_config: None,
+        }
+    }
+}
+impl<S, F> From<(S, S, Option<Value>, F)> for ExpectFix
+where
+    S: Into<String>,
+    F: Into<ExpectFixKind>,
+{
+    fn from((source, expected, config, kind): (S, S, Option<Value>, F)) -> Self {
+        Self {
+            source: source.into(),
+            expected: expected.into(),
+            kind: kind.into(),
+            rule_config: config,
+        }
     }
 }
 
@@ -237,7 +309,7 @@ impl Tester {
 
     fn test_pass(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_pass.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, false);
+            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
             let passed = result == TestResult::Passed;
             assert!(passed, "expect test to pass: {source} {}", self.snapshot);
         }
@@ -245,7 +317,7 @@ impl Tester {
 
     fn test_fail(&mut self) {
         for TestCase { source, rule_config, eslint_config, path } in self.expect_fail.clone() {
-            let result = self.run(&source, rule_config, &eslint_config, path, false);
+            let result = self.run(&source, rule_config, &eslint_config, path, ExpectFixKind::None);
             let failed = result == TestResult::Failed;
             assert!(failed, "expect test to fail: {source}");
         }
@@ -253,8 +325,8 @@ impl Tester {
 
     fn test_fix(&mut self) {
         for fix in self.expect_fix.clone() {
-            let ExpectFix { source, expected, rule_config: config } = fix;
-            let result = self.run(&source, config, &None, None, true);
+            let ExpectFix { source, expected, kind, rule_config: config } = fix;
+            let result = self.run(&source, config, &None, None, kind);
             match result {
                 TestResult::Fixed(fixed_str) => assert_eq!(
                     expected, fixed_str,
@@ -272,12 +344,12 @@ impl Tester {
         rule_config: Option<Value>,
         eslint_config: &Option<Value>,
         path: Option<PathBuf>,
-        is_fix: bool,
+        fix: ExpectFixKind,
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let options = LintOptions::default()
-            .with_fix(is_fix.then_some(FixKind::All).unwrap_or_default())
+            .with_fix(fix.into())
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
             .with_vitest_plugin(self.vitest_plugin)
@@ -312,7 +384,7 @@ impl Tester {
             return TestResult::Passed;
         }
 
-        if is_fix {
+        if fix.is_some() {
             let fix_result = Fixer::new(source_text, result).fix();
             return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
