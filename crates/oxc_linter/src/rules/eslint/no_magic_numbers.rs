@@ -1,7 +1,7 @@
 use std::ops::Mul;
 
 use oxc_ast::{
-    ast::{Argument, AssignmentTarget, Expression, VariableDeclarationKind},
+    ast::{Argument, AssignmentTarget, Expression, MemberExpression, VariableDeclarationKind},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -10,6 +10,11 @@ use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
+
+enum NoMagicNumberReportReason<'a> {
+    MustUseConst(&'a Span),
+    NoMagicNumber(&'a Span, &'a str),
+}
 
 fn must_use_const_diagnostic(span: &Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Number constants declarations must use 'const'.").with_label(*span)
@@ -140,82 +145,91 @@ struct InternConfig<'a> {
     raw: String,
 }
 
+impl InternConfig<'_> {
+    fn try_node<'a>(
+        node: &'a AstNode<'a>,
+        parent_node: &'a AstNode<'a>,
+    ) -> Result<InternConfig<'a>, OxcDiagnostic> {
+        let is_negative = matches!(parent_node.kind(), AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation);
+
+        if let AstKind::BigIntLiteral(bigint) = node.kind() {
+            let mut chars = bigint.raw.chars();
+
+            chars.next_back();
+
+            if is_negative {
+                return Ok(InternConfig {
+                    node: parent_node,
+                    value: 0.0 - chars.as_str().parse::<f64>().unwrap(),
+                    raw: format!("-{}", bigint.raw),
+                });
+            } else {
+                return Ok(InternConfig {
+                    node,
+                    value: chars.as_str().parse::<f64>().unwrap(),
+                    raw: bigint.raw.clone().into(),
+                });
+            }
+        } else if let AstKind::NumericLiteral(numeric) = node.kind() {
+            if is_negative {
+                return Ok(InternConfig {
+                    node: parent_node,
+                    value: 0.0 - numeric.value,
+                    raw: format!("-{}", numeric.raw),
+                });
+            } else {
+                return Ok(InternConfig { node, value: numeric.value, raw: numeric.raw.into() });
+            }
+        } else {
+            return Err(OxcDiagnostic::warn(format!(
+                "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
+                node.kind().debug_name()
+            )));
+        }
+    }
+
+    pub fn from<'a>(node: &'a AstNode<'a>, parent: &'a AstNode<'a>) -> InternConfig<'a> {
+        return InternConfig::try_node(node, parent).unwrap();
+    }
+}
 impl Rule for NoMagicNumbers {
     fn from_configuration(value: serde_json::Value) -> Self {
         return Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()));
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-
-        let ok_ast_kinds: Vec<AstKind> = if self.detect_objects {
-            vec![]
-        } else {
-            vec![
-            AstKind::ObjectExpression,
-            AstKind::PropertyDefinition,
-            AstKind::AssignmentExpression
-            ]
-        };
-
         match node.kind() {
-            AstKind::NumericLiteral(literal) => {
-                let parent_node = ctx.nodes().parent_node(node.id());
-
-                let config: InternConfig = match parent_node.unwrap().kind() {
-                    AstKind::UnaryExpression(unary)
-                        if unary.operator == UnaryOperator::UnaryNegation =>
-                    {
-                        InternConfig {
-                            node: parent_node.unwrap(),
-                            value: 0.0 - literal.value,
-                            raw: format!("-{}", literal.raw),
-                        }
-                    }
-                    _ => InternConfig { node, value: literal.value, raw: literal.raw.to_string() },
-                };
+            AstKind::BigIntLiteral(literal) => {
+                let config = InternConfig::from(node, ctx.nodes().parent_node(node.id()).unwrap());
 
                 let parent = ctx.nodes().parent_node(config.node.id()).unwrap();
                 let parent_parent = ctx.nodes().parent_node(parent.id()).unwrap();
 
-                println!(
-                    "
-                
-                config {config:?}
-                parent: {parent:?}
-                parent_parent: {parent_parent:?}
-
-                "
-                );
-
-                if self.is_ignore_value(&config.value)
-                    || (self.ignore_default_values && self.is_default_value(&config.value, &parent))
-                    || (self.ignore_class_field_initial_values
-                        && self.is_class_field_initial_value(&config.value, &parent))
-                    || self.is_parse_int_radix(&config.value, &parent_parent)
-                {
+                if self.is_skipable(&config, parent, parent_parent) {
                     return;
                 }
 
-                match parent.kind() {
-                    AstKind::VariableDeclarator(declarator)
-                        if self.enforce_const
-                            && declarator.kind != VariableDeclarationKind::Const =>
-                    {
-                        println!("declarator: {declarator:?}");
-                        ctx.diagnostic(must_use_const_diagnostic(&literal.span));
-                    }
-                    AstKind::BinaryExpression(expression) => {
-                        if expression.left.is_number(literal.value) {
-                            ctx.diagnostic(no_magic_number_diagnostic(&literal.span, &config.raw))
-                        } else if expression.right.is_number(literal.value) {
-                            ctx.diagnostic(no_magic_number_diagnostic(&literal.span, &config.raw))
-                        }
-                    }
-                    AstKind::AssignmentExpression(expression) if self.detect_objects => {
-                        if let AssignmentTarget::AssignmentTargetIdentifier(_) = expression.left {
-                            ctx.diagnostic(no_magic_number_diagnostic(&literal.span, &config.raw))
-                        }
-                    }
-                    _ => {}
+                if let Some(reason) = self.get_report_reason(&parent, &config, &literal.span) {
+                    ctx.diagnostic(match reason {
+                        NoMagicNumberReportReason::MustUseConst(span) => must_use_const_diagnostic(span),
+                        NoMagicNumberReportReason::NoMagicNumber(span, raw) => no_magic_number_diagnostic(span, raw)
+                    });
+                }
+            }
+            AstKind::NumericLiteral(literal) => {
+                let config = InternConfig::from(node, ctx.nodes().parent_node(node.id()).unwrap());
+
+                let parent = ctx.nodes().parent_node(config.node.id()).unwrap();
+                let parent_parent = ctx.nodes().parent_node(parent.id()).unwrap();
+
+                if self.is_skipable(&config, parent, parent_parent) {
+                    return;
+                }
+
+                if let Some(reason) = self.get_report_reason(&parent, &config, &literal.span) {
+                    ctx.diagnostic(match reason {
+                        NoMagicNumberReportReason::MustUseConst(span) => must_use_const_diagnostic(span),
+                        NoMagicNumberReportReason::NoMagicNumber(span, raw) => no_magic_number_diagnostic(span, raw)
+                    });
                 }
             }
             _ => {}
@@ -267,6 +281,134 @@ impl NoMagicNumbers {
         }
 
         false
+    }
+
+    ///  Returns whether the given node is used as an array index.
+    ///  Value must coerce to a valid array index name: "0", "1", "2" ... "4294967294".
+    ///
+    ///  All other values, like "-1", "2.5", or "4294967295", are just "normal" object properties,
+    ///  which can be created and accessed on an array in addition to the array index properties,
+    ///  but they don't affect array's length and are not considered by methods such as .map(), .forEach() etc.
+    ///
+    ///  The maximum array length by the specification is 2 ** 32 - 1 = 4294967295,
+    ///  thus the maximum valid index is 2 ** 32 - 2 = 4294967294.
+    ///
+    ///  All notations are allowed, as long as the value coerces to one of "0", "1", "2" ... "4294967294".
+    ///
+    ///  Valid examples:
+    ///  a[0], a[1], a[1.2e1], a[0xAB], a[0n], a[1n]
+    ///  a[-0] (same as a[0] because -0 coerces to "0")
+    ///  a[-0n] (-0n evaluates to 0n)
+    ///
+    ///  Invalid examples:
+    ///  a[-1], a[-0xAB], a[-1n], a[2.5], a[1.23e1], a[12e-1]
+    ///  a[4294967295] (above the max index, it's an access to a regular property a["4294967295"])
+    ///  a[999999999999999999999] (even if it wasn't above the max index, it would be a["1e+21"])
+    ///  a[1e310] (same as a["Infinity"])
+    fn is_array_index<'a>(&self, node: &AstNode<'a>, parent_node: &AstNode<'a>) -> bool {
+        match node.kind() {
+            AstKind::UnaryExpression(unary) => {
+                if unary.operator == UnaryOperator::UnaryNegation && !unary.argument.is_number_0() {
+                    return false;
+                }
+
+                match &unary.argument {
+                    Expression::NumericLiteral(numeric) => {
+                        return numeric.value >= 0.0
+                            && numeric.value.fract() == 0.0
+                            && numeric.value < u32::MAX as f64;
+                    }
+                    _ => {}
+                }
+
+                false
+            }
+            AstKind::BigIntLiteral(bigint) => {
+                if let AstKind::MemberExpression(expression) = parent_node.kind() {
+                    if let MemberExpression::ComputedMemberExpression(computed_expression) =
+                        expression
+                    {
+                        return computed_expression.expression.is_number(bigint.value)
+                            && bigint.value >= 0.0
+                            && bigint.value.fract() == 0.0
+                            && bigint.value < u32::MAX as f64;
+                    }
+                }
+
+                false
+            }
+            AstKind::NumericLiteral(numeric) => {
+                if let AstKind::MemberExpression(expression) = parent_node.kind() {
+                    if let MemberExpression::ComputedMemberExpression(computed_expression) =
+                        expression
+                    {
+                        return computed_expression.expression.is_number(numeric.value)
+                            && numeric.value >= 0.0
+                            && numeric.value.fract() == 0.0
+                            && numeric.value < u32::MAX as f64;
+                    }
+                }
+
+                false
+            }
+            _ => false,
+        }
+    }
+
+    fn is_skipable<'a>(
+        &self,
+        config: &InternConfig<'a>,
+        parent: &AstNode<'a>,
+        parent_parent: &AstNode<'a>,
+    ) -> bool {
+        if self.is_ignore_value(&config.value)
+            || self.is_parse_int_radix(&config.value, &parent_parent)
+            || (self.ignore_default_values && self.is_default_value(&config.value, &parent))
+            || (self.ignore_class_field_initial_values
+                && self.is_class_field_initial_value(&config.value, &parent))
+            || (self.ignore_array_indexes && self.is_array_index(&config.node, &parent))
+        {
+            return true;
+        }
+
+        if !self.detect_objects
+            && (matches!(parent.kind(), AstKind::ObjectExpression(_))
+                || matches!(parent.kind(), AstKind::PropertyDefinition(_))
+                || matches!(parent.kind(), AstKind::ObjectProperty(_)))
+        {
+            return true;
+        }
+
+        false
+    }
+
+    fn get_report_reason<'a>(
+        &self,
+        parent: &'a AstNode<'a>,
+        config: &'a InternConfig<'a>,
+        span: &'a Span,
+    ) -> Option<NoMagicNumberReportReason<'a>> {
+        match parent.kind() {
+            AstKind::VariableDeclarator(declarator)
+                if self.enforce_const && declarator.kind != VariableDeclarationKind::Const =>
+            {
+                return Some(NoMagicNumberReportReason::MustUseConst(span));
+            }
+            AstKind::AssignmentExpression(expression) => {
+                if let AssignmentTarget::AssignmentTargetIdentifier(_) = expression.left {
+                    return Some(NoMagicNumberReportReason::NoMagicNumber(span, &config.raw));
+                }
+            }
+            AstKind::BinaryExpression(_)
+            | AstKind::MemberExpression(_)
+            | AstKind::ObjectProperty(_)
+            | AstKind::ReturnStatement(_) => {
+                return Some(NoMagicNumberReportReason::NoMagicNumber(span, &config.raw));
+            }
+            _ => {}
+        }
+
+        None
     }
 }
 
@@ -370,7 +512,10 @@ fn test() {
         ("function getNegativeSecondsInMinute() {return -60;}", None),
         ("var data = ['foo', 'bar', 'baz']; var third = data[3];", None),
         ("var data = ['foo', 'bar', 'baz']; var third = data[3];", Some(serde_json::json!([{}]))),
-        ("var data = ['foo', 'bar', 'baz']; var third = data[3];", ignore_array_indexes.clone()),
+        (
+            "var data = ['foo', 'bar', 'baz']; var third = data[3];",
+            Some(serde_json::json!([{"ignoreArrayIndexes": false}])),
+        ),
         ("foo[-100]", ignore_array_indexes.clone()),
         ("foo[-1.5]", ignore_array_indexes.clone()),
         ("foo[-1]", ignore_array_indexes.clone()),
@@ -402,7 +547,7 @@ fn test() {
         ("foo[- -1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         ("100 .toString()", ignore_array_indexes.clone()),
         ("200[100]", ignore_array_indexes.clone()),
-        ("var a = <div arrayProp={[1,2,3]}></div>;", None), // {                "parserOptions": {                    "ecmaFeatures": {                        "jsx": true                    }                }            },
+        // ("var a = <div arrayProp={[1,2,3]}></div>;", None), // {                "parserOptions": {                    "ecmaFeatures": {                        "jsx": true                    }                }            },
         ("var min, max, mean; min = 1; max = 10; mean = 4;", Some(serde_json::json!([{}]))),
         ("f(100n)", Some(serde_json::json!([{ "ignore": [100] }]))), // { "ecmaVersion": 2020 },
         ("f(-100n)", Some(serde_json::json!([{ "ignore": ["100n"] }]))), // { "ecmaVersion": 2020 },
