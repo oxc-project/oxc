@@ -6,6 +6,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
+use oxc_span::GetSpan;
+
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
 fn string_literal(span0: Span, x1: &str) -> OxcDiagnostic {
@@ -45,7 +47,8 @@ declare_oxc_lint!(
     /// foo.replace(pattern, bar)
     /// ```
     PreferStringReplaceAll,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferStringReplaceAll {
@@ -76,11 +79,17 @@ impl Rule for PreferStringReplaceAll {
         match method_name_str {
             "replaceAll" => {
                 if let Some(k) = get_pattern_replacement(pattern) {
-                    ctx.diagnostic(string_literal(static_member_expr.property.span, &k));
+                    ctx.diagnostic_with_fix(string_literal(pattern.span(), &k), |fixer| {
+                        // foo.replaceAll(/hello world/g, bar) => foo.replaceAll("hello world", bar)
+                        fixer.replace(pattern.span(), format!("{k:?}"))
+                    });
                 }
             }
             "replace" if is_reg_exp_with_global_flag(pattern) => {
-                ctx.diagnostic(use_replace_all(static_member_expr.property.span));
+                ctx.diagnostic_with_fix(
+                    use_replace_all(static_member_expr.property.span),
+                    |fixer| fixer.replace(static_member_expr.property.span, "replaceAll"),
+                );
             }
             _ => {}
         }
@@ -213,5 +222,10 @@ fn test() {
         r#""Hello world".replaceAll(/world/g, 'world!');"#,
     ];
 
-    Tester::new(PreferStringReplaceAll::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("foo.replace(/a/g, bar)", "foo.replaceAll(/a/g, bar)"),
+        ("foo.replaceAll(/a/g, bar)", "foo.replaceAll(\"a\", bar)"),
+    ];
+
+    Tester::new(PreferStringReplaceAll::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
