@@ -66,7 +66,18 @@ impl Rule for NoZeroFractions {
             } else {
                 zero_fraction(number_literal.span, &fmt)
             },
-            |fixer| fixer.replace(number_literal.span, fmt),
+            |fixer| {
+                let mut fixed = fmt.clone();
+
+                if (ctx.nodes()
+                .parent_node(node.id())
+                .map_or(false, |parent_node: &AstNode<'a>| {
+                    matches!(parent_node.kind(), AstKind::MemberExpression(_))
+                })) {
+                    fixed = format!("({})", fixed);
+                };
+                fixer.replace(number_literal.span, fmt)
+            },
         );
     }
 }
