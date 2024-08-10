@@ -19,7 +19,7 @@ pub use crate::{
     ast_passes::{CompressorPass, RemoveDeadCode, RemoveSyntax},
     compressor::Compressor,
     options::CompressOptions,
-    plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig},
+    plugins::*,
 };
 
 #[derive(Debug, Clone, Copy)]
