@@ -1,4 +1,5 @@
 mod boolean;
+mod numeric;
 use oxc_ast::{
     ast::{
         BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
@@ -10,6 +11,7 @@ use oxc_semantic::AstNode;
 use oxc_syntax::operator::LogicalOperator;
 
 pub use self::boolean::*;
+pub use self::numeric::*;
 use crate::LintContext;
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {

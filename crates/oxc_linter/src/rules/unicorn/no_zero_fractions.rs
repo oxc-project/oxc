@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_decimal_integer, AstNode};
 
 fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't use a zero fraction in the number.")
@@ -69,20 +69,29 @@ impl Rule for NoZeroFractions {
             |fixer| {
                 let mut fixed = fmt.clone();
 
-                if (ctx.nodes()
-                .parent_node(node.id())
-                .map_or(false, |parent_node: &AstNode<'a>| {
-                    matches!(parent_node.kind(), AstKind::MemberExpression(_))
-                })) {
+                if (ctx.nodes().parent_node(node.id()).map_or(
+                    false,
+                    |parent_node: &AstNode<'a>| {
+                        matches!(parent_node.kind(), AstKind::MemberExpression(_))
+                    },
+                ) && is_decimal_integer(&fmt))
+                {
                     fixed = format!("({})", fixed);
                 };
-                fixer.replace(number_literal.span, fmt)
+                fixer.replace(number_literal.span, fixed)
             },
         );
     }
 }
 
 fn format_raw(raw: &str) -> Option<(String, bool)> {
+    // Check if the string contains 'e' or 'E' (scientific notation)
+    if let Some((base, exp)) = raw.split_once(['e', 'E']) {
+        // Process the base part
+        let (formatted_base, has_fraction) = format_raw(base)?;
+        // Recombine the scientific notation
+        return Some((format!("{}e{}", formatted_base, exp), has_fraction));
+    }
     let (before, after_and_dot) = raw.split_once('.')?;
     let mut after_parts = after_and_dot.splitn(2, |c: char| !c.is_ascii_digit() && c != '_');
     let dot_and_fractions = after_parts.next()?;
@@ -157,19 +166,16 @@ fn test() {
         (r"const foo = 1.", r"const foo = 1"),
         (r"const foo = +1.", r"const foo = +1"),
         (r"const foo = -1.", r"const foo = -1"),
-        // maybe todo
-        // In the following tests, the comments did not pass the fixer.
-
-        // (r"const foo = 1.e10", r"const foo = 1e10"),
-        // (r"const foo = +1.e-10", r"const foo = +1e-10"),
-        // (r"const foo = -1.e+10", r"const foo = -1e+10"),
+        (r"const foo = 1.e10", r"const foo = 1e10"),
+        (r"const foo = +1.e-10", r"const foo = +1e-10"),
+        (r"const foo = -1.e+10", r"const foo = -1e+10"),
         (r"const foo = (1.).toString()", r"const foo = (1).toString()"),
-        // (r"1.00.toFixed(2)", r"(1).toFixed(2)"),
-        // (r"1.00 .toFixed(2)", r"(1) .toFixed(2)"),
+        (r"1.00.toFixed(2)", r"(1).toFixed(2)"),
+        (r"1.00 .toFixed(2)", r"(1) .toFixed(2)"),
         (r"(1.00).toFixed(2)", r"(1).toFixed(2)"),
-        // (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
+        (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
         (r"a = .0;", r"a = 0;"),
-        // (r"a = .0.toString()", r"a = (0).toString()"),
+        (r"a = .0.toString()", r"a = (0).toString()"),
         // (r"function foo(){return.0}", r"function foo(){return 0}"),
         // (r"function foo(){return.0.toString()}", r"function foo(){return (0).toString()}"),
         // (r"function foo(){return.0+.1}", r"function foo(){return 0+.1}"),
