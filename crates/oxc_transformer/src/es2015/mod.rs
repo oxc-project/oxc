@@ -24,7 +24,7 @@ impl<'a> ES2015<'a> {
     pub fn new(options: ES2015Options, ctx: Ctx<'a>) -> Self {
         Self {
             arrow_functions: ArrowFunctions::new(
-                options.arrow_function.clone().unwrap_or_default(),
+                options.arrow_function.unwrap_or_default(),
                 Rc::clone(&ctx),
             ),
             ctx,

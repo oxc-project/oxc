@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Deserialize)]
 pub struct ArrowFunctionsOptions {
     /// This option enables the following:
     /// * Wrap the generated function in .bind(this) and keeps uses of this inside the function as-is, instead of using a renamed this.
