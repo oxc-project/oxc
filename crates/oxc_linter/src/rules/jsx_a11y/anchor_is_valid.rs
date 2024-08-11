@@ -56,15 +56,17 @@ declare_oxc_lint!(
     ///
     /// Consider the following:
     ///
-    /// ```javascript
-    /// <a href="javascript:void(0)" onClick={foo}>Perform action</a>
-    /// <a href="#" onClick={foo}>Perform action</a>
-    /// <a onClick={foo}>Perform action</a>
+    /// ```jsx
+    /// <>
+    ///     <a href="javascript:void(0)" onClick={foo}>Perform action</a>
+    ///     <a href="#" onClick={foo}>Perform action</a>
+    ///     <a onClick={foo}>Perform action</a>
+    /// </>
     /// ````
     ///
     /// All these anchor implementations indicate that the element is only used to execute JavaScript code. All the above should be replaced with:
     ///
-    /// ```javascript
+    /// ```jsx
     /// <button onClick={foo}>Perform action</button>
     /// ```
     /// `
@@ -78,34 +80,24 @@ declare_oxc_lint!(
     ///
     /// #### Valid
     ///
-    /// ```javascript
-    /// <a href={`https://www.javascript.com`}>navigate here</a>
-    /// ```
-    ///
-    /// ```javascript
-    /// <a href={somewhere}>navigate here</a>
-    /// ```
-    ///
-    /// ```javascript
-    /// <a {...spread}>navigate here</a>
+    /// ```jsx
+    /// <>
+    ///     <a href={`https://www.javascript.com`}>navigate here</a>
+    ///     <a href={somewhere}>navigate here</a>
+    ///     <a {...spread}>navigate here</a>
+    /// </>
     /// ```
     ///
     /// #### Invalid
     ///
-    /// ```javascript
-    /// <a href={null}>navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href={undefined}>navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href>navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href="javascript:void(0)">navigate here</a>
-    /// ```
-    /// ```javascript
-    /// <a href="https://example.com" onClick={something}>navigate here</a>
+    /// ```jsx
+    /// <>
+    ///     <a href={null}>navigate here</a>
+    ///     <a href={undefined}>navigate here</a>
+    ///     <a href>navigate here</a>
+    ///     <a href="javascript:void(0)">navigate here</a>
+    ///     <a href="https://example.com" onClick={something}>navigate here</a>
+    /// </>
     /// ```
     ///
     /// ### Reference

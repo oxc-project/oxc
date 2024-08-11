@@ -57,20 +57,24 @@ declare_oxc_lint!(
     ///
     /// ```javascript
     /// // invalid
-    /// Above a describe block
+    ///
+    /// // Above a describe block
     /// test('my test', () => {});
     /// describe('test suite', () => {
     ///     it('test', () => {});
     /// });
+    ///
     /// // Below a describe block
     /// describe('test suite', () => {});
     /// test('my test', () => {});
+    ///
     /// // Same for hooks
     /// beforeAll('my beforeAll', () => {});
     /// describe('test suite', () => {});
     /// afterEach('my afterEach', () => {});
     ///
     /// //valid
+    ///
     /// // Above a describe block
     /// // In a describe block
     /// describe('test suite', () => {
@@ -80,9 +84,9 @@ declare_oxc_lint!(
     /// // In a nested describe block
     /// describe('test suite', () => {
     ///     test('my test', () => {});
-    /// describe('another test suite', () => {
-    ///     test('my other test', () => {});
-    /// });
+    ///     describe('another test suite', () => {
+    ///         test('my other test', () => {});
+    ///     });
     /// });
     /// ```
     ///

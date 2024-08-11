@@ -10,6 +10,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing this parameter.
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ function foo(a: number) {} foo()
+   ·              ┬
+   ·              ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used.
    ╭─[no_unused_vars.tsx:1:16]
  1 │ function foo({ a }, b) { return b } foo()
    ·                ┬

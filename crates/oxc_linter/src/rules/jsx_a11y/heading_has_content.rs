@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// from accessing information on the page's structure.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <h1 />
     ///

@@ -21,25 +21,31 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Using `await` on promises passed as arguments to `Promise.all()`, `Promise.allSettled()`, `Promise.any()`, or `Promise.race()` is likely a mistake.
+    /// Using `await` on promises passed as arguments to `Promise.all()`,
+    /// `Promise.allSettled()`, `Promise.any()`, or `Promise.race()` is likely a
+    /// mistake.
     ///
     /// ### Example
     /// Bad
     ///
     /// ```js
-    /// Promise.all([await promise, anotherPromise]);
-    /// Promise.allSettled([await promise, anotherPromise]);
-    /// Promise.any([await promise, anotherPromise]);
-    /// Promise.race([await promise, anotherPromise]);
+    /// async function foo() {
+    ///     Promise.all([await promise, anotherPromise]);
+    ///     Promise.allSettled([await promise, anotherPromise]);
+    ///     Promise.any([await promise, anotherPromise]);
+    ///     Promise.race([await promise, anotherPromise]);
+    /// }
     /// ```
     ///
     /// Good
     ///
     /// ```js
-    /// Promise.all([promise, anotherPromise]);
-    /// Promise.allSettled([promise, anotherPromise]);
-    /// Promise.any([promise, anotherPromise]);
-    /// Promise.race([promise, anotherPromise]);
+    /// async function foo() {
+    ///     Promise.all([promise, anotherPromise]);
+    ///     Promise.allSettled([promise, anotherPromise]);
+    ///     Promise.any([promise, anotherPromise]);
+    ///     Promise.race([promise, anotherPromise]);
+    /// }
     /// ```
     NoAwaitInPromiseMethods,
     correctness

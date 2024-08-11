@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.1] - 2024-08-10
+
+### Features
+
+- b3c3125 linter: Overhaul unicorn/no-useless-spread (#4791) (DonIsaac)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

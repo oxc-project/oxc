@@ -95,7 +95,7 @@ declare_oxc_lint!(
     /// inconsistent usage of type imports can make the code harder to read and understand.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// import { Foo } from 'Foo';
     /// type T = Foo;
     ///

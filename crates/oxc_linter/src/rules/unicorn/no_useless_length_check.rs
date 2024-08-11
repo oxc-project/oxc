@@ -33,20 +33,23 @@ pub struct NoUselessLengthCheck;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// It checks for an unnecessary array length check in a logical expression
+    ///
+    /// It checks for an unnecessary array length check in a logical expression.
+    ///
     /// The cases are:
-    ///  array.length === 0 || array.every(Boolean) (array.every returns true if array is has elements)
-    ///  array.length > 0 && array.some(Boolean) (array.some returns false if array is empty)
+    /// - `array.length === 0 || array.every(Boolean)` (`array.every` returns `true` if array is has elements)
+    /// - `array.length > 0 && array.some(Boolean)` (`array.some` returns `false` if array is empty)
     ///
     /// ### Why is this bad?
-    /// An extra unnecessary length check is done
+    ///
+    /// An extra unnecessary length check is done.
     ///
     /// ### Example
-    /// ```javascript
-    /// if(array.length === 0 || array.every(Boolean)){
-    ///    do something!
-    /// }
     ///
+    /// ```javascript
+    /// if (array.length === 0 || array.every(Boolean)) {
+    ///    // do something!
+    /// }
     /// ```
     NoUselessLengthCheck,
     correctness

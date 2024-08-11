@@ -31,7 +31,7 @@ pub use crate::{
     fixer::FixKind,
     frameworks::FrameworkFlags,
     options::{AllowWarnDeny, LintOptions},
-    rule::{RuleCategory, RuleMeta, RuleWithSeverity},
+    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
@@ -164,7 +164,7 @@ impl Linter {
     pub fn print_rules<W: Write>(writer: &mut W) {
         let table = RuleTable::new();
         for section in table.sections {
-            writeln!(writer, "{}", section.render_markdown_table()).unwrap();
+            writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
         }
         writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
         writeln!(writer, "Total: {}", table.total).unwrap();

@@ -28,8 +28,10 @@ declare_oxc_lint!(
     ///
     /// // Good
     /// if (problem) throw new Error("message");
+    /// ```
     ///
-    /// #! /usr/bin/env node
+    /// ```
+    /// #!/usr/bin/env node
     /// if (problem) process.exit(1);
     /// ```
     NoProcessExit,

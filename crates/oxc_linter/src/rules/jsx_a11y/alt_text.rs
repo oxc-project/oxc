@@ -119,12 +119,15 @@ declare_oxc_lint!(
     /// text that describes the element's content or purpose.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// <img src="flower.jpg">
     ///
-    /// // Good
-    /// <img src="flower.jpg" alt="A close-up of a white daisy">
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <img src="flower.jpg" alt="A close-up of a white daisy" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <img src="flower.jpg" />
     /// ```
     AltText,
     correctness

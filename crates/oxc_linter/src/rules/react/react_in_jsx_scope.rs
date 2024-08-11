@@ -21,10 +21,11 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
+    /// When using JSX, `<a />` expands to `React.createElement("a")`. Therefore
+    /// the `React` variable must be in scope.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// var a = <a />;
     ///

@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// When not using JSX, the children should be passed as additional arguments to `React.createElement`.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div children='Children' />
     ///

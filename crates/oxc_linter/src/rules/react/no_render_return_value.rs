@@ -20,7 +20,7 @@ declare_oxc_lint!(
     /// This rule will warn you if you try to use the ReactDOM.render() return value.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// vaa inst =ReactDOM.render(<App />, document.body);
     /// function render() {

@@ -1,5 +1,6 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 use std::{
+    borrow::Cow,
     collections::HashMap,
     fmt::{self, Display, Formatter},
 };
@@ -319,6 +320,10 @@ pub struct Context {
     fail_cases: String,
     fix_cases: Option<String>,
     has_filename: bool,
+    /// Language examples are written in.
+    ///
+    /// Should be `"js"`, `"jsx"`, `"ts"`, `"tsx"`. Defaults to `"js"`.
+    language: Cow<'static, str>,
 }
 
 impl Context {
@@ -335,6 +340,7 @@ impl Context {
             fail_cases,
             fix_cases: None,
             has_filename: false,
+            language: Cow::Borrowed("js"),
         }
     }
 
@@ -345,6 +351,11 @@ impl Context {
 
     fn with_fix_cases(mut self, fix_cases: String) -> Self {
         self.fix_cases = Some(fix_cases);
+        self
+    }
+
+    fn with_language<S: Into<Cow<'static, str>>>(mut self, language: S) -> Self {
+        self.language = language.into();
         self
     }
 }
@@ -648,6 +659,12 @@ fn main() {
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Oxc => String::new(),
     };
+    let language = match rule_kind {
+        RuleKind::Typescript | RuleKind::Oxc => "ts",
+        RuleKind::NextJS => "tsx",
+        RuleKind::React | RuleKind::ReactPerf | RuleKind::JSXA11y | RuleKind::TreeShaking => "jsx",
+        _ => "js",
+    };
 
     println!("Reading test file from {rule_test_path}");
 
@@ -719,6 +736,7 @@ fn main() {
             let (fail_cases, fix_cases) = gen_cases_string(fail_cases);
 
             Context::new(plugin_name, &rule_name, pass_cases, fail_cases)
+                .with_language(language)
                 .with_filename(has_filename)
                 .with_fix_cases(fix_cases)
         }

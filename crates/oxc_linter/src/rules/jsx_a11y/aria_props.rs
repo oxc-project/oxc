@@ -33,11 +33,13 @@ declare_oxc_lint!(
     /// This rule includes fixes for some common typos.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
     /// <input aria-labeledby="address_label" />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <input aria-labelledby="address_label" />
     /// ```
     AriaProps,
