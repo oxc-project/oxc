@@ -38,6 +38,7 @@ impl Generator for DeriveCloneIn {
 
                 #![allow(clippy::default_trait_access)]
 
+                ///@@line_break
                 use oxc_allocator::{Allocator, CloneIn};
 
                 ///@@line_break
