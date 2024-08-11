@@ -8,6 +8,7 @@ _default:
 
 alias r := ready
 alias c := coverage
+alias f := fix
 
 # Make sure you have cargo-binstall installed.
 # You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
@@ -70,6 +71,13 @@ lint:
 
 doc:
   RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
+# Fix all auto-fixable format and lint issues. Make sure your working tree is clean first.
+fix:
+  cargo clippy --fix --allow-staged --no-deps
+  just fmt
+  typos -w
+  git status
 
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
