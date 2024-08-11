@@ -126,6 +126,7 @@ mod eslint {
     pub mod unicode_bom;
     pub mod use_isnan;
     pub mod valid_typeof;
+    pub mod sort_keys;
 }
 
 mod typescript {
@@ -549,6 +550,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::symbol_description,
     eslint::sort_imports,
+    eslint::sort_keys,
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
