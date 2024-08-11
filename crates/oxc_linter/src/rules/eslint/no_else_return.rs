@@ -29,6 +29,7 @@ declare_oxc_lint!(
     /// ```
     NoElseReturn,
     suspicious,
+    fix
 );
 
 fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
