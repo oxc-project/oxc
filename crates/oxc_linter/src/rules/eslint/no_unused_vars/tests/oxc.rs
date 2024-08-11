@@ -1,8 +1,30 @@
 //! Test cases created by oxc maintainers
 
 use super::NoUnusedVars;
-use crate::{tester::Tester, RuleMeta as _};
+use crate::{tester::Tester, FixKind, RuleMeta as _};
 use serde_json::json;
+
+#[test]
+fn test_debug() {
+    let pass: Vec<&'static str> = vec![];
+    let fail = vec![];
+    let fix = vec![
+        // (
+        //     "const { foo: fooBar, baz } = obj; f(baz);",
+        //     "const { baz } = obj; f(baz);",
+        //     None,
+        //     FixKind::DangerousSuggestion,
+        // ),
+        ("const [a, b] = arr; f(a)", "const [a] = arr; f(a)", None, FixKind::DangerousSuggestion),
+        // (
+        //     "let x = 1; x = 2;",
+        //     "let x = 1; x = 2;",
+        //     Some(json!( [{ "varsIgnorePattern": "^tooCompli[cated]" }] )),
+        //     FixKind::DangerousFix,
+        // ),
+    ];
+    Tester::new(NoUnusedVars::NAME, pass, fail).expect_fix(fix).test();
+}
 
 #[test]
 fn test_vars_simple() {
@@ -12,18 +34,76 @@ fn test_vars_simple() {
         ("let a = 1; let b = a + 1; console.log(b)", None),
         ("let a = 1; if (true) { console.log(a) }", None),
         ("let _a = 1", Some(json!([{ "varsIgnorePattern": "^_" }]))),
+        ("const { foo: _foo, baz } = obj; f(baz);", Some(json!([{ "varsIgnorePattern": "^_" }]))),
     ];
     let fail = vec![
         ("let a = 1", None),
+        ("let a: number = 1", None),
         ("let a = 1; a = 2", None),
         (
             "let _a = 1; console.log(_a)",
             Some(json!([{ "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true }])),
         ),
+        ("const { foo: fooBar, baz } = obj; f(baz);", None),
         ("let _a = 1", Some(json!([{ "argsIgnorePattern": "^_" }]))),
     ];
 
+    let fix = vec![
+        // unused vars should be removed
+        ("let a = 1;", "", None, FixKind::DangerousSuggestion),
+        // FIXME: b should be deleted as well.
+        ("let a = 1, b = 2;", "let b = 2;", None, FixKind::DangerousSuggestion),
+        (
+            "let a = 1; let b = 2; console.log(a);",
+            "let a = 1;  console.log(a);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1; let b = 2; console.log(b);",
+            " let b = 2; console.log(b);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2; console.log(b);",
+            "let b = 2; console.log(b);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2; console.log(a);",
+            "let a = 1; console.log(a);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2, c = 3; console.log(a + c);",
+            "let a = 1, c = 3; console.log(a + c);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "let a = 1, b = 2, c = 3; console.log(b + c);",
+            "let b = 2, c = 3; console.log(b + c);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // vars with references get renamed
+        ("let x = 1; x = 2;", "let _x = 1; _x = 2;", None, FixKind::DangerousFix),
+        (
+            "let x = 1; x = 2;",
+            "let x = 1; x = 2;",
+            Some(json!( [{ "varsIgnorePattern": "^tooCompli[cated]" }] )),
+            FixKind::DangerousFix,
+        ),
+        // type annotations do not get clobbered
+        ("let x: number = 1; x = 2;", "let _x: number = 1; _x = 2;", None, FixKind::DangerousFix),
+        ("const { a } = obj;", "", None, FixKind::DangerousSuggestion),
+    ];
+
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .expect_fix(fix)
         .with_snapshot_suffix("oxc-vars-simple")
         .test_and_snapshot();
 }
@@ -185,7 +265,7 @@ fn test_vars_reassignment() {
 }
 
 #[test]
-fn test_vars_destructure_ignored() {
+fn test_vars_destructure() {
     let pass = vec![
         // ("const { a, ...rest } = obj; console.log(rest)", Some(json![{ "ignoreRestSiblings": true }]))
     ];
@@ -198,8 +278,53 @@ fn test_vars_destructure_ignored() {
         ),
     ];
 
+    let fix = vec![
+        ("const { a } = obj;", "", None, FixKind::DangerousSuggestion),
+        ("const [a] = arr;", "", None, FixKind::DangerousSuggestion),
+        (
+            "const { a, b } = obj; f(b)",
+            "const { b } = obj; f(b)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        ("const [a, b] = arr; f(b)", "const [,b] = arr; f(b)", None, FixKind::DangerousSuggestion),
+        ("const [a, b] = arr; f(a)", "const [a] = arr; f(a)", None, FixKind::DangerousSuggestion),
+        (
+            "const [a, b, c] = arr; f(a, c)",
+            "const [a, ,c] = arr; f(a, c)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const [a, b, c, d, e] = arr; f(a, e)",
+            "const [a, ,,,e] = arr; f(a, e)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const [a, b, c, d, e, f] = arr; fn(a, e)",
+            "const [a, ,,,e] = arr; fn(a, e)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "const { foo: fooBar, baz } = obj; f(baz);",
+            "const { baz } = obj; f(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // renaming
+        // (
+        //     "let a = 1; a = 2;",
+        //     "let _a = 1; _a = 2;",
+        //     Some(json!([{ "varsIgnorePattern": "^_" }])),
+        //     FixKind::DangerousSuggestion,
+        // ),
+    ];
+
     Tester::new(NoUnusedVars::NAME, pass, fail)
-        .with_snapshot_suffix("oxc-vars-destructure-ignored")
+        .expect_fix(fix)
+        .with_snapshot_suffix("oxc-vars-destructure")
         .test_and_snapshot();
 }
 
@@ -440,6 +565,7 @@ fn test_arguments() {
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
+        ("function foo(a: number) {} foo()", None),
         ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
     ];
 

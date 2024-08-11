@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// However, because enums create their own scope whereby each enum member becomes a variable in that scope, developers are often surprised at the resultant values.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// const imOutside = 2;
     /// const b = 2;
     /// enum Foo {

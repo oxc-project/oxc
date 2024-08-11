@@ -1,10 +1,15 @@
 #!/usr/bin/env -S just --justfile
 
+set windows-shell := ["powershell"]
+set shell := ["bash", "-cu"]
+
 _default:
   @just --list -u
 
 alias r := ready
 alias c := coverage
+alias f := fix
+alias new-typescript-rule := new-ts-rule
 
 # Make sure you have cargo-binstall installed.
 # You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
@@ -67,6 +72,13 @@ lint:
 
 doc:
   RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
+
+# Fix all auto-fixable format and lint issues. Make sure your working tree is clean first.
+fix:
+  cargo clippy --fix --allow-staged --no-deps
+  just fmt
+  typos -w
+  git status
 
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
@@ -156,7 +168,7 @@ clone-submodule dir url sha:
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
 
 website path:
-  cargo run -p website -- linter-rules > {{path}}/src/docs/guide/usage/linter/generated-rules.md
+  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
 

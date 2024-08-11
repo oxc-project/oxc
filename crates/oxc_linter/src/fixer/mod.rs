@@ -64,6 +64,11 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         RuleFix::new(self.kind, None, CompositeFix::Multiple(Vec::with_capacity(capacity)))
     }
 
+    #[inline]
+    pub fn source_text(&self) -> &'a str {
+        self.ctx.source_text()
+    }
+
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
     #[inline]

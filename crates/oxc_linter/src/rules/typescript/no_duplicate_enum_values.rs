@@ -20,14 +20,16 @@ declare_oxc_lint!(
     /// Disallow duplicate enum member values.
     ///
     /// ### Why is this bad?
-    /// Although TypeScript supports duplicate enum member values, people usually expect members to have unique values within the same enum. Duplicate values can lead to bugs that are hard to track down.
+    /// Although TypeScript supports duplicate enum member values, people
+    /// usually expect members to have unique values within the same enum.
+    /// Duplicate values can lead to bugs that are hard to track down.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// enum E {
-    //    A = 0,
-    //    B = 0,
-    //  }
+    ///     A = 0,
+    ///     B = 0,
+    /// }
     /// ```
     NoDuplicateEnumValues,
     pedantic

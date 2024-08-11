@@ -29,7 +29,7 @@ declare_oxc_lint!(
     /// This rule checks that children are not passed to void DOM elements.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <br>Children</br>
     /// <br children='Children' />

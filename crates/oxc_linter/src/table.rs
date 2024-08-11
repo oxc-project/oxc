@@ -1,8 +1,8 @@
-use std::fmt::Write;
+use std::{borrow::Cow, fmt::Write};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{rules::RULES, Linter, RuleCategory};
+use crate::{rules::RULES, Linter, RuleCategory, RuleFixMeta};
 
 pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
@@ -23,6 +23,7 @@ pub struct RuleTableRow {
     pub category: RuleCategory,
     pub documentation: Option<&'static str>,
     pub turned_on_by_default: bool,
+    pub autofix: RuleFixMeta,
 }
 
 impl Default for RuleTable {
@@ -49,6 +50,7 @@ impl RuleTable {
                     plugin: rule.plugin_name().to_string(),
                     category: rule.category(),
                     turned_on_by_default: default_rules.contains(name),
+                    autofix: rule.fix(),
                 }
             })
             .collect::<Vec<_>>();
@@ -88,7 +90,17 @@ impl RuleTable {
 }
 
 impl RuleTableSection {
-    pub fn render_markdown_table(&self) -> String {
+    /// Renders all the rules in this section as a markdown table.
+    ///
+    /// Provide [`Some`] prefix to render the rule name as a link. Provide
+    /// [`None`] to just display the rule name as text.
+    pub fn render_markdown_table(&self, link_prefix: Option<&str>) -> String {
+        const FIX_EMOJI_COL_WIDTH: usize = 10;
+        const DEFAULT_EMOJI_COL_WIDTH: usize = 9;
+        /// text width, leave 2 spaces for padding
+        const FIX: usize = FIX_EMOJI_COL_WIDTH - 2;
+        const DEFAULT: usize = DEFAULT_EMOJI_COL_WIDTH - 2;
+
         let mut s = String::new();
         let category = &self.category;
         let rows = &self.rows;
@@ -99,18 +111,81 @@ impl RuleTableSection {
         writeln!(s, "{}", category.description()).unwrap();
 
         let x = "";
-        writeln!(s, "| {:<rule_width$} | {:<plugin_width$} | Default |", "Rule name", "Source")
-            .unwrap();
-        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} |").unwrap();
+        writeln!(
+            s,
+            "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? |",
+            "Rule name", "Source"
+        )
+        .unwrap();
+        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} |").unwrap();
 
         for row in rows {
             let rule_name = row.name;
             let plugin_name = &row.plugin;
             let (default, default_width) =
-                if row.turned_on_by_default { ("✅", 6) } else { ("", 7) };
-            writeln!(s, "| {rule_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
+                if row.turned_on_by_default { ("✅", DEFAULT - 1) } else { ("", DEFAULT) };
+            let rendered_name = if let Some(prefix) = link_prefix {
+                Cow::Owned(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"))
+            } else {
+                Cow::Borrowed(rule_name)
+            };
+            let (fix_emoji, fix_emoji_width) = row.autofix.emoji().map_or(("", FIX), |emoji| {
+                let len = emoji.len();
+                if len > FIX {
+                    (emoji, 0)
+                } else {
+                    (emoji, FIX - len)
+                }
+            });
+            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |").unwrap();
         }
 
         s
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use markdown::{to_html_with_options, Options};
+    use std::sync::OnceLock;
+
+    static TABLE: OnceLock<RuleTable> = OnceLock::new();
+
+    fn table() -> &'static RuleTable {
+        TABLE.get_or_init(RuleTable::new)
+    }
+
+    #[test]
+    fn test_table_no_links() {
+        let options = Options::gfm();
+        for section in &table().sections {
+            let rendered_table = section.render_markdown_table(None);
+            assert!(!rendered_table.is_empty());
+            assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
+
+            let html = to_html_with_options(&rendered_table, &options).unwrap();
+            assert!(!html.is_empty());
+            assert!(html.contains("<table>"));
+        }
+    }
+
+    #[test]
+    fn test_table_with_links() {
+        const PREFIX: &str = "/foo/bar";
+        const PREFIX_WITH_SLASH: &str = "/foo/bar/";
+
+        let options = Options::gfm();
+
+        for section in &table().sections {
+            let rendered_table = section.render_markdown_table(Some(PREFIX));
+            assert!(!rendered_table.is_empty());
+            assert_eq!(rendered_table.split('\n').count(), 5 + section.rows.len());
+
+            let html = to_html_with_options(&rendered_table, &options).unwrap();
+            assert!(!html.is_empty());
+            assert!(html.contains("<table>"));
+            assert!(html.contains(PREFIX_WITH_SLASH));
+        }
     }
 }

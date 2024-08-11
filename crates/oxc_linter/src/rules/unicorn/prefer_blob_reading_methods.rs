@@ -24,20 +24,22 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// // bad
-    /// const arrayBuffer = await new Promise((resolve, reject) => {
-    /// 	const fileReader = new FileReader();
-    /// 	fileReader.addEventListener('load', () => {
-    /// 		resolve(fileReader.result);
-    /// 	});
-    /// 	fileReader.addEventListener('error', () => {
-    /// 		reject(fileReader.error);
-    /// 	});
-    /// 	fileReader.readAsArrayBuffer(blob);
-    /// });
+    /// async function bad() {
+    ///     const arrayBuffer = await new Promise((resolve, reject) => {
+    ///         const fileReader = new FileReader();
+    ///         fileReader.addEventListener('load', () => {
+    ///             resolve(fileReader.result);
+    ///         });
+    ///         fileReader.addEventListener('error', () => {
+    ///             reject(fileReader.error);
+    ///         });
+    ///         fileReader.readAsArrayBuffer(blob);
+    ///     });
+    /// }
     ///
-    /// // good
-    /// const arrayBuffer = await blob.arrayBuffer();
+    /// async function good() {
+    ///     const arrayBuffer = await blob.arrayBuffer();
+    /// }
     /// ```
     PreferBlobReadingMethods,
     pedantic
