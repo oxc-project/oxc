@@ -1,17 +1,43 @@
-use oxc_ast::{ast::VariableDeclarationKind, AstKind};
+use oxc_ast::syntax_directed_operations::PropName;
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::GetSpan;
+use std::cmp::Ordering;
+use std::str::Chars;
 
 use crate::{
     context::LintContext,
-    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
 
 #[derive(Debug, Default, Clone)]
-pub struct SortKeys;
+pub struct SortKeys(Box<SortKeysOptions>);
+
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
+pub enum SortOrder {
+    Desc,
+    #[default]
+    Asc,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct SortKeysOptions {
+    sort_order: SortOrder,
+    case_sensitive: bool,
+    natural: bool,
+    min_keys: usize,
+    allow_line_separated_groups: bool,
+}
+
+impl std::ops::Deref for SortKeys {
+    type Target = SortKeysOptions;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -41,13 +67,136 @@ declare_oxc_lint!(
 );
 
 impl Rule for SortKeys {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let Some(config) = value.get(0) else {
+            return Self(Box::new(SortKeysOptions {
+                sort_order: SortOrder::Asc,
+                case_sensitive: true,
+                natural: false,
+                min_keys: 2,
+                allow_line_separated_groups: false,
+            }));
+        };
+
+        let sort_order = config
+            .get("sortOrder")
+            .and_then(serde_json::Value::as_str)
+            .map(|s| match s {
+                "desc" => SortOrder::Desc,
+                _ => SortOrder::Asc,
+            })
+            .unwrap_or(SortOrder::Asc);
+        let case_sensitive = config
+            .get("caseSensitive")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(true);
+        let natural = config
+            .get("natural")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+        let min_keys = config
+            .get("minKeys")
+            .and_then(serde_json::Value::as_u64)
+            .map(|n| n as usize).unwrap_or(2);
+        let allow_line_separated_groups = config
+            .get("allowLineSeparatedGroups")
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+
+        Self(Box::new(SortKeysOptions {
+            sort_order,
+            case_sensitive,
+            natural,
+            min_keys,
+            allow_line_separated_groups,
+        }))
+    }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::VariableDeclaration(dec) = node.kind() {
-            if dec.kind == VariableDeclarationKind::Var {
-                ctx.diagnostic(no_var_diagnostic(Span::new(dec.span.start, dec.span.start + 3)));
+        if let AstKind::ObjectExpression(dec) = node.kind() {
+            let mut property_keys: Vec<&str> = vec![];
+
+            for prop in &dec.properties {
+                match prop.prop_name() {
+                    Some((name, _)) => {
+                        property_keys.push(name);
+                    }
+                    None => {}
+                }
+            }
+
+            if property_keys.len() >= self.min_keys {
+                let mut sorted = property_keys.clone();
+                if self.case_sensitive {
+                    sorted.sort();
+                } else {
+                    sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+                }
+
+                if self.natural {
+                    natural_sort(&mut sorted);
+                }
+
+                if self.sort_order == SortOrder::Desc {
+                    sorted.reverse();
+                }
+
+                let is_sorted = if self.allow_line_separated_groups {
+                    property_keys.windows(2).all(|w| {
+                        let idx_a = sorted.iter().position(|&x| x == w[0]).unwrap();
+                        let idx_b = sorted.iter().position(|&x| x == w[1]).unwrap();
+                        idx_a <= idx_b
+                    })
+                } else {
+                    property_keys == sorted
+                };
+
+                if !is_sorted {
+                    ctx.diagnostic(
+                        OxcDiagnostic::warn("Object keys should be sorted")
+                            .with_label(node.span()),
+                    );
+                }
             }
         }
     }
+}
+
+
+fn natural_sort(arr: &mut [&str]) {
+    arr.sort_by(|a, b| {
+        let mut c1 = a.chars();
+        let mut c2 = b.chars();
+
+        loop {
+            match (c1.next(), c2.next()) {
+                (Some(x), Some(y)) if x == y => continue,
+                (Some(x), Some(y)) if x.is_numeric() && y.is_numeric() => {
+                    let n1 = take_numeric(&mut c1, x);
+                    let n2 = take_numeric(&mut c2, y);
+                    match n1.cmp(&n2) {
+                        Ordering::Equal => continue,
+                        ord => return ord,
+                    }
+                }
+                (Some(x), Some(y)) => return x.cmp(&y),
+                (None, None) => return Ordering::Equal,
+                (Some(_), None) => return Ordering::Greater,
+                (None, Some(_)) => return Ordering::Less,
+            }
+        }
+    });
+}
+
+fn take_numeric(iter: &mut Chars, first: char) -> u32 {
+    let mut sum = first.to_digit(10).unwrap();
+    while let Some(c) = iter.next() {
+        if let Some(digit) = c.to_digit(10) {
+            sum = sum * 10 + digit;
+        } else {
+            break;
+        }
+    }
+    sum
 }
 
 #[test]
@@ -295,7 +444,7 @@ fn test() {
 			                    e: 1,
 			                    f: 2,
 			                    g: 3,
-			
+
 			                    a: 4,
 			                    b: 5,
 			                    c: 6
@@ -307,7 +456,7 @@ fn test() {
             "
 			                var obj = {
 			                    b: 1,
-			
+
 			                    // comment
 			                    a: 2,
 			                    c: 3
@@ -319,9 +468,9 @@ fn test() {
             "
 			                var obj = {
 			                    b: 1
-			
+
 			                    ,
-			
+
 			                    // comment
 			                    a: 2,
 			                    c: 3
@@ -334,7 +483,7 @@ fn test() {
 			                var obj = {
 			                    c: 1,
 			                    d: 2,
-			
+
 			                    b() {
 			                    },
 			                    e: 4
@@ -348,7 +497,7 @@ fn test() {
 			                    c: 1,
 			                    d: 2,
 			                    // comment
-			
+
 			                    // comment
 			                    b() {
 			                    },
@@ -361,7 +510,7 @@ fn test() {
             "
 			                var obj = {
 			                  b,
-			
+
 			                  [a+b]: 1,
 			                  a
 			                }
@@ -373,16 +522,16 @@ fn test() {
 			                var obj = {
 			                    c: 1,
 			                    d: 2,
-			
+
 			                    a() {
-			
+
 			                    },
-			
+
 			                    // abce
 			                    f: 3,
-			
+
 			                    /*
-			
+
 			                    */
 			                    [a+b]: 1,
 			                    cc: 1,
@@ -395,7 +544,7 @@ fn test() {
             r#"
 			                var obj = {
 			                    b: "/*",
-			
+
 			                    a: "*/",
 			                }
 			            "#,
@@ -407,7 +556,7 @@ fn test() {
 			                    b,
 			                    /*
 			                    */ //
-			
+
 			                    a
 			                }
 			            ",
@@ -417,7 +566,7 @@ fn test() {
             "
 			                var obj = {
 			                    b,
-			
+
 			                    /*
 			                    */ //
 			                    a
@@ -429,7 +578,7 @@ fn test() {
             "
 			                var obj = {
 			                    b: 1
-			
+
 			                    ,a: 2
 			                };
 			            ",
@@ -440,7 +589,7 @@ fn test() {
 			                var obj = {
 			                    b: 1
 			                // comment before comma
-			
+
 			                ,
 			                a: 2
 			                };
@@ -451,7 +600,7 @@ fn test() {
             "
 			                var obj = {
 			                  b,
-			
+
 			                  a,
 			                  ...z,
 			                  c
@@ -463,9 +612,9 @@ fn test() {
             "
 			                var obj = {
 			                  b,
-			
+
 			                  [foo()]: [
-			
+
 			                  ],
 			                  a
 			                }
@@ -691,7 +840,7 @@ fn test() {
             "
 			                let obj = {
 			                    b
-			
+
 			                    ,a
 			                }
 			            ",
@@ -702,7 +851,7 @@ fn test() {
 			                 var obj = {
 			                    b: 1,
 			                    c () {
-			
+
 			                    },
 			                    a: 3
 			                  }
@@ -714,9 +863,9 @@ fn test() {
 			                 var obj = {
 			                    a: 1,
 			                    b: 2,
-			
+
 			                    z () {
-			
+
 			                    },
 			                    y: 3
 			                  }
@@ -764,14 +913,14 @@ fn test() {
 			                var obj = {
 			                    c: 1,
 			                    d: 2,
-			
+
 			                    z() {
-			
+
 			                    },
 			                    f: 3,
 			                    /*
-			
-			
+
+
 			                    */
 			                    [a+b]: 1,
 			                    b: 1,
@@ -805,7 +954,7 @@ fn test() {
 			                  b,
 			                  [foo()]: [
 			                  // ↓ this blank is inside a property and therefore should not count
-			
+
 			                  ],
 			                  a
 			                }
