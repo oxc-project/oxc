@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::{
-    markers::{ScopeAttribute, ScopeMarkers, VisitMarkers},
+    markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
@@ -227,6 +227,7 @@ pub struct OuterMarkers {
 pub struct InnerMarkers {
     /// marker that hints to fold span in here
     pub span: bool,
+    pub derive_attributes: DeriveAttributes,
     #[serde(skip)]
     pub visit: VisitMarkers,
     #[serde(skip)]

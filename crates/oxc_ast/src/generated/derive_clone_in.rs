@@ -1,6 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_codegen/src/generators/derive_clone_in.rs`
 
+#![allow(clippy::default_trait_access)]
 use oxc_allocator::{Allocator, CloneIn};
 
 #[allow(clippy::wildcard_imports)]
@@ -84,7 +85,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Program<'old_alloc> {
             hashbang: self.hashbang.clone_in(alloc),
             directives: self.directives.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -170,8 +171,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for IdentifierReference<'old_al
         IdentifierReference {
             span: self.span.clone_in(alloc),
             name: self.name.clone_in(alloc),
-            reference_id: self.reference_id.clone_in(alloc),
-            reference_flag: self.reference_flag.clone_in(alloc),
+            reference_id: Default::default(),
+            reference_flag: Default::default(),
         }
     }
 }
@@ -182,7 +183,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for BindingIdentifier<'old_allo
         BindingIdentifier {
             span: self.span.clone_in(alloc),
             name: self.name.clone_in(alloc),
-            symbol_id: self.symbol_id.clone_in(alloc),
+            symbol_id: Default::default(),
         }
     }
 }
@@ -1077,7 +1078,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for BlockStatement<'old_alloc> 
         BlockStatement {
             span: self.span.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1212,7 +1213,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ForStatement<'old_alloc> {
             test: self.test.clone_in(alloc),
             update: self.update.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1307,7 +1308,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ForInStatement<'old_alloc> 
             left: self.left.clone_in(alloc),
             right: self.right.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1362,7 +1363,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ForOfStatement<'old_alloc> 
             left: self.left.clone_in(alloc),
             right: self.right.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1406,7 +1407,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for SwitchStatement<'old_alloc>
             span: self.span.clone_in(alloc),
             discriminant: self.discriminant.clone_in(alloc),
             cases: self.cases.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1459,7 +1460,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CatchClause<'old_alloc> {
             span: self.span.clone_in(alloc),
             param: self.param.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1576,7 +1577,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Function<'old_alloc> {
             params: self.params.clone_in(alloc),
             return_type: self.return_type.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1653,7 +1654,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ArrowFunctionExpression<'ol
             params: self.params.clone_in(alloc),
             return_type: self.return_type.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1684,7 +1685,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Class<'old_alloc> {
             body: self.body.clone_in(alloc),
             r#abstract: self.r#abstract.clone_in(alloc),
             declare: self.declare.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -1807,7 +1808,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for StaticBlock<'old_alloc> {
         StaticBlock {
             span: self.span.clone_in(alloc),
             body: self.body.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -2182,7 +2183,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSEnumDeclaration<'old_allo
             members: self.members.clone_in(alloc),
             r#const: self.r#const.clone_in(alloc),
             declare: self.declare.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -2374,7 +2375,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSConditionalType<'old_allo
             extends_type: self.extends_type.clone_in(alloc),
             true_type: self.true_type.clone_in(alloc),
             false_type: self.false_type.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -2718,7 +2719,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSTypeAliasDeclaration<'old
             type_parameters: self.type_parameters.clone_in(alloc),
             type_annotation: self.type_annotation.clone_in(alloc),
             declare: self.declare.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -2755,7 +2756,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSInterfaceDeclaration<'old
             type_parameters: self.type_parameters.clone_in(alloc),
             body: self.body.clone_in(alloc),
             declare: self.declare.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -2847,7 +2848,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSMethodSignature<'old_allo
             params: self.params.clone_in(alloc),
             return_type: self.return_type.clone_in(alloc),
             type_parameters: self.type_parameters.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -2860,7 +2861,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSConstructSignatureDeclara
             params: self.params.clone_in(alloc),
             return_type: self.return_type.clone_in(alloc),
             type_parameters: self.type_parameters.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -2918,7 +2919,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSModuleDeclaration<'old_al
             body: self.body.clone_in(alloc),
             kind: self.kind.clone_in(alloc),
             declare: self.declare.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }
@@ -3090,7 +3091,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSMappedType<'old_alloc> {
             type_annotation: self.type_annotation.clone_in(alloc),
             optional: self.optional.clone_in(alloc),
             readonly: self.readonly.clone_in(alloc),
-            scope_id: self.scope_id.clone_in(alloc),
+            scope_id: Default::default(),
         }
     }
 }

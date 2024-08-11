@@ -1,4 +1,5 @@
 use proc_macro2::TokenStream;
+use serde::Serialize;
 use syn::{
     ext::IdentExt,
     parenthesized,
@@ -63,6 +64,30 @@ pub struct VisitMarkers {
 #[derive(Default, Debug)]
 pub struct ScopeMarkers {
     pub enter_before: bool,
+}
+
+/// A struct representing the `#[scope(...)]` attribute.
+#[derive(Debug, Default, Serialize)]
+pub struct DeriveAttributes {
+    pub clone_in: CloneInAttribute,
+}
+
+/// A enum representing the value passed in `#[clone_in(...)]` derive attribute.
+#[derive(Debug, Default, Serialize)]
+pub enum CloneInAttribute {
+    #[default]
+    None,
+    Default,
+}
+
+impl From<&Ident> for CloneInAttribute {
+    fn from(ident: &Ident) -> Self {
+        if ident == "default" {
+            Self::Default
+        } else {
+            panic!("Invalid argument used in `#[clone_in(...)]` attribute.");
+        }
+    }
 }
 
 /// A struct representing the `#[scope(...)]` attribute.
@@ -184,6 +209,27 @@ where
                 .normalize()
         },
     )
+}
+
+pub fn get_derive_attributes<'a, I>(attrs: I) -> crate::Result<DeriveAttributes>
+where
+    I: IntoIterator<Item = &'a Attribute>,
+{
+    fn try_parse_clone_in(attr: &Attribute) -> crate::Result<Option<CloneInAttribute>> {
+        if attr.path().is_ident("clone_in") {
+            let arg = attr.parse_args_with(Ident::parse).normalize()?;
+            Ok(Some(CloneInAttribute::from(&arg)))
+        } else {
+            Ok(None)
+        }
+    }
+    let mut clone_in = None;
+    for attr in attrs {
+        if let Some(attr) = try_parse_clone_in(attr)? {
+            assert!(clone_in.replace(attr).is_none(), "Duplicate `#[clone_in(...)]` attribute.");
+        }
+    }
+    Ok(DeriveAttributes { clone_in: clone_in.unwrap_or_default() })
 }
 
 pub fn get_scope_attribute<'a, I>(attrs: I) -> Option<crate::Result<ScopeAttribute>>
