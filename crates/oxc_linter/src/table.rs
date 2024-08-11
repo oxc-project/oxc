@@ -95,6 +95,12 @@ impl RuleTableSection {
     /// Provide [`Some`] prefix to render the rule name as a link. Provide
     /// [`None`] to just display the rule name as text.
     pub fn render_markdown_table(&self, link_prefix: Option<&str>) -> String {
+        const FIX_EMOJI_COL_WIDTH: usize = 10;
+        const DEFAULT_EMOJI_COL_WIDTH: usize = 9;
+        /// text width, leave 2 spaces for padding
+        const FIX: usize = FIX_EMOJI_COL_WIDTH - 2;
+        const DEFAULT: usize = DEFAULT_EMOJI_COL_WIDTH - 2;
+
         let mut s = String::new();
         let category = &self.category;
         let rows = &self.rows;
@@ -105,21 +111,33 @@ impl RuleTableSection {
         writeln!(s, "{}", category.description()).unwrap();
 
         let x = "";
-        writeln!(s, "| {:<rule_width$} | {:<plugin_width$} | Default |", "Rule name", "Source")
-            .unwrap();
-        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} |").unwrap();
+        writeln!(
+            s,
+            "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? |",
+            "Rule name", "Source"
+        )
+        .unwrap();
+        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-<8} |").unwrap();
 
         for row in rows {
             let rule_name = row.name;
             let plugin_name = &row.plugin;
             let (default, default_width) =
-                if row.turned_on_by_default { ("✅", 6) } else { ("", 7) };
+                if row.turned_on_by_default { ("✅", DEFAULT - 1) } else { ("", DEFAULT) };
             let rendered_name = if let Some(prefix) = link_prefix {
                 Cow::Owned(format!("[{rule_name}]({prefix}/{plugin_name}/{rule_name}.html)"))
             } else {
                 Cow::Borrowed(rule_name)
             };
-            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
+            let (fix_emoji, fix_emoji_width) = row.autofix.emoji().map_or(("", FIX), |emoji| {
+                let len = emoji.len();
+                if len > FIX {
+                    (emoji, 0)
+                } else {
+                    (emoji, FIX - len)
+                }
+            });
+            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |").unwrap();
         }
 
         s
