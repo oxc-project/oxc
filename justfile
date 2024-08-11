@@ -9,6 +9,7 @@ _default:
 alias r := ready
 alias c := coverage
 alias f := fix
+alias new-typescript-rule := new-ts-rule
 
 # Make sure you have cargo-binstall installed.
 # You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
