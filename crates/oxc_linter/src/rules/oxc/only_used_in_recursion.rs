@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -60,24 +60,36 @@ declare_oxc_lint!(
 
 impl Rule for OnlyUsedInRecursion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Function(function) = node.kind() else {
-            return;
-        };
+        let (function_id, function_parameters) = match node.kind() {
+            AstKind::Function(function) => {
+                if function.is_typescript_syntax() {
+                    return;
+                }
 
-        let Some(function_id) = &function.id else {
-            return;
+                if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
+                    (binding_ident, &function.params)
+                } else if let Some(function_id) = &function.id {
+                    (function_id, &function.params)
+                } else {
+                    return;
+                }
+            }
+            AstKind::ArrowFunctionExpression(arrow_function) => {
+                if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
+                    (binding_ident, &arrow_function.params)
+                } else {
+                    return;
+                }
+            }
+            _ => return,
         };
-
-        if function.is_typescript_syntax() {
-            return;
-        }
 
         if is_function_maybe_reassigned(function_id, ctx) {
             return;
         }
 
-        for (arg_index, arg) in function.params.items.iter().enumerate() {
-            let BindingPatternKind::BindingIdentifier(arg) = &arg.pattern.kind else {
+        for (arg_index, formal_parameter) in function_parameters.items.iter().enumerate() {
+            let BindingPatternKind::BindingIdentifier(arg) = &formal_parameter.pattern.kind else {
                 continue;
             };
 
@@ -85,6 +97,20 @@ impl Rule for OnlyUsedInRecursion {
                 ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
             }
         }
+    }
+}
+
+fn get_function_like_declaration<'b>(
+    node: &AstNode<'b>,
+    ctx: &LintContext<'b>,
+) -> Option<&'b BindingIdentifier<'b>> {
+    let parent = outermost_paren_parent(node, ctx)?;
+
+    if let AstKind::VariableDeclarator(decl) = parent.kind() {
+        let ident = decl.id.get_binding_identifier()?;
+        Some(ident)
+    } else {
+        None
     }
 }
 
@@ -109,7 +135,15 @@ fn is_argument_only_used_in_recursion<'a>(
                     index == arg_index
                         && arg.span() == argument.span()
                         && if let Expression::Identifier(identifier) = &call_expr.callee {
-                            identifier.name == function_id.name
+                            identifier
+                                .reference_id()
+                                .and_then(|id| ctx.symbols().get_reference(id).symbol_id())
+                                .is_some_and(|v| {
+                                    let function_symbol_id = function_id.symbol_id.get();
+                                    debug_assert!(function_symbol_id.is_some());
+                                    function_symbol_id
+                                        .is_some_and(|function_symbol_id| function_symbol_id == v)
+                                })
                         } else {
                             false
                         }
@@ -201,6 +235,12 @@ fn test() {
                 arg0()
             }
         ",
+        // arg not passed to recursive call (arrow)
+        "
+            const test = (arg0) => {
+                test();
+            };
+        ",
         "function test(arg0) { }",
         // args in wrong order
         "
@@ -213,6 +253,12 @@ fn test() {
             function test(arg0, arg1) {
                 test(arg1, arg0);
             }
+        ",
+        // Arguments Swapped in Recursion (arrow)
+        r"
+            const test = (arg0, arg1) => {
+                test(arg1, arg0);
+            };
         ",
         // https://github.com/swc-project/swc/blob/3ca954b9f9622ed400308f2af35242583a4bdc3d/crates/swc_ecma_transforms_base/src/helpers/_get.js#L1-L16
         r#"
@@ -235,6 +281,13 @@ fn test() {
         "#,
         "function foo() {}
         declare function foo() {}",
+        r#"
+        var validator = function validator(node, key, val) {
+            var validator = node.operator === "in" ? inOp : expression;
+            validator(node, key, val);
+        };
+        validator()
+        "#,
     ];
 
     let fail = vec![
@@ -274,6 +327,17 @@ fn test() {
         r"
             export function test(a) {
                 test(a)
+            }
+        ",
+        // https://github.com/oxc-project/oxc/issues/4817
+        // "
+        //     const test = function test(arg0) {
+        //         return test(arg0);
+        //     }
+        // ",
+        "
+            const a = (arg0) => {
+                return a(arg0);
             }
         ",
     ];
