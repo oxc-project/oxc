@@ -5,6 +5,7 @@ use syn::Ident;
 
 use crate::{
     codegen::LateCtx,
+    markers::CloneInAttribute,
     output,
     schema::{EnumDef, GetIdent, StructDef, TypeDef},
     GeneratorOutput,
@@ -35,6 +36,9 @@ impl Generator for DeriveCloneIn {
             quote! {
                 #header
 
+                #![allow(clippy::default_trait_access)]
+
+                ///@@line_break
                 use oxc_allocator::{Allocator, CloneIn};
 
                 ///@@line_break
@@ -83,7 +87,10 @@ fn derive_struct(def: &StructDef) -> TokenStream {
     } else {
         let fields = def.fields.iter().map(|field| {
             let ident = field.ident();
-            quote!(#ident: self.#ident.clone_in(alloc))
+            match field.markers.derive_attributes.clone_in {
+                CloneInAttribute::Default => quote!(#ident: Default::default()),
+                CloneInAttribute::None => quote!(#ident: self.#ident.clone_in(alloc)),
+            }
         });
         (format_ident!("alloc"), quote!(#ty_ident { #(#fields),* }))
     };

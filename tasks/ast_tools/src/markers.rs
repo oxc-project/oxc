@@ -1,4 +1,5 @@
 use proc_macro2::TokenStream;
+use serde::Serialize;
 use syn::{
     ext::IdentExt,
     parenthesized,
@@ -60,20 +61,44 @@ pub struct VisitMarkers {
 }
 
 /// A struct representing `#[scope(...)]` markers
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct ScopeMarkers {
     pub enter_before: bool,
 }
 
 /// A struct representing the `#[scope(...)]` attribute.
+#[derive(Debug, Default, Serialize)]
+pub struct DeriveAttributes {
+    pub clone_in: CloneInAttribute,
+}
+
+/// A enum representing the value passed in `#[clone_in(...)]` derive attribute.
+#[derive(Debug, Default, Serialize)]
+pub enum CloneInAttribute {
+    #[default]
+    None,
+    Default,
+}
+
+impl From<&Ident> for CloneInAttribute {
+    fn from(ident: &Ident) -> Self {
+        if ident == "default" {
+            Self::Default
+        } else {
+            panic!("Invalid argument used in `#[clone_in(...)]` attribute.");
+        }
+    }
+}
+
+/// A struct representing the `#[scope(...)]` attribute.
 #[derive(Debug, Default)]
-pub struct ScopeAttr {
+pub struct ScopeAttribute {
     pub r#if: Option<Expr>,
     pub flags: Option<Expr>,
     pub strict_if: Option<Expr>,
 }
 
-impl Parse for ScopeAttr {
+impl Parse for ScopeAttribute {
     fn parse(input: ParseStream) -> Result<Self, syn::Error> {
         let parsed = input.parse_terminated(CommonAttribute::parse, Token![,])?;
         Ok(parsed.into_iter().fold(Self::default(), |mut acc, CommonAttribute { ident, args }| {
@@ -110,7 +135,7 @@ impl Parse for CommonAttribute {
     }
 }
 
-pub fn get_visit_markers<'a, I>(attrs: I) -> Option<crate::Result<VisitMarkers>>
+pub fn get_visit_markers<'a, I>(attrs: I) -> crate::Result<VisitMarkers>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
@@ -127,36 +152,39 @@ where
         "For now we only accept one `#[visit]` marker per field/variant, Please merge them together!"
     );
 
-    attr.map(|attr| {
-        let mut visit_as = None;
-        let mut visit_args = None;
-        let mut enter_before = false;
-        let mut ignore = false;
-        let nested =
-            attr.parse_args_with(Punctuated::<CommonAttribute, Token![,]>::parse_terminated);
-        nested
-            .map(|nested| {
-                for com in nested {
-                    if com.ident == "args" {
-                        visit_args = Some(parse2(com.args).unwrap());
-                    } else if com.ident == "as" {
-                        visit_as =
-                            Some(parse2(com.args).expect("Invalid `#[visit[as(...)]]` input!"));
-                    } else if com.ident == "enter_before" {
-                        enter_before = true;
-                    } else if com.ident == "ignore" {
-                        ignore = true;
-                    } else {
-                        panic!("Invalid `#[visit(...)]` input!")
+    attr.map_or_else(
+        || Ok(VisitMarkers::default()),
+        |attr| {
+            let mut visit_as = None;
+            let mut visit_args = None;
+            let mut enter_before = false;
+            let mut ignore = false;
+            let nested =
+                attr.parse_args_with(Punctuated::<CommonAttribute, Token![,]>::parse_terminated);
+            nested
+                .map(|nested| {
+                    for com in nested {
+                        if com.ident == "args" {
+                            visit_args = Some(parse2(com.args).unwrap());
+                        } else if com.ident == "as" {
+                            visit_as =
+                                Some(parse2(com.args).expect("Invalid `#[visit[as(...)]]` input!"));
+                        } else if com.ident == "enter_before" {
+                            enter_before = true;
+                        } else if com.ident == "ignore" {
+                            ignore = true;
+                        } else {
+                            panic!("Invalid `#[visit(...)]` input!")
+                        }
                     }
-                }
-            })
-            .map(|()| VisitMarkers { visit_as, visit_args, enter_before, ignore })
-            .normalize()
-    })
+                })
+                .map(|()| VisitMarkers { visit_as, visit_args, enter_before, ignore })
+                .normalize()
+        },
+    )
 }
 
-pub fn get_scope_markers<'a, I>(attrs: I) -> Option<crate::Result<ScopeMarkers>>
+pub fn get_scope_markers<'a, I>(attrs: I) -> crate::Result<ScopeMarkers>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
@@ -173,14 +201,38 @@ where
         "For now we only accept one `#[scope]` marker per field/variant, Please merge them together!"
     );
 
-    attr.map(|attr| {
-        attr.parse_args_with(Ident::parse)
-            .map(|id| ScopeMarkers { enter_before: id == "enter_before" })
-            .normalize()
-    })
+    attr.map_or_else(
+        || Ok(ScopeMarkers::default()),
+        |attr| {
+            attr.parse_args_with(Ident::parse)
+                .map(|id| ScopeMarkers { enter_before: id == "enter_before" })
+                .normalize()
+        },
+    )
 }
 
-pub fn get_scope_attr<'a, I>(attrs: I) -> Option<crate::Result<ScopeAttr>>
+pub fn get_derive_attributes<'a, I>(attrs: I) -> crate::Result<DeriveAttributes>
+where
+    I: IntoIterator<Item = &'a Attribute>,
+{
+    fn try_parse_clone_in(attr: &Attribute) -> crate::Result<Option<CloneInAttribute>> {
+        if attr.path().is_ident("clone_in") {
+            let arg = attr.parse_args_with(Ident::parse).normalize()?;
+            Ok(Some(CloneInAttribute::from(&arg)))
+        } else {
+            Ok(None)
+        }
+    }
+    let mut clone_in = None;
+    for attr in attrs {
+        if let Some(attr) = try_parse_clone_in(attr)? {
+            assert!(clone_in.replace(attr).is_none(), "Duplicate `#[clone_in(...)]` attribute.");
+        }
+    }
+    Ok(DeriveAttributes { clone_in: clone_in.unwrap_or_default() })
+}
+
+pub fn get_scope_attribute<'a, I>(attrs: I) -> Option<crate::Result<ScopeAttribute>>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
@@ -189,9 +241,9 @@ where
         debug_assert!(attr.path().is_ident("scope"));
         let result = if matches!(attr.meta, Meta::Path(_)) {
             // empty `#[scope]`.
-            Ok(ScopeAttr::default())
+            Ok(ScopeAttribute::default())
         } else {
-            attr.parse_args_with(ScopeAttr::parse)
+            attr.parse_args_with(ScopeAttribute::parse)
         };
 
         result.normalize()

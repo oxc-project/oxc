@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/ast_kind.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_kind.rs`
 
 use oxc_span::{GetSpan, Span};
 

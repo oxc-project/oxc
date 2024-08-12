@@ -28,7 +28,7 @@ use crate::{
 ///
 /// ::: danger NOTE
 ///
-/// Only the `.json` format is supported.
+/// Only the `.json` format is supported. You can use comments in configuration files.
 ///
 /// :::
 ///
