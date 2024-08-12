@@ -1475,7 +1475,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_ast_codegen"
+name = "oxc_ast_macros"
+version = "0.24.2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "oxc_ast_tools"
 version = "0.0.0"
 dependencies = [
  "bpaf",
@@ -1488,15 +1497,6 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "syn",
-]
-
-[[package]]
-name = "oxc_ast_macros"
-version = "0.24.2"
-dependencies = [
- "proc-macro2",
- "quote",
  "syn",
 ]
 

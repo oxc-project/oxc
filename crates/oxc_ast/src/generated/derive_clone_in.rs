@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/derive_clone_in.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/derive_clone_in.rs`
 
 #![allow(clippy::default_trait_access)]
 
