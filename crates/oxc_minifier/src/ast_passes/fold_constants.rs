@@ -98,6 +98,9 @@ impl<'a> FoldConstants<'a> {
         let Expression::ConditionalExpression(conditional_expr) = expr else {
             return;
         };
+        if ctx.ancestry.parent().is_tagged_template_expression() {
+            return;
+        }
         match self.fold_expression_and_get_boolean_value(&mut conditional_expr.test, ctx) {
             Some(true) => {
                 *expr = self.ast.move_expression(&mut conditional_expr.consequent);
@@ -582,6 +585,9 @@ impl<'a> FoldConstants<'a> {
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        if ctx.ancestry.parent().is_tagged_template_expression() {
+            return None;
+        }
         let op = logical_expr.operator;
         if !matches!(op, LogicalOperator::And | LogicalOperator::Or) {
             return None;
