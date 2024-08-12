@@ -337,9 +337,9 @@ dependencies = [
 
 [[package]]
 name = "criterion2"
-version = "0.11.0"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7258985df1aa8b33359ee2392cbc3b7802875242cdacdda91a17a602132c24a9"
+checksum = "b8df39381f28ced0ceebfb5611528d99aef14f8d75b43e9d4ceb6aba66e7b04d"
 dependencies = [
  "anes",
  "bpaf",
@@ -1041,7 +1041,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -3420,7 +3420,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
