@@ -34,6 +34,7 @@ declare_oxc_lint!(
 
 fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow `else` blocks after `return` statements in `if` statements")
+        .with_help("Unnecessary 'else' after 'return'.")
         .with_label(else_stmt.span())
 }
 
