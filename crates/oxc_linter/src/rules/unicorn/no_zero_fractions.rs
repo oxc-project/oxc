@@ -75,6 +75,19 @@ impl Rule for NoZeroFractions {
                 {
                     fixed = format!("({fixed})");
                 };
+
+                // Handle special cases where a space is needed after certain keywords
+                // to prevent the number from being interpreted as a property access
+                let start = number_literal.span.start.saturating_sub(6);
+                let end = number_literal.span.start;
+                let token = ctx.source_range(oxc_span::Span::new(start, end)).to_string();
+                if token.ends_with("return")
+                    || token.ends_with("throw")
+                    || token.ends_with("typeof")
+                {
+                    fixed = format!(" {fixed}");
+                }
+
                 fixer.replace(number_literal.span, fixed)
             },
         );
@@ -173,9 +186,15 @@ fn test() {
         (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
         (r"a = .0;", r"a = 0;"),
         (r"a = .0.toString()", r"a = (0).toString()"),
-        // (r"function foo(){return.0}", r"function foo(){return 0}"),
-        // (r"function foo(){return.0.toString()}", r"function foo(){return (0).toString()}"),
-        // (r"function foo(){return.0+.1}", r"function foo(){return 0+.1}"),
+        (r"function foo(){return.0}", r"function foo(){return 0}"),
+        (r"function foo(){return.0.toString()}", r"function foo(){return (0).toString()}"),
+        (r"function foo(){return.0+.1}", r"function foo(){return 0+.1}"),
+        (r"typeof.0", r"typeof 0"),
+        (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
+        (r"typeof.0+.1", r"typeof 0+.1"),
+        (r"function foo(){throw.0;}", r"function foo(){throw 0;}"),
+        (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
+        (r"function foo() {throw.0+.1;}", r"function foo() {throw 0+.1;}"),
     ];
 
     Tester::new(NoZeroFractions::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
