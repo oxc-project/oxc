@@ -4,9 +4,9 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn prefer_array_flat_map_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`Array.flatMap` performs `Array.map` and `Array.flat` in one step.")
@@ -33,7 +33,8 @@ declare_oxc_lint!(
     /// const bar = [1,2,3].flatMap(i => [i]); // ✓ pass
     /// ```
     PreferArrayFlatMap,
-    style
+    style,
+    fix
 );
 
 impl Rule for PreferArrayFlatMap {
@@ -70,7 +71,20 @@ impl Rule for PreferArrayFlatMap {
             }
         }
 
-        ctx.diagnostic(prefer_array_flat_map_diagnostic(flat_call_expr.span));
+        ctx.diagnostic_with_fix(prefer_array_flat_map_diagnostic(flat_call_expr.span), |_fixer| {
+            let mut fixes = vec![];
+            // delete map
+            let delete_start = member_expr.object().span().end;
+            let delete_end = flat_call_expr.span().end;
+            let delete_span = Span::new(delete_start, delete_end);
+            fixes.push(Fix::delete(delete_span));
+            // replace flat with flat_map
+            let replace_end = call_expr.callee.span().end;
+            let replace_start = replace_end - 3;
+            let replace_span = Span::new(replace_start, replace_end);
+            fixes.push(Fix::new("flatMap", replace_span));
+            fixes
+        });
     }
 }
 
@@ -116,5 +130,61 @@ fn test() {
         ("const bar = [1,2,3].map(i => [i]).flat(1);", None),
     ];
 
-    Tester::new(PreferArrayFlatMap::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            "const bar = [[1],[2],[3]].map(i => [i]).flat()",
+            "const bar = [[1],[2],[3]].flatMap(i => [i])",
+            None,
+        ),
+        (
+            "const bar = [[1],[2],[3]].map(i => [i]).flat(1,)",
+            "const bar = [[1],[2],[3]].flatMap(i => [i])",
+            None,
+        ),
+        ("const bar = [1,2,3].map(i => [i]).flat()", "const bar = [1,2,3].flatMap(i => [i])", None),
+        (
+            "const bar = [1,2,3].map((i) => [i]).flat()",
+            "const bar = [1,2,3].flatMap((i) => [i])",
+            None,
+        ),
+        (
+            "const bar = [1,2,3].map((i) => { return [i]; }).flat()",
+            "const bar = [1,2,3].flatMap((i) => { return [i]; })",
+            None,
+        ),
+        ("const bar = [1,2,3].map(foo).flat()", "const bar = [1,2,3].flatMap(foo)", None),
+        ("const bar = foo.map(i => [i]).flat()", "const bar = foo.flatMap(i => [i])", None),
+        (
+            "const bar = { map: () => {} }.map(i => [i]).flat()",
+            "const bar = { map: () => {} }.flatMap(i => [i])",
+            None,
+        ),
+        (
+            "const bar = [1,2,3].map(i => i).map(i => [i]).flat()",
+            "const bar = [1,2,3].map(i => i).flatMap(i => [i])",
+            None,
+        ),
+        (
+            "const bar = [1,2,3].sort().map(i => [i]).flat()",
+            "const bar = [1,2,3].sort().flatMap(i => [i])",
+            None,
+        ),
+        (
+            "const bar = (([1,2,3].map(i => [i]))).flat()",
+            "const bar = (([1,2,3].flatMap(i => [i])))",
+            None,
+        ),
+        (
+            "let bar = [1,2,3] . map( x => y ) . flat () // 🤪",
+            "let bar = [1,2,3] . flatMap( x => y ) // 🤪",
+            None,
+        ),
+        (
+            "const bar = [1,2,3].map(i => [i]).flat(1);",
+            "const bar = [1,2,3].flatMap(i => [i]);",
+            None,
+        ),
+    ];
+
+    Tester::new(PreferArrayFlatMap::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
