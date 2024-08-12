@@ -84,6 +84,7 @@ impl Rule for NoZeroFractions {
                 if token.ends_with("return")
                     || token.ends_with("throw")
                     || token.ends_with("typeof")
+                    || token.ends_with("void")
                 {
                     fixed = format!(" {fixed}");
                 }
@@ -194,7 +195,10 @@ fn test() {
         (r"typeof.0+.1", r"typeof 0+.1"),
         (r"function foo(){throw.0;}", r"function foo(){throw 0;}"),
         (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
-        (r"function foo() {throw.0+.1;}", r"function foo() {throw 0+.1;}"),
+        (r"function foo(){throw.0+.1;}", r"function foo(){throw 0+.1;}"),
+        (r"void.0", r"void 0"),
+        (r"function foo(){void.0.toString()}", r"function foo(){void (0).toString()}"),
+        (r"function foo(){void.0+.1;}", r"function foo(){void 0+.1;}"),
     ];
 
     Tester::new(NoZeroFractions::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
