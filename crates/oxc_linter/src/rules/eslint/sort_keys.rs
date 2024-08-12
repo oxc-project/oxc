@@ -1,16 +1,17 @@
-use oxc_ast::syntax_directed_operations::PropName;
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::GetSpan;
-use std::cmp::Ordering;
-use std::str::Chars;
-
 use crate::{
     context::LintContext,
     rule::Rule,
     AstNode,
 };
+use itertools::all;
+use oxc_ast::ast::ObjectPropertyKind;
+use oxc_ast::syntax_directed_operations::PropName;
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
+use std::cmp::Ordering;
+use std::str::Chars;
 
 #[derive(Debug, Default, Clone)]
 pub struct SortKeys(Box<SortKeysOptions>);
@@ -68,24 +69,31 @@ declare_oxc_lint!(
 
 impl Rule for SortKeys {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(config) = value.get(0) else {
-            return Self(Box::new(SortKeysOptions {
-                sort_order: SortOrder::Asc,
-                case_sensitive: true,
-                natural: false,
-                min_keys: 2,
-                allow_line_separated_groups: false,
-            }));
+        let config_array = match value.as_array() {
+            Some(v) => v,
+            None => {
+                return Self(Box::new(SortKeysOptions {
+                    sort_order: SortOrder::Asc,
+                    case_sensitive: true,
+                    natural: false,
+                    min_keys: 2,
+                    allow_line_separated_groups: false,
+                }))
+            }
         };
 
-        let sort_order = config
-            .get("sortOrder")
-            .and_then(serde_json::Value::as_str)
-            .map(|s| match s {
+        let sort_order = if config_array.len() > 0 {
+            config_array[0].as_str().map(|s| match s {
                 "desc" => SortOrder::Desc,
                 _ => SortOrder::Asc,
             })
-            .unwrap_or(SortOrder::Asc);
+                .unwrap_or(SortOrder::Asc)
+        } else { SortOrder::Asc };
+
+        let config = if config_array.len() > 1 {
+            config_array[1].as_object().unwrap()
+        } else { &serde_json::Map::new() };
+
         let case_sensitive = config
             .get("caseSensitive")
             .and_then(serde_json::Value::as_bool)
@@ -113,24 +121,50 @@ impl Rule for SortKeys {
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
-            let mut property_keys: Vec<&str> = vec![];
+            if dec.properties.len() < self.min_keys {
+                return;
+            }
 
-            for prop in &dec.properties {
+            let mut property_groups: Vec<Vec<String>> = vec![vec![]];
+
+            let source_text = ctx.semantic().source_text();
+
+            for (i, prop) in dec.properties.iter().enumerate() {
+                if let ObjectPropertyKind::SpreadProperty(_) = prop {
+                    property_groups.push(vec!["<ellipsis_group>".into()]);
+                    property_groups.push(vec![]);
+                    continue;
+                }
                 match prop.prop_name() {
                     Some((name, _)) => {
-                        property_keys.push(name);
+                        if i != dec.properties.len() - 1 && self.allow_line_separated_groups {
+                            let text_between = extract_text_between_spans(source_text, prop.span(), dec.properties[i + 1].span());
+                            if text_between.contains("\n\n") {
+                                property_groups.last_mut().unwrap().push(name.into());
+                                property_groups.push(vec!["<linebreak_group>".into()]);
+                                property_groups.push(vec![]);
+                            }
+                        } else {
+                            property_groups.last_mut().unwrap().push(name.into());
+                        }
                     }
                     None => {}
                 }
             }
 
-            if property_keys.len() >= self.min_keys {
-                let mut sorted = property_keys.clone();
-                if self.case_sensitive {
-                    sorted.sort();
-                } else {
-                    sorted.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+            if !self.case_sensitive {
+                for group in &mut property_groups {
+                    *group = group.iter()
+                        .map(|s| s.to_lowercase())
+                        .collect::<Vec<String>>();
                 }
+            }
+
+            let mut sorted_property_groups = property_groups.clone();
+            for (i, group) in property_groups.iter().enumerate() {
+                let mut sorted = group.clone();
+
+                alphanumeric_sort(&mut sorted);
 
                 if self.natural {
                     natural_sort(&mut sorted);
@@ -140,29 +174,43 @@ impl Rule for SortKeys {
                     sorted.reverse();
                 }
 
-                let is_sorted = if self.allow_line_separated_groups {
-                    property_keys.windows(2).all(|w| {
-                        let idx_a = sorted.iter().position(|&x| x == w[0]).unwrap();
-                        let idx_b = sorted.iter().position(|&x| x == w[1]).unwrap();
-                        idx_a <= idx_b
-                    })
-                } else {
-                    property_keys == sorted
-                };
+                sorted_property_groups[i] = sorted;
+            }
 
-                if !is_sorted {
-                    ctx.diagnostic(
-                        OxcDiagnostic::warn("Object keys should be sorted")
-                            .with_label(node.span()),
-                    );
-                }
+            let is_sorted = all(property_groups.iter().zip(&sorted_property_groups), |(a, b)| a == b);
+
+            if !is_sorted {
+                ctx.diagnostic(
+                    OxcDiagnostic::warn("Object keys should be sorted")
+                        .with_label(node.span()),
+                );
             }
         }
     }
 }
 
 
-fn natural_sort(arr: &mut [&str]) {
+fn alphanumeric_cmp(a: &str, b: &str) -> Ordering {
+    let a_chars: Vec<char> = a.chars().collect();
+    let b_chars: Vec<char> = b.chars().collect();
+
+    for (a_char, b_char) in a_chars.iter().zip(b_chars.iter()) {
+        return match (a_char.is_alphanumeric(), b_char.is_alphanumeric()) {
+            (false, true) => Ordering::Less,
+            (true, false) => Ordering::Greater,
+            (false, false) => a_char.cmp(b_char),
+            (true, true) => a_char.cmp(b_char),
+        };
+    }
+
+    a.len().cmp(&b.len())
+}
+
+fn alphanumeric_sort(arr: &mut Vec<String>) {
+    arr.sort_by(|a, b| alphanumeric_cmp(a, b));
+}
+
+fn natural_sort(arr: &mut [String]) {
     arr.sort_by(|a, b| {
         let mut c1 = a.chars();
         let mut c2 = b.chars();
@@ -178,7 +226,7 @@ fn natural_sort(arr: &mut [&str]) {
                         ord => return ord,
                     }
                 }
-                (Some(x), Some(y)) => return x.cmp(&y),
+                (Some(_), Some(_)) => return Ordering::Equal,
                 (None, None) => return Ordering::Equal,
                 (Some(_), None) => return Ordering::Greater,
                 (None, Some(_)) => return Ordering::Less,
@@ -197,6 +245,12 @@ fn take_numeric(iter: &mut Chars, first: char) -> u32 {
         }
     }
     sum
+}
+
+fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: Span) -> &str {
+    let cur_span_end = current_span.end as usize;
+    let next_span_start = next_span.start as usize;
+    &source_text[cur_span_end..next_span_start]
 }
 
 #[test]
