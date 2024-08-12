@@ -198,7 +198,7 @@ impl<'a> fmt::Display for Atom<'a> {
 ///
 /// Currently implemented as just a wrapper around [`compact_str::CompactString`],
 /// but will be reduced in size with a custom implementation later.
-#[derive(Clone, Eq)]
+#[derive(Clone, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serialize", derive(serde::Deserialize))]
 pub struct CompactStr(CompactString);
 

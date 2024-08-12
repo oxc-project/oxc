@@ -76,6 +76,7 @@ pub struct TSEnumDeclaration<'a> {
     pub members: Vec<'a, TSEnumMember<'a>>,
     pub r#const: bool,
     pub declare: bool,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -313,6 +314,7 @@ pub struct TSConditionalType<'a> {
     pub extends_type: TSType<'a>,
     pub true_type: TSType<'a>,
     pub false_type: TSType<'a>,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -757,6 +759,7 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub type_annotation: TSType<'a>,
     pub declare: bool,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -802,6 +805,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub declare: bool,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -910,6 +914,7 @@ pub struct TSMethodSignature<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -925,6 +930,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1001,6 +1007,7 @@ pub struct TSModuleDeclaration<'a> {
     /// ```
     pub kind: TSModuleDeclarationKind,
     pub declare: bool,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1198,6 +1205,7 @@ pub struct TSMappedType<'a> {
     pub type_annotation: Option<TSType<'a>>,
     pub optional: TSMappedTypeModifierOperator,
     pub readonly: TSMappedTypeModifierOperator,
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

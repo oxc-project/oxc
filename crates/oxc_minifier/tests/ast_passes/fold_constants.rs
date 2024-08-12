@@ -31,6 +31,18 @@ fn cjs() {
     );
 }
 
+#[test] // https://github.com/oxc-project/oxc/issues/4341
+fn tagged_template() {
+    test_same("(1, o.f)()");
+    test_same("(1, o.f)``");
+
+    test("(true && o.f)()", "o.f()");
+    test_same("(true && o.f)``");
+
+    test("(true ? o.f : false)()", "o.f()");
+    test_same("(true ? o.f : false)``");
+}
+
 // Google Closure Compiler
 
 #[test]
