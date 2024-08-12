@@ -60,9 +60,12 @@ fn sort_properties_diagnostic(span0: Span) -> OxcDiagnostic {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// When declaring multiple properties, sorting property names alphabetically makes it easier
+    /// to find and/or diff necessary properties at a later time.
     ///
     /// ### Why is this bad?
     ///
+    /// Unsorted property keys can make the code harder to read and maintain.
     ///
     /// ### Examples
     ///
@@ -82,7 +85,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     SortKeys,
-    style, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
+    pedantic, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
