@@ -27,5 +27,3 @@ tasks/coverage/babel/
 tasks/coverage/test262/
 tasks/coverage/typescript/
 tasks/prettier_conformance/prettier/
-
-.idea/

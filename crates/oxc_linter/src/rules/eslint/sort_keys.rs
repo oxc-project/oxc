@@ -23,7 +23,7 @@ pub enum SortOrder {
     Asc,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct SortKeysOptions {
     sort_order: SortOrder,
     case_sensitive: bool,
@@ -32,12 +32,29 @@ pub struct SortKeysOptions {
     allow_line_separated_groups: bool,
 }
 
+impl Default for SortKeysOptions {
+    fn default() -> Self {
+        // we follow the eslint defaults
+        Self {
+            sort_order: SortOrder::Asc,
+            case_sensitive: true,
+            natural: false,
+            min_keys: 2,
+            allow_line_separated_groups: false,
+        }
+    }
+}
+
 impl std::ops::Deref for SortKeys {
     type Target = SortKeysOptions;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+fn sort_properties_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Object properties should be sorted.").with_label(span0)
 }
 
 declare_oxc_lint!(
@@ -51,15 +68,21 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// let myObj {
+    ///   c: 1,
+    ///   a: 2,
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// let myObj {
+    ///   a: 2,
+    ///   c: 1,
+    /// }
     /// ```
     SortKeys,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
+    style, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 
     pending  // TODO: describe fix capabilities. Remove if no fix can be done,
@@ -69,18 +92,8 @@ declare_oxc_lint!(
 
 impl Rule for SortKeys {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config_array = match value.as_array() {
-            Some(v) => v,
-            None => {
-                // we follow the eslint defaults
-                return Self(Box::new(SortKeysOptions {
-                    sort_order: SortOrder::Asc,
-                    case_sensitive: true,
-                    natural: false,
-                    min_keys: 2,
-                    allow_line_separated_groups: false,
-                }))
-            }
+        let Some(config_array) = value.as_array() else {
+            return Self(Box::new(SortKeysOptions::default()));
         };
 
         let sort_order = if config_array.len() > 0 {
@@ -183,9 +196,8 @@ impl Rule for SortKeys {
 
             if !is_sorted {
                 ctx.diagnostic(
-                    OxcDiagnostic::warn("Object keys should be sorted")
-                        .with_label(node.span()),
-                );
+                    sort_properties_diagnostic(node.span())
+                )
             }
         }
     }
