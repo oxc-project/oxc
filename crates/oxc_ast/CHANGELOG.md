@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.2] - 2024-08-12
+
+### Documentation
+
+- 8827659 ast: More doc comments for JSX nodes (#4830) (DonIsaac)
+
+### Refactor
+
+- 0ea697b ast, ast_codegen: `CloneIn` implementations now initialize semantic related cells with `Default` value. (#4819) (rzvxa)
+- ecfa124 ast_codegen: Add line break to generated code (#4829) (overlookmotel)
+- 096ac7b linter: Clean up jsx-a11y/anchor-is-valid (#4831) (DonIsaac)
+
 ## [0.24.1] - 2024-08-10
 
 ### Bug Fixes
