@@ -280,12 +280,12 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         with:
           components: rustfmt
-          cache-key: codegen
+          cache-key: ast_changes
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check AST Changes
         if: steps.filter.outputs.src == 'true'
         run: |
-          cargo run -p oxc_ast_codegen
-          echo 'AST changes must be commited to the repo.'
-          git diff --exit-code
+          cargo run -p oxc_ast_tools
+          git diff --exit-code ||
+          echo 'AST changes caused the "generated" code to get outdated. Have you forgotten to run the `just ast` command and/or commit generated codes?'
