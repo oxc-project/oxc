@@ -145,6 +145,16 @@ macro_rules! impl_from {
 // but this breaks when implementing `From<RuleFix<'a>> for CompositeFix<'a>`.
 impl_from!(CompositeFix<'a>, Fix<'a>, Option<Fix<'a>>, Vec<Fix<'a>>);
 
+impl<'a> FromIterator<Fix<'a>> for RuleFix<'a> {
+    fn from_iter<T: IntoIterator<Item = Fix<'a>>>(iter: T) -> Self {
+        Self {
+            kind: FixKind::SafeFix,
+            message: None,
+            fix: iter.into_iter().collect::<Vec<_>>().into(),
+        }
+    }
+}
+
 impl<'a> From<RuleFix<'a>> for CompositeFix<'a> {
     #[inline]
     fn from(val: RuleFix<'a>) -> Self {

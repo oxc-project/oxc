@@ -46,16 +46,54 @@ export type ReferenceFlag = {
 "#;
 
 bitflags! {
+    /// Describes how a symbol is being referenced in the AST.
+    ///
+    /// There are three general categories of references:
+    /// 1. Values being referenced as values
+    /// 2. Types being referenced as types
+    /// 3. Values being referenced as types
+    ///
+    /// ## Values
+    /// Reading a value is indicated by [`Read`], writing a value
+    /// is indicated by [`Write`]. References can be both a read
+    /// and a write, such as in this scenario:
+    ///
+    /// ```js
+    /// let a = 1;
+    /// a++;
+    /// ```
+    ///
+    /// When a value symbol is used as a type, such as in `typeof a`, it has
+    /// [`TSTypeQuery`] added to its flags. It is, however, still
+    /// considered a read. A good rule of thumb is that if a reference has [`Read`]
+    /// or [`Write`] in its flags, it is referencing a value symbol.
+    ///
+    /// ## Types
+    /// Type references are indicated by [`Type`]. These are used primarily in
+    /// type definitions and signatures. Types can never be re-assigned, so
+    /// there is no read/write distinction for type references.
+    ///
+    /// [`Read`]: ReferenceFlag::Read
+    /// [`Write`]: ReferenceFlag::Write
+    /// [`TSTypeQuery`]: ReferenceFlag::TSTypeQuery
     #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, CloneIn)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlag: u8 {
         const None = 0;
+        /// A symbol is being read as a Value
         const Read = 1 << 0;
+        /// A symbol is being written to in a Value context.
         const Write = 1 << 1;
         // Used in type definitions.
         const Type = 1 << 2;
         // Used in `typeof xx`
         const TSTypeQuery = 1 << 3;
+        /// The symbol being referenced is a value.
+        ///
+        /// Note that this does not necessarily indicate the reference is used
+        /// in a value context, since type queries are also flagged as [`Read`]
+        ///
+        /// [`Read`]: ReferenceFlag::Read
         const Value = Self::Read.bits() | Self::Write.bits();
     }
 }

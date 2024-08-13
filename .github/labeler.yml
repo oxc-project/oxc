@@ -2,6 +2,10 @@ A-ast:
 - changed-files:
   - any-glob-to-any-file: ['crates/oxc_ast/**']
 
+A-ast-tools:
+- changed-files:
+  - any-glob-to-any-file: ['tasks/ast_tools/**']
+
 A-cfg:
 - changed-files:
   - any-glob-to-any-file: ['crates/oxc_cfg/**']
