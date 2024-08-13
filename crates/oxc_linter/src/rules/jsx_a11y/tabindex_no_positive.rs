@@ -42,7 +42,8 @@ declare_oxc_lint!(
     /// <span tabIndex="-1">bar</span>
     /// ```
     TabindexNoPositive,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for TabindexNoPositive {
