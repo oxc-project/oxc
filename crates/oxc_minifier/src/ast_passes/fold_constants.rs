@@ -592,7 +592,19 @@ impl<'a> FoldConstants<'a> {
         if !matches!(op, LogicalOperator::And | LogicalOperator::Or) {
             return None;
         }
+
         if let Some(boolean_value) = ctx.get_boolean_value(&logical_expr.left) {
+            // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
+            if !boolean_value {
+                if let Expression::AssignmentExpression(assign_expr) = &logical_expr.right {
+                    if let Some(member_expr) = assign_expr.left.as_member_expression() {
+                        if member_expr.is_specific_member_access("module", "exports") {
+                            return None;
+                        }
+                    }
+                }
+            }
+
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if (boolean_value && op == LogicalOperator::Or)
