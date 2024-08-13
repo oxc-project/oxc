@@ -1,4 +1,7 @@
-use oxc_ast::{ast::VariableDeclarator, AstKind};
+use oxc_ast::{
+    ast::{Expression, VariableDeclarator},
+    AstKind,
+};
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::CompactStr;
 use regex::Regex;
@@ -20,6 +23,10 @@ impl NoUnusedVars {
         decl: &VariableDeclarator<'a>,
         decl_id: AstNodeId,
     ) -> RuleFix<'a> {
+        if decl.init.as_ref().is_some_and(Expression::is_function) {
+            return fixer.noop();
+        }
+
         let Some(AstKind::VariableDeclaration(declaration)) =
             symbol.nodes().parent_node(decl_id).map(AstNode::kind)
         else {
