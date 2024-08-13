@@ -4,26 +4,9 @@
 //!
 //! The following optimization techniques are used:
 //! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
-//! * Short strings are inlined by [CompactString](https://github.com/ParkMyCar/compact_str)
-//! * No other heap allocations are done except the above two
 //! * [oxc_span::Span] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
-//!
-//! # Conformance
-//! The parser parses all of Test262 and most of Babel and TypeScript parser conformance tests.
-//!
-//! See [oxc coverage](https://github.com/Boshen/oxc/tree/main/tasks/coverage) for details
-//! ```
-//! Test262 Summary:
-//! AST Parsed     : 44000/44000 (100.00%)
-//!
-//! Babel Summary:
-//! AST Parsed     : 2065/2071 (99.71%)
-//!
-//! TypeScript Summary:
-//! AST Parsed     : 2337/2337 (100.00%)
-//! ```
 //!
 //! # Usage
 //!

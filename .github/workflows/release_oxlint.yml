@@ -245,6 +245,6 @@ jobs:
         with:
           repo: oxc-project/eslint-plugin-oxlint
           workflow: bump_oxlint.yml
-          token: ${{ secrets.PAT }}
+          token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
           inputs: '{ "version": "${{ needs.publish.outputs.version }}" }'

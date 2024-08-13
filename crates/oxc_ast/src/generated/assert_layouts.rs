@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/assert_layouts.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/assert_layouts.rs`
 
 use std::mem::{align_of, offset_of, size_of};
 

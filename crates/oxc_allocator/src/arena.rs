@@ -212,6 +212,21 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
     }
 }
 
+/// Memory address of an AST node in arena.
+///
+/// `Address` is generated from a `Box<T>`.
+/// AST nodes in a `Box` in an arena are guaranteed to never move in memory,
+/// so this address acts as a unique identifier for the duration of the arena's existence.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Address(usize);
+
+impl<'a, T> Box<'a, T> {
+    #[inline]
+    pub fn address(&self) -> Address {
+        Address(ptr::addr_of!(**self) as usize)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use std::hash::{DefaultHasher, Hash, Hasher};

@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -101,7 +101,31 @@
           "description": "Path to ESlint configuration."
         }
       }
-    }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "oxlintrc.json",
+          "oxlint.json",
+          ".oxlintrc.json",
+          ".oxlint.json",
+          ".oxlintrc"
+        ],
+        "url": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "jsonc",
+        "filenames": [
+          "oxlintrc.json",
+          "oxlint.json",
+          ".oxlintrc.json",
+          ".oxlint.json",
+          ".oxlintrc"
+        ]
+      }
+    ]
   },
   "scripts": {
     "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",

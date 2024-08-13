@@ -2,7 +2,7 @@
 
 // NB: `#[span]`, `#[scope(...)]` and `#[visit(...)]` do NOT do anything to the code.
 // They are purely markers for codegen used in
-// `tasks/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
@@ -44,8 +44,11 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 pub struct JSXElement<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// Opening tag of the element.
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
+    /// Closing tag of the element. Will be [`None`] for self-closing tags.
     pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
+    /// Children of the element. This can be text, other elements, or expressions.
     pub children: Vec<'a, JSXChild<'a>>,
 }
 
@@ -89,7 +92,15 @@ pub struct JSXOpeningElement<'a> {
 
 /// JSX Closing Element
 ///
-/// Closing tag in a [`JSXElement`]. Not all JSX elements have a closing tag.
+/// Closing tag in a [`JSXElement`]. Self-closing tags do not have closing elements.
+///
+/// ## Example
+///
+/// ```tsx
+/// <Foo>Hello, World!</Foo>
+/// //                  ^^^ name
+/// <Bar /> // <- no closing element
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
@@ -117,8 +128,11 @@ pub struct JSXClosingElement<'a> {
 pub struct JSXFragment<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// `<>`
     pub opening_fragment: JSXOpeningFragment,
+    /// `</>`
     pub closing_fragment: JSXClosingFragment,
+    /// Elements inside the fragment.
     pub children: Vec<'a, JSXChild<'a>>,
 }
 
@@ -240,6 +254,7 @@ pub enum JSXMemberExpressionObject<'a> {
 pub struct JSXExpressionContainer<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The expression inside the container.
     pub expression: JSXExpression<'a>,
 }
 
@@ -276,21 +291,35 @@ pub struct JSXEmptyExpression {
 // 1.3 JSX Attributes
 
 /// JSX Attributes
+///
+/// ## Example
+///
+/// ```tsx
+/// <Component foo="bar" baz={4} {...rest} />
+/// //         ^^^^^^^^^ ^^^^^^^ ^^^^^^^^^
+/// //             Attribute     SpreadAttribute
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeItem<'a> {
+    /// A `key="value"` attribute
     Attribute(Box<'a, JSXAttribute<'a>>) = 0,
+    /// a `{...spread}` attribute
     SpreadAttribute(Box<'a, JSXSpreadAttribute<'a>>) = 1,
 }
 
 /// JSX Attribute
 ///
+/// An attribute in a JSX opening tag. May or may not have a value. Part of
+/// [`JSXAttributeItem`].
+///
 /// ## Example
 ///
 /// ```tsx
+/// // `has-no-value` is a JSXAttribute with no value.
 /// <Component has-no-value foo="foo" />
 /// //                 name ^^^ ^^^^ value
 #[ast(visit)]
@@ -301,7 +330,11 @@ pub enum JSXAttributeItem<'a> {
 pub struct JSXAttribute<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The name of the attribute. This is a prop in React-like applications.
     pub name: JSXAttributeName<'a>,
+    /// The value of the attribute. This can be a string literal, an expression,
+    /// or an element. Will be [`None`] for boolean-like attributes (e.g.
+    /// `<button disabled />`).
     pub value: Option<JSXAttributeValue<'a>>,
 }
 
@@ -326,19 +359,48 @@ pub struct JSXSpreadAttribute<'a> {
 /// JSX Attribute Name
 ///
 /// Part of a [`JSXAttribute`].
+///
+/// "Normal" attributes will be a [`JSXIdentifier`], while namespaced attributes
+/// will be a [`JSXNamespacedName`].
+///
+/// ## Example
+///
+/// ```tsx
+/// const Foo = <Component foo="bar" />;
+/// //                     ^^^ Identifier
+/// const Bar = <Component foo:bar="baz" />;
+/// //                     ^^^^^^^ NamespacedName
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeName<'a> {
+    /// An attribute name without a namespace prefix, e.g. `foo` in `foo="bar"`.
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
+    /// An attribute name with a namespace prefix, e.g. `foo:bar` in `foo:bar="baz"`.
     NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 1,
 }
 
 /// JSX Attribute Value
 ///
 /// Part of a [`JSXAttribute`].
+///
+/// You're most likely interested in [`StringLiteral`] and
+/// [`JSXExpressionContainer`].
+///
+/// ## Example
+///
+/// ```tsx
+/// //                        v ExpressionContainer storing a NumericLiteral
+/// <Component foo="bar" baz={4} />
+/// //              ^^^ StringLiteral
+///
+/// // not a very common case, but it is valid syntax. Could also be a fragment.
+/// <Component foo=<Element /> />
+/// //             ^^^^^^^^^^^ Element
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
@@ -364,6 +426,7 @@ pub enum JSXAttributeValue<'a> {
 pub struct JSXIdentifier<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The name of the identifier.
     pub name: Atom<'a>,
 }
 
@@ -401,6 +464,7 @@ pub enum JSXChild<'a> {
 pub struct JSXSpreadChild<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The expression being spread.
     pub expression: Expression<'a>,
 }
 
@@ -422,5 +486,6 @@ pub struct JSXSpreadChild<'a> {
 pub struct JSXText<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The text content.
     pub value: Atom<'a>,
 }

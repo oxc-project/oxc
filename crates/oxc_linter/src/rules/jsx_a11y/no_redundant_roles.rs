@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// <nav />
     /// ```
     NoRedundantRoles,
-    correctness
+    correctness,
+    pending
 );
 
 static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, &'static str> = phf_map! {

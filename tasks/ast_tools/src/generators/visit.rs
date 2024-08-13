@@ -9,7 +9,7 @@ use syn::{parse_quote, Ident};
 use crate::{
     codegen::LateCtx,
     generators::ast_kind::BLACK_LIST as KIND_BLACK_LIST,
-    markers::{ScopeMarkers, VisitArg, VisitMarkers},
+    markers::VisitArg,
     output,
     schema::{EnumDef, GetIdent, StructDef, ToType, TypeDef},
     util::{StrExt, ToIdent, TokenStreamExt, TypeWrapper},
@@ -331,7 +331,7 @@ impl<'a> VisitBuilder<'a> {
             .variants
             .iter()
             .filter(|var| {
-                if var.markers.visit.as_ref().is_some_and(|mk| mk.ignore) {
+                if var.markers.visit.ignore {
                     // We are ignoring some variants so the match is no longer exhaustive.
                     non_exhaustive = true;
                     false
@@ -356,10 +356,10 @@ impl<'a> VisitBuilder<'a> {
                     let (args_def, args) = var
                         .markers
                         .visit
-                        .as_ref()
-                        .map(|mk| mk.visit_args.clone().unwrap_or_default())
+                        .visit_args
+                        .clone()
+                        .unwrap_or_default()
                         .into_iter()
-                        .flatten()
                         .fold((Vec::new(), Vec::new()), Self::visit_args_fold);
                     let body = quote!(visitor.#visit(it #(#args)*));
                     let body = if args_def.is_empty() {
@@ -507,17 +507,11 @@ impl<'a> VisitBuilder<'a> {
                 }
                 let typ_wrapper = &analysis.wrapper;
                 let markers = &field.markers;
-                let visit_as = markers.visit.as_ref().and_then(|mk| mk.visit_as.clone());
-                let visit_args = markers.visit.as_ref().and_then(|mk| mk.visit_args.clone());
+                let visit_as = markers.visit.visit_as.clone();
+                let visit_args = markers.visit.visit_args.clone();
 
-                let have_enter_scope = markers
-                    .scope
-                    .as_ref()
-                    .is_some_and(|it| matches!(it, ScopeMarkers { enter_before: true }));
-                let have_enter_node = markers
-                    .visit
-                    .as_ref()
-                    .is_some_and(|it| matches!(it, VisitMarkers { enter_before: true, .. }));
+                let have_enter_scope = markers.scope.enter_before;
+                let have_enter_node = markers.visit.enter_before;
 
                 let (args_def, args) = visit_args
                     .map(|it| it.into_iter().fold((Vec::new(), Vec::new()), Self::visit_args_fold))

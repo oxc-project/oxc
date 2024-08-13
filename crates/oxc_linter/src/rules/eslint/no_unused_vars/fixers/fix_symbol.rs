@@ -1,124 +1,43 @@
-use oxc_ast::{
-    ast::{BindingPatternKind, VariableDeclaration, VariableDeclarator},
-    AstKind,
-};
-use oxc_semantic::{AstNode, AstNodeId};
-use oxc_span::{CompactStr, GetSpan, Span};
-use regex::Regex;
-
-use super::{NoUnusedVars, Symbol};
+use super::Symbol;
 use crate::fixer::{Fix, RuleFix, RuleFixer};
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::{ast::*, AstKind};
+use oxc_span::{CompactStr, GetSpan, Span};
 
-impl NoUnusedVars {
-    #[allow(clippy::cast_possible_truncation)]
-    pub(super) fn rename_or_remove_var_declaration<'a>(
-        &self,
-        fixer: RuleFixer<'_, 'a>,
-        symbol: &Symbol<'_, 'a>,
-        decl: &VariableDeclarator<'a>,
-        decl_id: AstNodeId,
-    ) -> RuleFix<'a> {
-        let Some(AstKind::VariableDeclaration(declaration)) =
-            symbol.nodes().parent_node(decl_id).map(AstNode::kind)
-        else {
-            panic!("VariableDeclarator nodes should always be direct children of VariableDeclaration nodes");
-        };
-
-        // `true` even if references aren't considered a usage.
-        let has_references = symbol.has_references();
-
-        // we can delete variable declarations that aren't referenced anywhere
-        if !has_references {
-            // for `let x = 1;` or `const { x } = obj; the whole declaration can
-            // be removed, but for `const { x, y } = obj;` or `let x = 1, y = 2`
-            // we need to keep the other declarations
-            let has_neighbors = declaration.declarations.len() > 1;
-            debug_assert!(!declaration.declarations.is_empty());
-            let binding_info = symbol.get_binding_info(&decl.id.kind);
-
-            match binding_info {
-                BindingInfo::SingleDestructure | BindingInfo::NotDestructure => {
-                    if has_neighbors {
-                        return self
-                            .delete_declarator(fixer, symbol, declaration, decl)
-                            .dangerously();
-                    }
-                    return fixer.delete(declaration).dangerously();
-                }
-                BindingInfo::MultiDestructure(mut span, is_object, is_last) => {
-                    let source_after = &fixer.source_text()[(span.end as usize)..];
-                    // remove trailing commas
-                    span = span.expand_right(count_whitespace_or_commas(source_after.chars()));
-
-                    // remove leading commas when removing the last element in
-                    // an array
-                    // `const [a, b] = [1, 2];` -> `const [a, b] = [1, 2];`
-                    //            ^                         ^^^
-                    if !is_object && is_last {
-                        debug_assert!(span.start > 0);
-                        let source_before = &fixer.source_text()[..(span.start as usize)];
-                        let chars = source_before.chars().rev();
-                        let start_offset = count_whitespace_or_commas(chars);
-                        // do not walk past the beginning of the file
-                        debug_assert!(start_offset < span.start);
-                        span = span.expand_left(start_offset);
-                    }
-
-                    return if is_object || is_last {
-                        fixer.delete_range(span).dangerously()
-                    } else {
-                        // infix array elements need a comma to preserve
-                        // unpacking order of symbols around them
-                        // e.g. `const [a, b, c] = [1, 2, 3];` -> `const [a, , c] = [1, 2, 3];`
-                        fixer.replace(span, ",").dangerously()
-                    };
-                }
-                BindingInfo::NotFound => {
-                    return fixer.noop();
-                }
-            }
-        }
-
-        // otherwise, try to rename the variable to match the unused variable
-        // pattern
-        if let Some(new_name) = self.get_unused_var_name(symbol) {
-            return symbol.rename(&new_name).dangerously();
-        }
-
-        fixer.noop()
-    }
-
+impl<'s, 'a> Symbol<'s, 'a> {
     /// Delete a single declarator from a [`VariableDeclaration`] list with more
     /// than one declarator.
     #[allow(clippy::unused_self)]
-    fn delete_declarator<'a>(
+    pub(super) fn delete_from_list<T>(
         &self,
         fixer: RuleFixer<'_, 'a>,
-        symbol: &Symbol<'_, 'a>,
-        declaration: &VariableDeclaration<'a>,
-        decl: &VariableDeclarator<'a>,
-    ) -> RuleFix<'a> {
-        let own_position = declaration
-            .declarations
-            .iter()
-            .position(|d| symbol == &d.id)
-            .expect("VariableDeclarator not found within its own parent VariableDeclaration");
-        let mut delete_range = decl.span();
+        list: &[T],
+        own: &T,
+    ) -> RuleFix<'a>
+    where
+        T: GetSpan,
+        Symbol<'s, 'a>: PartialEq<T>,
+    {
+        let Some(own_position) = list.iter().position(|el| self == el) else {
+            debug_assert!(false, "Symbol not found within its own parent declaration list");
+            return fixer.noop();
+        };
+        let mut delete_range = own.span();
         let mut has_left = false;
         let mut has_right = false;
 
         // `let x = 1, y = 2, z = 3;` -> `let x = 1, y = 2, z = 3;`
         //             ^^^^^                         ^^^^^^^
-        if let Some(right_neighbor) = declaration.declarations.get(own_position + 1) {
-            delete_range.end = right_neighbor.span.start;
+        if let Some(right_neighbor) = list.get(own_position + 1) {
+            delete_range.end = right_neighbor.span().start;
             has_right = true;
         }
 
         // `let x = 1, y = 2, z = 3;` -> `let x = 1, y = 2, z = 3;`
         //             ^^^^^                       ^^^^^^^
         if own_position > 0 {
-            if let Some(left_neighbor) = declaration.declarations.get(own_position - 1) {
-                delete_range.start = left_neighbor.span.end;
+            if let Some(left_neighbor) = list.get(own_position - 1) {
+                delete_range.start = left_neighbor.span().end;
                 has_left = true;
             }
         }
@@ -134,31 +53,7 @@ impl NoUnusedVars {
         return fixer.delete(&delete_range);
     }
 
-    fn get_unused_var_name(&self, symbol: &Symbol<'_, '_>) -> Option<CompactStr> {
-        let pat = self.vars_ignore_pattern.as_ref().map(Regex::as_str)?;
-
-        let ignored_name: String = match pat {
-            // TODO: support more patterns
-            "^_" => format!("_{}", symbol.name()),
-            _ => return None,
-        };
-
-        // adjust name to avoid conflicts
-        let scopes = symbol.scopes();
-        let scope_id = symbol.scope_id();
-        let mut i = 0;
-        let mut new_name = ignored_name.clone();
-        while scopes.has_binding(scope_id, &new_name) {
-            new_name = format!("{ignored_name}{i}");
-            i += 1;
-        }
-
-        Some(new_name.into())
-    }
-}
-
-impl<'s, 'a> Symbol<'s, 'a> {
-    fn rename(&self, new_name: &CompactStr) -> RuleFix<'a> {
+    pub(super) fn rename(&self, new_name: &CompactStr) -> RuleFix<'a> {
         let mut fixes: Vec<Fix<'a>> = vec![];
         let decl_span = self.span();
         fixes.push(Fix::new(new_name.clone(), decl_span));
@@ -184,7 +79,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// - `true` if `pattern` is a destructuring pattern and only contains one symbol
     /// - `false` if `pattern` is a destructuring pattern and contains more than one symbol
     /// - `not applicable` if `pattern` is not a destructuring pattern
-    fn get_binding_info(&self, pattern: &BindingPatternKind<'a>) -> BindingInfo {
+    pub(super) fn get_binding_info(&self, pattern: &BindingPatternKind<'a>) -> BindingInfo {
         match pattern {
             BindingPatternKind::ArrayPattern(arr) => match arr.elements.len() {
                 0 => {
@@ -267,7 +162,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 }
 
 #[derive(Debug, Clone, Copy)]
-enum BindingInfo {
+pub(super) enum BindingInfo {
     NotDestructure,
     SingleDestructure,
     /// Notes:
@@ -308,11 +203,4 @@ impl BindingInfo {
             None => BindingInfo::SingleDestructure,
         }
     }
-}
-
-// source text will never be large enough for this usize to be truncated when
-// getting cast to a u32
-#[allow(clippy::cast_possible_truncation)]
-fn count_whitespace_or_commas<I: Iterator<Item = char>>(iter: I) -> u32 {
-    iter.take_while(|c| c.is_whitespace() || *c == ',').count() as u32
 }

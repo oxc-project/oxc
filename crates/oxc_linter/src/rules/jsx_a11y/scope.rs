@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// <th scope={scope} />
     /// ```
     Scope,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for Scope {
