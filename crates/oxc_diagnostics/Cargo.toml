@@ -24,3 +24,7 @@ miette = { workspace = true }
 unicode-width = { workspace = true }
 owo-colors    = { workspace = true }
 textwrap      = { workspace = true }
+
+[dev-dependencies]
+insta      = { workspace = true }
+serde_json = { workspace = true }

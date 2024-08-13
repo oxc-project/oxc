@@ -1,0 +1,20 @@
+---
+source: crates/oxc_diagnostics/src/reporter/json.rs
+expression: pretty_output
+---
+[
+  {
+    "message": "Something happened!",
+    "severity": "warning",
+    "help": "Try something else.",
+    "labels": [
+      {
+        "span": {
+          "offset": 0,
+          "length": 1
+        }
+      }
+    ],
+    "related": []
+  }
+]

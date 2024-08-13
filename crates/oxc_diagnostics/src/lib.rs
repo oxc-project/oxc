@@ -3,6 +3,7 @@
 
 mod graphic_reporter;
 mod graphical_theme;
+mod json_reporter;
 mod reporter;
 mod service;
 
@@ -17,6 +18,7 @@ pub use crate::{
     graphical_theme::GraphicalTheme,
     service::{DiagnosticSender, DiagnosticService, DiagnosticTuple},
 };
+pub(crate) use json_reporter::JSONReportHandler;
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;

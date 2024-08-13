@@ -1,0 +1,23 @@
+---
+source: crates/oxc_diagnostics/src/reporter/json.rs
+expression: "pretty_output"
+---
+[
+  {
+    "message": "oxc(1234): Something happened!",
+    "severity": "warning",
+    "help": "Try something else.",
+    "filename": "test.js",
+    "labels": [
+      {
+        "span": {
+          "offset": 22,
+          "length": 10,
+          "line": 1,
+          "column": 4
+        }
+      }
+    ],
+    "related": []
+  }
+]

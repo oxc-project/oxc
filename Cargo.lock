@@ -1593,8 +1593,10 @@ dependencies = [
 name = "oxc_diagnostics"
 version = "0.24.2"
 dependencies = [
+ "insta",
  "miette",
  "owo-colors",
+ "serde_json",
  "textwrap",
  "unicode-width",
 ]
