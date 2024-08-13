@@ -59,9 +59,9 @@ impl<'a> TypeScript<'a> {
                     ));
                     self.ctx.ast.expression_call(
                         SPAN,
-                        arguments,
                         callee,
                         Option::<TSTypeParameterInstantiation>::None,
+                        arguments,
                         false,
                     )
                 }

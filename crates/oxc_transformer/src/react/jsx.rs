@@ -690,9 +690,9 @@ impl<'a> ReactJsx<'a> {
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
         self.ast().expression_call(
             e.span(),
-            arguments,
             callee,
             Option::<TSTypeParameterInstantiation>::None,
+            arguments,
             false,
         )
     }
