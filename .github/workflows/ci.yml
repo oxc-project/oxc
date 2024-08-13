@@ -67,8 +67,12 @@ jobs:
           RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
         run: |
-          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml) # NOTE: this will fail if there are any other items named `rust-version`.
-          sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml # set profile to minimal and channel to our Minimum Supported Rust Version.
+          # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
+          # NOTE: this will fail if there are any other items named `rust-version`. We assume there is only one in our `Cargo.toml`.
+          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
+          # Set profile to minimal and channel to our Minimum Supported Rust Version.
+          # Running our tests on this channel ensures that our code uses APIs that are supported in our `MSRV`.
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
           rustup set profile minimal
           rustup show
           git restore .
