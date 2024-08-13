@@ -285,6 +285,14 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn is_require_call(&self) -> bool {
+        if let Self::CallExpression(call_expr) = self {
+            call_expr.is_require_call()
+        } else {
+            false
+        }
+    }
 }
 
 impl<'a> IdentifierName<'a> {
