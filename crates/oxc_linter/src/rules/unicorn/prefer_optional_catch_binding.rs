@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// ```
     PreferOptionalCatchBinding,
     style,
-    pending
+    fix
 );
 
 impl Rule for PreferOptionalCatchBinding {
@@ -51,7 +51,29 @@ impl Rule for PreferOptionalCatchBinding {
         if references_count != 0 {
             return;
         }
-        ctx.diagnostic(prefer_optional_catch_binding_diagnostic(catch_param.pattern.span()));
+        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
+        let AstKind::CatchClause(catch_clause) = parent_node.kind() else {
+            return;
+        };
+        ctx.diagnostic_with_fix(
+            prefer_optional_catch_binding_diagnostic(catch_param.pattern.span()),
+            |fixer| {
+                let mut start = catch_clause.span().start + 5;
+                let total_param = Span::new(start, catch_param.span().start);
+                let value = ctx.source_range(total_param);
+                for char in value.chars() {
+                    if char != ' ' {
+                        break;
+                    }
+                    start += 1;
+                }
+                let end = catch_clause.body.span().start;
+                let span = Span::new(start, end);
+                fixer.delete(&span)
+            },
+        );
     }
 }
 
@@ -110,5 +132,21 @@ fn test() {
         r"try {} catch ({cause: {message}}) {}",
     ];
 
-    Tester::new(PreferOptionalCatchBinding::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r"try {} catch (_) {}", r"try {} catch {}"),
+        (r"try {} catch (theRealErrorName) {}", r"try {} catch {}"),
+        (
+            r"try    {    } catch    (e)
+			  	  {    }",
+            r"try    {    } catch    {    }",
+        ),
+        (r"try {} catch(e) {}", r"try {} catch{}"),
+        (r"try {} catch (e){}", r"try {} catch {}"),
+        (r"try {} catch ({}) {}", r"try {} catch {}"),
+        (r"try {} catch ({message}) {}", r"try {} catch {}"),
+        (r"try {} catch ({message: notUsedMessage}) {}", r"try {} catch {}"),
+        (r"try {} catch ({cause: {message}}) {}", r"try {} catch {}"),
+    ];
+
+    Tester::new(PreferOptionalCatchBinding::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
