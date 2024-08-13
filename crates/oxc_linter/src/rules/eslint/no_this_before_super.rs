@@ -410,6 +410,7 @@ fn test() {
         // disallows `this`/`super` in arguments of `super()`.
         ("class A extends B { constructor() { super(this); } }", None),
         ("class A extends B { constructor() { super(this.c); } }", None),
+        ("class A extends B { constructor() { super(a(b(this.c))); } }", None),
         ("class A extends B { constructor() { super(this.c()); } }", None),
         ("class A extends B { constructor() { super(super.c); } }", None),
         ("class A extends B { constructor() { super(super.c()); } }", None),
