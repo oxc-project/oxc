@@ -13,6 +13,8 @@ fn aria_props_diagnostic(span: Span, prop_name: &str, suggestion: Option<&str>) 
 
     if let Some(suggestion) = suggestion {
         err = err.with_help(format!("Did you mean '{suggestion}'?"));
+    } else {
+        err = err.with_help("You can find a list of valid ARIA attributes at https://www.w3.org/TR/wai-aria-1.1/#state_prop_def");
     }
 
     err.with_label(span)

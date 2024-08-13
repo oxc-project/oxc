@@ -14,7 +14,10 @@ use crate::{
 declare_oxc_lint! {
     /// ### What it does
     ///
-    /// Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `role` and/or `aria-*` props.
+    /// Certain reserved DOM elements do not support ARIA roles, states and
+    /// properties. This is often because they are not visible, for example
+    /// `meta`, `html`, `script`, `style`. This rule enforces that these DOM
+    /// elements do not contain the `role` and/or `aria-*` props.
     ///
     /// ### Example
     ///
