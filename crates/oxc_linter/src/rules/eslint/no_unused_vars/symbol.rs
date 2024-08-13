@@ -1,3 +1,4 @@
+use oxc_ast::ast::VariableDeclarator;
 use std::{cell::OnceCell, fmt};
 
 use oxc_ast::{
@@ -235,6 +236,12 @@ impl<'a> PartialEq<BindingIdentifier<'a>> for Symbol<'_, 'a> {
     }
 }
 
+impl<'a> PartialEq<VariableDeclarator<'a>> for Symbol<'_, 'a> {
+    fn eq(&self, decl: &VariableDeclarator<'a>) -> bool {
+        self == &decl.id
+    }
+}
+
 impl<'a> PartialEq<BindingPattern<'a>> for Symbol<'_, 'a> {
     fn eq(&self, id: &BindingPattern<'a>) -> bool {
         id.get_binding_identifier().is_some_and(|id| self == id)
@@ -247,6 +254,15 @@ impl<'a> PartialEq<AssignmentTarget<'a>> for Symbol<'_, 'a> {
             AssignmentTarget::AssignmentTargetIdentifier(id) => self == id.as_ref(),
             _ => false,
         }
+    }
+}
+
+impl<'s, 'a, T> PartialEq<&T> for Symbol<'s, 'a>
+where
+    Symbol<'s, 'a>: PartialEq<T>,
+{
+    fn eq(&self, other: &&T) -> bool {
+        self == *other
     }
 }
 

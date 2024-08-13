@@ -89,6 +89,20 @@ fn test_vars_simple() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        // function expressions do not get changed
+        (r"const foo = () => {}", r"const foo = () => {}", None, FixKind::DangerousSuggestion),
+        (
+            r"const foo = function() {}",
+            r"const foo = function() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            r"const foo = function foo() {}",
+            r"const foo = function foo() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
         // vars with references get renamed
         ("let x = 1; x = 2;", "let _x = 1; _x = 2;", None, FixKind::DangerousFix),
         (
@@ -279,8 +293,10 @@ fn test_vars_destructure() {
     ];
 
     let fix = vec![
+        // single destructure
         ("const { a } = obj;", "", None, FixKind::DangerousSuggestion),
         ("const [a] = arr;", "", None, FixKind::DangerousSuggestion),
+        // multi destructure
         (
             "const { a, b } = obj; f(b)",
             "const { b } = obj; f(b)",
@@ -310,6 +326,13 @@ fn test_vars_destructure() {
         (
             "const { foo: fooBar, baz } = obj; f(baz);",
             "const { baz } = obj; f(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // multi destructure with rename
+        (
+            "const { a: foo, b: bar } = obj; f(bar)",
+            "const { b: bar } = obj; f(bar)",
             None,
             FixKind::DangerousSuggestion,
         ),
