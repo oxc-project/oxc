@@ -67,7 +67,8 @@ jobs:
           RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
         run: |
-          sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
+          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml) # NOTE: this will fail if there are any other items named `rust-version`.
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml # set profile to minimal and channel to our Minimum Supported Rust Version.
           rustup set profile minimal
           rustup show
           git restore .
