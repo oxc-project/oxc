@@ -1054,7 +1054,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::UpdateExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::UnaryExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::BinaryExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::PrivateInExpression(expr) => expr.gen(p, ctx),
+            Self::PrivateInExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::LogicalExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::ConditionalExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::AssignmentExpression(expr) => expr.gen_expr(p, precedence, ctx),
@@ -1778,11 +1778,13 @@ impl<const MINIFY: bool> Gen<MINIFY> for BinaryOperator {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateInExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.left.gen(p, ctx);
-        p.print_str(" in ");
-        self.right.gen_expr(p, Precedence::Shift, Context::empty());
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateInExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        p.wrap(precedence >= Precedence::Compare, |p| {
+            self.left.gen(p, ctx);
+            p.print_str(" in ");
+            self.right.gen_expr(p, Precedence::Equals, Context::empty());
+        });
     }
 }
 
