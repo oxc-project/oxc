@@ -1,9 +1,9 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::NumberBase, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_decimal_integer, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't use a zero fraction in the number.")
@@ -67,11 +67,11 @@ impl Rule for NoZeroFractions {
                 zero_fraction(number_literal.span, &fmt)
             },
             |fixer| {
-                let mut fixed = fmt.clone();
+                let mut fixed = fmt;
 
                 if ctx.nodes().parent_node(node.id()).map_or(false, |parent_node: &AstNode<'a>| {
                     matches!(parent_node.kind(), AstKind::MemberExpression(_))
-                }) && is_decimal_integer(&fmt)
+                }) && !is_dangling_dot
                 {
                     fixed = format!("({fixed})");
                 };
