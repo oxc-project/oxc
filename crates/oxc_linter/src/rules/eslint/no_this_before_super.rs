@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::rc::Rc;
 
 use oxc_ast::{
     ast::{Argument, Expression, MethodDefinitionKind},
@@ -11,7 +10,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodeId, Semantic};
+use oxc_semantic::AstNodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -75,10 +74,8 @@ impl Rule for NoThisBeforeSuper {
                     let basic_block_id = node.cfg_id();
                     if let Some(parent) = semantic.nodes().parent_node(node.id()) {
                         if let AstKind::CallExpression(call_expr) = parent.kind() {
-                            let has_this_or_super_in_args = Self::contains_this_or_super_in_args(
-                                &call_expr.arguments,
-                                semantic,
-                            );
+                            let has_this_or_super_in_args =
+                                Self::contains_this_or_super_in_args(&call_expr.arguments);
 
                             if !has_this_or_super_in_args {
                                 basic_blocks_with_super_called.insert(basic_block_id);
@@ -252,7 +249,7 @@ impl NoThisBeforeSuper {
         })
     }
 
-    fn contains_this_or_super(arg: &Argument, semantic: &Rc<Semantic>) -> bool {
+    fn contains_this_or_super(arg: &Argument) -> bool {
         match arg {
             Argument::Super(_) | Argument::ThisExpression(_) => true,
             Argument::CallExpression(call_expr) => {
@@ -260,7 +257,7 @@ impl NoThisBeforeSuper {
                     || matches!(&call_expr.callee,
                     Expression::StaticMemberExpression(static_member) if
                     matches!(static_member.object, Expression::Super(_) | Expression::ThisExpression(_)))
-                    || Self::contains_this_or_super_in_args(&call_expr.arguments, semantic)
+                    || Self::contains_this_or_super_in_args(&call_expr.arguments)
             }
             Argument::StaticMemberExpression(call_expr) => {
                 matches!(&call_expr.object, Expression::Super(_) | Expression::ThisExpression(_))
@@ -269,8 +266,8 @@ impl NoThisBeforeSuper {
         }
     }
 
-    fn contains_this_or_super_in_args(args: &[Argument], semantic: &Rc<Semantic>) -> bool {
-        args.iter().any(|arg| Self::contains_this_or_super(arg, semantic))
+    fn contains_this_or_super_in_args(args: &[Argument]) -> bool {
+        args.iter().any(|arg| Self::contains_this_or_super(arg))
     }
 }
 
