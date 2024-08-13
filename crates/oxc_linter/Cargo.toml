@@ -48,7 +48,6 @@ language-tags       = { workspace = true }
 mime_guess          = { workspace = true }
 url                 = { workspace = true }
 rust-lapper         = { workspace = true }
-once_cell           = { workspace = true }
 memchr              = { workspace = true }
 json-strip-comments = { workspace = true }
 schemars            = { workspace = true, features = ["indexmap2"] }

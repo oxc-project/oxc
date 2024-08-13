@@ -1,7 +1,6 @@
 use std::{borrow::Cow, collections::hash_map::HashMap};
 
 use itertools::Itertools;
-use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
@@ -13,6 +12,7 @@ use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
+use std::sync::LazyLock;
 
 use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
 
@@ -419,7 +419,7 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
     "webkitDirectory",
 ];
 
-static DOM_PROPERTIES_LOWER_MAP: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
+static DOM_PROPERTIES_LOWER_MAP: LazyLock<HashMap<String, &'static str>> = LazyLock::new(|| {
     DOM_PROPERTIES_NAMES.iter().map(|it| (it.to_lowercase(), *it)).collect::<HashMap<_, _>>()
 });
 
@@ -430,7 +430,8 @@ static DOM_PROPERTIES_LOWER_MAP: Lazy<HashMap<String, &'static str>> = Lazy::new
 /// then the attribute is a valid data attribute.
 ///
 fn is_valid_data_attr(name: &str) -> bool {
-    static DATA_ATTR_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^data(-?[^:]*)$").unwrap());
+    static DATA_ATTR_REGEX: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"^data(-?[^:]*)$").unwrap());
 
     !name.to_lowercase().starts_with("data-xml") && DATA_ATTR_REGEX.is_match(name)
 }
@@ -455,7 +456,8 @@ impl Rule for NoUnknownProperty {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
+        static HTML_TAG_CONVENTION: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new("^[a-z][^-]*$").unwrap());
 
         let AstKind::JSXOpeningElement(el) = &node.kind() else {
             return;

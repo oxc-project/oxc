@@ -1,4 +1,3 @@
-use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
@@ -7,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_map;
+use std::sync::LazyLock;
 
 use crate::{
     context::LintContext,
@@ -75,7 +75,7 @@ impl PreferTagOverRole {
     }
 }
 
-static ROLE_TO_TAG_MAP: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|| {
+static ROLE_TO_TAG_MAP: LazyLock<phf::Map<&'static str, &'static str>> = LazyLock::new(|| {
     phf_map! {
         "checkbox" => "input",
         "button" => "button",
