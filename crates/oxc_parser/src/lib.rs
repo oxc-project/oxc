@@ -362,13 +362,11 @@ impl<'a> ParserImpl<'a> {
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
     fn flow_error(&self) -> Option<OxcDiagnostic> {
-        if self.source_type.is_javascript()
-            && (self.source_text.starts_with("// @flow")
-                || self.source_text.starts_with("/* @flow */"))
-        {
-            return Some(diagnostics::flow(Span::new(0, 8)));
-        }
-        None
+        if !self.source_type.is_javascript() {
+            return None;
+        };
+        let span = self.lexer.trivia_builder.comments.first()?.span;
+        span.source_text(self.source_text).contains("@flow").then(|| diagnostics::flow(span))
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
@@ -439,15 +437,20 @@ mod test {
     fn flow_error() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let source = "// @flow\nasdf adsf";
-        let ret = Parser::new(&allocator, source, source_type).parse();
-        assert!(ret.program.is_empty());
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
-
-        let source = "/* @flow */\n asdf asdf";
-        let ret = Parser::new(&allocator, source, source_type).parse();
-        assert!(ret.program.is_empty());
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+        let sources = [
+            "// @flow\nasdf adsf",
+            "/* @flow */\n asdf asdf",
+            "/**
+             * @flow
+             */
+             asdf asdf
+             ",
+        ];
+        for source in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.program.is_empty());
+            assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+        }
     }
 
     #[test]
