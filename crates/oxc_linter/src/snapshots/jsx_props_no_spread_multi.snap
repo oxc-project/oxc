@@ -2,37 +2,37 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Disallow JSX prop spreading the same identifier multiple times.
-   ╭─[jsx_props_no_spread_multi.tsx:3:27]
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
  2 │           const props = {};
  3 │           <App {...props} {...props} />
-   ·                           ──────────
+   ·                ────────── ──────────
  4 │         
    ╰────
   help: Remove duplicate spread attributes.
 
   ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Disallow JSX prop spreading the same identifier multiple times.
-   ╭─[jsx_props_no_spread_multi.tsx:3:33]
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
  2 │           const props = {};
  3 │           <div {...props} a="a" {...props} />
-   ·                                 ──────────
+   ·                ──────────       ──────────
  4 │         
    ╰────
   help: Remove duplicate spread attributes.
 
   ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Disallow JSX prop spreading the same identifier multiple times.
-   ╭─[jsx_props_no_spread_multi.tsx:3:27]
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
  2 │           const props = {};
  3 │           <div {...props} {...props} {...props} />
-   ·                           ──────────
+   ·                ────────── ──────────
  4 │         
    ╰────
   help: Remove duplicate spread attributes.
 
   ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Disallow JSX prop spreading the same identifier multiple times.
-   ╭─[jsx_props_no_spread_multi.tsx:3:38]
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
  2 │           const props = {};
  3 │           <div {...props} {...props} {...props} />
-   ·                                      ──────────
+   ·                ──────────            ──────────
  4 │         
    ╰────
   help: Remove duplicate spread attributes.

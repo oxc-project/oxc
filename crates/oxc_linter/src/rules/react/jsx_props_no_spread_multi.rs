@@ -1,16 +1,16 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn jsx_props_no_spread_multi_diagnostic(span0: Span) -> OxcDiagnostic {
+fn jsx_props_no_spread_multi_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow JSX prop spreading the same identifier multiple times.")
         .with_help("Remove duplicate spread attributes.")
-        .with_label(span0)
+        .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,13 +47,18 @@ impl Rule for JsxPropsNoSpreadMulti {
                 None
             });
 
-            let mut identifier_names = HashSet::new();
+            let mut identifier_names: HashMap<&Atom, Span> = HashMap::new();
 
             for spread_attr in spread_attrs {
                 let identifier_name =
                     &spread_attr.argument.get_identifier_reference().unwrap().name;
-                if !identifier_names.insert(identifier_name) {
-                    ctx.diagnostic(jsx_props_no_spread_multi_diagnostic(spread_attr.span));
+                if let Some(first_span) = identifier_names.get(&identifier_name) {
+                    ctx.diagnostic(jsx_props_no_spread_multi_diagnostic(
+                        *first_span,
+                        spread_attr.span,
+                    ));
+                } else {
+                    identifier_names.insert(identifier_name, spread_attr.span);
                 }
             }
         }
