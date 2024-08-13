@@ -1,7 +1,8 @@
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 
 use oxc_ast::{
-    ast::{Expression, MethodDefinitionKind},
+    ast::{Argument, Expression, MethodDefinitionKind},
     AstKind,
 };
 use oxc_cfg::{
@@ -10,7 +11,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::{AstNodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -73,11 +74,15 @@ impl Rule for NoThisBeforeSuper {
                 AstKind::Super(_) => {
                     let basic_block_id = node.cfg_id();
                     if let Some(parent) = semantic.nodes().parent_node(node.id()) {
-                        if let AstKind::CallExpression(_) = parent.kind() {
-                            // Note: we don't need to worry about also having invalid
-                            // usage in the same callexpression, because arguments are visited
-                            // before the callee in generating the semantic nodes.
-                            basic_blocks_with_super_called.insert(basic_block_id);
+                        if let AstKind::CallExpression(call_expr) = parent.kind() {
+                            let has_this_or_super_in_args = Self::contains_this_or_super_in_args(
+                                &call_expr.arguments,
+                                semantic,
+                            );
+
+                            if !has_this_or_super_in_args {
+                                basic_blocks_with_super_called.insert(basic_block_id);
+                            }
                         }
                     }
                     if !basic_blocks_with_super_called.contains(&basic_block_id) {
@@ -246,6 +251,27 @@ impl NoThisBeforeSuper {
             }),
         })
     }
+
+    fn contains_this_or_super(arg: &Argument, semantic: &Rc<Semantic>) -> bool {
+        match arg {
+            Argument::Super(_) | Argument::ThisExpression(_) => true,
+            Argument::CallExpression(call_expr) => {
+                matches!(&call_expr.callee, Expression::Super(_) | Expression::ThisExpression(_))
+                    || matches!(&call_expr.callee,
+                    Expression::StaticMemberExpression(static_member) if
+                    matches!(static_member.object, Expression::Super(_) | Expression::ThisExpression(_)))
+                    || Self::contains_this_or_super_in_args(&call_expr.arguments, semantic)
+            }
+            Argument::StaticMemberExpression(call_expr) => {
+                matches!(&call_expr.object, Expression::Super(_) | Expression::ThisExpression(_))
+            }
+            _ => false,
+        }
+    }
+
+    fn contains_this_or_super_in_args(args: &[Argument], semantic: &Rc<Semantic>) -> bool {
+        args.iter().any(|arg| Self::contains_this_or_super(arg, semantic))
+    }
 }
 
 #[test]
@@ -382,8 +408,10 @@ fn test() {
         ("class A extends B { constructor() { this.c(); super(); } }", None),
         ("class A extends B { constructor() { super.c(); super(); } }", None),
         // disallows `this`/`super` in arguments of `super()`.
+        ("class A extends B { constructor() { super(this); } }", None),
         ("class A extends B { constructor() { super(this.c); } }", None),
         ("class A extends B { constructor() { super(this.c()); } }", None),
+        ("class A extends B { constructor() { super(super.c); } }", None),
         ("class A extends B { constructor() { super(super.c()); } }", None),
         // // even if is nested, reports correctly.
         (
