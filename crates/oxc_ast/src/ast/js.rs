@@ -44,6 +44,7 @@ pub struct Program<'a> {
     pub hashbang: Option<Hashbang<'a>>,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1187,6 +1188,7 @@ pub struct BlockStatement<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1362,6 +1364,7 @@ pub struct ForStatement<'a> {
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
     pub body: Statement<'a>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1398,6 +1401,7 @@ pub struct ForInStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1434,6 +1438,7 @@ pub struct ForOfStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1500,6 +1505,7 @@ pub struct SwitchStatement<'a> {
     pub discriminant: Expression<'a>,
     #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1567,6 +1573,7 @@ pub struct CatchClause<'a> {
     pub span: Span,
     pub param: Option<CatchParameter<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1735,6 +1742,7 @@ pub struct Function<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1832,6 +1840,7 @@ pub struct ArrowFunctionExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1919,6 +1928,7 @@ pub struct Class<'a> {
     pub declare: bool,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -2176,6 +2186,7 @@ pub struct StaticBlock<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+    #[serde(skip)]
     #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
