@@ -30,7 +30,8 @@ declare_oxc_lint! {
     /// ```
     ///
     AriaUnsupportedElements,
-    correctness
+    correctness,
+    fix
 }
 
 #[derive(Debug, Default, Clone)]
@@ -56,7 +57,10 @@ impl Rule for AriaUnsupportedElements {
                     };
                     let attr_name = get_jsx_attribute_name(&attr.name).to_lowercase();
                     if INVALID_ATTRIBUTES.contains(&attr_name) {
-                        ctx.diagnostic(aria_unsupported_elements_diagnostic(attr.span, &attr_name));
+                        ctx.diagnostic_with_fix(
+                            aria_unsupported_elements_diagnostic(attr.span, &attr_name),
+                            |fixer| fixer.delete(&attr.span),
+                        );
                     }
                 }
             }
@@ -416,7 +420,16 @@ fn test() {
         (r#"<track aria-hidden aria-role="none" {...props} />"#, None),
     ];
 
+    let fix = vec![
+        (r"<col role {...props} />", r"<col  {...props} />"),
+        (
+            r#"<meta aria-hidden aria-role="none" {...props} />"#,
+            r#"<meta  aria-role="none" {...props} />"#,
+        ),
+    ];
+
     Tester::new(AriaUnsupportedElements::NAME, pass, fail)
         .with_jsx_a11y_plugin(true)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
