@@ -7,31 +7,33 @@ mod babel;
 mod misc;
 mod test262;
 mod typescript;
-// Tools
-mod codegen;
-mod minifier;
-mod prettier;
-mod sourcemap;
-mod transformer;
+
+mod driver;
+mod tools;
 
 use std::{fs, path::PathBuf, process::Command, time::Duration};
 
 use oxc_tasks_common::agent;
 use runtime::{CodegenRuntimeTest262Case, V8_TEST_262_FAILED_TESTS_PATH};
 use similar::DiffableStr;
-use sourcemap::{SourcemapCase, SourcemapSuite};
 
 use crate::{
     babel::{BabelCase, BabelSuite},
-    codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
-    minifier::{MinifierBabelCase, MinifierTest262Case},
+    driver::Driver,
     misc::{MiscCase, MiscSuite},
-    prettier::{PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase},
     suite::Suite,
     test262::{Test262Case, Test262Suite},
-    transformer::{
-        TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
-        TransformerTypeScriptCase,
+    tools::{
+        codegen::{CodegenBabelCase, CodegenMiscCase, CodegenTest262Case, CodegenTypeScriptCase},
+        minifier::{MinifierBabelCase, MinifierTest262Case},
+        prettier::{
+            PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase,
+        },
+        sourcemap::{SourcemapCase, SourcemapSuite},
+        transformer::{
+            TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
+            TransformerTypeScriptCase,
+        },
     },
     typescript::{TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase},
 };

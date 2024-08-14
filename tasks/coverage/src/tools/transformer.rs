@@ -1,16 +1,14 @@
 use std::path::{Path, PathBuf};
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_transformer::{
     ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, TransformOptions,
-    Transformer, TypeScriptOptions,
+    TypeScriptOptions,
 };
 
 use crate::{
     babel::BabelCase,
+    driver::Driver,
     misc::MiscCase,
     suite::{Case, TestResult},
     test262::{Test262Case, TestFlag},
@@ -24,44 +22,25 @@ fn get_result(
     source_path: &Path,
     options: Option<TransformOptions>,
 ) -> TestResult {
-    let allocator = Allocator::default();
-    let options = options.unwrap_or_else(get_default_transformer_options);
-
-    // First pass
+    let mut driver = Driver {
+        path: source_path.to_path_buf(),
+        transform: Some(options.unwrap_or_else(get_default_transformer_options)),
+        codegen: true,
+        ..Driver::default()
+    };
     let transformed1 = {
-        let mut ret1 = Parser::new(&allocator, source_text, source_type).parse();
-        let _ = Transformer::new(
-            &allocator,
-            source_path,
-            source_type,
-            source_text,
-            ret1.trivias.clone(),
-            options.clone(),
-        )
-        .build(&mut ret1.program);
-        CodeGenerator::new().build(&ret1.program).source_text
+        driver.run(source_text, source_type);
+        driver.printed.clone()
     };
-
-    // Second pass with only JavaScript parsing
+    // Second pass with only JavaScript syntax
     let transformed2 = {
-        let source_type = SourceType::default().with_module(source_type.is_module());
-        let mut ret2 = Parser::new(&allocator, &transformed1, source_type).parse();
-        let _ = Transformer::new(
-            &allocator,
-            source_path,
-            source_type,
-            &transformed1,
-            ret2.trivias.clone(),
-            options,
-        )
-        .build(&mut ret2.program);
-        CodeGenerator::new().build(&ret2.program).source_text
+        driver.run(&transformed1, SourceType::default().with_module(source_type.is_module()));
+        driver.printed.clone()
     };
-
     if transformed1 == transformed2 {
         TestResult::Passed
     } else {
-        TestResult::Mismatch(transformed1, transformed2)
+        TestResult::Mismatch("Mismatch", transformed1, transformed2)
     }
 }
 
