@@ -19,6 +19,8 @@ pub struct JsxPropsNoSpreadMulti;
 declare_oxc_lint!(
     /// ### What it does
     /// Enforces that any unique expression is only spread once.
+    ///
+    /// ### Why is this bad?
     /// Generally spreading the same expression twice is an indicator of a mistake since any attribute between the spreads may be overridden when the intent was not to.
     /// Even when that is not the case this will lead to unnecessary computations being performed.
     ///
