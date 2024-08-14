@@ -1,3 +1,9 @@
+//! Semantic analysis of a JavaScript/TypeScript program.
+//!
+//! # Example
+//! ```rust
+#![doc = include_str!("../examples/simple.rs")]
+//! ```
 mod binder;
 mod builder;
 mod checker;
@@ -37,47 +43,76 @@ pub use crate::{
     symbol::SymbolTable,
 };
 
+/// Semantic analysis of a JavaScript/TypeScript program.
+///
+/// [`Semantic`] contains the results of analyzing a program, including the
+/// [`Abstract Syntax Tree (AST)`], [`scope tree`], [`symbol table`], and
+/// [`control flow graph (CFG)`].
+///
+/// Do not construct this struct directly; instead, use [`SemanticBuilder`].
+///
+/// [`Abstract Syntax Tree (AST)`]: crate::AstNodes
+/// [`scope tree`]: crate::ScopeTree
+/// [`symbol table`]: crate::SymbolTable
+/// [`control flow graph (CFG)`]: crate::ControlFlowGraph
 pub struct Semantic<'a> {
+    /// Source code of the JavaScript/TypeScript program being analyzed.
     source_text: &'a str,
 
+    /// What kind of source code is being analyzed. Comes from the parser.
     source_type: SourceType,
 
+    /// The Abstract Syntax Tree (AST) nodes.
     nodes: AstNodes<'a>,
 
+    /// The scope tree containing scopes and what identifier names are bound in
+    /// each one.
     scopes: ScopeTree,
 
+    /// Symbol table containing all symbols in the program and their references.
     symbols: SymbolTable,
 
     classes: ClassTable,
 
+    /// Parsed comments.
     trivias: Trivias,
 
     module_record: Arc<ModuleRecord>,
 
+    /// Parsed JSDoc comments.
     jsdoc: JSDocFinder<'a>,
 
     unused_labels: FxHashSet<AstNodeId>,
 
+    /// Control flow graph. Only present if [`Semantic`] is built with cfg
+    /// creation enabled using [`SemanticBuilder::with_cfg`].
     cfg: Option<ControlFlowGraph>,
 }
 
 impl<'a> Semantic<'a> {
+    /// Extract the [`SymbolTable`] and [`ScopeTree`] from the [`Semantic`]
+    /// instance, consuming `self`.
     pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
         (self.symbols, self.scopes)
     }
 
+    /// Source code of the JavaScript/TypeScript program being analyzed.
     pub fn source_text(&self) -> &'a str {
         self.source_text
     }
 
+    /// What kind of source code is being analyzed. Comes from the parser.
     pub fn source_type(&self) -> &SourceType {
         &self.source_type
     }
 
+    /// Nodes in the Abstract Syntax Tree (AST)
     pub fn nodes(&self) -> &AstNodes<'a> {
         &self.nodes
     }
 
+    /// The [`ScopeTree`] containing scopes and what identifier names are bound in
+    /// each one.
     pub fn scopes(&self) -> &ScopeTree {
         &self.scopes
     }
@@ -86,22 +121,30 @@ impl<'a> Semantic<'a> {
         &self.classes
     }
 
+    /// Get a mutable reference to the [`ScopeTree`].
     pub fn scopes_mut(&mut self) -> &mut ScopeTree {
         &mut self.scopes
     }
 
+    /// Trivias (comments) found while parsing
     pub fn trivias(&self) -> &Trivias {
         &self.trivias
     }
 
+    /// Parsed [`JSDoc`] comments.
+    ///
+    /// Will be empty if JSDoc parsing is disabled.
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         &self.jsdoc
     }
 
+    /// ESM module record containing imports and exports.
     pub fn module_record(&self) -> &ModuleRecord {
         self.module_record.as_ref()
     }
 
+    /// [`SymbolTable`] containing all symbols in the program and their
+    /// [`Reference`]s.
     pub fn symbols(&self) -> &SymbolTable {
         &self.symbols
     }
@@ -110,6 +153,10 @@ impl<'a> Semantic<'a> {
         &self.unused_labels
     }
 
+    /// Control flow graph.
+    ///
+    /// Only present if [`Semantic`] is built with cfg creation enabled using
+    /// [`SemanticBuilder::with_cfg`].
     pub fn cfg(&self) -> Option<&ControlFlowGraph> {
         self.cfg.as_ref()
     }

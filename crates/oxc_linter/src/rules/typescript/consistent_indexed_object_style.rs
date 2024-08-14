@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// ### Example
     /// With "record":
     ///
-    /// ```javascript
+    /// ```ts
     /// // bad
     /// interface Foo {
     ///  [key: string]: unknown;
@@ -48,7 +48,7 @@ declare_oxc_lint!(
     ///
     /// With "index-signature":
     ///
-    /// ```javascript
+    /// ```ts
     /// // bad
     /// type Foo = Record<string, unknown>;
     /// ```

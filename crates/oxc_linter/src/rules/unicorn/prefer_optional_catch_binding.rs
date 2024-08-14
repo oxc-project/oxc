@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// } catch { }
     /// ```
     PreferOptionalCatchBinding,
-    style
+    style,
+    pending
 );
 
 impl Rule for PreferOptionalCatchBinding {

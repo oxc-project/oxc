@@ -23,7 +23,6 @@ pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDe
     let allocator = Allocator::default();
     let ctx = TransformContext::new(&allocator, &filename, &source_text, source_type, None);
     let transformed_ret = build_declarations(&ctx);
-
     IsolatedDeclarationsResult {
         source_text: transformed_ret.source_text,
         errors: ctx.take_and_render_reports(),
@@ -31,7 +30,7 @@ pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDe
 }
 
 pub(crate) fn build_declarations(ctx: &TransformContext<'_>) -> CodegenReturn {
-    let transformed_ret = IsolatedDeclarations::new(ctx.allocator).build(&ctx.program_mut());
+    let transformed_ret = IsolatedDeclarations::new(ctx.allocator).build(&ctx.program());
     ctx.add_diagnostics(transformed_ret.errors);
-    ctx.codegen::<false>().build(&ctx.program())
+    ctx.codegen::<false>().build(&transformed_ret.program)
 }

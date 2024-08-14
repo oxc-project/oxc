@@ -44,9 +44,25 @@ macro_rules! control_flow {
     };
 }
 
+/// Semantic Builder
+///
+/// Traverses a parsed AST and builds a [`Semantic`] representation of the
+/// program.
+///
+/// The main API is the [`build`] method.
+///
+/// # Example
+///
+/// ```rust
+#[doc = include_str!("../examples/simple.rs")]
+/// ```
+///
+/// [`build`]: SemanticBuilder::build
 pub struct SemanticBuilder<'a> {
+    /// source code of the parsed program
     pub source_text: &'a str,
 
+    /// source type of the parsed program
     pub source_type: SourceType,
 
     trivias: Trivias,
@@ -83,6 +99,9 @@ pub struct SemanticBuilder<'a> {
     build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
 
+    /// Should additional syntax checks be performed?
+    ///
+    /// See: [`crate::checker::check`]
     check_syntax_error: bool,
 
     pub cfg: Option<ControlFlowGraphBuilder<'a>>,
@@ -92,6 +111,7 @@ pub struct SemanticBuilder<'a> {
     ast_node_records: Vec<AstNodeId>,
 }
 
+/// Data returned by [`SemanticBuilder::build`].
 pub struct SemanticBuilderReturn<'a> {
     pub semantic: Semantic<'a>,
     pub errors: Vec<OxcDiagnostic>,
@@ -138,12 +158,20 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Enable/disable additional syntax checks.
+    ///
+    /// Set this to `true` to enable additional syntax checks. Without these,
+    /// there is no guarantee that the parsed program follows the ECMAScript
+    /// spec.
+    ///
+    /// By default, this is `false`.
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
         self
     }
 
+    /// Enable/disable JSDoc parsing.
     #[must_use]
     pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
         self.build_jsdoc = yes;
@@ -312,6 +340,7 @@ impl<'a> SemanticBuilder<'a> {
         self.scope.get_flags(self.current_scope_id)
     }
 
+    /// Is the current scope in strict mode?
     pub fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
     }
@@ -355,6 +384,7 @@ impl<'a> SemanticBuilder<'a> {
         symbol_id
     }
 
+    /// Declare a new symbol on the current scope.
     pub fn declare_symbol(
         &mut self,
         span: Span,
@@ -365,6 +395,10 @@ impl<'a> SemanticBuilder<'a> {
         self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes)
     }
 
+    /// Check if a symbol with the same name has already been declared in the
+    /// current scope. Returns the symbol id if it exists and is not excluded by `excludes`.
+    ///
+    /// Only records a redeclaration error if `report_error` is `true`.
     pub fn check_redeclaration(
         &self,
         scope_id: ScopeId,
@@ -419,6 +453,10 @@ impl<'a> SemanticBuilder<'a> {
         symbol_id
     }
 
+    /// Try to resolve all references from the current scope that are not
+    /// already resolved.
+    ///
+    /// This gets called every time [`SemanticBuilder`] exists a scope.
     fn resolve_references_for_current_scope(&mut self) {
         let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
 
@@ -501,6 +539,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    /// Flag the symbol bound to an identifier in the current scope as exported.
     fn add_export_flag_to_identifier(&mut self, name: &str) {
         if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
             self.symbols.union_flag(symbol_id, SymbolFlags::Export);

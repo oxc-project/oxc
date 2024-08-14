@@ -1,8 +1,10 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/ast_kind.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_kind.rs`
 
-use crate::ast::*;
 use oxc_span::{GetSpan, Span};
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AstType {

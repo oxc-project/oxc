@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_linter"
-version                = "0.7.0"
+version                = "0.7.1"
 publish                = false
 authors.workspace      = true
 description.workspace  = true
@@ -54,6 +54,6 @@ json-strip-comments = { workspace = true }
 schemars            = { workspace = true, features = ["indexmap2"] }
 
 [dev-dependencies]
-static_assertions = { workspace = true }
 insta             = { workspace = true }
 project-root      = { workspace = true }
+markdown          = { version = "1.0.0-alpha.19" }

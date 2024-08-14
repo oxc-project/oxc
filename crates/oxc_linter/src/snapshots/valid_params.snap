@@ -1,0 +1,170 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(valid-params): Promise.resolve() requires 0 or 1 arguments, but received 2
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.resolve(1, 2)
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.resolve() requires 0 or 1 arguments, but received 5
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.resolve({}, function() {}, 1, 2, 3)
+   · ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.reject() requires 0 or 1 arguments, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.reject(1, 2, 3)
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.reject() requires 0 or 1 arguments, but received 4
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.reject({}, function() {}, 1, 2)
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.race() requires 1 argument, but received 2
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.race(1, 2)
+   · ──────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.race() requires 1 argument, but received 5
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.race({}, function() {}, 1, 2, 3)
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.all() requires 1 argument, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.all(1, 2, 3)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.all() requires 1 argument, but received 4
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.all({}, function() {}, 1, 2)
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.allSettled() requires 1 argument, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.allSettled(1, 2, 3)
+   · ───────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.allSettled() requires 1 argument, but received 4
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.allSettled({}, function() {}, 1, 2)
+   · ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.any() requires 1 argument, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.any(1, 2, 3)
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.any() requires 1 argument, but received 4
+   ╭─[valid_params.tsx:1:1]
+ 1 │ Promise.any({}, function() {}, 1, 2)
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().then()
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().then()
+   · ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().then(() => {}, () => {}, () => {})
+   · ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().then(() => {}, () => {}, () => {})
+   · ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.then()
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.then()
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.then(() => {}, () => {}, () => {})
+   · ───────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.then() requires 1 or 2 arguments, but received 3
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.then(() => {}, () => {}, () => {})
+   · ───────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.catch() requires 1 argument, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().catch()
+   · ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.catch() requires 1 argument, but received 2
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().catch(() => {}, () => {})
+   · ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.catch() requires 1 argument, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.catch()
+   · ────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.catch() requires 1 argument, but received 2
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.catch(() => {}, () => {})
+   · ──────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.finally() requires 1 argument, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().finally()
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.finally() requires 1 argument, but received 2
+   ╭─[valid_params.tsx:1:1]
+ 1 │ somePromise().finally(() => {}, () => {})
+   · ─────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.finally() requires 1 argument, but received 0
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.finally()
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(valid-params): Promise.finally() requires 1 argument, but received 2
+   ╭─[valid_params.tsx:1:1]
+ 1 │ promiseReference.finally(() => {}, () => {})
+   · ────────────────────────────────────────────
+   ╰────

@@ -23,7 +23,7 @@ pub struct Scope;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The scope prop should be used only on <th> elements.
+    /// The scope prop should be used only on `<th>` elements.
     ///
     /// ### Why is this bad?
     /// The scope attribute makes table navigation much easier for screen reader users, provided that it is used correctly.
@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// A screen reader operates under the assumption that a table has a header and that this header specifies a scope. Because of the way screen readers function, having an accurate header makes viewing a table far more accessible and more efficient for people who use the device.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div scope />
     ///
@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// <th scope={scope} />
     /// ```
     Scope,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for Scope {

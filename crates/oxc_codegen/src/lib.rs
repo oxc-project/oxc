@@ -35,6 +35,8 @@ pub use crate::{
     gen::{Gen, GenExpr},
 };
 
+use self::annotation_comment::AnnotationComment;
+
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a, false>;
 
@@ -519,7 +521,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 }
 
-pub(crate) type MoveCommentMap = FxHashMap<u32, Comment>;
+pub(crate) type MoveCommentMap = FxHashMap<u32, AnnotationComment>;
 
 // Comment related
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
@@ -543,7 +545,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     ///
     ///  }, b = 10000;
     /// ```
-    fn move_comment(&mut self, position: u32, full_comment_info: Comment) {
+    fn move_comment(&mut self, position: u32, full_comment_info: AnnotationComment) {
         self.move_comment_map.insert(position, full_comment_info);
     }
 
@@ -551,7 +553,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.trivias.comments_range(0..start).next_back()
     }
 
-    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Comment> {
+    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<AnnotationComment> {
         self.move_comment_map.remove(&node_start)
     }
 }

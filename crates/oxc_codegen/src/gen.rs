@@ -632,7 +632,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
-        p.gen_comment(self.span.start);
+        p.gen_comments(self.span.start);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
@@ -868,7 +868,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
         if p.comment_options.preserve_annotate_comments {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
-                    p.gen_comment(self.span.start);
+                    p.gen_comments(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
                     if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
@@ -1054,7 +1054,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::UpdateExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::UnaryExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::BinaryExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::PrivateInExpression(expr) => expr.gen(p, ctx),
+            Self::PrivateInExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::LogicalExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::ConditionalExpression(expr) => expr.gen_expr(p, precedence, ctx),
             Self::AssignmentExpression(expr) => expr.gen_expr(p, precedence, ctx),
@@ -1072,27 +1072,11 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::JSXFragment(fragment) => fragment.gen(p, ctx),
             Self::ParenthesizedExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSSatisfiesExpression(e) => {
-                e.expression.gen_expr(p, precedence, ctx);
-                p.print_str(" satisfies ");
-                e.type_annotation.gen(p, ctx);
-            }
+            Self::TSSatisfiesExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
-            Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
+            Self::TSNonNullExpression(e) => e.gen_expr(p, precedence, ctx),
+            Self::TSInstantiationExpression(e) => e.gen_expr(p, precedence, ctx),
         }
-    }
-}
-
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.print_char(b'(');
-        p.print_char(b'(');
-        self.expression.gen_expr(p, precedence, ctx);
-        p.print_char(b')');
-        p.print_str(" as ");
-        self.type_annotation.gen(p, ctx);
-        p.print_char(b')');
     }
 }
 
@@ -1638,7 +1622,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
-            p.gen_comment(self.span.start);
+            p.gen_comments(self.span.start);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
                 p.print_str("async");
@@ -1778,11 +1762,13 @@ impl<const MINIFY: bool> Gen<MINIFY> for BinaryOperator {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateInExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.left.gen(p, ctx);
-        p.print_str(" in ");
-        self.right.gen_expr(p, Precedence::Shift, Context::empty());
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateInExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        p.wrap(precedence >= Precedence::Compare, |p| {
+            self.left.gen(p, ctx);
+            p.print_str(" in ");
+            self.right.gen_expr(p, Precedence::Equals, Context::empty());
+        });
     }
 }
 
@@ -1885,10 +1871,10 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SimpleAssignmentTarget<'a> {
                 self.to_member_expression().gen_expr(p, precedence, ctx);
             }
             Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSSatisfiesExpression(e) => e.expression.gen_expr(p, precedence, ctx),
-            Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
+            Self::TSSatisfiesExpression(e) => e.gen_expr(p, precedence, ctx),
+            Self::TSNonNullExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
+            Self::TSInstantiationExpression(e) => e.gen_expr(p, precedence, ctx),
         }
     }
 }
@@ -2115,12 +2101,67 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
             if let Some(comment) = annotate_comment {
                 p.print_comment(comment);
             }
+            p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
             self.callee.gen_expr(p, Precedence::New, Context::FORBID_CALL);
             p.print_char(b'(');
             p.print_list(&self.arguments, ctx);
             p.print_char(b')');
+        });
+    }
+}
+
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        p.print_char(b'(');
+        p.print_char(b'(');
+        self.expression.gen_expr(p, precedence, ctx);
+        p.print_char(b')');
+        p.print_str(" as ");
+        self.type_annotation.gen(p, ctx);
+        p.print_char(b')');
+    }
+}
+
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSSatisfiesExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        // TODO: print properly
+        self.expression.gen_expr(p, precedence, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSNonNullExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        p.wrap(matches!(self.expression, Expression::ParenthesizedExpression(_)), |p| {
+            self.expression.gen_expr(p, precedence, ctx);
+        });
+        p.print_char(b'!');
+        if MINIFY {
+            p.print_hard_space();
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSInstantiationExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        // TODO: print properly
+        self.expression.gen_expr(p, precedence, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        p.wrap(precedence >= self.precedence(), |p| {
+            p.print_str("<");
+            // var r = < <T>(x: T) => T > ((x) => { return null; });
+            //          ^ make sure space is printed here.
+            if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
+                p.print_hard_space();
+            }
+            self.type_annotation.gen(p, ctx);
+            p.print_str(">");
+            self.expression.gen_expr(p, Precedence::Member, ctx);
         });
     }
 }
@@ -3594,22 +3635,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
         }
-    }
-}
-
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= self.precedence(), |p| {
-            p.print_str("<");
-            // var r = < <T>(x: T) => T > ((x) => { return null; });
-            //          ^ make sure space is printed here.
-            if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
-                p.print_hard_space();
-            }
-            self.type_annotation.gen(p, ctx);
-            p.print_str(">");
-            self.expression.gen_expr(p, Precedence::Member, ctx);
-        });
     }
 }
 

@@ -31,7 +31,7 @@ pub use crate::{
     fixer::FixKind,
     frameworks::FrameworkFlags,
     options::{AllowWarnDeny, LintOptions},
-    rule::{RuleCategory, RuleMeta, RuleWithSeverity},
+    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
@@ -44,12 +44,10 @@ use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use static_assertions::assert_eq_size;
-
     // `RuleEnum` runs in a really tight loop, make sure it is small for CPU cache.
     // A reduction from 168 bytes to 16 results 15% performance improvement.
     // See codspeed in https://github.com/oxc-project/oxc/pull/1783
-    assert_eq_size!(RuleEnum, [u8; 16]);
+    assert!(std::mem::size_of::<RuleEnum>() == 16);
 }
 
 #[derive(Debug)]
@@ -146,7 +144,7 @@ impl Linter {
     pub fn print_rules<W: Write>(writer: &mut W) {
         let table = RuleTable::new();
         for section in table.sections {
-            writeln!(writer, "{}", section.render_markdown_table()).unwrap();
+            writeln!(writer, "{}", section.render_markdown_table(None)).unwrap();
         }
         writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
         writeln!(writer, "Total: {}", table.total).unwrap();

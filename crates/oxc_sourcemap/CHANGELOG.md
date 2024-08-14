@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- e42ac3a sourcemap: Add `ConcatSourceMapBuilder::from_sourcemaps` (#4639) (overlookmotel)
+
+### Performance
+
+- ff43dff sourcemap: Speed up VLQ encoding (#4633) (overlookmotel)
+- a330773 sourcemap: Reduce string copying in `ConcatSourceMapBuilder` (#4638) (overlookmotel)
+- 372316b sourcemap: `ConcatSourceMapBuilder` extend `source_contents` in separate loop (#4634) (overlookmotel)
+- c7f1d48 sourcemap: Keep local copy of previous token in VLQ encode (#4596) (overlookmotel)
+- 590d795 sourcemap: Shorten main loop encoding VLQ (#4586) (overlookmotel)
+
 ## [0.23.1] - 2024-08-06
 
 ### Features

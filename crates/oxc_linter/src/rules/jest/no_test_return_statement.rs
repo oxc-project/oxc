@@ -34,6 +34,9 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
+    /// test('one', () => {
+    ///    return expect(1).toBe(1);
+    /// });
     /// ```
     NoTestReturnStatement,
     style,

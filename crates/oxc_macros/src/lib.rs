@@ -6,15 +6,52 @@ mod declare_oxc_lint;
 
 /// Macro used to declare an oxc lint rule
 ///
-/// Every lint declaration consists of 2 parts:
+/// Every lint declaration consists of 4 parts:
 ///
 /// 1. The documentation
 /// 2. The lint's struct
+/// 3. The lint's category
+/// 4. What kind of auto-fixes the lint supports
 ///
+/// ## Documentation
+/// Lint rule documentation added here will be used to build documentation pages
+/// for [our website](https://oxc.rs). Please make sure they are clear and
+/// concise. Remember, end users will depend on it to understand the purpose of
+/// the lint and how to use it!
+///
+/// ## Category
+/// Please see the [rule category
+/// documentation](https://oxc.rs/docs/contribute/linter.html#rule-category) for
+/// a full list of categories and their descriptions.
+///
+/// ## Auto-fixes
+///
+/// Lints that support auto-fixes **must** specify what kind of auto-fixes they
+/// support. Here are some examples:
+/// - `none`: no auto-fixes are available (default)
+/// - `pending`: auto-fixes are planned but not yet implemented
+/// - `fix`: safe, automatic fixes are available
+/// - `suggestion`: automatic fixes are available, but may not be safe
+/// - `conditional_fix`: automatic fixes are available in some cases
+/// - `dangerous_fix`: automatic fixes are available, but may be dangerous
+///
+/// More generally, auto-fix categories follow this pattern:
+/// ```text
+/// [conditional?]_[fix|suggestion|dangerous]
+/// ```
+/// ...meaning that these are also valid:
+/// - `suggestion_fix` (supports safe fixes and suggestions)
+/// - `conditional_dangerous_fix` (sometimes provides dangerous fixes)
+/// - `dangerous_fix_dangerous_suggestion` (provides dangerous fixes and suggestions in all cases)
+///
+/// `pending` and `none` are special cases that do not follow this pattern.
 /// # Example
 ///
 /// ```
 /// use oxc_macros::declare_oxc_lint;
+///
+/// #[derive(Debug, Default, Clone)]
+/// pub struct NoDebugger;
 ///
 /// declare_oxc_lint! {
 ///     /// ### What it does
@@ -25,15 +62,23 @@ mod declare_oxc_lint;
 ///     /// They're most commonly an accidental debugging leftover.
 ///     ///
 ///     ///
-///     /// ### Example
-///     /// ```javascript
+///     /// ### Examples
+///     ///
+///     /// Examples of **incorrect** code for this rule:
+///     /// ```js
 ///     /// const data = await getData();
 ///     /// const result = complexCalculation(data);
 ///     /// debugger;
 ///     /// ```
 ///     ///
+///     /// Examples of **correct** code for this rule:
+///     /// ```js
+///     /// // Not a debugger statement
+///     /// var debug = require('foo');
 ///     /// ```
-///     pub struct NoDebugger
+///     NoDebugger,
+///     correctness,
+///     fix
 /// }
 /// ```
 #[proc_macro]

@@ -1,4 +1,3 @@
-use super::FinderRet;
 use crate::ancestor::{Ancestor, AncestorType};
 
 const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
@@ -48,49 +47,9 @@ impl<'a> TraverseAncestry<'a> {
         self.stack.get(self.stack.len() - level)
     }
 
-    /// Walk up trail of ancestors to find a node.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use oxc_ast::ast::ThisExpression;
-    /// use oxc_traverse::{Ancestor, FinderRet, Traverse, TraverseCtx};
-    ///
-    /// struct MyTraverse;
-    /// impl<'a> Traverse<'a> for MyTraverse {
-    ///     fn enter_this_expression(&mut self, this_expr: &mut ThisExpression, ctx: &mut TraverseCtx<'a>) {
-    ///         // Get name of function where `this` is bound.
-    ///         // NB: This example doesn't handle `this` in class fields or static blocks.
-    ///         let fn_id = ctx.ancestry.find_ancestor(|ancestor| {
-    ///             match ancestor {
-    ///                 Ancestor::FunctionBody(func) => FinderRet::Found(func.id()),
-    ///                 Ancestor::FunctionParams(func) => FinderRet::Found(func.id()),
-    ///                 _ => FinderRet::Continue
-    ///             }
-    ///         });
-    ///     }
-    /// }
-    /// ```
-    //
-    // `'c` lifetime on `&'c self` and `&'c Ancestor` passed into the closure
-    // allows an `Ancestor` or AST node to be returned from the closure.
-    pub fn find_ancestor<'c, F, O>(&'c self, finder: F) -> Option<O>
-    where
-        F: Fn(&'c Ancestor<'a>) -> FinderRet<O>,
-    {
-        for ancestor in self.stack.iter().rev() {
-            match finder(ancestor) {
-                FinderRet::Found(res) => return Some(res),
-                FinderRet::Stop => return None,
-                FinderRet::Continue => {}
-            }
-        }
-        None
+    /// Get iterator over ancestors, starting with closest ancestor
+    pub fn ancestors<'b>(&'b self) -> impl Iterator<Item = &'b Ancestor<'a>> {
+        self.stack.iter().rev()
     }
 
     /// Get depth in the AST.

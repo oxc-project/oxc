@@ -24,8 +24,8 @@ declare_oxc_lint!(
     /// ### Example
     /// ```javascript
     /// for (key in foo) {
-    //     doSomething(key);
-    // }
+    ///     doSomething(key);
+    /// }
     /// ```
     GuardForIn,
     style

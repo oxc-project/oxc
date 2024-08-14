@@ -9,8 +9,15 @@ fn module_decl() {
 }
 
 #[test]
-fn new_expr() {
+fn expr() {
     test("new (foo()).bar();", "new (foo()).bar();\n");
+    test(
+        "class Foo { #test
+          bar() { if (!(#test in Foo)) { } }
+        }",
+        "class Foo {\n\t#test;\n\tbar() {\n\t\tif (!(#test in Foo)) {}\n\t}\n}\n",
+    );
+    test_minify("x in new Error()", "x in new Error();");
 }
 
 #[test]

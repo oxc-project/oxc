@@ -4,26 +4,9 @@
 //!
 //! The following optimization techniques are used:
 //! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
-//! * Short strings are inlined by [CompactString](https://github.com/ParkMyCar/compact_str)
-//! * No other heap allocations are done except the above two
 //! * [oxc_span::Span] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
-//!
-//! # Conformance
-//! The parser parses all of Test262 and most of Babel and TypeScript parser conformance tests.
-//!
-//! See [oxc coverage](https://github.com/Boshen/oxc/tree/main/tasks/coverage) for details
-//! ```
-//! Test262 Summary:
-//! AST Parsed     : 44000/44000 (100.00%)
-//!
-//! Babel Summary:
-//! AST Parsed     : 2065/2071 (99.71%)
-//!
-//! TypeScript Summary:
-//! AST Parsed     : 2337/2337 (100.00%)
-//! ```
 //!
 //! # Usage
 //!
@@ -379,13 +362,11 @@ impl<'a> ParserImpl<'a> {
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
     fn flow_error(&self) -> Option<OxcDiagnostic> {
-        if self.source_type.is_javascript()
-            && (self.source_text.starts_with("// @flow")
-                || self.source_text.starts_with("/* @flow */"))
-        {
-            return Some(diagnostics::flow(Span::new(0, 8)));
-        }
-        None
+        if !self.source_type.is_javascript() {
+            return None;
+        };
+        let span = self.lexer.trivia_builder.comments.first()?.span;
+        span.source_text(self.source_text).contains("@flow").then(|| diagnostics::flow(span))
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
@@ -456,15 +437,20 @@ mod test {
     fn flow_error() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let source = "// @flow\nasdf adsf";
-        let ret = Parser::new(&allocator, source, source_type).parse();
-        assert!(ret.program.is_empty());
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
-
-        let source = "/* @flow */\n asdf asdf";
-        let ret = Parser::new(&allocator, source, source_type).parse();
-        assert!(ret.program.is_empty());
-        assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+        let sources = [
+            "// @flow\nasdf adsf",
+            "/* @flow */\n asdf asdf",
+            "/**
+             * @flow
+             */
+             asdf asdf
+             ",
+        ];
+        for source in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.program.is_empty());
+            assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
+        }
     }
 
     #[test]

@@ -295,6 +295,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_for_statement(stmt, ctx);
     }
 
+    fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_for_of_statement(stmt, ctx);
+    }
+
+    fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_for_in_statement(stmt, ctx);
+    }
+
     fn enter_ts_export_assignment(
         &mut self,
         export_assignment: &mut TSExportAssignment<'a>,

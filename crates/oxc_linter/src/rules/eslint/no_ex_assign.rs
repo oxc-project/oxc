@@ -25,11 +25,11 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    // try {
-    //     // code
-    // } catch (e) {
-    //     e = 10;
-    // }
+    /// try {
+    ///     // code
+    /// } catch (e) {
+    ///     e = 10;
+    /// }
     /// ```
     NoExAssign,
     correctness
