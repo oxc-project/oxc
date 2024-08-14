@@ -8,6 +8,7 @@ mod misc;
 mod test262;
 mod typescript;
 
+mod driver;
 mod tools;
 
 use std::{fs, path::PathBuf, process::Command, time::Duration};
@@ -18,6 +19,7 @@ use similar::DiffableStr;
 
 use crate::{
     babel::{BabelCase, BabelSuite},
+    driver::Driver,
     misc::{MiscCase, MiscSuite},
     suite::Suite,
     test262::{Test262Case, Test262Suite},
