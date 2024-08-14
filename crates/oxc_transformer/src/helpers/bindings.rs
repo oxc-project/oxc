@@ -65,6 +65,16 @@ impl<'a> BoundIdentifier<'a> {
         Self::new_uid(name, scope_id, flags, ctx)
     }
 
+    /// Create `BoundIdentifier` for new binding in current scope
+    pub fn new_uid_in_current_scope(
+        name: &str,
+        flags: SymbolFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Self {
+        let scope_id = ctx.current_scope_id();
+        Self::new_uid(name, scope_id, flags, ctx)
+    }
+
     /// Create `BindingIdentifier` for this binding
     pub fn create_binding_identifier(&self) -> BindingIdentifier<'a> {
         BindingIdentifier {
