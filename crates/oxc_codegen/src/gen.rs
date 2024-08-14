@@ -2101,6 +2101,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
             if let Some(comment) = annotate_comment {
                 p.print_comment(comment);
             }
+            p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
             self.callee.gen_expr(p, Precedence::New, Context::FORBID_CALL);

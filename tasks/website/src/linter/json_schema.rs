@@ -1,7 +1,7 @@
 use handlebars::Handlebars;
 use oxc_linter::OxlintConfig;
 use schemars::{
-    schema::{RootSchema, Schema, SchemaObject, SingleOrVec},
+    schema::{RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation},
     schema_for,
 };
 use serde::Serialize;
@@ -140,11 +140,40 @@ impl Renderer {
             return object
                 .properties
                 .iter()
-                .map(|(key, schema)| {
+                .flat_map(|(key, schema)| {
                     let key = parent_key.map_or_else(|| key.clone(), |k| format!("{k}.{key}"));
-                    self.render_schema(depth + 1, &key, Self::get_schema_object(schema))
+                    let schema_object = Self::get_schema_object(schema);
+
+                    if let Some(subschemas) = &schema_object.subschemas {
+                        return self.render_sub_schema(depth, &key, subschemas);
+                    }
+
+                    vec![self.render_schema(depth + 1, &key, schema_object)]
                 })
                 .collect::<Vec<_>>();
+        }
+        if let Some(subschemas) = &schema.subschemas {
+            let key = parent_key.unwrap_or("");
+            return self.render_sub_schema(depth, key, subschemas);
+        }
+        vec![]
+    }
+
+    fn render_sub_schema(
+        &self,
+        depth: usize,
+        key: &str,
+        subschemas: &SubschemaValidation,
+    ) -> Vec<Section> {
+        if let Some(schemas) = &subschemas.all_of {
+            return schemas
+                .iter()
+                .map(|schema| {
+                    let schema = Self::get_schema_object(schema);
+                    let schema = self.get_referenced_schema(schema);
+                    self.render_schema(depth + 1, key, schema)
+                })
+                .collect::<Vec<Section>>();
         }
         vec![]
     }
