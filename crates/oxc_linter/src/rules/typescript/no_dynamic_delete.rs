@@ -19,7 +19,7 @@ declare_oxc_lint!(
     /// Consider using a Map or Set if you’re using an object as a key-value collection.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// const container: { [i: string]: 0 } = {};
     /// delete container['aa' + 'b'];
     /// ```

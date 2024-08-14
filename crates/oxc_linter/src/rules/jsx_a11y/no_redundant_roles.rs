@@ -27,13 +27,15 @@ pub struct NoRedundantRoles;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces that the explicit role property is not the same as implicit/default role property on element.
+    ///
+    /// Enforces that the explicit `role` property is not the same as
+    /// implicit/default role property on element.
     ///
     /// ### Why is this bad?
     /// Redundant roles can lead to confusion and verbosity in the codebase.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <nav role="navigation" />
     ///
@@ -41,7 +43,8 @@ declare_oxc_lint!(
     /// <nav />
     /// ```
     NoRedundantRoles,
-    correctness
+    correctness,
+    pending
 );
 
 static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, &'static str> = phf_map! {

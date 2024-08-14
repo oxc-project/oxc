@@ -1,9 +1,12 @@
 use oxc_linter::table::RuleTable;
 
-// `cargo run -p website linter-rules > /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/generated-rules.md`
-// <https://oxc.rs/docs/guide/usage/linter/rules.html>
+/// Renders the website's Rules page. Each [`category`] gets its own table with
+/// links to documentation pages for each rule.
+///
 /// `docs_prefix` is a path prefix to the base URL all rule documentation pages
 /// share in common.
+///
+/// [`category`]: oxc_linter::RuleCategory
 pub fn render_rules_table(table: &RuleTable, docs_prefix: &str) -> String {
     let total = table.total;
     let turned_on_by_default_count = table.turned_on_by_default_count;

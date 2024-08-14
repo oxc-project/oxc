@@ -39,23 +39,40 @@ impl std::ops::Deref for AriaRole {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Elements with ARIA roles must use a valid, non-abstract ARIA role. A reference to role definitions can be found at [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
-
+    ///
+    /// Elements with ARIA roles must use a valid, non-abstract ARIA role. A
+    /// reference to role definitions can be found at
+    /// [WAI-ARIA](https://www.w3.org/TR/wai-aria/#role_definitions) site.
+    ///
     ///
     /// ### Why is this bad?
-    /// The intent of this Success Criterion is to ensure that Assistive Technologies (AT) can gather information about,
-    /// activate (or set) and keep up to date on the status of user interface controls in the content(such as screen readers, screen magnifiers, and speech recognition software, used by people with disabilities).
     ///
-    /// When standard controls from accessible technologies are used, this process is straightforward. If the user interface elements are used according to specification the conditions of this provision will be met.
+    /// The intent of this Success Criterion is to ensure that Assistive
+    /// Technologies (AT) can gather information about, activate (or set) and
+    /// keep up to date on the status of user interface controls in the
+    /// content(such as screen readers, screen magnifiers, and speech
+    /// recognition software, used by people with disabilities).
     ///
-    /// If custom controls are created, however, or interface elements are programmed (in code or script) to have a different role and/or function than usual,
-    /// then additional measures need to be taken to ensure that the controls provide important information to assistive technologies and allow themselves to be controlled by assistive technologies.
-    /// A particularly important state of a user interface control is whether or not it has focus. The focus state of a control can be programmatically determined, and notifications about change of focus are sent to user agents and assistive technology.
-    /// Other examples of user interface control state are whether or not a checkbox or radio button has been selected, or whether or not a collapsible tree or list node is expanded or collapsed.
+    /// When standard controls from accessible technologies are used, this
+    /// process is straightforward. If the user interface elements are used
+    /// according to specification the conditions of this provision will be met.
+    ///
+    /// If custom controls are created, however, or interface elements are
+    /// programmed (in code or script) to have a different role and/or function
+    /// than usual, then additional measures need to be taken to ensure that the
+    /// controls provide important information to assistive technologies and
+    /// allow themselves to be controlled by assistive technologies.  A
+    /// particularly important state of a user interface control is whether or
+    /// not it has focus. The focus state of a control can be programmatically
+    /// determined, and notifications about change of focus are sent to user
+    /// agents and assistive technology.  Other examples of user interface
+    /// control state are whether or not a checkbox or radio button has been
+    /// selected, or whether or not a collapsible tree or list node is expanded
+    /// or collapsed.
     ///
     /// ### Rule options
     /// This rule takes one optional object argument of type object:
-    /// ```
+    /// ```json
     /// {
     ///     "rules": {
     ///         "jsx-a11y/aria-role": [ 2, {
@@ -65,25 +82,30 @@ declare_oxc_lint!(
     ///     }
     ///  }
     /// ```
-    /// allowedInvalidRules is an optional string array of custom roles that should be allowed in addition to the ARIA spec, such as for cases when you need to use a non-standard role.
+    /// `allowedInvalidRules` is an optional string array of custom roles that
+    /// should be allowed in addition to the ARIA spec, such as for cases when
+    /// you need to use a non-standard role.
     ///
-    /// For the ignoreNonDOM option, this determines if developer created components are checked.
+    /// For the `ignoreNonDOM` option, this determines if developer created
+    /// components are checked.
     ///
     /// ### Example
-    /// // good
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```jsx
+    /// <div role="datepicker"></div> <!-- Bad: "datepicker" is not an ARIA role -->
+    /// <div role="range"></div>      <!-- Bad: "range" is an _abstract_ ARIA role -->
+    /// <div role=""></div>           <!-- Bad: An empty ARIA role is not allowed -->
+    /// <Foo role={role}></Foo>       <!-- Bad: ignoreNonDOM is set to false or not set -->
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <div role="button"></div>     <!-- Good: "button" is a valid ARIA role -->
     /// <div role={role}></div>       <!-- Good: role is a variable & cannot be determined until runtime. -->
     /// <div></div>                   <!-- Good: No ARIA role -->
     /// <Foo role={role}></Foo>       <!-- Good: ignoreNonDOM is set to true -->
-    /// ```
-    ///
-    /// // bad
-    /// ```javascript
-    ///  <div role="datepicker"></div> <!-- Bad: "datepicker" is not an ARIA role -->
-    ///  <div role="range"></div>      <!-- Bad: "range" is an _abstract_ ARIA role -->
-    ///  <div role=""></div>           <!-- Bad: An empty ARIA role is not allowed -->
-    ///  <Foo role={role}></Foo>       <!-- Bad: ignoreNonDOM is set to false or not set -->
     /// ```
     AriaRole,
     correctness

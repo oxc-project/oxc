@@ -32,21 +32,22 @@ declare_oxc_lint!(
     ///
     /// JavaScript classes may define a constructor method that runs
     /// when a class instance is newly created.
-    /// TypeScript allows interfaces that describe a static class object to define
-    /// a new() method (though this is rarely used in real world code).
+    ///
+    /// TypeScript allows interfaces that describe a static class object to
+    /// define a `new()` method (though this is rarely used in real world code).
     /// Developers new to JavaScript classes and/or TypeScript interfaces may
     /// sometimes confuse when to use constructor or new.
     ///
     /// ### Example
     /// ```typescript
-    // declare class C {
-    //   new(): C;
-    // }
-
-    // interface I {
-    //   new (): I;
-    //   constructor(): void;
-    // }
+    /// declare class C {
+    ///   new(): C;
+    /// }
+    ///
+    /// interface I {
+    ///   new (): I;
+    ///   constructor(): void;
+    /// }
     /// ```
     NoMisusedNew,
     correctness

@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// interface Foo {}
     /// class Foo {}
     /// ```

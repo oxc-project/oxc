@@ -16,7 +16,7 @@ declare_oxc_lint!(
     ///
     /// Prevent Functions that are local to the current method from being used as values of JSX props
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <Item callback={new Function(...)} />
     /// <Item callback={this.props.callback || function() {}} />

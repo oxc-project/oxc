@@ -137,6 +137,20 @@ impl RuleFixMeta {
         matches!(self, Self::None)
     }
 
+    #[inline]
+    pub const fn fix_kind(self) -> FixKind {
+        match self {
+            Self::Conditional(kind) | Self::Fixable(kind) => {
+                debug_assert!(
+                    !kind.is_none(),
+                    "This lint rule indicates that it provides an auto-fix but its FixKind is None. This is a bug. If this rule does not provide a fix, please use RuleFixMeta::None. Otherwise, please provide a valid FixKind"
+                );
+                kind
+            }
+            RuleFixMeta::None | RuleFixMeta::FixPending => FixKind::None,
+        }
+    }
+
     /// Does this `Rule` have some kind of auto-fix available?
     ///
     /// Also returns `true` for suggestions.
@@ -168,7 +182,9 @@ impl RuleFixMeta {
                     (true, true) => "auto-fix and a suggestion are available for this rule",
                     (true, false) => "auto-fix is available for this rule",
                     (false, true) => "suggestion is available for this rule",
-                    _ => unreachable!(),
+                    _ => unreachable!(
+                        "Fix kinds must contain Fix and/or Suggestion, but {self:?} has neither."
+                    ),
                 };
                 let mut message =
                     if kind.is_dangerous() { format!("dangerous {noun}") } else { noun.into() };
@@ -187,14 +203,18 @@ impl RuleFixMeta {
             }
         }
     }
+    pub fn emoji(self) -> Option<&'static str> {
+        match self {
+            Self::None => None,
+            Self::Conditional(kind) | Self::Fixable(kind) => Some(kind.emoji()),
+            Self::FixPending => Some("🚧"),
+        }
+    }
 }
 
 impl From<RuleFixMeta> for FixKind {
     fn from(value: RuleFixMeta) -> Self {
-        match value {
-            RuleFixMeta::None | RuleFixMeta::FixPending => FixKind::None,
-            RuleFixMeta::Fixable(kind) | RuleFixMeta::Conditional(kind) => kind,
-        }
+        value.fix_kind()
     }
 }
 
@@ -235,12 +255,22 @@ impl RuleWithSeverity {
 #[cfg(test)]
 mod test {
     use crate::rules::RULES;
+    use markdown::{to_html_with_options, Options};
 
     #[test]
     fn ensure_documentation() {
         assert!(!RULES.is_empty());
+        let options = Options::gfm();
+
         for rule in RULES.iter() {
-            assert!(rule.documentation().is_some_and(|s| !s.is_empty()), "{}", rule.name());
+            let name = rule.name();
+            assert!(
+                rule.documentation().is_some_and(|s| !s.is_empty()),
+                "Rule '{name}' is missing documentation."
+            );
+            // will panic if provided invalid markdown
+            let html = to_html_with_options(rule.documentation().unwrap(), &options).unwrap();
+            assert!(!html.is_empty());
         }
     }
 }

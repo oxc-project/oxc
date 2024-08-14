@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "OxlintConfig",
-  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
   "type": "object",
   "properties": {
     "env": {
@@ -95,6 +95,13 @@
           "items": true
         }
       ]
+    },
+    "DummyRuleMap": {
+      "description": "See [Oxlint Rules](./rules)",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/DummyRule"
+      }
     },
     "GlobalValue": {
       "type": "string",
@@ -204,10 +211,7 @@
       }
     },
     "OxlintRules": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/DummyRule"
-      }
+      "$ref": "#/definitions/DummyRuleMap"
     },
     "OxlintSettings": {
       "description": "Shared settings for plugins",

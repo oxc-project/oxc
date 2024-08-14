@@ -298,7 +298,8 @@ impl<'a> TypeScriptAnnotations<'a> {
                         )
                     })
                     .statements
-                    .extend(
+                    .splice(
+                        0..0,
                         self.assignments
                             .drain(..)
                             .map(|assignment| assignment.create_this_property_assignment(ctx)),

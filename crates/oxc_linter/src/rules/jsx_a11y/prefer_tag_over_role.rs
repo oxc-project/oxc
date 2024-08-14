@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// Using semantic HTML tags can improve accessibility and readability of the code.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div role="button" />
     ///

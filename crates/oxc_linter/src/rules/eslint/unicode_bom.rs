@@ -36,7 +36,7 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// ﻿var a = 123;"
+    /// ﻿var a = 123;
     /// ```
     UnicodeBom,
     restriction,

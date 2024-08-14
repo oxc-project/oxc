@@ -83,11 +83,20 @@ impl InjectImportSpecifier {
     }
 }
 
-impl From<&InjectImport> for DotDefine {
+/// Wrapper around `DotDefine` which caches the `Atom` to replace with.
+/// `value_atom` is populated lazily when first replacement happens.
+/// If no replacement is made, `value_atom` remains `None`.
+struct DotDefineState<'a> {
+    dot_define: DotDefine,
+    value_atom: Option<Atom<'a>>,
+}
+
+impl<'a> From<&InjectImport> for DotDefineState<'a> {
     fn from(inject: &InjectImport) -> Self {
         let parts = inject.specifier.local().split('.').map(CompactStr::from).collect::<Vec<_>>();
         let value = inject.replace_value.clone().unwrap();
-        Self { parts, value }
+        let dot_define = DotDefine { parts, value };
+        Self { dot_define, value_atom: None }
     }
 }
 
@@ -102,7 +111,7 @@ pub struct InjectGlobalVariables<'a> {
 
     // states
     /// Dot defines derived from the config.
-    dot_defines: Vec<DotDefine>,
+    dot_defines: Vec<DotDefineState<'a>>,
 
     /// Identifiers for which dot define replaced a member expression.
     replaced_dot_defines:
@@ -138,7 +147,7 @@ impl<'a> InjectGlobalVariables<'a> {
             .injects
             .iter()
             .filter(|i| i.replace_value.is_some())
-            .map(DotDefine::from)
+            .map(DotDefineState::from)
             .collect::<Vec<_>>();
 
         if !dot_defines.is_empty() {
@@ -211,13 +220,20 @@ impl<'a> InjectGlobalVariables<'a> {
 
     fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) {
         if let Expression::StaticMemberExpression(member) = expr {
-            for dot_define in &self.dot_defines {
+            for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
                 if ReplaceGlobalDefines::is_dot_define(dot_define, member) {
-                    let value =
-                        self.ast.expression_identifier_reference(SPAN, dot_define.value.as_str());
+                    // If this is first replacement made for this dot define,
+                    // create `Atom` for replacement, and record in `replaced_dot_defines`
+                    if value_atom.is_none() {
+                        *value_atom = Some(self.ast.atom(dot_define.value.as_str()));
+
+                        self.replaced_dot_defines
+                            .push((dot_define.parts[0].clone(), dot_define.value.clone()));
+                    }
+                    let value_atom = value_atom.as_ref().unwrap().clone();
+
+                    let value = self.ast.expression_identifier_reference(SPAN, value_atom);
                     *expr = value;
-                    self.replaced_dot_defines
-                        .push((dot_define.parts[0].clone(), dot_define.value.clone()));
                     break;
                 }
             }

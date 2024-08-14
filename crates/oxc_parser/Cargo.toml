@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_parser"
-version                = "0.24.0"
+version                = "0.24.2"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -35,10 +35,9 @@ seq-macro        = { workspace = true }
 memchr = { workspace = true }
 
 [dev-dependencies]
-oxc_ast           = { workspace = true, features = ["serialize"] }
-serde_json        = { workspace = true }
-ouroboros         = { workspace = true } # for `multi-thread` example
-static_assertions = { workspace = true }
+oxc_ast    = { workspace = true, features = ["serialize"] }
+serde_json = { workspace = true }
+ouroboros  = { workspace = true } # for `multi-thread` example
 
 [features]
 # Expose Lexer for benchmarks

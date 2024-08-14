@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_ast"
-version                = "0.24.0"
+version                = "0.24.2"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -32,9 +32,6 @@ serde_json = { workspace = true, optional = true }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
-
-[dev-dependencies]
-static_assertions = { workspace = true }
 
 [features]
 default = []

@@ -98,6 +98,9 @@ impl<'a> FoldConstants<'a> {
         let Expression::ConditionalExpression(conditional_expr) = expr else {
             return;
         };
+        if ctx.ancestry.parent().is_tagged_template_expression() {
+            return;
+        }
         match self.fold_expression_and_get_boolean_value(&mut conditional_expr.test, ctx) {
             Some(true) => {
                 *expr = self.ast.move_expression(&mut conditional_expr.consequent);
@@ -582,11 +585,26 @@ impl<'a> FoldConstants<'a> {
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        if ctx.ancestry.parent().is_tagged_template_expression() {
+            return None;
+        }
         let op = logical_expr.operator;
         if !matches!(op, LogicalOperator::And | LogicalOperator::Or) {
             return None;
         }
+
         if let Some(boolean_value) = ctx.get_boolean_value(&logical_expr.left) {
+            // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
+            if !boolean_value {
+                if let Expression::AssignmentExpression(assign_expr) = &logical_expr.right {
+                    if let Some(member_expr) = assign_expr.left.as_member_expression() {
+                        if member_expr.is_specific_member_access("module", "exports") {
+                            return None;
+                        }
+                    }
+                }
+            }
+
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if (boolean_value && op == LogicalOperator::Or)

@@ -1,5 +1,5 @@
 [package]
-name              = "oxc_ast_codegen"
+name              = "oxc_ast_tools"
 version           = "0.0.0"
 publish           = false
 edition.workspace = true
@@ -9,7 +9,7 @@ license.workspace = true
 workspace = true
 
 [[bin]]
-name    = "oxc_ast_codegen"
+name    = "oxc_ast_tools"
 test    = false
 doctest = false
 

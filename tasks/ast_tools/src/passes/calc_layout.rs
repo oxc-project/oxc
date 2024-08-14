@@ -17,7 +17,7 @@ use super::{define_pass, Pass};
 
 /// We use compiler to infer 64bit type layouts.
 #[cfg(not(target_pointer_width = "64"))]
-compile_error!("`oxc_ast_codegen::calc_layout` only supports 64 architectures.");
+compile_error!("This module only supports 64bit architectures.");
 
 type WellKnown = HashMap<&'static str, PlatformLayout>;
 

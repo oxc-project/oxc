@@ -139,6 +139,54 @@ impl Span {
         Self::new(self.start.min(other.start), self.end.max(other.end))
     }
 
+    /// Create a [`Span`] that is grown by `offset` on either side.
+    ///
+    /// This is equivalent to `span.expand_left(offset).expand_right(offset)`.
+    /// See [`expand_left`] and [`expand_right`] for more info.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let span = Span::new(3, 5);
+    /// assert_eq!(span.expand(1), Span::new(2, 6));
+    /// // start and end cannot be expanded past `0` and `u32::MAX`, respectively
+    /// assert_eq!(span.expand(5), Span::new(0, 10));
+    /// ```
+    ///
+    /// [`expand_left`]: Span::expand_left
+    /// [`expand_right`]: Span::expand_right
+    #[must_use]
+    pub fn expand(self, offset: u32) -> Self {
+        Self::new(self.start.saturating_sub(offset), self.end.saturating_add(offset))
+    }
+
+    /// Create a [`Span`] that has its start and end positions shrunk by
+    /// `offset` amount.
+    ///
+    /// It is a logical error to shrink the start of the [`Span`] past its end
+    /// position. This will panic in debug builds.
+    ///
+    /// This is equivalent to `span.shrink_left(offset).shrink_right(offset)`.
+    /// See [`shrink_left`] and [`shrink_right`] for more info.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_span::Span;
+    /// let span = Span::new(5, 10);
+    /// assert_eq!(span.shrink(2), Span::new(7, 8));
+    /// ```
+    ///
+    /// [`shrink_left`]: Span::shrink_left
+    /// [`shrink_right`]: Span::shrink_right
+    #[must_use]
+    pub fn shrink(self, offset: u32) -> Self {
+        let start = self.start.saturating_add(offset);
+        let end = self.end.saturating_sub(offset);
+        debug_assert!(start <= end, "Cannot shrink span past zero length");
+        Self::new(start, end)
+    }
+
     /// Create a [`Span`] that has its start position moved to the left by
     /// `offset` bytes.
     ///
@@ -392,5 +440,30 @@ mod test {
         assert!(!span.contains_inclusive(Span::new(4, 10)));
         assert!(!span.contains_inclusive(Span::new(5, 11)));
         assert!(!span.contains_inclusive(Span::new(4, 11)));
+    }
+
+    #[test]
+    fn test_expand() {
+        let span = Span::new(3, 5);
+        assert_eq!(span.expand(0), Span::new(3, 5));
+        assert_eq!(span.expand(1), Span::new(2, 6));
+        // start and end cannot be expanded past `0` and `u32::MAX`, respectively
+        assert_eq!(span.expand(5), Span::new(0, 10));
+    }
+
+    #[test]
+    fn test_shrink() {
+        let span = Span::new(4, 8);
+        assert_eq!(span.shrink(0), Span::new(4, 8));
+        assert_eq!(span.shrink(1), Span::new(5, 7));
+        // can be equal
+        assert_eq!(span.shrink(2), Span::new(6, 6));
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot shrink span past zero length")]
+    fn test_shrink_past_start() {
+        let span = Span::new(5, 10);
+        let _ = span.shrink(5);
     }
 }

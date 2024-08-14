@@ -94,32 +94,26 @@ pub fn process_types(def: &TypeDef, _: &LateCtx) -> Vec<(Ident, Type)> {
         TypeDef::Enum(enum_) => enum_
             .variants
             .iter()
-            // .map(|it| (it, get_visit_markers(&it.attrs).transpose().unwrap()))
-            .filter(|it| it.markers.visit.as_ref().is_some_and(|mk| mk.visit_as.is_some()))
-            .filter_map(|var| {
-                var.markers.visit.as_ref().map(|markers| {
-                    let field = var.fields.first().unwrap();
-                    let type_name = field.typ.name().inner_name();
-                    (
-                        markers.visit_as.clone().expect("Already checked"),
-                        parse_quote!(#type_name<'a>),
-                    )
-                })
+            .filter(|it| it.markers.visit.visit_as.is_some())
+            .map(|var| {
+                let field = var.fields.first().unwrap();
+                let type_name = field.typ.name().inner_name();
+                (
+                    var.markers.visit.visit_as.clone().expect("Already checked"),
+                    parse_quote!(#type_name<'a>),
+                )
             })
             .collect_vec(),
         TypeDef::Struct(struct_) => struct_
             .fields
             .iter()
-            // .map(|it| (it, get_visit_markers(&it.attrs).transpose().unwrap()))
-            .filter(|it| it.markers.visit.as_ref().is_some_and(|mk| mk.visit_as.is_some()))
-            .filter_map(|field| {
-                field.markers.visit.as_ref().map(|markers| {
-                    let type_name = field.typ.name().inner_name().to_ident();
-                    (
-                        markers.visit_as.clone().expect("Already checked"),
-                        parse_quote!(#type_name<'a>),
-                    )
-                })
+            .filter(|it| it.markers.visit.visit_as.is_some())
+            .map(|field| {
+                let type_name = field.typ.name().inner_name().to_ident();
+                (
+                    field.markers.visit.visit_as.clone().expect("Already checked"),
+                    parse_quote!(#type_name<'a>),
+                )
             })
             .collect_vec(),
     };
