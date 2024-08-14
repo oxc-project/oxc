@@ -7,10 +7,10 @@ use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn jsx_props_no_spread_multi_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+fn jsx_props_no_spread_multi_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow JSX prop spreading the same identifier multiple times.")
         .with_help("Remove duplicate spread attributes.")
-        .with_labels([span0, span1])
+        .with_labels(spans)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -48,18 +48,26 @@ impl Rule for JsxPropsNoSpreadMulti {
             });
 
             let mut identifier_names: HashMap<&Atom, Span> = HashMap::new();
+            let mut duplicate_spreads: HashMap<&Atom, Vec<Span>> = HashMap::new();
 
             for spread_attr in spread_attrs {
-                let identifier_name =
-                    &spread_attr.argument.get_identifier_reference().unwrap().name;
-                if let Some(first_span) = identifier_names.get(&identifier_name) {
-                    ctx.diagnostic(jsx_props_no_spread_multi_diagnostic(
-                        *first_span,
-                        spread_attr.span,
-                    ));
-                } else {
-                    identifier_names.insert(identifier_name, spread_attr.span);
+                if let Some(identifier_name) =
+                    spread_attr.argument.get_identifier_reference().map(|arg| &arg.name)
+                {
+                    identifier_names
+                        .entry(identifier_name)
+                        .and_modify(|first_span| {
+                            duplicate_spreads
+                                .entry(identifier_name)
+                                .or_insert_with(|| vec![*first_span])
+                                .push(spread_attr.span);
+                        })
+                        .or_insert(spread_attr.span);
                 }
+            }
+
+            for spans in duplicate_spreads.values() {
+                ctx.diagnostic(jsx_props_no_spread_multi_diagnostic(spans.clone()));
             }
         }
     }
