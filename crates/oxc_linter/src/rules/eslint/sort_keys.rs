@@ -1,8 +1,4 @@
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 use itertools::all;
 use oxc_ast::ast::ObjectPropertyKind;
 use oxc_ast::syntax_directed_operations::PropName;
@@ -100,29 +96,31 @@ impl Rule for SortKeys {
         };
 
         let sort_order = if config_array.len() > 0 {
-            config_array[0].as_str().map(|s| match s {
-                "desc" => SortOrder::Desc,
-                _ => SortOrder::Asc,
-            })
+            config_array[0]
+                .as_str()
+                .map(|s| match s {
+                    "desc" => SortOrder::Desc,
+                    _ => SortOrder::Asc,
+                })
                 .unwrap_or(SortOrder::Asc)
-        } else { SortOrder::Asc };
+        } else {
+            SortOrder::Asc
+        };
 
         let config = if config_array.len() > 1 {
             config_array[1].as_object().unwrap()
-        } else { &serde_json::Map::new() };
+        } else {
+            &serde_json::Map::new()
+        };
 
-        let case_sensitive = config
-            .get("caseSensitive")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(true);
-        let natural = config
-            .get("natural")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
+        let case_sensitive =
+            config.get("caseSensitive").and_then(serde_json::Value::as_bool).unwrap_or(true);
+        let natural = config.get("natural").and_then(serde_json::Value::as_bool).unwrap_or(false);
         let min_keys = config
             .get("minKeys")
             .and_then(serde_json::Value::as_u64)
-            .map(|n| n as usize).unwrap_or(2);
+            .map(|n| n as usize)
+            .unwrap_or(2);
         let allow_line_separated_groups = config
             .get("allowLineSeparatedGroups")
             .and_then(serde_json::Value::as_bool)
@@ -159,7 +157,11 @@ impl Rule for SortKeys {
                 };
 
                 if i != dec.properties.len() - 1 && self.allow_line_separated_groups {
-                    let text_between = extract_text_between_spans(source_text, prop.span(), dec.properties[i + 1].span());
+                    let text_between = extract_text_between_spans(
+                        source_text,
+                        prop.span(),
+                        dec.properties[i + 1].span(),
+                    );
                     if text_between.contains("\n\n") {
                         property_groups.last_mut().unwrap().push(key.into());
                         property_groups.push(vec!["<linebreak_group>".into()]);
@@ -172,9 +174,7 @@ impl Rule for SortKeys {
 
             if !self.case_sensitive {
                 for group in &mut property_groups {
-                    *group = group.iter()
-                        .map(|s| s.to_lowercase())
-                        .collect::<Vec<String>>();
+                    *group = group.iter().map(|s| s.to_lowercase()).collect::<Vec<String>>();
                 }
             }
 
@@ -195,17 +195,15 @@ impl Rule for SortKeys {
                 sorted_property_groups[i] = sorted;
             }
 
-            let is_sorted = all(property_groups.iter().zip(&sorted_property_groups), |(a, b)| a == b);
+            let is_sorted =
+                all(property_groups.iter().zip(&sorted_property_groups), |(a, b)| a == b);
 
             if !is_sorted {
-                ctx.diagnostic(
-                    sort_properties_diagnostic(node.span())
-                )
+                ctx.diagnostic(sort_properties_diagnostic(node.span()))
             }
         }
     }
 }
-
 
 fn alphanumeric_cmp(a: &str, b: &str) -> Ordering {
     /* regex key special case */
@@ -285,10 +283,22 @@ fn natural_sort(arr: &mut [String]) {
                         ord => return ord,
                     }
                 }
-                (Some(a_char), Some(b_char)) if a_char.is_alphanumeric() && !b_char.is_alphanumeric() => return Ordering::Greater,
-                (Some(a_char), Some(b_char)) if !a_char.is_alphanumeric() && b_char.is_alphanumeric() => return Ordering::Less,
-                (Some(a_char), Some(b_char)) if a_char == '[' && b_char.is_alphanumeric() => return Ordering::Greater,
-                (Some(a_char), Some(b_char)) if a_char.is_alphanumeric() && b_char == '[' => return Ordering::Less,
+                (Some(a_char), Some(b_char))
+                    if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
+                {
+                    return Ordering::Greater
+                }
+                (Some(a_char), Some(b_char))
+                    if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
+                {
+                    return Ordering::Less
+                }
+                (Some(a_char), Some(b_char)) if a_char == '[' && b_char.is_alphanumeric() => {
+                    return Ordering::Greater
+                }
+                (Some(a_char), Some(b_char)) if a_char.is_alphanumeric() && b_char == '[' => {
+                    return Ordering::Less
+                }
                 (Some(a_char), Some(b_char)) => return a_char.cmp(&b_char),
                 (None, None) => return Ordering::Equal,
                 (Some(_), None) => return Ordering::Greater,
@@ -322,7 +332,6 @@ fn extract_property_key(prop_text: &str) -> &str {
     let without_quotes = before_colon.split("\"").next().unwrap_or(before_colon);
     without_quotes.split('(').next().unwrap_or(before_colon)
 }
-
 
 #[test]
 fn test() {
