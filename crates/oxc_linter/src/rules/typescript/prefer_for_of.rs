@@ -33,7 +33,7 @@ declare_oxc_lint!(
     /// eliminate the need for an index variable and manual array access.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// // Bad
     /// for (let i = 0; i < arr.length; i++) {
     ///   console.log(arr[i]);

@@ -127,7 +127,7 @@ impl NoDuplicateHooks {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
+        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;

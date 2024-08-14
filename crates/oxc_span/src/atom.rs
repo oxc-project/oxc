@@ -9,7 +9,7 @@ use compact_str::CompactString;
 use serde::{Serialize, Serializer};
 
 use crate::Span;
-use oxc_allocator::{Allocator, FromIn};
+use oxc_allocator::{Allocator, CloneIn, FromIn};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -56,6 +56,14 @@ impl<'a> Atom<'a> {
     #[inline]
     pub fn to_compact_str(&self) -> CompactStr {
         CompactStr::new(self.as_str())
+    }
+}
+
+impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Atom<'old_alloc> {
+    type Cloned = Atom<'new_alloc>;
+
+    fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
+        Atom::from_in(self.as_str(), alloc)
     }
 }
 
@@ -190,7 +198,7 @@ impl<'a> fmt::Display for Atom<'a> {
 ///
 /// Currently implemented as just a wrapper around [`compact_str::CompactString`],
 /// but will be reduced in size with a custom implementation later.
-#[derive(Clone, Eq)]
+#[derive(Clone, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "serialize", derive(serde::Deserialize))]
 pub struct CompactStr(CompactString);
 

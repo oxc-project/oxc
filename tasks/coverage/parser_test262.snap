@@ -2,7 +2,7 @@ commit: a1587416
 
 parser_test262 Summary:
 AST Parsed     : 46466/46466 (100.00%)
-Positive Passed: 46376/46466 (99.81%)
+Positive Passed: 46377/46466 (99.81%)
 Negative Passed: 4301/4307 (99.86%)
 Expect Syntax Error: "language/import/import-assertions/json-invalid.js"
 Expect Syntax Error: "language/import/import-assertions/json-named-bindings.js"
@@ -2178,14 +2178,6 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifier
  50 │ /(?-msi:)/msi;
     ·  ──
  51 │ new RegExp("(?-i:)", "i");
-    ╰────
-Expect to Parse: "built-ins/RegExp/unicode_character_class_backspace_escape.js"
-
-  × Character class range out of order
-    ╭─[built-ins/RegExp/unicode_character_class_backspace_escape.js:20:12]
- 19 │ assert(/[\b]/u.test('\u0008'));
- 20 │ assert(/[\b-A]/u.test('A'));
-    ·            ──
     ╰────
 Expect to Parse: "built-ins/String/prototype/match/duplicate-named-groups-properties.js"
 

@@ -31,14 +31,14 @@ fn missing_alt_value(span0: Span) -> OxcDiagnostic {
 }
 
 fn aria_label_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing value for aria-label attribute.")
-        .with_help("The aria-label attribute must have a value. The alt attribute is preferred over aria-label for images.")
+    OxcDiagnostic::warn("Missing value for `aria-label` attribute.")
+        .with_help("Give `aria-label` a meaningful value. Prever the `alt` attribute over `aria-label` for images.")
         .with_label(span0)
 }
 
 fn aria_labelled_by_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing value for aria-labelledby attribute.")
-        .with_help("The alt attribute is preferred over aria-labelledby for images.")
+    OxcDiagnostic::warn("Missing value for `aria-labelledby` attribute.")
+        .with_help("Give `aria-labelledby` an ID to a label element. Prefer the `alt` attribute over `aria-labelledby` for images.")
         .with_label(span0)
 }
 
@@ -119,12 +119,15 @@ declare_oxc_lint!(
     /// text that describes the element's content or purpose.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// <img src="flower.jpg">
     ///
-    /// // Good
-    /// <img src="flower.jpg" alt="A close-up of a white daisy">
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <img src="flower.jpg" alt="A close-up of a white daisy" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <img src="flower.jpg" />
     /// ```
     AltText,
     correctness

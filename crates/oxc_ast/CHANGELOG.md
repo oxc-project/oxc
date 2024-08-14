@@ -4,6 +4,69 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.2] - 2024-08-12
+
+### Documentation
+
+- 8827659 ast: More doc comments for JSX nodes (#4830) (DonIsaac)
+
+### Refactor
+
+- 0ea697b ast, ast_codegen: `CloneIn` implementations now initialize semantic related cells with `Default` value. (#4819) (rzvxa)
+- ecfa124 ast_codegen: Add line break to generated code (#4829) (overlookmotel)
+- 096ac7b linter: Clean up jsx-a11y/anchor-is-valid (#4831) (DonIsaac)
+
+## [0.24.1] - 2024-08-10
+
+### Bug Fixes
+
+- fff9da3 ast, ast_codegen: Use `generate_derive` instead of visitable for generating span derives. (#4747) (rzvxa)
+- f5eeebd ast_macros: Raise compile error on invalid `generate_derive` input. (#4766) (rzvxa)
+
+### Refactor
+
+- daa0b2e ast: `oxc_ast` crate re-export AST types from other crates (#4773) (overlookmotel)
+- d4a3be8 ast_codegen: Line breaks between types in layout assertions (#4781) (overlookmotel)
+- dbb5f4c ast_codegen: Remove unnecessary imports from generated files (#4774) (overlookmotel)
+- 2dea0ca ast_codegen: Consistent import order (#4761) (overlookmotel)
+
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 51c1ca0 ast: Derive `CloneIn` for AST types, using `generate_derive`. (#4732) (rzvxa)
+- e12bd1e ast: Allow conversion from TSAccessibility into &'static str (#4711) (DonIsaac)
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- ec0b4cb ast_codegen: Add `derive_clone_in` generator. (#4731) (rzvxa)
+- 82e2f6b ast_codegen: Process AST-related `syntax` types. (#4694) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+- 07607d3 ast_codegen, span: Process `Span` through ast_codegen (#4703) (overlookmotel)
+- 125c5fd ast_codegen, span: Process `SourceType` through ast_codegen. (#4696) (rzvxa)
+- eaddc8f linter: Add fixer for eslint/func_names (#4714) (DonIsaac)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- 579b797 ast: Use type identifier instead of `CloneIn::Cloned` GAT. (#4738) (rzvxa)
+- 475266d ast: Use correct lifetimes for name-related methods (#4712) (DonIsaac)
+- 83b6ca9 ast: Add explicit enum discriminants. (#4689) (rzvxa)
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+- 2218340 ast, ast_codegen: Use `generate_derive` for implementing `GetSpan` and `GetSpanMut` traits. (#4735) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
 ## [0.23.1] - 2024-08-06
 
 ### Features

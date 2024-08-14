@@ -94,3 +94,15 @@ abstract class A {private abstract static readonly prop: string}
 abstract class A {
 	private abstract static readonly prop: string;
 }
+
+a = x!;
+a = x!;
+
+b = (x as y);
+b = ((x) as y);
+
+c = foo<string>;
+c = foo;
+
+d = x satisfies y;
+d = x;

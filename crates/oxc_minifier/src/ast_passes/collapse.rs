@@ -1,7 +1,8 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
+use oxc_ast::{ast::*, AstBuilder};
+use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::CompressOptions;
+use crate::{CompressOptions, CompressorPass};
 
 /// Collapse variable declarations (TODO: and assignments).
 ///
@@ -12,23 +13,19 @@ pub struct Collapse<'a> {
     options: CompressOptions,
 }
 
-impl<'a> VisitMut<'a> for Collapse<'a> {
-    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+impl<'a> CompressorPass<'a> for Collapse<'a> {}
+
+impl<'a> Traverse<'a> for Collapse<'a> {
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         if self.options.join_vars {
             self.join_vars(stmts);
         }
-
-        walk_mut::walk_statements(self, stmts);
     }
 }
 
 impl<'a> Collapse<'a> {
     pub fn new(ast: AstBuilder<'a>, options: CompressOptions) -> Self {
         Self { ast, options }
-    }
-
-    pub fn build(&mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
     }
 
     /// Join consecutive var statements
@@ -46,6 +43,15 @@ impl<'a> Collapse<'a> {
                 Statement::VariableDeclaration(prev_decl),
             ) = (cur, prev)
             {
+                // Do not join `require` calls for cjs-module-lexer.
+                if cur_decl
+                    .declarations
+                    .first()
+                    .and_then(|d| d.init.as_ref())
+                    .is_some_and(Expression::is_require_call)
+                {
+                    break;
+                }
                 if cur_decl.kind == prev_decl.kind {
                     if i - 1 != range.end {
                         range.start = i - 1;

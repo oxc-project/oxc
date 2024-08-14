@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_minifier"
-version                = "0.23.1"
+version                = "0.24.2"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -30,6 +30,7 @@ oxc_parser      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_codegen     = { workspace = true }
 oxc_mangler     = { workspace = true }
+oxc_traverse    = { workspace = true }
 
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
@@ -38,5 +39,4 @@ num-traits = { workspace = true }
 oxc_parser = { workspace = true }
 
 insta     = { workspace = true }
-walkdir   = { workspace = true }
 pico-args = { workspace = true }

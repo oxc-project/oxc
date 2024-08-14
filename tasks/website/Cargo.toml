@@ -27,7 +27,14 @@ serde      = { workspace = true }
 bpaf       = { workspace = true, features = ["docgen"] }
 
 [dev-dependencies]
-insta = { workspace = true }
+oxc_allocator   = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_parser      = { workspace = true }
+oxc_span        = { workspace = true }
+
+insta    = { workspace = true }
+markdown = { version = "1.0.0-alpha.19" }
+scraper  = { version = "0.20.0" }
 
 [package.metadata.cargo-shear]
 ignored = ["bpaf"]

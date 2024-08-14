@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// This rule reports when an as with an explicit literal type can be replaced with an as const.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// let bar: 2 = 2;
     /// let foo = { bar: 'baz' as 'baz' };
     /// ```

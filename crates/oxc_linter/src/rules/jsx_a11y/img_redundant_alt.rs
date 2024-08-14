@@ -18,7 +18,8 @@ use crate::{
 };
 
 fn img_redundant_alt_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Redundant alt attribute.").with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_label(span0)
+    OxcDiagnostic::warn("Redundant alt attribute.")
+        .with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -79,7 +80,7 @@ declare_oxc_lint!(
     /// `<img>` and the components which you define in options.components with the exception of components which is hidden from screen reader.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <img src="foo" alt="Photo of foo being weird." />
     /// <img src="bar" alt="Image of me at a bar!" />

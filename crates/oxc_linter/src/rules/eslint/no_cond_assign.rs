@@ -29,12 +29,24 @@ enum NoCondAssignConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow assignment operators in conditional expressions
     ///
     /// ### Why is this bad?
     ///
+    /// In conditional statements, it is very easy to mistype a comparison
+    /// operator (such as `==`) as an assignment operator (such as `=`).
+    ///
+    /// There are valid reasons to use assignment operators in conditional
+    /// statements. However, it can be difficult to tell whether a specific
+    /// assignment was intentional.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// ```js
+    /// // Check the user's job title
+    /// if (user.jobTitle = "manager") {
+    ///     // user.jobTitle is now incorrect
+    /// }
     /// ```
     NoCondAssign,
     correctness
@@ -77,7 +89,8 @@ impl Rule for NoCondAssign {
                         }
                         AstKind::Function(_)
                         | AstKind::ArrowFunctionExpression(_)
-                        | AstKind::Program(_) => break,
+                        | AstKind::Program(_)
+                        | AstKind::BlockStatement(_) => break,
                         _ => {}
                     }
                 }
@@ -159,6 +172,11 @@ fn test() {
         ("switch (foo) { case a = b: bar(); }", Some(serde_json::json!(["except-parens"]))),
         ("switch (foo) { case a = b: bar(); }", Some(serde_json::json!(["always"]))),
         ("switch (foo) { case baz + (a = b): bar(); }", Some(serde_json::json!(["always"]))),
+        // not in condition
+        ("if (obj.key) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("for (;;) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("while (obj.key) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("do { (obj.key=false) } while (obj.key)", Some(serde_json::json!(["always"]))),
     ];
 
     let fail = vec![

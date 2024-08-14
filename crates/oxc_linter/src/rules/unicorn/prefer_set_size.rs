@@ -37,7 +37,8 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferSetSize,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for PreferSetSize {

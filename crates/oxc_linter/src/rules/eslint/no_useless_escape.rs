@@ -23,7 +23,45 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
     /// ```javascript
+    /// /*eslint no-useless-escape: "error"*/
+    ///
+    /// "\'";
+    /// '\"';
+    /// "\#";
+    /// "\e";
+    /// `\"`;
+    /// `\"${foo}\"`;
+    /// `\#{foo}`;
+    /// /\!/;
+    /// /\@/;
+    /// /[\[]/;
+    /// /[a-z\-]/;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```javascript
+    /// /*eslint no-useless-escape: "error"*/
+    ///
+    /// "\"";
+    /// '\'';
+    /// "\x12";
+    /// "\u00a9";
+    /// "\371";
+    /// "xs\u2111";
+    /// `\``;
+    /// `\${${foo}}`;
+    /// `$\{${foo}}`;
+    /// /\\/g;
+    /// /\t/g;
+    /// /\w\$\*\^\./;
+    /// /[[]/;
+    /// /[\]]/;
+    /// /[a-z-]/;
     /// ```
     NoUselessEscape,
     correctness,

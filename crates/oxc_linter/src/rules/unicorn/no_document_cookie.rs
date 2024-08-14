@@ -23,11 +23,17 @@ pub struct NoDocumentCookie;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow direct use of [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie).
+    /// Disallow direct use of
+    /// [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie).
     ///
     /// ### Why is this bad?
     ///
-    /// It's not recommended to use [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie) directly as it's easy to get the string wrong. Instead, you should use the [Cookie Store API](https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API) or a [cookie library](https://www.npmjs.com/search?q=cookie).
+    /// It's not recommended to use
+    /// [`document.cookie`](https://developer.mozilla.org/en-US/docs/Web/API/Document/cookie)
+    /// directly as it's easy to get the string wrong. Instead, you should use
+    /// the [Cookie Store
+    /// API](https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API)
+    /// or a [cookie library](https://www.npmjs.com/search?q=cookie).
     ///
     /// ### Example
     /// ```javascript
@@ -40,12 +46,14 @@ declare_oxc_lint!(
     ///     '; Secure';
     ///
     /// // good
-    /// await cookieStore.set({
-    /// 	name: 'foo',
-    /// 	value: 'bar',
-    /// 	expires: Date.now() + 24 * 60 * 60 * 1000,
-    /// 	domain: 'example.com'
-    /// });
+    /// async function storeCookies() {
+    ///     await cookieStore.set({
+    ///         name: 'foo',
+    ///         value: 'bar',
+    ///         expires: Date.now() + 24 * 60 * 60 * 1000,
+    ///         domain: 'example.com'
+    ///     });
+    /// }
     /// ```
     NoDocumentCookie,
     correctness

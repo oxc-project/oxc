@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/ast_builder.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_builder.rs`
 
 #![allow(
     clippy::default_trait_access,
@@ -8,13 +8,6 @@
 )]
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{
-    number::{BigintBase, NumberBase},
-    operator::{
-        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-    },
-};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -1250,9 +1243,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_element
-    /// - closing_element
-    /// - children
+    /// - opening_element: Opening tag of the element.
+    /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// - children: Children of the element. This can be text, other elements, or expressions.
     #[inline]
     pub fn expression_jsx_element<T1, T2>(
         self,
@@ -1288,9 +1281,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_fragment
-    /// - closing_fragment
-    /// - children
+    /// - opening_fragment: `<>`
+    /// - closing_fragment: `</>`
+    /// - children: Elements inside the fragment.
     #[inline]
     pub fn expression_jsx_fragment(
         self,
@@ -12677,9 +12670,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_element
-    /// - closing_element
-    /// - children
+    /// - opening_element: Opening tag of the element.
+    /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// - children: Children of the element. This can be text, other elements, or expressions.
     #[inline]
     pub fn jsx_element<T1, T2>(
         self,
@@ -12706,9 +12699,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_element
-    /// - closing_element
-    /// - children
+    /// - opening_element: Opening tag of the element.
+    /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// - children: Children of the element. This can be text, other elements, or expressions.
     #[inline]
     pub fn alloc_jsx_element<T1, T2>(
         self,
@@ -12824,9 +12817,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_fragment
-    /// - closing_fragment
-    /// - children
+    /// - opening_fragment: `<>`
+    /// - closing_fragment: `</>`
+    /// - children: Elements inside the fragment.
     #[inline]
     pub fn jsx_fragment(
         self,
@@ -12844,9 +12837,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_fragment
-    /// - closing_fragment
-    /// - children
+    /// - opening_fragment: `<>`
+    /// - closing_fragment: `</>`
+    /// - children: Elements inside the fragment.
     #[inline]
     pub fn alloc_jsx_fragment(
         self,
@@ -12867,7 +12860,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
+    /// - name: The name of the identifier.
     #[inline]
     pub fn jsx_element_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXElementName<'a>
     where
@@ -13021,7 +13014,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
+    /// - name: The name of the identifier.
     #[inline]
     pub fn jsx_member_expression_object_jsx_identifier<A>(
         self,
@@ -13084,7 +13077,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
+    /// - expression: The expression inside the container.
     #[inline]
     pub fn jsx_expression_container(
         self,
@@ -13100,7 +13093,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
+    /// - expression: The expression inside the container.
     #[inline]
     pub fn alloc_jsx_expression_container(
         self,
@@ -13161,8 +13154,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
-    /// - value
+    /// - name: The name of the attribute. This is a prop in React-like applications.
+    /// - value: The value of the attribute. This can be a string literal, an expression,
     #[inline]
     pub fn jsx_attribute_item_jsx_attribute(
         self,
@@ -13213,8 +13206,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
-    /// - value
+    /// - name: The name of the attribute. This is a prop in React-like applications.
+    /// - value: The value of the attribute. This can be a string literal, an expression,
     #[inline]
     pub fn jsx_attribute(
         self,
@@ -13231,8 +13224,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
-    /// - value
+    /// - name: The name of the attribute. This is a prop in React-like applications.
+    /// - value: The value of the attribute. This can be a string literal, an expression,
     #[inline]
     pub fn alloc_jsx_attribute(
         self,
@@ -13281,7 +13274,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
+    /// - name: The name of the identifier.
     #[inline]
     pub fn jsx_attribute_name_jsx_identifier<A>(self, span: Span, name: A) -> JSXAttributeName<'a>
     where
@@ -13362,7 +13355,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
+    /// - expression: The expression inside the container.
     #[inline]
     pub fn jsx_attribute_value_jsx_expression_container(
         self,
@@ -13392,9 +13385,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_element
-    /// - closing_element
-    /// - children
+    /// - opening_element: Opening tag of the element.
+    /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// - children: Children of the element. This can be text, other elements, or expressions.
     #[inline]
     pub fn jsx_attribute_value_jsx_element<T1, T2>(
         self,
@@ -13430,9 +13423,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_fragment
-    /// - closing_fragment
-    /// - children
+    /// - opening_fragment: `<>`
+    /// - closing_fragment: `</>`
+    /// - children: Elements inside the fragment.
     #[inline]
     pub fn jsx_attribute_value_jsx_fragment(
         self,
@@ -13464,7 +13457,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
+    /// - name: The name of the identifier.
     #[inline]
     pub fn jsx_identifier<A>(self, span: Span, name: A) -> JSXIdentifier<'a>
     where
@@ -13479,7 +13472,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - name
+    /// - name: The name of the identifier.
     #[inline]
     pub fn alloc_jsx_identifier<A>(self, span: Span, name: A) -> Box<'a, JSXIdentifier<'a>>
     where
@@ -13494,7 +13487,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
+    /// - value: The text content.
     #[inline]
     pub fn jsx_child_jsx_text<A>(self, span: Span, value: A) -> JSXChild<'a>
     where
@@ -13518,9 +13511,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_element
-    /// - closing_element
-    /// - children
+    /// - opening_element: Opening tag of the element.
+    /// - closing_element: Closing tag of the element. Will be [`None`] for self-closing tags.
+    /// - children: Children of the element. This can be text, other elements, or expressions.
     #[inline]
     pub fn jsx_child_jsx_element<T1, T2>(
         self,
@@ -13556,9 +13549,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - opening_fragment
-    /// - closing_fragment
-    /// - children
+    /// - opening_fragment: `<>`
+    /// - closing_fragment: `</>`
+    /// - children: Elements inside the fragment.
     #[inline]
     pub fn jsx_child_jsx_fragment(
         self,
@@ -13590,7 +13583,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
+    /// - expression: The expression inside the container.
     #[inline]
     pub fn jsx_child_jsx_expression_container(
         self,
@@ -13615,7 +13608,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
+    /// - expression: The expression being spread.
     #[inline]
     pub fn jsx_child_jsx_spread_child(
         self,
@@ -13640,7 +13633,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
+    /// - expression: The expression being spread.
     #[inline]
     pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
         JSXSpreadChild { span, expression }
@@ -13652,7 +13645,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - expression
+    /// - expression: The expression being spread.
     #[inline]
     pub fn alloc_jsx_spread_child(
         self,
@@ -13668,7 +13661,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
+    /// - value: The text content.
     #[inline]
     pub fn jsx_text<A>(self, span: Span, value: A) -> JSXText<'a>
     where
@@ -13683,7 +13676,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
+    /// - value: The text content.
     #[inline]
     pub fn alloc_jsx_text<A>(self, span: Span, value: A) -> Box<'a, JSXText<'a>>
     where

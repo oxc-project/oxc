@@ -4,11 +4,13 @@ use std::{
 };
 
 mod arena;
+mod clone_in;
 mod convert;
 
 use bumpalo::Bump;
 
-pub use arena::{Box, String, Vec};
+pub use arena::{Address, Box, String, Vec};
+pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 
 #[derive(Default)]

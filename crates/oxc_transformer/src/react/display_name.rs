@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
-use oxc_traverse::{Ancestor, FinderRet, TraverseCtx};
+use oxc_traverse::{Ancestor, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -34,58 +34,60 @@ impl<'a> ReactDisplayName<'a> {
             return;
         };
 
-        let name = ctx.find_ancestor(|ancestor| {
+        let mut ancestors = ctx.ancestors();
+        let name = loop {
+            let Some(ancestor) = ancestors.next() else {
+                return;
+            };
+
             match ancestor {
                 // `foo = React.createClass({})`
                 Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
                     AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                        FinderRet::Found(ident.name.clone())
+                        break ident.name.clone();
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        FinderRet::Found(expr.property.name.clone())
+                        break expr.property.name.clone();
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
                     AssignmentTarget::ComputedMemberExpression(expr) => {
-                        match expr.static_property_name() {
-                            Some(name) => FinderRet::Found(name),
-                            None => FinderRet::Stop,
+                        if let Some(name) = expr.static_property_name() {
+                            break name;
                         }
+                        return;
                     }
-                    _ => FinderRet::Stop,
+                    _ => return,
                 },
                 // `let foo = React.createClass({})`
-                Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id().kind {
-                    BindingPatternKind::BindingIdentifier(ident) => {
-                        FinderRet::Found(ident.name.clone())
+                Ancestor::VariableDeclaratorInit(declarator) => {
+                    if let BindingPatternKind::BindingIdentifier(ident) = &declarator.id().kind {
+                        break ident.name.clone();
                     }
-                    _ => FinderRet::Stop,
-                },
+                    return;
+                }
                 // `{foo: React.createClass({})}`
                 Ancestor::ObjectPropertyValue(prop) => {
                     // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
                     if let Some(name) = prop.key().static_name() {
-                        FinderRet::Found(ctx.ast.atom(&name))
-                    } else {
-                        FinderRet::Stop
+                        break ctx.ast.atom(&name);
                     }
+                    return;
                 }
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    FinderRet::Found(ctx.ast.atom(&self.ctx.filename))
+                    break ctx.ast.atom(&self.ctx.filename);
                 }
                 // Stop crawling up when hit a statement
-                _ if ancestor.is_via_statement() => FinderRet::Stop,
-                _ => FinderRet::Continue,
+                _ if ancestor.is_via_statement() => return,
+                _ => {}
             }
-        });
+        };
 
-        if let Some(name) = name {
-            self.add_display_name(obj_expr, name);
-        }
+        self.add_display_name(obj_expr, name);
     }
 }
 

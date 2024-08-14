@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/visit.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
 
 //! Visitor Pattern
 //!
@@ -21,7 +21,9 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{ast::*, ast_kind::AstKind};
+#[allow(clippy::wildcard_imports)]
+use crate::ast::*;
+use crate::ast_kind::AstKind;
 
 use walk::*;
 
