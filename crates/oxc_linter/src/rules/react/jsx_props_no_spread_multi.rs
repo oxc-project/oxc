@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
@@ -47,8 +47,8 @@ impl Rule for JsxPropsNoSpreadMulti {
                 None
             });
 
-            let mut identifier_names: HashMap<&Atom, Span> = HashMap::new();
-            let mut duplicate_spreads: HashMap<&Atom, Vec<Span>> = HashMap::new();
+            let mut identifier_names: FxHashMap<&Atom, Span> = FxHashMap::default();
+            let mut duplicate_spreads: FxHashMap<&Atom, Vec<Span>> = FxHashMap::default();
 
             for spread_attr in spread_attrs {
                 if let Some(identifier_name) =
