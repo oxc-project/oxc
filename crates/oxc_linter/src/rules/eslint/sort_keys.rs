@@ -54,7 +54,7 @@ impl std::ops::Deref for SortKeys {
 }
 
 fn sort_properties_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Object properties should be sorted.").with_label(span0)
+    OxcDiagnostic::warn("Object keys should be sorted").with_label(span0)
 }
 
 declare_oxc_lint!(
