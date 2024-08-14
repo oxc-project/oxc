@@ -653,7 +653,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind: ast::CharacterKind::Null,
-                value: 0x0000,
+                value: 0x00,
             }));
         }
 
@@ -953,8 +953,8 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('b') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
-                kind: ast::CharacterKind::Symbol,
-                value: 'b' as u32,
+                kind: ast::CharacterKind::SingleEscape,
+                value: 0x08,
             })));
         }
 
@@ -1444,8 +1444,8 @@ impl<'a> PatternParser<'a> {
             if self.reader.eat('b') {
                 return Ok(Some(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
-                    kind: ast::CharacterKind::Symbol,
-                    value: 'b' as u32,
+                    kind: ast::CharacterKind::SingleEscape,
+                    value: 0x08,
                 }));
             }
 
