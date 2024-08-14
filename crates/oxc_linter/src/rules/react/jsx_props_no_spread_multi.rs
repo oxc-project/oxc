@@ -7,9 +7,9 @@ use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn jsx_props_no_spread_multi_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
+fn jsx_props_no_spread_multi_diagnostic(spans: Vec<Span>, prop_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow JSX prop spreading the same identifier multiple times.")
-        .with_help("Remove duplicate spread attributes.")
+        .with_help(format!("Prop '{prop_name}' is spread multiple times."))
         .with_labels(spans)
 }
 
@@ -66,8 +66,8 @@ impl Rule for JsxPropsNoSpreadMulti {
                 }
             }
 
-            for spans in duplicate_spreads.values() {
-                ctx.diagnostic(jsx_props_no_spread_multi_diagnostic(spans.clone()));
+            for (identifier_name, spans) in duplicate_spreads {
+                ctx.diagnostic(jsx_props_no_spread_multi_diagnostic(spans, identifier_name));
             }
         }
     }
