@@ -14,6 +14,7 @@ use crate::AllowWarnDeny;
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
 // <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
+// Note: when update document comment, also update `DummyRuleMap`'s description in this file.
 #[derive(Debug, Clone, Default)]
 pub struct OxlintRules(Vec<ESLintRule>);
 
@@ -42,7 +43,13 @@ impl JsonSchema for OxlintRules {
             Toggle(AllowWarnDeny),
             ToggleAndConfig(Vec<serde_json::Value>),
         }
-        gen.subschema_for::<FxHashMap<String, DummyRule>>()
+
+        #[allow(unused)]
+        #[derive(Debug, JsonSchema)]
+        #[schemars(description = "See [Oxlint Rules](./rules)")]
+        struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
+
+        gen.subschema_for::<DummyRuleMap>()
     }
 }
 

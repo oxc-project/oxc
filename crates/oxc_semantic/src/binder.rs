@@ -12,7 +12,7 @@ use oxc_span::{GetSpan, SourceType};
 
 use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
-pub trait Binder<'a> {
+pub(crate) trait Binder<'a> {
     #[allow(unused_variables)]
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {}
 }

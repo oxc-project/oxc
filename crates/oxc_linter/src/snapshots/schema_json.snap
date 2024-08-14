@@ -100,6 +100,13 @@ expression: json
         }
       ]
     },
+    "DummyRuleMap": {
+      "description": "See [Oxlint Rules](./rules)",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/DummyRule"
+      }
+    },
     "GlobalValue": {
       "type": "string",
       "enum": [
@@ -208,10 +215,7 @@ expression: json
       }
     },
     "OxlintRules": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/DummyRule"
-      }
+      "$ref": "#/definitions/DummyRuleMap"
     },
     "OxlintSettings": {
       "description": "Shared settings for plugins",

@@ -52,6 +52,7 @@ Add or remove global variables.
 
 ## rules
 
+type: `object`
 
 See [Oxlint Rules](./rules)
 

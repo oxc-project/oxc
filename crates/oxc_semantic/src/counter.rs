@@ -16,7 +16,7 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 #[allow(clippy::struct_field_names)]
 #[derive(Default, Debug)]
-pub struct Counter {
+pub(crate) struct Counter {
     pub nodes_count: usize,
     pub scopes_count: usize,
     pub symbols_count: usize,

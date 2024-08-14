@@ -99,57 +99,69 @@ bitflags! {
 }
 
 impl ReferenceFlag {
+    #[inline]
     pub const fn read() -> Self {
         Self::Read
     }
 
+    #[inline]
     pub const fn write() -> Self {
         Self::Write
     }
 
+    #[inline]
     pub const fn read_write() -> Self {
         Self::Value
     }
 
     /// The identifier is read from. It may also be written to.
+    #[inline]
     pub const fn is_read(&self) -> bool {
         self.intersects(Self::Read)
     }
 
     /// The identifier is only read from.
+    #[inline]
     pub const fn is_read_only(&self) -> bool {
         self.contains(Self::Read)
     }
 
     /// The identifier is written to. It may also be read from.
+    #[inline]
     pub const fn is_write(&self) -> bool {
         self.intersects(Self::Write)
     }
 
     /// The identifier is only written to. It is not read from in this reference.
+    #[inline]
     pub const fn is_write_only(&self) -> bool {
         self.contains(Self::Write)
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.
+    #[inline]
     pub fn is_read_write(&self) -> bool {
         self.contains(Self::Read | Self::Write)
     }
 
     /// The identifier is used in a type referenced
+    #[inline]
     pub fn is_ts_type_query(&self) -> bool {
         self.contains(Self::TSTypeQuery)
     }
 
     /// The identifier is used in a type definition.
+    #[inline]
     pub const fn is_type(&self) -> bool {
         self.contains(Self::Type)
     }
 
+    #[inline]
     pub const fn is_type_only(self) -> bool {
         matches!(self, Self::Type)
     }
 
+    #[inline]
     pub const fn is_value(&self) -> bool {
         self.intersects(Self::Value)
     }
