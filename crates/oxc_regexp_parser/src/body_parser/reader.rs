@@ -1,28 +1,30 @@
 pub struct Reader<'a> {
     source: &'a str,
-    // NOTE: For now, this exists only for `span_position()` method.
-    char_indices: std::str::CharIndices<'a>,
     unicode_mode: bool,
     index: usize,
+    u8_units: Vec<(usize, char)>,
+    u16_units: Vec<u16>,
 }
 
 impl<'a> Reader<'a> {
     pub fn new(source: &'a str, unicode_mode: bool) -> Self {
-        Self { source, char_indices: source.char_indices(), unicode_mode, index: 0 }
+        // TODO: This may not be efficient in some cases.
+        // Implements lookahead cache with `VecDeque`?
+        let u8_units = source.char_indices().collect::<Vec<_>>();
+        let u16_units = if unicode_mode { "" } else { source }.encode_utf16().collect::<Vec<_>>();
+        Self { source, unicode_mode, index: 0, u8_units, u16_units }
     }
 
     pub fn offset(&self) -> usize {
-        let mut char_indices = self.char_indices.clone();
-
         if self.unicode_mode {
-            char_indices.nth(self.index).map_or(self.source.len(), |(i, _)| i)
+            self.u8_units.get(self.index).map_or(self.source.len(), |(i, _)| *i)
         } else {
-            // TODO: This has a bug when called for surrogate pairs...
+            // TODO: This has a bug(start>end) when called for surrogate pairs...
             let mut utf16_units = 0;
             let mut byte_index = 0;
-            for (idx, ch) in char_indices {
+            for (idx, ch) in &self.u8_units {
                 if utf16_units == self.index {
-                    return idx;
+                    return *idx;
                 }
 
                 utf16_units += ch.len_utf16();
@@ -46,13 +48,11 @@ impl<'a> Reader<'a> {
     fn peek_nth(&self, n: usize) -> Option<u32> {
         let nth = self.index + n;
 
-        // TODO: This is not efficient.
-        // Refs oxc_parser/src/lexer/mod.rs using `VecDeque` for this?
         if self.unicode_mode {
-            self.source.chars().nth(nth).map(|c| c as u32)
+            self.u8_units.get(nth).map(|&(_, ch)| ch as u32)
         } else {
             #[allow(clippy::cast_lossless)]
-            self.source.encode_utf16().nth(nth).map(|u| u as u32)
+            self.u16_units.get(nth).map(|&cu| cu as u32)
         }
     }
 
@@ -62,8 +62,6 @@ impl<'a> Reader<'a> {
     pub fn peek2(&self) -> Option<u32> {
         self.peek_nth(1)
     }
-
-    // NOTE: Consider `peek_char(): Option<char>` style API?
 
     pub fn eat(&mut self, ch: char) -> bool {
         if self.peek_nth(0) == Some(ch as u32) {
