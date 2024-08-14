@@ -8,8 +8,8 @@ pub struct Reader<'a> {
 
 impl<'a> Reader<'a> {
     pub fn new(source: &'a str, unicode_mode: bool) -> Self {
-        // TODO: This may not be efficient in some cases.
-        // Implements lookahead cache with `VecDeque`?
+        // NOTE: This may not be efficient if the source is too large.
+        // Implements lookahead cache with `VecDeque` is better...?
         let u8_units = source.char_indices().collect::<Vec<_>>();
         let u16_units = if unicode_mode { "" } else { source }.encode_utf16().collect::<Vec<_>>();
         Self { source, unicode_mode, index: 0, u8_units, u16_units }
@@ -17,20 +17,18 @@ impl<'a> Reader<'a> {
 
     pub fn offset(&self) -> usize {
         if self.unicode_mode {
-            self.u8_units.get(self.index).map_or(self.source.len(), |(i, _)| *i)
+            self.u8_units.get(self.index).map_or(self.source.len(), |(idx, _)| *idx)
         } else {
-            // TODO: This has a bug(start>end) when called for surrogate pairs...
-            let mut utf16_units = 0;
-            let mut byte_index = 0;
+            // NOTE: This can be optimized by saving the last idx?
+            let mut u16_idx = 0;
             for (idx, ch) in &self.u8_units {
-                if utf16_units == self.index {
+                if self.index <= u16_idx {
                     return *idx;
                 }
 
-                utf16_units += ch.len_utf16();
-                byte_index = idx + ch.len_utf8();
+                u16_idx += ch.len_utf16();
             }
-            byte_index
+            self.source.len()
         }
     }
 
