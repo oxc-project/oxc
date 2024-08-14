@@ -1,8 +1,5 @@
 use std::path::{Path, PathBuf};
 
-use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, WhitespaceRemover};
-use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use crate::{
@@ -11,44 +8,27 @@ use crate::{
     suite::{Case, TestResult},
     test262::{Test262Case, TestFlag},
     typescript::TypeScriptCase,
+    Driver,
 };
 
+/// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let normal_result = get_normal_result(source_text, source_type);
-    if !normal_result {
-        return TestResult::CodegenError("Normal");
+    let result = Driver { codegen: true, ..Driver::default() }.idempotency(
+        "Normal",
+        source_text,
+        source_type,
+    );
+    if result != TestResult::Passed {
+        return result;
     };
 
-    let minify_result = get_minify_result(source_text, source_type);
-    if !minify_result {
-        return TestResult::CodegenError("Minify");
+    let result = Driver { codegen: true, remove_whitespace: true, ..Driver::default() }
+        .idempotency("Minify", source_text, source_type);
+    if result != TestResult::Passed {
+        return result;
     }
 
     TestResult::Passed
-}
-
-/// Idempotency test
-fn get_normal_result(source_text: &str, source_type: SourceType) -> bool {
-    let allocator = Allocator::default();
-    let source_text1 = {
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        CodeGenerator::new().build(&ret.program).source_text
-    };
-    let source_text2 = {
-        let ret = Parser::new(&allocator, &source_text1, source_type).parse();
-        CodeGenerator::new().build(&ret.program).source_text
-    };
-    source_text1 == source_text2
-}
-
-/// Minify idempotency test
-fn get_minify_result(source_text: &str, source_type: SourceType) -> bool {
-    let allocator = Allocator::default();
-    let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = WhitespaceRemover::new().build(&parse_result1.program).source_text;
-    let parse_result2 = Parser::new(&allocator, source_text1.as_str(), source_type).parse();
-    let source_text2 = WhitespaceRemover::new().build(&parse_result2.program).source_text;
-    source_text1 == source_text2
 }
 
 pub struct CodegenTest262Case {

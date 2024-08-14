@@ -228,6 +228,7 @@ mod react {
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
+    pub mod jsx_props_no_spread_multi;
     pub mod no_children_prop;
     pub mod no_danger;
     pub mod no_direct_mutation_state;
@@ -735,6 +736,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_useless_fragment,
+    react::jsx_props_no_spread_multi,
     react::jsx_no_undef,
     react::react_in_jsx_scope,
     react::no_children_prop,
