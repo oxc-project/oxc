@@ -63,12 +63,14 @@ impl Rule for PreferOptionalCatchBinding {
                 let mut start = catch_clause.span().start + 5;
                 let total_param = Span::new(start, catch_param.span().start);
                 let value = ctx.source_range(total_param);
-                for char in value.chars() {
-                    if char != ' ' {
-                        break;
-                    }
-                    start += 1;
-                }
+                let x: u32 = value
+                    .as_bytes()
+                    .iter()
+                    .position(|x| !x.is_ascii_whitespace())
+                    .unwrap_or(0)
+                    .try_into()
+                    .unwrap();
+                start += x;
                 let end = catch_clause.body.span().start;
                 let span = Span::new(start, end);
                 fixer.delete(&span)
