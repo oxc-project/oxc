@@ -61,6 +61,15 @@ impl<'a> BoundIdentifier<'a> {
         Self::new_uid(name, scope_id, flags, ctx)
     }
 
+    /// Create `BindingIdentifier` for this binding
+    pub fn create_binding_identifier(&self) -> BindingIdentifier<'a> {
+        BindingIdentifier {
+            span: SPAN,
+            name: self.name.clone(),
+            symbol_id: Cell::new(Some(self.symbol_id)),
+        }
+    }
+
     /// Create `IdentifierReference` referencing this binding, which is read from, with dummy `Span`
     pub fn create_read_reference(&self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         self.create_spanned_read_reference(SPAN, ctx)
@@ -73,14 +82,5 @@ impl<'a> BoundIdentifier<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
         ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, ReferenceFlag::Read)
-    }
-
-    /// Create `BindingIdentifier` for this binding
-    pub fn create_binding_identifier(&self) -> BindingIdentifier<'a> {
-        BindingIdentifier {
-            span: SPAN,
-            name: self.name.clone(),
-            symbol_id: Cell::new(Some(self.symbol_id)),
-        }
     }
 }
