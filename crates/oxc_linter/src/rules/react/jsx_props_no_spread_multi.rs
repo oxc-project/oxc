@@ -35,6 +35,7 @@ declare_oxc_lint!(
     /// ```
     JsxPropsNoSpreadMulti,
     correctness,
+    pending // TODO: add auto-fix to remove the first spread. Removing the second one would change program behavior.
 );
 
 impl Rule for JsxPropsNoSpreadMulti {
