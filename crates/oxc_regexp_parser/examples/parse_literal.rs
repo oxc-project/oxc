@@ -40,6 +40,7 @@ fn main() {
         r"/[[^\q{}]]/v",       // Error
         r"/(?<a>)(?<a>)/",     // Error
         r"/(?noname)/v",       // Error
+        r"/[\bb]/",
     ] {
         println!("Parse: {source_text}");
         let parser = Parser::new(&allocator, source_text, ParserOptions::default());
