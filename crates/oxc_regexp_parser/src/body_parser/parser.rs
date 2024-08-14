@@ -1209,13 +1209,14 @@ impl<'a> PatternParser<'a> {
 
         let span_start = self.reader.span_position();
         if self.reader.eat3('\\', 'q', '{') {
-            let class_string_disjunction_contents =
+            let (class_string_disjunction_contents, strings) =
                 self.parse_class_string_disjunction_contents()?;
 
             if self.reader.eat('}') {
                 return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(Box::new_in(
                     ast::ClassStringDisjunction {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
+                        strings,
                         body: class_string_disjunction_contents,
                     },
                     self.allocator,
@@ -1246,8 +1247,6 @@ impl<'a> PatternParser<'a> {
         // [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
         if self.reader.eat('[') {
             let negative = self.reader.eat('^');
-            // NOTE: This can be recursive as the name suggests!
-            // e.g. `/[a[b[c[d[e]f]g]h]i]j]/v`
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
@@ -1269,13 +1268,7 @@ impl<'a> PatternParser<'a> {
                         //   - || ClassString contains 2 more ClassSetCharacters
                         ast::CharacterClassContents::ClassStringDisjunction(
                             class_string_disjunction,
-                        ) => {
-                            class_string_disjunction.body.is_empty()
-                                || class_string_disjunction
-                                    .body
-                                    .iter()
-                                    .any(|class_string| class_string.body.len() != 1)
-                        }
+                        ) => class_string_disjunction.strings,
                         _ => false,
                     };
 
@@ -1352,19 +1345,30 @@ impl<'a> PatternParser<'a> {
     //   ClassString
     //   ClassString | ClassStringDisjunctionContents
     // ```
-    fn parse_class_string_disjunction_contents(&mut self) -> Result<Vec<'a, ast::ClassString<'a>>> {
+    // Returns: (ClassStringDisjunctionContents, contain_strings)
+    fn parse_class_string_disjunction_contents(
+        &mut self,
+    ) -> Result<(Vec<'a, ast::ClassString<'a>>, bool)> {
         let mut body = Vec::new_in(self.allocator);
+        let mut strings = false;
 
         loop {
-            let class_string = self.parse_class_string()?;
+            let (class_string, contain_strings) = self.parse_class_string()?;
             body.push(class_string);
+            if contain_strings {
+                strings = true;
+            }
 
             if !self.reader.eat('|') {
                 break;
             }
         }
 
-        Ok(body)
+        if body.is_empty() {
+            strings = true;
+        }
+
+        Ok((body, strings))
     }
 
     // ```
@@ -1375,7 +1379,8 @@ impl<'a> PatternParser<'a> {
     // NonEmptyClassString ::
     //   ClassSetCharacter NonEmptyClassString[opt]
     // ```
-    fn parse_class_string(&mut self) -> Result<ast::ClassString<'a>> {
+    // Returns (ClassString, contain_strings)
+    fn parse_class_string(&mut self) -> Result<(ast::ClassString<'a>, bool)> {
         let span_start = self.reader.span_position();
 
         let mut body = Vec::new_in(self.allocator);
@@ -1383,10 +1388,16 @@ impl<'a> PatternParser<'a> {
             body.push(class_set_character);
         }
 
-        Ok(ast::ClassString {
-            span: self.span_factory.create(span_start, self.reader.span_position()),
-            body,
-        })
+        // True if empty or contains 2 or more characters
+        let contain_strings = body.len() != 1;
+
+        Ok((
+            ast::ClassString {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                body,
+            },
+            contain_strings,
+        ))
     }
 
     // ```
