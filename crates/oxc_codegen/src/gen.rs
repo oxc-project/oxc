@@ -7,7 +7,6 @@ use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
-    number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
 };
@@ -1153,26 +1152,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
                 p.print_str("-");
             }
 
-            let result = if self.base == NumberBase::Float {
-                print_non_negative_float(abs_value, p)
-            } else {
-                let value = abs_value as u64;
-                // If integers less than 1000, we know that exponential notation will always be longer than
-                // the integer representation. This is not the case for 1000 which is "1e3".
-                if value < 1000 {
-                    format!("{value}")
-                } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
-                    let hex = format!("{value:#x}");
-                    let result = print_non_negative_float(abs_value, p);
-                    if hex.len() < result.len() {
-                        hex
-                    } else {
-                        result
-                    }
-                } else {
-                    print_non_negative_float(abs_value, p)
-                }
-            };
+            let result = print_non_negative_float(abs_value, p);
             let bytes = result.as_str();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
@@ -1188,15 +1168,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
 
 // TODO: refactor this with less allocations
 // <https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_printer/js_printer.go#L3472>
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIFY }>) -> String {
     use oxc_syntax::number::ToJsString;
-    let mut result = value.to_js_string();
+    if value < 1000.0 && value.fract() == 0.0 {
+        return value.to_js_string();
+    }
+    let mut result = format!("{value:e}");
     let chars = result.as_bytes();
     let len = chars.len();
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-
         unsafe { String::from_utf8_unchecked(num.to_vec()) }
     };
 
@@ -1241,6 +1224,16 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
             result = format!("{}e{}", u8_to_string(remaining), exponent);
         } else {
             result = u8_to_string(chars);
+        }
+    }
+
+    if MINIFY && value.fract() == 0.0 {
+        let value = value as u64;
+        if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
+            let hex = format!("{value:#x}");
+            if hex.len() < result.len() {
+                result = hex;
+            }
         }
     }
 
