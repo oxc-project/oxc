@@ -88,14 +88,14 @@ fn parse_capturing_groups(source_text: &str) -> (u32, u32, FxHashSet<&str>) {
 
             // Named capturing group
             if reader.eat2('?', '<') {
-                let span_start = reader.span_position();
+                let span_start = reader.offset();
                 while let Some(ch) = reader.peek() {
                     if ch == '>' as u32 {
                         break;
                     }
                     reader.advance();
                 }
-                let span_end = reader.span_position();
+                let span_end = reader.offset();
 
                 if reader.eat('>') {
                     let group_name = &source_text[span_start..span_end];

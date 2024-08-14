@@ -60,7 +60,7 @@ impl<'a> PatternParser<'a> {
         let disjunction = self.parse_disjunction()?;
 
         if self.reader.peek().is_some() {
-            let span_start = self.reader.span_position();
+            let span_start = self.reader.offset();
             return Err(OxcDiagnostic::error("Could not parse the entire pattern")
                 .with_label(self.span_factory.create(span_start, span_start)));
         }
@@ -77,7 +77,7 @@ impl<'a> PatternParser<'a> {
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] | Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     // ```
     fn parse_disjunction(&mut self) -> Result<ast::Disjunction<'a>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         let mut body = Vec::new_in(self.allocator);
         loop {
@@ -89,7 +89,7 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(ast::Disjunction {
-            span: self.span_factory.create(span_start, self.reader.span_position()),
+            span: self.span_factory.create(span_start, self.reader.offset()),
             body,
         })
     }
@@ -100,7 +100,7 @@ impl<'a> PatternParser<'a> {
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] Term[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     // ```
     fn parse_alternative(&mut self) -> Result<ast::Alternative<'a>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         let mut body = Vec::new_in(self.allocator);
         while let Some(term) = self.parse_term()? {
@@ -108,7 +108,7 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(ast::Alternative {
-            span: self.span_factory.create(span_start, self.reader.span_position()),
+            span: self.span_factory.create(span_start, self.reader.offset()),
             body,
         })
     }
@@ -133,12 +133,12 @@ impl<'a> PatternParser<'a> {
                 return Ok(Some(assertion));
             }
 
-            let span_start = self.reader.span_position();
+            let span_start = self.reader.offset();
             return match (self.parse_atom()?, self.consume_quantifier()?) {
                 (Some(atom), Some(((min, max), greedy))) => {
                     Ok(Some(ast::Term::Quantifier(Box::new_in(
                         ast::Quantifier {
-                            span: self.span_factory.create(span_start, self.reader.span_position()),
+                            span: self.span_factory.create(span_start, self.reader.offset()),
                             greedy,
                             min,
                             max,
@@ -150,9 +150,7 @@ impl<'a> PatternParser<'a> {
                 (Some(atom), None) => Ok(Some(atom)),
                 (None, Some(_)) => {
                     Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `Atom`")
-                        .with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
-                        ))
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())))
                 }
                 (None, None) => Ok(None),
             };
@@ -162,7 +160,7 @@ impl<'a> PatternParser<'a> {
         // [~UnicodeMode] Assertion
         // [~UnicodeMode] ExtendedAtom Quantifier
         // [~UnicodeMode] ExtendedAtom
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         if let Some(assertion) = self.parse_assertion()? {
             // `QuantifiableAssertion` = (Negative)Lookahead: `(?=...)` or `(?!...)`
             if let ast::Term::LookAroundAssertion(look_around) = &assertion {
@@ -174,9 +172,7 @@ impl<'a> PatternParser<'a> {
                     if let Some(((min, max), greedy)) = self.consume_quantifier()? {
                         return Ok(Some(ast::Term::Quantifier(Box::new_in(
                             ast::Quantifier {
-                                span: self
-                                    .span_factory
-                                    .create(span_start, self.reader.span_position()),
+                                span: self.span_factory.create(span_start, self.reader.offset()),
                                 greedy,
                                 min,
                                 max,
@@ -195,7 +191,7 @@ impl<'a> PatternParser<'a> {
             (Some(extended_atom), Some(((min, max), greedy))) => {
                 Ok(Some(ast::Term::Quantifier(Box::new_in(
                     ast::Quantifier {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.offset()),
                         min,
                         max,
                         greedy,
@@ -207,7 +203,7 @@ impl<'a> PatternParser<'a> {
             (Some(extended_atom), None) => Ok(Some(extended_atom)),
             (None, Some(_)) => {
                 Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `ExtendedAtom`")
-                    .with_label(self.span_factory.create(span_start, self.reader.span_position())))
+                    .with_label(self.span_factory.create(span_start, self.reader.offset())))
             }
             (None, None) => Ok(None),
         }
@@ -231,7 +227,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // (Annex B)
     fn parse_assertion(&mut self) -> Result<Option<ast::Term<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         let kind = if self.reader.eat('^') {
             Some(ast::BoundaryAssertionKind::Start)
@@ -247,7 +243,7 @@ impl<'a> PatternParser<'a> {
 
         if let Some(kind) = kind {
             return Ok(Some(ast::Term::BoundaryAssertion(ast::BoundaryAssertion {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind,
             })));
         }
@@ -268,14 +264,13 @@ impl<'a> PatternParser<'a> {
             let disjunction = self.parse_disjunction()?;
 
             if !self.reader.eat(')') {
-                return Err(OxcDiagnostic::error("Unterminated lookaround assertion").with_label(
-                    self.span_factory.create(span_start, self.reader.span_position()),
-                ));
+                return Err(OxcDiagnostic::error("Unterminated lookaround assertion")
+                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
             }
 
             return Ok(Some(ast::Term::LookAroundAssertion(Box::new_in(
                 ast::LookAroundAssertion {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind,
                     body: disjunction,
                 },
@@ -296,14 +291,14 @@ impl<'a> PatternParser<'a> {
     //   (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     fn parse_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         // PatternCharacter
         if let Some(cp) = self.reader.peek().filter(|&cp| !unicode::is_syntax_character(cp)) {
             self.reader.advance();
 
             return Ok(Some(ast::Term::Character(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Symbol,
                 value: cp,
             })));
@@ -312,7 +307,7 @@ impl<'a> PatternParser<'a> {
         // .
         if self.reader.eat('.') {
             return Ok(Some(ast::Term::Dot(ast::Dot {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
             })));
         }
 
@@ -360,12 +355,12 @@ impl<'a> PatternParser<'a> {
     //   ExtendedPatternCharacter
     // ```
     fn parse_extended_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         // .
         if self.reader.eat('.') {
             return Ok(Some(ast::Term::Dot(ast::Dot {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
             })));
         }
 
@@ -378,14 +373,14 @@ impl<'a> PatternParser<'a> {
             // \ [lookahead = c]
             if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
                 return Ok(Some(ast::Term::Character(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Symbol,
                     value: '\\' as u32,
                 })));
             }
 
             return Err(OxcDiagnostic::error("Invalid escape")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
@@ -411,19 +406,19 @@ impl<'a> PatternParser<'a> {
         }
 
         // InvalidBracedQuantifier
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         if self.consume_quantifier()?.is_some() {
             // [SS:EE] ExtendedAtom :: InvalidBracedQuantifier
             // It is a Syntax Error if any source text is matched by this production.
             // (Annex B)
             return Err(OxcDiagnostic::error("Invalid braced quantifier")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         // ExtendedPatternCharacter
         if let Some(cp) = self.consume_extended_pattern_character() {
             return Ok(Some(ast::Term::Character(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Symbol,
                 value: cp,
             })));
@@ -450,20 +445,19 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
                 if self.state.num_of_capturing_groups < index {
-                    return Err(OxcDiagnostic::error("Invalid indexed reference").with_label(
-                        self.span_factory.create(span_start, self.reader.span_position()),
-                    ));
+                    return Err(OxcDiagnostic::error("Invalid indexed reference")
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     index,
                 })));
             }
 
             if index <= self.state.num_of_capturing_groups {
                 return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     index,
                 })));
             }
@@ -495,14 +489,13 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
                 if !self.state.found_group_names.contains(name.as_str()) {
-                    return Err(OxcDiagnostic::error("Group specifier is empty").with_label(
-                        self.span_factory.create(span_start, self.reader.span_position()),
-                    ));
+                    return Err(OxcDiagnostic::error("Group specifier is empty")
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 return Ok(Some(ast::Term::NamedReference(Box::new_in(
                     ast::NamedReference {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.offset()),
                         name,
                     },
                     self.allocator,
@@ -510,11 +503,11 @@ impl<'a> PatternParser<'a> {
             }
 
             return Err(OxcDiagnostic::error("Invalid named reference")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         Err(OxcDiagnostic::error("Invalid atom escape")
-            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
+            .with_label(self.span_factory.create(span_start, self.reader.offset())))
     }
 
     // ```
@@ -547,7 +540,7 @@ impl<'a> PatternParser<'a> {
         };
 
         Some(ast::CharacterClassEscape {
-            span: self.span_factory.create(span_start, self.reader.span_position()),
+            span: self.span_factory.create(span_start, self.reader.offset()),
             kind,
         })
     }
@@ -586,13 +579,11 @@ impl<'a> PatternParser<'a> {
                         return Err(OxcDiagnostic::error(
                             "Invalid property name(negative + property of strings)",
                         )
-                        .with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
-                        ));
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                     }
 
                     return Ok(Some(ast::UnicodePropertyEscape {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.offset()),
                         negative,
                         strings: is_strings_related,
                         name,
@@ -603,7 +594,7 @@ impl<'a> PatternParser<'a> {
         }
 
         Err(OxcDiagnostic::error("Unterminated unicode property escape")
-            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
+            .with_label(self.span_factory.create(span_start, self.reader.offset())))
     }
 
     // ```
@@ -623,7 +614,7 @@ impl<'a> PatternParser<'a> {
             self.reader.advance();
 
             return Ok(Some(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::SingleEscape,
                 value: cp,
             }));
@@ -636,7 +627,7 @@ impl<'a> PatternParser<'a> {
                 self.reader.advance();
 
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::ControlLetter,
                     value: cp,
                 }));
@@ -651,7 +642,7 @@ impl<'a> PatternParser<'a> {
             self.reader.advance();
 
             return Ok(Some(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Null,
                 value: 0x00,
             }));
@@ -661,20 +652,20 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('x') {
             if let Some(cp) = self.consume_fixed_hex_digits(2) {
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::HexadecimalEscape,
                     value: cp,
                 }));
             }
 
             return Err(OxcDiagnostic::error("Invalid hexadecimal escape")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         // e.g. \u{1f600}
         if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(self.state.unicode_mode)? {
             return Ok(Some(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::UnicodeEscape,
                 value: cp,
             }));
@@ -684,7 +675,7 @@ impl<'a> PatternParser<'a> {
         if !self.state.unicode_mode {
             if let Some(cp) = self.consume_legacy_octal_escape_sequence() {
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Octal,
                     value: cp,
                 }));
@@ -694,7 +685,7 @@ impl<'a> PatternParser<'a> {
         // e.g. \.
         if let Some(cp) = self.consume_identity_escape() {
             return Ok(Some(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Identifier,
                 value: cp,
             }));
@@ -709,7 +700,7 @@ impl<'a> PatternParser<'a> {
     //   [^ ClassContents[?UnicodeMode, ?UnicodeSetsMode] ]
     // ```
     fn parse_character_class(&mut self) -> Result<Option<ast::CharacterClass<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if self.reader.eat('[') {
             let negative = self.reader.eat('^');
@@ -730,13 +721,12 @@ impl<'a> PatternParser<'a> {
                         _ => false,
                     })
                 {
-                    return Err(OxcDiagnostic::error("Invalid character class").with_label(
-                        self.span_factory.create(span_start, self.reader.span_position()),
-                    ));
+                    return Err(OxcDiagnostic::error("Invalid character class")
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 return Ok(Some(ast::CharacterClass {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     negative,
                     kind,
                     body,
@@ -744,7 +734,7 @@ impl<'a> PatternParser<'a> {
             }
 
             return Err(OxcDiagnostic::error("Unterminated character class")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         Ok(None)
@@ -790,13 +780,13 @@ impl<'a> PatternParser<'a> {
         let mut body = Vec::new_in(self.allocator);
 
         loop {
-            let range_span_start = self.reader.span_position();
+            let range_span_start = self.reader.offset();
 
             let Some(class_atom) = self.parse_class_atom()? else {
                 break;
             };
 
-            let span_start = self.reader.span_position();
+            let span_start = self.reader.offset();
             if !self.reader.eat('-') {
                 // ClassAtom[?UnicodeMode]
                 body.push(class_atom);
@@ -804,7 +794,7 @@ impl<'a> PatternParser<'a> {
             }
 
             let dash = ast::CharacterClassContents::Character(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Symbol,
                 value: '-' as u32,
             });
@@ -830,9 +820,7 @@ impl<'a> PatternParser<'a> {
                 // It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
                 if to.value < from.value {
                     return Err(OxcDiagnostic::error("Character class range out of order")
-                        .with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
-                        ));
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
@@ -853,9 +841,8 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
             // (Annex B)
             if self.state.unicode_mode {
-                return Err(OxcDiagnostic::error("Invalid character class range").with_label(
-                    self.span_factory.create(range_span_start, self.reader.span_position()),
-                ));
+                return Err(OxcDiagnostic::error("Invalid character class range")
+                    .with_label(self.span_factory.create(range_span_start, self.reader.offset())));
             }
 
             body.push(class_atom);
@@ -875,11 +862,11 @@ impl<'a> PatternParser<'a> {
     //   ClassAtomNoDash[?UnicodeMode]
     // ```
     fn parse_class_atom(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if self.reader.eat('-') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Symbol,
                 value: '-' as u32,
             })));
@@ -896,7 +883,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // (Annex B)
     fn parse_class_atom_no_dash(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if let Some(cp) = self
             .reader
@@ -906,7 +893,7 @@ impl<'a> PatternParser<'a> {
             self.reader.advance();
 
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Symbol,
                 value: cp,
             })));
@@ -915,7 +902,7 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('\\') {
             if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
                 return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Symbol,
                     value: '\\' as u32,
                 })));
@@ -926,7 +913,7 @@ impl<'a> PatternParser<'a> {
             }
 
             return Err(OxcDiagnostic::error("Invalid class atom")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         Ok(None)
@@ -952,7 +939,7 @@ impl<'a> PatternParser<'a> {
         // b
         if self.reader.eat('b') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::SingleEscape,
                 value: 0x08,
             })));
@@ -961,7 +948,7 @@ impl<'a> PatternParser<'a> {
         // [+UnicodeMode] -
         if self.state.unicode_mode && self.reader.eat('-') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Symbol,
                 value: '-' as u32,
             })));
@@ -980,7 +967,7 @@ impl<'a> PatternParser<'a> {
                     self.reader.advance();
 
                     return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.offset()),
                         kind: ast::CharacterKind::ControlLetter,
                         value: cp,
                     })));
@@ -1045,9 +1032,9 @@ impl<'a> PatternParser<'a> {
             return self.parse_class_set_union(class_set_operand);
         }
 
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         Err(OxcDiagnostic::error("Expected nonempty class set expression")
-            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
+            .with_label(self.span_factory.create(span_start, self.reader.offset())))
     }
 
     // ```
@@ -1096,14 +1083,12 @@ impl<'a> PatternParser<'a> {
             }
 
             if self.reader.eat2('&', '&') {
-                let span_start = self.reader.span_position();
+                let span_start = self.reader.offset();
                 if self.reader.eat('&') {
                     return Err(OxcDiagnostic::error(
                         "Unexpected `&` inside of class interseciton", // spellchecker:disable-line
                     )
-                    .with_label(
-                        self.span_factory.create(span_start, self.reader.span_position()),
-                    ));
+                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 if let Some(class_set_operand) = self.parse_class_set_operand()? {
@@ -1112,11 +1097,11 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
-            let span_start = self.reader.span_position();
+            let span_start = self.reader.offset();
             return Err(OxcDiagnostic::error(
                 "Invalid character in character class set interseciton", // spellchecker:disable-line
             )
-            .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+            .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         Ok((ast::CharacterClassContentsKind::Intersection, body))
@@ -1146,11 +1131,11 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
-            let span_start = self.reader.span_position();
+            let span_start = self.reader.offset();
             return Err(OxcDiagnostic::error(
                 "Invalid character in character class set subtraction",
             )
-            .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+            .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         Ok((ast::CharacterClassContentsKind::Subtraction, body))
@@ -1207,7 +1192,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(nested_class));
         }
 
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         if self.reader.eat3('\\', 'q', '{') {
             let (class_string_disjunction_contents, strings) =
                 self.parse_class_string_disjunction_contents()?;
@@ -1215,7 +1200,7 @@ impl<'a> PatternParser<'a> {
             if self.reader.eat('}') {
                 return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(Box::new_in(
                     ast::ClassStringDisjunction {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.offset()),
                         strings,
                         body: class_string_disjunction_contents,
                     },
@@ -1224,7 +1209,7 @@ impl<'a> PatternParser<'a> {
             }
 
             return Err(OxcDiagnostic::error("Unterminated class string disjunction")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         if let Some(class_set_character) = self.parse_class_set_character()? {
@@ -1241,7 +1226,7 @@ impl<'a> PatternParser<'a> {
     //   \ CharacterClassEscape[+UnicodeMode]
     // ```
     fn parse_nested_class(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         // [ [lookahead ≠ ^] ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
         // [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
@@ -1296,14 +1281,14 @@ impl<'a> PatternParser<'a> {
                         }
                     } {
                         return Err(OxcDiagnostic::error("Invalid character class").with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
+                            self.span_factory.create(span_start, self.reader.offset()),
                         ));
                     }
                 }
 
                 return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
                     ast::CharacterClass {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.offset()),
                         negative,
                         kind,
                         body,
@@ -1313,11 +1298,11 @@ impl<'a> PatternParser<'a> {
             }
 
             return Err(OxcDiagnostic::error("Unterminated nested class")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         // \ CharacterClassEscape[+UnicodeMode]
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('\\') {
             if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
@@ -1381,7 +1366,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // Returns (ClassString, contain_strings)
     fn parse_class_string(&mut self) -> Result<(ast::ClassString<'a>, bool)> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         let mut body = Vec::new_in(self.allocator);
         while let Some(class_set_character) = self.parse_class_set_character()? {
@@ -1393,7 +1378,7 @@ impl<'a> PatternParser<'a> {
 
         Ok((
             ast::ClassString {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 body,
             },
             contain_strings,
@@ -1408,7 +1393,7 @@ impl<'a> PatternParser<'a> {
     //   \b
     // ```
     fn parse_class_set_character(&mut self) -> Result<Option<ast::Character>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if let (Some(cp1), Some(cp2)) = (self.reader.peek(), self.reader.peek2()) {
             if !unicode::is_class_set_reserved_double_punctuator(cp1, cp2)
@@ -1417,7 +1402,7 @@ impl<'a> PatternParser<'a> {
                 self.reader.advance();
 
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Symbol,
                     value: cp1,
                 }));
@@ -1435,7 +1420,7 @@ impl<'a> PatternParser<'a> {
             {
                 self.reader.advance();
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::Identifier,
                     value: cp,
                 }));
@@ -1443,7 +1428,7 @@ impl<'a> PatternParser<'a> {
 
             if self.reader.eat('b') {
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     kind: ast::CharacterKind::SingleEscape,
                     value: 0x08,
                 }));
@@ -1462,7 +1447,7 @@ impl<'a> PatternParser<'a> {
     //   ? GroupName[?UnicodeMode]
     // ```
     fn parse_capturing_group(&mut self) -> Result<Option<ast::CapturingGroup<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if self.reader.eat('(') {
             let mut group_name = None;
@@ -1471,9 +1456,7 @@ impl<'a> PatternParser<'a> {
             if self.reader.eat('?') {
                 let Some(name) = self.consume_group_name()? else {
                     return Err(OxcDiagnostic::error("Capturing group name is missing")
-                        .with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
-                        ));
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 };
                 group_name = Some(name);
             }
@@ -1481,14 +1464,14 @@ impl<'a> PatternParser<'a> {
             let disjunction = self.parse_disjunction()?;
             if self.reader.eat(')') {
                 return Ok(Some(ast::CapturingGroup {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    span: self.span_factory.create(span_start, self.reader.offset()),
                     name: group_name,
                     body: disjunction,
                 }));
             }
 
             return Err(OxcDiagnostic::error("Unterminated capturing group")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         Ok(None)
@@ -1498,19 +1481,18 @@ impl<'a> PatternParser<'a> {
     // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     fn parse_ignore_group(&mut self) -> Result<Option<ast::IgnoreGroup<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if self.reader.eat3('(', '?', ':') {
             let disjunction = self.parse_disjunction()?;
 
             if !self.reader.eat(')') {
-                return Err(OxcDiagnostic::error("Unterminated ignore group").with_label(
-                    self.span_factory.create(span_start, self.reader.span_position()),
-                ));
+                return Err(OxcDiagnostic::error("Unterminated ignore group")
+                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
             }
 
             return Ok(Some(ast::IgnoreGroup {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
+                span: self.span_factory.create(span_start, self.reader.offset()),
                 // TODO: Stage3 ModifierFlags
                 enabling_modifiers: None,
                 disabling_modifiers: None,
@@ -1551,7 +1533,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
         }
 
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('{') {
             if let Some(min) = self.consume_decimal_digits() {
@@ -1573,8 +1555,7 @@ impl<'a> PatternParser<'a> {
                                     "Numbers out of order in braced quantifier",
                                 )
                                 .with_label(
-                                    self.span_factory
-                                        .create(span_start, self.reader.span_position()),
+                                    self.span_factory.create(span_start, self.reader.offset()),
                                 ));
                             }
 
@@ -1647,7 +1628,7 @@ impl<'a> PatternParser<'a> {
         // UnicodePropertyName=UnicodePropertyValue
         if let Some(name) = self.consume_unicode_property_name() {
             if self.reader.eat('=') {
-                let span_start = self.reader.span_position();
+                let span_start = self.reader.offset();
                 if let Some(value) = self.consume_unicode_property_value() {
                     // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
                     // It is a Syntax Error if the source text matched by UnicodePropertyName is not a Unicode property name or property alias listed in the “Property name and aliases” column of Table 65.
@@ -1656,7 +1637,7 @@ impl<'a> PatternParser<'a> {
                     if !unicode_property::is_valid_unicode_property(&name, &value) {
                         return Err(OxcDiagnostic::error("Invalid unicode property name")
                             .with_label(
-                                self.span_factory.create(span_start, self.reader.span_position()),
+                                self.span_factory.create(span_start, self.reader.offset()),
                             ));
                     }
 
@@ -1666,7 +1647,7 @@ impl<'a> PatternParser<'a> {
         }
         self.reader.rewind(checkpoint);
 
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         // LoneUnicodePropertyNameOrValue
         if let Some(name_or_value) = self.consume_unicode_property_value() {
             // [SS:EE] UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
@@ -1684,23 +1665,21 @@ impl<'a> PatternParser<'a> {
                     return Err(OxcDiagnostic::error(
                         "`UnicodeSetsMode` is required for binary property of strings",
                     )
-                    .with_label(
-                        self.span_factory.create(span_start, self.reader.span_position()),
-                    ));
+                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 return Ok(Some((name_or_value, None, true)));
             }
 
             return Err(OxcDiagnostic::error("Invalid unicode property name or value")
-                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
 
         Ok(None)
     }
 
     fn consume_unicode_property_name(&mut self) -> Option<SpanAtom<'a>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         let checkpoint = self.reader.checkpoint();
         while unicode::is_unicode_property_name_character(self.reader.peek()?) {
@@ -1711,11 +1690,11 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
+        Some(SpanAtom::from(&self.source_text[span_start..self.reader.offset()]))
     }
 
     fn consume_unicode_property_value(&mut self) -> Option<SpanAtom<'a>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         let checkpoint = self.reader.checkpoint();
         while unicode::is_unicode_property_value_character(self.reader.peek()?) {
@@ -1726,7 +1705,7 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
+        Some(SpanAtom::from(&self.source_text[span_start..self.reader.offset()]))
     }
 
     // ```
@@ -1734,7 +1713,7 @@ impl<'a> PatternParser<'a> {
     //   < RegExpIdentifierName[?UnicodeMode] >
     // ```
     fn consume_group_name(&mut self) -> Result<Option<SpanAtom<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if !self.reader.eat('<') {
             return Ok(None);
@@ -1747,7 +1726,7 @@ impl<'a> PatternParser<'a> {
         }
 
         Err(OxcDiagnostic::error("Unterminated capturing group name")
-            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
+            .with_label(self.span_factory.create(span_start, self.reader.offset())))
     }
 
     // ```
@@ -1756,14 +1735,12 @@ impl<'a> PatternParser<'a> {
     //   RegExpIdentifierName[?UnicodeMode] RegExpIdentifierPart[?UnicodeMode]
     // ```
     fn consume_reg_exp_idenfigier_name(&mut self) -> Result<Option<SpanAtom<'a>>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
 
         if self.consume_reg_exp_idenfigier_start()?.is_some() {
             while self.consume_reg_exp_idenfigier_part()?.is_some() {}
 
-            return Ok(Some(SpanAtom::from(
-                &self.source_text[span_start..self.reader.span_position()],
-            )));
+            return Ok(Some(SpanAtom::from(&self.source_text[span_start..self.reader.offset()])));
         }
 
         Ok(None)
@@ -1781,16 +1758,14 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(cp));
         }
 
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         if self.reader.eat('\\') {
             if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierStart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierStartChar lexical grammar production.
                 if !unicode::is_identifier_start_char(cp) {
                     return Err(OxcDiagnostic::error("Invalid unicode escape sequence")
-                        .with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
-                        ));
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 return Ok(Some(cp));
@@ -1798,7 +1773,7 @@ impl<'a> PatternParser<'a> {
         }
 
         if !self.state.unicode_mode {
-            let span_start = self.reader.span_position();
+            let span_start = self.reader.offset();
 
             if let Some(lead_surrogate) =
                 self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
@@ -1814,7 +1789,7 @@ impl<'a> PatternParser<'a> {
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierStart is not matched by the UnicodeIDStart lexical grammar production.
                     if !unicode::is_unicode_id_start(cp) {
                         return Err(OxcDiagnostic::error("Invalid surrogate pair").with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
+                            self.span_factory.create(span_start, self.reader.offset()),
                         ));
                     }
 
@@ -1840,16 +1815,14 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         if self.reader.eat('\\') {
             if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierPart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierPartChar lexical grammar production.
                 if !unicode::is_identifier_part_char(cp) {
                     return Err(OxcDiagnostic::error("Invalid unicode escape sequence")
-                        .with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
-                        ));
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
 
                 return Ok(Some(cp));
@@ -1857,7 +1830,7 @@ impl<'a> PatternParser<'a> {
         }
 
         if !self.state.unicode_mode {
-            let span_start = self.reader.span_position();
+            let span_start = self.reader.offset();
 
             if let Some(lead_surrogate) =
                 self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
@@ -1873,7 +1846,7 @@ impl<'a> PatternParser<'a> {
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierPart is not matched by the UnicodeIDContinue lexical grammar production.
                     if !unicode::is_unicode_id_continue(cp) {
                         return Err(OxcDiagnostic::error("Invalid surrogate pair").with_label(
-                            self.span_factory.create(span_start, self.reader.span_position()),
+                            self.span_factory.create(span_start, self.reader.offset()),
                         ));
                     }
 
@@ -1898,7 +1871,7 @@ impl<'a> PatternParser<'a> {
         &mut self,
         unicode_mode: bool,
     ) -> Result<Option<u32>> {
-        let span_start = self.reader.span_position();
+        let span_start = self.reader.offset();
         let checkpoint = self.reader.checkpoint();
 
         if self.reader.eat('u') {
@@ -1962,9 +1935,8 @@ impl<'a> PatternParser<'a> {
             }
 
             if self.state.unicode_mode {
-                return Err(OxcDiagnostic::error("Invalid unicode escape sequence").with_label(
-                    self.span_factory.create(span_start, self.reader.span_position()),
-                ));
+                return Err(OxcDiagnostic::error("Invalid unicode escape sequence")
+                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
             }
             self.reader.rewind(checkpoint);
         }

@@ -11,17 +11,13 @@ impl<'a> Reader<'a> {
         Self { source, char_indices: source.char_indices(), unicode_mode, index: 0 }
     }
 
-    // NOTE: Should be decoupled from the reader...?
-    // ```
-    // let reader_idx = reader.index;
-    // SpanPosition::new(source, unicode_mode).get(reader_idx);
-    // ````
-    pub fn span_position(&self) -> usize {
+    pub fn offset(&self) -> usize {
         let mut char_indices = self.char_indices.clone();
 
         if self.unicode_mode {
             char_indices.nth(self.index).map_or(self.source.len(), |(i, _)| i)
         } else {
+            // TODO: This has a bug when called for surrogate pairs...
             let mut utf16_units = 0;
             let mut byte_index = 0;
             for (idx, ch) in char_indices {
@@ -213,23 +209,23 @@ mod test {
             while reader.peek() != Some('^' as u32) {
                 reader.advance();
             }
-            let s1 = reader.span_position();
+            let s1 = reader.offset();
             assert!(reader.eat('^'));
-            let e1 = reader.span_position();
+            let e1 = reader.offset();
 
             while reader.peek() != Some('@' as u32) {
                 reader.advance();
             }
-            let s2 = reader.span_position();
+            let s2 = reader.offset();
             assert!(reader.eat('@'));
-            let e2 = reader.span_position();
+            let e2 = reader.offset();
 
             while reader.peek() != Some('$' as u32) {
                 reader.advance();
             }
-            let s3 = reader.span_position();
+            let s3 = reader.offset();
             assert!(reader.eat('$'));
-            let e3 = reader.span_position();
+            let e3 = reader.offset();
 
             assert_eq!(&source_text[s1..e1], "^");
             assert_eq!(&source_text[s2..e2], "@");
