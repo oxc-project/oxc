@@ -67,14 +67,16 @@ impl Rule for NoZeroFractions {
                 zero_fraction(number_literal.span, &fmt)
             },
             |fixer| {
-                let mut fixed = fmt;
+                let mut fixed = fmt.clone();
+                let is_decimal_integer = fmt.parse::<i64>().is_ok();
+                let is_member_expression =
+                    ctx.nodes().parent_node(node.id()).map_or(false, |parent_node| {
+                        matches!(parent_node.kind(), AstKind::MemberExpression(_))
+                    });
 
-                if ctx.nodes().parent_node(node.id()).map_or(false, |parent_node: &AstNode<'a>| {
-                    matches!(parent_node.kind(), AstKind::MemberExpression(_))
-                }) && !is_dangling_dot
-                {
+                if is_member_expression && is_decimal_integer {
                     fixed = format!("({fixed})");
-                };
+                }
 
                 // Handle special cases where a space is needed after certain keywords
                 // to prevent the number from being interpreted as a property access
@@ -182,6 +184,7 @@ fn test() {
         (r"const foo = -1.e+10", r"const foo = -1e+10"),
         (r"const foo = (1.).toString()", r"const foo = (1).toString()"),
         (r"1.00.toFixed(2)", r"(1).toFixed(2)"),
+        (r"1.010.toFixed(2)", r"1.01.toFixed(2)"),
         (r"1.00 .toFixed(2)", r"(1) .toFixed(2)"),
         (r"(1.00).toFixed(2)", r"(1).toFixed(2)"),
         (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
