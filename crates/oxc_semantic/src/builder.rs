@@ -60,10 +60,10 @@ macro_rules! control_flow {
 /// [`build`]: SemanticBuilder::build
 pub struct SemanticBuilder<'a> {
     /// source code of the parsed program
-    pub source_text: &'a str,
+    pub(crate) source_text: &'a str,
 
     /// source type of the parsed program
-    pub source_type: SourceType,
+    pub(crate) source_type: SourceType,
 
     trivias: Trivias,
 
@@ -71,30 +71,30 @@ pub struct SemanticBuilder<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
 
     // states
-    pub current_node_id: AstNodeId,
-    pub current_node_flags: NodeFlags,
-    pub current_symbol_flags: SymbolFlags,
-    pub current_scope_id: ScopeId,
+    pub(crate) current_node_id: AstNodeId,
+    pub(crate) current_node_flags: NodeFlags,
+    pub(crate) current_symbol_flags: SymbolFlags,
+    pub(crate) current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
-    pub function_stack: Vec<AstNodeId>,
+    pub(crate) function_stack: Vec<AstNodeId>,
     // To make a namespace/module value like
     // we need the to know the modules we are inside
     // and when we reach a value declaration we set it
     // to value like
-    pub namespace_stack: Vec<SymbolId>,
+    pub(crate) namespace_stack: Vec<SymbolId>,
     current_reference_flag: ReferenceFlag,
-    pub hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
+    pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
     // builders
-    pub nodes: AstNodes<'a>,
-    pub scope: ScopeTree,
-    pub symbols: SymbolTable,
+    pub(crate) nodes: AstNodes<'a>,
+    pub(crate) scope: ScopeTree,
+    pub(crate) symbols: SymbolTable,
 
     unresolved_references: UnresolvedReferencesStack<'a>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
-    pub label_builder: LabelBuilder<'a>,
+    pub(crate) label_builder: LabelBuilder<'a>,
 
     build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
@@ -104,9 +104,9 @@ pub struct SemanticBuilder<'a> {
     /// See: [`crate::checker::check`]
     check_syntax_error: bool,
 
-    pub cfg: Option<ControlFlowGraphBuilder<'a>>,
+    pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
 
-    pub class_table_builder: ClassTableBuilder,
+    pub(crate) class_table_builder: ClassTableBuilder,
 
     ast_node_records: Vec<AstNodeId>,
 }
@@ -278,7 +278,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Push a Syntax Error
-    pub fn error(&self, error: OxcDiagnostic) {
+    pub(crate) fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error);
     }
 
@@ -336,16 +336,16 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[inline]
-    pub fn current_scope_flags(&self) -> ScopeFlags {
+    pub(crate) fn current_scope_flags(&self) -> ScopeFlags {
         self.scope.get_flags(self.current_scope_id)
     }
 
     /// Is the current scope in strict mode?
-    pub fn strict_mode(&self) -> bool {
+    pub(crate) fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
     }
 
-    pub fn set_function_node_flag(&mut self, flag: NodeFlags) {
+    pub(crate) fn set_function_node_flag(&mut self, flag: NodeFlags) {
         if let Some(current_function) = self.function_stack.last() {
             *self.nodes.get_node_mut(*current_function).flags_mut() |= flag;
         }
@@ -357,7 +357,7 @@ impl<'a> SemanticBuilder<'a> {
     /// excludes: the flags which node cannot be declared alongside in a symbol table. Used to report forbidden declarations.
     ///
     /// Reports errors for conflicting identifier names.
-    pub fn declare_symbol_on_scope(
+    pub(crate) fn declare_symbol_on_scope(
         &mut self,
         span: Span,
         name: &str,
@@ -385,7 +385,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Declare a new symbol on the current scope.
-    pub fn declare_symbol(
+    pub(crate) fn declare_symbol(
         &mut self,
         span: Span,
         name: &str,
@@ -399,7 +399,7 @@ impl<'a> SemanticBuilder<'a> {
     /// current scope. Returns the symbol id if it exists and is not excluded by `excludes`.
     ///
     /// Only records a redeclaration error if `report_error` is `true`.
-    pub fn check_redeclaration(
+    pub(crate) fn check_redeclaration(
         &self,
         scope_id: ScopeId,
         span: Span,
@@ -420,7 +420,11 @@ impl<'a> SemanticBuilder<'a> {
     /// Declare an unresolved reference in the current scope.
     ///
     /// # Panics
-    pub fn declare_reference(&mut self, name: Atom<'a>, reference: Reference) -> ReferenceId {
+    pub(crate) fn declare_reference(
+        &mut self,
+        name: Atom<'a>,
+        reference: Reference,
+    ) -> ReferenceId {
         let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
@@ -433,7 +437,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
-    pub fn declare_shadow_symbol(
+    pub(crate) fn declare_shadow_symbol(
         &mut self,
         name: &str,
         span: Span,
@@ -516,7 +520,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
+    pub(crate) fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
         self.symbols.add_redeclaration(symbol_id, span);
     }
 

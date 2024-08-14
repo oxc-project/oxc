@@ -29,6 +29,8 @@ fn cjs() {
           }
         });",
     );
+    // Bail `cjs-module-lexer`.
+    test_same("0 && (module.exports = { version });");
 }
 
 #[test] // https://github.com/oxc-project/oxc/issues/4341
