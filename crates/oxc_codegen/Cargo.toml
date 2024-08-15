@@ -32,7 +32,6 @@ bitflags   = { workspace = true }
 nonmax     = { workspace = true }
 once_cell  = { workspace = true }
 daachorse  = { workspace = true }
-rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

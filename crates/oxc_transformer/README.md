@@ -85,7 +85,7 @@ variable names) which causes Babel's tests to fail when run on Oxc's output.
 In future we may find a way to work around this problem.
 
 So where we feel Babel's implementation is inefficient, but we have to follow it at present to pass their
-tests, make a `// TODO(improve-on-babel): Babel's impl is inefficiant because X, we could do better by Y`
+tests, make a `// TODO(improve-on-babel): Babel's impl is inefficient because X, we could do better by Y`
 comment, so we can return to it later.
 
 ### Clear "entry points" 
@@ -139,7 +139,7 @@ Only exception is that parent can check if child transform is enabled or not.
 
 #### Bad! Don't do this.
 
-Here some of logic from child tranform is "leaked" into the parent:
+Here some of logic from child transform is "leaked" into the parent:
 
 ```rs
 // src/do_stuff/mod.rs

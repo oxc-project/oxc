@@ -46,37 +46,29 @@ impl From<(Comment, AnnotationKind)> for AnnotationComment {
 }
 
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
-    pub(crate) fn get_leading_annotate_comment(
+    pub(crate) fn get_leading_annotate_comments(
         &mut self,
         node_start: u32,
-    ) -> Option<AnnotationComment> {
-        let maybe_leading_comment = self.try_get_leading_comment(node_start);
-        let comment = maybe_leading_comment?;
-        if self.latest_consumed_comment_end >= comment.span.end {
-            return None;
+    ) -> Vec<AnnotationComment> {
+        if !self.comment_options.preserve_annotate_comments {
+            return vec![];
         }
-        let real_end = match comment.kind {
-            CommentKind::SingleLine => comment.span.end,
-            CommentKind::MultiLine => comment.span.end + 2,
-        };
-        let source_code = self.source_text;
-        let content_between = &source_code[real_end as usize..node_start as usize];
-        // Used for VariableDeclaration (Rollup only respects "const" and only for the first one)
-        if content_between.chars().all(|ch| ch.is_ascii_whitespace()) {
-            let comment_content =
-                &source_code[comment.span.start as usize..comment.span.end as usize];
-            if let Some(m) = MATCHER.find_iter(&comment_content).next() {
-                let annotation_kind = match m.value() {
-                    0 | 1 => AnnotationKind::NO_SIDE_EFFECTS,
-                    2 | 3 => AnnotationKind::PURE,
-                    _ => unreachable!(),
-                };
-                return Some((*comment, annotation_kind).into());
-            }
-            None
-        } else {
-            None
-        }
+        self.get_leading_comments(self.latest_consumed_comment_end, node_start)
+            .filter_map(|comment| {
+                let source_code = self.source_text;
+                let comment_content =
+                    &source_code[comment.span.start as usize..comment.span.end as usize];
+                if let Some(m) = MATCHER.find_iter(&comment_content).next() {
+                    let annotation_kind = match m.value() {
+                        0 | 1 => AnnotationKind::NO_SIDE_EFFECTS,
+                        2 | 3 => AnnotationKind::PURE,
+                        _ => unreachable!(),
+                    };
+                    return Some((*comment, annotation_kind).into());
+                }
+                None
+            })
+            .collect::<Vec<_>>()
     }
 
     pub(crate) fn print_comment(&mut self, comment: AnnotationComment) {
@@ -93,11 +85,11 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         // in this example, `Object.getOwnPropertyNames(Symbol)` and `Object.getOwnPropertyNames(Symbol).filter()`, `Object.getOwnPropertyNames(Symbol).filter().map()`
         // share the same leading comment. since they both are call expr and has same span start, we need to avoid print the same comment multiple times.
         let comment_span = comment.span();
+
         if self.latest_consumed_comment_end >= comment_span.end {
             return;
         }
-        self.latest_consumed_comment_end = comment_span.end;
-        match comment.kind() {
+        let real_comment_end = match comment.kind() {
             CommentKind::SingleLine => {
                 self.print_str("//");
                 self.print_range_of_source_code(
@@ -105,6 +97,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
                 );
                 self.print_soft_newline();
                 self.print_indent();
+                comment_span.end
             }
             CommentKind::MultiLine => {
                 self.print_str("/*");
@@ -113,8 +106,10 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
                 );
                 self.print_str("*/");
                 self.print_soft_space();
+                comment_span.end + 2
             }
-        }
+        };
+        self.update_last_consumed_comment_end(real_comment_end);
         // FIXME: esbuild function `restoreExprStartFlags`
         self.start_of_default_export = self.code_len();
     }
@@ -123,21 +118,30 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         if !self.comment_options.preserve_annotate_comments {
             return;
         }
-        let mut annotation_kind_set = AnnotationKind::empty();
-        if let Some(comment) = self.try_take_moved_comment(node_start) {
+        let annotation_kind_set = AnnotationKind::empty();
+
+        let leading_annotate_comments = self.get_leading_annotate_comments(node_start);
+        self.print_comments(&leading_annotate_comments, annotation_kind_set);
+    }
+
+    #[inline]
+    pub(crate) fn print_comments(
+        &mut self,
+        leading_annotate_comment: &Vec<AnnotationComment>,
+        mut annotation_kind_set: AnnotationKind,
+    ) {
+        for &comment in leading_annotate_comment {
             let kind = comment.annotation_kind();
             if !annotation_kind_set.intersects(kind) {
                 annotation_kind_set.insert(kind);
                 self.print_comment(comment);
             }
+            self.update_last_consumed_comment_end(comment.span().end);
         }
-        let maybe_leading_annotate_comment = self.get_leading_annotate_comment(node_start);
-        if let Some(comment) = maybe_leading_annotate_comment {
-            let kind = comment.annotation_kind();
-            if !annotation_kind_set.intersects(kind) {
-                annotation_kind_set.insert(kind);
-                self.print_comment(comment);
-            }
-        }
+    }
+
+    #[inline]
+    pub fn update_last_consumed_comment_end(&mut self, end: u32) {
+        self.latest_consumed_comment_end = self.latest_consumed_comment_end.max(end);
     }
 }
