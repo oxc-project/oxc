@@ -404,7 +404,9 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
-    pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+    fn get_assignable_properties_for_namespaces(
+        stmts: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+    ) -> FxHashMap<&'a str, FxHashSet<Atom>> {
         let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
         for stmt in stmts {
             let Statement::ExportNamedDeclaration(decl) = stmt else { continue };
@@ -465,6 +467,12 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
         }
+        assignable_properties_for_namespace
+    }
+
+    pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+        let assignable_properties_for_namespace =
+            IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 
         let mut can_expando_function_names = FxHashSet::default();
         for stmt in stmts {
