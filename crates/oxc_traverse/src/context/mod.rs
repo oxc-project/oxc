@@ -379,6 +379,21 @@ impl<'a> TraverseCtx<'a> {
     ) -> ReferenceId {
         self.scoping.create_reference_in_current_scope(name, flag)
     }
+
+    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
+    ///
+    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
+    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
+    /// and generate `IdentifierReference`s with `TraverseCtx::create_reference_id`.
+    ///
+    /// This is a shortcut for `ctx.scoping.clone_identifier_reference`.
+    pub fn clone_identifier_reference(
+        &mut self,
+        ident: &IdentifierReference<'a>,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        self.scoping.clone_identifier_reference(ident, flag)
+    }
 }
 
 // Methods used internally within crate

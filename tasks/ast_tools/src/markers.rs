@@ -66,13 +66,13 @@ pub struct ScopeMarkers {
     pub enter_before: bool,
 }
 
-/// A struct representing the `#[scope(...)]` attribute.
+/// A struct representing all the helper attributes that might be used with `#[generate_derive(...)]`
 #[derive(Debug, Default, Serialize)]
 pub struct DeriveAttributes {
     pub clone_in: CloneInAttribute,
 }
 
-/// A enum representing the value passed in `#[clone_in(...)]` derive attribute.
+/// A enum representing the value passed in `#[clone_in(...)]` derive helper attribute.
 #[derive(Debug, Default, Serialize)]
 pub enum CloneInAttribute {
     #[default]

@@ -29,7 +29,7 @@ impl<'alloc, T> Box<'alloc, T> {
         // This pointer read is safe because the reference `self.0` is
         // guaranteed to be unique--not just now, but we're guaranteed it's not
         // borrowed from some other reference. This in turn is because we never
-        // construct an alloc::Box with a borrowed reference, only with a fresh
+        // construct a `Box` with a borrowed reference, only with a fresh
         // one just allocated from a Bump.
         unsafe { ptr::read(self.0.as_ptr()) }
     }

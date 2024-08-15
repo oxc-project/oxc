@@ -35,10 +35,9 @@ seq-macro        = { workspace = true }
 memchr = { workspace = true }
 
 [dev-dependencies]
-oxc_ast           = { workspace = true, features = ["serialize"] }
-serde_json        = { workspace = true }
-ouroboros         = { workspace = true } # for `multi-thread` example
-static_assertions = { workspace = true }
+oxc_ast    = { workspace = true, features = ["serialize"] }
+serde_json = { workspace = true }
+ouroboros  = { workspace = true } # for `multi-thread` example
 
 [features]
 # Expose Lexer for benchmarks

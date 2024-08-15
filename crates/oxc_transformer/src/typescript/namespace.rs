@@ -45,9 +45,14 @@ impl<'a> TypeScript<'a> {
                             self.ctx.error(namespace_not_supported(decl.span));
                         }
 
-                        if let Some(transformed_stmt) =
-                            self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None, ctx)
-                        {
+                        if let Some(transformed_stmt) = self.handle_nested(
+                            {
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ctx.ast.copy(&decl) }.unbox()
+                            },
+                            None,
+                            ctx,
+                        ) {
                             let name = decl.id.name();
                             if names.insert(name.clone()) {
                                 new_stmts
@@ -68,9 +73,14 @@ impl<'a> TypeScript<'a> {
                                     self.ctx.error(namespace_not_supported(decl.span));
                                 }
 
-                                if let Some(transformed_stmt) =
-                                    self.handle_nested(self.ctx.ast.copy(decl), None, ctx)
-                                {
+                                if let Some(transformed_stmt) = self.handle_nested(
+                                    {
+                                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                                        unsafe { self.ctx.ast.copy(decl) }
+                                    },
+                                    None,
+                                    ctx,
+                                ) {
                                     let name = decl.id.name();
                                     if names.insert(name.clone()) {
                                         let declaration = self.create_variable_declaration(name);
@@ -339,7 +349,9 @@ impl<'a> TypeScript<'a> {
             // (_N.M = {}) or (N = {})
             let mut logical_right = {
                 // _N.M
-                let assign_left = if let Some(parent_export) = self.ctx.ast.copy(&parent_export) {
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                let parent_export = unsafe { self.ctx.ast.copy(&parent_export) };
+                let assign_left = if let Some(parent_export) = parent_export {
                     self.ctx.ast.simple_assignment_target_member_expression(
                         self.ctx.ast.member_expression_static(
                             SPAN,
@@ -464,7 +476,8 @@ impl<'a> TypeScript<'a> {
                                     ),
                                 )
                                 .into(),
-                            self.ctx.ast.copy(init),
+                            // SAFETY: `ast.copy` is unsound! We need to fix.
+                            unsafe { self.ctx.ast.copy(init) },
                         ),
                     );
                 }

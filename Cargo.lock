@@ -1469,7 +1469,6 @@ dependencies = [
  "oxc_syntax",
  "serde",
  "serde_json",
- "static_assertions",
  "tsify",
  "wasm-bindgen",
 ]
@@ -1551,7 +1550,6 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "rustc-hash",
 ]
 
 [[package]]
@@ -1656,7 +1654,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "bitflags 2.6.0",
  "convert_case",
@@ -1691,7 +1689,6 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
- "static_assertions",
  "url",
 ]
 
@@ -1779,7 +1776,6 @@ dependencies = [
  "rustc-hash",
  "seq-macro",
  "serde_json",
- "static_assertions",
 ]
 
 [[package]]
@@ -2022,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "bpaf",
  "glob",

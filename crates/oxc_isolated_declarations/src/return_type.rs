@@ -157,6 +157,7 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
                 return;
             }
         }
-        self.return_expression = Some(self.ast.copy(&stmt.argument));
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        self.return_expression = Some(unsafe { self.ast.copy(&stmt.argument) });
     }
 }

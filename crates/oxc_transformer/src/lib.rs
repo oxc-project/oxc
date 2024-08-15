@@ -15,6 +15,10 @@ mod options;
 // Presets: <https://babel.dev/docs/presets>
 mod env;
 mod es2015;
+mod es2016;
+mod es2019;
+mod es2020;
+mod es2021;
 mod react;
 mod typescript;
 
@@ -25,6 +29,10 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
+use es2016::ES2016;
+use es2019::ES2019;
+use es2020::ES2020;
+use es2021::ES2021;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
@@ -37,7 +45,7 @@ pub use crate::{
     env::EnvOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
-    react::{ReactJsxRuntime, ReactOptions},
+    react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
     typescript::TypeScriptOptions,
 };
 use crate::{
@@ -58,6 +66,10 @@ pub struct Transformer<'a> {
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
+    x2_es2021: ES2021<'a>,
+    x2_es2020: ES2020<'a>,
+    x2_es2019: ES2019<'a>,
+    x2_es2016: ES2016<'a>,
     x3_es2015: ES2015<'a>,
 }
 
@@ -82,6 +94,10 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
             x1_react: React::new(options.react, Rc::clone(&ctx)),
+            x2_es2021: ES2021::new(options.es2021, Rc::clone(&ctx)),
+            x2_es2020: ES2020::new(options.es2020, Rc::clone(&ctx)),
+            x2_es2019: ES2019::new(options.es2019, Rc::clone(&ctx)),
+            x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
             x3_es2015: ES2015::new(options.es2015, ctx),
         }
     }
@@ -111,6 +127,7 @@ impl<'a> Transformer<'a> {
 impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_program(program, ctx);
+        self.x1_react.transform_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -160,10 +177,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr, ctx);
+        self.x2_es2021.transform_expression(expr, ctx);
+        self.x2_es2020.transform_expression(expr, ctx);
+        self.x2_es2016.transform_expression(expr, ctx);
         self.x3_es2015.transform_expression(expr);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x1_react.transform_expression_on_exit(expr, ctx);
         self.x3_es2015.transform_expression_on_exit(expr, ctx);
     }
 
@@ -244,13 +265,21 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_property_definition(def);
     }
 
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements(stmts);
+        self.x1_react.transform_statements(stmts, ctx);
+        self.x2_es2021.transform_statements(stmts, ctx);
+        self.x2_es2020.transform_statements(stmts, ctx);
+        self.x2_es2016.transform_statements(stmts, ctx);
         self.x3_es2015.enter_statements(stmts);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements_on_exit(stmts, ctx);
+        self.x1_react.transform_statements_on_exit(stmts, ctx);
+        self.x2_es2021.transform_statements_on_exit(stmts, ctx);
+        self.x2_es2020.transform_statements_on_exit(stmts, ctx);
+        self.x2_es2016.transform_statements_on_exit(stmts, ctx);
         self.x3_es2015.exit_statements(stmts);
     }
 
@@ -301,6 +330,10 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_for_in_statement(stmt, ctx);
+    }
+
+    fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2019.transform_catch_clause(clause, ctx);
     }
 
     fn enter_ts_export_assignment(
