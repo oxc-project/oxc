@@ -8,10 +8,10 @@ pub(crate) const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-private-methods",
     // "babel-plugin-transform-private-property-in-object",
     // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
-    // // ES2021
-    // "babel-plugin-transform-logical-assignment-operators",
+    // ES2021
+    "babel-plugin-transform-logical-assignment-operators",
     // "babel-plugin-transform-numeric-separator",
-    // // ES2020
+    // ES2020
     // "babel-plugin-transform-export-namespace-from",
     // "babel-plugin-transform-dynamic-import",
     "babel-plugin-transform-nullish-coalescing-operator",
@@ -19,7 +19,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // // [Syntax] "babel-plugin-transform-syntax-bigint",
     // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
     // // [Syntax] "babel-plugin-transform-syntax-import-meta",
-    // // ES2019
+    // ES2019
     "babel-plugin-transform-optional-catch-binding",
     // "babel-plugin-transform-json-strings",
     // // ES2018
@@ -32,7 +32,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-async-to-generator",
     // ES2016
     "babel-plugin-transform-exponentiation-operator",
-    // // ES2015
+    // ES2015
     "babel-plugin-transform-arrow-functions",
     // "babel-plugin-transform-function-name",
     // "babel-plugin-transform-shorthand-properties",

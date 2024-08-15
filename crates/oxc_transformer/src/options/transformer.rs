@@ -10,6 +10,7 @@ use crate::{
     es2016::ES2016Options,
     es2019::ES2019Options,
     es2020::ES2020Options,
+    es2021::ES2021Options,
     options::babel::BabelOptions,
     react::ReactOptions,
     typescript::TypeScriptOptions,
@@ -43,6 +44,8 @@ pub struct TransformOptions {
     pub es2019: ES2019Options,
 
     pub es2020: ES2020Options,
+
+    pub es2021: ES2021Options,
 }
 
 impl TransformOptions {
@@ -128,6 +131,11 @@ impl TransformOptions {
             enable_plugin(plugin_name, options, &env_options, &targets).is_some()
         });
 
+        let es2021 = ES2021Options::default().with_logical_assignment_operators({
+            let plugin_name = "transform-logical-assignment-operators";
+            enable_plugin(plugin_name, options, &env_options, &targets).is_some()
+        });
+
         let typescript = {
             let plugin_name = "transform-typescript";
             from_value::<TypeScriptOptions>(get_plugin_options(plugin_name, options))
@@ -162,6 +170,7 @@ impl TransformOptions {
             es2016,
             es2019,
             es2020,
+            es2021,
         })
     }
 }

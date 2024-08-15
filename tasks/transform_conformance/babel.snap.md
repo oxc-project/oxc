@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 462/947
+Passed: 466/953
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -433,6 +433,10 @@ Passed: 462/947
 * shipped-proposals/new-class-features-chrome-90/input.js
 * shipped-proposals/new-class-features-chrome-94/input.js
 * shipped-proposals/new-class-features-firefox-70/input.js
+
+# babel-plugin-transform-logical-assignment-operators (4/6)
+* logical-assignment/general-semantics/input.js
+* logical-assignment/null-coalescing/input.js
 
 # babel-plugin-transform-nullish-coalescing-operator (2/12)
 * assumption-noDocumentAll/transform/input.js
