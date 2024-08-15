@@ -20,7 +20,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
     // // [Syntax] "babel-plugin-transform-syntax-import-meta",
     // // ES2019
-    // "babel-plugin-transform-optional-catch-binding",
+    "babel-plugin-transform-optional-catch-binding",
     // "babel-plugin-transform-json-strings",
     // // ES2018
     // "babel-plugin-transform-async-generator-functions",

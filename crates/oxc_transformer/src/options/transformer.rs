@@ -8,6 +8,7 @@ use crate::{
     env::{can_enable_plugin, EnvOptions, Versions},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
+    es2019::ES2019Options,
     es2020::ES2020Options,
     options::babel::BabelOptions,
     react::ReactOptions,
@@ -38,6 +39,8 @@ pub struct TransformOptions {
     pub es2015: ES2015Options,
 
     pub es2016: ES2016Options,
+
+    pub es2019: ES2019Options,
 
     pub es2020: ES2020Options,
 }
@@ -115,6 +118,11 @@ impl TransformOptions {
             enable_plugin(plugin_name, options, &env_options, &targets).is_some()
         });
 
+        let es2019 = ES2019Options::default().with_optional_catch_binding({
+            let plugin_name = "transform-optional-catch-binding";
+            enable_plugin(plugin_name, options, &env_options, &targets).is_some()
+        });
+
         let es2020 = ES2020Options::default().with_nullish_coalescing_operator({
             let plugin_name = "transform-nullish-coalescing-operator";
             enable_plugin(plugin_name, options, &env_options, &targets).is_some()
@@ -152,6 +160,7 @@ impl TransformOptions {
             react,
             es2015,
             es2016,
+            es2019,
             es2020,
         })
     }

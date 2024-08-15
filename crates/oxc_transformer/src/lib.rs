@@ -16,6 +16,7 @@ mod options;
 mod env;
 mod es2015;
 mod es2016;
+mod es2019;
 mod es2020;
 mod react;
 mod typescript;
@@ -28,6 +29,7 @@ mod helpers {
 use std::{path::Path, rc::Rc};
 
 use es2016::ES2016;
+use es2019::ES2019;
 use es2020::ES2020;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, Trivias};
@@ -63,6 +65,7 @@ pub struct Transformer<'a> {
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
     x2_es2020: ES2020<'a>,
+    x2_es2019: ES2019<'a>,
     x2_es2016: ES2016<'a>,
     x3_es2015: ES2015<'a>,
 }
@@ -88,8 +91,9 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
             x1_react: React::new(options.react, Rc::clone(&ctx)),
-            x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
             x2_es2020: ES2020::new(options.es2020, Rc::clone(&ctx)),
+            x2_es2019: ES2019::new(options.es2019, Rc::clone(&ctx)),
+            x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
             x3_es2015: ES2015::new(options.es2015, ctx),
         }
     }
@@ -315,6 +319,10 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_for_in_statement(stmt, ctx);
+    }
+
+    fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x2_es2019.transform_catch_clause(clause, ctx);
     }
 
     fn enter_ts_export_assignment(

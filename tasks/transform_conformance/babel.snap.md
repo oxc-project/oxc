@@ -1,8 +1,9 @@
 commit: 12619ffe
 
-Passed: 458/943
+Passed: 462/947
 
 # All Passed:
+* babel-plugin-transform-optional-catch-binding
 * babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self

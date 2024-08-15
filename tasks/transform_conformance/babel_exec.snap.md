@@ -1,9 +1,10 @@
 commit: 12619ffe
 
-Passed: 12/18
+Passed: 13/19
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
+* babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 
