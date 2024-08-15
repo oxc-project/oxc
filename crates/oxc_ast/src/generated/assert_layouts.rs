@@ -202,7 +202,7 @@ const _: () = {
     assert!(offset_of!(SpreadElement, argument) == 8usize);
 
     assert!(size_of::<Argument>() == 16usize);
-    assert!(align_of::<Argument>() == 8usize);
+    assert!(align_of::<Argument>() == 16usize);
 
     assert!(size_of::<UpdateExpression>() == 32usize);
     assert!(align_of::<UpdateExpression>() == 8usize);
