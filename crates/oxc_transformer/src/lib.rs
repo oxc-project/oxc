@@ -45,7 +45,7 @@ pub use crate::{
     env::EnvOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
-    react::{ReactJsxRuntime, ReactOptions},
+    react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
     typescript::TypeScriptOptions,
 };
 use crate::{
@@ -127,6 +127,7 @@ impl<'a> Transformer<'a> {
 impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_program(program, ctx);
+        self.x1_react.transform_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -183,6 +184,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x1_react.transform_expression_on_exit(expr, ctx);
         self.x3_es2015.transform_expression_on_exit(expr, ctx);
     }
 
@@ -265,6 +267,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements(stmts);
+        self.x1_react.transform_statements(stmts, ctx);
         self.x2_es2021.transform_statements(stmts, ctx);
         self.x2_es2020.transform_statements(stmts, ctx);
         self.x2_es2016.transform_statements(stmts, ctx);
@@ -273,6 +276,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements_on_exit(stmts, ctx);
+        self.x1_react.transform_statements_on_exit(stmts, ctx);
         self.x2_es2021.transform_statements_on_exit(stmts, ctx);
         self.x2_es2020.transform_statements_on_exit(stmts, ctx);
         self.x2_es2016.transform_statements_on_exit(stmts, ctx);
