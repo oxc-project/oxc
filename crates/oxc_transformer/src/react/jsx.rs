@@ -523,7 +523,10 @@ impl<'a> ReactJsx<'a> {
                         // deopt if spreading an object with `__proto__` key
                         if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
                         {
-                            arguments.push(Argument::from(self.ast().copy(&spread.argument)));
+                            arguments.push(Argument::from({
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast().copy(&spread.argument) }
+                            }));
                             continue;
                         }
                     }
@@ -813,10 +816,12 @@ impl<'a> ReactJsx<'a> {
             }
             JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
                 Expression::ObjectExpression(expr) if !expr.has_proto() => {
-                    properties.extend(self.ast().copy(&expr.properties));
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    properties.extend(unsafe { self.ast().copy(&expr.properties) });
                 }
                 expr => {
-                    let argument = self.ast().copy(expr);
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    let argument = unsafe { self.ast().copy(expr) };
                     let object_property =
                         self.ast().object_property_kind_spread_element(attr.span, argument);
                     properties.push(object_property);
@@ -842,7 +847,10 @@ impl<'a> ReactJsx<'a> {
                 self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
             }
             Some(JSXAttributeValue::ExpressionContainer(c)) => match &c.expression {
-                e @ match_expression!(JSXExpression) => self.ast().copy(e.to_expression()),
+                e @ match_expression!(JSXExpression) => {
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast().copy(e.to_expression()) }
+                }
                 JSXExpression::EmptyExpression(e) => {
                     self.ast().expression_boolean_literal(e.span, true)
                 }
@@ -859,7 +867,10 @@ impl<'a> ReactJsx<'a> {
         match child {
             JSXChild::Text(text) => self.transform_jsx_text(text),
             JSXChild::ExpressionContainer(e) => match &e.expression {
-                e @ match_expression!(JSXExpression) => Some(self.ast().copy(e.to_expression())),
+                e @ match_expression!(JSXExpression) => {
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(unsafe { self.ast().copy(e.to_expression()) })
+                }
                 JSXExpression::EmptyExpression(_) => None,
             },
             JSXChild::Element(e) => {

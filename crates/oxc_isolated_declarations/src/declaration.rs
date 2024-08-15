@@ -77,7 +77,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         init =
                             self.transform_template_to_string(lit).map(Expression::StringLiteral);
                     } else {
-                        init = Some(self.ast.copy(init_expr));
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        init = Some(unsafe { self.ast.copy(init_expr) });
                     }
                 } else if !decl.kind.is_const()
                     || !matches!(init_expr, Expression::TemplateLiteral(_))
@@ -94,10 +95,14 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
         let id = binding_type.map_or_else(
-            || self.ast.copy(&decl.id),
+            || {
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&decl.id) }
+            },
             |ts_type| {
                 self.ast.binding_pattern(
-                    self.ast.copy(&decl.id.kind),
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&decl.id.kind) },
                     Some(self.ast.ts_type_annotation(SPAN, ts_type)),
                     decl.id.optional,
                 )
@@ -149,11 +154,13 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &Box<'a, TSModuleDeclaration<'a>>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         if decl.declare {
-            return self.ast.copy(decl);
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return unsafe { self.ast.copy(decl) };
         }
 
         let Some(body) = &decl.body else {
-            return self.ast.copy(decl);
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return unsafe { self.ast.copy(decl) };
         };
 
         match body {
@@ -161,7 +168,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 let inner = self.transform_ts_module_declaration(decl);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    self.ast.copy(&decl.id),
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&decl.id) },
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     decl.kind,
                     self.is_declare(),
@@ -171,7 +179,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 let body = self.transform_ts_module_block(block);
                 self.ast.alloc_ts_module_declaration(
                     decl.span,
-                    self.ast.copy(&decl.id),
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&decl.id) },
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     decl.kind,
                     self.is_declare(),
@@ -213,7 +222,8 @@ impl<'a> IsolatedDeclarations<'a> {
             Declaration::TSTypeAliasDeclaration(alias_decl) => {
                 self.visit_ts_type_alias_declaration(alias_decl);
                 if !check_binding || self.scope.has_reference(&alias_decl.id.name) {
-                    Some(self.ast.copy(decl))
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(unsafe { self.ast.copy(decl) })
                 } else {
                     None
                 }
@@ -221,7 +231,8 @@ impl<'a> IsolatedDeclarations<'a> {
             Declaration::TSInterfaceDeclaration(interface_decl) => {
                 self.visit_ts_interface_declaration(interface_decl);
                 if !check_binding || self.scope.has_reference(&interface_decl.id.name) {
-                    Some(self.ast.copy(decl))
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(unsafe { self.ast.copy(decl) })
                 } else {
                     None
                 }
@@ -250,7 +261,8 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Declaration::TSImportEqualsDeclaration(decl) => {
                 if !check_binding || self.scope.has_reference(&decl.id.name) {
-                    Some(Declaration::TSImportEqualsDeclaration(self.ast.copy(decl)))
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(Declaration::TSImportEqualsDeclaration(unsafe { self.ast.copy(decl) }))
                 } else {
                     None
                 }

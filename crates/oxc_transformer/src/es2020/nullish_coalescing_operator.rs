@@ -138,7 +138,13 @@ impl<'a> NullishCoalescingOperator<'a> {
         let op = BinaryOperator::StrictInequality;
         let null = ctx.ast.expression_null_literal(SPAN);
         let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
-        let right = ctx.ast.expression_binary(SPAN, ctx.ast.copy(&reference), op, ctx.ast.void_0());
+        let right = ctx.ast.expression_binary(
+            SPAN,
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { ctx.ast.copy(&reference) },
+            op,
+            ctx.ast.void_0(),
+        );
         let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
 
         *expr = ctx.ast.expression_conditional(SPAN, test, reference, logical_expr.right);

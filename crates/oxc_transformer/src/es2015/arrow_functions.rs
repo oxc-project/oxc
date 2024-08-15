@@ -184,15 +184,17 @@ impl<'a> ArrowFunctions<'a> {
         arrow_function_expr: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut body = self.ctx.ast.copy(&arrow_function_expr.body);
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        let mut body = unsafe { self.ctx.ast.copy(&arrow_function_expr.body) };
 
         if arrow_function_expr.expression {
             let first_stmt = body.statements.remove(0);
             if let Statement::ExpressionStatement(stmt) = first_stmt {
-                let return_statement = self
-                    .ctx
-                    .ast
-                    .statement_return(stmt.span, Some(self.ctx.ast.copy(&stmt.expression)));
+                let return_statement = self.ctx.ast.statement_return(
+                    stmt.span,
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(unsafe { self.ctx.ast.copy(&stmt.expression) }),
+                );
                 body.statements.push(return_statement);
             }
         }
@@ -222,10 +224,13 @@ impl<'a> ArrowFunctions<'a> {
             r#async: arrow_function_expr.r#async,
             declare: false,
             this_param: None,
-            params: self.ctx.ast.copy(&arrow_function_expr.params),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            params: unsafe { self.ctx.ast.copy(&arrow_function_expr.params) },
             body: Some(body),
-            type_parameters: self.ctx.ast.copy(&arrow_function_expr.type_parameters),
-            return_type: self.ctx.ast.copy(&arrow_function_expr.return_type),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            type_parameters: unsafe { self.ctx.ast.copy(&arrow_function_expr.type_parameters) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return_type: unsafe { self.ctx.ast.copy(&arrow_function_expr.return_type) },
             scope_id: Cell::new(scope_id),
         };
 

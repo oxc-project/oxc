@@ -99,12 +99,15 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
         let mut new_ast_stmts = self.ast.vec::<Statement<'a>>();
-        for stmt in Self::remove_function_overloads_implementation(self.ast.copy(stmts)) {
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        for stmt in Self::remove_function_overloads_implementation(unsafe { self.ast.copy(stmts) })
+        {
             if let Some(decl) = stmt.as_declaration() {
                 if let Some(decl) = self.transform_declaration(decl, false) {
                     new_ast_stmts.push(Statement::from(decl));
                 } else {
-                    new_ast_stmts.push(Statement::from(self.ast.copy(decl)));
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    new_ast_stmts.push(Statement::from(unsafe { self.ast.copy(decl) }));
                 }
             }
         }
@@ -127,19 +130,27 @@ impl<'a> IsolatedDeclarations<'a> {
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
         // 4. Collect transformed indexes
-        for stmt in Self::remove_function_overloads_implementation(self.ast.copy(stmts)) {
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        for stmt in Self::remove_function_overloads_implementation(unsafe { self.ast.copy(stmts) })
+        {
             match stmt {
                 match_declaration!(Statement) => {
                     match stmt.to_declaration() {
                         Declaration::VariableDeclaration(decl) => {
                             variables_declarations.push_back(
-                                self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&decl.declarations) }
+                                    .into_iter()
+                                    .collect::<Vec<_>>(),
                             );
                             variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::UsingDeclaration(decl) => {
                             variables_declarations.push_back(
-                                self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&decl.declarations) }
+                                    .into_iter()
+                                    .collect::<Vec<_>>(),
                             );
                             variable_transformed_indexes.push_back(FxHashSet::default());
                         }
