@@ -326,6 +326,24 @@ impl TraverseScoping {
         let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
         self.create_reference(name, symbol_id, flag)
     }
+
+    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
+    ///
+    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
+    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
+    /// and generate `IdentifierReference`s with `TraverseScoping::create_reference_id`.
+    pub fn clone_identifier_reference<'a>(
+        &mut self,
+        ident: &IdentifierReference<'a>,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        let reference =
+            self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
+                unreachable!("IdentifierReference must have a reference_id");
+            }));
+        let symbol_id = reference.symbol_id();
+        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flag)
+    }
 }
 
 // Methods used internally within crate
