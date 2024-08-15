@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 456/931
+Passed: 458/943
 
 # All Passed:
 * babel-preset-react
@@ -432,6 +432,18 @@ Passed: 456/931
 * shipped-proposals/new-class-features-chrome-90/input.js
 * shipped-proposals/new-class-features-chrome-94/input.js
 * shipped-proposals/new-class-features-firefox-70/input.js
+
+# babel-plugin-transform-nullish-coalescing-operator (2/12)
+* assumption-noDocumentAll/transform/input.js
+* assumption-noDocumentAll/transform-in-default-destructuring/input.js
+* assumption-noDocumentAll/transform-in-default-param/input.js
+* assumption-noDocumentAll/transform-in-function/input.js
+* assumption-noDocumentAll/transform-static-refs-in-default/input.js
+* assumption-noDocumentAll/transform-static-refs-in-function/input.js
+* nullish-coalescing/transform-in-default-destructuring/input.js
+* nullish-coalescing/transform-in-default-param/input.js
+* nullish-coalescing/transform-in-function/input.js
+* nullish-coalescing/transform-loose/input.js
 
 # babel-plugin-transform-exponentiation-operator (3/4)
 * regression/4349/input.js

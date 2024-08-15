@@ -14,7 +14,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // // ES2020
     // "babel-plugin-transform-export-namespace-from",
     // "babel-plugin-transform-dynamic-import",
-    // "babel-plugin-transform-nullish-coalescing-operator",
+    "babel-plugin-transform-nullish-coalescing-operator",
     // "babel-plugin-transform-optional-chaining",
     // // [Syntax] "babel-plugin-transform-syntax-bigint",
     // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",

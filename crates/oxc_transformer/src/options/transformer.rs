@@ -8,6 +8,7 @@ use crate::{
     env::{can_enable_plugin, EnvOptions, Versions},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
+    es2020::ES2020Options,
     options::babel::BabelOptions,
     react::ReactOptions,
     typescript::TypeScriptOptions,
@@ -37,6 +38,8 @@ pub struct TransformOptions {
     pub es2015: ES2015Options,
 
     pub es2016: ES2016Options,
+
+    pub es2020: ES2020Options,
 }
 
 impl TransformOptions {
@@ -112,6 +115,11 @@ impl TransformOptions {
             enable_plugin(plugin_name, options, &env_options, &targets).is_some()
         });
 
+        let es2020 = ES2020Options::default().with_nullish_coalescing_operator({
+            let plugin_name = "transform-nullish-coalescing-operator";
+            enable_plugin(plugin_name, options, &env_options, &targets).is_some()
+        });
+
         let typescript = {
             let plugin_name = "transform-typescript";
             from_value::<TypeScriptOptions>(get_plugin_options(plugin_name, options))
@@ -144,6 +152,7 @@ impl TransformOptions {
             react,
             es2015,
             es2016,
+            es2020,
         })
     }
 }
