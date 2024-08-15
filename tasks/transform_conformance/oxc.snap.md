@@ -1,8 +1,9 @@
 commit: 12619ffe
 
-Passed: 5/8
+Passed: 6/9
 
 # All Passed:
+* babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-jsx
 
 

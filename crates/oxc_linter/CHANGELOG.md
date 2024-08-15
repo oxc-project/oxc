@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.7.2] - 2024-08-15
+
+### Features
+
+- 97e38cd linter: Add fixer for unicorn/prefer-optional-catch-binding (#4867) (heygsc)
+- 93ae1c7 linter: Eslint-plugin-react jsx-props-no-spread-multi (#4866) (keita hino)
+- 0a23610 linter: Add fixer for unicorn/prefer-array-flat-map (#4844) (heygsc)
+- 13c7b1b linter/jsx-a11y: Add fixer for aria-unsupported-elements (#4854) (DonIsaac)
+- a6195a6 linter/jsx-a11y: Add fixer for anchor-has-content (#4852) (DonIsaac)
+- 4d28d03 task/website: Support render `subschemas.all_of` (#4800) (mysteryven)
+
+### Bug Fixes
+
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- a08d7a7 linter/jsx-a11y: Reduce false negatives for html-has-lang (#4855) (DonIsaac)
+- a81ce3a linter/no-unused-vars: Do not delete function expressions when fixing (#4848) (DonIsaac)
+
+### Refactor
+
+- 56f033c linter: Improve diagnostics for several jsx-a11y rules (#4853) (DonIsaac)
+- c53c210 linter/no-unused-vars: Split fixer logic into multiple files (#4847) (DonIsaac)
+
 ## [0.7.1] - 2024-08-12
 
 ### Features
