@@ -293,6 +293,8 @@ fn test_vars_destructure() {
             "const { a: { b }, ...rest } = obj; console.log(rest)",
             Some(json!( [{ "ignoreRestSiblings": true }] )),
         ),
+        // https://github.com/oxc-project/oxc/issues/4839
+        (r#"const l="",{e}=r"#, None),
     ];
 
     let fix = vec![
@@ -339,6 +341,8 @@ fn test_vars_destructure() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        // TODO: destructures in VariableDeclarations with more than one declarator
+        (r#"const l="",{e}=r"#, r"const {e}=r", None, FixKind::All),
         // renaming
         // (
         //     "let a = 1; a = 2;",

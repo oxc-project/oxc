@@ -19,7 +19,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         Symbol<'s, 'a>: PartialEq<T>,
     {
         let Some(own_position) = list.iter().position(|el| self == el) else {
-            debug_assert!(false, "Symbol not found within its own parent declaration list");
+            // Happens when the symbol is in a destructuring pattern.
             return fixer.noop();
         };
         let mut delete_range = own.span();

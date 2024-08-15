@@ -48,3 +48,19 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'l' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ const l="",{e}=r
+   ·       ┬
+   ·       ╰── 'l' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'e' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ const l="",{e}=r
+   ·             ┬
+   ·             ╰── 'e' is declared here
+   ╰────
+  help: Consider removing this declaration.
