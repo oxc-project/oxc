@@ -702,10 +702,10 @@ impl<'a> Statement<'a> {
 }
 
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
-    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+    fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
         Statement::ExpressionStatement(Box::from_in(
             ExpressionStatement { span: expression.span(), expression },
-            alloc,
+            allocator,
         ))
     }
 }
