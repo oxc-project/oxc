@@ -1,14 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
-   ╭─[no_unused_vars.tsx:1:9]
- 1 │ const { a, ...rest } = obj
-   ·         ┬
-   ·         ╰── 'a' is declared here
-   ╰────
-  help: Consider removing this declaration.
-
   ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used.
    ╭─[no_unused_vars.tsx:1:15]
  1 │ const { a, ...rest } = obj
@@ -46,5 +38,13 @@ source: crates/oxc_linter/src/tester.rs
  1 │ const { a: { b }, ...rest } = obj; console.log(a)
    ·                      ──┬─
    ·                        ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ const { a: { b }, ...rest } = obj; console.log(rest)
+   ·              ┬
+   ·              ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
