@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 453/927
+Passed: 456/931
 
 # All Passed:
 * babel-preset-react
@@ -432,6 +432,9 @@ Passed: 453/927
 * shipped-proposals/new-class-features-chrome-90/input.js
 * shipped-proposals/new-class-features-chrome-94/input.js
 * shipped-proposals/new-class-features-firefox-70/input.js
+
+# babel-plugin-transform-exponentiation-operator (3/4)
+* regression/4349/input.js
 
 # babel-plugin-transform-arrow-functions (1/6)
 * assumption-newableArrowFunctions-false/basic/input.js

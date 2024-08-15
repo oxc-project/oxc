@@ -30,8 +30,8 @@ pub(crate) const PLUGINS: &[&str] = &[
     // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
     // // ES2017
     // "babel-plugin-transform-async-to-generator",
-    // // ES2016
-    // "babel-plugin-transform-exponentiation-operator",
+    // ES2016
+    "babel-plugin-transform-exponentiation-operator",
     // // ES2015
     "babel-plugin-transform-arrow-functions",
     // "babel-plugin-transform-function-name",

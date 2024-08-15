@@ -1,8 +1,9 @@
 commit: 12619ffe
 
-Passed: 8/14
+Passed: 10/16
 
 # All Passed:
+* babel-plugin-transform-exponentiation-operator
 * babel-plugin-transform-arrow-functions
 
 

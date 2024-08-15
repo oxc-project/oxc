@@ -15,6 +15,7 @@ mod options;
 // Presets: <https://babel.dev/docs/presets>
 mod env;
 mod es2015;
+mod es2016;
 mod react;
 mod typescript;
 
@@ -25,6 +26,7 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
+use es2016::ES2016;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
@@ -58,6 +60,7 @@ pub struct Transformer<'a> {
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
+    x2_es2016: ES2016<'a>,
     x3_es2015: ES2015<'a>,
 }
 
@@ -82,6 +85,7 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
             x1_react: React::new(options.react, Rc::clone(&ctx)),
+            x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
             x3_es2015: ES2015::new(options.es2015, ctx),
         }
     }
@@ -160,6 +164,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr, ctx);
+        self.x2_es2016.transform_expression(expr, ctx);
         self.x3_es2015.transform_expression(expr);
     }
 
@@ -244,13 +249,15 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_property_definition(def);
     }
 
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements(stmts);
+        self.x2_es2016.transform_statements(stmts, ctx);
         self.x3_es2015.enter_statements(stmts);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements_on_exit(stmts, ctx);
+        self.x2_es2016.transform_statements_on_exit(stmts, ctx);
         self.x3_es2015.exit_statements(stmts);
     }
 
