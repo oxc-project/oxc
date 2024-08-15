@@ -1,13 +1,13 @@
-use std::collections::HashSet;
-use std::path::PathBuf;
+use std::{collections::HashSet, path::PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_ast::Trivias;
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::{ast::*, visit::walk, Trivias, Visit};
 use oxc_codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::{Parser, ParserReturn};
-use oxc_semantic::{Semantic, SemanticBuilder};
+use oxc_semantic::{ScopeFlags, Semantic, SemanticBuilder};
 use oxc_span::{SourceType, Span};
 use oxc_transformer::{TransformOptions, Transformer};
 
@@ -81,10 +81,10 @@ impl Driver {
             return;
         }
 
-        // TODO
-        // if self.check_semantic(&semantic_ret.semantic) {
-        // return;
-        // }
+        if let Some(errors) = SemanticChecker::new(&semantic_ret.semantic).check(&program) {
+            self.errors.extend(errors);
+            return;
+        }
 
         if let Some(options) = self.transform.clone() {
             Transformer::new(
@@ -129,39 +129,89 @@ impl Driver {
         }
         false
     }
+}
 
+struct SemanticChecker<'a, 'b> {
     #[allow(unused)]
-    fn check_semantic(&mut self, semantic: &Semantic<'_>) -> bool {
-        if are_all_identifiers_resolved(semantic) {
-            return false;
+    semantic: &'b Semantic<'a>,
+
+    missing_references: Vec<Span>,
+    missing_symbols: Vec<Span>,
+}
+
+impl<'a, 'b> Visit<'a> for SemanticChecker<'a, 'b> {
+    // Check missing `ReferenceId` on `IdentifierReference`.
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        if ident.reference_id.get().is_none() {
+            self.missing_references.push(ident.span);
         }
-        self.errors.push(OxcDiagnostic::error("symbol or reference is not set"));
-        false
+    }
+
+    // Check missing `SymbolId` on `BindingIdentifier`.
+    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
+        if ident.symbol_id.get().is_none() {
+            self.missing_symbols.push(ident.span);
+        }
+    }
+
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+        if func.is_ts_declare_function() {
+            return;
+        }
+        walk::walk_function(self, func, flags);
+    }
+
+    fn visit_declaration(&mut self, it: &Declaration<'a>) {
+        if it.is_typescript_syntax() {
+            return;
+        }
+        walk::walk_declaration(self, it);
+    }
+
+    fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
+        // skip `if (function foo() {}) {}`
+        if !matches!(stmt.test, Expression::FunctionExpression(_)) {
+            self.visit_expression(&stmt.test);
+        }
+        // skip `if (true) function foo() {} else function bar() {}`
+        if !stmt.consequent.is_declaration() {
+            self.visit_statement(&stmt.consequent);
+        }
+        if let Some(alternate) = &stmt.alternate {
+            if !alternate.is_declaration() {
+                self.visit_statement(alternate);
+            }
+        }
+    }
+
+    fn visit_ts_type(&mut self, _it: &TSType<'a>) {
+        /* noop */
     }
 }
 
-#[allow(unused)]
-fn are_all_identifiers_resolved(semantic: &Semantic<'_>) -> bool {
-    use oxc_ast::AstKind;
-    use oxc_semantic::AstNode;
+impl<'a, 'b> SemanticChecker<'a, 'b> {
+    fn new(semantic: &'b Semantic<'a>) -> Self {
+        Self { semantic, missing_references: vec![], missing_symbols: vec![] }
+    }
 
-    let ast_nodes = semantic.nodes();
-    let has_non_resolved = ast_nodes.iter().any(|node| {
-        match node.kind() {
-            AstKind::BindingIdentifier(id) => {
-                let mut parents = ast_nodes.iter_parents(node.id()).map(AstNode::kind);
-                parents.next(); // Exclude BindingIdentifier itself
-                if let (Some(AstKind::Function(_)), Some(AstKind::IfStatement(_))) =
-                    (parents.next(), parents.next())
-                {
-                    return false;
-                }
-                id.symbol_id.get().is_none()
-            }
-            AstKind::IdentifierReference(ref_id) => ref_id.reference_id.get().is_none(),
-            _ => false,
+    fn check(mut self, program: &Program<'a>) -> Option<Vec<OxcDiagnostic>> {
+        if program.source_type.is_typescript_definition() {
+            return None;
         }
-    });
 
-    !has_non_resolved
+        self.visit_program(program);
+
+        let diagnostics = self
+            .missing_references
+            .into_iter()
+            .map(|span| OxcDiagnostic::error("Missing ReferenceId").with_label(span))
+            .chain(
+                self.missing_symbols
+                    .into_iter()
+                    .map(|span| OxcDiagnostic::error("Missing SymbolId").with_label(span)),
+            )
+            .collect::<Vec<_>>();
+
+        (!diagnostics.is_empty()).then_some(diagnostics)
+    }
 }
