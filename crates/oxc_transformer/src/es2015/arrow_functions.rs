@@ -81,9 +81,8 @@ impl<'a> ArrowFunctions<'a> {
 
     fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
         if self.this_var.is_none() {
-            self.this_var = Some(BoundIdentifier::new_uid(
+            self.this_var = Some(BoundIdentifier::new_uid_in_current_scope(
                 "this",
-                ctx.current_scope_id(),
                 SymbolFlags::FunctionScopedVariable,
                 ctx,
             ));

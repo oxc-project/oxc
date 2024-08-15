@@ -1,44 +1,53 @@
 pub struct Reader<'a> {
     source: &'a str,
     unicode_mode: bool,
+    /// Current index for `u8_units`(unicode mode) or `u16_units`(non-unicode mode).
     index: usize,
+    /// Even in non-unicode mode, used for `Span` offset calculation.
     u8_units: Vec<(usize, char)>,
     u16_units: Vec<u16>,
+    /// Last offset caches for non-unicode mode.
+    last_offset_indices: (usize, usize),
 }
 
 impl<'a> Reader<'a> {
     pub fn new(source: &'a str, unicode_mode: bool) -> Self {
-        // TODO: This may not be efficient in some cases.
-        // Implements lookahead cache with `VecDeque`?
+        // NOTE: Distinguish these 2 units looks cleaner, but it may not be necessary.
+        // As as a parser, AST `Character[kind=Symbol]` only needs to be aware of this for surrogate pairs.
+        // NOTE: Collecting `Vec` may not be efficient if the source is too large.
+        // Implements lookahead cache with `VecDeque` is better...?
         let u8_units = source.char_indices().collect::<Vec<_>>();
         let u16_units = if unicode_mode { "" } else { source }.encode_utf16().collect::<Vec<_>>();
-        Self { source, unicode_mode, index: 0, u8_units, u16_units }
+
+        Self { source, unicode_mode, index: 0, u8_units, u16_units, last_offset_indices: (0, 0) }
     }
 
-    pub fn offset(&self) -> usize {
+    pub fn offset(&mut self) -> usize {
         if self.unicode_mode {
-            self.u8_units.get(self.index).map_or(self.source.len(), |(i, _)| *i)
+            self.u8_units.get(self.index).map_or(self.source.len(), |(idx, _)| *idx)
         } else {
-            // TODO: This has a bug(start>end) when called for surrogate pairs...
-            let mut utf16_units = 0;
-            let mut byte_index = 0;
-            for (idx, ch) in &self.u8_units {
-                if utf16_units == self.index {
+            let (mut u16_idx, mut u8_idx) = self.last_offset_indices;
+            for (idx, ch) in &self.u8_units[u8_idx..] {
+                if self.index <= u16_idx {
+                    self.last_offset_indices = (u16_idx, u8_idx);
                     return *idx;
                 }
 
-                utf16_units += ch.len_utf16();
-                byte_index = idx + ch.len_utf8();
+                u16_idx += ch.len_utf16();
+                u8_idx += 1;
             }
-            byte_index
+            self.source.len()
         }
     }
 
+    // NOTE: For now, `usize` is enough for the checkpoint.
+    // But `last_offset_indices` should be stored as well for more performance?
     pub fn checkpoint(&self) -> usize {
         self.index
     }
     pub fn rewind(&mut self, checkpoint: usize) {
         self.index = checkpoint;
+        self.last_offset_indices = (0, 0);
     }
 
     pub fn advance(&mut self) {

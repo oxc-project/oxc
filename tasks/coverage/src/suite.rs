@@ -1,5 +1,4 @@
 use std::{
-    collections::HashSet,
     fs,
     io::{stdout, Read, Write},
     panic::UnwindSafe,
@@ -11,33 +10,25 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
-use oxc_allocator::Allocator;
-use oxc_ast::Trivias;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
-use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
-use oxc_span::{SourceType, Span};
+use oxc_span::SourceType;
 use oxc_tasks_common::{normalize_path, Snapshot};
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
 use walkdir::WalkDir;
 
-use crate::{project_root, AppArgs};
+use crate::{project_root, AppArgs, Driver};
 
 #[derive(Debug, PartialEq)]
 pub enum TestResult {
     ToBeRun,
     Passed,
     IncorrectlyPassed,
-    #[allow(unused)]
-    // (actual, expected)
-    Mismatch(String, String),
+    Mismatch(/* case */ &'static str, /* actual */ String, /* expected */ String),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
     RuntimeError(String),
-    CodegenError(/* reason */ &'static str),
-    DuplicatedComments(String),
     Snapshot(String),
 }
 
@@ -318,28 +309,16 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
     /// Execute the parser once and get the test result
     fn execute(&mut self, source_type: SourceType) -> TestResult {
-        let allocator = Allocator::default();
         let source_text = self.code();
-        let parser_ret = Parser::new(&allocator, source_text, source_type)
-            .allow_return_outside_function(self.allow_return_outside_function())
-            .parse();
-        if let Some(res) = self.check_comments(&parser_ret.trivias) {
-            return res;
-        }
+        let path = self.path();
 
-        // Make sure serialization doesn't crash; also for code coverage.
-        let _serializer = parser_ret.program.serializer();
-
-        let program = allocator.alloc(parser_ret.program);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(parser_ret.trivias)
-            .with_check_syntax_error(true)
-            .build_module_record(PathBuf::new(), program)
-            .build(program);
-        if let Some(res) = self.check_semantic(&semantic_ret.semantic) {
-            return res;
-        }
-        let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
+        let mut driver = Driver {
+            path: path.to_path_buf(),
+            allow_return_outside_function: self.allow_return_outside_function(),
+            ..Driver::default()
+        };
+        driver.run(source_text, source_type);
+        let errors = driver.errors();
 
         let result = if errors.is_empty() {
             Ok(String::new())
@@ -349,7 +328,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             let mut output = String::new();
             for error in errors {
                 let error = error.with_source_code(NamedSource::new(
-                    normalize_path(self.path()),
+                    normalize_path(path),
                     source_text.to_string(),
                 ));
                 handler.render_report(&mut output, error.as_ref()).unwrap();
@@ -359,8 +338,8 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         let should_fail = self.should_fail();
         match result {
-            Err(err) if should_fail => TestResult::CorrectError(err, parser_ret.panicked),
-            Err(err) if !should_fail => TestResult::ParseError(err, parser_ret.panicked),
+            Err(err) if should_fail => TestResult::CorrectError(err, driver.panicked),
+            Err(err) if !should_fail => TestResult::ParseError(err, driver.panicked),
             Ok(_) if should_fail => TestResult::IncorrectlyPassed,
             Ok(_) if !should_fail => TestResult::Passed,
             _ => unreachable!(),
@@ -375,13 +354,12 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 )?;
                 writer.write_all(error.as_bytes())?;
             }
-            TestResult::Mismatch(ast_string, expected_ast_string) => {
-                writer.write_all(
-                    format!("Mismatch: {:?}\n", normalize_path(self.path())).as_bytes(),
-                )?;
+            TestResult::Mismatch(case, ast_string, expected_ast_string) => {
+                writer
+                    .write_all(format!("{case}: {:?}\n", normalize_path(self.path())).as_bytes())?;
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
-                    println!("Mismatch: {:?}", normalize_path(self.path()));
+                    println!("{case}: {:?}", normalize_path(self.path()));
                 }
             }
             TestResult::RuntimeError(error) => {
@@ -396,22 +374,8 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     format!("Expect Syntax Error: {:?}\n", normalize_path(self.path())).as_bytes(),
                 )?;
             }
-            TestResult::CodegenError(reason) => {
-                writer.write_all(
-                    format!("{reason} failed: {:?}\n", normalize_path(self.path())).as_bytes(),
-                )?;
-            }
             TestResult::Snapshot(snapshot) => {
                 writer.write_all(snapshot.as_bytes())?;
-            }
-            TestResult::DuplicatedComments(comment) => {
-                writer.write_all(
-                    format!(
-                        "Duplicated comments \"{comment}\": {:?}\n",
-                        normalize_path(self.path())
-                    )
-                    .as_bytes(),
-                )?;
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }
@@ -436,21 +400,5 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             )?;
         }
         Ok(())
-    }
-
-    fn check_semantic(&self, _semantic: &oxc_semantic::Semantic<'_>) -> Option<TestResult> {
-        None
-    }
-
-    fn check_comments(&self, trivias: &Trivias) -> Option<TestResult> {
-        let mut uniq: HashSet<Span> = HashSet::new();
-        for comment in trivias.comments() {
-            if !uniq.insert(comment.span) {
-                return Some(TestResult::DuplicatedComments(
-                    comment.span.source_text(self.code()).to_string(),
-                ));
-            }
-        }
-        None
     }
 }

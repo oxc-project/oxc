@@ -7,12 +7,12 @@ use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
-    number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
 };
 
 use crate::{
+    annotation_comment::AnnotationKind,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     Codegen, Context, Operator,
 };
@@ -154,6 +154,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
                 decl.gen(p, ctx);
                 p.print_semicolon_after_statement();
             }
+        }
+
+        if p.comment_options.preserve_annotate_comments {
+            p.update_last_consumed_comment_end(self.span().end);
         }
     }
 }
@@ -592,17 +596,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
         }
 
         if p.comment_options.preserve_annotate_comments
-            && matches!(self.kind, VariableDeclarationKind::Const)
+            && !matches!(self.kind, VariableDeclarationKind::Const)
         {
-            if let Some(declarator) = self.declarations.first() {
-                if let Some(ref init) = declarator.init {
-                    if let Some(leading_annotate_comment) =
-                        p.get_leading_annotate_comment(self.span.start)
-                    {
-                        p.move_comment(init.span().start, leading_annotate_comment);
-                    }
-                }
-            }
+            p.update_last_consumed_comment_end(self.span.start);
         }
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
@@ -865,23 +861,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
+
         if p.comment_options.preserve_annotate_comments {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
                     p.gen_comments(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
-                    if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
+                    if !matches!(var_decl.kind, VariableDeclarationKind::Const) =>
                 {
-                    if let Some(declarator) = var_decl.declarations.first() {
-                        if let Some(ref init) = declarator.init {
-                            if let Some(leading_annotate_comment) =
-                                p.get_leading_annotate_comment(self.span.start)
-                            {
-                                p.move_comment(init.span().start, leading_annotate_comment);
-                            }
-                        }
-                    }
+                    p.update_last_consumed_comment_end(self.span.start);
                 }
                 _ => {}
             };
@@ -1077,6 +1066,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::TSNonNullExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.gen_expr(p, precedence, ctx),
         }
+        if p.comment_options.preserve_annotate_comments {
+            p.update_last_consumed_comment_end(self.span().end);
+        }
     }
 }
 
@@ -1153,26 +1145,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
                 p.print_str("-");
             }
 
-            let result = if self.base == NumberBase::Float {
-                print_non_negative_float(abs_value, p)
-            } else {
-                let value = abs_value as u64;
-                // If integers less than 1000, we know that exponential notation will always be longer than
-                // the integer representation. This is not the case for 1000 which is "1e3".
-                if value < 1000 {
-                    format!("{value}")
-                } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
-                    let hex = format!("{value:#x}");
-                    let result = print_non_negative_float(abs_value, p);
-                    if hex.len() < result.len() {
-                        hex
-                    } else {
-                        result
-                    }
-                } else {
-                    print_non_negative_float(abs_value, p)
-                }
-            };
+            let result = print_non_negative_float(abs_value, p);
             let bytes = result.as_str();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
@@ -1188,15 +1161,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
 
 // TODO: refactor this with less allocations
 // <https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_printer/js_printer.go#L3472>
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIFY }>) -> String {
     use oxc_syntax::number::ToJsString;
-    let mut result = value.to_js_string();
+    if value < 1000.0 && value.fract() == 0.0 {
+        return value.to_js_string();
+    }
+    let mut result = format!("{value:e}");
     let chars = result.as_bytes();
     let len = chars.len();
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-
         unsafe { String::from_utf8_unchecked(num.to_vec()) }
     };
 
@@ -1241,6 +1217,16 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
             result = format!("{}e{}", u8_to_string(remaining), exponent);
         } else {
             result = u8_to_string(chars);
+        }
+    }
+
+    if MINIFY && value.fract() == 0.0 {
+        let value = value as u64;
+        if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
+            let hex = format!("{value:#x}");
+            if hex.len() < result.len() {
+                result = hex;
+            }
         }
     }
 
@@ -1422,14 +1408,12 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
-        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+        let annotate_comments = p.get_leading_annotate_comments(self.span.start);
+        if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            if let Some(comment) = annotate_comment {
-                p.print_comment(comment);
-            }
+            p.print_comments(&annotate_comments, AnnotationKind::empty());
             p.add_source_mapping(self.span.start);
             self.callee.gen_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
@@ -2093,14 +2077,12 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
-        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+        let annotate_comment = p.get_leading_annotate_comments(self.span.start);
+        if !annotate_comment.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            if let Some(comment) = annotate_comment {
-                p.print_comment(comment);
-            }
+            p.print_comments(&annotate_comment, AnnotationKind::empty());
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");

@@ -109,13 +109,17 @@ impl TypeScriptTranspileCase {
         let baseline_text = baseline.print();
 
         if expected.files.len() != baseline.files.len() {
-            return TestResult::Mismatch(baseline_text, expected_text);
+            return TestResult::Mismatch("Mismatch", baseline_text, expected_text);
         }
 
         for (base, expected) in baseline.files.iter().zip(expected.files) {
             if expected.original_diagnostic.is_empty() {
                 if base.oxc_printed != expected.oxc_printed {
-                    return TestResult::Mismatch(base.oxc_printed.clone(), expected.oxc_printed);
+                    return TestResult::Mismatch(
+                        "Mismatch",
+                        base.oxc_printed.clone(),
+                        expected.oxc_printed,
+                    );
                 }
             } else {
                 let matched = base.oxc_diagnostics.iter().zip(expected.original_diagnostic).all(

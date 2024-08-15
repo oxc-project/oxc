@@ -3,8 +3,6 @@ use oxc_span::{Atom as SpanAtom, Span};
 
 // NOTE: Should keep all `enum` size <= 16
 
-// TODO: `Disjunction` may be redundant, `Vec<Alternative>` may be enough.
-
 #[derive(Debug)]
 pub struct RegExpLiteral<'a> {
     pub span: Span,
@@ -112,6 +110,7 @@ pub struct Quantifier<'a> {
 /// Single character.
 #[derive(Debug, Copy, Clone)]
 pub struct Character {
+    /// This will be invalid position when `UnicodeMode` is disabled and `value` is a surrogate pair.
     pub span: Span,
     pub kind: CharacterKind,
     /// Unicode code point or UTF-16 code unit.

@@ -169,7 +169,7 @@ impl<'a> ReactJsxSource<'a> {
 
     fn get_filename_var(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
         if self.filename_var.is_none() {
-            self.filename_var = Some(BoundIdentifier::new_root_uid(
+            self.filename_var = Some(BoundIdentifier::new_uid_in_root_scope(
                 FILE_NAME_VAR,
                 SymbolFlags::FunctionScopedVariable,
                 ctx,

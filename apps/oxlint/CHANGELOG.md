@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.7.2] - 2024-08-15
+
+### Documentation
+
+- 955a4b4 oxlint: Improve cli doc regarding fix and `-D all` (Boshen)
+
 ## [0.7.0] - 2024-08-05
 
 ### Features

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.7.2] - 2024-08-15
+
+### Features
+
+- 4d28d03 task/website: Support render `subschemas.all_of` (#4800) (mysteryven)
+
 ## [0.7.1] - 2024-08-12
 
 ### Features
