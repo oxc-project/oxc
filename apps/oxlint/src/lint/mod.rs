@@ -92,7 +92,7 @@ impl Runner for LintRunner {
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
         let lint_options = LintOptions::default()
             .with_filter(filter)
-            .with_config_path(basic_options.config)
+            .with_config_path(basic_options.config().map(Into::into))
             .with_fix(fix_options.fix_kind())
             .with_react_plugin(enable_plugins.react_plugin)
             .with_unicorn_plugin(enable_plugins.unicorn_plugin)

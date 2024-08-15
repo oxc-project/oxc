@@ -1,4 +1,8 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 use bpaf::Bpaf;
 use oxc_linter::{AllowWarnDeny, FixKind};
@@ -62,12 +66,47 @@ pub struct BasicOptions {
     /// Oxlint configuration file (experimental)
     ///  * only `.json` extension is supported
     ///  * tries to be compatible with the ESLint v8's format
+    ///
+    /// If not provided, Oxlint will look for the following files in the current
+    /// directory (in order):
+    ///
+    /// - `.oxlintrc.json`
+    /// - `oxlintrc.json`
+    /// - `.oxlint.json`
+    /// - `oxlint.json
     #[bpaf(long, short, argument("./oxlintrc.json"))]
-    pub config: Option<PathBuf>,
+    config: Option<PathBuf>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references for import plugin
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
+}
+
+impl BasicOptions {
+    const DEFAULT_OXLINTRC_NAMES: [&'static str; 4] =
+        [".oxlintrc.json", ".oxlint.json", "oxlintrc.json", "oxlint.json"];
+    pub fn config(&self) -> Option<Cow<'_, Path>> {
+        if let Some(config) = &self.config {
+            return Some(config.into());
+        }
+
+        let pwd = std::env::current_dir().ok()?;
+        for entry in std::fs::read_dir(&pwd).ok()? {
+            let Ok(entry) = entry else {
+                continue;
+            };
+            let name_string = entry.file_name();
+            let path = entry.path();
+            let Some(name) = name_string.to_str() else {
+                continue;
+            };
+            if Self::DEFAULT_OXLINTRC_NAMES.contains(&name) && path.is_file() {
+                return Some(Cow::Owned(path));
+            }
+        }
+
+        None
+    }
 }
 
 // This is formatted according to
