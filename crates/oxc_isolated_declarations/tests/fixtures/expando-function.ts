@@ -11,8 +11,14 @@ export namespace NS {
 }
 
 export namespace foo {
+  // declaration must be exported
   let bar = 42;
   export let baz = 100;
+}
+
+// namespace must be exported
+namespace foo {
+  export let bar = 42;
 }
 
 foo.bar = 42;
