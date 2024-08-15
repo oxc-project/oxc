@@ -22,6 +22,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                     SemanticBuilder::new(source_text, source_type)
                         .with_trivias(ret.trivias.clone())
                         .with_build_jsdoc(true)
+                        .with_statistics(ret.statistics.clone())
                         .build_module_record(PathBuf::new(), program)
                         .build(program)
                 });

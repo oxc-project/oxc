@@ -11,12 +11,14 @@ use oxc_allocator::{Allocator, Box, IntoIn, Vec};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
+use crate::stats::StatisticsCell;
 
 /// AST builder for creating AST nodes
 #[derive(Clone, Copy)]
 #[non_exhaustive]
 pub struct AstBuilder<'a> {
     pub allocator: &'a Allocator,
+    pub(crate) stats: Option<StatisticsCell<'a>>,
 }
 
 impl<'a> AstBuilder<'a> {
@@ -29,6 +31,7 @@ impl<'a> AstBuilder<'a> {
     /// - value
     #[inline]
     pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
+        self.observe_node();
         BooleanLiteral { span, value }
     }
 
@@ -52,6 +55,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn null_literal(self, span: Span) -> NullLiteral {
+        self.observe_node();
         NullLiteral { span }
     }
 
@@ -86,6 +90,7 @@ impl<'a> AstBuilder<'a> {
     where
         S: IntoIn<'a, &'a str>,
     {
+        self.observe_node();
         NumericLiteral { span, value, raw: raw.into_in(self.allocator), base }
     }
 
@@ -125,6 +130,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         BigIntLiteral { span, raw: raw.into_in(self.allocator), base }
     }
 
@@ -164,6 +170,7 @@ impl<'a> AstBuilder<'a> {
         value: EmptyObject,
         regex: RegExp<'a>,
     ) -> RegExpLiteral<'a> {
+        self.observe_node();
         RegExpLiteral { span, value, regex }
     }
 
@@ -197,6 +204,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         StringLiteral { span, value: value.into_in(self.allocator) }
     }
 
@@ -234,6 +242,8 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
+        self.observe_node();
+        self.observe_scope();
         Program { span, source_type, hashbang, directives, body, scope_id: Default::default() }
     }
 
@@ -1475,6 +1485,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         IdentifierName { span, name: name.into_in(self.allocator) }
     }
 
@@ -1505,6 +1516,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
+        self.observe_reference();
         IdentifierReference {
             span,
             name: name.into_in(self.allocator),
@@ -1544,6 +1557,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
+        self.observe_symbol();
         BindingIdentifier {
             span,
             name: name.into_in(self.allocator),
@@ -1578,6 +1593,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         LabelIdentifier { span, name: name.into_in(self.allocator) }
     }
 
@@ -1604,6 +1620,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn this_expression(self, span: Span) -> ThisExpression {
+        self.observe_node();
         ThisExpression { span }
     }
 
@@ -1633,6 +1650,7 @@ impl<'a> AstBuilder<'a> {
         elements: Vec<'a, ArrayExpressionElement<'a>>,
         trailing_comma: Option<Span>,
     ) -> ArrayExpression<'a> {
+        self.observe_node();
         ArrayExpression { span, elements, trailing_comma }
     }
 
@@ -1716,6 +1734,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn elision(self, span: Span) -> Elision {
+        self.observe_node();
         Elision { span }
     }
 
@@ -1745,6 +1764,7 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, ObjectPropertyKind<'a>>,
         trailing_comma: Option<Span>,
     ) -> ObjectExpression<'a> {
+        self.observe_node();
         ObjectExpression { span, properties, trailing_comma }
     }
 
@@ -1857,6 +1877,7 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> ObjectProperty<'a> {
+        self.observe_node();
         ObjectProperty { span, kind, key, value, init, method, shorthand, computed }
     }
 
@@ -1959,6 +1980,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
+        self.observe_node();
         TemplateLiteral { span, quasis, expressions }
     }
 
@@ -2000,6 +2022,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         TaggedTemplateExpression {
             span,
             tag,
@@ -2049,6 +2072,7 @@ impl<'a> AstBuilder<'a> {
         tail: bool,
         value: TemplateElementValue<'a>,
     ) -> TemplateElement<'a> {
+        self.observe_node();
         TemplateElement { span, tail, value }
     }
 
@@ -2183,6 +2207,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool,
     ) -> ComputedMemberExpression<'a> {
+        self.observe_node();
         ComputedMemberExpression { span, object, expression, optional }
     }
 
@@ -2226,6 +2251,7 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName<'a>,
         optional: bool,
     ) -> StaticMemberExpression<'a> {
+        self.observe_node();
         StaticMemberExpression { span, object, property, optional }
     }
 
@@ -2266,6 +2292,7 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> PrivateFieldExpression<'a> {
+        self.observe_node();
         PrivateFieldExpression { span, object, field, optional }
     }
 
@@ -2311,6 +2338,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         CallExpression {
             span,
             arguments,
@@ -2368,6 +2396,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         NewExpression {
             span,
             callee,
@@ -2414,6 +2443,7 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> MetaProperty<'a> {
+        self.observe_node();
         MetaProperty { span, meta, property }
     }
 
@@ -2444,6 +2474,7 @@ impl<'a> AstBuilder<'a> {
     /// - argument: The expression being spread.
     #[inline]
     pub fn spread_element(self, span: Span, argument: Expression<'a>) -> SpreadElement<'a> {
+        self.observe_node();
         SpreadElement { span, argument }
     }
 
@@ -2506,6 +2537,7 @@ impl<'a> AstBuilder<'a> {
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
     ) -> UpdateExpression<'a> {
+        self.observe_node();
         UpdateExpression { span, operator, prefix, argument }
     }
 
@@ -2544,6 +2576,7 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> UnaryExpression<'a> {
+        self.observe_node();
         UnaryExpression { span, operator, argument }
     }
 
@@ -2582,6 +2615,7 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> BinaryExpression<'a> {
+        self.observe_node();
         BinaryExpression { span, left, operator, right }
     }
 
@@ -2622,6 +2656,7 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
+        self.observe_node();
         PrivateInExpression { span, left, operator, right }
     }
 
@@ -2662,6 +2697,7 @@ impl<'a> AstBuilder<'a> {
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> LogicalExpression<'a> {
+        self.observe_node();
         LogicalExpression { span, left, operator, right }
     }
 
@@ -2702,6 +2738,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> ConditionalExpression<'a> {
+        self.observe_node();
         ConditionalExpression { span, test, consequent, alternate }
     }
 
@@ -2742,6 +2779,7 @@ impl<'a> AstBuilder<'a> {
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> AssignmentExpression<'a> {
+        self.observe_node();
         AssignmentExpression { span, operator, left, right }
     }
 
@@ -3075,6 +3113,7 @@ impl<'a> AstBuilder<'a> {
         rest: Option<AssignmentTargetRest<'a>>,
         trailing_comma: Option<Span>,
     ) -> ArrayAssignmentTarget<'a> {
+        self.observe_node();
         ArrayAssignmentTarget { span, elements, rest, trailing_comma }
     }
 
@@ -3116,6 +3155,7 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
         rest: Option<AssignmentTargetRest<'a>>,
     ) -> ObjectAssignmentTarget<'a> {
+        self.observe_node();
         ObjectAssignmentTarget { span, properties, rest }
     }
 
@@ -3150,6 +3190,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         target: AssignmentTarget<'a>,
     ) -> AssignmentTargetRest<'a> {
+        self.observe_node();
         AssignmentTargetRest { span, target }
     }
 
@@ -3224,6 +3265,7 @@ impl<'a> AstBuilder<'a> {
         binding: AssignmentTarget<'a>,
         init: Expression<'a>,
     ) -> AssignmentTargetWithDefault<'a> {
+        self.observe_node();
         AssignmentTargetWithDefault { span, binding, init }
     }
 
@@ -3324,6 +3366,7 @@ impl<'a> AstBuilder<'a> {
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a>>,
     ) -> AssignmentTargetPropertyIdentifier<'a> {
+        self.observe_node();
         AssignmentTargetPropertyIdentifier { span, binding, init }
     }
 
@@ -3360,6 +3403,7 @@ impl<'a> AstBuilder<'a> {
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
     ) -> AssignmentTargetPropertyProperty<'a> {
+        self.observe_node();
         AssignmentTargetPropertyProperty { span, name, binding }
     }
 
@@ -3394,6 +3438,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
     ) -> SequenceExpression<'a> {
+        self.observe_node();
         SequenceExpression { span, expressions }
     }
 
@@ -3421,6 +3466,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn super_(self, span: Span) -> Super {
+        self.observe_node();
         Super { span }
     }
 
@@ -3444,6 +3490,7 @@ impl<'a> AstBuilder<'a> {
     /// - argument
     #[inline]
     pub fn await_expression(self, span: Span, argument: Expression<'a>) -> AwaitExpression<'a> {
+        self.observe_node();
         AwaitExpression { span, argument }
     }
 
@@ -3472,6 +3519,7 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn chain_expression(self, span: Span, expression: ChainElement<'a>) -> ChainExpression<'a> {
+        self.observe_node();
         ChainExpression { span, expression }
     }
 
@@ -3549,6 +3597,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ParenthesizedExpression<'a> {
+        self.observe_node();
         ParenthesizedExpression { span, expression }
     }
 
@@ -4057,6 +4106,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         Directive { span, expression, directive: directive.into_in(self.allocator) }
     }
 
@@ -4093,6 +4143,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         Hashbang { span, value: value.into_in(self.allocator) }
     }
 
@@ -4120,6 +4171,8 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn block_statement(self, span: Span, body: Vec<'a, Statement<'a>>) -> BlockStatement<'a> {
+        self.observe_node();
+        self.observe_scope();
         BlockStatement { span, body, scope_id: Default::default() }
     }
 
@@ -4526,6 +4579,7 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> VariableDeclaration<'a> {
+        self.observe_node();
         VariableDeclaration { span, kind, declarations, declare }
     }
 
@@ -4568,6 +4622,7 @@ impl<'a> AstBuilder<'a> {
         init: Option<Expression<'a>>,
         definite: bool,
     ) -> VariableDeclarator<'a> {
+        self.observe_node();
         VariableDeclarator { span, kind, id, init, definite }
     }
 
@@ -4608,6 +4663,7 @@ impl<'a> AstBuilder<'a> {
         is_await: bool,
         declarations: Vec<'a, VariableDeclarator<'a>>,
     ) -> UsingDeclaration<'a> {
+        self.observe_node();
         UsingDeclaration { span, is_await, declarations }
     }
 
@@ -4637,6 +4693,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn empty_statement(self, span: Span) -> EmptyStatement {
+        self.observe_node();
         EmptyStatement { span }
     }
 
@@ -4664,6 +4721,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ExpressionStatement<'a> {
+        self.observe_node();
         ExpressionStatement { span, expression }
     }
 
@@ -4700,6 +4758,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> IfStatement<'a> {
+        self.observe_node();
         IfStatement { span, test, consequent, alternate }
     }
 
@@ -4738,6 +4797,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> DoWhileStatement<'a> {
+        self.observe_node();
         DoWhileStatement { span, body, test }
     }
 
@@ -4774,6 +4834,7 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         body: Statement<'a>,
     ) -> WhileStatement<'a> {
+        self.observe_node();
         WhileStatement { span, test, body }
     }
 
@@ -4814,6 +4875,8 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> ForStatement<'a> {
+        self.observe_node();
+        self.observe_scope();
         ForStatement { span, init, test, update, body, scope_id: Default::default() }
     }
 
@@ -4926,6 +4989,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForInStatement<'a> {
+        self.observe_node();
+        self.observe_scope();
         ForInStatement { span, left, right, body, scope_id: Default::default() }
     }
 
@@ -5041,6 +5106,8 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForOfStatement<'a> {
+        self.observe_node();
+        self.observe_scope();
         ForOfStatement { span, r#await, left, right, body, scope_id: Default::default() }
     }
 
@@ -5079,6 +5146,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> ContinueStatement<'a> {
+        self.observe_node();
         ContinueStatement { span, label }
     }
 
@@ -5111,6 +5179,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> BreakStatement<'a> {
+        self.observe_node();
         BreakStatement { span, label }
     }
 
@@ -5143,6 +5212,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Option<Expression<'a>>,
     ) -> ReturnStatement<'a> {
+        self.observe_node();
         ReturnStatement { span, argument }
     }
 
@@ -5177,6 +5247,7 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> WithStatement<'a> {
+        self.observe_node();
         WithStatement { span, object, body }
     }
 
@@ -5213,6 +5284,8 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> SwitchStatement<'a> {
+        self.observe_node();
+        self.observe_scope();
         SwitchStatement { span, discriminant, cases, scope_id: Default::default() }
     }
 
@@ -5249,6 +5322,7 @@ impl<'a> AstBuilder<'a> {
         test: Option<Expression<'a>>,
         consequent: Vec<'a, Statement<'a>>,
     ) -> SwitchCase<'a> {
+        self.observe_node();
         SwitchCase { span, test, consequent }
     }
 
@@ -5285,6 +5359,7 @@ impl<'a> AstBuilder<'a> {
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> LabeledStatement<'a> {
+        self.observe_node();
         LabeledStatement { span, label, body }
     }
 
@@ -5315,6 +5390,7 @@ impl<'a> AstBuilder<'a> {
     /// - argument
     #[inline]
     pub fn throw_statement(self, span: Span, argument: Expression<'a>) -> ThrowStatement<'a> {
+        self.observe_node();
         ThrowStatement { span, argument }
     }
 
@@ -5356,6 +5432,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
+        self.observe_node();
         TryStatement {
             span,
             block: block.into_in(self.allocator),
@@ -5407,6 +5484,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         CatchClause {
             span,
             param,
@@ -5445,6 +5524,7 @@ impl<'a> AstBuilder<'a> {
     /// - pattern
     #[inline]
     pub fn catch_parameter(self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
+        self.observe_node();
         CatchParameter { span, pattern }
     }
 
@@ -5472,6 +5552,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn debugger_statement(self, span: Span) -> DebuggerStatement {
+        self.observe_node();
         DebuggerStatement { span }
     }
 
@@ -5504,6 +5585,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.observe_node();
         BindingPattern { kind, type_annotation: type_annotation.into_in(self.allocator), optional }
     }
 
@@ -5660,6 +5742,7 @@ impl<'a> AstBuilder<'a> {
         left: BindingPattern<'a>,
         right: Expression<'a>,
     ) -> AssignmentPattern<'a> {
+        self.observe_node();
         AssignmentPattern { span, left, right }
     }
 
@@ -5699,6 +5782,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.observe_node();
         ObjectPattern { span, properties, rest: rest.into_in(self.allocator) }
     }
 
@@ -5742,6 +5826,7 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> BindingProperty<'a> {
+        self.observe_node();
         BindingProperty { span, key, value, shorthand, computed }
     }
 
@@ -5785,6 +5870,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.observe_node();
         ArrayPattern { span, elements, rest: rest.into_in(self.allocator) }
     }
 
@@ -5822,6 +5908,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: BindingPattern<'a>,
     ) -> BindingRestElement<'a> {
+        self.observe_node();
         BindingRestElement { span, argument }
     }
 
@@ -5878,6 +5965,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         Function {
             r#type,
             span,
@@ -5969,6 +6058,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
+        self.observe_node();
         FormalParameters { span, kind, items, rest: rest.into_in(self.allocator) }
     }
 
@@ -6016,6 +6106,7 @@ impl<'a> AstBuilder<'a> {
         readonly: bool,
         r#override: bool,
     ) -> FormalParameter<'a> {
+        self.observe_node();
         FormalParameter { span, decorators, pattern, accessibility, readonly, r#override }
     }
 
@@ -6061,6 +6152,7 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         statements: Vec<'a, Statement<'a>>,
     ) -> FunctionBody<'a> {
+        self.observe_node();
         FunctionBody { span, directives, statements }
     }
 
@@ -6111,6 +6203,8 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         ArrowFunctionExpression {
             span,
             expression,
@@ -6181,6 +6275,7 @@ impl<'a> AstBuilder<'a> {
         delegate: bool,
         argument: Option<Expression<'a>>,
     ) -> YieldExpression<'a> {
+        self.observe_node();
         YieldExpression { span, delegate, argument }
     }
 
@@ -6238,6 +6333,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         Class {
             r#type,
             span,
@@ -6317,6 +6414,7 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn class_body(self, span: Span, body: Vec<'a, ClassElement<'a>>) -> ClassBody<'a> {
+        self.observe_node();
         ClassBody { span, body }
     }
 
@@ -6594,6 +6692,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, Function<'a>>>,
     {
+        self.observe_node();
         MethodDefinition {
             r#type,
             span,
@@ -6701,6 +6800,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.observe_node();
         PropertyDefinition {
             r#type,
             span,
@@ -6792,6 +6892,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         PrivateIdentifier { span, name: name.into_in(self.allocator) }
     }
 
@@ -6819,6 +6920,8 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn static_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> StaticBlock<'a> {
+        self.observe_node();
+        self.observe_scope();
         StaticBlock { span, body, scope_id: Default::default() }
     }
 
@@ -7072,6 +7175,7 @@ impl<'a> AstBuilder<'a> {
         computed: bool,
         r#static: bool,
     ) -> AccessorProperty<'a> {
+        self.observe_node();
         AccessorProperty { r#type, span, decorators, key, value, computed, r#static }
     }
 
@@ -7119,6 +7223,7 @@ impl<'a> AstBuilder<'a> {
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
     ) -> ImportExpression<'a> {
+        self.observe_node();
         ImportExpression { span, source, arguments }
     }
 
@@ -7159,6 +7264,7 @@ impl<'a> AstBuilder<'a> {
         with_clause: Option<WithClause<'a>>,
         import_kind: ImportOrExportKind,
     ) -> ImportDeclaration<'a> {
+        self.observe_node();
         ImportDeclaration { span, specifiers, source, with_clause, import_kind }
     }
 
@@ -7301,6 +7407,7 @@ impl<'a> AstBuilder<'a> {
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
     ) -> ImportSpecifier<'a> {
+        self.observe_node();
         ImportSpecifier { span, imported, local, import_kind }
     }
 
@@ -7337,6 +7444,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportDefaultSpecifier<'a> {
+        self.observe_node();
         ImportDefaultSpecifier { span, local }
     }
 
@@ -7369,6 +7477,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportNamespaceSpecifier<'a> {
+        self.observe_node();
         ImportNamespaceSpecifier { span, local }
     }
 
@@ -7403,6 +7512,7 @@ impl<'a> AstBuilder<'a> {
         attributes_keyword: IdentifierName<'a>,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
+        self.observe_node();
         WithClause { span, attributes_keyword, with_entries }
     }
 
@@ -7439,6 +7549,7 @@ impl<'a> AstBuilder<'a> {
         key: ImportAttributeKey<'a>,
         value: StringLiteral<'a>,
     ) -> ImportAttribute<'a> {
+        self.observe_node();
         ImportAttribute { span, key, value }
     }
 
@@ -7533,6 +7644,7 @@ impl<'a> AstBuilder<'a> {
         export_kind: ImportOrExportKind,
         with_clause: Option<WithClause<'a>>,
     ) -> ExportNamedDeclaration<'a> {
+        self.observe_node();
         ExportNamedDeclaration { span, declaration, specifiers, source, export_kind, with_clause }
     }
 
@@ -7585,6 +7697,7 @@ impl<'a> AstBuilder<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
     ) -> ExportDefaultDeclaration<'a> {
+        self.observe_node();
         ExportDefaultDeclaration { span, declaration, exported }
     }
 
@@ -7625,6 +7738,7 @@ impl<'a> AstBuilder<'a> {
         with_clause: Option<WithClause<'a>>,
         export_kind: ImportOrExportKind,
     ) -> ExportAllDeclaration<'a> {
+        self.observe_node();
         ExportAllDeclaration { span, exported, source, with_clause, export_kind }
     }
 
@@ -7670,6 +7784,7 @@ impl<'a> AstBuilder<'a> {
         exported: ModuleExportName<'a>,
         export_kind: ImportOrExportKind,
     ) -> ExportSpecifier<'a> {
+        self.observe_node();
         ExportSpecifier { span, local, exported, export_kind }
     }
 
@@ -7958,6 +8073,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.observe_node();
         TSThisParameter { span, this, type_annotation: type_annotation.into_in(self.allocator) }
     }
 
@@ -8001,6 +8117,8 @@ impl<'a> AstBuilder<'a> {
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
+        self.observe_node();
+        self.observe_scope();
         TSEnumDeclaration { span, id, members, r#const, declare, scope_id: Default::default() }
     }
 
@@ -8041,6 +8159,7 @@ impl<'a> AstBuilder<'a> {
         id: TSEnumMemberName<'a>,
         initializer: Option<Expression<'a>>,
     ) -> TSEnumMember<'a> {
+        self.observe_node();
         TSEnumMember { span, id, initializer }
     }
 
@@ -8193,6 +8312,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSTypeAnnotation<'a> {
+        self.observe_node();
         TSTypeAnnotation { span, type_annotation }
     }
 
@@ -8221,6 +8341,7 @@ impl<'a> AstBuilder<'a> {
     /// - literal
     #[inline]
     pub fn ts_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSLiteralType<'a> {
+        self.observe_node();
         TSLiteralType { span, literal }
     }
 
@@ -9464,6 +9585,8 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> TSConditionalType<'a> {
+        self.observe_node();
+        self.observe_scope();
         TSConditionalType {
             span,
             check_type,
@@ -9508,6 +9631,7 @@ impl<'a> AstBuilder<'a> {
     /// - types
     #[inline]
     pub fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSUnionType<'a> {
+        self.observe_node();
         TSUnionType { span, types }
     }
 
@@ -9540,6 +9664,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         types: Vec<'a, TSType<'a>>,
     ) -> TSIntersectionType<'a> {
+        self.observe_node();
         TSIntersectionType { span, types }
     }
 
@@ -9572,6 +9697,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSParenthesizedType<'a> {
+        self.observe_node();
         TSParenthesizedType { span, type_annotation }
     }
 
@@ -9606,6 +9732,7 @@ impl<'a> AstBuilder<'a> {
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
     ) -> TSTypeOperator<'a> {
+        self.observe_node();
         TSTypeOperator { span, operator, type_annotation }
     }
 
@@ -9636,6 +9763,7 @@ impl<'a> AstBuilder<'a> {
     /// - element_type
     #[inline]
     pub fn ts_array_type(self, span: Span, element_type: TSType<'a>) -> TSArrayType<'a> {
+        self.observe_node();
         TSArrayType { span, element_type }
     }
 
@@ -9670,6 +9798,7 @@ impl<'a> AstBuilder<'a> {
         object_type: TSType<'a>,
         index_type: TSType<'a>,
     ) -> TSIndexedAccessType<'a> {
+        self.observe_node();
         TSIndexedAccessType { span, object_type, index_type }
     }
 
@@ -9704,6 +9833,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         element_types: Vec<'a, TSTupleElement<'a>>,
     ) -> TSTupleType<'a> {
+        self.observe_node();
         TSTupleType { span, element_types }
     }
 
@@ -9740,6 +9870,7 @@ impl<'a> AstBuilder<'a> {
         label: IdentifierName<'a>,
         optional: bool,
     ) -> TSNamedTupleMember<'a> {
+        self.observe_node();
         TSNamedTupleMember { span, element_type, label, optional }
     }
 
@@ -9772,6 +9903,7 @@ impl<'a> AstBuilder<'a> {
     /// - type_annotation
     #[inline]
     pub fn ts_optional_type(self, span: Span, type_annotation: TSType<'a>) -> TSOptionalType<'a> {
+        self.observe_node();
         TSOptionalType { span, type_annotation }
     }
 
@@ -9800,6 +9932,7 @@ impl<'a> AstBuilder<'a> {
     /// - type_annotation
     #[inline]
     pub fn ts_rest_type(self, span: Span, type_annotation: TSType<'a>) -> TSRestType<'a> {
+        self.observe_node();
         TSRestType { span, type_annotation }
     }
 
@@ -9882,6 +10015,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_any_keyword(self, span: Span) -> TSAnyKeyword {
+        self.observe_node();
         TSAnyKeyword { span }
     }
 
@@ -9904,6 +10038,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_string_keyword(self, span: Span) -> TSStringKeyword {
+        self.observe_node();
         TSStringKeyword { span }
     }
 
@@ -9926,6 +10061,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_boolean_keyword(self, span: Span) -> TSBooleanKeyword {
+        self.observe_node();
         TSBooleanKeyword { span }
     }
 
@@ -9948,6 +10084,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_number_keyword(self, span: Span) -> TSNumberKeyword {
+        self.observe_node();
         TSNumberKeyword { span }
     }
 
@@ -9970,6 +10107,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_never_keyword(self, span: Span) -> TSNeverKeyword {
+        self.observe_node();
         TSNeverKeyword { span }
     }
 
@@ -9992,6 +10130,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_intrinsic_keyword(self, span: Span) -> TSIntrinsicKeyword {
+        self.observe_node();
         TSIntrinsicKeyword { span }
     }
 
@@ -10014,6 +10153,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_unknown_keyword(self, span: Span) -> TSUnknownKeyword {
+        self.observe_node();
         TSUnknownKeyword { span }
     }
 
@@ -10036,6 +10176,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_null_keyword(self, span: Span) -> TSNullKeyword {
+        self.observe_node();
         TSNullKeyword { span }
     }
 
@@ -10058,6 +10199,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_undefined_keyword(self, span: Span) -> TSUndefinedKeyword {
+        self.observe_node();
         TSUndefinedKeyword { span }
     }
 
@@ -10080,6 +10222,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_void_keyword(self, span: Span) -> TSVoidKeyword {
+        self.observe_node();
         TSVoidKeyword { span }
     }
 
@@ -10102,6 +10245,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_symbol_keyword(self, span: Span) -> TSSymbolKeyword {
+        self.observe_node();
         TSSymbolKeyword { span }
     }
 
@@ -10124,6 +10268,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_this_type(self, span: Span) -> TSThisType {
+        self.observe_node();
         TSThisType { span }
     }
 
@@ -10146,6 +10291,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_object_keyword(self, span: Span) -> TSObjectKeyword {
+        self.observe_node();
         TSObjectKeyword { span }
     }
 
@@ -10168,6 +10314,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_big_int_keyword(self, span: Span) -> TSBigIntKeyword {
+        self.observe_node();
         TSBigIntKeyword { span }
     }
 
@@ -10200,6 +10347,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         TSTypeReference {
             span,
             type_name,
@@ -10294,6 +10442,7 @@ impl<'a> AstBuilder<'a> {
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
     ) -> TSQualifiedName<'a> {
+        self.observe_node();
         TSQualifiedName { span, left, right }
     }
 
@@ -10328,6 +10477,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSType<'a>>,
     ) -> TSTypeParameterInstantiation<'a> {
+        self.observe_node();
         TSTypeParameterInstantiation { span, params }
     }
 
@@ -10370,6 +10520,7 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
+        self.observe_node();
         TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
     }
 
@@ -10415,6 +10566,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSTypeParameter<'a>>,
     ) -> TSTypeParameterDeclaration<'a> {
+        self.observe_node();
         TSTypeParameterDeclaration { span, params }
     }
 
@@ -10456,6 +10608,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         TSTypeAliasDeclaration {
             span,
             id,
@@ -10512,6 +10666,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         TSClassImplements {
             span,
             expression,
@@ -10565,6 +10720,8 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         TSInterfaceDeclaration {
             span,
             id,
@@ -10620,6 +10777,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, TSSignature<'a>>,
     ) -> TSInterfaceBody<'a> {
+        self.observe_node();
         TSInterfaceBody { span, body }
     }
 
@@ -10663,6 +10821,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.observe_node();
         TSPropertySignature {
             span,
             computed,
@@ -10938,6 +11097,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.observe_node();
         TSIndexSignature {
             span,
             parameters,
@@ -10996,6 +11156,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.observe_node();
         TSCallSignatureDeclaration {
             span,
             this_param,
@@ -11073,6 +11234,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         TSMethodSignature {
             span,
             key,
@@ -11157,6 +11320,8 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         TSConstructSignatureDeclaration {
             span,
             params: params.into_in(self.allocator),
@@ -11213,6 +11378,7 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
+        self.observe_node();
         TSIndexSignatureName {
             span,
             name: name.into_in(self.allocator),
@@ -11260,6 +11426,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         TSInterfaceHeritage {
             span,
             expression,
@@ -11308,6 +11475,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
+        self.observe_node();
         TSTypePredicate {
             span,
             parameter_name,
@@ -11407,6 +11575,9 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> TSModuleDeclaration<'a> {
+        self.observe_node();
+        self.observe_symbol();
+        self.observe_scope();
         TSModuleDeclaration { span, id, body, kind, declare, scope_id: Default::default() }
     }
 
@@ -11573,6 +11744,7 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> TSModuleBlock<'a> {
+        self.observe_node();
         TSModuleBlock { span, directives, body }
     }
 
@@ -11607,6 +11779,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         members: Vec<'a, TSSignature<'a>>,
     ) -> TSTypeLiteral<'a> {
+        self.observe_node();
         TSTypeLiteral { span, members }
     }
 
@@ -11638,6 +11811,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
+        self.observe_node();
         TSInferType { span, type_parameter: type_parameter.into_in(self.allocator) }
     }
 
@@ -11674,6 +11848,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         TSTypeQuery { span, expr_name, type_parameters: type_parameters.into_in(self.allocator) }
     }
 
@@ -11773,6 +11948,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         TSImportType {
             span,
             is_type_of,
@@ -11835,6 +12011,7 @@ impl<'a> AstBuilder<'a> {
         attributes_keyword: IdentifierName<'a>,
         elements: Vec<'a, TSImportAttribute<'a>>,
     ) -> TSImportAttributes<'a> {
+        self.observe_node();
         TSImportAttributes { span, attributes_keyword, elements }
     }
 
@@ -11871,6 +12048,7 @@ impl<'a> AstBuilder<'a> {
         name: TSImportAttributeName<'a>,
         value: Expression<'a>,
     ) -> TSImportAttribute<'a> {
+        self.observe_node();
         TSImportAttribute { span, name, value }
     }
 
@@ -11974,6 +12152,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.observe_node();
         TSFunctionType {
             span,
             this_param,
@@ -12037,6 +12216,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
+        self.observe_node();
         TSConstructorType {
             span,
             r#abstract,
@@ -12100,6 +12280,8 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
+        self.observe_node();
+        self.observe_scope();
         TSMappedType {
             span,
             type_parameter: type_parameter.into_in(self.allocator),
@@ -12163,6 +12345,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         types: Vec<'a, TSType<'a>>,
     ) -> TSTemplateLiteralType<'a> {
+        self.observe_node();
         TSTemplateLiteralType { span, quasis, types }
     }
 
@@ -12199,6 +12382,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSAsExpression<'a> {
+        self.observe_node();
         TSAsExpression { span, expression, type_annotation }
     }
 
@@ -12235,6 +12419,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSSatisfiesExpression<'a> {
+        self.observe_node();
         TSSatisfiesExpression { span, expression, type_annotation }
     }
 
@@ -12271,6 +12456,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSTypeAssertion<'a> {
+        self.observe_node();
         TSTypeAssertion { span, expression, type_annotation }
     }
 
@@ -12309,6 +12495,7 @@ impl<'a> AstBuilder<'a> {
         module_reference: TSModuleReference<'a>,
         import_kind: ImportOrExportKind,
     ) -> TSImportEqualsDeclaration<'a> {
+        self.observe_node();
         TSImportEqualsDeclaration { span, id, module_reference, import_kind }
     }
 
@@ -12383,6 +12570,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: StringLiteral<'a>,
     ) -> TSExternalModuleReference<'a> {
+        self.observe_node();
         TSExternalModuleReference { span, expression }
     }
 
@@ -12415,6 +12603,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSNonNullExpression<'a> {
+        self.observe_node();
         TSNonNullExpression { span, expression }
     }
 
@@ -12443,6 +12632,7 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn decorator(self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
+        self.observe_node();
         Decorator { span, expression }
     }
 
@@ -12471,6 +12661,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSExportAssignment<'a> {
+        self.observe_node();
         TSExportAssignment { span, expression }
     }
 
@@ -12503,6 +12694,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: IdentifierName<'a>,
     ) -> TSNamespaceExportDeclaration<'a> {
+        self.observe_node();
         TSNamespaceExportDeclaration { span, id }
     }
 
@@ -12540,6 +12732,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
+        self.observe_node();
         TSInstantiationExpression {
             span,
             expression,
@@ -12586,6 +12779,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNullableType<'a> {
+        self.observe_node();
         JSDocNullableType { span, type_annotation, postfix }
     }
 
@@ -12622,6 +12816,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNonNullableType<'a> {
+        self.observe_node();
         JSDocNonNullableType { span, type_annotation, postfix }
     }
 
@@ -12651,6 +12846,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn js_doc_unknown_type(self, span: Span) -> JSDocUnknownType {
+        self.observe_node();
         JSDocUnknownType { span }
     }
 
@@ -12686,6 +12882,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, JSXOpeningElement<'a>>>,
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
+        self.observe_node();
         JSXElement {
             span,
             opening_element: opening_element.into_in(self.allocator),
@@ -12743,6 +12940,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
+        self.observe_node();
         JSXOpeningElement {
             span,
             self_closing,
@@ -12793,6 +12991,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXElementName<'a>,
     ) -> JSXClosingElement<'a> {
+        self.observe_node();
         JSXClosingElement { span, name }
     }
 
@@ -12829,6 +13028,7 @@ impl<'a> AstBuilder<'a> {
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
     ) -> JSXFragment<'a> {
+        self.observe_node();
         JSXFragment { span, opening_fragment, closing_fragment, children }
     }
 
@@ -12952,6 +13152,7 @@ impl<'a> AstBuilder<'a> {
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXNamespacedName<'a> {
+        self.observe_node();
         JSXNamespacedName { span, namespace, property }
     }
 
@@ -12988,6 +13189,7 @@ impl<'a> AstBuilder<'a> {
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXMemberExpression<'a> {
+        self.observe_node();
         JSXMemberExpression { span, object, property }
     }
 
@@ -13085,6 +13287,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: JSXExpression<'a>,
     ) -> JSXExpressionContainer<'a> {
+        self.observe_node();
         JSXExpressionContainer { span, expression }
     }
 
@@ -13135,6 +13338,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
+        self.observe_node();
         JSXEmptyExpression { span }
     }
 
@@ -13216,6 +13420,7 @@ impl<'a> AstBuilder<'a> {
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
     ) -> JSXAttribute<'a> {
+        self.observe_node();
         JSXAttribute { span, name, value }
     }
 
@@ -13250,6 +13455,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> JSXSpreadAttribute<'a> {
+        self.observe_node();
         JSXSpreadAttribute { span, argument }
     }
 
@@ -13464,6 +13670,8 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
+        self.observe_reference();
         JSXIdentifier { span, name: name.into_in(self.allocator) }
     }
 
@@ -13637,6 +13845,7 @@ impl<'a> AstBuilder<'a> {
     /// - expression: The expression being spread.
     #[inline]
     pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
+        self.observe_node();
         JSXSpreadChild { span, expression }
     }
 
@@ -13668,6 +13877,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
+        self.observe_node();
         JSXText { span, value: value.into_in(self.allocator) }
     }
 

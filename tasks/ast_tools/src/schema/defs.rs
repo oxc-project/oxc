@@ -36,6 +36,13 @@ impl TypeDef {
         let generated_derives = self.generated_derives();
         generated_derives.iter().any(|it| it == derive)
     }
+
+    pub fn is_visitable(&self) -> bool {
+        match self {
+            Self::Struct(it) => it.visitable,
+            Self::Enum(it) => it.visitable,
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]

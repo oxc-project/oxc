@@ -53,7 +53,7 @@ impl Driver {
 
     pub fn run(&mut self, source_text: &str, source_type: SourceType) {
         let allocator = Allocator::default();
-        let ParserReturn { mut program, errors, trivias, panicked } =
+        let ParserReturn { mut program, errors, trivias, panicked, .. } =
             Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(self.allow_return_outside_function)
                 .parse();

@@ -53,6 +53,7 @@ impl Generator for AstBuilderGenerator {
                 ///@@line_break
                 #[allow(clippy::wildcard_imports)]
                 use crate::ast::*;
+                use crate::stats::StatisticsCell;
 
                 ///@@line_break
                 /// AST builder for creating AST nodes
@@ -60,6 +61,7 @@ impl Generator for AstBuilderGenerator {
                 #[non_exhaustive]
                 pub struct AstBuilder<'a> {
                     pub allocator: &'a Allocator,
+                    pub(crate) stats: Option<StatisticsCell<'a>>,
                 }
 
                 ///@@line_break
@@ -141,6 +143,7 @@ fn generate_enum_variant_builder_fn(
 ) -> TokenStream {
     assert_eq!(variant.fields.len(), 1);
     let enum_ident = enum_.ident();
+    let enum_ident_string = enum_ident.to_string();
     let enum_type = &enum_.to_type();
     let var_ident = &variant.ident();
     let var_type = &variant.fields.first().expect("we have already asserted this one!").typ;
@@ -169,7 +172,7 @@ fn generate_enum_variant_builder_fn(
     }
 
     let from_variant_builder = generate_enum_from_variant_builder_fn(enum_, variant, ctx);
-    let article = article_for(enum_ident.to_string());
+    let article = article_for(&enum_ident_string);
     let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
         .with_params(&params);
     if does_alloc {
@@ -180,11 +183,18 @@ fn generate_enum_variant_builder_fn(
         ));
     }
 
+    // // enum variants do not create identifiers, instead they contain structs
+    // // that do.
+    // let (observe_node, _observe_symbol, observe_scope, _observe_reference) =
+    //     get_statistics_calls(ty);
+
     quote! {
         ///@@line_break
         #docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
+            // #observe_node
+            // #observe_scope
             #enum_ident::#var_ident(#inner)
         }
 
@@ -279,7 +289,8 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
 
     let alloc_fn_name = format_ident!("alloc_{fn_name}");
 
-    let article = article_for(ident.to_string());
+    let ident_string = ident.to_string();
+    let article = article_for(&ident_string);
     let fn_docs = DocComment::new(format!("Builds {article} [`{ident}`]"))
         .with_description(format!("If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."))
         .with_params(&params);
@@ -289,11 +300,19 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
             .with_description(format!("Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."))
             .with_params(&params);
 
+    // NOTE: do not record nodes in alloc methods, since they call the non-alloc
+    // methods.
+    let (observe_node, observe_symbol, observe_scope, observe_reference) = get_statistics_calls(ty);
+
     quote! {
         ///@@line_break
         #fn_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type  #where_clause {
+            #observe_node
+            #observe_symbol
+            #observe_scope
+            #observe_reference
             #ident { #(#fields),* }
         }
 
@@ -563,4 +582,66 @@ fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
         });
         acc
     })
+}
+
+fn get_statistics_calls(
+    def: &StructDef,
+) -> (
+    /* nodes */ TokenStream,
+    /* symbols */ TokenStream,
+    /* scopes */ TokenStream,
+    /* references */ TokenStream,
+) {
+    let observe_node = if def.visitable {
+        quote! {
+            self.observe_node();
+        }
+    } else {
+        quote! {}
+    };
+
+    let (symbol, reference) = creates_symbol_or_reference(def);
+    let observe_symbol = if symbol {
+        quote! {
+            self.observe_symbol();
+        }
+    } else {
+        quote! {}
+    };
+    let observe_reference = if reference {
+        quote! {
+            self.observe_reference();
+        }
+    } else {
+        quote! {}
+    };
+
+    let observe_scope = if def.markers.scope.is_some() {
+        quote! {
+            self.observe_scope();
+        }
+    } else {
+        quote! {}
+    };
+
+    (observe_node, observe_symbol, observe_scope, observe_reference)
+}
+
+fn creates_symbol_or_reference(it: &StructDef) -> (bool, bool) {
+    // it.fields.iter().any(|field| field.ident().map_or(false, |ident|
+    // ident == "symbol_id"))
+    // statically-known computed properties also create symbols. FIXME: this
+    // observes two nodes for identifier properties, and reserves a symbol for
+    // unidentifiable computed properties.
+    let name_creates_symbol = it.name == "TSEnumMemberName" || it.name == "TSModuleDeclaration";
+    let name_creates_reference = it.name == "JSXIdentifier";
+    it.fields.iter().fold(
+        (name_creates_symbol, name_creates_reference),
+        |(symbol, reference), field| {
+            (
+                symbol || field.ident().map_or(false, |ident| ident == "symbol_id"),
+                reference || field.ident().map_or(false, |ident| ident == "reference_id"),
+            )
+        },
+    )
 }

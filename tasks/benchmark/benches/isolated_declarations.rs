@@ -19,7 +19,7 @@ fn bench_isolated_declarations(criterion: &mut Criterion) {
         b.iter_with_large_drop(|| {
             let allocator = Allocator::default();
             let ParserReturn { program, .. } =
-                Parser::new(&allocator, source_text, source_type).parse();
+                Parser::new(&allocator, source_text, source_type).record_statistics(false).parse();
             IsolatedDeclarations::new(&allocator).build(&program);
         });
     });

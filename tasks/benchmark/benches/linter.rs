@@ -36,6 +36,7 @@ fn bench_linter(criterion: &mut Criterion) {
                     .with_trivias(ret.trivias)
                     .with_cfg(true)
                     .build_module_record(PathBuf::new(), program)
+                    .with_statistics(ret.statistics)
                     .build(program);
                 let filter = vec![
                     (AllowWarnDeny::Deny, "all".into()),

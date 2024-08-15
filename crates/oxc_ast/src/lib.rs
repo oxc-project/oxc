@@ -33,6 +33,7 @@ mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
+mod stats;
 pub mod syntax_directed_operations;
 mod trivia;
 
@@ -61,6 +62,7 @@ pub use num_bigint::BigUint;
 pub use crate::{
     ast_builder::AstBuilder,
     ast_kind::{AstKind, AstType},
+    stats::Statistics,
     trivia::{Comment, CommentKind, SortedComments, Trivias},
     visit::{Visit, VisitMut},
 };

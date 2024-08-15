@@ -20,7 +20,9 @@ fn bench_transformer(criterion: &mut Criterion) {
             b.iter_with_large_drop(|| {
                 let allocator = Allocator::default();
                 let ParserReturn { trivias, program, .. } =
-                    Parser::new(&allocator, source_text, source_type).parse();
+                    Parser::new(&allocator, source_text, source_type)
+                        .record_statistics(false)
+                        .parse();
                 let transform_options = TransformOptions::default();
                 let program = allocator.alloc(program);
                 Transformer::new(

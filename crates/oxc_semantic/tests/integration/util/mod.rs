@@ -162,6 +162,7 @@ impl<'a> SemanticTester<'a> {
         SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
+            .with_statistics(parse.statistics)
             .with_cfg(self.cfg)
             .build(program)
     }

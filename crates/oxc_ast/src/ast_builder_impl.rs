@@ -13,12 +13,25 @@ use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
-use crate::AstBuilder;
+use crate::{
+    stats::{Statistics, StatisticsCell},
+    AstBuilder,
+};
 
 impl<'a> AstBuilder<'a> {
     #[inline]
+    #[must_use]
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator }
+        Self { allocator, stats: None }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_statistics(mut self) -> Self {
+        if self.stats.is_none() {
+            self.stats = Some(StatisticsCell::default());
+        }
+        self
     }
 
     #[inline]
@@ -58,11 +71,10 @@ impl<'a> AstBuilder<'a> {
         Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
     }
 
-    /// # SAFETY
+    /// # Safety
     /// This method is completely unsound and should not be used.
     /// We need to remove all uses of it. Please don't add any more!
     /// <https://github.com/oxc-project/oxc/issues/3483>
-    #[allow(clippy::missing_safety_doc)]
     #[inline]
     pub unsafe fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)
@@ -103,6 +115,36 @@ impl<'a> AstBuilder<'a> {
         );
         let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
         mem::replace(decl, empty_decl)
+    }
+
+    /* ---------- Statistics ---------- */
+
+    pub fn take_stats(mut self) -> Option<Statistics> {
+        self.stats.take().map(StatisticsCell::take)
+    }
+
+    pub(crate) fn observe_node(self) {
+        if let Some(s) = self.stats {
+            s.observe_node();
+        }
+    }
+
+    pub(crate) fn observe_symbol(self) {
+        if let Some(s) = self.stats {
+            s.observe_symbol();
+        }
+    }
+
+    pub(crate) fn observe_scope(self) {
+        if let Some(s) = self.stats {
+            s.observe_scope();
+        }
+    }
+
+    pub(crate) fn observe_reference(self) {
+        if let Some(s) = self.stats {
+            s.observe_reference();
+        }
     }
 
     /* ---------- Constructors ---------- */

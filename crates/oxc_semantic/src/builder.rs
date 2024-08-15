@@ -6,6 +6,7 @@ use std::{
     sync::Arc,
 };
 
+use oxc_ast::Statistics;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_cfg::{
@@ -66,6 +67,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) source_type: SourceType,
 
     trivias: Trivias,
+    statistics: Option<Statistics>,
 
     /// Semantic early errors such as redeclaration errors.
     errors: RefCell<Vec<OxcDiagnostic>>,
@@ -127,6 +129,7 @@ impl<'a> SemanticBuilder<'a> {
             source_text,
             source_type,
             trivias: trivias.clone(),
+            statistics: None,
             errors: RefCell::new(vec![]),
             current_node_id: AstNodeId::new(0),
             current_node_flags: NodeFlags::empty(),
@@ -155,6 +158,12 @@ impl<'a> SemanticBuilder<'a> {
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
         self.trivias = trivias.clone();
         self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
+        self
+    }
+
+    #[must_use]
+    pub fn with_statistics(mut self, statistics: Option<Statistics>) -> Self {
+        self.statistics = statistics;
         self
     }
 
@@ -224,26 +233,34 @@ impl<'a> SemanticBuilder<'a> {
             // Avoiding this growth produces up to 30% perf boost on our benchmarks.
             // TODO: It would be even more efficient to calculate counts in parser to avoid
             // this extra AST traversal.
-            let mut counter = Counter::default();
-            counter.visit_program(program);
-            self.nodes.reserve(counter.nodes_count);
-            self.scope.reserve(counter.scopes_count);
-            self.symbols.reserve(counter.symbols_count, counter.references_count);
+            // counter.visit_program(program);
+            let statistics = self.statistics.clone().unwrap_or_else(|| {
+                let mut counter = Counter::default();
+                counter.visit_program(program);
+                counter.into_inner()
+            });
+            // self.nodes.reserve(counter.nodes_count);
+            // self.scope.reserve(counter.scopes_count);
+            // self.symbols.reserve(counter.symbols_count,
+            // counter.references_count);
+            self.nodes.reserve(statistics.nodes() as usize);
+            self.scope.reserve(statistics.scopes() as usize);
+            self.symbols.reserve(statistics.symbols() as usize, statistics.references() as usize);
 
             // Visit AST to generate scopes tree etc
             self.visit_program(program);
 
             // Check that `Counter` got accurate counts
-            debug_assert_eq!(self.nodes.len(), counter.nodes_count);
-            debug_assert_eq!(self.scope.len(), counter.scopes_count);
-            debug_assert_eq!(self.symbols.references.len(), counter.references_count);
+            debug_assert_eq!(self.nodes.len(), statistics.nodes() as usize);
+            debug_assert_eq!(self.scope.len(), statistics.scopes() as usize);
+            debug_assert_eq!(self.symbols.references.len(), statistics.references() as usize);
             // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
             // can result in only a single symbol.
             // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
             // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
             // It's allocating with *not enough* capacity which is costly, as then the `Vec`
             // will grow and reallocate.
-            debug_assert!(self.symbols.len() <= counter.symbols_count);
+            debug_assert!(self.symbols.len() <= statistics.symbols() as usize);
 
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {

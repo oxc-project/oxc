@@ -15,7 +15,8 @@ fn bench_sourcemap(criterion: &mut Criterion) {
         let source_type = SourceType::from_path(&file.file_name).unwrap();
         group.bench_with_input(id, &file.source_text, |b, source_text| {
             let allocator = Allocator::default();
-            let ret = Parser::new(&allocator, source_text, source_type).parse();
+            let ret =
+                Parser::new(&allocator, source_text, source_type).record_statistics(false).parse();
 
             let CodegenReturn { source_text: output_txt, .. } = CodeGenerator::new()
                 .enable_source_map(file.file_name.as_str(), source_text)

@@ -66,7 +66,7 @@ use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Expression, Program},
-    AstBuilder, Trivias,
+    AstBuilder, Statistics, Trivias,
 };
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
@@ -101,6 +101,7 @@ pub struct ParserReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
     pub trivias: Trivias,
     pub panicked: bool,
+    pub statistics: Option<Statistics>,
 }
 
 /// Parser options
@@ -115,11 +116,16 @@ struct ParserOptions {
     ///
     /// Default: true
     pub preserve_parens: bool,
+    pub record_statistics: bool,
 }
 
 impl Default for ParserOptions {
     fn default() -> Self {
-        Self { allow_return_outside_function: false, preserve_parens: true }
+        Self {
+            allow_return_outside_function: false,
+            preserve_parens: true,
+            record_statistics: true,
+        }
     }
 }
 
@@ -157,6 +163,12 @@ impl<'a> Parser<'a> {
     #[must_use]
     pub fn preserve_parens(mut self, allow: bool) -> Self {
         self.options.preserve_parens = allow;
+        self
+    }
+
+    #[must_use]
+    pub fn record_statistics(mut self, yes: bool) -> Self {
+        self.options.record_statistics = yes;
         self
     }
 }
@@ -282,6 +294,10 @@ impl<'a> ParserImpl<'a> {
         options: ParserOptions,
         unique: UniquePromise,
     ) -> Self {
+        let mut ast = AstBuilder::new(allocator);
+        if options.record_statistics {
+            ast = ast.with_statistics();
+        }
         Self {
             lexer: Lexer::new(allocator, source_text, source_type, unique),
             source_type,
@@ -291,7 +307,7 @@ impl<'a> ParserImpl<'a> {
             prev_token_end: 0,
             state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
-            ast: AstBuilder::new(allocator),
+            ast,
             preserve_parens: options.preserve_parens,
         }
     }
@@ -320,7 +336,7 @@ impl<'a> ParserImpl<'a> {
         };
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect();
         let trivias = self.lexer.trivia_builder.build();
-        ParserReturn { program, errors, trivias, panicked }
+        ParserReturn { program, errors, trivias, panicked, statistics: self.ast.take_stats() }
     }
 
     pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
@@ -328,6 +344,8 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        // must be taken to prevent a memory leak
+        let _ = self.ast.take_stats();
         if !errors.is_empty() {
             return Err(errors);
         }
