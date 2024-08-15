@@ -97,7 +97,7 @@
         "oxc_language_server.configPath": {
           "type": "string",
           "scope": "window",
-          "default": ".eslintrc",
+          "default": ".oxlintrc.json",
           "description": "Path to ESlint configuration."
         }
       }
