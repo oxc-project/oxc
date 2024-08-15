@@ -314,6 +314,9 @@ impl<'a> IsolatedDeclarations<'a> {
                         new_ast_stmts.push(Statement::ImportDeclaration(decl));
                     }
                 }
+                Statement::TSModuleDeclaration(decl) => {
+                    new_ast_stmts.push(Statement::TSModuleDeclaration(decl));
+                }
                 _ => {}
             }
         }
