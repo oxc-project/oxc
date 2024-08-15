@@ -56,8 +56,22 @@ impl<'a> BoundIdentifier<'a> {
     }
 
     /// Create `BoundIdentifier` for new binding in root scope
-    pub fn new_root_uid(name: &str, flags: SymbolFlags, ctx: &mut TraverseCtx<'a>) -> Self {
+    pub fn new_uid_in_root_scope(
+        name: &str,
+        flags: SymbolFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Self {
         let scope_id = ctx.scopes().root_scope_id();
+        Self::new_uid(name, scope_id, flags, ctx)
+    }
+
+    /// Create `BoundIdentifier` for new binding in current scope
+    pub fn new_uid_in_current_scope(
+        name: &str,
+        flags: SymbolFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Self {
+        let scope_id = ctx.current_scope_id();
         Self::new_uid(name, scope_id, flags, ctx)
     }
 
@@ -81,6 +95,49 @@ impl<'a> BoundIdentifier<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, ReferenceFlag::Read)
+        self.create_spanned_reference(span, ReferenceFlag::Read, ctx)
+    }
+
+    /// Create `IdentifierReference` referencing this binding, which is written to, with dummy `Span`
+    pub fn create_write_reference(&self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
+        self.create_spanned_write_reference(SPAN, ctx)
+    }
+
+    /// Create `IdentifierReference` referencing this binding, which is written to, with specified `Span`
+    pub fn create_spanned_write_reference(
+        &self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        self.create_spanned_reference(span, ReferenceFlag::Write, ctx)
+    }
+
+    /// Create `IdentifierReference` referencing this binding, which is read from + written to,
+    /// with dummy `Span`
+    pub fn create_read_write_reference(
+        &self,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        self.create_spanned_read_write_reference(SPAN, ctx)
+    }
+
+    /// Create `IdentifierReference` referencing this binding, which is read from + written to,
+    /// with specified `Span`
+    pub fn create_spanned_read_write_reference(
+        &self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        self.create_spanned_reference(span, ReferenceFlag::Read | ReferenceFlag::Write, ctx)
+    }
+
+    /// Create `IdentifierReference` referencing this binding, with specified `Span` and `ReferenceFlag`
+    pub fn create_spanned_reference(
+        &self,
+        span: Span,
+        flag: ReferenceFlag,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, flag)
     }
 }

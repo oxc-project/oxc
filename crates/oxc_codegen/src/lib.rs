@@ -12,8 +12,6 @@ mod sourcemap_builder;
 
 use std::{borrow::Cow, ops::Range};
 
-use rustc_hash::FxHashMap;
-
 use oxc_ast::{
     ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
     Comment, Trivias,
@@ -34,8 +32,6 @@ pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
 };
-
-use self::annotation_comment::AnnotationComment;
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a, false>;
@@ -98,10 +94,6 @@ pub struct Codegen<'a, const MINIFY: bool> {
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
 
-    /// The key of map is the node start position,
-    /// the first element of value is the start of the comment
-    /// the second element of value includes the end of the comment and comment kind.
-    move_comment_map: MoveCommentMap,
     latest_consumed_comment_end: u32,
 }
 
@@ -147,7 +139,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             indent: 0,
             quote: b'"',
             sourcemap_builder: None,
-            move_comment_map: MoveCommentMap::default(),
             latest_consumed_comment_end: 0,
         }
     }
@@ -521,8 +512,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 }
 
-pub(crate) type MoveCommentMap = FxHashMap<u32, AnnotationComment>;
-
 // Comment related
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     /// Avoid issue related to rustc borrow checker .
@@ -532,28 +521,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.code.extend_from_slice(self.source_text[range].as_bytes());
     }
 
-    /// In some scenario, we want to move the comment that should be codegened to another position.
-    /// ```js
-    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
-    ///
-    ///  }, b = 10000;
-    ///
-    /// ```
-    /// should generate such output:
-    /// ```js
-    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
-    ///
-    ///  }, b = 10000;
-    /// ```
-    fn move_comment(&mut self, position: u32, full_comment_info: AnnotationComment) {
-        self.move_comment_map.insert(position, full_comment_info);
-    }
-
-    fn try_get_leading_comment(&self, start: u32) -> Option<&Comment> {
-        self.trivias.comments_range(0..start).next_back()
-    }
-
-    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<AnnotationComment> {
-        self.move_comment_map.remove(&node_start)
+    fn get_leading_comments(&self, start: u32, end: u32) -> impl Iterator<Item = &'_ Comment> + '_ {
+        self.trivias.comments_range(start..end)
     }
 }
