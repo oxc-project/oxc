@@ -325,6 +325,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         new_ast_stmts.push(Statement::ImportDeclaration(decl));
                     }
                 }
+                Statement::TSModuleDeclaration(decl) => {
+                    if decl.kind.is_global() || decl.id.is_string_literal() {
+                        new_ast_stmts.push(Statement::TSModuleDeclaration(decl));
+                    }
+                }
                 _ => {}
             }
         }
