@@ -98,7 +98,7 @@ impl<'a> IsolatedDeclarations<'a> {
             value,
             property.computed,
             property.r#static,
-            property.declare,
+            false,
             property.r#override,
             property.optional,
             property.definite,
