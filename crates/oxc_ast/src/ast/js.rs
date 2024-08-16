@@ -62,12 +62,12 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum Expression<'a> {
     /// See [`BooleanLiteral`] for AST node details.
-    BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
     /// See [`NullLiteral`] for AST node details.
     NullLiteral(Box<'a, NullLiteral>) = 1,
     /// See [`NumericLiteral`] for AST node details.
     NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
     /// See [`BigIntLiteral`] for AST node details.
+    BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
     BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
     /// See [`RegExpLiteral`] for AST node details.
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
@@ -685,8 +685,6 @@ pub enum Argument<'a> {
     @inherit Expression
 }
 }
-
-// FORCE
 
 /// `++i` in `let i = 0; ++i;`
 ///
