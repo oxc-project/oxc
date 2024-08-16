@@ -788,20 +788,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
 
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:2]
- 1 │ [...arr.reduce((set, b) => set.add(b), new Set())]
-   ·  ───
-   ╰────
-  help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
-
-  ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.tsx:1:2]
- 1 │ [...arr.reduce((set, b) => set.add(b), new Set(iter))]
-   ·  ───
-   ╰────
-  help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
-
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.tsx:1:15]
  1 │ const obj = { ...(foo ? { a: 1 } : { a: 2 }) }
