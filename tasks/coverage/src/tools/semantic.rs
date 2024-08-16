@@ -2,8 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_span::SourceType;
 use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, TransformOptions,
-    TypeScriptOptions,
+    ES2015Options, ReactJsxRuntime, ReactOptions, TransformOptions, TypeScriptOptions,
 };
 
 use crate::{
@@ -14,6 +13,20 @@ use crate::{
     test262::{Test262Case, TestFlag},
     typescript::TypeScriptCase,
 };
+
+fn get_default_transformer_options() -> TransformOptions {
+    TransformOptions {
+        typescript: TypeScriptOptions::default(),
+        es2015: ES2015Options { arrow_function: None },
+        react: ReactOptions {
+            jsx_plugin: true,
+            jsx_self_plugin: true,
+            jsx_source_plugin: true,
+            ..Default::default()
+        },
+        ..Default::default()
+    }
+}
 
 /// Idempotency test
 fn get_result(
@@ -37,20 +50,6 @@ fn get_result(
 
     let messages = errors.into_iter().map(|e| e.message.to_string()).collect::<Vec<_>>().join("\n");
     TestResult::GenericError("semantic", messages)
-}
-
-fn get_default_transformer_options() -> TransformOptions {
-    TransformOptions {
-        typescript: TypeScriptOptions::default(),
-        es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
-        react: ReactOptions {
-            jsx_plugin: true,
-            jsx_self_plugin: true,
-            jsx_source_plugin: true,
-            ..Default::default()
-        },
-        ..Default::default()
-    }
 }
 
 pub struct SemanticTest262Case {

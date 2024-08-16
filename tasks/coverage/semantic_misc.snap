@@ -69,12 +69,6 @@ previous scope ScopeId(0): ["K"]
 current  scope ScopeId(0): []
 
 pass/swc-8243.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Foo", "_jsx", "_jsxFileName"]
-current  scope ScopeId(0): ["Foo", "_jsx", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this", "props"]
-current  scope ScopeId(1): ["props"]
-Symbols mismatch after transform
+semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 

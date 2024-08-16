@@ -2,7 +2,7 @@ commit: d8086f14
 
 semantic_typescript Summary:
 AST Parsed     : 6456/6456 (100.00%)
-Positive Passed: 3632/6456 (56.26%)
+Positive Passed: 3697/6456 (57.26%)
 compiler/APILibCheck.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
@@ -39,8 +39,6 @@ compiler/APISample_jsdoc.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Annotations", "console", "getAllTags", "getAnnotations", "getReturnTypeFromJSDoc", "getSomeOtherTags", "parseCommentsIntoDefinition", "parseSpecificTags", "ts"]
 current  scope ScopeId(0): ["getAllTags", "getAnnotations", "getReturnTypeFromJSDoc", "getSomeOtherTags", "parseCommentsIntoDefinition", "parseSpecificTags", "ts"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/APISample_linter.ts
 semantic error: Bindings Mismatch:
@@ -550,16 +548,6 @@ semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["MyCallback", "increment", "increment2"]
 current  scope ScopeId(0): ["increment", "increment2"]
 
-compiler/asyncFunctionReturnType.2.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["X"]
-current  scope ScopeId(0): ["X", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/asyncFunctionReturnType.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Obj", "fAsync", "fAsyncExplicit", "fGenericIndexedTypeForAnyProp", "fGenericIndexedTypeForExplicitPromiseOfAnyProp", "fGenericIndexedTypeForExplicitPromiseOfKProp", "fGenericIndexedTypeForExplicitPromiseOfStringProp", "fGenericIndexedTypeForKProp", "fGenericIndexedTypeForPromiseOfAnyProp", "fGenericIndexedTypeForPromiseOfKProp", "fGenericIndexedTypeForPromiseOfStringProp", "fGenericIndexedTypeForStringProp", "fIndexedTypeForAnyProp", "fIndexedTypeForExplicitPromiseOfAnyProp", "fIndexedTypeForExplicitPromiseOfStringProp", "fIndexedTypeForPromiseOfAnyProp", "fIndexedTypeForPromiseOfStringProp", "fIndexedTypeForStringProp"]
@@ -735,16 +723,6 @@ previous scope ScopeId(5): ["ARGS", "f"]
 current  scope ScopeId(3): ["f"]
 Symbols mismatch after transform
 
-compiler/badThisBinding.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(5): []
-current  scope ScopeId(3): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this", "x"]
-current  scope ScopeId(4): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/bangInModuleName.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["http"]
@@ -901,16 +879,6 @@ current  scope ScopeId(13): ["C", "a"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-compiler/captureThisInSuperCall.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): []
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/capturedLetConstInLoop1.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["iobj", "sobj"]
@@ -928,55 +896,11 @@ reference Mismatch:
 previous reference ReferenceId(94): Some("iobj")
 current  reference ReferenceId(94): None
 
-compiler/capturedLetConstInLoop10.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(23): []
-current  scope ScopeId(23): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(25): ["_this", "f"]
-current  scope ScopeId(25): ["f"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/capturedLetConstInLoop10_ES6.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(23): []
-current  scope ScopeId(23): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(25): ["_this", "f"]
-current  scope ScopeId(25): ["f"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/capturedLetConstInLoop13.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(3): ["names"]
-current  scope ScopeId(3): ["_this", "names"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this"]
-current  scope ScopeId(6): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/capturedLetConstInLoop9.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(47): []
-current  scope ScopeId(46): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(50): ["_this"]
-current  scope ScopeId(49): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: ReferenceId mismatch after transform
 
 compiler/capturedLetConstInLoop9_ES6.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(47): []
-current  scope ScopeId(46): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(50): ["_this"]
-current  scope ScopeId(49): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: ReferenceId mismatch after transform
 
 compiler/castExpressionParentheses.ts
 semantic error: Bindings Mismatch:
@@ -1061,52 +985,6 @@ compiler/checkJsTypeDefNoUnusedLocalMarked.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo", "global"]
 current  scope ScopeId(0): ["Foo"]
-ReferenceId mismatch after transform
-
-compiler/checkSuperCallBeforeThisAccessing4.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(3): ["that"]
-current  scope ScopeId(3): ["_this3", "that"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this"]
-current  scope ScopeId(4): []
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this2"]
-current  scope ScopeId(5): []
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this3"]
-current  scope ScopeId(6): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/checkSuperCallBeforeThisAccessing6.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): []
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/checkSuperCallBeforeThisAccessing7.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): []
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/checkSwitchStatementIfCaseTypeIsString.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): ["v"]
-current  scope ScopeId(3): ["_this", "v"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(4): []
-Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 compiler/circularConstrainedMappedTypeNoCrash.ts
@@ -1239,16 +1117,6 @@ current  scope ScopeId(0): ["Greeter"]
 reference Mismatch:
 previous reference ReferenceId(1): Some("console")
 current  reference ReferenceId(1): None
-
-compiler/classNameReferencesInStaticElements.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Foo", "oldFoo"]
-current  scope ScopeId(0): ["Foo", "_this", "oldFoo"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/classVarianceCircularity.ts
 semantic error: Bindings Mismatch:
@@ -1482,7 +1350,6 @@ current  reference ReferenceId(1): None
 compiler/collisionSuperAndParameter.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/collisionSuperAndPropertyNameAsConstuctorParameter.ts
 semantic error: Scopes mismatch after transform
@@ -1494,107 +1361,17 @@ semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-compiler/collisionThisExpressionAndAmbientClassInGlobal.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["a", "f"]
-current  scope ScopeId(0): ["_this2", "a", "f"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this2"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/collisionThisExpressionAndAmbientVarInGlobal.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["_this", "f"]
-current  scope ScopeId(0): ["_this2", "f"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this2"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndClassInGlobal.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["_this", "f"]
-current  scope ScopeId(0): ["_this", "_this2", "f"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this2"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+current  scope ScopeId(0): ["f"]
+reference Mismatch:
+previous reference ReferenceId(0): Some("_this")
+current  reference ReferenceId(0): None
 
 compiler/collisionThisExpressionAndEnumInGlobal.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndFunctionInGlobal.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["_this", "f"]
-current  scope ScopeId(0): ["_this", "_this2", "f"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this2"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndLocalVarInAccessors.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): ["_this", "_this2"]
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this", "_this3"]
-current  scope ScopeId(7): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(11): ["_this4"]
-current  scope ScopeId(11): []
-Bindings Mismatch:
-previous scope ScopeId(14): ["_this5"]
-current  scope ScopeId(14): []
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndLocalVarInConstructor.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): ["_this", "_this2"]
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(8): ["_this3"]
-current  scope ScopeId(8): []
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndLocalVarInFunction.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(1): ["_this", "_this2"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this2", "x"]
-current  scope ScopeId(2): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndLocalVarInLambda.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(3): ["_this", "_this2"]
-current  scope ScopeId(2): ["_this"]
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndLocalVarInMethod.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): ["_this", "_this2"]
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this3"]
-current  scope ScopeId(7): []
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndLocalVarInProperty.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(3): ["_this", "_this2"]
-current  scope ScopeId(3): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this3"]
-current  scope ScopeId(7): []
 ReferenceId mismatch after transform
 
 compiler/collisionThisExpressionAndModuleInGlobal.ts
@@ -1602,71 +1379,18 @@ semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-compiler/collisionThisExpressionAndNameResolution.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): []
-current  scope ScopeId(3): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this2", "x"]
-current  scope ScopeId(4): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/collisionThisExpressionAndParameter.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
-ReferenceId mismatch after transform
+reference Mismatch:
+previous reference ReferenceId(1): Some("console")
+current  reference ReferenceId(1): None
+reference Mismatch:
+previous reference ReferenceId(3): Some("console")
+current  reference ReferenceId(3): None
 
 compiler/collisionThisExpressionAndPropertyNameAsConstuctorParameter.ts
 semantic error: Scopes mismatch after transform
-Symbol Mismatch:
-previous symbol SymbolId(3): SymbolId(3)
-current  symbol SymbolId(3): SymbolId(3)
-Symbol Mismatch:
-previous symbol SymbolId(4): SymbolId(4)
-current  symbol SymbolId(4): SymbolId(4)
-Symbol Mismatch:
-previous symbol SymbolId(5): SymbolId(5)
-current  symbol SymbolId(5): SymbolId(5)
-Symbol Mismatch:
-previous symbol SymbolId(6): SymbolId(6)
-current  symbol SymbolId(6): SymbolId(6)
-Symbol Mismatch:
-previous symbol SymbolId(7): SymbolId(7)
-current  symbol SymbolId(7): SymbolId(7)
-Symbol Mismatch:
-previous symbol SymbolId(8): SymbolId(8)
-current  symbol SymbolId(8): SymbolId(8)
-Symbol Mismatch:
-previous symbol SymbolId(9): SymbolId(9)
-current  symbol SymbolId(9): SymbolId(9)
-Symbol Mismatch:
-previous symbol SymbolId(10): SymbolId(10)
-current  symbol SymbolId(10): SymbolId(10)
-Symbol Mismatch:
-previous symbol SymbolId(13): SymbolId(13)
-current  symbol SymbolId(13): SymbolId(13)
-Symbol Mismatch:
-previous symbol SymbolId(14): SymbolId(14)
-current  symbol SymbolId(14): SymbolId(14)
-Symbol Mismatch:
-previous symbol SymbolId(15): SymbolId(15)
-current  symbol SymbolId(15): SymbolId(15)
-Symbol Mismatch:
-previous symbol SymbolId(17): SymbolId(17)
-current  symbol SymbolId(17): SymbolId(17)
-Symbol Mismatch:
-previous symbol SymbolId(18): SymbolId(18)
-current  symbol SymbolId(18): SymbolId(18)
-ReferenceId mismatch after transform
-
-compiler/collisionThisExpressionAndVarInGlobal.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["_this", "f"]
-current  scope ScopeId(0): ["_this", "_this2", "f"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this2"]
-current  scope ScopeId(1): []
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -2305,13 +2029,7 @@ ReferenceId mismatch after transform
 compiler/contextuallyTypedJsxChildren.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["DropdownMenu", "React", "_jsxFileName"]
-current  scope ScopeId(0): ["React", "_jsxFileName", "_this2"]
-Bindings Mismatch:
-previous scope ScopeId(8): ["_this", "onClose"]
-current  scope ScopeId(1): ["onClose"]
-Bindings Mismatch:
-previous scope ScopeId(9): ["_this2", "onClose"]
-current  scope ScopeId(2): ["onClose"]
+current  scope ScopeId(0): ["React", "_jsxFileName"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -2486,12 +2204,10 @@ Symbols mismatch after transform
 compiler/controlFlowPropertyDeclarations.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["HTMLDOMPropertyConfig", "HTMLtoJSX", "StyleParser", "endsWith", "hyphenToCamelCase", "isConvertiblePixelValue", "isEmpty", "mapFrom", "propname", "repeatString", "require", "trimEnd"]
-current  scope ScopeId(0): ["HTMLDOMPropertyConfig", "HTMLtoJSX", "StyleParser", "_this2", "endsWith", "hyphenToCamelCase", "isConvertiblePixelValue", "isEmpty", "mapFrom", "propname", "repeatString", "trimEnd"]
-Bindings Mismatch:
-previous scope ScopeId(16): ["_this", "_this2", "node", "parentTag", "text"]
-current  scope ScopeId(16): ["_this", "node", "parentTag", "text"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+current  scope ScopeId(0): ["HTMLDOMPropertyConfig", "HTMLtoJSX", "StyleParser", "endsWith", "hyphenToCamelCase", "isConvertiblePixelValue", "isEmpty", "mapFrom", "propname", "repeatString", "trimEnd"]
+reference Mismatch:
+previous reference ReferenceId(0): Some("require")
+current  reference ReferenceId(0): None
 
 compiler/controlFlowWithIncompleteTypes.ts
 semantic error: Bindings Mismatch:
@@ -2897,22 +2613,6 @@ compiler/dependencyViaImportAlias.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-compiler/derivedClassConstructorWithExplicitReturns01.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["C", "D"]
-current  scope ScopeId(0): ["C", "D", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this"]
-current  scope ScopeId(6): []
-Bindings Mismatch:
-previous scope ScopeId(7): ["a"]
-current  scope ScopeId(7): ["_this2", "a"]
-Bindings Mismatch:
-previous scope ScopeId(9): ["_this2"]
-current  scope ScopeId(9): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/destructureOfVariableSameAsShorthand.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["AxiosResponse", "main"]
@@ -2951,46 +2651,6 @@ Bindings Mismatch:
 previous scope ScopeId(2): ["T", "callback", "object"]
 current  scope ScopeId(2): ["callback", "object"]
 Symbols mismatch after transform
-
-compiler/detachedCommentAtStartOfConstructor1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["getMessage", "message"]
-current  scope ScopeId(2): ["_this", "getMessage", "message"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/detachedCommentAtStartOfConstructor2.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["getMessage", "message"]
-current  scope ScopeId(2): ["_this", "getMessage", "message"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/detachedCommentAtStartOfLambdaFunction1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["message"]
-current  scope ScopeId(2): ["_this", "message"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this", "x"]
-current  scope ScopeId(3): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/detachedCommentAtStartOfLambdaFunction2.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["message"]
-current  scope ScopeId(2): ["_this", "message"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this", "x"]
-current  scope ScopeId(3): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/discriminableUnionWithIntersectedMembers.ts
 semantic error: Bindings Mismatch:
@@ -3400,16 +3060,6 @@ semantic error: ReferenceId mismatch after transform
 
 compiler/emitSuperCallBeforeEmitPropertyDeclarationAndParameterPropertyDeclaration1ES6.ts
 semantic error: ReferenceId mismatch after transform
-
-compiler/emitThisInObjectLiteralGetter.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(1): []
-current  scope ScopeId(1): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this", "item"]
-current  scope ScopeId(2): ["item"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/emitTopOfFileTripleSlashCommentOnNotEmittedNodeIfRemoveCommentsIsFalse.ts
 semantic error: Bindings Mismatch:
@@ -5807,26 +5457,6 @@ reference Mismatch:
 previous reference ReferenceId(3): Some("b")
 current  reference ReferenceId(0): None
 
-compiler/fatarrowfunctions.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(23): []
-current  scope ScopeId(22): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(24): ["_this"]
-current  scope ScopeId(23): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/fatarrowfunctionsInFunctionParameterDefaults.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["fn"]
-current  scope ScopeId(0): ["_this", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/fillInMissingTypeArgsOnConstructCalls.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
@@ -6006,16 +5636,6 @@ current  scope ScopeId(0): []
 
 compiler/functionTypeArgumentArrayAssignment.ts
 semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/functionsInClassExpressions.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Foo"]
-current  scope ScopeId(0): ["Foo", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -6642,16 +6262,6 @@ compiler/globalIsContextualKeyword.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["a", "b", "foo", "global", "obj"]
 current  scope ScopeId(0): ["a", "b", "foo", "obj"]
-
-compiler/globalThisCapture.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["parts"]
-current  scope ScopeId(0): ["_this", "parts"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/hidingCallSignatures.ts
 semantic error: Bindings Mismatch:
@@ -7305,40 +6915,7 @@ compiler/inferenceLimit.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["BrokenClass", "MyModule"]
 current  scope ScopeId(0): ["BrokenClass"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["order"]
-current  scope ScopeId(5): ["_this", "order"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this", "reject", "resolve"]
-current  scope ScopeId(6): ["reject", "resolve"]
-Symbol Mismatch:
-previous symbol SymbolId(0): SymbolId(0)
-current  symbol SymbolId(0): SymbolId(0)
-Symbol Mismatch:
-previous symbol SymbolId(1): SymbolId(1)
-current  symbol SymbolId(1): SymbolId(1)
-Symbol Mismatch:
-previous symbol SymbolId(2): SymbolId(2)
-current  symbol SymbolId(2): SymbolId(2)
-Symbol Mismatch:
-previous symbol SymbolId(3): SymbolId(3)
-current  symbol SymbolId(3): SymbolId(3)
-Symbol Mismatch:
-previous symbol SymbolId(4): SymbolId(4)
-current  symbol SymbolId(4): SymbolId(4)
-Symbol Mismatch:
-previous symbol SymbolId(5): SymbolId(5)
-current  symbol SymbolId(5): SymbolId(5)
-Symbol Mismatch:
-previous symbol SymbolId(6): SymbolId(6)
-current  symbol SymbolId(6): SymbolId(6)
-Symbol Mismatch:
-previous symbol SymbolId(7): SymbolId(7)
-current  symbol SymbolId(7): SymbolId(7)
-Symbol Mismatch:
-previous symbol SymbolId(8): SymbolId(8)
-current  symbol SymbolId(8): SymbolId(8)
-ReferenceId mismatch after transform
+Symbols mismatch after transform
 
 compiler/inferenceOfNullableObjectTypesWithCommonBase.ts
 semantic error: Bindings Mismatch:
@@ -7907,14 +7484,6 @@ compiler/invalidThisEmitInContextualObjectLiteral.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["IDef", "TestController"]
 current  scope ScopeId(0): ["TestController"]
-Bindings Mismatch:
-previous scope ScopeId(5): []
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this", "vvvvvvvvv"]
-current  scope ScopeId(5): ["vvvvvvvvv"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/ipromise2.ts
 semantic error: Bindings Mismatch:
@@ -7993,16 +7562,6 @@ current  reference ReferenceId(0): None
 compiler/jsFileClassSelfReferencedProperty.ts
 semantic error: Cannot use export statement outside a module
 
-compiler/jsFileCompilationClassMethodContainingArrowFunction.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["a", "x"]
-current  scope ScopeId(2): ["_this", "a", "x"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this", "a"]
-current  scope ScopeId(3): ["a"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/jsFileCompilationRestParamJsDocFunction.ts
 semantic error: Cannot use export statement outside a module
 
@@ -8045,11 +7604,16 @@ previous scope ScopeId(0): ["ArrowRendererHandler", "ArrowRendererProps", "Autoc
 current  scope ScopeId(0): ["React", "_jsxFileName", "createReactSingleSelect"]
 Bindings Mismatch:
 previous scope ScopeId(6): ["WrappedComponent", "WrappedProps"]
-current  scope ScopeId(1): ["WrappedComponent", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this", "props"]
-current  scope ScopeId(2): ["props"]
-Symbols mismatch after transform
+current  scope ScopeId(1): ["WrappedComponent"]
+Symbol Mismatch:
+previous symbol SymbolId(0): SymbolId(0)
+current  symbol SymbolId(0): SymbolId(0)
+Symbol Mismatch:
+previous symbol SymbolId(8): SymbolId(8)
+current  symbol SymbolId(1): SymbolId(1)
+Symbol Mismatch:
+previous symbol SymbolId(9): SymbolId(9)
+current  symbol SymbolId(2): SymbolId(2)
 ReferenceId mismatch after transform
 
 compiler/jsxContainsOnlyTriviaWhiteSpacesNotCountedAsChild.tsx
@@ -8235,43 +7799,19 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 compiler/jsxNamespaceGlobalReexport.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Comp", "_jsx", "_jsxFileName"]
-current  scope ScopeId(0): ["Comp", "_jsx", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
+semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 compiler/jsxNamespaceImplicitImportJSXNamespace.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Comp", "_jsx", "_jsxFileName"]
-current  scope ScopeId(0): ["Comp", "_jsx", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
+semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 compiler/jsxNamespaceImplicitImportJSXNamespaceFromConfigPickedOverGlobalOne.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Comp", "_jsx", "_jsxFileName"]
-current  scope ScopeId(0): ["Comp", "_jsx", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
+semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 compiler/jsxNamespaceImplicitImportJSXNamespaceFromPragmaPickedOverGlobalOne.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Comp", "_jsxFileName"]
-current  scope ScopeId(0): ["Comp", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
+semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 compiler/jsxNamespaceReexports.tsx
@@ -8294,10 +7834,7 @@ ReferenceId mismatch after transform
 compiler/jsxPartialSpread.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["React", "Repro", "Select", "_jsxFileName", "_reactJsxRuntime"]
-current  scope ScopeId(0): ["Repro", "Select", "_jsxFileName", "_reactJsxRuntime", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this", "p"]
-current  scope ScopeId(1): ["p"]
+current  scope ScopeId(0): ["Repro", "Select", "_jsxFileName", "_reactJsxRuntime"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -8315,10 +7852,7 @@ ReferenceId mismatch after transform
 compiler/jsxSpreadFirstUnionNoErrors.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Info", "InfoProps", "React", "_jsxFileName", "a", "b", "c", "infoProps"]
-current  scope ScopeId(0): ["Info", "React", "_jsxFileName", "_this", "a", "b", "c"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this", "props"]
-current  scope ScopeId(1): ["props"]
+current  scope ScopeId(0): ["Info", "React", "_jsxFileName", "a", "b", "c"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -8703,16 +8237,6 @@ Symbols mismatch after transform
 
 compiler/methodContainingLocalFunction.ts
 semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/missingSelf.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(5): []
-current  scope ScopeId(5): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this"]
-current  scope ScopeId(6): []
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -9699,16 +9223,9 @@ Bindings Mismatch:
 previous scope ScopeId(3): ["W"]
 current  scope ScopeId(1): []
 Bindings Mismatch:
-previous scope ScopeId(5): ["result"]
-current  scope ScopeId(3): ["_this", "result"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this", "c"]
-current  scope ScopeId(4): ["c"]
-Bindings Mismatch:
 previous scope ScopeId(7): ["T"]
 current  scope ScopeId(5): []
 Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/noBundledEmitFromNodeModules.ts
 semantic error: Bindings Mismatch:
@@ -9718,16 +9235,6 @@ Symbols mismatch after transform
 
 compiler/noCircularDefinitionOnExportOfPrivateInMergedNamespace.ts
 semantic error: ReferenceId mismatch after transform
-
-compiler/noCollisionThisExpressionInFunctionAndVarInGlobal.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): []
-current  scope ScopeId(1): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this2", "x"]
-current  scope ScopeId(2): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/noCrashOnThisTypeUsage.ts
 semantic error: Bindings Mismatch:
@@ -9877,12 +9384,7 @@ Symbols mismatch after transform
 compiler/nonNullReferenceMatching.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Component", "ComponentProps", "ElementRef", "ThumbProps"]
-current  scope ScopeId(0): ["Component", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this", "ref"]
-current  scope ScopeId(2): ["ref"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+current  scope ScopeId(0): ["Component"]
 
 compiler/nonNullableAndObjectIntersections.ts
 semantic error: Bindings Mismatch:
@@ -11613,16 +11115,6 @@ semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-compiler/quotedPropertyName3.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["x", "y"]
-current  scope ScopeId(2): ["_this", "x", "y"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/ramdaToolsNoInfinite.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Curry", "R", "Tools"]
@@ -11684,10 +11176,7 @@ ReferenceId mismatch after transform
 compiler/reactSFCAndFunctionResolvable.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Checkbox", "OtherRadio", "Radio", "RandomComponent", "React", "_jsxFileName", "condition1", "condition2", "condition3"]
-current  scope ScopeId(0): ["RandomComponent", "React", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["Component", "OtherComponent", "_this"]
-current  scope ScopeId(1): ["Component", "OtherComponent"]
+current  scope ScopeId(0): ["RandomComponent", "React", "_jsxFileName"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -12160,18 +11649,20 @@ ReferenceId mismatch after transform
 
 compiler/returnTypePredicateIsInstantiateInContextOfTarget.tsx
 semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["React", "TestComponent", "TestRender", "_jsxFileName"]
-current  scope ScopeId(0): ["React", "TestComponent", "TestRender", "_jsxFileName", "_this"]
-Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 Bindings Mismatch:
 previous scope ScopeId(2): ["T", "obj"]
 current  scope ScopeId(2): ["obj"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
+Symbol Mismatch:
+previous symbol SymbolId(0): SymbolId(0)
+current  symbol SymbolId(0): SymbolId(0)
+Symbol Mismatch:
+previous symbol SymbolId(1): SymbolId(1)
+current  symbol SymbolId(1): SymbolId(1)
+Symbol Mismatch:
+previous symbol SymbolId(3): SymbolId(3)
+current  symbol SymbolId(2): SymbolId(2)
 ReferenceId mismatch after transform
 
 compiler/reuseInnerModuleMember.ts
@@ -12219,22 +11710,13 @@ semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "a"]
 current  scope ScopeId(0): ["a"]
 
-compiler/selfInCallback.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(3): []
-current  scope ScopeId(3): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this"]
-current  scope ScopeId(4): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/selfInLambdas.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["MouseEvent", "Window", "X", "o", "window"]
 current  scope ScopeId(0): ["X", "o"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+reference Mismatch:
+previous reference ReferenceId(2): Some("window")
+current  reference ReferenceId(0): None
 
 compiler/selfReferencingTypeReferenceInference.ts
 semantic error: Bindings Mismatch:
@@ -12337,16 +11819,6 @@ ReferenceId mismatch after transform
 
 compiler/sourceMapValidationClass.ts
 semantic error: ReferenceId mismatch after transform
-
-compiler/sourceMapValidationClassWithDefaultConstructorAndCapturedThisStatement.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Greeter"]
-current  scope ScopeId(0): ["Greeter", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/sourceMapValidationClasses.ts
 semantic error: Scopes mismatch after transform
@@ -14216,16 +13688,6 @@ semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["IComparable"]
 current  scope ScopeId(0): []
 
-compiler/thisCapture1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["keys", "ret"]
-current  scope ScopeId(2): ["_this", "keys", "ret"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/thisConditionalOnMethodReturnOfGenericInstance.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
@@ -14238,94 +13700,14 @@ previous scope ScopeId(6): ["T"]
 current  scope ScopeId(4): []
 Symbols mismatch after transform
 
-compiler/thisExpressionInIndexExpression.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(1): []
-current  scope ScopeId(1): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this", "r"]
-current  scope ScopeId(2): ["r"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/thisExpressionOfGenericObject.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
-Bindings Mismatch:
-previous scope ScopeId(2): []
-current  scope ScopeId(2): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbol Mismatch:
-previous symbol SymbolId(1): SymbolId(1)
-current  symbol SymbolId(1): SymbolId(1)
-ReferenceId mismatch after transform
-
-compiler/thisInAccessors.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["fn"]
-current  scope ScopeId(2): ["_this", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Bindings Mismatch:
-previous scope ScopeId(7): ["fn", "val"]
-current  scope ScopeId(7): ["_this2", "fn", "val"]
-Bindings Mismatch:
-previous scope ScopeId(8): ["_this2"]
-current  scope ScopeId(8): []
-Bindings Mismatch:
-previous scope ScopeId(10): ["fn"]
-current  scope ScopeId(10): ["_this3", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(11): ["_this3"]
-current  scope ScopeId(11): []
-Bindings Mismatch:
-previous scope ScopeId(12): ["fn", "val"]
-current  scope ScopeId(12): ["_this4", "fn", "val"]
-Bindings Mismatch:
-previous scope ScopeId(13): ["_this4"]
-current  scope ScopeId(13): []
 Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/thisInArrowFunctionInStaticInitializer1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Vector", "log"]
-current  scope ScopeId(0): ["Vector", "_this", "log"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/thisInClassBodyStaticESNext.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Foo"]
-current  scope ScopeId(0): ["Foo", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/thisInConstructorParameter2.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["P"]
-current  scope ScopeId(0): ["P", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["z", "zz", "zzz"]
-current  scope ScopeId(2): ["_this2", "z", "zz", "zzz"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this", "p"]
-current  scope ScopeId(3): ["p"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this2", "p"]
-current  scope ScopeId(4): ["p"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: ReferenceId mismatch after transform
 
 compiler/thisInGenericStaticMembers.ts
 semantic error: Bindings Mismatch:
@@ -14336,41 +13718,6 @@ previous scope ScopeId(3): ["T", "source"]
 current  scope ScopeId(3): ["source"]
 Symbols mismatch after transform
 
-compiler/thisInInnerFunctions.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(3): ["f"]
-current  scope ScopeId(3): ["_this", "f"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this"]
-current  scope ScopeId(4): []
-Bindings Mismatch:
-previous scope ScopeId(5): ["x"]
-current  scope ScopeId(5): ["_this3", "x"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this3"]
-current  scope ScopeId(6): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this2"]
-current  scope ScopeId(7): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/thisInLambda.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["f"]
-current  scope ScopeId(2): ["_this", "f"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Bindings Mismatch:
-previous scope ScopeId(7): []
-current  scope ScopeId(7): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(8): ["_this2", "x"]
-current  scope ScopeId(8): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/thisInModuleFunction1.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
@@ -14378,37 +13725,6 @@ ReferenceId mismatch after transform
 
 compiler/thisInObjectJs.ts
 semantic error: Cannot use export statement outside a module
-
-compiler/thisInPropertyBoundDeclarations.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B", "Bug"]
-current  scope ScopeId(0): ["A", "B", "Bug", "_this5"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["inner"]
-current  scope ScopeId(6): ["_this", "inner"]
-Bindings Mismatch:
-previous scope ScopeId(8): ["_this"]
-current  scope ScopeId(8): []
-Bindings Mismatch:
-previous scope ScopeId(15): ["_this2"]
-current  scope ScopeId(15): []
-Bindings Mismatch:
-previous scope ScopeId(19): ["_this3"]
-current  scope ScopeId(19): []
-Bindings Mismatch:
-previous scope ScopeId(23): ["_this4"]
-current  scope ScopeId(23): []
-Bindings Mismatch:
-previous scope ScopeId(24): ["_this5"]
-current  scope ScopeId(24): []
-Bindings Mismatch:
-previous scope ScopeId(25): []
-current  scope ScopeId(25): ["_this6"]
-Bindings Mismatch:
-previous scope ScopeId(26): ["_this6"]
-current  scope ScopeId(26): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/thisInTupleTypeParameterConstraints.ts
 semantic error: Bindings Mismatch:
@@ -14430,19 +13746,7 @@ current  scope ScopeId(0): ["CoachMarkAnchorDecorator"]
 Bindings Mismatch:
 previous scope ScopeId(5): ["P", "anchor"]
 current  scope ScopeId(2): ["anchor"]
-Symbol Mismatch:
-previous symbol SymbolId(7): SymbolId(7)
-current  symbol SymbolId(1): SymbolId(1)
-Symbol Mismatch:
-previous symbol SymbolId(8): SymbolId(8)
-current  symbol SymbolId(2): SymbolId(2)
-Symbol Mismatch:
-previous symbol SymbolId(9): SymbolId(9)
-current  symbol SymbolId(3): SymbolId(3)
-Symbol Mismatch:
-previous symbol SymbolId(10): SymbolId(10)
-current  symbol SymbolId(4): SymbolId(4)
-ReferenceId mismatch after transform
+Symbols mismatch after transform
 
 compiler/thisTypeAsConstraint.ts
 semantic error: Bindings Mismatch:
@@ -14469,26 +13773,6 @@ compiler/topLevelBlockExpando.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Person"]
 current  scope ScopeId(0): []
-
-compiler/topLevelLambda2.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["foo"]
-current  scope ScopeId(0): ["_this", "foo"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/topLevelLambda3.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["f"]
-current  scope ScopeId(0): ["_this", "f"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 compiler/transitiveTypeArgumentInference1.ts
 semantic error: Bindings Mismatch:
@@ -14523,10 +13807,7 @@ current  reference ReferenceId(0): None
 compiler/tsxAttributeQuickinfoTypesSameAsObjectLiteral.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo", "JSX", "_jsxFileName", "_reactJsxRuntime"]
-current  scope ScopeId(0): ["Foo", "_jsxFileName", "_reactJsxRuntime", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this", "props"]
-current  scope ScopeId(1): ["props"]
+current  scope ScopeId(0): ["Foo", "_jsxFileName", "_reactJsxRuntime"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -14569,10 +13850,7 @@ ReferenceId mismatch after transform
 compiler/tsxReactPropsInferenceSucceedsOnIntersections.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["ButtonProps", "CustomButton", "CustomButtonProps", "React", "_jsxFileName"]
-current  scope ScopeId(0): ["CustomButton", "React", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this", "props"]
-current  scope ScopeId(1): ["props"]
+current  scope ScopeId(0): ["CustomButton", "React", "_jsxFileName"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -14597,14 +13875,13 @@ ReferenceId mismatch after transform
 compiler/tsxUnionMemberChecksFilterDataProps.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["React", "ReactElement", "RootHappy", "RootNotHappy", "_jsxFileName"]
-current  scope ScopeId(0): ["React", "RootHappy", "RootNotHappy", "_jsxFileName", "_this2"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(1): []
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this2"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
+current  scope ScopeId(0): ["React", "RootHappy", "RootNotHappy", "_jsxFileName"]
+Symbol Mismatch:
+previous symbol SymbolId(0): SymbolId(0)
+current  symbol SymbolId(0): SymbolId(0)
+Symbol Mismatch:
+previous symbol SymbolId(1): SymbolId(1)
+current  symbol SymbolId(1): SymbolId(1)
 ReferenceId mismatch after transform
 
 compiler/tsxUnionSpread.tsx
@@ -15645,22 +14922,6 @@ semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I1"]
 current  scope ScopeId(0): []
 
-compiler/unusedParametersThis.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): ["fn"]
-current  scope ScopeId(4): ["_this", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Bindings Mismatch:
-previous scope ScopeId(6): ["fn"]
-current  scope ScopeId(6): ["_this2", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this2"]
-current  scope ScopeId(7): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 compiler/unusedTypeParameters6.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
@@ -15865,30 +15126,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 compiler/validUseOfThisInSuper.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): []
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-compiler/varArgParamTypeCheck.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): ["foo"]
-current  scope ScopeId(4): ["_this", "foo"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Bindings Mismatch:
-previous scope ScopeId(6): ["baz"]
-current  scope ScopeId(6): ["_this2", "baz"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this2"]
-current  scope ScopeId(7): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: ReferenceId mismatch after transform
 
 compiler/varArgsOnConstructorTypes.ts
 semantic error: Bindings Mismatch:
@@ -16167,26 +15405,6 @@ previous scope ScopeId(0): ["bar", "foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-conformance/async/es2017/asyncArrowFunction/asyncArrowFunctionCapturesArguments_es2017.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["fn", "other"]
-current  scope ScopeId(2): ["_this", "fn", "other"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this"]
-current  scope ScopeId(4): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-conformance/async/es2017/asyncArrowFunction/asyncArrowFunctionCapturesThis_es2017.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["fn"]
-current  scope ScopeId(2): ["_this", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 conformance/async/es2017/asyncAwait_es2017.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
@@ -16397,26 +15615,6 @@ current  scope ScopeId(0): ["f"]
 reference Mismatch:
 previous reference ReferenceId(2): Some("a")
 current  reference ReferenceId(0): None
-
-conformance/async/es5/asyncArrowFunction/asyncArrowFunction11_es5.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["args", "obj"]
-current  scope ScopeId(2): ["_this", "args", "obj"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-conformance/async/es5/asyncArrowFunction/asyncArrowFunctionCapturesThis_es5.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["fn"]
-current  scope ScopeId(2): ["_this", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 conformance/async/es5/asyncAwait_es5.ts
 semantic error: Scopes mismatch after transform
@@ -16656,26 +15854,6 @@ conformance/async/es6/asyncAliasReturnType_es6.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["PromiseAlias", "f"]
 current  scope ScopeId(0): ["f"]
-
-conformance/async/es6/asyncArrowFunction/asyncArrowFunctionCapturesArguments_es6.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["fn", "other"]
-current  scope ScopeId(2): ["_this", "fn", "other"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this"]
-current  scope ScopeId(4): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-conformance/async/es6/asyncArrowFunction/asyncArrowFunctionCapturesThis_es6.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(2): ["fn"]
-current  scope ScopeId(2): ["_this", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 conformance/async/es6/asyncAwait_es6.ts
 semantic error: Scopes mismatch after transform
@@ -16986,98 +16164,6 @@ semantic error: ReferenceId mismatch after transform
 conformance/classes/constructorDeclarations/superCalls/emitStatementsBeforeSuperCallWithDefineFields.ts
 semantic error: ReferenceId mismatch after transform
 
-conformance/classes/members/accessibility/privateClassPropertyAccessibleWithinClass.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(10): []
-current  scope ScopeId(10): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(11): ["_this"]
-current  scope ScopeId(11): []
-Bindings Mismatch:
-previous scope ScopeId(12): ["x"]
-current  scope ScopeId(12): ["_this2", "x"]
-Bindings Mismatch:
-previous scope ScopeId(13): ["_this2"]
-current  scope ScopeId(13): []
-Bindings Mismatch:
-previous scope ScopeId(14): []
-current  scope ScopeId(14): ["_this3"]
-Bindings Mismatch:
-previous scope ScopeId(15): ["_this3"]
-current  scope ScopeId(15): []
-Bindings Mismatch:
-previous scope ScopeId(16): []
-current  scope ScopeId(16): ["_this4"]
-Bindings Mismatch:
-previous scope ScopeId(17): ["_this4"]
-current  scope ScopeId(17): []
-Bindings Mismatch:
-previous scope ScopeId(18): ["x"]
-current  scope ScopeId(18): ["_this5", "x"]
-Bindings Mismatch:
-previous scope ScopeId(19): ["_this5"]
-current  scope ScopeId(19): []
-Bindings Mismatch:
-previous scope ScopeId(20): []
-current  scope ScopeId(20): ["_this6"]
-Bindings Mismatch:
-previous scope ScopeId(21): ["_this6"]
-current  scope ScopeId(21): []
-Bindings Mismatch:
-previous scope ScopeId(22): []
-current  scope ScopeId(22): ["_this7"]
-Bindings Mismatch:
-previous scope ScopeId(23): ["_this7"]
-current  scope ScopeId(23): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-conformance/classes/members/accessibility/protectedClassPropertyAccessibleWithinClass.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(10): []
-current  scope ScopeId(10): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(11): ["_this"]
-current  scope ScopeId(11): []
-Bindings Mismatch:
-previous scope ScopeId(12): ["x"]
-current  scope ScopeId(12): ["_this2", "x"]
-Bindings Mismatch:
-previous scope ScopeId(13): ["_this2"]
-current  scope ScopeId(13): []
-Bindings Mismatch:
-previous scope ScopeId(14): []
-current  scope ScopeId(14): ["_this3"]
-Bindings Mismatch:
-previous scope ScopeId(15): ["_this3"]
-current  scope ScopeId(15): []
-Bindings Mismatch:
-previous scope ScopeId(16): []
-current  scope ScopeId(16): ["_this4"]
-Bindings Mismatch:
-previous scope ScopeId(17): ["_this4"]
-current  scope ScopeId(17): []
-Bindings Mismatch:
-previous scope ScopeId(18): ["x"]
-current  scope ScopeId(18): ["_this5", "x"]
-Bindings Mismatch:
-previous scope ScopeId(19): ["_this5"]
-current  scope ScopeId(19): []
-Bindings Mismatch:
-previous scope ScopeId(20): []
-current  scope ScopeId(20): ["_this6"]
-Bindings Mismatch:
-previous scope ScopeId(21): ["_this6"]
-current  scope ScopeId(21): []
-Bindings Mismatch:
-previous scope ScopeId(22): []
-current  scope ScopeId(22): ["_this7"]
-Bindings Mismatch:
-previous scope ScopeId(23): ["_this7"]
-current  scope ScopeId(23): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 conformance/classes/members/classTypes/genericSetterInClassType.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
@@ -17128,14 +16214,7 @@ current  scope ScopeId(2): []
 Symbols mismatch after transform
 
 conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers5.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["C"]
-current  scope ScopeId(0): ["C", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: ReferenceId mismatch after transform
 
 conformance/classes/members/privateNames/privateNameConstructorSignature.ts
 semantic error: Bindings Mismatch:
@@ -18093,16 +17172,6 @@ reference Mismatch:
 previous reference ReferenceId(3): Some("Factory")
 current  reference ReferenceId(3): None
 
-conformance/es6/classDeclaration/superCallBeforeThisAccessing2.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(4): []
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 conformance/es6/classExpressions/typeArgumentInferenceWithClassExpression1.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "x"]
@@ -18114,14 +17183,6 @@ semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "x"]
 current  scope ScopeId(1): ["x"]
 Symbols mismatch after transform
-
-conformance/es6/computedProperties/computedPropertyNames29_ES5.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-conformance/es6/computedProperties/computedPropertyNames29_ES6.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 conformance/es6/computedProperties/computedPropertyNames33_ES5.ts
 semantic error: Bindings Mismatch:
@@ -20169,34 +19230,6 @@ previous scope ScopeId(1): ["A", "B", "C", "a", "b", "c"]
 current  scope ScopeId(1): ["a", "b", "c"]
 Symbols mismatch after transform
 
-conformance/expressions/functions/arrowFunctionExpressions.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["MyClass", "a", "arrrr", "b", "c", "d", "e", "f", "g", "h", "outerFn", "p1", "p10", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "someFn", "someOtherFn", "someOuterFn", "tryCatchFn"]
-current  scope ScopeId(0): ["MyClass", "_this", "a", "arrrr", "b", "c", "d", "e", "f", "g", "h", "outerFn", "p1", "p10", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9", "someFn", "someOtherFn", "someOuterFn", "tryCatchFn"]
-Bindings Mismatch:
-previous scope ScopeId(19): ["_this", "n"]
-current  scope ScopeId(19): ["n"]
-Bindings Mismatch:
-previous scope ScopeId(20): ["m", "p"]
-current  scope ScopeId(20): ["_this2", "m", "p"]
-Bindings Mismatch:
-previous scope ScopeId(22): ["_this2", "n"]
-current  scope ScopeId(22): ["n"]
-Bindings Mismatch:
-previous scope ScopeId(42): ["m", "t", "x"]
-current  scope ScopeId(42): ["_this3", "_this4", "_this5", "m", "t", "x"]
-Bindings Mismatch:
-previous scope ScopeId(44): ["_this3"]
-current  scope ScopeId(44): []
-Bindings Mismatch:
-previous scope ScopeId(47): ["_this4"]
-current  scope ScopeId(47): []
-Bindings Mismatch:
-previous scope ScopeId(49): ["_this5"]
-current  scope ScopeId(49): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 conformance/expressions/functions/typeOfThisInFunctionExpression.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
@@ -21804,20 +20837,14 @@ ReferenceId mismatch after transform
 conformance/jsx/checkJsxChildrenProperty10.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Button", "JSX", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
-current  scope ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "_this", "k1", "k2", "k3", "k4"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this", "user"]
-current  scope ScopeId(3): ["user"]
+current  scope ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 conformance/jsx/checkJsxChildrenProperty11.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Button", "JSX", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
-current  scope ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "_this", "k1", "k2", "k3", "k4"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this", "user"]
-current  scope ScopeId(3): ["user"]
+current  scope ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3", "k4"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -21831,10 +20858,7 @@ ReferenceId mismatch after transform
 conformance/jsx/checkJsxChildrenProperty16.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Props", "React", "Test", "_jsxFileName", "_reactJsxRuntime"]
-current  scope ScopeId(0): ["React", "Test", "_jsxFileName", "_reactJsxRuntime", "_this4"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this", "_this2", "_this3", "_this4"]
-current  scope ScopeId(1): ["_this3"]
+current  scope ScopeId(0): ["React", "Test", "_jsxFileName", "_reactJsxRuntime"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -21842,18 +20866,6 @@ conformance/jsx/checkJsxChildrenProperty3.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["FetchUser", "IFetchUserProps", "IUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
 current  scope ScopeId(0): ["FetchUser", "React", "UserName0", "UserName1", "_jsxFileName", "_reactJsxRuntime"]
-Bindings Mismatch:
-previous scope ScopeId(5): []
-current  scope ScopeId(3): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this", "user"]
-current  scope ScopeId(4): ["user"]
-Bindings Mismatch:
-previous scope ScopeId(7): []
-current  scope ScopeId(5): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(8): ["_this2", "user"]
-current  scope ScopeId(6): ["user"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -21872,13 +20884,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 conformance/jsx/checkJsxChildrenProperty9.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "k1", "k2", "k3"]
-current  scope ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime", "_this", "k1", "k2", "k3"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this", "user"]
-current  scope ScopeId(1): ["user"]
-Symbols mismatch after transform
+semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 conformance/jsx/checkJsxIntersectionElementPropsType.tsx
@@ -21972,10 +20978,7 @@ ReferenceId mismatch after transform
 conformance/jsx/jsxs/jsxJsxsCjsTransformNestedSelfClosingChild.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["React", "_jsxFileName", "_reactJsxRuntime"]
-current  scope ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this", "i"]
-current  scope ScopeId(1): ["i"]
+current  scope ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -22108,15 +21111,6 @@ conformance/jsx/tsxEmit1.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["JSX", "SomeClass", "_jsxFileName", "_reactJsxRuntime", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
 current  scope ScopeId(0): ["SomeClass", "_jsxFileName", "_reactJsxRuntime", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["rewrites1", "rewrites2", "rewrites3", "rewrites4", "rewrites5", "rewrites6"]
-current  scope ScopeId(2): ["_this2", "rewrites1", "rewrites2", "rewrites3", "rewrites4", "rewrites5", "rewrites6"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this"]
-current  scope ScopeId(3): []
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this2"]
-current  scope ScopeId(4): []
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -22162,32 +21156,20 @@ ReferenceId mismatch after transform
 conformance/jsx/tsxGenericAttributesType1.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["Component", "T"]
-current  scope ScopeId(1): ["Component", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this", "props"]
-current  scope ScopeId(2): ["props"]
+current  scope ScopeId(1): ["Component"]
 Bindings Mismatch:
 previous scope ScopeId(3): ["Component", "T"]
-current  scope ScopeId(3): ["Component", "_this2"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this2", "props"]
-current  scope ScopeId(4): ["props"]
+current  scope ScopeId(3): ["Component"]
 Bindings Mismatch:
 previous scope ScopeId(5): ["Component", "T", "U"]
-current  scope ScopeId(5): ["Component", "_this3"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this3", "props"]
-current  scope ScopeId(6): ["props"]
+current  scope ScopeId(5): ["Component"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 conformance/jsx/tsxGenericAttributesType2.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["Component", "T"]
-current  scope ScopeId(1): ["Component", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this", "props"]
-current  scope ScopeId(2): ["props"]
+current  scope ScopeId(1): ["Component"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -22261,19 +21243,7 @@ ReferenceId mismatch after transform
 conformance/jsx/tsxInArrowFunction.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime"]
-current  scope ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "_this4"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this"]
-current  scope ScopeId(1): []
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this2", "x"]
-current  scope ScopeId(2): ["x"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this3"]
-current  scope ScopeId(3): []
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this4"]
-current  scope ScopeId(4): []
+current  scope ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -22349,15 +21319,6 @@ conformance/jsx/tsxReactEmit1.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["JSX", "React", "SomeClass", "_jsxFileName", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
 current  scope ScopeId(0): ["SomeClass", "_jsxFileName", "openClosed1", "openClosed2", "openClosed3", "openClosed4", "openClosed5", "p", "selfClosed1", "selfClosed2", "selfClosed3", "selfClosed4", "selfClosed5", "selfClosed6", "selfClosed7", "whitespace1", "whitespace2", "whitespace3"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["rewrites1", "rewrites2", "rewrites3", "rewrites4", "rewrites5", "rewrites6"]
-current  scope ScopeId(2): ["_this2", "rewrites1", "rewrites2", "rewrites3", "rewrites4", "rewrites5", "rewrites6"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this"]
-current  scope ScopeId(3): []
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this2"]
-current  scope ScopeId(4): []
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -22400,12 +21361,6 @@ conformance/jsx/tsxReactEmitNesting.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["_jsxFileName", "ctrl", "model", "render", "vdom"]
 current  scope ScopeId(0): ["_jsxFileName", "render"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this", "ctrl", "model"]
-current  scope ScopeId(1): ["ctrl", "model"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this2", "todo"]
-current  scope ScopeId(2): ["todo"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -22532,19 +21487,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 conformance/jsx/tsxStatelessFunctionComponents3.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["App", "Foo", "MainMenu", "React", "_jsxFileName", "_reactJsxRuntime", "foo"]
-current  scope ScopeId(0): ["App", "Foo", "MainMenu", "React", "_jsxFileName", "_reactJsxRuntime", "_this3", "foo"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this", "props"]
-current  scope ScopeId(1): ["props"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this2", "props"]
-current  scope ScopeId(2): ["props"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this3", "children"]
-current  scope ScopeId(3): ["children"]
-Symbols mismatch after transform
+semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 conformance/jsx/tsxStatelessFunctionComponentsWithTypeArguments1.tsx
@@ -22595,10 +21538,7 @@ ReferenceId mismatch after transform
 conformance/jsx/tsxUnionTypeComponent1.tsx
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["ComponentProps", "MyButtonComponent", "MyComponent", "React", "_jsxFileName"]
-current  scope ScopeId(0): ["MyButtonComponent", "MyComponent", "React", "_jsxFileName", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this"]
-current  scope ScopeId(3): []
+current  scope ScopeId(0): ["MyButtonComponent", "MyComponent", "React", "_jsxFileName"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -23089,36 +22029,6 @@ conformance/salsa/propertyAssignmentUseParentType1.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["N", "ignoreJsdoc", "inlined", "interfaced"]
 current  scope ScopeId(0): ["ignoreJsdoc", "inlined", "interfaced"]
-
-conformance/salsa/thisTypeOfConstructorFunctions.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(1): ["t"]
-current  scope ScopeId(1): ["_this", "t"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-conformance/salsa/typeFromContextualThisType.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(3): []
-current  scope ScopeId(3): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this", "m"]
-current  scope ScopeId(4): ["m"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-conformance/salsa/typeFromPropertyAssignment23.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["B", "C", "D", "Module", "NormalModule"]
-current  scope ScopeId(0): ["B", "C", "D", "Module", "NormalModule", "_this"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["_this"]
-current  scope ScopeId(7): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 conformance/salsa/typeFromPropertyAssignment30.ts
 semantic error: Bindings Mismatch:
@@ -24648,42 +23558,14 @@ conformance/types/thisType/thisTypeInClasses.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["C1", "C2", "C3", "C5", "Foo"]
 current  scope ScopeId(0): ["C1", "C2", "C3", "C5"]
-Bindings Mismatch:
-previous scope ScopeId(9): ["f1", "f2", "f3", "f4"]
-current  scope ScopeId(6): ["_this5", "f1", "f2", "f3", "f4"]
-Bindings Mismatch:
-previous scope ScopeId(10): ["_this", "x"]
-current  scope ScopeId(7): ["x"]
-Bindings Mismatch:
-previous scope ScopeId(11): ["_this2", "x"]
-current  scope ScopeId(8): ["x"]
-Bindings Mismatch:
-previous scope ScopeId(13): ["_this3", "y"]
-current  scope ScopeId(10): ["y"]
-Bindings Mismatch:
-previous scope ScopeId(14): ["_this5", "g", "x"]
-current  scope ScopeId(11): ["g", "x"]
-Bindings Mismatch:
-previous scope ScopeId(15): ["y"]
-current  scope ScopeId(12): ["_this4", "y"]
-Bindings Mismatch:
-previous scope ScopeId(16): ["_this4"]
-current  scope ScopeId(13): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 conformance/types/thisType/thisTypeInFunctions4.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["CorrectObject", "WrongObject", "problemFunction"]
 current  scope ScopeId(0): ["problemFunction"]
 Bindings Mismatch:
-previous scope ScopeId(5): []
-current  scope ScopeId(1): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(6): ["T", "_this", "name"]
+previous scope ScopeId(6): ["T", "name"]
 current  scope ScopeId(2): ["name"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 conformance/types/thisType/thisTypeInInterfaces.ts
 semantic error: Bindings Mismatch:
