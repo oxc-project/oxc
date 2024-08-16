@@ -5,28 +5,6 @@ use crate::{tester::Tester, FixKind, RuleMeta as _};
 use serde_json::json;
 
 #[test]
-fn test_debug() {
-    let pass: Vec<&'static str> = vec![];
-    let fail = vec![];
-    let fix = vec![
-        // (
-        //     "const { foo: fooBar, baz } = obj; f(baz);",
-        //     "const { baz } = obj; f(baz);",
-        //     None,
-        //     FixKind::DangerousSuggestion,
-        // ),
-        ("const [a, b] = arr; f(a)", "const [a] = arr; f(a)", None, FixKind::DangerousSuggestion),
-        // (
-        //     "let x = 1; x = 2;",
-        //     "let x = 1; x = 2;",
-        //     Some(json!( [{ "varsIgnorePattern": "^tooCompli[cated]" }] )),
-        //     FixKind::DangerousFix,
-        // ),
-    ];
-    Tester::new(NoUnusedVars::NAME, pass, fail).expect_fix(fix).test();
-}
-
-#[test]
 fn test_vars_simple() {
     let pass = vec![
         ("let a = 1; console.log(a)", None),
@@ -281,15 +259,42 @@ fn test_vars_reassignment() {
 #[test]
 fn test_vars_destructure() {
     let pass = vec![
-        // ("const { a, ...rest } = obj; console.log(rest)", Some(json![{ "ignoreRestSiblings": true }]))
+        (
+            "const { a, ...rest } = obj; console.log(rest)",
+            Some(json![[{ "ignoreRestSiblings": true }]]),
+        ),
+        (
+            "const { a, ...rest } = obj; console.log(rest)",
+            Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
+        ),
+        (
+            "const { a, ...rest } = obj; console.log(rest)",
+            Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
+        ),
+        // https://github.com/oxc-project/oxc/issues/4888
+        (
+            "const { text, ...dbEntry } = entry; return doSomething({ ...dbEntry, someOtherProp });",
+            Some(json!([{
+                "args": "none",
+                "caughtErrors": "none",
+                "ignoreRestSiblings": true,
+                "vars": "all"
+            }]))
+        )
     ];
     let fail = vec![
-        ("const { a, ...rest } = obj", Some(json![{ "ignoreRestSiblings": true }])),
-        ("const [a, ...rest] = arr", Some(json![{ "ignoreRestSiblings": true }])),
+        ("const { a, ...rest } = obj", Some(json!( [{ "ignoreRestSiblings": true }] ))),
+        ("const [a, ...rest] = arr", Some(json!( [{ "ignoreRestSiblings": true }] ))),
         (
             "const { a: { b }, ...rest } = obj; console.log(a)",
-            Some(json![{ "ignoreRestSiblings": true }]),
+            Some(json!( [{ "ignoreRestSiblings": true }] )),
         ),
+        (
+            "const { a: { b }, ...rest } = obj; console.log(rest)",
+            Some(json!( [{ "ignoreRestSiblings": true }] )),
+        ),
+        // https://github.com/oxc-project/oxc/issues/4839
+        (r#"const l="",{e}=r"#, None),
     ];
 
     let fix = vec![
@@ -336,6 +341,8 @@ fn test_vars_destructure() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        // TODO: destructures in VariableDeclarations with more than one declarator
+        (r#"const l="",{e}=r"#, r"const {e}=r", None, FixKind::All),
         // renaming
         // (
         //     "let a = 1; a = 2;",

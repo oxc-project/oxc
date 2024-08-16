@@ -9,7 +9,8 @@ pub struct FormalParameterBindingPattern<'a> {
 impl<'a> VisitMut<'a> for FormalParameterBindingPattern<'a> {
     fn visit_binding_pattern_kind(&mut self, kind: &mut BindingPatternKind<'a>) {
         if let BindingPatternKind::AssignmentPattern(assignment) = kind {
-            *kind = self.ast.copy(&assignment.left.kind);
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            *kind = unsafe { self.ast.copy(&assignment.left.kind) };
         }
 
         walk_binding_pattern_kind(self, kind);

@@ -238,7 +238,8 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = ast.copy(initializer);
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        let mut new_initializer = unsafe { ast.copy(initializer) };
 
                         // If the initializer is a binding identifier,
                         // and it is not a binding in the current scope and parent scopes,

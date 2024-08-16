@@ -216,14 +216,16 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         if expr.is_typescript_syntax() {
-            *expr = self.ctx.ast.copy(expr.get_inner_expression());
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            *expr = unsafe { self.ctx.ast.copy(expr.get_inner_expression()) };
         }
     }
 
     pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
         if let Some(expr) = target.get_expression() {
             if let Expression::Identifier(ident) = expr.get_inner_expression() {
-                let ident = self.ctx.ast.copy(ident);
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                let ident = unsafe { self.ctx.ast.copy(ident) };
                 *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
             }
         }
@@ -232,7 +234,8 @@ impl<'a> TypeScriptAnnotations<'a> {
     pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
         if let Some(expr) = target.get_expression() {
             if let Some(member_expr) = expr.get_inner_expression().as_member_expression() {
-                *target = AssignmentTarget::from(self.ctx.ast.copy(member_expr));
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                *target = AssignmentTarget::from(unsafe { self.ctx.ast.copy(member_expr) });
             }
         }
     }

@@ -62,10 +62,10 @@ impl<'a> AstBuilder<'a> {
     /// This method is completely unsound and should not be used.
     /// We need to remove all uses of it. Please don't add any more!
     /// <https://github.com/oxc-project/oxc/issues/3483>
+    #[allow(clippy::missing_safety_doc)]
     #[inline]
-    pub fn copy<T>(self, src: &T) -> T {
+    pub unsafe fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)
-
         unsafe { std::mem::transmute_copy(src) }
     }
 
