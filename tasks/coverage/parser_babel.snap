@@ -4,128 +4,128 @@ parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
 Positive Passed: 2083/2101 (99.14%)
 Negative Passed: 1380/1501 (91.94%)
-Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
-Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
-Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
-Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
-Expect Syntax Error: "annex-b/disabled/3.2.4-duplicate-function-in-block/input.js"
-Expect Syntax Error: "annex-b/disabled/3.2.5-duplicate-function-in-switch/input.js"
-Expect Syntax Error: "annex-b/disabled/3.3-function-in-if-body/input.js"
-Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
-Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
-Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
-Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
-Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine/input.js"
-Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-catch-func/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-func-var-sloppy/input.js"
-Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
-Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
-Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
-Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
-Expect Syntax Error: "es2015/uncategorised/297/input.js"
-Expect Syntax Error: "es2015/uncategorised/335/input.js"
-Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
-Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-for-in/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-nested/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
-Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
-Expect Syntax Error: "es2020/dynamic-import-createImportExpression-false/invalid-trailing-comma/input.js"
-Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0276/input.js"
-Expect Syntax Error: "typescript/cast/satisfies-const-error/input.ts"
-Expect Syntax Error: "typescript/cast/unparenthesized-assert-and-assign/input.ts"
-Expect Syntax Error: "typescript/cast/unparenthesized-type-assertion-and-assign/input.ts"
-Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-1/input.ts"
-Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-2/input.ts"
-Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-3/input.ts"
-Expect Syntax Error: "typescript/class/constructor-with-type-parameters/input.ts"
-Expect Syntax Error: "typescript/class/constructor-with-type-parameters-babel-7/input.ts"
-Expect Syntax Error: "typescript/class/declare-accessor/input.ts"
-Expect Syntax Error: "typescript/class/declare-field-initializer/input.ts"
-Expect Syntax Error: "typescript/class/declare-initializer/input.ts"
-Expect Syntax Error: "typescript/class/declare-method/input.ts"
-Expect Syntax Error: "typescript/class/declare-readonly-field-initializer-w-annotation/input.ts"
-Expect Syntax Error: "typescript/class/index-signature-errors/input.ts"
-Expect Syntax Error: "typescript/class/invalid-modifiers-order/input.ts"
-Expect Syntax Error: "typescript/class/method-readonly/input.ts"
-Expect Syntax Error: "typescript/class/modifiers-incompatible/input.ts"
-Expect Syntax Error: "typescript/class/modifiers-index-signatures/input.ts"
-Expect Syntax Error: "typescript/class/modifiers-invalid-order/input.ts"
-Expect Syntax Error: "typescript/class/modifiers-override-errors/input.ts"
-Expect Syntax Error: "typescript/class/parameter-properties-binding-patterns/input.ts"
-Expect Syntax Error: "typescript/class/private-fields-modifier-abstract/input.ts"
-Expect Syntax Error: "typescript/class/property-optional-definite-assignment-not-allowed/input.ts"
-Expect Syntax Error: "typescript/declare/function/input.ts"
-Expect Syntax Error: "typescript/declare/module-class/input.ts"
-Expect Syntax Error: "typescript/declare/module-function/input.ts"
-Expect Syntax Error: "typescript/declare/namespace-class/input.ts"
-Expect Syntax Error: "typescript/declare/namespace-function/input.ts"
-Expect Syntax Error: "typescript/decorators/type-arguments-invalid/input.ts"
-Expect Syntax Error: "typescript/disallow-jsx-ambiguity/type-assertion/input.ts"
-Expect Syntax Error: "typescript/disallow-jsx-ambiguity/type-parameter/input.ts"
-Expect Syntax Error: "typescript/disallow-jsx-ambiguity/type-parameter-babel-7/input.ts"
-Expect Syntax Error: "typescript/dts/invalid-class-implementation/input.ts"
-Expect Syntax Error: "typescript/dts/invalid-class-initializer/input.ts"
-Expect Syntax Error: "typescript/expect-plugin/export-interface/input.js"
-Expect Syntax Error: "typescript/expect-plugin/export-type/input.js"
-Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
-Expect Syntax Error: "typescript/export/equals-in-script/input.ts"
-Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
-Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-parameters/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-parameters-babel-7/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-this-parameters/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts"
-Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
-Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
-Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
-Expect Syntax Error: "typescript/regression/keyword-qualified-type-disallowed/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-accessibility-private-01/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-accessibility-protected-01/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-accessibility-public-01/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-modifier-abstract-01/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-modifier-override-01/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-modifier-override-01/invalid-static-block-with-modifier-abstract/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts"
-Expect Syntax Error: "typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts"
-Expect Syntax Error: "typescript/tsx/invalid-gt-arrow-like/input.ts"
-Expect Syntax Error: "typescript/type-arguments/call-optional-chain-invalid/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-function/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-interface-extends/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-interface-implements/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-new/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-superclass/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-tsx/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-type-import/input.ts"
-Expect Syntax Error: "typescript/type-arguments/empty-type-ref/input.ts"
-Expect Syntax Error: "typescript/type-arguments/instantiation-expression-property-access/input.ts"
-Expect Syntax Error: "typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts"
-Expect Syntax Error: "typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts"
-Expect Syntax Error: "typescript/types/const-type-parameters-invalid/input.ts"
-Expect Syntax Error: "typescript/types/const-type-parameters-invalid-babel-7/input.ts"
-Expect Syntax Error: "typescript/types/import-type-declaration-error/input.ts"
-Expect Syntax Error: "typescript/types/import-type-dynamic-errors/input.ts"
-Expect Syntax Error: "typescript/types/intrinsic-keyword-error/input.ts"
-Expect Syntax Error: "typescript/types/read-only-1/input.ts"
-Expect Syntax Error: "typescript/types/read-only-2/input.ts"
-Expect Syntax Error: "typescript/types/read-only-3/input.ts"
-Expect Syntax Error: "typescript/types/read-only-4/input.ts"
-Expect Syntax Error: "typescript/types/tuple-labeled-invalid-optional/input.ts"
-Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
-Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
-Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
+Expect Syntax Error: annex-b/disabled/1.1-html-comments-close/input.js
+Expect Syntax Error: annex-b/disabled/3.1-sloppy-labeled-functions/input.js
+Expect Syntax Error: annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js
+Expect Syntax Error: annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js
+Expect Syntax Error: annex-b/disabled/3.2.4-duplicate-function-in-block/input.js
+Expect Syntax Error: annex-b/disabled/3.2.5-duplicate-function-in-switch/input.js
+Expect Syntax Error: annex-b/disabled/3.3-function-in-if-body/input.js
+Expect Syntax Error: annex-b/disabled/3.5-for-in-initializer/input.js
+Expect Syntax Error: annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
+Expect Syntax Error: core/categorized/invalid-fn-decl-labeled-inside-if/input.js
+Expect Syntax Error: core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
+Expect Syntax Error: core/escape-string/non-octal-eight-and-nine/input.js
+Expect Syntax Error: core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js
+Expect Syntax Error: core/scope/dupl-bind-catch-func/input.js
+Expect Syntax Error: core/scope/dupl-bind-func-var-sloppy/input.js
+Expect Syntax Error: es2015/class-methods/direct-super-in-object-method/input.js
+Expect Syntax Error: es2015/destructuring/error-operator-for-default/input.js
+Expect Syntax Error: es2015/for-of/invalid-let-as-identifier/input.js
+Expect Syntax Error: es2015/object/disallow-duplicate-method-params/input.js
+Expect Syntax Error: es2015/uncategorised/297/input.js
+Expect Syntax Error: es2015/uncategorised/335/input.js
+Expect Syntax Error: es2017/async-functions/async-await-as-arrow-binding-identifier/input.js
+Expect Syntax Error: es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js
+Expect Syntax Error: es2018/object-rest-spread/24/input.js
+Expect Syntax Error: es2018/object-rest-spread/comma-after-rest/input.js
+Expect Syntax Error: es2018/object-rest-spread/comma-after-spread-for-in/input.js
+Expect Syntax Error: es2018/object-rest-spread/comma-after-spread-nested/input.js
+Expect Syntax Error: es2018/object-rest-spread/no-pattern-in-rest/input.js
+Expect Syntax Error: es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js
+Expect Syntax Error: es2020/dynamic-import/invalid-trailing-comma/input.js
+Expect Syntax Error: es2020/dynamic-import-createImportExpression-false/invalid-trailing-comma/input.js
+Expect Syntax Error: esprima/es2015-arrow-function/invalid-param-strict-mode/input.js
+Expect Syntax Error: esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js
+Expect Syntax Error: esprima/invalid-syntax/migrated_0101/input.js
+Expect Syntax Error: esprima/invalid-syntax/migrated_0276/input.js
+Expect Syntax Error: typescript/cast/satisfies-const-error/input.ts
+Expect Syntax Error: typescript/cast/unparenthesized-assert-and-assign/input.ts
+Expect Syntax Error: typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
+Expect Syntax Error: typescript/class/constructor-with-invalid-order-modifiers-1/input.ts
+Expect Syntax Error: typescript/class/constructor-with-invalid-order-modifiers-2/input.ts
+Expect Syntax Error: typescript/class/constructor-with-invalid-order-modifiers-3/input.ts
+Expect Syntax Error: typescript/class/constructor-with-type-parameters/input.ts
+Expect Syntax Error: typescript/class/constructor-with-type-parameters-babel-7/input.ts
+Expect Syntax Error: typescript/class/declare-accessor/input.ts
+Expect Syntax Error: typescript/class/declare-field-initializer/input.ts
+Expect Syntax Error: typescript/class/declare-initializer/input.ts
+Expect Syntax Error: typescript/class/declare-method/input.ts
+Expect Syntax Error: typescript/class/declare-readonly-field-initializer-w-annotation/input.ts
+Expect Syntax Error: typescript/class/index-signature-errors/input.ts
+Expect Syntax Error: typescript/class/invalid-modifiers-order/input.ts
+Expect Syntax Error: typescript/class/method-readonly/input.ts
+Expect Syntax Error: typescript/class/modifiers-incompatible/input.ts
+Expect Syntax Error: typescript/class/modifiers-index-signatures/input.ts
+Expect Syntax Error: typescript/class/modifiers-invalid-order/input.ts
+Expect Syntax Error: typescript/class/modifiers-override-errors/input.ts
+Expect Syntax Error: typescript/class/parameter-properties-binding-patterns/input.ts
+Expect Syntax Error: typescript/class/private-fields-modifier-abstract/input.ts
+Expect Syntax Error: typescript/class/property-optional-definite-assignment-not-allowed/input.ts
+Expect Syntax Error: typescript/declare/function/input.ts
+Expect Syntax Error: typescript/declare/module-class/input.ts
+Expect Syntax Error: typescript/declare/module-function/input.ts
+Expect Syntax Error: typescript/declare/namespace-class/input.ts
+Expect Syntax Error: typescript/declare/namespace-function/input.ts
+Expect Syntax Error: typescript/decorators/type-arguments-invalid/input.ts
+Expect Syntax Error: typescript/disallow-jsx-ambiguity/type-assertion/input.ts
+Expect Syntax Error: typescript/disallow-jsx-ambiguity/type-parameter/input.ts
+Expect Syntax Error: typescript/disallow-jsx-ambiguity/type-parameter-babel-7/input.ts
+Expect Syntax Error: typescript/dts/invalid-class-implementation/input.ts
+Expect Syntax Error: typescript/dts/invalid-class-initializer/input.ts
+Expect Syntax Error: typescript/expect-plugin/export-interface/input.js
+Expect Syntax Error: typescript/expect-plugin/export-type/input.js
+Expect Syntax Error: typescript/expect-plugin/export-type-named/input.js
+Expect Syntax Error: typescript/export/equals-in-script/input.ts
+Expect Syntax Error: typescript/import/equals-in-script/input.ts
+Expect Syntax Error: typescript/import/equals-require-in-script/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-optional-parameter/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-parameters/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-parameters-babel-7/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-reset-parameter/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-this-parameters/input.ts
+Expect Syntax Error: typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts
+Expect Syntax Error: typescript/interface/invalid-modifiers-method/input.ts
+Expect Syntax Error: typescript/interface/invalid-modifiers-method-babel-7/input.ts
+Expect Syntax Error: typescript/interface/invalid-modifiers-property/input.ts
+Expect Syntax Error: typescript/regression/keyword-qualified-type-disallowed/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-block-with-accessibility-private-01/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-block-with-accessibility-protected-01/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-block-with-accessibility-public-01/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-block-with-modifier-abstract-01/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-block-with-modifier-override-01/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-block-with-modifier-override-01/invalid-static-block-with-modifier-abstract/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-block-with-modifier-static/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-blocks-with-modifer-declare-01/input.ts
+Expect Syntax Error: typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-01/input.ts
+Expect Syntax Error: typescript/tsx/invalid-gt-arrow-like/input.ts
+Expect Syntax Error: typescript/type-arguments/call-optional-chain-invalid/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-function/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-interface-extends/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-interface-implements/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-new/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-superclass/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-tsx/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-type-import/input.ts
+Expect Syntax Error: typescript/type-arguments/empty-type-ref/input.ts
+Expect Syntax Error: typescript/type-arguments/instantiation-expression-property-access/input.ts
+Expect Syntax Error: typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts
+Expect Syntax Error: typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts
+Expect Syntax Error: typescript/types/const-type-parameters-invalid/input.ts
+Expect Syntax Error: typescript/types/const-type-parameters-invalid-babel-7/input.ts
+Expect Syntax Error: typescript/types/import-type-declaration-error/input.ts
+Expect Syntax Error: typescript/types/import-type-dynamic-errors/input.ts
+Expect Syntax Error: typescript/types/intrinsic-keyword-error/input.ts
+Expect Syntax Error: typescript/types/read-only-1/input.ts
+Expect Syntax Error: typescript/types/read-only-2/input.ts
+Expect Syntax Error: typescript/types/read-only-3/input.ts
+Expect Syntax Error: typescript/types/read-only-4/input.ts
+Expect Syntax Error: typescript/types/tuple-labeled-invalid-optional/input.ts
+Expect Syntax Error: typescript/types/tuple-optional-invalid/input.ts
+Expect Syntax Error: typescript/types/tuple-required-after-labeled-optional/input.ts
+Expect to Parse: core/opts/allowNewTargetOutsideFunction-true/input.js
 
   × Unexpected new.target expression
    ╭─[core/opts/allowNewTargetOutsideFunction-true/input.js:1:11]
@@ -142,13 +142,13 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
+Expect to Parse: typescript/arrow-function/generic-tsx-babel-7/input.ts
 
   × Expected `<` but found `EOF`
    ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:3:1]
  2 │ <T>(a: T): T => a;
    ╰────
-Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
+Expect to Parse: typescript/class/constructor-with-modifier-names/input.ts
 
   × Multiple constructor implementations are not allowed.
    ╭─[typescript/class/constructor-with-modifier-names/input.ts:2:3]
@@ -161,7 +161,7 @@ Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
    ·        ╰── it cannot be redeclared here
  4 │ }
    ╰────
-Expect to Parse: "typescript/class/declare/input.ts"
+Expect to Parse: typescript/class/declare/input.ts
 
   × Identifier `x` has already been declared
    ╭─[typescript/class/declare/input.ts:3:5]
@@ -174,7 +174,7 @@ Expect to Parse: "typescript/class/declare/input.ts"
    ·     ╰── It can not be redeclared here
  5 │     f();
    ╰────
-Expect to Parse: "typescript/class/modifiers-override/input.ts"
+Expect to Parse: typescript/class/modifiers-override/input.ts
 
   × Identifier `show` has already been declared
    ╭─[typescript/class/modifiers-override/input.ts:2:12]
@@ -199,7 +199,7 @@ Expect to Parse: "typescript/class/modifiers-override/input.ts"
    ·                       ╰── It can not be redeclared here
  6 │ 
    ╰────
-Expect to Parse: "typescript/class/parameter-properties/input.ts"
+Expect to Parse: typescript/class/parameter-properties/input.ts
 
   × A required parameter cannot follow an optional parameter.
    ╭─[typescript/class/parameter-properties/input.ts:7:9]
@@ -208,7 +208,7 @@ Expect to Parse: "typescript/class/parameter-properties/input.ts"
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
    ╰────
-Expect to Parse: "typescript/class/properties/input.ts"
+Expect to Parse: typescript/class/properties/input.ts
 
   × Identifier `x` has already been declared
    ╭─[typescript/class/properties/input.ts:2:5]
@@ -269,7 +269,7 @@ Expect to Parse: "typescript/class/properties/input.ts"
    ·     ╰── It can not be redeclared here
  8 │ }
    ╰────
-Expect to Parse: "typescript/declare/eval/input.ts"
+Expect to Parse: typescript/declare/eval/input.ts
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/declare/eval/input.ts:3:25]
@@ -302,14 +302,14 @@ Expect to Parse: "typescript/declare/eval/input.ts"
     ·                  ─────────
  10 │ 
     ╰────
-Expect to Parse: "typescript/function/declare-pattern-parameters/input.ts"
+Expect to Parse: typescript/function/declare-pattern-parameters/input.ts
 
   × A required parameter cannot follow an optional parameter.
    ╭─[typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
    ╰────
-Expect to Parse: "typescript/interface/get-set-properties/input.ts"
+Expect to Parse: typescript/interface/get-set-properties/input.ts
 
   × Expected `(` but found `:`
    ╭─[typescript/interface/get-set-properties/input.ts:2:10]
@@ -319,7 +319,7 @@ Expect to Parse: "typescript/interface/get-set-properties/input.ts"
    ·          ╰── `(` expected
  3 │   set bar: string;
    ╰────
-Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
+Expect to Parse: typescript/regression/nested-extends-in-arrow-type-param/input.ts
 
   × Expected `,` but found `extends`
    ╭─[typescript/regression/nested-extends-in-arrow-type-param/input.ts:1:31]
@@ -327,7 +327,7 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input
    ·                               ───┬───
    ·                                  ╰── `,` expected
    ╰────
-Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
+Expect to Parse: typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts
 
   × Expected `,` but found `extends`
    ╭─[typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts:1:31]
@@ -335,7 +335,7 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel
    ·                               ───┬───
    ·                                  ╰── `,` expected
    ╰────
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts"
+Expect to Parse: typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
 
   × Expected `{` but found `<<`
    ╭─[typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts:1:17]
@@ -343,14 +343,14 @@ Expect to Parse: "typescript/type-arguments-bit-shift-left-like/class-heritage/i
    ·                 ─┬
    ·                  ╰── `{` expected
    ╰────
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx"
+Expect to Parse: typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
 
   × Unexpected token
    ╭─[typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx:1:11]
  1 │ <Component<<T>(v: T) => void> />
    ·           ──
    ╰────
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts"
+Expect to Parse: typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts
 
   × Expected `{` but found `<<`
    ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts:1:17]
@@ -358,14 +358,14 @@ Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/class-he
    ·                 ─┬
    ·                  ╰── `{` expected
    ╰────
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx"
+Expect to Parse: typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx
 
   × Unexpected token
    ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx:1:11]
  1 │ <Component<<T>(v: T) => void> />
    ·           ──
    ╰────
-Expect to Parse: "typescript/types/const-type-parameters/input.ts"
+Expect to Parse: typescript/types/const-type-parameters/input.ts
 
   × Identifier `method` has already been declared
     ╭─[typescript/types/const-type-parameters/input.ts:29:3]
@@ -390,7 +390,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
     ·      ╰── It can not be redeclared here
  32 │ }
     ╰────
-Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
+Expect to Parse: typescript/types/const-type-parameters-babel-7/input.ts
 
   × Identifier `method` has already been declared
     ╭─[typescript/types/const-type-parameters-babel-7/input.ts:29:3]

@@ -4,10 +4,10 @@ parser_test262 Summary:
 AST Parsed     : 45859/45859 (100.00%)
 Positive Passed: 45859/45859 (100.00%)
 Negative Passed: 3925/3929 (99.90%)
-Expect Syntax Error: "language/import/import-assertions/json-invalid.js"
-Expect Syntax Error: "language/import/import-assertions/json-named-bindings.js"
-Expect Syntax Error: "language/import/import-attributes/json-invalid.js"
-Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
+Expect Syntax Error: language/import/import-assertions/json-invalid.js
+Expect Syntax Error: language/import/import-assertions/json-named-bindings.js
+Expect Syntax Error: language/import/import-attributes/json-invalid.js
+Expect Syntax Error: language/import/import-attributes/json-named-bindings.js
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:18:4]
