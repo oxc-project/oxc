@@ -375,10 +375,6 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.report_property_key(&method.key, method.computed) {
                         continue;
                     }
-                    if method.accessibility.is_some_and(TSAccessibility::is_private) {
-                        elements.push(self.transform_private_modifier_method(method));
-                        continue;
-                    }
 
                     let inferred_accessor_types = self.collect_inferred_accessor_types(decl);
                     let function = &method.value;
@@ -405,6 +401,11 @@ impl<'a> IsolatedDeclarations<'a> {
                                 function, &params,
                             ),
                         );
+                    }
+
+                    if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                        elements.push(self.transform_private_modifier_method(method));
+                        continue;
                     }
 
                     let return_type = match method.kind {
