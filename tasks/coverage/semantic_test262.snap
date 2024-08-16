@@ -1,0 +1,515 @@
+commit: a1587416
+
+semantic_test262 Summary:
+AST Parsed     : 46406/46406 (100.00%)
+Positive Passed: 46346/46406 (99.87%)
+built-ins/JSON/stringify/value-bigint-tojson-receiver.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(2): []
+current  scope ScopeId(2): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(3): ["_this"]
+current  scope ScopeId(3): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+built-ins/Object/keys/proxy-keys.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): []
+current  scope ScopeId(5): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this", "args"]
+current  scope ScopeId(6): ["args"]
+Bindings Mismatch:
+previous scope ScopeId(7): []
+current  scope ScopeId(7): ["_this2"]
+Bindings Mismatch:
+previous scope ScopeId(8): ["_this2", "args", "name"]
+current  scope ScopeId(8): ["args", "name"]
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+built-ins/Set/prototype/forEach/this-arg-explicit-cannot-override-lexical-this-arrow.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["counter", "s", "usurper"]
+current  scope ScopeId(0): ["_this", "counter", "s", "usurper"]
+Bindings Mismatch:
+previous scope ScopeId(1): ["_", "_this"]
+current  scope ScopeId(1): ["_"]
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/arrow-function/cannot-override-this-with-thisArg.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["calls", "usurper"]
+current  scope ScopeId(0): ["_this", "calls", "usurper"]
+Bindings Mismatch:
+previous scope ScopeId(1): ["_this", "value"]
+current  scope ScopeId(1): ["value"]
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/arrow-function/lexical-this.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(1): []
+current  scope ScopeId(1): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(2): ["_", "_this"]
+current  scope ScopeId(2): ["_"]
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/constructor-this-tdz-during-initializers.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(4): []
+current  scope ScopeId(4): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(5): ["_this"]
+current  scope ScopeId(5): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-field-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(2): ["arrowFunction"]
+current  scope ScopeId(2): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(3): ["_this"]
+current  scope ScopeId(3): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-getter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-method-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-methods/prod-private-async-generator.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): ["ctorIter", "p"]
+current  scope ScopeId(5): ["_this", "ctorIter", "p"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-methods/prod-private-async-method.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): []
+current  scope ScopeId(5): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-methods/prod-private-generator.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): ["res"]
+current  scope ScopeId(5): ["_this", "res"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-methods/prod-private-method-initialize-order.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(6): []
+current  scope ScopeId(6): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(7): ["_this"]
+current  scope ScopeId(7): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-methods/prod-private-method.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): []
+current  scope ScopeId(5): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/private-setter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/static-field-init-this-inside-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["C"]
+current  scope ScopeId(0): ["C", "_this"]
+Bindings Mismatch:
+previous scope ScopeId(2): ["_this"]
+current  scope ScopeId(2): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/static-private-getter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/static-private-method-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/class/elements/static-private-setter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/tagged-template/call-expression-context-no-strict.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): []
+current  scope ScopeId(3): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/expressions/tagged-template/call-expression-context-strict.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): []
+current  scope ScopeId(3): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/module-code/eval-rqstd-once.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns1", "ns3"]
+current  scope ScopeId(0): ["global"]
+Symbols mismatch after transform
+
+language/module-code/eval-rqstd-order.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns1", "ns2"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/eval-self-once.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns", "ns1"]
+current  scope ScopeId(0): ["global"]
+Symbols mismatch after transform
+
+language/module-code/import-assertions/import-assertion-many.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-assertions/import-assertion-trlng-comma.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-assertions/import-assertion-value-string-double.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-assertions/import-assertion-value-string-single.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-attributes/allow-nlt-before-with.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-attributes/import-attribute-many.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-attributes/import-attribute-trlng-comma.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-attributes/import-attribute-value-string-double.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/import-attributes/import-attribute-value-string-single.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-named-err-ambiguous-as.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["y"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-named-err-ambiguous.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-named-err-dflt-thru-star-as.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-named-err-dflt-thru-star-dflt.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-named-err-not-found-as.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["y"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-named-err-not-found-dflt.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-named-err-not-found.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["x"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/instn-once.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns", "ns1", "x"]
+current  scope ScopeId(0): ["x"]
+Symbols mismatch after transform
+
+language/module-code/instn-star-err-not-found.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["ns"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/top-level-await/module-import-rejection-body.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["foo"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/top-level-await/module-import-rejection-tick.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["foo"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/module-code/top-level-await/module-import-rejection.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["resolved"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+language/statements/class/elements/private-field-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(2): ["arrowFunction"]
+current  scope ScopeId(2): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(3): ["_this"]
+current  scope ScopeId(3): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-getter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-method-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-methods/prod-private-async-generator.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): ["ctorIter", "p"]
+current  scope ScopeId(5): ["_this", "ctorIter", "p"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-methods/prod-private-async-method.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): []
+current  scope ScopeId(5): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-methods/prod-private-generator.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): ["res"]
+current  scope ScopeId(5): ["_this", "res"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-methods/prod-private-method-initialize-order.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(6): []
+current  scope ScopeId(6): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(7): ["_this"]
+current  scope ScopeId(7): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-methods/prod-private-method.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(5): []
+current  scope ScopeId(5): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(6): ["_this"]
+current  scope ScopeId(6): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/private-setter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/privatefieldset-evaluation-order-3.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(4): ["init", "object"]
+current  scope ScopeId(4): ["_this", "init", "object"]
+Bindings Mismatch:
+previous scope ScopeId(5): ["_this"]
+current  scope ScopeId(5): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/static-field-init-this-inside-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["C"]
+current  scope ScopeId(0): ["C", "_this"]
+Bindings Mismatch:
+previous scope ScopeId(2): ["_this"]
+current  scope ScopeId(2): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/static-private-getter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/static-private-method-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/elements/static-private-setter-access-on-inner-arrow-function.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(3): ["arrowFunction"]
+current  scope ScopeId(3): ["_this", "arrowFunction"]
+Bindings Mismatch:
+previous scope ScopeId(4): ["_this"]
+current  scope ScopeId(4): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+language/statements/class/subclass/class-definition-null-proto-this.js
+semantic error: Bindings Mismatch:
+previous scope ScopeId(2): []
+current  scope ScopeId(2): ["_this"]
+Bindings Mismatch:
+previous scope ScopeId(3): ["_this"]
+current  scope ScopeId(3): []
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+

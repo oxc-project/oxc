@@ -35,6 +35,7 @@ oxc_tasks_common          = { workspace = true }
 oxc_sourcemap             = { workspace = true }
 oxc_transformer           = { workspace = true }
 oxc_isolated_declarations = { workspace = true }
+oxc_syntax                = { workspace = true }
 
 serde          = { workspace = true, features = ["derive"] }
 serde_json     = { workspace = true }

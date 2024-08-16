@@ -190,10 +190,10 @@ impl CodegenRuntimeTest262Case {
                             return TestResult::Passed;
                         }
                     }
-                    TestResult::RuntimeError(output)
+                    TestResult::GenericError("runtime", output)
                 }
             }
-            Err(error) => TestResult::RuntimeError(error),
+            Err(error) => TestResult::GenericError("runtime", error),
         }
     }
 }

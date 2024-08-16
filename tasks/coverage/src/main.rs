@@ -20,6 +20,7 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
     match task {
         "parser" => args.run_parser(),
+        "semantic" => args.run_semantic(),
         "codegen" => args.run_codegen(),
         "codegen-runtime" => args.run_codegen_runtime(),
         // "prettier" => args.run_prettier(),
