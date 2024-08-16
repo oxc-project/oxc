@@ -76,6 +76,11 @@ impl Rule for NoZeroFractions {
 
                 if is_member_expression && is_decimal_integer {
                     fixed = format!("({fixed})");
+                    // TODO: checks the type and value of tokenBefore:
+                    // If tokenBefore is a Punctuator (e.g., a symbol like ;, ], or )), it determines whether a semicolon is necessary based on the context (e.g., the type of the last block node).
+                    // If the token type is in tokenTypesNeedsSemicolon, it returns true (semicolon needed).
+                    // Special cases like Template strings, ObjectExpression blocks, and certain Identifier cases are handled explicitly.  
+                    // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/77f32e5a6b2df542cf50dfbd371054f2cd8ce2d6/rules/no-zero-fractions.js#L56
                 }
 
                 // Handle special cases where a space is needed after certain keywords
