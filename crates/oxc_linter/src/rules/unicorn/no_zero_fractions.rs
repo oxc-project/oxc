@@ -66,12 +66,50 @@ impl Rule for NoZeroFractions {
             } else {
                 zero_fraction(number_literal.span, &fmt)
             },
-            |fixer| fixer.replace(number_literal.span, fmt),
+            |fixer| {
+                let mut fixed = fmt.clone();
+                let is_decimal_integer = fmt.parse::<i64>().is_ok();
+                let is_member_expression =
+                    ctx.nodes().parent_node(node.id()).map_or(false, |parent_node| {
+                        matches!(parent_node.kind(), AstKind::MemberExpression(_))
+                    });
+
+                if is_member_expression && is_decimal_integer {
+                    fixed = format!("({fixed})");
+                    // TODO: checks the type and value of tokenBefore:
+                    // If tokenBefore is a Punctuator (e.g., a symbol like ;, ], or )), it determines whether a semicolon is necessary based on the context (e.g., the type of the last block node).
+                    // If the token type is in tokenTypesNeedsSemicolon, it returns true (semicolon needed).
+                    // Special cases like Template strings, ObjectExpression blocks, and certain Identifier cases are handled explicitly.
+                    // https://github.com/sindresorhus/eslint-plugin-unicorn/blob/77f32e5a6b2df542cf50dfbd371054f2cd8ce2d6/rules/no-zero-fractions.js#L56
+                }
+
+                // Handle special cases where a space is needed after certain keywords
+                // to prevent the number from being interpreted as a property access
+                let start = number_literal.span.start.saturating_sub(6);
+                let end = number_literal.span.start;
+                let token = ctx.source_range(oxc_span::Span::new(start, end)).to_string();
+                if token.ends_with("return")
+                    || token.ends_with("throw")
+                    || token.ends_with("typeof")
+                    || token.ends_with("void")
+                {
+                    fixed = format!(" {fixed}");
+                }
+
+                fixer.replace(number_literal.span, fixed)
+            },
         );
     }
 }
 
 fn format_raw(raw: &str) -> Option<(String, bool)> {
+    // Check if the string contains 'e' or 'E' (scientific notation)
+    if let Some((base, exp)) = raw.split_once(['e', 'E']) {
+        // Process the base part
+        let (formatted_base, has_fraction) = format_raw(base)?;
+        // Recombine the scientific notation
+        return Some((format!("{formatted_base}e{exp}"), has_fraction));
+    }
     let (before, after_and_dot) = raw.split_once('.')?;
     let mut after_parts = after_and_dot.splitn(2, |c: char| !c.is_ascii_digit() && c != '_');
     let dot_and_fractions = after_parts.next()?;
@@ -146,22 +184,29 @@ fn test() {
         (r"const foo = 1.", r"const foo = 1"),
         (r"const foo = +1.", r"const foo = +1"),
         (r"const foo = -1.", r"const foo = -1"),
-        // maybe todo
-        // In the following tests, the comments did not pass the fixer.
-
-        // (r"const foo = 1.e10", r"const foo = 1e10"),
-        // (r"const foo = +1.e-10", r"const foo = +1e-10"),
-        // (r"const foo = -1.e+10", r"const foo = -1e+10"),
+        (r"const foo = 1.e10", r"const foo = 1e10"),
+        (r"const foo = +1.e-10", r"const foo = +1e-10"),
+        (r"const foo = -1.e+10", r"const foo = -1e+10"),
         (r"const foo = (1.).toString()", r"const foo = (1).toString()"),
-        // (r"1.00.toFixed(2)", r"(1).toFixed(2)"),
-        // (r"1.00 .toFixed(2)", r"(1) .toFixed(2)"),
+        (r"1.00.toFixed(2)", r"(1).toFixed(2)"),
+        (r"1.010.toFixed(2)", r"1.01.toFixed(2)"),
+        (r"1.00 .toFixed(2)", r"(1) .toFixed(2)"),
         (r"(1.00).toFixed(2)", r"(1).toFixed(2)"),
-        // (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
+        (r"1.00?.toFixed(2)", r"(1)?.toFixed(2)"),
         (r"a = .0;", r"a = 0;"),
-        // (r"a = .0.toString()", r"a = (0).toString()"),
-        // (r"function foo(){return.0}", r"function foo(){return 0}"),
-        // (r"function foo(){return.0.toString()}", r"function foo(){return (0).toString()}"),
-        // (r"function foo(){return.0+.1}", r"function foo(){return 0+.1}"),
+        (r"a = .0.toString()", r"a = (0).toString()"),
+        (r"function foo(){return.0}", r"function foo(){return 0}"),
+        (r"function foo(){return.0.toString()}", r"function foo(){return (0).toString()}"),
+        (r"function foo(){return.0+.1}", r"function foo(){return 0+.1}"),
+        (r"typeof.0", r"typeof 0"),
+        (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
+        (r"typeof.0+.1", r"typeof 0+.1"),
+        (r"function foo(){throw.0;}", r"function foo(){throw 0;}"),
+        (r"function foo(){typeof.0.toString()}", r"function foo(){typeof (0).toString()}"),
+        (r"function foo(){throw.0+.1;}", r"function foo(){throw 0+.1;}"),
+        (r"void.0", r"void 0"),
+        (r"function foo(){void.0.toString()}", r"function foo(){void (0).toString()}"),
+        (r"function foo(){void.0+.1;}", r"function foo(){void 0+.1;}"),
     ];
 
     Tester::new(NoZeroFractions::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
