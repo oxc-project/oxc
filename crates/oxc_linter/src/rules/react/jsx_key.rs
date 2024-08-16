@@ -1,5 +1,6 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement,
+        Expression, CallExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -67,6 +68,45 @@ impl Rule for JsxKey {
     fn should_run(&self, ctx: &LintContext) -> bool {
         ctx.source_type().is_jsx()
     }
+}
+
+
+pub fn is_to_array(call: &CallExpression) -> bool {
+    const TOARRAY: &str = "toArray";
+
+    let Some(subject) = call.callee_name() else { return false };
+
+    if subject != TOARRAY {
+        return false;
+    }
+
+    true
+}
+
+pub fn is_children(call: &CallExpression) -> bool {
+    const CHILDREN: &str = "Children";
+
+    if let Some(member) = call.callee.as_member_expression() {
+        if let Expression::Identifier(ident) = member.object() {
+            return ident.name == CHILDREN;
+        }
+
+        if let Some(inner_member) = member.object().get_inner_expression().as_member_expression() {
+            return inner_member.static_property_name() == Some(CHILDREN);
+        }
+    }
+
+    false
+}
+fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let mut parents_iter = ctx.nodes().iter_parents(node.id()).skip(2);
+    parents_iter.any(|node| {
+        if let AstKind::CallExpression(expr) = node.kind() {
+            is_to_array(expr) && is_children(expr)
+        } else {
+            false
+        }
+    })
 }
 
 enum InsideArrayOrIterator {
@@ -151,6 +191,9 @@ fn is_in_array_or_iter<'a, 'b>(
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
+        if is_within_children_to_array(node, ctx) {
+            return;
+        }
         if !jsx_elem.opening_element.attributes.iter().any(|attr| {
             let JSXAttributeItem::Attribute(attr) = attr else {
                 return false;
