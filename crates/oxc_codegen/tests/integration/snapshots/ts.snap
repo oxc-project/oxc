@@ -102,7 +102,7 @@ b = (x as y);
 b = ((x) as y);
 
 c = foo<string>;
-c = foo;
+c = foo<string>;
 
 d = x satisfies y;
-d = x;
+d = ((x) satisfies y);
