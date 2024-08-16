@@ -1,6 +1,8 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement,
-        Expression, CallExpression},
+    ast::{
+        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment,
+        Statement,
+    },
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -69,7 +71,6 @@ impl Rule for JsxKey {
         ctx.source_type().is_jsx()
     }
 }
-
 
 pub fn is_to_array(call: &CallExpression) -> bool {
     const TOARRAY: &str = "toArray";
