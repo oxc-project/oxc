@@ -4,7 +4,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{CompressOptions, CompressorPass};
 
@@ -56,10 +56,7 @@ impl<'a> Traverse<'a> for SubstituteAlternateSyntax<'a> {
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Check if this call expression is a top level `ExpressionStatement`.
-        // NB: 1 = global, 2 = Program, 3 = ExpressionStatement
-        if ctx.ancestors_depth() == 3
-            && matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
+        if ctx.parent().is_expression_statement()
             && Self::is_object_define_property_exports(call_expr)
         {
             self.in_define_export = true;
