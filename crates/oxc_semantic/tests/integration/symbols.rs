@@ -342,12 +342,15 @@ fn test_type_query() {
 
 #[test]
 fn test_ts_interface_heritage() {
+    // NOTE: interface heritage clauses can only be identifiers or qualified
+    // names, but we handle references on invalid heritage clauses anyways.
     SemanticTester::ts(
         "
         type Heritage = { x: number; y: string; };
         interface A extends (Heritage.x) {}
     ",
     )
+    .expect_errors(true)
     .has_some_symbol("Heritage")
     .has_number_of_references(1)
     .test();

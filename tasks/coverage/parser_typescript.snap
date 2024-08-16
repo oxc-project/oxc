@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 6446/6456 (99.85%)
 Positive Passed: 6423/6456 (99.49%)
-Negative Passed: 1167/5653 (20.64%)
+Negative Passed: 1169/5653 (20.68%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -1158,7 +1158,6 @@ Expect Syntax Error: "compiler/interfaceImplementation6.ts"
 Expect Syntax Error: "compiler/interfaceImplementation7.ts"
 Expect Syntax Error: "compiler/interfaceImplementation8.ts"
 Expect Syntax Error: "compiler/interfaceInheritance.ts"
-Expect Syntax Error: "compiler/interfaceMayNotBeExtendedWitACall.ts"
 Expect Syntax Error: "compiler/interfaceMemberValidation.ts"
 Expect Syntax Error: "compiler/interfaceNameAsIdentifier.ts"
 Expect Syntax Error: "compiler/interfacePropertiesWithSameName2.ts"
@@ -3317,7 +3316,6 @@ Expect Syntax Error: "conformance/interfaces/declarationMerging/twoGenericInterf
 Expect Syntax Error: "conformance/interfaces/declarationMerging/twoInterfacesDifferentRootModule.ts"
 Expect Syntax Error: "conformance/interfaces/declarationMerging/twoInterfacesDifferentRootModule2.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/derivedInterfaceIncompatibleWithBaseIndexer.ts"
-Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceExtendingOptionalChain.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceExtendsObjectIntersectionErrors.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceThatHidesBaseProperty2.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceThatIndirectlyInheritsFromItself.ts"
@@ -8118,6 +8116,14 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ·              ┬
     ·              ╰── `{` expected
     ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[compiler/interfaceMayNotBeExtendedWitACall.ts:3:24]
+ 2 │ 
+ 3 │ interface blue extends color() { // error
+   ·                        ───────
+ 4 │ 
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/interfaceNaming1.ts:1:10]
@@ -17989,6 +17995,13 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     · ─────────
  11 │ I           // This should be the identifier 'I'
     ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[conformance/interfaces/interfaceDeclarations/interfaceExtendingOptionalChain.ts:5:22]
+ 4 │ 
+ 5 │ interface C1 extends Foo?.Bar {}
+   ·                      ────────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:5:10]
