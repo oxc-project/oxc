@@ -2098,7 +2098,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.print_char(b'(');
         p.print_char(b'(');
-        self.expression.gen_expr(p, precedence, ctx);
+        self.expression.gen_expr(p, precedence, Context::default());
         p.print_char(b')');
         p.print_str(" as ");
         self.type_annotation.gen(p, ctx);
@@ -2108,8 +2108,13 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSSatisfiesExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        // TODO: print properly
-        self.expression.gen_expr(p, precedence, ctx);
+        p.print_char(b'(');
+        p.print_char(b'(');
+        self.expression.gen_expr(p, precedence, Context::default());
+        p.print_char(b')');
+        p.print_str(" satisfies ");
+        self.type_annotation.gen(p, ctx);
+        p.print_char(b')');
     }
 }
 
@@ -2127,8 +2132,11 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSNonNullExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSInstantiationExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        // TODO: print properly
         self.expression.gen_expr(p, precedence, ctx);
+        self.type_parameters.gen(p, ctx);
+        if MINIFY {
+            p.print_hard_space();
+        }
     }
 }
 

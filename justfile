@@ -87,6 +87,9 @@ coverage:
   cargo run -p oxc_prettier_conformance
   # cargo minsize
 
+conformance *args='':
+  cargo coverage -- {{args}}
+
 # Get code coverage
 codecov:
   cargo codecov --html

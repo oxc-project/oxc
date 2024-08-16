@@ -3,9 +3,9 @@ commit: d8086f14
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
 Positive Passed: 17/20 (85.00%)
-Mismatch: "declarationBasicSyntax.ts"
-Mismatch: "declarationEmitPartialNodeReuse.ts"
-Mismatch: "declarationRestParameters.ts"
+Mismatch: declarationBasicSyntax.ts
+Mismatch: declarationEmitPartialNodeReuse.ts
+Mismatch: declarationRestParameters.ts
 
 #### "declarationComputedPropertyNames.ts" ####
 //// [declarationComputedPropertyNames.ts] ////

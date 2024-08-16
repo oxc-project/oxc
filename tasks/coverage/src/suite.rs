@@ -28,7 +28,7 @@ pub enum TestResult {
     Mismatch(/* case */ &'static str, /* actual */ String, /* expected */ String),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
-    RuntimeError(String),
+    GenericError(/* case */ &'static str, /* error */ String),
     Snapshot(String),
 }
 
@@ -347,32 +347,25 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     fn print<W: Write>(&self, args: &AppArgs, writer: &mut W) -> std::io::Result<()> {
+        let path = normalize_path(self.path());
         match self.test_result() {
             TestResult::ParseError(error, _) => {
-                writer.write_all(
-                    format!("Expect to Parse: {:?}\n", normalize_path(self.path())).as_bytes(),
-                )?;
+                writer.write_all(format!("Expect to Parse: {path}\n").as_bytes())?;
                 writer.write_all(error.as_bytes())?;
             }
             TestResult::Mismatch(case, ast_string, expected_ast_string) => {
-                writer
-                    .write_all(format!("{case}: {:?}\n", normalize_path(self.path())).as_bytes())?;
+                writer.write_all(format!("{case}: {path}\n",).as_bytes())?;
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
-                    println!("{case}: {:?}", normalize_path(self.path()));
+                    println!("{case}: {path:?}");
                 }
             }
-            TestResult::RuntimeError(error) => {
-                writer.write_all(
-                    format!("Expect to run correctly: {:?}\n", normalize_path(self.path()))
-                        .as_bytes(),
-                )?;
-                writer.write_all(format!("But got a runtime error: {error}\n\n").as_bytes())?;
+            TestResult::GenericError(case, error) => {
+                writer.write_all(format!("{path}\n").as_bytes())?;
+                writer.write_all(format!("{case} error: {error}\n\n").as_bytes())?;
             }
             TestResult::IncorrectlyPassed => {
-                writer.write_all(
-                    format!("Expect Syntax Error: {:?}\n", normalize_path(self.path())).as_bytes(),
-                )?;
+                writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
             }
             TestResult::Snapshot(snapshot) => {
                 writer.write_all(snapshot.as_bytes())?;

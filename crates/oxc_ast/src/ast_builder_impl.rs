@@ -69,11 +69,33 @@ impl<'a> AstBuilder<'a> {
         unsafe { std::mem::transmute_copy(src) }
     }
 
+    /// Moves the identifier reference out by replacing it with a dummy identifier reference.
+    #[inline]
+    pub fn move_identifier_reference(
+        self,
+        expr: &mut IdentifierReference<'a>,
+    ) -> IdentifierReference<'a> {
+        let dummy = self.identifier_reference(expr.span(), "");
+        mem::replace(expr, dummy)
+    }
+
     /// Moves the expression out by replacing it with a null expression.
     #[inline]
     pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
         let null_expr = self.expression_null_literal(expr.span());
         mem::replace(expr, null_expr)
+    }
+
+    /// Moves the member expression out by replacing it with a dummy expression.
+    #[inline]
+    pub fn move_member_expression(self, expr: &mut MemberExpression<'a>) -> MemberExpression<'a> {
+        let dummy = self.member_expression_computed(
+            expr.span(),
+            self.expression_null_literal(expr.span()),
+            self.expression_null_literal(expr.span()),
+            false,
+        );
+        mem::replace(expr, dummy)
     }
 
     #[inline]

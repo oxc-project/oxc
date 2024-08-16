@@ -216,6 +216,20 @@ impl<'a> Expression<'a> {
         }
     }
 
+    pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
+        match self {
+            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSInstantiationExpression(expr) => {
+                expr.expression.get_inner_expression_mut()
+            }
+            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression_mut(),
+            _ => self,
+        }
+    }
+
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
@@ -629,6 +643,17 @@ impl<'a> SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
             Self::TSNonNullExpression(expr) => Some(&expr.expression),
             Self::TSTypeAssertion(expr) => Some(&expr.expression),
+            _ => None,
+        }
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        match self {
+            Self::TSAsExpression(expr) => Some(&mut expr.expression),
+            Self::TSSatisfiesExpression(expr) => Some(&mut expr.expression),
+            Self::TSNonNullExpression(expr) => Some(&mut expr.expression),
+            Self::TSTypeAssertion(expr) => Some(&mut expr.expression),
+            Self::TSInstantiationExpression(expr) => Some(&mut expr.expression),
             _ => None,
         }
     }

@@ -29,6 +29,9 @@ use crate::{
         prettier::{
             PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase,
         },
+        semantic::{
+            SemanticBabelCase, SemanticMiscCase, SemanticTest262Case, SemanticTypeScriptCase,
+        },
         sourcemap::{SourcemapCase, SourcemapSuite},
         transformer::{
             TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
@@ -60,6 +63,7 @@ impl AppArgs {
 
     pub fn run_all(&self) {
         self.run_parser();
+        self.run_semantic();
         self.run_codegen();
         // self.run_prettier();
         self.run_transformer();
@@ -73,6 +77,13 @@ impl AppArgs {
         BabelSuite::<BabelCase>::new().run("parser_babel", self);
         TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
         MiscSuite::<MiscCase>::new().run("parser_misc", self);
+    }
+
+    pub fn run_semantic(&self) {
+        Test262Suite::<SemanticTest262Case>::new().run("semantic_test262", self);
+        BabelSuite::<SemanticBabelCase>::new().run("semantic_babel", self);
+        TypeScriptSuite::<SemanticTypeScriptCase>::new().run("semantic_typescript", self);
+        MiscSuite::<SemanticMiscCase>::new().run("semantic_misc", self);
     }
 
     pub fn run_codegen(&self) {

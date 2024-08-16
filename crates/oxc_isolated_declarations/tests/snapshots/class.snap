@@ -33,3 +33,9 @@ export declare class Boo {
 	readonly prop3: number;
 	constructor(prop?: number, prop2?: number, prop3?: number);
 }
+export declare class Bux {
+	readonly prop: number;
+	private readonly prop2;
+	readonly prop3: number;
+	private constructor();
+}

@@ -1,0 +1,74 @@
+semantic_misc Summary:
+AST Parsed     : 25/25 (100.00%)
+Positive Passed: 11/25 (44.00%)
+pass/oxc-1288.ts
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["from"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+pass/oxc-1289.ts
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["infer", "target", "type"]
+current  scope ScopeId(0): []
+Symbols mismatch after transform
+
+pass/oxc-1740.tsx
+semantic error: Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+pass/oxc-2087.ts
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["Helpers"]
+current  scope ScopeId(0): []
+
+pass/oxc-2394.ts
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["A"]
+current  scope ScopeId(0): []
+
+pass/oxc-2592.ts
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["Foo"]
+current  scope ScopeId(0): []
+
+pass/oxc-2674.tsx
+semantic error: Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+pass/oxc-2723.jsx
+semantic error: Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+pass/oxc-2948-2.ts
+semantic error: ReferenceId mismatch after transform
+
+pass/oxc-3443.tsx
+semantic error: Bindings Mismatch:
+previous scope ScopeId(1): ["T"]
+current  scope ScopeId(1): []
+Bindings Mismatch:
+previous scope ScopeId(2): ["T"]
+current  scope ScopeId(2): []
+Symbols mismatch after transform
+
+pass/oxc-3948-1.ts
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+current  scope ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+Symbols mismatch after transform
+
+pass/oxc-4449.ts
+semantic error: Scopes mismatch after transform
+Symbols mismatch after transform
+ReferenceId mismatch after transform
+
+pass/swc-7187.ts
+semantic error: Bindings Mismatch:
+previous scope ScopeId(0): ["K"]
+current  scope ScopeId(0): []
+
+pass/swc-8243.tsx
+semantic error: Symbols mismatch after transform
+ReferenceId mismatch after transform
+
