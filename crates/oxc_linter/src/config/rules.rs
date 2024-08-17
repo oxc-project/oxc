@@ -8,7 +8,7 @@ use serde::{
     Deserialize,
 };
 
-use crate::AllowWarnDeny;
+use crate::{rules::RULES, AllowWarnDeny};
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -92,7 +92,7 @@ impl<'de> Deserialize<'de> for OxlintRules {
 
 fn parse_rule_key(name: &str) -> (String, String) {
     let Some((plugin_name, rule_name)) = name.split_once('/') else {
-        return ("eslint".to_string(), name.to_string());
+        return (RULES.iter().find(|r| r.name() == name).map(|r| r.plugin_name()).unwrap_or("unknown_plugin").to_string(), name.to_string());
     };
 
     let (oxlint_plugin_name, rule_name) = match plugin_name {
