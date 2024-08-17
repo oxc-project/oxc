@@ -128,6 +128,8 @@ Arguments:
 ## Available options:
 - **`    --rules`** &mdash; 
   list all the rules that are currently registered
+- **`    --print-config`** &mdash; 
+  print a generated configuration file
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
 - **`-V`**, **`--version`** &mdash; 
