@@ -2,12 +2,12 @@
 
 use std::path::{Path, PathBuf};
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_isolated_declarations::IsolatedDeclarations;
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc::allocator::Allocator;
+use oxc::codegen::CodeGenerator;
+use oxc::diagnostics::OxcDiagnostic;
+use oxc::isolated_declarations::IsolatedDeclarations;
+use oxc::parser::Parser;
+use oxc::span::SourceType;
 
 use super::{
     meta::{Baseline, BaselineFile},

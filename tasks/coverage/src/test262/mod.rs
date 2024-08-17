@@ -2,7 +2,7 @@ mod meta;
 
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
+use oxc::span::SourceType;
 
 pub use self::meta::{MetaData, Phase, TestFlag};
 use crate::suite::{Case, Suite, TestResult};

@@ -1,16 +1,16 @@
 use std::{cell::Cell, collections::HashSet, path::PathBuf};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc::allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, visit::walk, Trivias, Visit};
-use oxc_codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::{Parser, ParserReturn};
-use oxc_semantic::{ReferenceId, ScopeFlags, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
-use oxc_span::{CompactStr, SourceType, Span};
-use oxc_syntax::scope::ScopeId;
-use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
+use oxc::ast::{ast::*, visit::walk, Trivias, Visit};
+use oxc::codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
+use oxc::diagnostics::OxcDiagnostic;
+use oxc::minifier::{CompressOptions, Compressor};
+use oxc::parser::{Parser, ParserReturn};
+use oxc::semantic::{ReferenceId, ScopeFlags, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
+use oxc::span::{CompactStr, SourceType, Span};
+use oxc::syntax::scope::ScopeId;
+use oxc::transformer::{TransformOptions, Transformer, TransformerReturn};
 
 use crate::suite::TestResult;
 

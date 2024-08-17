@@ -4,11 +4,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_parser::Parser;
-use oxc_sourcemap::SourcemapVisualizer;
-use oxc_span::SourceType;
+use oxc::allocator::Allocator;
+use oxc::codegen::CodeGenerator;
+use oxc::parser::Parser;
+use oxc::sourcemap::SourcemapVisualizer;
+use oxc::span::SourceType;
 use oxc_tasks_common::TestFiles;
 
 use crate::{

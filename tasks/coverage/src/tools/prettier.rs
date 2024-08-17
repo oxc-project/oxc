@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use oxc_allocator::Allocator;
-use oxc_parser::{Parser, ParserReturn};
+use oxc::allocator::Allocator;
+use oxc::parser::{Parser, ParserReturn};
+use oxc::span::SourceType;
 use oxc_prettier::{Prettier, PrettierOptions};
-use oxc_span::SourceType;
 
 use crate::{
     babel::BabelCase,

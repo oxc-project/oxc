@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
-use oxc_transformer::BabelOptions;
+use oxc::span::SourceType;
+use oxc::transformer::BabelOptions;
 use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
 
