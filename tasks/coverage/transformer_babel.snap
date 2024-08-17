@@ -1,6 +1,5 @@
 commit: 12619ffe
 
 transformer_babel Summary:
-AST Parsed     : 2771/2771 (100.00%)
-Positive Passed: 2770/2771 (99.96%)
-Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/basic/7/input.js
+AST Parsed     : 2101/2101 (100.00%)
+Positive Passed: 2101/2101 (100.00%)

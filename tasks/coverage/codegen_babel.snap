@@ -1,9 +1,5 @@
 commit: 12619ffe
 
 codegen_babel Summary:
-AST Parsed     : 2771/2771 (100.00%)
-Positive Passed: 2767/2771 (99.86%)
-Normal: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/basic/sequence-expression/input.js
-Normal: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/sequence-expression-parenthesized/input.js
-Normal: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/regression/issue-11387/input.js
-Normal: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/legacy-decorators/abstract-class/input.ts
+AST Parsed     : 2101/2101 (100.00%)
+Positive Passed: 2101/2101 (100.00%)

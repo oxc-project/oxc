@@ -127,7 +127,7 @@ impl BabelCase {
 impl Case for BabelCase {
     /// # Panics
     fn new(path: PathBuf, code: String) -> Self {
-        let dir = workspace_root().join(FIXTURES_PATH).join(&path);
+        let dir = workspace_root().join(&path);
         let options = BabelOptions::from_test_path(dir.parent().unwrap());
         let source_type = SourceType::from_path(&path)
             .unwrap()
