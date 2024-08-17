@@ -2535,6 +2535,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         self.decorators.gen(p, ctx);
+        if self.declare {
+            p.print_str("declare ");
+        }
         if let Some(accessibility) = &self.accessibility {
             accessibility.gen(p, ctx);
         }
