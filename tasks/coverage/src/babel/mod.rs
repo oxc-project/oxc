@@ -6,11 +6,11 @@ use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
 
 use crate::{
-    project_root,
     suite::{Case, Suite, TestResult},
+    workspace_root,
 };
 
-const FIXTURES_PATH: &str = "tasks/coverage/babel/packages/babel-parser/test/fixtures";
+const FIXTURES_PATH: &str = "babel/packages/babel-parser/test/fixtures";
 
 /// output.json
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -25,7 +25,7 @@ pub struct BabelSuite<T: Case> {
 
 impl<T: Case> BabelSuite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
+        Self { test_root: PathBuf::from(FIXTURES_PATH), test_cases: vec![] }
     }
 }
 
@@ -98,7 +98,7 @@ impl BabelCase {
     }
 
     fn read_output_json(path: &Path) -> Option<BabelOutput> {
-        let dir = project_root().join(FIXTURES_PATH).join(path);
+        let dir = workspace_root().join(path);
         if let Some(json) = Self::read_file::<BabelOutput>(&dir, "output.json") {
             return Some(json);
         }
@@ -127,7 +127,7 @@ impl BabelCase {
 impl Case for BabelCase {
     /// # Panics
     fn new(path: PathBuf, code: String) -> Self {
-        let dir = project_root().join(FIXTURES_PATH).join(&path);
+        let dir = workspace_root().join(FIXTURES_PATH).join(&path);
         let options = BabelOptions::from_test_path(dir.parent().unwrap());
         let source_type = SourceType::from_path(&path)
             .unwrap()

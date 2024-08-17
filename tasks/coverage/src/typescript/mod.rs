@@ -5,12 +5,9 @@ use std::path::{Path, PathBuf};
 
 use self::meta::{CompilerSettings, TestCaseContent, TestUnitData};
 pub use self::transpile_runner::{TranspileRunner, TypeScriptTranspileCase};
-use crate::{
-    project_root,
-    suite::{Case, Suite, TestResult},
-};
+use crate::suite::{Case, Suite, TestResult};
 
-const TESTS_ROOT: &str = "tasks/coverage/typescript/tests/";
+const TESTS_ROOT: &str = "typescript/tests";
 
 pub struct TypeScriptSuite<T: Case> {
     test_root: PathBuf,
@@ -19,7 +16,7 @@ pub struct TypeScriptSuite<T: Case> {
 
 impl<T: Case> TypeScriptSuite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(TESTS_ROOT).join("cases"), test_cases: vec![] }
+        Self { test_root: PathBuf::from(TESTS_ROOT).join("cases"), test_cases: vec![] }
     }
 }
 

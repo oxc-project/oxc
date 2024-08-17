@@ -9,8 +9,7 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use regex::Regex;
 
-use super::TESTS_ROOT;
-use crate::project_root;
+use crate::workspace_root;
 
 lazy_static::lazy_static! {
     // Returns a match for a test option. Test options have the form `// @name: value`
@@ -172,7 +171,7 @@ impl TestCaseContent {
     //   * `filename.errors.txt`
     fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
         let file_name = path.file_stem().unwrap().to_string_lossy();
-        let root = project_root().join(TESTS_ROOT).join("baselines/reference");
+        let root = workspace_root().join("typescript/tests/baselines/reference");
         let mut suffixes = vec![String::new()];
         suffixes.extend(options.modules.iter().map(|module| format!("(module={module})")));
         suffixes.extend(options.targets.iter().map(|target| format!("(target={target})")));

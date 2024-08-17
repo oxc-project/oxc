@@ -1,5 +1,8 @@
 commit: 12619ffe
 
 minifier_babel Summary:
-AST Parsed     : 1638/1638 (100.00%)
-Positive Passed: 1638/1638 (100.00%)
+AST Parsed     : 2305/2305 (100.00%)
+Positive Passed: 2302/2305 (99.87%)
+Compress: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/basic/sequence-expression/input.js
+Compress: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/errors/sequence-expression-parenthesized/input.js
+Compress: tasks/coverage/babel/packages/babel-parser/test/fixtures/jsx/regression/issue-11387/input.js

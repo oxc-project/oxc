@@ -9,12 +9,14 @@ use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
-use oxc_tasks_common::{project_root, TestFiles};
+use oxc_tasks_common::TestFiles;
 
-use crate::suite::{Case, Suite, TestResult};
+use crate::{
+    suite::{Case, Suite, TestResult},
+    workspace_root,
+};
 
-static FIXTURES_PATH: &str =
-    "tasks/coverage/babel/packages/babel-generator/test/fixtures/sourcemaps";
+static FIXTURES_PATH: &str = "babel/packages/babel-generator/test/fixtures/sourcemaps";
 
 pub struct SourcemapSuite<T: Case> {
     test_root: PathBuf,
@@ -24,7 +26,7 @@ pub struct SourcemapSuite<T: Case> {
 impl<T: Case> SourcemapSuite<T> {
     pub fn new() -> Self {
         Self {
-            test_root: project_root().join(FIXTURES_PATH),
+            test_root: PathBuf::from(FIXTURES_PATH),
             test_cases: TestFiles::react()
                 .files()
                 .iter()
@@ -57,7 +59,7 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
     }
 
     fn run_coverage(&self, name: &str, _args: &crate::AppArgs) {
-        let path = project_root().join(format!("tasks/coverage/{name}.snap"));
+        let path = workspace_root().join(format!("{name}.snap"));
         let mut file = File::create(path).unwrap();
 
         let mut tests = self.get_test_cases().iter().collect::<Vec<_>>();
@@ -68,12 +70,12 @@ impl<T: Case> Suite<T> for SourcemapSuite<T> {
             let path = case.path().to_string_lossy();
             let result = match result {
                 TestResult::Snapshot(snapshot) => snapshot.to_string(),
-                TestResult::ParseError(error, _) => format!("- {path}\n{error}"),
+                TestResult::ParseError(error, _) => format!("./{path}\n{error}"),
                 _ => {
                     unreachable!()
                 }
             };
-            writeln!(file, "{result}\n\n").unwrap();
+            writeln!(file, "{result}\n").unwrap();
         }
     }
 }

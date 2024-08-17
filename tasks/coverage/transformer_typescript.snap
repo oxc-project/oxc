@@ -3,6 +3,6 @@ commit: d8086f14
 transformer_typescript Summary:
 AST Parsed     : 6456/6456 (100.00%)
 Positive Passed: 6453/6456 (99.95%)
-Mismatch: compiler/constEnumNamespaceReferenceCausesNoImport2.ts
-Mismatch: conformance/externalModules/typeOnly/exportDeclaration.ts
-Mismatch: conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport2.ts
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration.ts
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx

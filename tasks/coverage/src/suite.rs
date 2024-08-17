@@ -18,7 +18,7 @@ use similar::{ChangeTag, TextDiff};
 use tokio::runtime::Runtime;
 use walkdir::WalkDir;
 
-use crate::{project_root, AppArgs, Driver};
+use crate::{workspace_root, AppArgs, Driver};
 
 #[derive(Debug, PartialEq)]
 pub enum TestResult {
@@ -89,11 +89,12 @@ pub trait Suite<T: Case> {
     fn save_test_cases(&mut self, cases: Vec<T>);
 
     fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
-        let test_root = self.get_test_root();
+        let test_path = workspace_root();
+        let cases_path = test_path.join(self.get_test_root());
 
         let get_paths = || {
             let filter = args.filter.as_ref();
-            WalkDir::new(test_root)
+            WalkDir::new(&cases_path)
                 .into_iter()
                 .filter_map(Result::ok)
                 .filter(|e| !e.file_type().is_dir())
@@ -137,7 +138,7 @@ pub trait Suite<T: Case> {
                     content
                 });
 
-                let path = path.strip_prefix(test_root).unwrap().to_owned();
+                let path = path.strip_prefix(&test_path).unwrap().to_owned();
                 // remove the Byte Order Mark in some of the TypeScript files
                 let code = code.trim_start_matches('\u{feff}').to_string();
                 T::new(path, code)
@@ -234,9 +235,10 @@ pub trait Suite<T: Case> {
 
     /// # Errors
     fn snapshot_errors(&self, name: &str, report: &CoverageReport<T>) -> std::io::Result<()> {
-        let snapshot_path = self.get_test_root();
+        let snapshot_path = workspace_root().join(self.get_test_root());
+
         let show_commit = !snapshot_path.to_string_lossy().contains("misc");
-        let snapshot = Snapshot::new(snapshot_path, show_commit);
+        let snapshot = Snapshot::new(&snapshot_path, show_commit);
 
         let mut tests = self
             .get_test_cases()
@@ -257,7 +259,7 @@ pub trait Suite<T: Case> {
             }
         }
 
-        let path = project_root().join(format!("tasks/coverage/{}.snap", name.to_lowercase()));
+        let path = workspace_root().join(format!("{}.snap", name.to_lowercase()));
         let out = String::from_utf8(out).unwrap();
         snapshot.save(&path, &out);
         Ok(())
@@ -347,7 +349,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     }
 
     fn print<W: Write>(&self, args: &AppArgs, writer: &mut W) -> std::io::Result<()> {
-        let path = normalize_path(self.path());
+        let path = normalize_path(Path::new("tasks/coverage").join(self.path()));
         match self.test_result() {
             TestResult::ParseError(error, _) => {
                 writer.write_all(format!("Expect to Parse: {path}\n").as_bytes())?;
@@ -357,7 +359,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                 writer.write_all(format!("{case}: {path}\n",).as_bytes())?;
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
-                    println!("{case}: {path:?}");
+                    println!("{case}: {path}");
                 }
             }
             TestResult::GenericError(case, error) => {
