@@ -8,7 +8,10 @@ use serde::{
     Deserialize,
 };
 
-use crate::{rules::RULES, AllowWarnDeny};
+use crate::{
+    rules::{RuleEnum, RULES},
+    AllowWarnDeny,
+};
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -92,7 +95,14 @@ impl<'de> Deserialize<'de> for OxlintRules {
 
 fn parse_rule_key(name: &str) -> (String, String) {
     let Some((plugin_name, rule_name)) = name.split_once('/') else {
-        return (RULES.iter().find(|r| r.name() == name).map(|r| r.plugin_name()).unwrap_or("unknown_plugin").to_string(), name.to_string());
+        return (
+            RULES
+                .iter()
+                .find(|r| r.name() == name)
+                .map_or("unknown_plugin", RuleEnum::plugin_name)
+                .to_string(),
+            name.to_string(),
+        );
     };
 
     let (oxlint_plugin_name, rule_name) = match plugin_name {
@@ -193,7 +203,7 @@ mod test {
 
         let r3 = rules.next().unwrap();
         assert_eq!(r3.rule_name, "dummy");
-        assert_eq!(r3.plugin_name, "eslint");
+        assert_eq!(r3.plugin_name, "unknown_plugin");
         assert!(r3.severity.is_warn_deny());
         assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
 
