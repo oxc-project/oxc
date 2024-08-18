@@ -1,5 +1,5 @@
 use crate::{context::LintContext, rule::Rule, AstNode};
-use itertools::{all};
+use itertools::all;
 use oxc_ast::ast::ObjectPropertyKind;
 use oxc_ast::syntax_directed_operations::PropName;
 use oxc_ast::AstKind;
@@ -70,7 +70,7 @@ declare_oxc_lint!(
     /// let myObj {
     ///   c: 1,
     ///   a: 2,
-    /// }
+    /// };
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -78,7 +78,7 @@ declare_oxc_lint!(
     /// let myObj {
     ///   a: 2,
     ///   c: 1,
-    /// }
+    /// };
     /// ```
     SortKeys,
     pedantic, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
@@ -98,12 +98,10 @@ impl Rule for SortKeys {
         let sort_order = if config_array.is_empty() {
             SortOrder::Asc
         } else {
-            config_array[0]
-                .as_str()
-                .map_or(SortOrder::Asc, |s| match s {
-                    "desc" => SortOrder::Desc,
-                    _ => SortOrder::Asc,
-                })
+            config_array[0].as_str().map_or(SortOrder::Asc, |s| match s {
+                "desc" => SortOrder::Desc,
+                _ => SortOrder::Asc,
+            })
         };
 
         let config = if config_array.len() > 1 {
@@ -117,9 +115,8 @@ impl Rule for SortKeys {
         let natural = config.get("natural").and_then(serde_json::Value::as_bool).unwrap_or(false);
         let min_keys = config
             .get("minKeys")
-            .and_then(serde_json::Value::as_u64).map_or(2,
-            |n| n.try_into().unwrap_or(2),
-        );
+            .and_then(serde_json::Value::as_u64)
+            .map_or(2, |n| n.try_into().unwrap_or(2));
         let allow_line_separated_groups = config
             .get("allowLineSeparatedGroups")
             .and_then(serde_json::Value::as_bool)
@@ -279,15 +276,15 @@ fn natural_sort(arr: &mut [String]) {
                     }
                 }
                 (Some(a_char), Some(b_char))
-                if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
-                    {
-                        return Ordering::Greater
-                    }
+                    if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
+                {
+                    return Ordering::Greater
+                }
                 (Some(a_char), Some(b_char))
-                if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
-                    {
-                        return Ordering::Less
-                    }
+                    if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
+                {
+                    return Ordering::Less
+                }
                 (Some(a_char), Some(b_char)) if a_char == '[' && b_char.is_alphanumeric() => {
                     return Ordering::Greater
                 }
