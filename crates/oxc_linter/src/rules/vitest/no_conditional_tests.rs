@@ -14,7 +14,7 @@ use crate::{
 
 fn no_conditional_tests(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid having conditionals in tests")
-        .with_help("Avoid using if conditions in a test.")
+        .with_help("Remove the surrounding if statement.")
         .with_label(span0)
 }
 
