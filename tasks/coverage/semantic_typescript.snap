@@ -4,36 +4,30 @@ semantic_typescript Summary:
 AST Parsed     : 6456/6456 (100.00%)
 Positive Passed: 3697/6456 (57.26%)
 tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["console", "formatHost", "os", "process", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
-current  scope ScopeId(0): ["formatHost", "reportDiagnostic", "reportWatchStatusChanged", "ts", "watchMain"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithDefaults.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["console", "ts", "watchMain"]
-current  scope ScopeId(0): ["ts", "watchMain"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_WatchWithOwnWatchHost.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["console", "ts", "watchMain"]
-current  scope ScopeId(0): ["ts", "watchMain"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_compile.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["compile", "console", "os", "process", "ts"]
-current  scope ScopeId(0): ["compile", "ts"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_jsdoc.ts
 semantic error: Bindings Mismatch:
@@ -55,11 +49,8 @@ previous reference ReferenceId(51): Some("readFileSync")
 current  reference ReferenceId(45): None
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_parseConfig.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["console", "createProgram", "os", "printError", "process", "ts"]
-current  scope ScopeId(0): ["createProgram", "printError", "ts"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/APISample_transform.ts
 semantic error: Bindings Mismatch:
@@ -152,44 +143,46 @@ previous scope ScopeId(0): ["ExtendedMapper", "ExtendedMapper1", "ExtendedMapper
 current  scope ScopeId(0): ["check", "check1", "check2", "check3"]
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInAccessorsOfClass.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInArray.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInFunctionExpression.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInGenericFunction.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInIndexerOfClass.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInObjectLiteral.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInOrExpression.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInTypeArgumentOfExtendsClause.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsageInVarAssignment.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/aliasUsedAsNameValue.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/allowJsCrossMonorepoPackage.ts
 semantic error: Bindings Mismatch:
@@ -375,7 +368,8 @@ previous scope ScopeId(0): ["Elephant", "Giraffe", "IAnimal", "arr", "bar", "foo
 current  scope ScopeId(0): ["Elephant", "Giraffe", "arr", "bar", "foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/arrayOfExportedClass.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/arrayTypeInSignatureOfInterfaceAndClass.ts
 semantic error: Bindings Mismatch:
@@ -452,59 +446,53 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability10.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability2.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability3.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability36.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability4.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability5.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability6.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability7.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability8.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability9.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatibilityForConstrainedTypeParameters.ts
 semantic error: Bindings Mismatch:
@@ -615,28 +603,22 @@ previous scope ScopeId(0): ["Array"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3_1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["file1", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4_1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["file1", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals5.ts
 semantic error: Bindings Mismatch:
@@ -645,16 +627,13 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6_1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["file1", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypeBracketNamedPropertyAccess.ts
 semantic error: Bindings Mismatch:
@@ -662,19 +641,16 @@ previous scope ScopeId(0): ["Function", "Object", "f", "o", "r1", "r2", "r3", "r
 current  scope ScopeId(0): ["f", "o", "r1", "r2", "r3", "r4"]
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesClass3.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules3b.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules4.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/autonumberingInEnums.ts
 semantic error: Scopes mismatch after transform
@@ -982,10 +958,8 @@ previous scope ScopeId(0): ["SecondEvent", "Third"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/checkJsTypeDefNoUnusedLocalMarked.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Foo", "global"]
-current  scope ScopeId(0): ["Foo"]
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/circularConstrainedMappedTypeNoCrash.ts
 semantic error: Bindings Mismatch:
@@ -1016,9 +990,7 @@ previous reference ReferenceId(46): Some("connect")
 current  reference ReferenceId(4): None
 
 tasks/coverage/typescript/tests/cases/compiler/classDeclarationMergedInModuleWithContinuation.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/classExpressionTest1.ts
 semantic error: Bindings Mismatch:
@@ -1145,9 +1117,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleAndTypeParameters.ts
 semantic error: Scopes mismatch after transform
@@ -1170,9 +1140,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/cloduleWithRecursiveReference.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences2.ts
 semantic error: Scopes mismatch after transform
@@ -1221,14 +1189,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithAccessorChildren.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithConstructorChildren.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithEnumMemberConflict.ts
 semantic error: Scopes mismatch after transform
@@ -1236,9 +1200,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithFunctionChildren.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMemberClassConflict.ts
 semantic error: Scopes mismatch after transform
@@ -1251,24 +1213,16 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMemberVariable.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMethodChildren.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithModuleChildren.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithModuleReopening.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithPrivateMember.ts
 semantic error: Scopes mismatch after transform
@@ -1357,9 +1311,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndAliasInGlobal.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndAmbientVarInGlobal.ts
 semantic error: Bindings Mismatch:
@@ -1454,7 +1406,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/commonJsImportClassExpression.ts
-semantic error: Scopes mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/comparabilityTypeParametersRelatedByUnion.ts
 semantic error: Bindings Mismatch:
@@ -1480,9 +1433,7 @@ previous scope ScopeId(0): ["Collection", "Many", "PartialDeep", "x"]
 current  scope ScopeId(0): ["x"]
 
 tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/complicatedIndexesOfIntersectionsAreInferencable.ts
 semantic error: Bindings Mismatch:
@@ -1505,8 +1456,8 @@ current  scope ScopeId(2): ["func"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/compositeWithNodeModulesSourceFile.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/compoundVarDecl1.ts
 semantic error: Scopes mismatch after transform
@@ -1643,9 +1594,8 @@ previous scope ScopeId(0): ["M", "c1", "c2", "c3", "c4", "c5"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumExternalModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumMergingWithValues1.ts
 semantic error: Scopes mismatch after transform
@@ -1688,9 +1638,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumOnlyModuleMerging.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport1.ts
 semantic error: Scopes mismatch after transform
@@ -2414,8 +2362,8 @@ current  scope ScopeId(0): ["MyClass", "someDecorator"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision3.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision5.ts
 semantic error: Bindings Mismatch:
@@ -2430,8 +2378,8 @@ current  scope ScopeId(0): ["MyClass", "someDecorator"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorMetadataWithImportDeclarationNameCollision8.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/decoratorReferenceOnOtherProperty.ts
 semantic error: Bindings Mismatch:
@@ -2610,8 +2558,10 @@ previous reference ReferenceId(28): Some("b")
 current  reference ReferenceId(23): None
 
 tasks/coverage/typescript/tests/cases/compiler/dependencyViaImportAlias.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/destructureOfVariableSameAsShorthand.ts
 semantic error: Bindings Mismatch:
@@ -2885,9 +2835,9 @@ previous scope ScopeId(0): ["IIntervalTreeNode", "ITestEventInterval", "test"]
 current  scope ScopeId(0): ["test"]
 
 tasks/coverage/typescript/tests/cases/compiler/dottedModuleName2.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/dottedNamesInSystem.ts
 semantic error: Scopes mismatch after transform
@@ -2929,14 +2879,12 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/downlevelLetConst13.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousInners1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousModuleClasses.ts
 semantic error: Scopes mismatch after transform
@@ -3005,8 +2953,10 @@ tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedW
 semantic error: 'with' statements are not allowed
 
 tasks/coverage/typescript/tests/cases/compiler/elidingImportNames.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/emitDecoratorMetadata_object.ts
 semantic error: Bindings Mismatch:
@@ -3183,9 +3133,8 @@ previous scope ScopeId(0): ["I1", "T1", "T2", "val1", "val2"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat4.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/enumCodeGenNewLines1.ts
 semantic error: Scopes mismatch after transform
@@ -5048,7 +4997,8 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/es6ImportNameSpaceImportNoNamedExports.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/es6ModuleClassDeclaration.ts
 semantic error: Scopes mismatch after transform
@@ -5081,24 +5031,31 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalImport.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/es6ModuleLet.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/es6ModuleModuleDeclaration.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/es6ModuleVariableStatement.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_IterableWeakMap.ts
 semantic error: Bindings Mismatch:
@@ -5108,9 +5065,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/eventEmitterPatternWithRecordOfFunction.ts
 semantic error: Bindings Mismatch:
@@ -5148,7 +5104,8 @@ previous scope ScopeId(0): ["Bar", "Foo", "bar", "foo", "mySymbol", "t"]
 current  scope ScopeId(0): ["bar", "foo", "mySymbol", "t"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignClassAndModule.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignValueAndType.ts
 semantic error: Bindings Mismatch:
@@ -5157,52 +5114,43 @@ current  scope ScopeId(0): ["server", "x"]
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignedTypeAsTypeAnnotation.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["x"]
-current  scope ScopeId(0): []
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentClass.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentEnum.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentError.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentFunction.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInterface.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["A"]
-current  scope ScopeId(0): []
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentInternalModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentOfGenericType1.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(1): ["X"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentVariable.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithImportStatementPrivacyError.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignmentWithPrivacyError.ts
 semantic error: Bindings Mismatch:
@@ -5257,7 +5205,8 @@ previous scope ScopeId(0): ["io", "module"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualCallable.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualNamespaces.ts
 semantic error: ReferenceId mismatch after transform
@@ -5266,7 +5215,8 @@ tasks/coverage/typescript/tests/cases/compiler/exportEqualsClassNoRedeclarationE
 semantic error: ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsDefaultProperty.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsOfModule.ts
 semantic error: Bindings Mismatch:
@@ -5274,21 +5224,19 @@ previous scope ScopeId(0): ["popsicle", "popsicle-proxy-agent", "~popsicle/dist/
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsProperty2.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportMultipleFiles.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
 semantic error: Bindings Mismatch:
@@ -5296,9 +5244,10 @@ previous scope ScopeId(0): ["A", "B", "x"]
 current  scope ScopeId(0): ["x"]
 
 tasks/coverage/typescript/tests/cases/compiler/exportPrivateType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/exportSpecifierAndExportedMemberDeclaration.ts
 semantic error: Bindings Mismatch:
@@ -5399,8 +5348,8 @@ previous scope ScopeId(0): ["Alpha", "Beta", "alpha", "betaOfNumber"]
 current  scope ScopeId(0): ["alpha", "betaOfNumber"]
 
 tasks/coverage/typescript/tests/cases/compiler/extendingClassFromAliasAndUsageInIndexer.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/externModuleClobber.ts
 semantic error: Bindings Mismatch:
@@ -5408,7 +5357,8 @@ previous scope ScopeId(0): ["EM", "ec", "x"]
 current  scope ScopeId(0): ["ec", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleAssignToVar.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleQualification.ts
 semantic error: Bindings Mismatch:
@@ -5422,18 +5372,18 @@ previous scope ScopeId(0): ["__timezonecomplete/basics", "timezonecomplete"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleReferenceOfImportDeclarationWithExportModifier.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/externalModuleWithoutCompilerFlag1.ts
 semantic error: Bindings Mismatch:
@@ -5650,9 +5600,7 @@ previous scope ScopeId(0): ["A", "B"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/funduleOfFunctionWithoutReturnTypeAnnotation.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/funduleUsedAcrossFileBoundary.ts
 semantic error: Bindings Mismatch:
@@ -5786,9 +5734,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/genericCloduleInModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/genericConstraint3.ts
 semantic error: Bindings Mismatch:
@@ -6394,14 +6340,11 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/importAliasWithDottedName.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/importDeclWithExportModifierInAmbientContext.ts
 semantic error: Bindings Mismatch:
@@ -6460,7 +6403,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersVerbatimModuleSyntax.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpersWithLocalCollisions.ts
 semantic error: Bindings Mismatch:
@@ -6471,9 +6415,7 @@ previous reference ReferenceId(0): Some("dec")
 current  reference ReferenceId(0): None
 
 tasks/coverage/typescript/tests/cases/compiler/importInTypePosition.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember12.ts
 semantic error: Bindings Mismatch:
@@ -6482,9 +6424,7 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/importOnAliasedIdentifiers.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/importPropertyFromMappedType.ts
 semantic error: Bindings Mismatch:
@@ -6493,16 +6433,16 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/importShadowsGlobalName.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/importUsedInExtendsList1.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-exported-alias.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/import_reference-to-type-alias.ts
 semantic error: Scopes mismatch after transform
@@ -6515,8 +6455,8 @@ previous scope ScopeId(0): ["ITest"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/import_var-referencing-an-imported-module-alias.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/importedAliasedConditionalTypeInstantiation.ts
 semantic error: Bindings Mismatch:
@@ -7242,8 +7182,8 @@ current  scope ScopeId(0): ["ABC", "Animal", "Derived1", "Derived2", "Giraffe", 
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/instanceOfInExternalModules.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/instanceSubtypeCheck1.ts
 semantic error: Bindings Mismatch:
@@ -7396,9 +7336,7 @@ previous scope ScopeId(0): ["Foo", "v"]
 current  scope ScopeId(0): ["v"]
 
 tasks/coverage/typescript/tests/cases/compiler/internalImportInstantiatedModuleMergedWithClassNotReferencingInstanceNoConflict.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleMergedWithClassNotReferencingInstanceNoConflict.ts
 semantic error: Bindings Mismatch:
@@ -7526,10 +7464,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportAlias.ts
-semantic error: Symbols mismatch after transform
-reference Mismatch:
-previous reference ReferenceId(0): Some("events")
-current  reference ReferenceId(0): None
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesShadowGlobalTypeNotValue.ts
 semantic error: Bindings Mismatch:
@@ -7542,8 +7480,8 @@ previous scope ScopeId(0): ["FC"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModules_resolveJsonModule_strict_outDir_commonJs.ts
 semantic error: Bindings Mismatch:
@@ -7746,14 +7684,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/jsxInferenceProducesLiteralAsExpected.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["FunctionPropertyNames", "React", "Test", "TestObject", "TestProps", "_jsxFileName", "el1", "el2", "model"]
-current  scope ScopeId(0): ["React", "Test", "TestObject", "_jsxFileName", "el1", "el2", "model"]
-Bindings Mismatch:
-previous scope ScopeId(7): ["T", "props"]
-current  scope ScopeId(3): ["props"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicElementsCompatability.tsx
 semantic error: Bindings Mismatch:
@@ -7811,8 +7743,7 @@ semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceImplicitImportJSXNamespaceFromPragmaPickedOverGlobalOne.tsx
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: importSource cannot be set when runtime is classic.
 
 tasks/coverage/typescript/tests/cases/compiler/jsxNamespaceReexports.tsx
 semantic error: Bindings Mismatch:
@@ -7970,7 +7901,8 @@ previous reference ReferenceId(40): Some("literalUnion")
 current  reference ReferenceId(40): None
 
 tasks/coverage/typescript/tests/cases/compiler/localAliasExportAssignment.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/localImportNameVsGlobalName.ts
 semantic error: Scopes mismatch after transform
@@ -8121,8 +8053,8 @@ current  scope ScopeId(1): ["x", "z"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/memberAccessMustUseModuleInstances.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/mergeMultipleInterfacesReexported.ts
 semantic error: Bindings Mismatch:
@@ -8134,14 +8066,10 @@ previous reference ReferenceId(1): Some("p012")
 current  reference ReferenceId(0): None
 
 tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations4.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations5.ts
 semantic error: Bindings Mismatch:
@@ -8193,14 +8121,13 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationCodeGen5.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationWithSharedExportedVar.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromAlias.ts
 semantic error: Bindings Mismatch:
@@ -8292,9 +8219,12 @@ current  scope ScopeId(1): ["Base"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/mixingFunctionAndAmbientModule1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/modFunctionCrash.ts
 semantic error: Bindings Mismatch:
@@ -8326,8 +8256,8 @@ previous reference ReferenceId(18): Some("console")
 current  reference ReferenceId(18): None
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasAsFunctionArgument.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/moduleAliasInterface.ts
 semantic error: Scopes mismatch after transform
@@ -8422,9 +8352,7 @@ previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest3.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest5.ts
 semantic error: Scopes mismatch after transform
@@ -8432,14 +8360,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/moduleCodegenTest4.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/moduleIdentifiers.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/moduleImportedForTypeArgumentPosition.ts
 semantic error: Bindings Mismatch:
@@ -8458,9 +8382,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/moduleMemberWithoutTypeAnnotation2.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/moduleMerge.ts
 semantic error: Scopes mismatch after transform
@@ -8473,21 +8395,16 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/modulePreserve2.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["cjs", "esm"]
-current  scope ScopeId(0): ["cjs"]
-Symbol Mismatch:
-previous symbol SymbolId(0): SymbolId(0)
-current  symbol SymbolId(0): SymbolId(0)
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/moduleReopenedTypeOtherBlock.ts
 semantic error: Scopes mismatch after transform
@@ -8512,8 +8429,8 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionNoResolve.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/moduleResolutionPackageIdWithRelativeAndAbsolutePath.ts
 semantic error: Bindings Mismatch:
@@ -8739,19 +8656,16 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/moduleUnassignedVariable.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/moduleVariables.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/moduleVisibilityTest1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/moduleWithTryStatement1.ts
 semantic error: Scopes mismatch after transform
@@ -8780,14 +8694,10 @@ previous scope ScopeId(0): ["A", "B", "I", "a", "b", "i", "i1", "i2"]
 current  scope ScopeId(0): ["a", "b", "i", "i1", "i2"]
 
 tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/multiModuleFundule1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/multiSignatureTypeInference.ts
 semantic error: Bindings Mismatch:
@@ -8951,12 +8861,12 @@ previous scope ScopeId(0): ["FileMatch", "FileMatchOrMatch", "Match", "elementA"
 current  scope ScopeId(0): ["FileMatch", "Match", "elementA", "elementB"]
 
 tasks/coverage/typescript/tests/cases/compiler/narrowedImports.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/narrowedImports_assumeInitialized.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/narrowingAssignmentReadonlyRespectsAssertion.ts
 semantic error: Bindings Mismatch:
@@ -9295,36 +9205,36 @@ previous scope ScopeId(0): ["IThing", "bar", "baz", "foo", "qwe"]
 current  scope ScopeId(0): ["bar", "baz", "foo", "qwe"]
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution1.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution2.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution3.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution4.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution5.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution6.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution7.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nodeResolution8.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/nonConflictingRecursiveBaseTypeMembers.ts
 semantic error: Bindings Mismatch:
@@ -9957,9 +9867,12 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/privacyGloVar.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/privacyInterface.ts
 semantic error: Scopes mismatch after transform
@@ -10096,9 +10009,18 @@ current  scope ScopeId(4): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/privacyVar.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/privateInstanceVisibility.ts
 semantic error: Scopes mismatch after transform
@@ -11095,9 +11017,7 @@ previous scope ScopeId(0): ["IPromise", "foo"]
 current  scope ScopeId(0): ["foo"]
 
 tasks/coverage/typescript/tests/cases/compiler/propertyNamesWithStringLiteral.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/prototypeInstantiatedWithBaseConstraint.ts
 semantic error: Bindings Mismatch:
@@ -11111,9 +11031,7 @@ previous scope ScopeId(0): ["I1", "i"]
 current  scope ScopeId(0): ["i"]
 
 tasks/coverage/typescript/tests/cases/compiler/qualifiedName_ImportDeclarations-entity-names-referencing-a-var.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
 semantic error: Bindings Mismatch:
@@ -11126,11 +11044,8 @@ previous scope ScopeId(0): ["Any/Cast", "Any/Compute", "Any/Extends", "Any/Imple
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(1): ["App", "C", "P"]
-current  scope ScopeId(1): ["App", "C"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/reactImportDropped.ts
 semantic error: Symbols mismatch after transform
@@ -11215,9 +11130,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveCloduleReference.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalCrash1.ts
 semantic error: Bindings Mismatch:
@@ -11256,13 +11169,10 @@ previous scope ScopeId(0): ["ITreeItem", "NodeWithId", "getMaxId", "nodes"]
 current  scope ScopeId(0): ["getMaxId", "nodes"]
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveExportAssignmentAndFindAliasedType7.ts
-semantic error: Symbols mismatch after transform
-reference Mismatch:
-previous reference ReferenceId(0): Some("self")
-current  reference ReferenceId(0): None
-reference Mismatch:
-previous reference ReferenceId(1): Some("selfVar")
-current  reference ReferenceId(1): Some("self")
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveFieldSetting.ts
 semantic error: ReferenceId mismatch after transform
@@ -11449,7 +11359,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault8.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
 semantic error: Scopes mismatch after transform
@@ -11494,24 +11405,32 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelative.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileNonRelativeWithoutExtensionResolvesToTs.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithAlwaysStrictWithoutErrors.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithEmptyObject.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithModuleEmitUndefined.ts
 semantic error: Bindings Mismatch:
@@ -11550,16 +11469,22 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithSourceMap.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithTraillingComma.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutAllowJs.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutEsModuleInterop.ts
 semantic error: Bindings Mismatch:
@@ -11568,12 +11493,16 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutExtensionResolvesToTs.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFileWithoutOutDir.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/requireOfJsonFile_PathMapping.ts
 semantic error: Bindings Mismatch:
@@ -13116,14 +13045,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/sourceMapWithMultipleFilesWithFileEndingWithInterface.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/sourcemapValidationDuplicateNames.ts
 semantic error: Scopes mismatch after transform
@@ -13385,8 +13310,8 @@ previous reference ReferenceId(2): Some("dec")
 current  reference ReferenceId(2): None
 
 tasks/coverage/typescript/tests/cases/compiler/staticInstanceResolution3.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/staticInterfaceAssignmentCompat.ts
 semantic error: Bindings Mismatch:
@@ -13572,8 +13497,8 @@ previous scope ScopeId(0): ["A", "I"]
 current  scope ScopeId(0): ["A"]
 
 tasks/coverage/typescript/tests/cases/compiler/systemModule18.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/systemModule7.ts
 semantic error: Scopes mismatch after transform
@@ -13765,9 +13690,7 @@ previous scope ScopeId(0): ["Collection", "Combinators", "_", "c2", "r1a", "r1b"
 current  scope ScopeId(0): ["_", "c2", "r1a", "r1b", "rf1"]
 
 tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/topLevelBlockExpando.ts
 semantic error: Bindings Mismatch:
@@ -14863,29 +14786,27 @@ previous reference ReferenceId(1): Some("s")
 current  reference ReferenceId(1): None
 
 tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports11.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports13.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports14.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports15.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedImports16.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace4.ts
 semantic error: Scopes mismatch after transform
@@ -14893,9 +14814,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace5.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/unusedLocalProperty.ts
 semantic error: Bindings Mismatch:
@@ -15121,9 +15040,7 @@ Cannot use import statement outside a module
 Cannot use export statement outside a module
 
 tasks/coverage/typescript/tests/cases/compiler/usingModuleWithExportImportInValuePosition.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/validUseOfThisInSuper.ts
 semantic error: ReferenceId mismatch after transform
@@ -15265,16 +15182,13 @@ previous scope ScopeId(0): ["A", "B", "I", "P1", "P2", "X", "_i", "i", "p2"]
 current  scope ScopeId(0): ["_i", "i", "p2"]
 
 tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/compiler/visibilityOfCrossModuleTypeUsage.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["IConfiguration", "fs", "server"]
-current  scope ScopeId(0): ["fs", "server"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/compiler/voidReturnIndexUnionInference.ts
 semantic error: Bindings Mismatch:
@@ -15376,8 +15290,8 @@ previous scope ScopeId(0): ["E", "E1"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleMerging.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientInsideNonAmbient.ts
 semantic error: Scopes mismatch after transform
@@ -15390,8 +15304,8 @@ previous scope ScopeId(0): ["E", "M", "x"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/ambient/ambientShorthand_duplicate.ts
 semantic error: Bindings Mismatch:
@@ -16120,7 +16034,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/extendClassExpressionFromModule.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpressions/genericClassExpressionInFunction.ts
 semantic error: Bindings Mismatch:
@@ -16775,16 +16690,16 @@ previous reference ReferenceId(11): Some("console")
 current  reference ReferenceId(11): None
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsAMD.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsCJS.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInExportEqualsUMD.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
 semantic error: Cannot assign to 'arguments' in strict mode
@@ -17083,9 +16998,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty50.ts
 semantic error: Scopes mismatch after transform
@@ -17374,46 +17287,34 @@ tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLev
 semantic error: 'with' statements are not allowed
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1-amd.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1-es6.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3-amd.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3-es6.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-amd.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4-es6.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports4.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImportsWithContextualKeywordNames02.ts
 semantic error: Bindings Mismatch:
@@ -17448,14 +17349,10 @@ previous reference ReferenceId(6): Some("console")
 current  reference ReferenceId(6): None
 
 tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesWithModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesWithModuleES6.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInCall11.ts
 semantic error: Bindings Mismatch:
@@ -18399,8 +18296,8 @@ previous reference ReferenceId(0): Some("dec")
 current  reference ReferenceId(0): None
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.9.ts
-semantic error: Scopes mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/esDecorators-contextualTypes.2.ts
 semantic error: Bindings Mismatch:
@@ -18568,9 +18465,7 @@ previous scope ScopeId(0): ["AOrArrA", "a", "arr", "x"]
 current  scope ScopeId(0): ["a", "arr", "x"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithAnyAndEveryType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithConstrainedTypeParameter.ts
 semantic error: Bindings Mismatch:
@@ -19148,9 +19043,18 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/generatedContextualTyping.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping3.ts
 semantic error: Bindings Mismatch:
@@ -19955,9 +19859,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typePredicateASI.ts
 semantic error: Bindings Mismatch:
@@ -19990,9 +19895,7 @@ previous scope ScopeId(0): ["Facts", "M", "m", "x", "x2"]
 current  scope ScopeId(0): ["m", "x", "x2"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithBooleanType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithEnumType.ts
 semantic error: Scopes mismatch after transform
@@ -20000,39 +19903,25 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithNumberType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithStringType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithAnyOtherType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithNumberType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/incrementOperator/incrementOperatorWithAnyOtherType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/incrementOperator/incrementOperatorWithNumberType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithBooleanType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithEnumType.ts
 semantic error: Scopes mismatch after transform
@@ -20040,14 +19929,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithNumberType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithStringType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/amdImportAsPrimaryExpression.ts
 semantic error: Scopes mismatch after transform
@@ -20065,8 +19950,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportAsPrimaryExpression.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/commonJSImportNotAsPrimaryExpression.ts
 semantic error: Scopes mismatch after transform
@@ -20104,77 +19989,69 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignDottedName.ts
-semantic error: Symbols mismatch after transform
-reference Mismatch:
-previous reference ReferenceId(0): Some("foo1")
-current  reference ReferenceId(0): None
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignImportedIdentifier.ts
-semantic error: Symbols mismatch after transform
-reference Mismatch:
-previous reference ReferenceId(0): Some("foo1")
-current  reference ReferenceId(0): None
-reference Mismatch:
-previous reference ReferenceId(1): Some("x")
-current  reference ReferenceId(1): Some("foo1")
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignTypes.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentCircularModules.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentGenericType.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(1): ["T"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedInterface.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["Foo"]
-current  scope ScopeId(0): []
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelClodule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelEnumdule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelFundule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentTopLevelIdentifier.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDeclaredModule.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["M1"]
-current  scope ScopeId(0): []
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportNonVisibleType.ts
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["I1", "x"]
-current  scope ScopeId(0): ["x"]
-ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/exportTypeMergedWithExportStarAsNamespace.ts
 semantic error: Bindings Mismatch:
@@ -20187,8 +20064,8 @@ previous scope ScopeId(0): ["global"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/importImportOnlyModule.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithExtensions.ts
 semantic error: Bindings Mismatch:
@@ -20197,28 +20074,31 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleScoping.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameDelimitedBySlashes.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithFileExtension.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/reexportClassDefinition.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathToDeclarationFile.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAmbientModule.ts
 semantic error: Bindings Mismatch:
@@ -20242,8 +20122,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModule.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/typeAndNamespaceExportMerge.ts
 semantic error: Bindings Mismatch:
@@ -20510,9 +20392,7 @@ previous scope ScopeId(0): ["Foo", "f", "r1", "r2", "r3", "r4"]
 current  scope ScopeId(0): ["f", "r1", "r2", "r3", "r4"]
 
 tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithPropertyOfEveryType.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithSpecializedCallAndConstructSignatures.ts
 semantic error: Bindings Mismatch:
@@ -20565,9 +20445,7 @@ previous scope ScopeId(0): ["A", "X", "l", "p"]
 current  scope ScopeId(0): ["l", "p"]
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedLocalVarsOfTheSameName.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedInterfacesOfTheSameName.ts
 semantic error: Bindings Mismatch:
@@ -20575,9 +20453,8 @@ previous scope ScopeId(0): ["A", "X", "l", "p"]
 current  scope ScopeId(0): ["l", "p"]
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedModulesOfTheSameName.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndDifferentCommonRoot.ts
 semantic error: Scopes mismatch after transform
@@ -20590,19 +20467,14 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/exportCodeGen.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/importStatements.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/nameCollision.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWhichExtendsInterfaceWithInaccessibleType.ts
 semantic error: Scopes mismatch after transform
@@ -20610,9 +20482,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWithAccessibleTypesInTypeParameterConstraintsClassHeritageListMemberTypeAnnotations.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWithInaccessibleTypeInIndexerTypeAnnotations.ts
 semantic error: Scopes mismatch after transform
@@ -20620,9 +20491,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWithInaccessibleTypeInTypeParameterConstraint.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportFunctionWithAccessibleTypesInParameterAndReturnTypeAnnotation.ts
 semantic error: Scopes mismatch after transform
@@ -20640,9 +20510,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithAccessibleTypesInTypeParameterConstraintsClassHeritageListMemberTypeAnnotations.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInIndexerTypeAnnotations.ts
 semantic error: Bindings Mismatch:
@@ -20650,44 +20519,33 @@ previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInTypeParameterConstraint.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportModuleWithAccessibleTypesOnItsExportedMembers.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportObjectLiteralAndObjectTypeLiteralWithAccessibleTypesInMemberTypeAnnotations.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportObjectLiteralAndObjectTypeLiteralWithAccessibleTypesInNestedMemberTypeAnnotations.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableOfGenericTypeWithInaccessibleTypeAsTypeArgument.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithAccessibleTypeInTypeAnnotation.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithInaccessibleTypeInTypeAnnotation.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/exportImportAlias.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
 semantic error: Scopes mismatch after transform
@@ -20695,9 +20553,10 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleBody/moduleWithStatementsOfEveryKind.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace03.ts
 semantic error: Scopes mismatch after transform
@@ -20705,24 +20564,16 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace05.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/instantiatedModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nestedModules.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nonInstantiatedModule.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/reExportAliasMakesInstantiated.ts
 semantic error: Bindings Mismatch:
@@ -21248,19 +21099,18 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxNamespacedAttributeName1.tsx
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
+Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxNamespacedAttributeName2.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["React", "_jsxFileName", "a", "b"]
-current  scope ScopeId(0): ["_jsxFileName", "a", "b"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
+Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxNamespacedTagName1.tsx
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
+Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
+Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
+Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxNoJsx.tsx
 semantic error: Symbols mismatch after transform
@@ -21288,9 +21138,11 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit1.tsx
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxPreserveEmit2.tsx
 semantic error: Symbols mismatch after transform
@@ -21447,16 +21299,11 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildren.tsx
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Spread children are not supported in React.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildrenInvalidType.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["JSX", "React", "Todo", "TodoList", "TodoListNoError", "TodoListProps", "TodoProp", "_jsxFileName", "_reactJsxRuntime", "x"]
-current  scope ScopeId(0): ["Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_reactJsxRuntime", "x"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Spread children are not supported in React.
+Spread children are not supported in React.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload2.tsx
 semantic error: Symbols mismatch after transform
@@ -21532,15 +21379,12 @@ semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionElementType5.tsx
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
-semantic error: Bindings Mismatch:
-previous scope ScopeId(0): ["ComponentProps", "MyButtonComponent", "MyComponent", "React", "_jsxFileName"]
-current  scope ScopeId(0): ["MyButtonComponent", "MyComponent", "React", "_jsxFileName"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
 semantic error: Bindings Mismatch:
@@ -21573,8 +21417,12 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/packageJsonMain.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+`import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/moduleResolution/resolutionModeImportType1.ts
 semantic error: Bindings Mismatch:
@@ -21650,8 +21498,8 @@ previous reference ReferenceId(0): Some("val")
 current  reference ReferenceId(0): None
 
 tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration16.ts
 semantic error: Scopes mismatch after transform
@@ -21827,9 +21675,9 @@ previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModule1.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration11.ts
 semantic error: Bindings Mismatch:
@@ -22019,8 +21867,8 @@ previous scope ScopeId(0): ["I", "a", "t"]
 current  scope ScopeId(0): ["a", "t"]
 
 tasks/coverage/typescript/tests/cases/conformance/salsa/moduleExportAlias.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
 semantic error: Identifier `orbitol` has already been declared
@@ -23133,9 +22981,10 @@ previous scope ScopeId(0): ["I", "a", "foo", "i", "r", "r2", "r3", "r4", "r5"]
 current  scope ScopeId(0): ["a", "foo", "i", "r", "r2", "r3", "r4", "r5"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithoutReturnTypeAnnotationInference.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesThatDifferOnlyByReturnType.ts
 semantic error: Bindings Mismatch:
@@ -23357,9 +23206,7 @@ previous scope ScopeId(0): ["String", "a", "b", "c", "d", "x"]
 current  scope ScopeId(0): ["a", "b", "c", "d", "x"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/primitives/undefined/invalidUndefinedValues.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/primitives/undefined/validUndefinedAssignments.ts
 semantic error: Bindings Mismatch:
@@ -24014,9 +23861,8 @@ current  scope ScopeId(3): ["a", "c", "d", "e"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignabilityInInheritance.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignableToEveryType.ts
 semantic error: Scopes mismatch after transform
@@ -24024,9 +23870,8 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignableToEveryType2.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithGenericCallSignatures.ts
 semantic error: Bindings Mismatch:
@@ -24259,110 +24104,8 @@ current  scope ScopeId(8): ["x"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/nullIsSubtypeOfEverythingButUndefined.ts
-semantic error: Scopes mismatch after transform
-Symbol Mismatch:
-previous symbol SymbolId(11): SymbolId(11)
-current  symbol SymbolId(11): SymbolId(11)
-Symbol Mismatch:
-previous symbol SymbolId(12): SymbolId(12)
-current  symbol SymbolId(12): SymbolId(12)
-Symbol Mismatch:
-previous symbol SymbolId(13): SymbolId(13)
-current  symbol SymbolId(13): SymbolId(13)
-Symbol Mismatch:
-previous symbol SymbolId(14): SymbolId(14)
-current  symbol SymbolId(14): SymbolId(14)
-Symbol Mismatch:
-previous symbol SymbolId(15): SymbolId(15)
-current  symbol SymbolId(15): SymbolId(15)
-Symbol Mismatch:
-previous symbol SymbolId(17): SymbolId(17)
-current  symbol SymbolId(15): SymbolId(15)
-Symbol Mismatch:
-previous symbol SymbolId(18): SymbolId(18)
-current  symbol SymbolId(16): SymbolId(16)
-Symbol Mismatch:
-previous symbol SymbolId(18): SymbolId(18)
-current  symbol SymbolId(17): SymbolId(17)
-Symbol Mismatch:
-previous symbol SymbolId(19): SymbolId(19)
-current  symbol SymbolId(18): SymbolId(18)
-Symbol Mismatch:
-previous symbol SymbolId(20): SymbolId(20)
-current  symbol SymbolId(18): SymbolId(18)
-Symbol Mismatch:
-previous symbol SymbolId(21): SymbolId(21)
-current  symbol SymbolId(19): SymbolId(19)
-Symbol Mismatch:
-previous symbol SymbolId(21): SymbolId(21)
-current  symbol SymbolId(20): SymbolId(20)
-Symbol Mismatch:
-previous symbol SymbolId(22): SymbolId(22)
-current  symbol SymbolId(21): SymbolId(21)
-Symbol Mismatch:
-previous symbol SymbolId(23): SymbolId(23)
-current  symbol SymbolId(21): SymbolId(21)
-Symbol Mismatch:
-previous symbol SymbolId(24): SymbolId(24)
-current  symbol SymbolId(22): SymbolId(22)
-Symbol Mismatch:
-previous symbol SymbolId(25): SymbolId(25)
-current  symbol SymbolId(23): SymbolId(23)
-Symbol Mismatch:
-previous symbol SymbolId(25): SymbolId(25)
-current  symbol SymbolId(24): SymbolId(24)
-Symbol Mismatch:
-previous symbol SymbolId(28): SymbolId(28)
-current  symbol SymbolId(25): SymbolId(25)
-Symbol Mismatch:
-previous symbol SymbolId(29): SymbolId(29)
-current  symbol SymbolId(26): SymbolId(26)
-Symbol Mismatch:
-previous symbol SymbolId(30): SymbolId(30)
-current  symbol SymbolId(27): SymbolId(27)
-Symbol Mismatch:
-previous symbol SymbolId(32): SymbolId(32)
-current  symbol SymbolId(28): SymbolId(28)
-Symbol Mismatch:
-previous symbol SymbolId(33): SymbolId(33)
-current  symbol SymbolId(29): SymbolId(29)
-Symbol Mismatch:
-previous symbol SymbolId(34): SymbolId(34)
-current  symbol SymbolId(30): SymbolId(30)
-Symbol Mismatch:
-previous symbol SymbolId(36): SymbolId(36)
-current  symbol SymbolId(31): SymbolId(31)
-Symbol Mismatch:
-previous symbol SymbolId(37): SymbolId(37)
-current  symbol SymbolId(32): SymbolId(32)
-Symbol Mismatch:
-previous symbol SymbolId(37): SymbolId(37)
-current  symbol SymbolId(33): SymbolId(33)
-Symbol Mismatch:
-previous symbol SymbolId(38): SymbolId(38)
-current  symbol SymbolId(34): SymbolId(34)
-Symbol Mismatch:
-previous symbol SymbolId(39): SymbolId(39)
-current  symbol SymbolId(35): SymbolId(35)
-Symbol Mismatch:
-previous symbol SymbolId(40): SymbolId(40)
-current  symbol SymbolId(35): SymbolId(35)
-Symbol Mismatch:
-previous symbol SymbolId(41): SymbolId(41)
-current  symbol SymbolId(36): SymbolId(36)
-Symbol Mismatch:
-previous symbol SymbolId(41): SymbolId(41)
-current  symbol SymbolId(37): SymbolId(37)
-Symbol Mismatch:
-previous symbol SymbolId(42): SymbolId(42)
-current  symbol SymbolId(38): SymbolId(38)
-Symbol Mismatch:
-previous symbol SymbolId(43): SymbolId(43)
-current  symbol SymbolId(38): SymbolId(38)
-Symbol Mismatch:
-previous symbol SymbolId(44): SymbolId(44)
-current  symbol SymbolId(39): SymbolId(39)
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/stringLiteralTypeIsSubtypeOfString.ts
 semantic error: Scopes mismatch after transform
@@ -24370,14 +24113,12 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfAny.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints2.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints3.ts
 semantic error: Bindings Mismatch:
@@ -24562,9 +24303,8 @@ current  scope ScopeId(1): ["a", "b"]
 Symbols mismatch after transform
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/undefinedIsSubtypeOfEverything.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentity.ts
 semantic error: Bindings Mismatch:

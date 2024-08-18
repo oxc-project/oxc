@@ -550,10 +550,12 @@ previous scope ScopeId(0): ["I", "M", "N", "T", "_bar", "bar", "foo", "x"]
 current  scope ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-unambiguous/input.ts
-semantic error: ReferenceId mismatch after transform
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
 semantic error: Bindings Mismatch:
@@ -624,24 +626,24 @@ semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-require/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-as-identifier/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
 semantic error: Bindings Mismatch:
@@ -649,8 +651,8 @@ previous scope ScopeId(0): ["a"]
 current  scope ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-named-import-require/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-and-named-id-type/input.ts
 semantic error: Bindings Mismatch:
@@ -677,8 +679,8 @@ current  scope ScopeId(0): []
 Symbols mismatch after transform
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-type-as-identifier/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/internal-comments/input.ts
 semantic error: Bindings Mismatch:
@@ -1069,9 +1071,7 @@ previous scope ScopeId(0): ["bar"]
 current  scope ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var-2/input.js
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum/input.ts
 semantic error: Scopes mismatch after transform
