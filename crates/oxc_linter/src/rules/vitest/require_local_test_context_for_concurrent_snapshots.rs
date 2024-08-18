@@ -76,12 +76,8 @@ declare_oxc_lint!(
     /// })
     /// ```
     RequireLocalTestContextForConcurrentSnapshots,
-    correctness, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    suggestion  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    correctness,
+    suggestion
 );
 
 impl Rule for RequireLocalTestContextForConcurrentSnapshots {
