@@ -334,6 +334,7 @@ mod unicorn {
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
+    pub mod prefer_structured_clone;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
@@ -727,6 +728,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
