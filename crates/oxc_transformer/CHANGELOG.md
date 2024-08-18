@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- d49fb16 oxc_codegen: Support generate range leading comments (#4898) (IWANABETHATGUY)
+- f1fcdde transformer: Support react fast refresh (#4587) (Dunqing)
+- 0d79122 transformer: Support logical-assignment-operators plugin (#4890) (Dunqing)
+- ab1d08c transformer: Support `optional-catch-binding` plugin (#4885) (Dunqing)
+- 69da9fd transformer: Support nullish-coalescing-operator plugin (#4884) (Dunqing)
+- 3a66e58 transformer: Support exponentiation operator plugin (#4876) (Dunqing)
+- f88cbcd transformer: Add `BoundIdentifier::new_uid_in_current_scope` method (#4903) (overlookmotel)
+- 1e6d0fe transformer: Add methods to `BoundIdentifier` (#4897) (overlookmotel)
+
+### Bug Fixes
+
+- 2476dce transformer: Remove an `ast.copy` from `NullishCoalescingOperator` transform (#4913) (overlookmotel)
+- 248a757 transformer/typescript: Typescript syntax within `SimpleAssignmentTarget` with `MemberExpressions` is not stripped (#4920) (Dunqing)
+
+### Documentation
+
+- 9c700ed transformer: Add README including style guide (#4899) (overlookmotel)
+
+### Refactor
+
+- 1eb59d2 ast, isolated_declarations, transformer: Mark `AstBuilder::copy` as an unsafe function (#4907) (overlookmotel)
+- 452187a transformer: Rename `BoundIdentifier::new_uid_in_root_scope` (#4902) (overlookmotel)
+- 707a01f transformer: Re-order `BoundIdentifier` methods (#4896) (overlookmotel)
+- 117dff2 transformer: Improve comments for `BoundIdentifier` helper (#4895) (overlookmotel)
+
 ## [0.24.2] - 2024-08-12
 
 ### Bug Fixes
