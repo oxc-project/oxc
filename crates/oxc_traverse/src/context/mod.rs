@@ -12,8 +12,8 @@ use oxc_syntax::{
 };
 
 use crate::ancestor::{Ancestor, AncestorType};
-
 mod ancestry;
+mod ast_operations;
 pub use ancestry::TraverseAncestry;
 mod scoping;
 pub use scoping::TraverseScoping;

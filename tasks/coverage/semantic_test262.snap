@@ -3,145 +3,145 @@ commit: a1587416
 semantic_test262 Summary:
 AST Parsed     : 46406/46406 (100.00%)
 Positive Passed: 46382/46406 (99.95%)
-language/module-code/eval-rqstd-once.js
+tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns1", "ns3"]
 current  scope ScopeId(0): ["global"]
 Symbols mismatch after transform
 
-language/module-code/eval-rqstd-order.js
+tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns1", "ns2"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/eval-self-once.js
+tasks/coverage/test262/test/language/module-code/eval-self-once.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns", "ns1"]
 current  scope ScopeId(0): ["global"]
 Symbols mismatch after transform
 
-language/module-code/import-assertions/import-assertion-many.js
+tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-many.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-assertions/import-assertion-trlng-comma.js
+tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-trlng-comma.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-assertions/import-assertion-value-string-double.js
+tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-value-string-double.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-assertions/import-assertion-value-string-single.js
+tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-value-string-single.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-attributes/allow-nlt-before-with.js
+tasks/coverage/test262/test/language/module-code/import-attributes/allow-nlt-before-with.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-attributes/import-attribute-many.js
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-many.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-attributes/import-attribute-trlng-comma.js
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-trlng-comma.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-attributes/import-attribute-value-string-double.js
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-double.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/import-attributes/import-attribute-value-string-single.js
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-single.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-named-err-ambiguous-as.js
+tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous-as.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["y"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-named-err-ambiguous.js
+tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-named-err-dflt-thru-star-as.js
+tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-as.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-named-err-dflt-thru-star-dflt.js
+tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-dflt.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-named-err-not-found-as.js
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-as.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["y"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-named-err-not-found-dflt.js
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-dflt.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-named-err-not-found.js
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/instn-once.js
+tasks/coverage/test262/test/language/module-code/instn-once.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns", "ns1", "x"]
 current  scope ScopeId(0): ["x"]
 Symbols mismatch after transform
 
-language/module-code/instn-star-err-not-found.js
+tasks/coverage/test262/test/language/module-code/instn-star-err-not-found.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["ns"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/top-level-await/module-import-rejection-body.js
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-body.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/top-level-await/module-import-rejection-tick.js
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-tick.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-language/module-code/top-level-await/module-import-rejection.js
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["resolved"]
 current  scope ScopeId(0): []

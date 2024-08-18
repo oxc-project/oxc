@@ -1,4 +1,4 @@
-- ClassBody-StaticBlock/input.js
+- babel/packages/babel-generator/test/fixtures/sourcemaps/ClassBody-StaticBlock/input.js
 (0:0-0:6) "class " --> (0:0-0:6) "class "
 (0:6-0:10) "Foo " --> (0:6-0:10) "Foo "
 (0:10-1:2) "{\n " --> (0:10-1:1) "{\n"
@@ -22,12 +22,10 @@
 (14:1-15:1) "}\n" --> (13:0-14:1) "\n}\n"
 
 
-
-- ModuleExpression/input.js
+./babel/packages/babel-generator/test/fixtures/sourcemaps/ModuleExpression/input.js
 Expected a semicolon or an implicit semicolon after a statement, but found none
 
-
-- arrow-function/input.js
+- babel/packages/babel-generator/test/fixtures/sourcemaps/arrow-function/input.js
 (0:0-0:1) "(" --> (0:0-0:0) ""
 (0:1-0:7) "() => " --> (0:0-0:6) "() => "
 (0:7-0:9) "{ " --> (0:6-1:0) "{"
@@ -36,8 +34,7 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 (0:21-1:1) ")\n" --> (2:0-3:1) "\n};\n"
 
 
-
-- arrow-function-compact/input.js
+- babel/packages/babel-generator/test/fixtures/sourcemaps/arrow-function-compact/input.js
 (0:0-0:1) "(" --> (0:0-0:0) ""
 (0:1-0:7) "() => " --> (0:0-0:6) "() => "
 (0:7-0:9) "{ " --> (0:6-1:0) "{"
@@ -46,12 +43,10 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 (0:21-1:1) ")\n" --> (2:0-3:1) "\n};\n"
 
 
-
-- bar-record-tuple-babel-7/input.js
+./babel/packages/babel-generator/test/fixtures/sourcemaps/bar-record-tuple-babel-7/input.js
 Unexpected token
 
-
-- call-identifiers/input.js
+- babel/packages/babel-generator/test/fixtures/sourcemaps/call-identifiers/input.js
 (0:0-1:0) "foo;" --> (0:0-1:0) "foo;"
 (1:0-1:5) "\nfoo(" --> (1:0-1:5) "\nfoo("
 (1:5-2:0) ");" --> (1:5-2:0) ");"
@@ -92,8 +87,7 @@ Unexpected token
 (15:1-16:1) "}\n" --> (15:0-16:1) "\n}\n"
 
 
-
-- comment-before-parentheses-return-arg/input.js
+- babel/packages/babel-generator/test/fixtures/sourcemaps/comment-before-parentheses-return-arg/input.js
 (0:0-0:9) "function " --> (0:0-0:9) "function "
 (0:9-0:23) "assertElement(" --> (0:9-0:23) "assertElement("
 (0:23-0:33) "assertFn, " --> (0:23-0:33) "assertFn, "
@@ -120,8 +114,7 @@ Unexpected token
 (16:1-17:1) ");\n" --> (4:17-5:1) ");\n"
 
 
-
-- comment-before-parentheses-return-arg-createParenthesizedExpressions/input.js
+- babel/packages/babel-generator/test/fixtures/sourcemaps/comment-before-parentheses-return-arg-createParenthesizedExpressions/input.js
 (0:0-0:9) "function " --> (0:0-0:9) "function "
 (0:9-0:23) "assertElement(" --> (0:9-0:23) "assertElement("
 (0:23-0:33) "assertFn, " --> (0:23-0:33) "assertFn, "
@@ -148,8 +141,7 @@ Unexpected token
 (16:1-17:1) ");\n" --> (4:17-5:1) ");\n"
 
 
-
-- function-identifier-name/input.js
+- babel/packages/babel-generator/test/fixtures/sourcemaps/function-identifier-name/input.js
 (0:0-0:9) "function " --> (0:0-0:9) "function "
 (0:9-0:14) "fn() " --> (0:9-0:14) "fn() "
 (0:14-0:16) "{}" --> (0:14-0:15) "{"
@@ -406,13 +398,30 @@ Unexpected token
 (60:28-61:1) "});\n" --> (50:24-51:1) "{});\n"
 
 
-
-- hash-record-tuple/input.js
+./babel/packages/babel-generator/test/fixtures/sourcemaps/hash-record-tuple/input.js
 Invalid Character `[`
 
-
-- hash-record-tuple-babel-7/input.js
+./babel/packages/babel-generator/test/fixtures/sourcemaps/hash-record-tuple-babel-7/input.js
 Invalid Character `[`
+
+- babel/packages/babel-generator/test/fixtures/sourcemaps/string-literal-newline/input.js
+(0:0-3:0) "\"before\\\nafter\";\n" --> (0:0-2:0) "\"before\\\nafter\";"
+(3:0-6:1) "\n\"before\\\n\\\nafter\";\n" --> (2:0-5:1) "\n\"before\\\n\\\nafter\";\n"
+
+
+- babel/packages/babel-generator/test/fixtures/sourcemaps/template-literal-newline/input.js
+(1:0-1:1) "\n" --> (0:0-0:1) "`"
+(1:1-5:0) "`before\nafter`;\n\n// Newline newline" --> (0:1-2:0) "before\nafter`;"
+(5:0-5:1) "\n" --> (2:0-2:1) "\n"
+(5:1-10:0) "`before\n\nafter`;\n\n// Newline LineContinuation" --> (2:1-5:0) "`before\n\nafter`;"
+(10:0-10:1) "\n" --> (5:0-5:1) "\n"
+(10:1-15:0) "`before\n\\\nafter`;\n\n// LineContinuation" --> (5:1-8:0) "`before\n\\\nafter`;"
+(15:0-15:1) "\n" --> (8:0-8:1) "\n"
+(15:1-19:0) "`before\\\nafter`;\n\n// LineContinuation newline" --> (8:1-10:0) "`before\\\nafter`;"
+(19:0-19:1) "\n" --> (10:0-10:1) "\n"
+(19:1-24:0) "`before\\\n\nafter`;\n\n// LineContinuation LineContinuation" --> (10:1-13:0) "`before\\\n\nafter`;"
+(24:0-24:1) "\n" --> (13:0-13:1) "\n"
+(24:1-27:1) "`before\\\n\\\nafter`;\n" --> (13:1-16:1) "`before\\\n\\\nafter`;\n"
 
 
 - react.development.js
@@ -5249,28 +5258,5 @@ Invalid Character `[`
 (2331:3-2331:6) "})(" --> (1485:1-1485:5) "\t})("
 (2331:6-2332:1) ");\n" --> (1485:5-1486:0) ");"
 (2332:1-2333:1) "}\n" --> (1486:0-1487:1) "\n}\n"
-
-
-
-- string-literal-newline/input.js
-(0:0-3:0) "\"before\\\nafter\";\n" --> (0:0-2:0) "\"before\\\nafter\";"
-(3:0-6:1) "\n\"before\\\n\\\nafter\";\n" --> (2:0-5:1) "\n\"before\\\n\\\nafter\";\n"
-
-
-
-- template-literal-newline/input.js
-(1:0-1:1) "\n" --> (0:0-0:1) "`"
-(1:1-5:0) "`before\nafter`;\n\n// Newline newline" --> (0:1-2:0) "before\nafter`;"
-(5:0-5:1) "\n" --> (2:0-2:1) "\n"
-(5:1-10:0) "`before\n\nafter`;\n\n// Newline LineContinuation" --> (2:1-5:0) "`before\n\nafter`;"
-(10:0-10:1) "\n" --> (5:0-5:1) "\n"
-(10:1-15:0) "`before\n\\\nafter`;\n\n// LineContinuation" --> (5:1-8:0) "`before\n\\\nafter`;"
-(15:0-15:1) "\n" --> (8:0-8:1) "\n"
-(15:1-19:0) "`before\\\nafter`;\n\n// LineContinuation newline" --> (8:1-10:0) "`before\\\nafter`;"
-(19:0-19:1) "\n" --> (10:0-10:1) "\n"
-(19:1-24:0) "`before\\\n\nafter`;\n\n// LineContinuation LineContinuation" --> (10:1-13:0) "`before\\\n\nafter`;"
-(24:0-24:1) "\n" --> (13:0-13:1) "\n"
-(24:1-27:1) "`before\\\n\\\nafter`;\n" --> (13:1-16:1) "`before\\\n\\\nafter`;\n"
-
 
 

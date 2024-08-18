@@ -1,13 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
+use oxc::span::SourceType;
 
-use crate::{
-    project_root,
-    suite::{Case, Suite, TestResult},
-};
+use crate::suite::{Case, Suite, TestResult};
 
-const FIXTURES_PATH: &str = "tasks/coverage/misc";
+const FIXTURES_PATH: &str = "misc";
 
 pub struct MiscSuite<T: Case> {
     test_root: PathBuf,
@@ -16,7 +13,7 @@ pub struct MiscSuite<T: Case> {
 
 impl<T: Case> MiscSuite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
+        Self { test_root: PathBuf::from(FIXTURES_PATH), test_cases: vec![] }
     }
 
     fn extra_cases() -> Vec<T> {

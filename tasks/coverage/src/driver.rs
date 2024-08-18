@@ -1,16 +1,16 @@
 use std::{cell::Cell, collections::HashSet, path::PathBuf};
 
-use oxc_allocator::{Allocator, CloneIn};
+use oxc::allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, visit::walk, Trivias, Visit};
-use oxc_codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::{Parser, ParserReturn};
-use oxc_semantic::{ReferenceId, ScopeFlags, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
-use oxc_span::{CompactStr, SourceType, Span};
-use oxc_syntax::scope::ScopeId;
-use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
+use oxc::ast::{ast::*, visit::walk, Trivias, Visit};
+use oxc::codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
+use oxc::diagnostics::OxcDiagnostic;
+use oxc::minifier::{CompressOptions, Compressor};
+use oxc::parser::{Parser, ParserReturn};
+use oxc::semantic::{ReferenceId, ScopeFlags, ScopeTree, SemanticBuilder, SymbolId, SymbolTable};
+use oxc::span::{CompactStr, SourceType, Span};
+use oxc::syntax::scope::ScopeId;
+use oxc::transformer::{TransformOptions, Transformer, TransformerReturn};
 
 use crate::suite::TestResult;
 
@@ -96,7 +96,7 @@ impl Driver {
 
         if let Some(options) = self.transform.clone() {
             let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
-            let TransformerReturn { symbols, scopes, .. } = Transformer::new(
+            let TransformerReturn { symbols, scopes, errors } = Transformer::new(
                 &allocator,
                 &self.path,
                 source_type,
@@ -105,6 +105,11 @@ impl Driver {
                 options,
             )
             .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+
+            if !errors.is_empty() {
+                self.errors.extend(errors);
+                return;
+            }
 
             if let Some(check1) = check1 {
                 if self.check_semantic(&check1, &symbols, &scopes, &program) {
