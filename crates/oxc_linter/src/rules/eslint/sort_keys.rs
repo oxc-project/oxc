@@ -1,5 +1,5 @@
 use crate::{context::LintContext, rule::Rule, AstNode};
-use itertools::all;
+use itertools::{all};
 use oxc_ast::ast::ObjectPropertyKind;
 use oxc_ast::syntax_directed_operations::PropName;
 use oxc_ast::AstKind;
@@ -92,19 +92,18 @@ declare_oxc_lint!(
 impl Rule for SortKeys {
     fn from_configuration(value: serde_json::Value) -> Self {
         let Some(config_array) = value.as_array() else {
-            return Self(Box::new(SortKeysOptions::default()));
+            return Self(Box::default());
         };
 
-        let sort_order = if config_array.len() > 0 {
+        let sort_order = if config_array.is_empty() {
+            SortOrder::Asc
+        } else {
             config_array[0]
                 .as_str()
-                .map(|s| match s {
+                .map_or(SortOrder::Asc, |s| match s {
                     "desc" => SortOrder::Desc,
                     _ => SortOrder::Asc,
                 })
-                .unwrap_or(SortOrder::Asc)
-        } else {
-            SortOrder::Asc
         };
 
         let config = if config_array.len() > 1 {
@@ -118,9 +117,9 @@ impl Rule for SortKeys {
         let natural = config.get("natural").and_then(serde_json::Value::as_bool).unwrap_or(false);
         let min_keys = config
             .get("minKeys")
-            .and_then(serde_json::Value::as_u64)
-            .map(|n| n as usize)
-            .unwrap_or(2);
+            .and_then(serde_json::Value::as_u64).map_or(2,
+            |n| n.try_into().unwrap_or(2),
+        );
         let allow_line_separated_groups = config
             .get("allowLineSeparatedGroups")
             .and_then(serde_json::Value::as_bool)
@@ -179,27 +178,23 @@ impl Rule for SortKeys {
             }
 
             let mut sorted_property_groups = property_groups.clone();
-            for (i, group) in property_groups.iter().enumerate() {
-                let mut sorted = group.clone();
-
+            for group in &mut sorted_property_groups {
                 if self.natural {
-                    natural_sort(&mut sorted);
+                    natural_sort(group);
                 } else {
-                    alphanumeric_sort(&mut sorted);
+                    alphanumeric_sort(group);
                 }
 
                 if self.sort_order == SortOrder::Desc {
-                    sorted.reverse();
+                    group.reverse();
                 }
-
-                sorted_property_groups[i] = sorted;
             }
 
             let is_sorted =
                 all(property_groups.iter().zip(&sorted_property_groups), |(a, b)| a == b);
 
             if !is_sorted {
-                ctx.diagnostic(sort_properties_diagnostic(node.span()))
+                ctx.diagnostic(sort_properties_diagnostic(node.span()));
             }
         }
     }
@@ -207,19 +202,19 @@ impl Rule for SortKeys {
 
 fn alphanumeric_cmp(a: &str, b: &str) -> Ordering {
     /* regex key special case */
-    if a.starts_with("/") && a.ends_with("/") {
-        if b.starts_with("/") && b.ends_with("/") {
+    if a.starts_with('/') && a.ends_with('/') {
+        if b.starts_with('/') && b.ends_with('/') {
             return a.cmp(b);
         }
         return Ordering::Greater;
     }
 
-    if b.starts_with("/") && b.ends_with("/") {
+    if b.starts_with('/') && b.ends_with('/') {
         return Ordering::Less;
     }
 
     /* empty keys special case */
-    if a == "" && b.starts_with("[") || b == "" && a.starts_with("[") {
+    if a.is_empty() && b.starts_with('[') || b.is_empty() && a.starts_with('[') {
         return Ordering::Equal;
     }
 
@@ -263,7 +258,7 @@ fn alphanumeric_cmp(a: &str, b: &str) -> Ordering {
     a.cmp(b)
 }
 
-fn alphanumeric_sort(arr: &mut Vec<String>) {
+fn alphanumeric_sort(arr: &mut [String]) {
     arr.sort_by(|a, b| alphanumeric_cmp(a, b));
 }
 
@@ -284,15 +279,15 @@ fn natural_sort(arr: &mut [String]) {
                     }
                 }
                 (Some(a_char), Some(b_char))
-                    if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
-                {
-                    return Ordering::Greater
-                }
+                if a_char.is_alphanumeric() && !b_char.is_alphanumeric() =>
+                    {
+                        return Ordering::Greater
+                    }
                 (Some(a_char), Some(b_char))
-                    if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
-                {
-                    return Ordering::Less
-                }
+                if !a_char.is_alphanumeric() && b_char.is_alphanumeric() =>
+                    {
+                        return Ordering::Less
+                    }
                 (Some(a_char), Some(b_char)) if a_char == '[' && b_char.is_alphanumeric() => {
                     return Ordering::Greater
                 }
@@ -310,7 +305,7 @@ fn natural_sort(arr: &mut [String]) {
 
 fn take_numeric(iter: &mut Chars, first: char) -> u32 {
     let mut sum = first.to_digit(10).unwrap();
-    while let Some(c) = iter.next() {
+    for c in iter.by_ref() {
         if let Some(digit) = c.to_digit(10) {
             sum = sum * 10 + digit;
         } else {
@@ -329,7 +324,7 @@ fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: 
 fn extract_property_key(prop_text: &str) -> &str {
     let trimmed = prop_text.trim();
     let before_colon = trimmed.split(':').next().unwrap_or(trimmed);
-    let without_quotes = before_colon.split("\"").next().unwrap_or(before_colon);
+    let without_quotes = before_colon.split('"').next().unwrap_or(before_colon);
     without_quotes.split('(').next().unwrap_or(before_colon)
 }
 
