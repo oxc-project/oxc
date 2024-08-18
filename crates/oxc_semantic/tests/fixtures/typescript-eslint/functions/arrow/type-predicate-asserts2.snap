@@ -47,7 +47,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction)",
         "id": 1,
         "name": "foo",
         "node": "VariableDeclarator(foo)",
