@@ -13,7 +13,7 @@ use std::ops::Deref;
 
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{ScopeFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::GetSpan;
 
 use crate::{context::LintContext, rule::Rule};
@@ -209,7 +209,20 @@ impl NoUnusedVars {
             | AstKind::ImportExpression(_)
             | AstKind::ImportDefaultSpecifier(_)
             | AstKind::ImportNamespaceSpecifier(_) => {
-                ctx.diagnostic(diagnostic::imported(symbol));
+                let diagnostic = diagnostic::imported(symbol);
+                let declaration =
+                    symbol.iter_self_and_parents().map(AstNode::kind).find_map(|kind| match kind {
+                        AstKind::ImportDeclaration(import) => Some(import),
+                        _ => None,
+                    });
+
+                if let Some(declaration) = declaration {
+                    ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                        self.remove_unused_import_declaration(fixer, symbol, declaration)
+                    });
+                } else {
+                    ctx.diagnostic(diagnostic);
+                }
             }
             AstKind::VariableDeclarator(decl) => {
                 if self.is_allowed_variable_declaration(symbol, decl) {
