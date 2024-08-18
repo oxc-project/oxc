@@ -7,7 +7,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, PossibleJestNode,
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
 };
 
@@ -26,13 +27,15 @@ fn is_snapshot_method(property_name: &str) -> bool {
 #[inline]
 fn is_test_or_describe_node(member_expr: &MemberExpression) -> bool {
     if let Some(id) = member_expr.object().get_identifier_reference() {
-        if ["test", "describe"].contains(&id.name.as_str()) {
+        if matches!(
+            JestFnKind::from(id.name.as_str()),
+            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
+        ) {
             if let Some(property_name) = member_expr.static_property_name() {
                 return property_name == "concurrent";
             }
         }
     }
-
     false
 }
 
@@ -133,38 +136,38 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"test("something", () => { expect(true).toBe(true) })"#,
-        r#"test.concurrent("something", () => { expect(true).toBe(true) })"#,
-        r#"test("something", () => { expect(1).toMatchSnapshot() })"#,
-        r#"test.concurrent("something", ({ expect }) => { expect(1).toMatchSnapshot() })"#,
-        r#"test.concurrent("something", ({ expect }) => { expect(1).toMatchInlineSnapshot("1") })"#,
-        r#"describe.concurrent("something", () => { test("something", () => { expect(true).toBe(true) }) })"#,
-        r#"describe.concurrent("something", () => { test("something", ({ expect }) => { expect(1).toMatchSnapshot() }) })"#,
-        r#"describe.concurrent("something", () => { test("something", ({ expect }) => { expect(1).toMatchInlineSnapshot() }) })"#,
-        r#"describe("something", () => { test("something", (context) => { context.expect(1).toMatchInlineSnapshot() }) })"#,
-        r#"describe("something", () => { test("something", (context) => { expect(1).toMatchInlineSnapshot() }) })"#,
-        r#"test.concurrent("something", (context) => { context.expect(1).toMatchSnapshot() })"#,
+        r#"it("something", () => { expect(true).toBe(true) })"#,
+        r#"it.concurrent("something", () => { expect(true).toBe(true) })"#,
+        r#"it("something", () => { expect(1).toMatchSnapshot() })"#,
+        r#"it.concurrent("something", ({ expect }) => { expect(1).toMatchSnapshot() })"#,
+        r#"it.concurrent("something", ({ expect }) => { expect(1).toMatchInlineSnapshot("1") })"#,
+        r#"describe.concurrent("something", () => { it("something", () => { expect(true).toBe(true) }) })"#,
+        r#"describe.concurrent("something", () => { it("something", ({ expect }) => { expect(1).toMatchSnapshot() }) })"#,
+        r#"describe.concurrent("something", () => { it("something", ({ expect }) => { expect(1).toMatchInlineSnapshot() }) })"#,
+        r#"describe("something", () => { it("something", (context) => { context.expect(1).toMatchInlineSnapshot() }) })"#,
+        r#"describe("something", () => { it("something", (context) => { expect(1).toMatchInlineSnapshot() }) })"#,
+        r#"it.concurrent("something", (context) => { context.expect(1).toMatchSnapshot() })"#,
     ];
 
     let fail = vec![
-        r#"test.concurrent("should fail", () => { expect(true).toMatchSnapshot() })"#,
-        r#"test.concurrent("should fail", () => { expect(true).toMatchInlineSnapshot("true") })"#,
-        r#"describe.concurrent("failing", () => { test("should fail", () => { expect(true).toMatchSnapshot() }) })"#,
-        r#"describe.concurrent("failing", () => { test("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })"#,
-        r#"test.concurrent("something", (context) => { expect(true).toMatchSnapshot() })"#,
-        r#"test.concurrent("something", () => {
+        r#"it.concurrent("should fail", () => { expect(true).toMatchSnapshot() })"#,
+        r#"it.concurrent("should fail", () => { expect(true).toMatchInlineSnapshot("true") })"#,
+        r#"describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchSnapshot() }) })"#,
+        r#"describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })"#,
+        r#"it.concurrent("something", (context) => { expect(true).toMatchSnapshot() })"#,
+        r#"it.concurrent("something", () => {
 			                 expect(true).toMatchSnapshot();
 			
 			                 expect(true).toMatchSnapshot();
 			            })"#,
-        r#"test.concurrent("something", () => {
+        r#"it.concurrent("something", () => {
 			                 expect(true).toBe(true);
 			
 			                 expect(true).toMatchSnapshot();
 			            })"#,
-        r#"test.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })"#,
-        r#"test.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingSnapshot() })"#,
-        r#"test.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })"#,
+        r#"it.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })"#,
+        r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingSnapshot() })"#,
+        r#"it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })"#,
     ];
 
     Tester::new(RequireLocalTestContextForConcurrentSnapshots::NAME, pass, fail)
