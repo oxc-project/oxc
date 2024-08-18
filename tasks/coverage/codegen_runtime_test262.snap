@@ -2,220 +2,223 @@ commit: a1587416
 
 codegen_runtime_test262 Summary:
 AST Parsed     : 18687/18687 (100.00%)
-Positive Passed: 18615/18687 (99.61%)
-Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
+Positive Passed: 18614/18687 (99.61%)
+Expect to run correctly: annexB/built-ins/String/prototype/substr/surrogate-pairs.js
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
 
-Expect to run correctly: "annexB/language/global-code/block-decl-global-init.js"
+Expect to run correctly: annexB/language/global-code/block-decl-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/global-code/if-decl-else-decl-a-global-init.js"
+Expect to run correctly: annexB/language/global-code/if-decl-else-decl-a-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/global-code/if-decl-else-decl-b-global-init.js"
+Expect to run correctly: annexB/language/global-code/if-decl-else-decl-b-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/global-code/if-decl-else-stmt-global-init.js"
+Expect to run correctly: annexB/language/global-code/if-decl-else-stmt-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/global-code/if-decl-no-else-global-init.js"
+Expect to run correctly: annexB/language/global-code/if-decl-no-else-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/global-code/if-stmt-else-decl-global-init.js"
+Expect to run correctly: annexB/language/global-code/if-stmt-else-decl-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/global-code/switch-case-global-init.js"
+Expect to run correctly: annexB/language/global-code/switch-case-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "annexB/language/global-code/switch-dflt-global-init.js"
+Expect to run correctly: annexB/language/global-code/switch-dflt-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/expressions/assignment/fn-name-lhs-cover.js"
+Expect to run correctly: language/expressions/assignment/fn-name-lhs-cover.js
 But got a runtime error: Test262Error: descriptor value should be ; object value should be 
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--1.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--11.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--11.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--13.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--13.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--15.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--15.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--17.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--17.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--19.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--19.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--21.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--21.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--3.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--3.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--5.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--5.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--7.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--7.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--9.js"
+Expect to run correctly: language/expressions/compound-assignment/compound-assignment-operator-calls-putvalue-lref--v--9.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/dynamic-import/always-create-new-promise.js"
+Expect to run correctly: language/expressions/dynamic-import/always-create-new-promise.js
 But got a runtime error: Test262Error: p1 constructor is %Promise% Expected SameValue(«function Promise() { [native code] }», «function Promise() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/eval-self-once-module.js"
+Expect to run correctly: language/expressions/dynamic-import/eval-self-once-module.js
 But got a runtime error: Test262Error: global property was defined and incremented only once Expected SameValue(«2», «1») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/imported-self-update.js"
+Expect to run correctly: language/expressions/dynamic-import/imported-self-update.js
 But got a runtime error: Test262Error: updated value, direct binding Expected SameValue(«0», «1») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/indirect-resolution.js"
+Expect to run correctly: language/expressions/dynamic-import/indirect-resolution.js
 But got a runtime error: Test262Error: default is Promise instance Expected SameValue(«[object Promise]», «[object Promise]») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/returns-promise.js"
+Expect to run correctly: language/expressions/dynamic-import/returns-promise.js
 But got a runtime error: Test262Error: constructor is %Promise% Expected SameValue(«function Promise() { [native code] }», «function Promise() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-empty-str-is-valid-assign-expr.js"
+Expect to run correctly: language/expressions/dynamic-import/syntax/valid/nested-with-expression-empty-str-is-valid-assign-expr.js
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-assertions-trailing-comma-first.js"
+Expect to run correctly: language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-assertions-trailing-comma-first.js
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-assertions-trailing-comma-second.js"
+Expect to run correctly: language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-assertions-trailing-comma-second.js
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-attributes-trailing-comma-first.js"
+Expect to run correctly: language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-attributes-trailing-comma-first.js
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-attributes-trailing-comma-second.js"
+Expect to run correctly: language/expressions/dynamic-import/syntax/valid/nested-with-expression-import-attributes-trailing-comma-second.js
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-nested-imports.js"
+Expect to run correctly: language/expressions/dynamic-import/syntax/valid/nested-with-expression-nested-imports.js
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/syntax/valid/nested-with-expression-script-code-valid.js"
+Expect to run correctly: language/expressions/dynamic-import/syntax/valid/nested-with-expression-script-code-valid.js
 But got a runtime error: Test262Error: Expected SameValue(«function then() { [native code] }», «function then() { [native code] }») to be true
 
-Expect to run correctly: "language/expressions/dynamic-import/usage-from-eval.js"
+Expect to run correctly: language/expressions/dynamic-import/usage-from-eval.js
 But got a runtime error: Test262Error: constructor is %Promise% Expected SameValue(«[object Promise]», «[object Promise]») to be true
 
-Expect to run correctly: "language/expressions/object/__proto__-permitted-dup-shorthand.js"
-But got a runtime error: Test262Error: Expected SameValue(«[object Object]», «2») to be true
+Expect to run correctly: language/expressions/in/private-field-rhs-non-object.js
+But got a runtime error: Test262Error: Expected SameValue(«null», «null») to be false
 
-Expect to run correctly: "language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue--1.js"
+Expect to run correctly: language/expressions/object/__proto__-permitted-dup-shorthand.js
+But got a runtime error: SyntaxError: Duplicate __proto__ fields are not allowed in object literals
+
+Expect to run correctly: language/expressions/postfix-decrement/operator-x-postfix-decrement-calls-putvalue-lhs-newvalue--1.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue--1.js"
+Expect to run correctly: language/expressions/postfix-increment/operator-x-postfix-increment-calls-putvalue-lhs-newvalue--1.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue--1.js"
+Expect to run correctly: language/expressions/prefix-decrement/operator-prefix-decrement-x-calls-putvalue-lhs-newvalue--1.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js"
+Expect to run correctly: language/expressions/prefix-increment/operator-prefix-increment-x-calls-putvalue-lhs-newvalue--1.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
-Expect to run correctly: "language/global-code/decl-func.js"
+Expect to run correctly: language/global-code/decl-func.js
 But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should not be configurable
 
-Expect to run correctly: "language/global-code/decl-var.js"
+Expect to run correctly: language/global-code/decl-var.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
-Expect to run correctly: "language/module-code/eval-self-once.js"
+Expect to run correctly: language/module-code/eval-self-once.js
 But got a runtime error: Test262Error: global property initially unset Expected SameValue(«262», «undefined») to be true
 
-Expect to run correctly: "language/module-code/instn-iee-bndng-cls.js"
+Expect to run correctly: language/module-code/instn-iee-bndng-cls.js
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
 
-Expect to run correctly: "language/module-code/instn-iee-bndng-const.js"
+Expect to run correctly: language/module-code/instn-iee-bndng-const.js
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
 
-Expect to run correctly: "language/module-code/instn-iee-bndng-fun.js"
+Expect to run correctly: language/module-code/instn-iee-bndng-fun.js
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
 
-Expect to run correctly: "language/module-code/instn-iee-bndng-gen.js"
+Expect to run correctly: language/module-code/instn-iee-bndng-gen.js
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
 
-Expect to run correctly: "language/module-code/instn-iee-bndng-let.js"
+Expect to run correctly: language/module-code/instn-iee-bndng-let.js
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
 
-Expect to run correctly: "language/module-code/instn-iee-bndng-var.js"
+Expect to run correctly: language/module-code/instn-iee-bndng-var.js
 But got a runtime error: ReferenceError: Cannot access 'results' before initialization
 
-Expect to run correctly: "language/module-code/instn-named-bndng-cls.js"
+Expect to run correctly: language/module-code/instn-named-bndng-cls.js
 But got a runtime error: Test262Error: binding is created but not initialized Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/instn-named-bndng-const.js"
+Expect to run correctly: language/module-code/instn-named-bndng-const.js
 But got a runtime error: Test262Error: binding is created but not initialized Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/instn-named-bndng-dflt-cls.js"
+Expect to run correctly: language/module-code/instn-named-bndng-dflt-cls.js
 But got a runtime error: Test262Error: Binding is created but not initialized. Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/instn-named-bndng-dflt-expr.js"
+Expect to run correctly: language/module-code/instn-named-bndng-dflt-expr.js
 But got a runtime error: Test262Error: binding is created but not initialized Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/instn-named-bndng-dflt-named.js"
+Expect to run correctly: language/module-code/instn-named-bndng-dflt-named.js
 But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/instn-named-bndng-dflt-star.js"
+Expect to run correctly: language/module-code/instn-named-bndng-dflt-star.js
 But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/instn-named-bndng-let.js"
+Expect to run correctly: language/module-code/instn-named-bndng-let.js
 But got a runtime error: Test262Error: binding is created but not initialized Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/instn-named-bndng-trlng-comma.js"
+Expect to run correctly: language/module-code/instn-named-bndng-trlng-comma.js
 But got a runtime error: Test262Error: binding is initialized to `undefined` prior to module evaulation Expected SameValue(«23», «undefined») to be true
 
-Expect to run correctly: "language/module-code/instn-named-bndng-var.js"
+Expect to run correctly: language/module-code/instn-named-bndng-var.js
 But got a runtime error: Test262Error: binding is initialized to `undefined` prior to module evaulation Expected SameValue(«23», «undefined») to be true
 
-Expect to run correctly: "language/module-code/namespace/internals/delete-exported-uninit.js"
+Expect to run correctly: language/module-code/namespace/internals/delete-exported-uninit.js
 But got a runtime error: Test262Error: binding unmodified: local1 Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/namespace/internals/enumerate-binding-uninit.js"
+Expect to run correctly: language/module-code/namespace/internals/enumerate-binding-uninit.js
 But got a runtime error: Test262Error: Expected a ReferenceError but got a Test262Error
 
-Expect to run correctly: "language/module-code/namespace/internals/get-own-property-str-found-uninit.js"
+Expect to run correctly: language/module-code/namespace/internals/get-own-property-str-found-uninit.js
 But got a runtime error: Test262Error: hasOwnProperty: local1 Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/namespace/internals/get-str-found-uninit.js"
+Expect to run correctly: language/module-code/namespace/internals/get-str-found-uninit.js
 But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/namespace/internals/object-hasOwnProperty-binding-uninit.js"
+Expect to run correctly: language/module-code/namespace/internals/object-hasOwnProperty-binding-uninit.js
 But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/namespace/internals/object-keys-binding-uninit.js"
+Expect to run correctly: language/module-code/namespace/internals/object-keys-binding-uninit.js
 But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/namespace/internals/object-propertyIsEnumerable-binding-uninit.js"
+Expect to run correctly: language/module-code/namespace/internals/object-propertyIsEnumerable-binding-uninit.js
 But got a runtime error: Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
 
-Expect to run correctly: "language/module-code/verify-dfs.js"
+Expect to run correctly: language/module-code/verify-dfs.js
 But got a runtime error: Test262Error: Expected SameValue(«B», «A») to be true
 
-Expect to run correctly: "language/statements/class/subclass/default-constructor-spread-override.js"
+Expect to run correctly: language/statements/class/subclass/default-constructor-spread-override.js
 But got a runtime error: Test262Error: @@iterator invoked
 
-Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-catch-finally-arrow.js"
+Expect to run correctly: language/statements/class/subclass/derived-class-return-override-catch-finally-arrow.js
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
 
-Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-catch-finally.js"
+Expect to run correctly: language/statements/class/subclass/derived-class-return-override-catch-finally.js
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
 
-Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-finally-super-arrow.js"
+Expect to run correctly: language/statements/class/subclass/derived-class-return-override-finally-super-arrow.js
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
 
-Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-finally-super.js"
+Expect to run correctly: language/statements/class/subclass/derived-class-return-override-finally-super.js
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
 
-Expect to run correctly: "language/statements/class/subclass/derived-class-return-override-for-of-arrow.js"
+Expect to run correctly: language/statements/class/subclass/derived-class-return-override-for-of-arrow.js
 But got a runtime error: ReferenceError: Must call super constructor in derived class before accessing 'this' or returning from derived constructor
 
-Expect to run correctly: "language/statements/for-of/string-astral-truncated.js"
+Expect to run correctly: language/statements/for-of/string-astral-truncated.js
 But got a runtime error: Test262Error: Expected SameValue(«\», «\ud801») to be true
 

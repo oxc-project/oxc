@@ -32,10 +32,16 @@ impl<'a> IsolatedDeclarations<'a> {
                 _ => None,
             },
             Expression::FunctionExpression(func) => {
-                self.transform_function_to_ts_type(func).map(|x| self.ast.copy(&x))
+                self.transform_function_to_ts_type(func).map(|x| {
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&x) }
+                })
             }
             Expression::ArrowFunctionExpression(func) => {
-                self.transform_arrow_function_to_ts_type(func).map(|x| self.ast.copy(&x))
+                self.transform_arrow_function_to_ts_type(func).map(|x| {
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&x) }
+                })
             }
             Expression::ObjectExpression(expr) => {
                 Some(self.transform_object_expression_to_ts_type(expr, false))
@@ -48,7 +54,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(self.ast.copy(&expr.type_annotation))
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(unsafe { self.ast.copy(&expr.type_annotation) })
                 }
             }
             Expression::ClassExpression(expr) => {
@@ -64,7 +71,10 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::TSSatisfiesExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
             }
-            Expression::TSTypeAssertion(expr) => Some(self.ast.copy(&expr.type_annotation)),
+            Expression::TSTypeAssertion(expr) => {
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                Some(unsafe { self.ast.copy(&expr.type_annotation) })
+            }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {
                     self.infer_type_from_expression(&expr.argument)
@@ -81,11 +91,15 @@ impl<'a> IsolatedDeclarations<'a> {
         param: &FormalParameter<'a>,
     ) -> Option<TSType<'a>> {
         if param.pattern.type_annotation.is_some() {
-            param.pattern.type_annotation.as_ref().map(|x| self.ast.copy(&x.type_annotation));
+            param.pattern.type_annotation.as_ref().map(|x| {
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&x.type_annotation) }
+            });
         }
         if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
             if let Some(annotation) = pattern.left.type_annotation.as_ref() {
-                Some(self.ast.copy(&annotation.type_annotation))
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                Some(unsafe { self.ast.copy(&annotation.type_annotation) })
             } else {
                 if let Expression::TSAsExpression(expr) = &pattern.right {
                     if !expr.type_annotation.is_keyword_or_literal() {
@@ -105,7 +119,8 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return self.ast.copy(&function.return_type);
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return unsafe { self.ast.copy(&function.return_type) };
         }
 
         if function.r#async || function.generator {
@@ -123,7 +138,8 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &ArrowFunctionExpression<'a>,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return self.ast.copy(&function.return_type);
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return unsafe { self.ast.copy(&function.return_type) };
         }
 
         if function.r#async {

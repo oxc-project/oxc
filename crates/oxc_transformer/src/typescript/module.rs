@@ -92,7 +92,8 @@ impl<'a> TypeScript<'a> {
                 } else {
                     unreachable!()
                 }
-                self.ctx.ast.expression_from_identifier_reference(ctx.ast.copy(ident))
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                self.ctx.ast.expression_from_identifier_reference(unsafe { ctx.ast.copy(ident) })
             }
             TSTypeName::QualifiedName(qualified_name) => self
                 .ctx

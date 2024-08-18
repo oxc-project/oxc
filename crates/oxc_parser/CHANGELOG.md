@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- 1bdde2c parser: Detect @flow in `/** @flow */ comment (#4861) (Boshen)
+
 ## [0.24.2] - 2024-08-12
 
 ### Documentation

@@ -4,6 +4,7 @@ use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
@@ -216,15 +217,30 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         if expr.is_typescript_syntax() {
-            *expr = self.ctx.ast.copy(expr.get_inner_expression());
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            *expr = unsafe { self.ctx.ast.copy(expr.get_inner_expression()) };
         }
     }
 
     pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
-        if let Some(expr) = target.get_expression() {
-            if let Expression::Identifier(ident) = expr.get_inner_expression() {
-                let ident = self.ctx.ast.copy(ident);
-                *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
+        if let Some(expr) = target.get_expression_mut() {
+            match expr.get_inner_expression_mut() {
+                // `foo!++` to `foo++`
+                Expression::Identifier(ident) => {
+                    *target = self.ctx.ast.simple_assignment_target_from_identifier_reference(
+                        self.ctx.ast.move_identifier_reference(ident),
+                    );
+                }
+                // `foo.bar!++` to `foo.bar++`
+                inner_expr @ match_member_expression!(Expression) => {
+                    *target = SimpleAssignmentTarget::from(
+                        self.ctx.ast.move_member_expression(inner_expr.to_member_expression_mut()),
+                    );
+                }
+                _ => {
+                    // This should be never hit until more syntax is added to the JavaScript/TypeScrips
+                    self.ctx.error(OxcDiagnostic::error("Cannot strip out typescript syntax if SimpleAssignmentTarget is not an IdentifierReference or MemberExpression"));
+                }
             }
         }
     }
@@ -232,7 +248,8 @@ impl<'a> TypeScriptAnnotations<'a> {
     pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
         if let Some(expr) = target.get_expression() {
             if let Some(member_expr) = expr.get_inner_expression().as_member_expression() {
-                *target = AssignmentTarget::from(self.ctx.ast.copy(member_expr));
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                *target = AssignmentTarget::from(unsafe { self.ctx.ast.copy(member_expr) });
             }
         }
     }

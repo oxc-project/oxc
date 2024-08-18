@@ -5,10 +5,10 @@ use std::{
     time::Duration,
 };
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc::allocator::Allocator;
+use oxc::codegen::CodeGenerator;
+use oxc::parser::Parser;
+use oxc::span::SourceType;
 use oxc_tasks_common::{agent, project_root};
 use phf::{phf_set, Set};
 use serde_json::json;
@@ -190,10 +190,10 @@ impl CodegenRuntimeTest262Case {
                             return TestResult::Passed;
                         }
                     }
-                    TestResult::RuntimeError(output)
+                    TestResult::GenericError("runtime", output)
                 }
             }
-            Err(error) => TestResult::RuntimeError(error),
+            Err(error) => TestResult::GenericError("runtime", error),
         }
     }
 }

@@ -29,6 +29,9 @@ use crate::{
         prettier::{
             PrettierBabelCase, PrettierMiscCase, PrettierTest262Case, PrettierTypeScriptCase,
         },
+        semantic::{
+            SemanticBabelCase, SemanticMiscCase, SemanticTest262Case, SemanticTypeScriptCase,
+        },
         sourcemap::{SourcemapCase, SourcemapSuite},
         transformer::{
             TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
@@ -40,8 +43,8 @@ use crate::{
 
 /// # Panics
 /// Invalid Project Root
-pub fn project_root() -> PathBuf {
-    project_root::get_project_root().unwrap()
+pub fn workspace_root() -> PathBuf {
+    project_root::get_project_root().unwrap().join("tasks").join("coverage")
 }
 
 #[derive(Debug, Default)]
@@ -60,6 +63,7 @@ impl AppArgs {
 
     pub fn run_all(&self) {
         self.run_parser();
+        self.run_semantic();
         self.run_codegen();
         // self.run_prettier();
         self.run_transformer();
@@ -73,6 +77,13 @@ impl AppArgs {
         BabelSuite::<BabelCase>::new().run("parser_babel", self);
         TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
         MiscSuite::<MiscCase>::new().run("parser_misc", self);
+    }
+
+    pub fn run_semantic(&self) {
+        Test262Suite::<SemanticTest262Case>::new().run("semantic_test262", self);
+        BabelSuite::<SemanticBabelCase>::new().run("semantic_babel", self);
+        TypeScriptSuite::<SemanticTypeScriptCase>::new().run("semantic_typescript", self);
+        MiscSuite::<SemanticMiscCase>::new().run("semantic_misc", self);
     }
 
     pub fn run_codegen(&self) {
@@ -107,8 +118,8 @@ impl AppArgs {
         let mut runtime_process = Command::new("node")
             .args([
                 "--experimental-vm-modules",
-                project_root()
-                    .join("tasks/coverage/src/runtime/runtime.js")
+                workspace_root()
+                    .join("src/runtime/runtime.js")
                     .to_string_lossy()
                     .as_str()
                     .unwrap_or_default(),
@@ -143,7 +154,7 @@ impl AppArgs {
         );
         tests.sort_unstable();
 
-        fs::write(project_root().join(V8_TEST_262_FAILED_TESTS_PATH), tests.join("\n"))
+        fs::write(workspace_root().join(V8_TEST_262_FAILED_TESTS_PATH), tests.join("\n"))
             .expect("Write v8 test262 status failed");
     }
 

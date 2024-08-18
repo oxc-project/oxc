@@ -14,6 +14,8 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+use super::ast_operations::GatherNodeParts;
+
 /// Traverse scope context.
 ///
 /// Contains the scope tree and symbols table, and provides methods to access them.
@@ -225,6 +227,44 @@ impl TraverseScoping {
         self.generate_uid(name, self.scopes.root_scope_id(), flags)
     }
 
+    /// Generate UID based on node.
+    ///
+    /// Recursively gathers the identifying names of a node, and joins them with `$`.
+    ///
+    /// Based on Babel's `scope.generateUidBasedOnNode` logic.
+    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
+    pub fn generate_uid_based_on_node<'a, T>(
+        &mut self,
+        node: &T,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId
+    where
+        T: GatherNodeParts<'a>,
+    {
+        let mut parts = String::new();
+        node.gather(&mut |part| {
+            if !parts.is_empty() {
+                parts.push('$');
+            }
+            parts.push_str(part);
+        });
+        let name = if parts.is_empty() { "ref" } else { parts.trim_start_matches('_') };
+        self.generate_uid(name, scope_id, flags)
+    }
+
+    /// Generate UID in current scope based on node.
+    pub fn generate_uid_in_current_scope_based_on_node<'a, T>(
+        &mut self,
+        node: &T,
+        flags: SymbolFlags,
+    ) -> SymbolId
+    where
+        T: GatherNodeParts<'a>,
+    {
+        self.generate_uid_based_on_node(node, self.current_scope_id, flags)
+    }
+
     /// Create a reference bound to a `SymbolId`
     pub fn create_bound_reference(
         &mut self,
@@ -325,6 +365,24 @@ impl TraverseScoping {
     ) -> ReferenceId {
         let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
         self.create_reference(name, symbol_id, flag)
+    }
+
+    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
+    ///
+    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
+    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
+    /// and generate `IdentifierReference`s with `TraverseScoping::create_reference_id`.
+    pub fn clone_identifier_reference<'a>(
+        &mut self,
+        ident: &IdentifierReference<'a>,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        let reference =
+            self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
+                unreachable!("IdentifierReference must have a reference_id");
+            }));
+        let symbol_id = reference.symbol_id();
+        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flag)
     }
 }
 

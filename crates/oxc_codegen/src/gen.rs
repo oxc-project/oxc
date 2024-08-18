@@ -12,6 +12,7 @@ use oxc_syntax::{
 };
 
 use crate::{
+    annotation_comment::AnnotationKind,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     Codegen, Context, Operator,
 };
@@ -153,6 +154,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
                 decl.gen(p, ctx);
                 p.print_semicolon_after_statement();
             }
+        }
+
+        if p.comment_options.preserve_annotate_comments {
+            p.update_last_consumed_comment_end(self.span().end);
         }
     }
 }
@@ -591,17 +596,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
         }
 
         if p.comment_options.preserve_annotate_comments
-            && matches!(self.kind, VariableDeclarationKind::Const)
+            && !matches!(self.kind, VariableDeclarationKind::Const)
         {
-            if let Some(declarator) = self.declarations.first() {
-                if let Some(ref init) = declarator.init {
-                    if let Some(leading_annotate_comment) =
-                        p.get_leading_annotate_comment(self.span.start)
-                    {
-                        p.move_comment(init.span().start, leading_annotate_comment);
-                    }
-                }
-            }
+            p.update_last_consumed_comment_end(self.span.start);
         }
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
@@ -864,23 +861,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
+
         if p.comment_options.preserve_annotate_comments {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
                     p.gen_comments(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
-                    if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
+                    if !matches!(var_decl.kind, VariableDeclarationKind::Const) =>
                 {
-                    if let Some(declarator) = var_decl.declarations.first() {
-                        if let Some(ref init) = declarator.init {
-                            if let Some(leading_annotate_comment) =
-                                p.get_leading_annotate_comment(self.span.start)
-                            {
-                                p.move_comment(init.span().start, leading_annotate_comment);
-                            }
-                        }
-                    }
+                    p.update_last_consumed_comment_end(self.span.start);
                 }
                 _ => {}
             };
@@ -1075,6 +1065,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
             Self::TSNonNullExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.gen_expr(p, precedence, ctx),
+        }
+        if p.comment_options.preserve_annotate_comments {
+            p.update_last_consumed_comment_end(self.span().end);
         }
     }
 }
@@ -1415,14 +1408,12 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
-        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+        let annotate_comments = p.get_leading_annotate_comments(self.span.start);
+        if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            if let Some(comment) = annotate_comment {
-                p.print_comment(comment);
-            }
+            p.print_comments(&annotate_comments, AnnotationKind::empty());
             p.add_source_mapping(self.span.start);
             self.callee.gen_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
@@ -2086,14 +2077,12 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
-        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+        let annotate_comment = p.get_leading_annotate_comments(self.span.start);
+        if !annotate_comment.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            if let Some(comment) = annotate_comment {
-                p.print_comment(comment);
-            }
+            p.print_comments(&annotate_comment, AnnotationKind::empty());
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
@@ -2109,7 +2098,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.print_char(b'(');
         p.print_char(b'(');
-        self.expression.gen_expr(p, precedence, ctx);
+        self.expression.gen_expr(p, precedence, Context::default());
         p.print_char(b')');
         p.print_str(" as ");
         self.type_annotation.gen(p, ctx);
@@ -2119,8 +2108,13 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSSatisfiesExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        // TODO: print properly
-        self.expression.gen_expr(p, precedence, ctx);
+        p.print_char(b'(');
+        p.print_char(b'(');
+        self.expression.gen_expr(p, precedence, Context::default());
+        p.print_char(b')');
+        p.print_str(" satisfies ");
+        self.type_annotation.gen(p, ctx);
+        p.print_char(b')');
     }
 }
 
@@ -2138,8 +2132,11 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSNonNullExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSInstantiationExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        // TODO: print properly
         self.expression.gen_expr(p, precedence, ctx);
+        self.type_parameters.gen(p, ctx);
+        if MINIFY {
+            p.print_hard_space();
+        }
     }
 }
 
@@ -2538,6 +2535,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         self.decorators.gen(p, ctx);
+        if self.declare {
+            p.print_str("declare ");
+        }
         if let Some(accessibility) = &self.accessibility {
             accessibility.gen(p, ctx);
         }

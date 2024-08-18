@@ -198,4 +198,14 @@ const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
 ",
         "const defineSSRCustomElement = /* #__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {\n\treturn /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);\n};\n",
     );
+
+    // Range leading comments
+    test(
+        r"
+const defineSSRCustomElement = () => {
+	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
+};
+",
+        "const defineSSRCustomElement = () => {\n\treturn /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);\n};\n",
+    );
 }

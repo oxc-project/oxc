@@ -61,7 +61,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
             let member = self.ast.ts_enum_member(
                 member.span,
-                self.ast.copy(&member.id),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&member.id) },
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
@@ -94,7 +95,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
         Some(self.ast.declaration_ts_enum(
             decl.span,
-            self.ast.copy(&decl.id),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.id) },
             members,
             decl.r#const,
             self.is_declare(),

@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_codegen"
-version                = "0.24.2"
+version                = "0.24.3"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -28,11 +28,10 @@ oxc_sourcemap = { workspace = true }
 oxc_mangler   = { workspace = true }
 oxc_index     = { workspace = true }
 
-bitflags   = { workspace = true }
-nonmax     = { workspace = true }
-once_cell  = { workspace = true }
-daachorse  = { workspace = true }
-rustc-hash = { workspace = true }
+bitflags  = { workspace = true }
+nonmax    = { workspace = true }
+once_cell = { workspace = true }
+daachorse = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

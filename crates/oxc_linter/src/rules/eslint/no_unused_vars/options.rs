@@ -567,6 +567,19 @@ mod tests {
     }
 
     #[test]
+    fn test_ignore_rest_siblings_only() {
+        let rule: NoUnusedVarsOptions = json!([
+            {
+                "ignoreRestSiblings": true,
+            }
+        ])
+        .into();
+        assert!(rule.ignore_rest_siblings);
+        // an options object is provided, so no default pattern is set.
+        assert!(rule.vars_ignore_pattern.is_none());
+    }
+
+    #[test]
     fn test_options_from_null() {
         let opts = NoUnusedVarsOptions::from(json!(null));
         let default = NoUnusedVarsOptions::default();

@@ -62,11 +62,21 @@ impl<'a> AstBuilder<'a> {
     /// This method is completely unsound and should not be used.
     /// We need to remove all uses of it. Please don't add any more!
     /// <https://github.com/oxc-project/oxc/issues/3483>
+    #[allow(clippy::missing_safety_doc)]
     #[inline]
-    pub fn copy<T>(self, src: &T) -> T {
+    pub unsafe fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)
-
         unsafe { std::mem::transmute_copy(src) }
+    }
+
+    /// Moves the identifier reference out by replacing it with a dummy identifier reference.
+    #[inline]
+    pub fn move_identifier_reference(
+        self,
+        expr: &mut IdentifierReference<'a>,
+    ) -> IdentifierReference<'a> {
+        let dummy = self.identifier_reference(expr.span(), "");
+        mem::replace(expr, dummy)
     }
 
     /// Moves the expression out by replacing it with a null expression.
@@ -74,6 +84,18 @@ impl<'a> AstBuilder<'a> {
     pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
         let null_expr = self.expression_null_literal(expr.span());
         mem::replace(expr, null_expr)
+    }
+
+    /// Moves the member expression out by replacing it with a dummy expression.
+    #[inline]
+    pub fn move_member_expression(self, expr: &mut MemberExpression<'a>) -> MemberExpression<'a> {
+        let dummy = self.member_expression_computed(
+            expr.span(),
+            self.expression_null_literal(expr.span()),
+            self.expression_null_literal(expr.span()),
+            false,
+        );
+        mem::replace(expr, dummy)
     }
 
     #[inline]
