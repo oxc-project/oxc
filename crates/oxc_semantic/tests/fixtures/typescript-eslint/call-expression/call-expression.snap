@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction)",
         "id": 0,
         "name": "foo",
         "node": "VariableDeclarator(foo)",
