@@ -6,7 +6,10 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{collect_possible_jest_call_node, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
+    },
 };
 
 fn no_conditional_tests(span0: Span) -> OxcDiagnostic {
@@ -58,11 +61,14 @@ impl Rule for NoConditionalTests {
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        let Some(callee_name) = call_expr.callee_name() else { return };
-
-        if matches!(
-            JestFnKind::from(callee_name),
-            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
+        if is_type_of_jest_fn_call(
+            call_expr,
+            possible_jest_node,
+            ctx,
+            &[
+                JestFnKind::General(JestGeneralFnKind::Describe),
+                JestFnKind::General(JestGeneralFnKind::Test),
+            ],
         ) {
             let if_statement_node = ctx
                 .nodes()
