@@ -1,0 +1,32 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(no-conditional-tests): Disallow conditional tests
+   ╭─[no_conditional_tests.tsx:3:9]
+ 2 │                     if(true) {
+ 3 │ ╭─▶                  test("shows error", () => {
+ 4 │ │                     expect(true).toBe(true);
+ 5 │ ╰─▶                  })
+ 6 │                     }
+   ╰────
+  help: Avoid using if conditions in a test.
+
+  ⚠ eslint-plugin-vitest(no-conditional-tests): Disallow conditional tests
+   ╭─[no_conditional_tests.tsx:4:9]
+ 3 │                     if(true) {
+ 4 │ ╭─▶                  it("shows error", () => {
+ 5 │ │                     expect(true).toBe(true);
+ 6 │ ╰─▶                   })
+ 7 │                      }
+   ╰────
+  help: Avoid using if conditions in a test.
+
+  ⚠ eslint-plugin-vitest(no-conditional-tests): Disallow conditional tests
+   ╭─[no_conditional_tests.tsx:3:9]
+ 2 │                     if (Math.random() > 0) {
+ 3 │ ╭─▶                  test("test2", () => {
+ 4 │ │                    expect(true).toBeTruthy();
+ 5 │ ╰─▶                 });
+ 6 │                     }
+   ╰────
+  help: Avoid using if conditions in a test.
