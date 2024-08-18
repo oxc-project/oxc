@@ -64,17 +64,20 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             JestFnKind::from(callee_name),
             JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
         ) {
-            let has_if_statement = ctx
+            let if_statement_node = ctx
                 .nodes()
                 .iter_parents(node.id())
-                .any(|node| matches!(node.kind(), AstKind::IfStatement(_)));
+                .find(|node| matches!(node.kind(), AstKind::IfStatement(_)));
 
-            if has_if_statement {
-                ctx.diagnostic(no_conditional_tests(call_expr.span));
+            let Some(node) = if_statement_node else { return };
+
+            if let AstKind::IfStatement(if_statement) = node.kind() {
+                ctx.diagnostic(no_conditional_tests(if_statement.span));
             }
         }
     }
 }
+
 #[test]
 fn test() {
     use crate::tester::Tester;
