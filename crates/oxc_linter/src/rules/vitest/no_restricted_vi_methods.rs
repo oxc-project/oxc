@@ -10,48 +10,48 @@ use crate::{
 };
 
 #[derive(Debug, Default, Clone)]
-pub struct NoRestrictedJestMethods(Box<NoRestrictedTestMethodsConfig>);
+pub struct NoRestrictedViMethods(Box<NoRestrictedTestMethodsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Restrict the use of specific `jest` methods.
+    /// Restrict the use of specific `vi` methods.
     ///
     /// ### Example
     /// ```javascript
-    /// jest.useFakeTimers();
+    /// vi.useFakeTimers();
     /// it('calls the callback after 1 second via advanceTimersByTime', () => {
     ///   // ...
     ///
-    ///   jest.advanceTimersByTime(1000);
+    ///   vi.advanceTimersByTime(1000);
     ///
     ///   // ...
     /// });
     ///
     /// test('plays video', () => {
-    ///   const spy = jest.spyOn(video, 'play');
+    ///   const spy = vi.spyOn(video, 'play');
     ///
     ///   // ...
     /// });
-    /// ```
-    NoRestrictedJestMethods,
+    ///
+    NoRestrictedViMethods,
     style,
 );
 
-impl NoRestrictedTestMethods for NoRestrictedJestMethods {
+impl NoRestrictedTestMethods for NoRestrictedViMethods {
     fn restricted_test_methods(&self) -> &FxHashMap<String, String> {
         &self.0.restricted_test_methods
     }
 }
 
-impl Rule for NoRestrictedJestMethods {
+impl Rule for NoRestrictedViMethods {
     fn from_configuration(value: serde_json::Value) -> Self {
         Self(Box::new(Self::get_configuration(&value)))
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            self.run_test(possible_jest_node, ctx, true);
+        for possible_vitest_node in &collect_possible_jest_call_node(ctx) {
+            self.run_test(possible_vitest_node, ctx, false);
         }
     }
 }
@@ -61,34 +61,32 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("jest", None),
-        ("jest()", None),
-        ("jest.mock()", None),
+        ("vi", None),
+        ("vi()", None),
+        ("vi.mock()", None),
         ("expect(a).rejects;", None),
         ("expect(a);", None),
         (
             "
-                import { jest } from '@jest/globals';
-
-                jest;
-            ",
+			     import { vi } from 'vitest';
+			     vi;
+			    ",
             None,
-        ),
+        ), // { "parserOptions": { "sourceType": "module" } }
     ];
 
     let fail = vec![
-        ("jest.fn()", Some(serde_json::json!([{ "fn": null }]))),
-        ("jest[\"fn\"]()", Some(serde_json::json!([{ "fn": null }]))),
-        ("jest.mock()", Some(serde_json::json!([{ "mock": "Do not use mocks" }]))),
-        ("jest[\"mock\"]()", Some(serde_json::json!([{ "mock": "Do not use mocks" }]))),
+        ("vi.fn()", Some(serde_json::json!([{ "fn": null }]))),
+        ("vi.mock()", Some(serde_json::json!([{ "mock": "Do not use mocks" }]))),
         (
             "
-                import { jest } from '@jest/globals';
-                jest.advanceTimersByTime();
-            ",
+			     import { vi } from 'vitest';
+			     vi.advanceTimersByTime();
+			    ",
             Some(serde_json::json!([{ "advanceTimersByTime": null }])),
-        ),
+        ), // { "parserOptions": { "sourceType": "module" } },
+        (r#"vi["fn"]()"#, Some(serde_json::json!([{ "fn": null }]))),
     ];
 
-    Tester::new(NoRestrictedJestMethods::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoRestrictedViMethods::NAME, pass, fail).test_and_snapshot();
 }
