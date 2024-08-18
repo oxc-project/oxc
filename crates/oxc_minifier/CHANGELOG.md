@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 46cb1c1 minifier: Handle `Object.definedPropert(exports` for @babel/types/lib/index.js (#4933) (Boshen)
+- 81fd637 minifier: Do not fold `0 && (module.exports = {})` for `cjs-module-lexer` (#4878) (Boshen)
+- 879a271 minifier: Do not join `require` calls for `cjs-module-lexer` (#4875) (Boshen)
+
 ## [0.24.2] - 2024-08-12
 
 ### Performance
