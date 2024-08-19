@@ -3312,6 +3312,7 @@ dependencies = [
  "oxc_span",
  "oxlint",
  "pico-args",
+ "project-root",
  "schemars",
  "scraper",
  "serde",

@@ -2,7 +2,10 @@
 //! get added to the website.
 
 use oxc_linter::table::RuleTableRow;
-use std::fmt::{self, Write};
+use std::{
+    fmt::{self, Write},
+    path::PathBuf,
+};
 
 use super::HtmlWriter;
 
@@ -48,7 +51,34 @@ pub fn render_rule_docs_page(rule: &RuleTableRow) -> Result<String, fmt::Error> 
         writeln!(page, "\n{}", *docs)?;
     }
 
-    // TODO: link to rule source
+    let rule_source = rule_source(rule);
+    writeln!(page, "\n## References")?;
+    writeln!(page, "- [Rule Source]({rule_source})")?;
 
     Ok(page.into())
+}
+
+fn rule_source(rule: &RuleTableRow) -> String {
+    use project_root::get_project_root;
+    use std::sync::OnceLock;
+
+    const GITHUB_URL: &str = "https://github.com/oxc-project/oxc/blob/main";
+    const LINT_RULES_DIR: &str = "crates/oxc_linter/src/rules";
+    static ROOT: OnceLock<PathBuf> = OnceLock::new();
+
+    let root = ROOT.get_or_init(|| get_project_root().unwrap());
+
+    // Some rules are folders with a mod.rs file, others are just a rust file
+    let mut rule_path =
+        root.join(LINT_RULES_DIR).join(&rule.plugin).join(rule.name.replace('-', "_"));
+    if rule_path.is_dir() {
+        rule_path.push("mod.rs");
+    } else {
+        rule_path.set_extension("rs");
+    }
+
+    assert!(rule_path.exists(), "Rule source not found: {}", rule_path.display());
+    assert!(rule_path.is_file(), "Rule source is not a file: {}", rule_path.display());
+
+    rule_path.to_string_lossy().replace(root.to_str().unwrap(), GITHUB_URL)
 }
