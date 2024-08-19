@@ -105,7 +105,7 @@ pub struct ParserReturn<'a> {
 
 /// Parser options
 #[derive(Clone, Copy)]
-struct ParserOptions {
+pub struct ParseOptions {
     pub allow_return_outside_function: bool,
     /// Emit `ParenthesizedExpression` in AST.
     ///
@@ -117,7 +117,7 @@ struct ParserOptions {
     pub preserve_parens: bool,
 }
 
-impl Default for ParserOptions {
+impl Default for ParseOptions {
     fn default() -> Self {
         Self { allow_return_outside_function: false, preserve_parens: true }
     }
@@ -130,14 +130,20 @@ pub struct Parser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
-    options: ParserOptions,
+    options: ParseOptions,
 }
 
 impl<'a> Parser<'a> {
     /// Create a new parser
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
-        let options = ParserOptions::default();
+        let options = ParseOptions::default();
         Self { allocator, source_text, source_type, options }
+    }
+
+    #[must_use]
+    pub fn with_options(mut self, options: ParseOptions) -> Self {
+        self.options = options;
+        self
     }
 
     /// Allow return outside of function
@@ -279,7 +285,7 @@ impl<'a> ParserImpl<'a> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
-        options: ParserOptions,
+        options: ParseOptions,
         unique: UniquePromise,
     ) -> Self {
         Self {
@@ -347,7 +353,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.program(span, self.source_type, hashbang, directives, statements))
     }
 
-    fn default_context(source_type: SourceType, options: ParserOptions) -> Context {
+    fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
         if source_type.module_kind() == ModuleKind::Module {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
