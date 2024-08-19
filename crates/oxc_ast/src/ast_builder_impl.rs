@@ -75,7 +75,7 @@ impl<'a> AstBuilder<'a> {
         self,
         expr: &mut IdentifierReference<'a>,
     ) -> IdentifierReference<'a> {
-        let dummy = self.identifier_reference(expr.span(), "");
+        let dummy = self.identifier_reference(expr.span(), Atom::empty());
         mem::replace(expr, dummy)
     }
 
