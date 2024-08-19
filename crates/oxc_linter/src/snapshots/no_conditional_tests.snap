@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vitest(no-conditional-tests): Disallow conditional tests
+  ⚠ eslint-plugin-vitest(no-conditional-tests): Avoid having conditionals in tests
    ╭─[no_conditional_tests.tsx:2:8]
  1 │     describe("shows error", () => {
  2 │ ╭─▶                 if(true) {
@@ -11,9 +11,9 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                 }
  7 │                    })
    ╰────
-  help: Avoid using if conditions in a test.
+  help: Remove the surrounding if statement.
 
-  ⚠ eslint-plugin-vitest(no-conditional-tests): Disallow conditional tests
+  ⚠ eslint-plugin-vitest(no-conditional-tests): Avoid having conditionals in tests
    ╭─[no_conditional_tests.tsx:3:8]
  2 │                    describe("shows error", () => {
  3 │ ╭─▶                 if(true) {
@@ -23,9 +23,9 @@ source: crates/oxc_linter/src/tester.rs
  7 │ ╰─▶                  }
  8 │                    })
    ╰────
-  help: Avoid using if conditions in a test.
+  help: Remove the surrounding if statement.
 
-  ⚠ eslint-plugin-vitest(no-conditional-tests): Disallow conditional tests
+  ⚠ eslint-plugin-vitest(no-conditional-tests): Avoid having conditionals in tests
    ╭─[no_conditional_tests.tsx:2:8]
  1 │     describe("errors", () => {
  2 │ ╭─▶                 if (Math.random() > 0) {
@@ -35,4 +35,4 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶                 }
  7 │                    });
    ╰────
-  help: Avoid using if conditions in a test.
+  help: Remove the surrounding if statement.
