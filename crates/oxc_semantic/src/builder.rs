@@ -466,10 +466,7 @@ impl<'a> SemanticBuilder<'a> {
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flag = self.symbols.get_flag(symbol_id);
 
-                let resolved_references: &mut Vec<_> =
-                    self.symbols.resolved_references[symbol_id].as_mut();
-                // Reserve space for all references to avoid reallocations.
-                resolved_references.reserve(references.len());
+                let resolved_references = &mut self.symbols.resolved_references[symbol_id];
 
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
