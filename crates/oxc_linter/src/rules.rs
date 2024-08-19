@@ -454,6 +454,7 @@ mod promise {
 }
 
 mod vitest {
+    pub mod no_conditional_in_test;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_to_be_falsy;
@@ -873,5 +874,6 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_truthy,
     vitest::no_conditional_tests,
+    vitest::no_conditional_in_test,
     vitest::require_local_test_context_for_concurrent_snapshots,
 }

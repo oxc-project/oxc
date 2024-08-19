@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in test
+   ╭─[no_conditional_in_test.tsx:2:10]
+ 1 │ it('foo', function () {
+ 2 │                   if('bar') {}
+   ·                   ────────────
+ 3 │                  });
+   ╰────
+  help: Remove the surrounding if statement.
+
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in test
+   ╭─[no_conditional_in_test.tsx:3:12]
+ 2 │                   it('bar', () => {
+ 3 │                     if ('bar') {}
+   ·                     ─────────────
+ 4 │                   })
+   ╰────
+  help: Remove the surrounding if statement.
+
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in test
+   ╭─[no_conditional_in_test.tsx:6:12]
+ 5 │                   it('baz', () => {
+ 6 │                     if ('qux') {}
+   ·                     ─────────────
+ 7 │                     if ('quux') {}
+   ╰────
+  help: Remove the surrounding if statement.
+
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in test
+   ╭─[no_conditional_in_test.tsx:7:12]
+ 6 │                     if ('qux') {}
+ 7 │                     if ('quux') {}
+   ·                     ──────────────
+ 8 │                   })
+   ╰────
+  help: Remove the surrounding if statement.
+
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in test
+   ╭─[no_conditional_in_test.tsx:2:10]
+ 1 │     test("shows error", () => {
+ 2 │ ╭─▶                   if (1 === 2) {
+ 3 │ │                       expect(true).toBe(false);
+ 4 │ ╰─▶                   }
+ 5 │                        });
+   ╰────
+  help: Remove the surrounding if statement.
+
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in test
+    ╭─[no_conditional_in_test.tsx:9:10]
+  8 │                       setTimeout(() => console.log("noop"));
+  9 │ ╭─▶                   if (1 === 2) {
+ 10 │ │                       expect(true).toBe(false);
+ 11 │ ╰─▶                   }
+ 12 │                        });
+    ╰────
+  help: Remove the surrounding if statement.
