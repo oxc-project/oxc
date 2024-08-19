@@ -67,7 +67,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// let myObj {
+    /// let myObj = {
     ///   c: 1,
     ///   a: 2,
     /// };
@@ -75,7 +75,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// let myObj {
+    /// let myObj = {
     ///   a: 2,
     ///   c: 1,
     /// };
