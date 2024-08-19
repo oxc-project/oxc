@@ -256,7 +256,7 @@ impl<'a> SemanticBuilder<'a> {
             .unresolved_references
             .into_root()
             .into_iter()
-            .map(|(k, v)| (k.into(), v.into_iter().map(|(reference_id, _)| reference_id).collect()))
+            .map(|(k, v)| (k.into(), v))
             .collect();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
@@ -425,14 +425,9 @@ impl<'a> SemanticBuilder<'a> {
         name: Atom<'a>,
         reference: Reference,
     ) -> ReferenceId {
-        let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
-        self.unresolved_references
-            .current_mut()
-            .entry(name)
-            .or_default()
-            .push((reference_id, reference_flag));
+        self.unresolved_references.current_mut().entry(name).or_default().push(reference_id);
         reference_id
     }
 
@@ -476,12 +471,13 @@ impl<'a> SemanticBuilder<'a> {
                 // Reserve space for all references to avoid reallocations.
                 resolved_references.reserve(references.len());
 
-                references.retain(|(id, flag)| {
+                references.retain(|&reference_id| {
+                    let reference = &mut self.symbols.references[reference_id];
+                    let flag = *reference.flag();
                     if flag.is_type() && symbol_flag.can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.can_be_referenced_by_value()
                         || flag.is_ts_type_query() && symbol_flag.is_import()
                     {
-                        let reference = &mut self.symbols.references[*id];
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                         if symbol_flag.is_value() && !flag.is_type_only() {
@@ -500,7 +496,7 @@ impl<'a> SemanticBuilder<'a> {
                         }
 
                         reference.set_symbol_id(symbol_id);
-                        resolved_references.push(*id);
+                        resolved_references.push(reference_id);
                         false
                     } else {
                         true
