@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 466/953
+Passed: 487/953
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -465,37 +465,16 @@ Passed: 466/953
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (109/151)
+# babel-plugin-transform-typescript (130/151)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/mix-references/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
-* exports/export-import=/input.ts
 * exports/interface/input.ts
-* imports/elide-type-referenced-in-imports-equal-no/input.ts
-* imports/import=-module/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-4/input.ts
-* namespace/alias/input.ts
-* namespace/clobber-class/input.ts
-* namespace/clobber-enum/input.ts
-* namespace/clobber-export/input.ts
-* namespace/contentious-names/input.ts
-* namespace/declare/input.ts
-* namespace/declare-global-nested-namespace/input.ts
-* namespace/empty-removed/input.ts
-* namespace/export/input.ts
-* namespace/module-nested/input.ts
-* namespace/module-nested-export/input.ts
-* namespace/multiple/input.ts
-* namespace/mutable-fail/input.ts
-* namespace/nested/input.ts
-* namespace/nested-namespace/input.ts
-* namespace/nested-shorthand/input.ts
-* namespace/same-name/input.ts
-* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts

@@ -3,19 +3,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_diagnostics::{Error, OxcDiagnostic};
-use oxc_parser::Parser;
-use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc::allocator::Allocator;
+use oxc::codegen::CodeGenerator;
+use oxc::diagnostics::{Error, OxcDiagnostic};
+use oxc::parser::Parser;
+use oxc::span::{SourceType, VALID_EXTENSIONS};
+use oxc::transformer::{BabelOptions, TransformOptions};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal};
-use oxc_transformer::{BabelOptions, TransformOptions, Transformer};
 
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
-    fixture_root, packages_root,
-    semantic::SemanticTester,
-    TestRunnerEnv,
+    driver::Driver,
+    fixture_root, packages_root, TestRunnerEnv,
 };
 
 #[derive(Debug)]
@@ -158,7 +157,6 @@ pub trait TestCase {
             }
         };
 
-        let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
         // Some babel test cases have a js extension, but contain typescript code.
@@ -171,22 +169,7 @@ pub trait TestCase {
             source_type = source_type.with_typescript(true);
         }
 
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let mut program = ret.program;
-        let result = Transformer::new(
-            &allocator,
-            path,
-            source_type,
-            &source_text,
-            ret.trivias.clone(),
-            transform_options.clone(),
-        )
-        .build(&mut program);
-        if result.errors.is_empty() {
-            Ok(CodeGenerator::new().build(&program).source_text)
-        } else {
-            Err(result.errors)
-        }
+        Driver::new(transform_options.clone()).execute(&source_text, source_type, path)
     }
 }
 
@@ -254,44 +237,25 @@ impl TestCase for ConformanceTestCase {
 
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
-        let mut semantic_errors = Vec::default();
 
         let transform_options = match self.transform_options() {
             Ok(transform_options) => {
-                let ret = Parser::new(&allocator, &input, source_type).parse();
-                if ret.errors.is_empty() {
-                    let mut program = ret.program;
-                    let transformer = Transformer::new(
-                        &allocator,
-                        &self.path,
-                        source_type,
-                        &input,
-                        ret.trivias.clone(),
-                        transform_options.clone(),
-                    );
-                    let ret = transformer.build(&mut program);
-
-                    semantic_errors = SemanticTester::new(ret.scopes, ret.symbols).test(&program);
-
-                    if ret.errors.is_empty() {
-                        transformed_code = CodeGenerator::new().build(&program).source_text;
-                    } else {
-                        let error = ret
-                            .errors
+                match Driver::new(transform_options.clone()).execute(
+                    &input,
+                    source_type,
+                    &self.path,
+                ) {
+                    Ok(printed) => {
+                        transformed_code = printed;
+                    }
+                    Err(errors) => {
+                        let error = errors
                             .into_iter()
-                            .map(|e| Error::from(e).to_string())
+                            .map(|err| err.to_string())
                             .collect::<Vec<_>>()
                             .join("\n");
                         actual_errors = get_babel_error(&error);
                     }
-                } else {
-                    let error = ret
-                        .errors
-                        .into_iter()
-                        .map(|err| err.to_string())
-                        .collect::<Vec<_>>()
-                        .join("\n");
-                    actual_errors = get_babel_error(&error);
                 }
                 Some(transform_options.clone())
             }
@@ -319,9 +283,8 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed = semantic_errors.is_empty()
-            && (transformed_code == output
-                || (!output.is_empty() && actual_errors.contains(&output)));
+        let passed =
+            transformed_code == output || (!output.is_empty() && actual_errors.contains(&output));
 
         if filtered {
             println!("Options:");
@@ -348,10 +311,6 @@ impl TestCase for ConformanceTestCase {
                     println!("Diff:\n");
                     print_diff_in_terminal(&output, &transformed_code);
                 }
-            }
-
-            if !semantic_errors.is_empty() {
-                println!("\nSemantic Errors:\n\n{}\n", semantic_errors.join("\n"));
             }
 
             println!("Passed: {passed}");
