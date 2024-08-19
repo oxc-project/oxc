@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// import thing from './__mocks__/index';
     /// require('./__mocks__/index');
     /// require('__mocks__');
-    ///
+    /// ```
     NoMocksImport,
     style
 );
