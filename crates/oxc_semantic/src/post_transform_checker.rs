@@ -109,8 +109,23 @@ current  scope {cur_scope_id:?}: {current_bindings:?}
         _previous_scopes: &ScopeTree,
         current_collect: &SemanticCollector,
         current_symbols: &SymbolTable,
-        _current_scopes: &ScopeTree,
+        current_scopes: &ScopeTree,
     ) {
+        // Check whether symbols are valid
+        for symbol_id in current_collect.symbol_ids.iter().copied() {
+            if current_symbols.get_flag(symbol_id).is_empty() {
+                let name = current_symbols.get_name(symbol_id);
+                self.errors.push(OxcDiagnostic::error(format!(
+                    "Expect non-empty SymbolFlags for BindingIdentifier({name})"
+                )));
+                if !current_scopes.has_binding(current_symbols.get_scope_id(symbol_id), name) {
+                    self.errors.push(OxcDiagnostic::error(
+                    format!("Cannot find BindingIdentifier({name}) in the Scope corresponding to the Symbol"),
+                ));
+                }
+            }
+        }
+
         if self.previous_collect.symbol_ids.len() != current_collect.symbol_ids.len() {
             self.errors.push(OxcDiagnostic::error("Symbols mismatch after transform"));
             return;
@@ -143,6 +158,16 @@ current  symbol {cur_symbol_id:?}: {cur_symbol_id:?}
         current_symbols: &SymbolTable,
         _current_scopes: &ScopeTree,
     ) {
+        // Check whether references are valid
+        for reference_id in current_collect.reference_ids.iter().copied() {
+            let reference = current_symbols.get_reference(reference_id);
+            if reference.flag().is_empty() {
+                self.errors.push(OxcDiagnostic::error(format!(
+                    "Expect ReferenceFlags for IdentifierReference({reference_id:?}) to not be empty",
+                )));
+            }
+        }
+
         if self.previous_collect.reference_ids.len() != current_collect.reference_ids.len() {
             self.errors.push(OxcDiagnostic::error("ReferenceId mismatch after transform"));
             return;
@@ -175,8 +200,8 @@ struct SemanticCollector {
     scope_ids: Vec<ScopeId>,
     symbol_ids: Vec<SymbolId>,
     reference_ids: Vec<ReferenceId>,
-    missing_references: Vec<Span>,
-    missing_symbols: Vec<Span>,
+
+    errors: Vec<OxcDiagnostic>,
 }
 
 impl<'a> Visit<'a> for SemanticCollector {
@@ -190,7 +215,7 @@ impl<'a> Visit<'a> for SemanticCollector {
         if let Some(reference_id) = ident.reference_id.get() {
             self.reference_ids.push(reference_id);
         } else {
-            self.missing_references.push(ident.span);
+            self.errors.push(OxcDiagnostic::error("Missing ReferenceId").with_label(ident.span));
         }
     }
 
@@ -198,7 +223,7 @@ impl<'a> Visit<'a> for SemanticCollector {
         if let Some(symbol_id) = ident.symbol_id.get() {
             self.symbol_ids.push(symbol_id);
         } else {
-            self.missing_symbols.push(ident.span);
+            self.errors.push(OxcDiagnostic::error("Missing SymbolId").with_label(ident.span));
         }
     }
 
@@ -248,17 +273,6 @@ impl SemanticCollector {
     fn check_ast(&mut self, program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
         self.visit_program(program);
 
-        let diagnostics = self
-            .missing_references
-            .iter()
-            .map(|span| OxcDiagnostic::error("Missing ReferenceId").with_label(*span))
-            .chain(
-                self.missing_symbols
-                    .iter()
-                    .map(|span| OxcDiagnostic::error("Missing SymbolId").with_label(*span)),
-            )
-            .collect::<Vec<_>>();
-
-        (!diagnostics.is_empty()).then_some(diagnostics)
+        (!self.errors.is_empty()).then(|| mem::take(&mut self.errors))
     }
 }
