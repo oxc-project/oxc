@@ -1,15 +1,11 @@
 commit: 12619ffe
 
-Passed: 28/35
+Passed: 31/35
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-typescript
 
-
-# babel-plugin-transform-typescript (4/7)
-* computed-constant-value/input.ts
-* enum-member-reference/input.ts
-* export-elimination/input.ts
 
 # babel-plugin-transform-react-jsx (23/27)
 * refresh/can-handle-implicit-arrow-returns/input.jsx

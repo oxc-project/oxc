@@ -141,7 +141,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "1.80.0",
-    "@vscode/vsce": "^2.27.0",
+    "@vscode/vsce": "^3.0.0",
     "cross-env": "^7.0.3",
     "esbuild": "^0.23.0",
     "ovsx": "^0.9.1",

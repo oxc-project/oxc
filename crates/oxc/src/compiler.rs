@@ -58,7 +58,7 @@ pub trait CompilerInterface {
     }
 
     fn compress_options(&self) -> Option<CompressOptions> {
-        Some(CompressOptions::all_true())
+        None
     }
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
@@ -67,6 +67,10 @@ pub trait CompilerInterface {
 
     fn remove_whitespace(&self) -> bool {
         false
+    }
+
+    fn check_semantic_error(&self) -> bool {
+        true
     }
 
     fn after_parse(&mut self, _parser_return: &mut ParserReturn) -> ControlFlow<()> {
@@ -172,7 +176,7 @@ pub trait CompilerInterface {
         source_path: &Path,
     ) -> SemanticBuilderReturn<'a> {
         SemanticBuilder::new(source_text, source_type)
-            .with_check_syntax_error(true)
+            .with_check_syntax_error(self.check_semantic_error())
             .build_module_record(source_path.to_path_buf(), program)
             .build(program)
     }
