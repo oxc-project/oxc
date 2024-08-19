@@ -73,7 +73,7 @@ impl Driver {
             options,
             printed: String::new(),
             errors: vec![],
-            check_semantic: false,
+            check_semantic: true,
             checker: PostTransformChecker::default(),
         }
     }

@@ -65,10 +65,17 @@ impl TestCaseKind {
         }
     }
 
-    pub fn test(&self, filter: bool) -> bool {
+    pub fn test(&mut self, filter: bool) {
         match self {
             Self::Transform(test_case) => test_case.test(filter),
             Self::Exec(test_case) => test_case.test(filter),
+        }
+    }
+
+    pub fn errors(&self) -> &Vec<OxcDiagnostic> {
+        match self {
+            Self::Transform(test_case) => test_case.errors(),
+            Self::Exec(test_case) => test_case.errors(),
         }
     }
 }
@@ -84,7 +91,9 @@ pub trait TestCase {
 
     fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>>;
 
-    fn test(&self, filtered: bool) -> bool;
+    fn test(&mut self, filtered: bool);
+
+    fn errors(&self) -> &Vec<OxcDiagnostic>;
 
     fn path(&self) -> &Path;
 
@@ -178,6 +187,7 @@ pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
     transform_options: Result<TransformOptions, Vec<Error>>,
+    errors: Vec<OxcDiagnostic>,
 }
 
 impl TestCase for ConformanceTestCase {
@@ -185,7 +195,7 @@ impl TestCase for ConformanceTestCase {
         let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
-        Self { path: path.to_path_buf(), options, transform_options }
+        Self { path: path.to_path_buf(), options, transform_options, errors: vec![] }
     }
 
     fn options(&self) -> &BabelOptions {
@@ -200,8 +210,12 @@ impl TestCase for ConformanceTestCase {
         &self.path
     }
 
+    fn errors(&self) -> &Vec<OxcDiagnostic> {
+        &self.errors
+    }
+
     /// Test conformance by comparing the parsed babel code and transformed code.
-    fn test(&self, filtered: bool) -> bool {
+    fn test(&mut self, filtered: bool) {
         let output_path = self.path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
             let path = entry.ok()?.path();
             let file_stem = path.file_stem()?;
@@ -237,14 +251,12 @@ impl TestCase for ConformanceTestCase {
 
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
+        let mut transform_options = None;
 
-        let transform_options = match self.transform_options() {
-            Ok(transform_options) => {
-                match Driver::new(transform_options.clone()).execute(
-                    &input,
-                    source_type,
-                    &self.path,
-                ) {
+        match self.transform_options() {
+            Ok(options) => {
+                transform_options.replace(options.clone());
+                match Driver::new(options.clone()).execute(&input, source_type, &self.path) {
                     Ok(printed) => {
                         transformed_code = printed;
                     }
@@ -257,14 +269,12 @@ impl TestCase for ConformanceTestCase {
                         actual_errors = get_babel_error(&error);
                     }
                 }
-                Some(transform_options.clone())
             }
             Err(json_err) => {
                 let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
                 actual_errors = get_babel_error(&error);
-                None
             }
-        };
+        }
 
         let babel_options = self.options();
 
@@ -315,7 +325,10 @@ impl TestCase for ConformanceTestCase {
 
             println!("Passed: {passed}");
         }
-        passed
+
+        if !passed {
+            self.errors.push(OxcDiagnostic::error(actual_errors));
+        }
     }
 }
 
@@ -324,6 +337,7 @@ pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
     transform_options: Result<TransformOptions, Vec<Error>>,
+    errors: Vec<OxcDiagnostic>,
 }
 
 impl ExecTestCase {
@@ -357,7 +371,7 @@ impl TestCase for ExecTestCase {
         let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
-        Self { path: path.to_path_buf(), options, transform_options }
+        Self { path: path.to_path_buf(), options, transform_options, errors: vec![] }
     }
 
     fn options(&self) -> &BabelOptions {
@@ -372,7 +386,11 @@ impl TestCase for ExecTestCase {
         &self.path
     }
 
-    fn test(&self, filtered: bool) -> bool {
+    fn errors(&self) -> &Vec<OxcDiagnostic> {
+        &self.errors
+    }
+
+    fn test(&mut self, filtered: bool) {
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
@@ -387,7 +405,7 @@ impl TestCase for ExecTestCase {
                         error.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n")
                     );
                 }
-                return false;
+                return;
             }
         };
         let target_path = self.write_to_test_files(&result);
@@ -398,7 +416,9 @@ impl TestCase for ExecTestCase {
             println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
         }
 
-        passed
+        if !passed {
+            self.errors.push(OxcDiagnostic::error("exec failed"));
+        }
     }
 }
 
