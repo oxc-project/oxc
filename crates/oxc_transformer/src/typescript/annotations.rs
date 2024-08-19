@@ -217,8 +217,8 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         if expr.is_typescript_syntax() {
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            *expr = unsafe { self.ctx.ast.copy(expr.get_inner_expression()) };
+            let inner_expr = expr.get_inner_expression_mut();
+            *expr = self.ctx.ast.move_expression(inner_expr);
         }
     }
 
