@@ -291,6 +291,29 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.generate_uid_in_root_scope(name, flags)
     }
 
+    /// Generate UID based on node.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_uid_based_on_node`.
+    pub fn generate_uid_based_on_node(
+        &mut self,
+        node: &Expression<'a>,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        self.scoping.generate_uid_based_on_node(node, scope_id, flags)
+    }
+
+    /// Generate UID in current scope based on node.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope_based_on_node`.
+    pub fn generate_uid_in_current_scope_based_on_node(
+        &mut self,
+        node: &Expression<'a>,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        self.scoping.generate_uid_in_current_scope_based_on_node(node, flags)
+    }
+
     /// Create a reference bound to a `SymbolId`.
     ///
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
