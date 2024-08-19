@@ -256,7 +256,7 @@ impl<'a> SemanticBuilder<'a> {
             .unresolved_references
             .into_root()
             .into_iter()
-            .map(|(k, v)| (k.into(), v))
+            .map(|(k, v)| (k.into(), v.into_iter().map(|(reference_id, _)| reference_id).collect()))
             .collect();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
