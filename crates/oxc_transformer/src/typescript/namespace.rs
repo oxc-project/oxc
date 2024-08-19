@@ -460,7 +460,7 @@ impl<'a> TypeScript<'a> {
                 let Some(property_name) = declarator.id.get_identifier() else {
                     return;
                 };
-                if let Some(init) = &declarator.init {
+                if let Some(init) = &mut declarator.init {
                     declarator.init = Some(
                         self.ctx.ast.expression_assignment(
                             SPAN,
@@ -476,8 +476,7 @@ impl<'a> TypeScript<'a> {
                                     ),
                                 )
                                 .into(),
-                            // SAFETY: `ast.copy` is unsound! We need to fix.
-                            unsafe { self.ctx.ast.copy(init) },
+                            self.ctx.ast.move_expression(init),
                         ),
                     );
                 }
