@@ -83,11 +83,6 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn move_statement_vec(self, stmts: &mut Vec<'a, Statement<'a>>) -> Vec<'a, Statement<'a>> {
-        mem::replace(stmts, self.vec())
-    }
-
-    #[inline]
     pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
         let dummy = self.simple_assignment_target_identifier_reference(Span::default(), "");
         mem::replace(target, dummy.into())
@@ -103,6 +98,11 @@ impl<'a> AstBuilder<'a> {
         );
         let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
         mem::replace(decl, empty_decl)
+    }
+
+    #[inline]
+    pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
+        mem::replace(vec, self.vec())
     }
 
     /* ---------- Constructors ---------- */

@@ -37,7 +37,7 @@ impl<'a> TypeScript<'a> {
         // every time a namespace declaration is encountered.
         let mut new_stmts = self.ctx.ast.vec();
 
-        for stmt in self.ctx.ast.move_statement_vec(&mut program.body) {
+        for stmt in self.ctx.ast.move_vec(&mut program.body) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !decl.declare {
