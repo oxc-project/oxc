@@ -1,5 +1,6 @@
 use std::hash::{Hash, Hasher};
 
+use oxc_ast::ast::BindingIdentifier;
 use oxc_ast::AstKind;
 use oxc_semantic::{AstNode, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -239,6 +240,18 @@ pub fn outermost_paren_parent<'a, 'b>(
         .find(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
 }
 
+pub fn nth_outermost_paren_parent<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+    n: usize,
+) -> Option<&'b AstNode<'a>> {
+    ctx.nodes()
+        .iter_parents(node.id())
+        .skip(1)
+        .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
+        .nth(n)
+}
+
 pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference,
     ctx: &'b LintContext<'a>,
@@ -391,5 +404,19 @@ pub fn is_function_node(node: &AstNode) -> bool {
         AstKind::Function(f) if f.is_expression() => true,
         AstKind::ArrowFunctionExpression(_) => true,
         _ => false,
+    }
+}
+
+pub fn get_function_like_declaration<'b>(
+    node: &AstNode<'b>,
+    ctx: &LintContext<'b>,
+) -> Option<&'b BindingIdentifier<'b>> {
+    let parent = outermost_paren_parent(node, ctx)?;
+
+    if let AstKind::VariableDeclarator(decl) = parent.kind() {
+        let ident = decl.id.get_binding_identifier()?;
+        Some(ident)
+    } else {
+        None
     }
 }

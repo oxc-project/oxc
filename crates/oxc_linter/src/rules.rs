@@ -254,6 +254,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -643,6 +644,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
