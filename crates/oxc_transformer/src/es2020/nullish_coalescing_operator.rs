@@ -49,74 +49,6 @@ impl<'a> NullishCoalescingOperator<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { _ctx: ctx, var_declarations: vec![] }
     }
-
-    fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        match expr {
-            Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlag::Read),
-            ),
-            _ => expr.clone_in(ctx.ast.allocator),
-        }
-    }
-
-    fn create_new_var_with_expression(
-        expr: &Expression<'a>,
-        current_scope_id: ScopeId,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> (BindingPattern<'a>, IdentifierReference<'a>) {
-        // Add `var name` to scope
-        let symbol_id = ctx.generate_uid_based_on_node(
-            expr,
-            current_scope_id,
-            SymbolFlags::FunctionScopedVariable,
-        );
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
-        // var _name;
-        let binding_identifier = BindingIdentifier {
-            span: SPAN,
-            name: symbol_name.clone(),
-            symbol_id: Cell::new(Some(symbol_id)),
-        };
-        let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation<'_>>, false);
-        let reference =
-            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
-
-        (id, reference)
-    }
-
-    /// Create a conditional expression
-    ///
-    /// ```js
-    /// // Input
-    /// bar ?? "qux"
-    ///
-    /// // Output
-    /// qux = bar !== null && bar !== void 0 ? bar : "qux"
-    /// //    ^^^ assignment  ^^^ reference           ^^^ default
-    /// ```
-    ///
-    /// reference and assignment are the same in this case, but they can be different
-    fn create_conditional_expression(
-        reference: Expression<'a>,
-        assignment: Expression<'a>,
-        default: Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let op = BinaryOperator::StrictInequality;
-        let null = ctx.ast.expression_null_literal(SPAN);
-        let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
-        let right = ctx.ast.expression_binary(
-            SPAN,
-            Self::clone_expression(&reference, ctx),
-            op,
-            ctx.ast.void_0(),
-        );
-        let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
-
-        ctx.ast.expression_conditional(SPAN, test, reference, default)
-    }
 }
 
 impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
@@ -244,5 +176,75 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
         }
 
         *expr = new_expr;
+    }
+}
+
+impl<'a> NullishCoalescingOperator<'a> {
+    fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        match expr {
+            Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
+                ctx.clone_identifier_reference(ident, ReferenceFlag::Read),
+            ),
+            _ => expr.clone_in(ctx.ast.allocator),
+        }
+    }
+
+    fn create_new_var_with_expression(
+        expr: &Expression<'a>,
+        current_scope_id: ScopeId,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> (BindingPattern<'a>, IdentifierReference<'a>) {
+        // Add `var name` to scope
+        let symbol_id = ctx.generate_uid_based_on_node(
+            expr,
+            current_scope_id,
+            SymbolFlags::FunctionScopedVariable,
+        );
+        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+
+        // var _name;
+        let binding_identifier = BindingIdentifier {
+            span: SPAN,
+            name: symbol_name.clone(),
+            symbol_id: Cell::new(Some(symbol_id)),
+        };
+        let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
+        let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation<'_>>, false);
+        let reference =
+            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
+
+        (id, reference)
+    }
+
+    /// Create a conditional expression
+    ///
+    /// ```js
+    /// // Input
+    /// bar ?? "qux"
+    ///
+    /// // Output
+    /// qux = bar !== null && bar !== void 0 ? bar : "qux"
+    /// //    ^^^ assignment  ^^^ reference           ^^^ default
+    /// ```
+    ///
+    /// reference and assignment are the same in this case, but they can be different
+    fn create_conditional_expression(
+        reference: Expression<'a>,
+        assignment: Expression<'a>,
+        default: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let op = BinaryOperator::StrictInequality;
+        let null = ctx.ast.expression_null_literal(SPAN);
+        let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
+        let right = ctx.ast.expression_binary(
+            SPAN,
+            Self::clone_expression(&reference, ctx),
+            op,
+            ctx.ast.void_0(),
+        );
+        let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
+
+        ctx.ast.expression_conditional(SPAN, test, reference, default)
     }
 }
