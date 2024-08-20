@@ -396,7 +396,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Check if a symbol with the same name has already been declared in the
-    /// current scope. Returns the symbol id if it exists and is not excluded by `excludes`.
+    /// current scope. Returns the symbol ID if it exists and is not excluded by `excludes`.
     ///
     /// Only records a redeclaration error if `report_error` is `true`.
     pub(crate) fn check_redeclaration(
@@ -455,7 +455,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Try to resolve all references from the current scope that are not
     /// already resolved.
     ///
-    /// This gets called every time [`SemanticBuilder`] exists a scope.
+    /// This gets called every time [`SemanticBuilder`] exits a scope.
     fn resolve_references_for_current_scope(&mut self) {
         let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
 
@@ -1728,7 +1728,7 @@ impl<'a> SemanticBuilder<'a> {
 
         match kind {
             AstKind::ExportDefaultDeclaration(decl) => {
-                // Only if the declaration has an id, we mark it as an export
+                // Only if the declaration has an ID, we mark it as an export
                 if match &decl.declaration {
                     ExportDefaultDeclarationKind::FunctionDeclaration(ref func) => {
                         func.id.is_some()
