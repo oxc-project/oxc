@@ -302,7 +302,7 @@ impl TraverseScoping {
     ) -> ReferenceId {
         let reference = Reference::new(AstNodeId::DUMMY, flag);
         let reference_id = self.symbols.create_reference(reference);
-        self.scopes.add_root_unresolved_reference(name, (reference_id, flag));
+        self.scopes.add_root_unresolved_reference(name, reference_id);
         reference_id
     }
 

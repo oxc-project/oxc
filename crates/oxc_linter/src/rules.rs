@@ -254,6 +254,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -452,6 +453,7 @@ mod promise {
 }
 
 mod vitest {
+    pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_truthy;
@@ -642,6 +644,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
@@ -866,4 +869,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::no_import_node_test,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_truthy,
+    vitest::no_conditional_tests,
 }

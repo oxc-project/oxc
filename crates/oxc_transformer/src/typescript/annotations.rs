@@ -217,8 +217,8 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         if expr.is_typescript_syntax() {
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            *expr = unsafe { self.ctx.ast.copy(expr.get_inner_expression()) };
+            let inner_expr = expr.get_inner_expression_mut();
+            *expr = self.ctx.ast.move_expression(inner_expr);
         }
     }
 
@@ -226,16 +226,20 @@ impl<'a> TypeScriptAnnotations<'a> {
         if let Some(expr) = target.get_expression_mut() {
             match expr.get_inner_expression_mut() {
                 // `foo!++` to `foo++`
-                Expression::Identifier(ident) => {
-                    *target = self.ctx.ast.simple_assignment_target_from_identifier_reference(
-                        self.ctx.ast.move_identifier_reference(ident),
-                    );
+                inner_expr @ Expression::Identifier(_) => {
+                    let inner_expr = self.ctx.ast.move_expression(inner_expr);
+                    let Expression::Identifier(ident) = inner_expr else {
+                        unreachable!();
+                    };
+                    *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
                 }
                 // `foo.bar!++` to `foo.bar++`
                 inner_expr @ match_member_expression!(Expression) => {
-                    *target = SimpleAssignmentTarget::from(
-                        self.ctx.ast.move_member_expression(inner_expr.to_member_expression_mut()),
-                    );
+                    let inner_expr = self.ctx.ast.move_expression(inner_expr);
+                    let Ok(member_expr) = MemberExpression::try_from(inner_expr) else {
+                        unreachable!();
+                    };
+                    *target = SimpleAssignmentTarget::from(member_expr);
                 }
                 _ => {
                     // This should be never hit until more syntax is added to the JavaScript/TypeScrips
@@ -246,10 +250,14 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
-        if let Some(expr) = target.get_expression() {
-            if let Some(member_expr) = expr.get_inner_expression().as_member_expression() {
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                *target = AssignmentTarget::from(unsafe { self.ctx.ast.copy(member_expr) });
+        if let Some(expr) = target.get_expression_mut() {
+            let inner_expr = expr.get_inner_expression_mut();
+            if inner_expr.is_member_expression() {
+                let inner_expr = self.ctx.ast.move_expression(inner_expr);
+                let Ok(member_expr) = MemberExpression::try_from(inner_expr) else {
+                    unreachable!();
+                };
+                *target = AssignmentTarget::from(member_expr);
             }
         }
     }

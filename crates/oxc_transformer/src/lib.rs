@@ -34,7 +34,7 @@ use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::*, AstBuilder, Trivias};
+use oxc_ast::{ast::*, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_span::SourceType;
@@ -107,7 +107,7 @@ impl<'a> Transformer<'a> {
             .build(program)
             .semantic
             .into_symbol_table_and_scope_tree();
-        let TransformCtx { ast: AstBuilder { allocator }, .. } = *self.ctx;
+        let allocator: &'a Allocator = self.ctx.ast.allocator;
         let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
@@ -118,7 +118,7 @@ impl<'a> Transformer<'a> {
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
-        let TransformCtx { ast: AstBuilder { allocator }, .. } = *self.ctx;
+        let allocator: &'a Allocator = self.ctx.ast.allocator;
         let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
@@ -178,7 +178,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr, ctx);
         self.x2_es2021.transform_expression(expr, ctx);
-        self.x2_es2020.transform_expression(expr, ctx);
+        self.x2_es2020.enter_expression(expr, ctx);
         self.x2_es2016.transform_expression(expr, ctx);
         self.x3_es2015.transform_expression(expr);
     }
@@ -269,7 +269,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_statements(stmts);
         self.x1_react.transform_statements(stmts, ctx);
         self.x2_es2021.transform_statements(stmts, ctx);
-        self.x2_es2020.transform_statements(stmts, ctx);
+        self.x2_es2020.enter_statements(stmts, ctx);
         self.x2_es2016.transform_statements(stmts, ctx);
         self.x3_es2015.enter_statements(stmts);
     }
@@ -278,7 +278,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_statements_on_exit(stmts, ctx);
         self.x1_react.transform_statements_on_exit(stmts, ctx);
         self.x2_es2021.transform_statements_on_exit(stmts, ctx);
-        self.x2_es2020.transform_statements_on_exit(stmts, ctx);
+        self.x2_es2020.exit_statements(stmts, ctx);
         self.x2_es2016.transform_statements_on_exit(stmts, ctx);
         self.x3_es2015.exit_statements(stmts);
     }

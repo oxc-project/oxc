@@ -17,15 +17,29 @@ pub struct NoCaller;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of arguments.caller or arguments.callee
+    /// Disallow the use of `arguments.caller` or `arguments.callee`.
     ///
     /// ### Why is this bad?
     ///
-    /// The use of arguments.caller and arguments.callee make several code optimizations impossible.
-    /// They have been deprecated in future versions of JavaScript and their use is forbidden in ECMAScript 5 while in strict mode.
+    /// The use of `arguments.caller` and `arguments.callee` make several code
+    /// optimizations impossible.  They have been deprecated in future versions
+    /// of JavaScript and their use is forbidden in ECMAScript 5 while in strict
+    /// mode.
+    ///
+    /// ```js
+    /// function foo() {
+    /// var callee = arguments.callee;
+    /// }
+    /// ```
+    ///
+    /// This rule is aimed at discouraging the use of deprecated and sub-optimal
+    /// code by disallowing the use of `arguments.caller` and `arguments.callee`. As
+    /// such, it will warn when `arguments.caller` and `arguments.callee` are used.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// function foo(n) {
     ///     if (n <= 0) {
     ///         return;
@@ -36,6 +50,21 @@ declare_oxc_lint!(
     ///
     /// [1,2,3,4,5].map(function(n) {
     ///    return !(n > 1) ? 1 : arguments.callee(n - 1) * n;
+    /// });
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// function foo(n) {
+    ///     if (n <= 0) {
+    ///         return;
+    ///     }
+    ///
+    ///     foo(n - 1);
+    /// }
+    ///
+    /// [1,2,3,4,5].map(function factorial(n) {
+    ///     return !(n > 1) ? 1 : factorial(n - 1) * n;
     /// });
     /// ```
     NoCaller,

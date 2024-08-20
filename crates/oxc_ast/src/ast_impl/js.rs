@@ -626,6 +626,10 @@ impl<'a> AssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
+    }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {

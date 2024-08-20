@@ -13,7 +13,7 @@ use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 use test_case::TestCaseKind;
 use walkdir::WalkDir;
 
-mod semantic;
+mod driver;
 mod test_case;
 
 #[test]
@@ -153,7 +153,11 @@ impl TestRunner {
             // Run the test
             let (passed, failed): (Vec<TestCaseKind>, Vec<TestCaseKind>) = test_cases
                 .into_iter()
-                .partition(|test_case| test_case.test(self.options.filter.is_some()));
+                .map(|mut test_case| {
+                    test_case.test(self.options.filter.is_some());
+                    test_case
+                })
+                .partition(|test_case| test_case.errors().is_empty());
             all_passed_count += passed.len();
 
             // Snapshot
@@ -168,6 +172,14 @@ impl TestRunner {
                     snapshot.push_str(&normalize_path(
                         test_case.path().strip_prefix(&case_root).unwrap(),
                     ));
+                    let errors = test_case.errors();
+                    if !errors.is_empty() {
+                        snapshot.push('\n');
+                        for error in test_case.errors() {
+                            snapshot.push_str(&error.message);
+                        }
+                        snapshot.push('\n');
+                    }
                     snapshot.push('\n');
                 }
                 snapshot.push('\n');

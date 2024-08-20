@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::outermost_paren_parent, context::LintContext, fixer::Fix, rule::Rule, AstNode,
+    ast_util::get_function_like_declaration, context::LintContext, fixer::Fix, rule::Rule, AstNode,
 };
 
 fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
@@ -159,20 +159,6 @@ impl Rule for OnlyUsedInRecursion {
                 }
             }
         }
-    }
-}
-
-fn get_function_like_declaration<'b>(
-    node: &AstNode<'b>,
-    ctx: &LintContext<'b>,
-) -> Option<&'b BindingIdentifier<'b>> {
-    let parent = outermost_paren_parent(node, ctx)?;
-
-    if let AstKind::VariableDeclarator(decl) = parent.kind() {
-        let ident = decl.id.get_binding_identifier()?;
-        Some(ident)
-    } else {
-        None
     }
 }
 
