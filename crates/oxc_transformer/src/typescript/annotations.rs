@@ -236,9 +236,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                 // `foo.bar!++` to `foo.bar++`
                 inner_expr @ match_member_expression!(Expression) => {
                     let inner_expr = self.ctx.ast.move_expression(inner_expr);
-                    let Ok(member_expr) = MemberExpression::try_from(inner_expr) else {
-                        unreachable!();
-                    };
+                    let member_expr = inner_expr.into_member_expression();
                     *target = SimpleAssignmentTarget::from(member_expr);
                 }
                 _ => {
@@ -254,9 +252,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             let inner_expr = expr.get_inner_expression_mut();
             if inner_expr.is_member_expression() {
                 let inner_expr = self.ctx.ast.move_expression(inner_expr);
-                let Ok(member_expr) = MemberExpression::try_from(inner_expr) else {
-                    unreachable!();
-                };
+                let member_expr = inner_expr.into_member_expression();
                 *target = AssignmentTarget::from(member_expr);
             }
         }
