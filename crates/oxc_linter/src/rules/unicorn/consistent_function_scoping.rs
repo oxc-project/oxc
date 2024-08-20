@@ -88,7 +88,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConsistentFunctionScoping,
-    correctness,
+    suspicious,
     pending
 );
 
