@@ -11,7 +11,7 @@ use oxc::{
     codegen::{CodeGenerator, WhitespaceRemover},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
-    parser::Parser,
+    parser::{ParseOptions, Parser},
     semantic::{ScopeId, Semantic, SemanticBuilder},
     span::SourceType,
     transformer::{TransformOptions, Transformer},
@@ -169,7 +169,10 @@ impl Oxc {
         let source_type = SourceType::from_path(&path).unwrap_or_default();
 
         let ret = Parser::new(&allocator, source_text, source_type)
-            .allow_return_outside_function(parser_options.allow_return_outside_function)
+            .with_options(ParseOptions {
+                allow_return_outside_function: parser_options.allow_return_outside_function,
+                ..ParseOptions::default()
+            })
             .parse();
 
         self.comments = self.map_comments(&ret.trivias);
@@ -204,7 +207,10 @@ impl Oxc {
 
         if run_options.prettier_format() {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .allow_return_outside_function(parser_options.allow_return_outside_function)
+                .with_options(ParseOptions {
+                    allow_return_outside_function: parser_options.allow_return_outside_function,
+                    ..ParseOptions::default()
+                })
                 .parse();
             let printed =
                 Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
@@ -214,7 +220,10 @@ impl Oxc {
 
         if run_options.prettier_ir() {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .allow_return_outside_function(parser_options.allow_return_outside_function)
+                .with_options(ParseOptions {
+                    allow_return_outside_function: parser_options.allow_return_outside_function,
+                    ..ParseOptions::default()
+                })
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,

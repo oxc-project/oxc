@@ -226,7 +226,7 @@ impl<'a> ParserImpl<'a> {
             )
         };
 
-        Ok(if self.preserve_parens {
+        Ok(if self.options.preserve_parens {
             self.ast.expression_parenthesized(paren_span, expression)
         } else {
             expression

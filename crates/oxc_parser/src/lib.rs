@@ -103,10 +103,15 @@ pub struct ParserReturn<'a> {
     pub panicked: bool,
 }
 
-/// Parser options
-#[derive(Clone, Copy)]
+/// Parse options
+#[derive(Debug, Clone, Copy)]
 pub struct ParseOptions {
+    /// Allow return outside of function
+    ///
+    /// By default, a return statement at the top level raises an error.
+    /// Set this to true to accept such code.
     pub allow_return_outside_function: bool,
+
     /// Emit `ParenthesizedExpression` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by
@@ -143,26 +148,6 @@ impl<'a> Parser<'a> {
     #[must_use]
     pub fn with_options(mut self, options: ParseOptions) -> Self {
         self.options = options;
-        self
-    }
-
-    /// Allow return outside of function
-    ///
-    /// By default, a return statement at the top level raises an error.
-    /// Set this to true to accept such code.
-    #[must_use]
-    pub fn allow_return_outside_function(mut self, allow: bool) -> Self {
-        self.options.allow_return_outside_function = allow;
-        self
-    }
-
-    /// Emit `ParenthesizedExpression` in AST.
-    ///
-    /// If this option is true, parenthesized expressions are represented by (non-standard)
-    /// `ParenthesizedExpression` nodes that have a single expression property containing the expression inside parentheses.
-    #[must_use]
-    pub fn preserve_parens(mut self, allow: bool) -> Self {
-        self.options.preserve_parens = allow;
         self
     }
 }
@@ -243,6 +228,8 @@ use parser_parse::UniquePromise;
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
 struct ParserImpl<'a> {
+    options: ParseOptions,
+
     lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
@@ -269,10 +256,6 @@ struct ParserImpl<'a> {
 
     /// Ast builder for creating AST spans
     ast: AstBuilder<'a>,
-
-    /// Emit `ParenthesizedExpression` in AST.
-    /// Default: `true`
-    preserve_parens: bool,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -289,6 +272,7 @@ impl<'a> ParserImpl<'a> {
         unique: UniquePromise,
     ) -> Self {
         Self {
+            options,
             lexer: Lexer::new(allocator, source_text, source_type, unique),
             source_type,
             source_text,
@@ -298,7 +282,6 @@ impl<'a> ParserImpl<'a> {
             state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
-            preserve_parens: options.preserve_parens,
         }
     }
 
