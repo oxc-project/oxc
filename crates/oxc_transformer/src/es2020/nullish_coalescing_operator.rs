@@ -30,8 +30,8 @@
 
 use std::cell::Cell;
 
-use oxc_semantic::{ReferenceFlag, SymbolFlags};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_semantic::{ReferenceFlag, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::*;
@@ -50,52 +50,72 @@ impl<'a> NullishCoalescingOperator<'a> {
         Self { _ctx: ctx, var_declarations: vec![] }
     }
 
-    fn clone_identifier_reference(
-        ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
-        let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
-        let symbol_id = reference.symbol_id();
-        let flag = reference.flag();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, *flag)
-    }
-
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
-            Expression::Identifier(ident) => ctx
-                .ast
-                .expression_from_identifier_reference(Self::clone_identifier_reference(ident, ctx)),
+            Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
+                ctx.clone_identifier_reference(ident, ReferenceFlag::Read),
+            ),
             _ => expr.clone_in(ctx.ast.allocator),
         }
     }
 
     fn create_new_var_with_expression(
-        &mut self,
         expr: &Expression<'a>,
+        current_scope_id: ScopeId,
         ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
+    ) -> (BindingPattern<'a>, IdentifierReference<'a>) {
         // Add `var name` to scope
-        let symbol_id = ctx
-            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
+        let symbol_id = ctx.generate_uid_based_on_node(
+            expr,
+            current_scope_id,
+            SymbolFlags::FunctionScopedVariable,
+        );
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
-        {
-            // var _name;
-            let binding_identifier = BindingIdentifier {
-                span: SPAN,
-                name: symbol_name.clone(),
-                symbol_id: Cell::new(Some(symbol_id)),
-            };
-            let kind = VariableDeclarationKind::Var;
-            let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-            let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation<'_>>, false);
-            self.var_declarations
-                .last_mut()
-                .unwrap()
-                .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
+        // var _name;
+        let binding_identifier = BindingIdentifier {
+            span: SPAN,
+            name: symbol_name.clone(),
+            symbol_id: Cell::new(Some(symbol_id)),
         };
+        let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
+        let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation<'_>>, false);
+        let reference =
+            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
 
-        ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read)
+        (id, reference)
+    }
+
+    /// Create a conditional expression
+    ///
+    /// ```js
+    /// // Input
+    /// bar ?? "qux"
+    ///
+    /// // Output
+    /// qux = bar !== null && bar !== void 0 ? bar : "qux"
+    /// //    ^^^ assignment  ^^^ reference           ^^^ default
+    /// ```
+    ///
+    /// reference and assignment are the same in this case, but they can be different
+    fn create_conditional_expression(
+        reference: Expression<'a>,
+        assignment: Expression<'a>,
+        default: Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let op = BinaryOperator::StrictInequality;
+        let null = ctx.ast.expression_null_literal(SPAN);
+        let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
+        let right = ctx.ast.expression_binary(
+            SPAN,
+            Self::clone_expression(&reference, ctx),
+            op,
+            ctx.ast.void_0(),
+        );
+        let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
+
+        ctx.ast.expression_conditional(SPAN, test, reference, default)
     }
 }
 
@@ -137,33 +157,92 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
         };
 
         // skip creating extra reference when `left` is static
-        let (reference, assignment) = if ctx.symbols().is_static(&logical_expr.left) {
-            (Self::clone_expression(&logical_expr.left, ctx), logical_expr.left)
+        if ctx.symbols().is_static(&logical_expr.left) {
+            *expr = Self::create_conditional_expression(
+                Self::clone_expression(&logical_expr.left, ctx),
+                logical_expr.left,
+                logical_expr.right,
+                ctx,
+            );
+            return;
+        }
+
+        // ctx.ancestor(1) is AssignmentPattern
+        // ctx.ancestor(2) is BindingPattern;
+        // ctx.ancestor(3) is FormalParameter
+        let is_parent_formal_parameter = ctx
+            .ancestor(3)
+            .is_some_and(|ancestor| matches!(ancestor, Ancestor::FormalParameterPattern(_)));
+
+        let current_scope_id = if is_parent_formal_parameter {
+            ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function)
         } else {
-            let ident = self.create_new_var_with_expression(&logical_expr.left, ctx);
-            let left =
-                AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    Self::clone_identifier_reference(&ident, ctx),
-                ));
-            let right = logical_expr.left;
-            (
-                ctx.ast.expression_from_identifier_reference(ident),
-                ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right),
-            )
+            ctx.current_scope_id()
         };
 
-        let op = BinaryOperator::StrictInequality;
-        let null = ctx.ast.expression_null_literal(SPAN);
-        let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
-        let right = ctx.ast.expression_binary(
-            SPAN,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            unsafe { ctx.ast.copy(&reference) },
-            op,
-            ctx.ast.void_0(),
-        );
-        let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
+        let (id, ident) =
+            Self::create_new_var_with_expression(&logical_expr.left, current_scope_id, ctx);
 
-        *expr = ctx.ast.expression_conditional(SPAN, test, reference, logical_expr.right);
+        let left =
+            AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
+                ctx.clone_identifier_reference(&ident, ReferenceFlag::Write),
+            ));
+
+        let reference = ctx.ast.expression_from_identifier_reference(ident);
+        let assignment = ctx.ast.expression_assignment(
+            SPAN,
+            AssignmentOperator::Assign,
+            left,
+            logical_expr.left,
+        );
+
+        let mut new_expr =
+            Self::create_conditional_expression(reference, assignment, logical_expr.right, ctx);
+
+        if is_parent_formal_parameter {
+            // Replace `function (a, x = a.b ?? c) {}` to `function (a, x = (() => a.b ?? c)() ){}`
+            // so the temporary variable can be injected in correct scope
+            let param = ctx.ast.formal_parameter(SPAN, ctx.ast.vec(), id, None, false, false);
+            let params = ctx.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::ArrowFormalParameters,
+                ctx.ast.vec1(param),
+                None::<BindingRestElement>,
+            );
+            let body = ctx.ast.function_body(
+                SPAN,
+                ctx.ast.vec(),
+                ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
+            );
+            let type_parameters = None::<TSTypeParameterDeclaration>;
+            let type_annotation = None::<TSTypeAnnotation>;
+            let arrow_function = ctx.ast.arrow_function_expression(
+                SPAN,
+                true,
+                false,
+                type_parameters,
+                params,
+                type_annotation,
+                body,
+            );
+            arrow_function.scope_id.set(Some(current_scope_id));
+            let arrow_function = ctx.ast.expression_from_arrow_function(arrow_function);
+            // `(x) => x;` -> `((x) => x)();`
+            new_expr = ctx.ast.expression_call(
+                SPAN,
+                ctx.ast.vec(),
+                arrow_function,
+                None::<TSTypeParameterInstantiation>,
+                false,
+            );
+        } else {
+            let kind = VariableDeclarationKind::Var;
+            self.var_declarations
+                .last_mut()
+                .unwrap()
+                .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
+        }
+
+        *expr = new_expr;
     }
 }

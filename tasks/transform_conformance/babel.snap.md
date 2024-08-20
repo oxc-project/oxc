@@ -1308,12 +1308,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 * assumption-noDocumentAll/transform-in-default-param/input.js
-Bindings Mismatch:
-previous scope ScopeId(0): ["bar", "foo"]
-current  scope ScopeId(0): ["_foo$bar", "bar", "foo"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_foo$bar", "foo", "qux"]
-current  scope ScopeId(1): ["foo", "qux"]
+Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
@@ -1332,12 +1327,7 @@ Symbols mismatch after transform
 ReferenceId mismatch after transform
 
 * nullish-coalescing/transform-in-default-param/input.js
-Bindings Mismatch:
-previous scope ScopeId(0): ["bar", "foo"]
-current  scope ScopeId(0): ["_foo$bar", "bar", "foo"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_foo$bar", "foo", "qux"]
-current  scope ScopeId(1): ["foo", "qux"]
+Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
