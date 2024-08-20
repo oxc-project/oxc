@@ -144,9 +144,9 @@ impl<'a> TypeScriptEnum<'a> {
 
         let call_expression = ast.expression_call(
             SPAN,
-            arguments,
             callee,
             Option::<TSTypeParameterInstantiation>::None,
+            arguments,
             false,
         );
 

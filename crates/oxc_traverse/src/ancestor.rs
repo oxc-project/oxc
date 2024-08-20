@@ -49,9 +49,9 @@ pub(crate) enum AncestorType {
     StaticMemberExpressionProperty = 17,
     PrivateFieldExpressionObject = 18,
     PrivateFieldExpressionField = 19,
-    CallExpressionArguments = 20,
-    CallExpressionCallee = 21,
-    CallExpressionTypeParameters = 22,
+    CallExpressionCallee = 20,
+    CallExpressionTypeParameters = 21,
+    CallExpressionArguments = 22,
     NewExpressionCallee = 23,
     NewExpressionArguments = 24,
     NewExpressionTypeParameters = 25,
@@ -376,12 +376,12 @@ pub enum Ancestor<'a> {
         AncestorType::PrivateFieldExpressionObject as u16,
     PrivateFieldExpressionField(PrivateFieldExpressionWithoutField<'a>) =
         AncestorType::PrivateFieldExpressionField as u16,
-    CallExpressionArguments(CallExpressionWithoutArguments<'a>) =
-        AncestorType::CallExpressionArguments as u16,
     CallExpressionCallee(CallExpressionWithoutCallee<'a>) =
         AncestorType::CallExpressionCallee as u16,
     CallExpressionTypeParameters(CallExpressionWithoutTypeParameters<'a>) =
         AncestorType::CallExpressionTypeParameters as u16,
+    CallExpressionArguments(CallExpressionWithoutArguments<'a>) =
+        AncestorType::CallExpressionArguments as u16,
     NewExpressionCallee(NewExpressionWithoutCallee<'a>) = AncestorType::NewExpressionCallee as u16,
     NewExpressionArguments(NewExpressionWithoutArguments<'a>) =
         AncestorType::NewExpressionArguments as u16,
@@ -936,9 +936,9 @@ impl<'a> Ancestor<'a> {
     pub fn is_call_expression(&self) -> bool {
         matches!(
             self,
-            Self::CallExpressionArguments(_)
-                | Self::CallExpressionCallee(_)
+            Self::CallExpressionCallee(_)
                 | Self::CallExpressionTypeParameters(_)
+                | Self::CallExpressionArguments(_)
         )
     }
 
@@ -2838,11 +2838,74 @@ impl<'a> PrivateFieldExpressionWithoutField<'a> {
 }
 
 pub(crate) const OFFSET_CALL_EXPRESSION_SPAN: usize = offset_of!(CallExpression, span);
-pub(crate) const OFFSET_CALL_EXPRESSION_ARGUMENTS: usize = offset_of!(CallExpression, arguments);
 pub(crate) const OFFSET_CALL_EXPRESSION_CALLEE: usize = offset_of!(CallExpression, callee);
 pub(crate) const OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(CallExpression, type_parameters);
+pub(crate) const OFFSET_CALL_EXPRESSION_ARGUMENTS: usize = offset_of!(CallExpression, arguments);
 pub(crate) const OFFSET_CALL_EXPRESSION_OPTIONAL: usize = offset_of!(CallExpression, optional);
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct CallExpressionWithoutCallee<'a>(pub(crate) *const CallExpression<'a>);
+
+impl<'a> CallExpressionWithoutCallee<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(&self) -> &Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct CallExpressionWithoutTypeParameters<'a>(pub(crate) *const CallExpression<'a>);
+
+impl<'a> CallExpressionWithoutTypeParameters<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn callee(&self) -> &Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn arguments(&self) -> &Vec<'a, Argument<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_ARGUMENTS)
+                as *const Vec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -2866,69 +2929,6 @@ impl<'a> CallExpressionWithoutArguments<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct CallExpressionWithoutCallee<'a>(pub(crate) *const CallExpression<'a>);
-
-impl<'a> CallExpressionWithoutCallee<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn arguments(&self) -> &Vec<'a, Argument<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_ARGUMENTS)
-                as *const Vec<'a, Argument<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct CallExpressionWithoutTypeParameters<'a>(pub(crate) *const CallExpression<'a>);
-
-impl<'a> CallExpressionWithoutTypeParameters<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn arguments(&self) -> &Vec<'a, Argument<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_ARGUMENTS)
-                as *const Vec<'a, Argument<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn callee(&self) -> &Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
         }
     }
 

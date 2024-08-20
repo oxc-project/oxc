@@ -162,9 +162,9 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
             // `(x) => x;` -> `((x) => x)();`
             new_expr = ctx.ast.expression_call(
                 SPAN,
-                ctx.ast.vec(),
                 arrow_function,
                 None::<TSTypeParameterInstantiation>,
+                ctx.ast.vec(),
                 false,
             );
         } else {

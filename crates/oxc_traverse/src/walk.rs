@@ -604,16 +604,7 @@ pub(crate) unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_call_expression(&mut *node, ctx);
-    ctx.push_stack(Ancestor::CallExpressionArguments(ancestor::CallExpressionWithoutArguments(
-        node,
-    )));
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>))
-        .iter_mut()
-    {
-        walk_argument(traverser, item as *mut _, ctx);
-    }
-    ctx.retag_stack(AncestorType::CallExpressionCallee);
+    ctx.push_stack(Ancestor::CallExpressionCallee(ancestor::CallExpressionWithoutCallee(node)));
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_CALLEE) as *mut Expression,
@@ -625,6 +616,13 @@ pub(crate) unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
     {
         ctx.retag_stack(AncestorType::CallExpressionTypeParameters);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::CallExpressionArguments);
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>))
+        .iter_mut()
+    {
+        walk_argument(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
     traverser.exit_call_expression(&mut *node, ctx);
