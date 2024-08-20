@@ -1,3 +1,33 @@
+//! ES2020: Nullish Coalescing Operator
+//!
+//! This plugin transforms nullish coalescing operators (`??`) to a series of ternary expressions.
+//!
+//! > This plugin is included in `preset-env`, in ES2020
+//!
+//! ## Example
+//!
+//! Input:
+//! ```js
+//! var foo = object.foo ?? "default";
+//! ```
+//!
+//! Output:
+//! ```js
+//! var _object$foo;
+//! var foo =
+//! (_object$foo = object.foo) !== null && _object$foo !== void 0
+//!   ? _object$foo
+//!   : "default";
+//! ```
+//!
+//! ## Implementation
+//!
+//! Implementation based on [@babel/plugin-transform-nullish-coalescing-operator](https://babeljs.io/docs/babel-plugin-transform-nullish-coalescing-operator).
+//!
+//! ## References:
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-nullish-coalescing-operator>
+//! * Nullish coalescing TC39 proposal: <https://github.com/tc39-transfer/proposal-nullish-coalescing>
+
 use std::cell::Cell;
 
 use oxc_semantic::{ReferenceFlag, SymbolFlags};
@@ -10,11 +40,6 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::context::Ctx;
 
-/// ES2020: Nullish Coalescing Operator
-///
-/// References:
-/// * <https://babeljs.io/docs/babel-plugin-transform-nullish-coalescing-operator>
-/// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-nullish-coalescing-operator>
 pub struct NullishCoalescingOperator<'a> {
     _ctx: Ctx<'a>,
     var_declarations: std::vec::Vec<Vec<'a, VariableDeclarator<'a>>>,
