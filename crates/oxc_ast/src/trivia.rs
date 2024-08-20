@@ -22,6 +22,23 @@ impl Comment {
         let span = Span::new(start, end);
         Self { kind, span }
     }
+
+    pub fn real_span_end(&self) -> u32 {
+        match self.kind {
+            CommentKind::SingleLine => self.span.end,
+            // length of `*/`
+            CommentKind::MultiLine => self.span.end + 2,
+        }
+    }
+
+    pub fn real_span_start(&self) -> u32 {
+        match self.kind {
+            // length of `//`
+            CommentKind::SingleLine => self.span.start - 2,
+            // length of `/*`
+            CommentKind::MultiLine => self.span.start - 2,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

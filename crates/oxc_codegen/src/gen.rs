@@ -156,9 +156,9 @@ impl<'a> Gen for Statement<'a> {
             }
         }
 
-        if p.comment_options.preserve_annotate_comments {
-            p.update_last_consumed_comment_end(self.span().end);
-        }
+        // if p.comment_options.preserve_annotate_comments {
+        //     p.update_last_consumed_comment_end(self.span().end);
+        // }
     }
 }
 
@@ -592,9 +592,17 @@ impl<'a> Gen for VariableDeclaration<'a> {
         }
 
         if p.comment_options.preserve_annotate_comments
-            && !matches!(self.kind, VariableDeclarationKind::Const)
+            && matches!(self.kind, VariableDeclarationKind::Const)
         {
-            p.update_last_consumed_comment_end(self.span.start);
+            if let Some(declarator) = self.declarations.first() {
+                if let Some(ref init) = declarator.init {
+                    let leading_annotate_comments =
+                        p.get_leading_annotate_comments(self.span.start);
+                    if !leading_annotate_comments.is_empty() {
+                        p.move_comments(init.span().start, leading_annotate_comments);
+                    }
+                }
+            }
         }
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
@@ -864,9 +872,19 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
                     p.gen_comments(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
-                    if !matches!(var_decl.kind, VariableDeclarationKind::Const) =>
+                    if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
                 {
-                    p.update_last_consumed_comment_end(self.span.start);
+                    if let Some(declarator) = var_decl.declarations.first() {
+                        if let Some(ref init) = declarator.init {
+                            let leading_annotate_comments =
+                                p.get_leading_annotate_comments(self.span.start);
+                            if !leading_annotate_comments.is_empty() {
+                                dbg!(&leading_annotate_comments);
+                                p.move_comments(init.span().start, leading_annotate_comments);
+                                dbg!(&p.move_comment_map);
+                            }
+                        }
+                    }
                 }
                 _ => {}
             };
@@ -1062,9 +1080,9 @@ impl<'a> GenExpr for Expression<'a> {
             Self::TSNonNullExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.gen_expr(p, precedence, ctx),
         }
-        if p.comment_options.preserve_annotate_comments {
-            p.update_last_consumed_comment_end(self.span().end);
-        }
+        // if p.comment_options.preserve_annotate_comments {
+        //     p.update_last_consumed_comment_end(self.span().end);
+        // }
     }
 }
 
@@ -1405,11 +1423,14 @@ impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         let annotate_comments = p.get_leading_annotate_comments(self.span.start);
+        dbg!(&precedence);
         if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
+        dbg!(&annotate_comments);
+        dbg!(&wrap);
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comments, AnnotationKind::empty());
+            p.print_comments(&annotate_comments, &mut AnnotationKind::empty());
             p.add_source_mapping(self.span.start);
             self.callee.gen_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
@@ -2078,7 +2099,7 @@ impl<'a> GenExpr for NewExpression<'a> {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comment, AnnotationKind::empty());
+            p.print_comments(&annotate_comment, &mut AnnotationKind::empty());
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");

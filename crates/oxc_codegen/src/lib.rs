@@ -10,7 +10,7 @@ mod gen;
 mod operator;
 mod sourcemap_builder;
 
-use std::{borrow::Cow, ops::Range};
+use std::{borrow::Cow, collections::hash_map::Entry, ops::Range};
 
 use oxc_ast::{
     ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
@@ -23,6 +23,7 @@ use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
+use rustc_hash::FxHashMap;
 
 use crate::{
     binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
@@ -32,6 +33,8 @@ pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
 };
+
+use self::annotation_comment::AnnotationComment;
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a>;
@@ -95,7 +98,13 @@ pub struct Codegen<'a> {
     sourcemap_builder: Option<SourcemapBuilder>,
 
     latest_consumed_comment_end: u32,
+
+    /// The key of map is the node start position,
+    /// the first element of value is the start of the comment
+    /// the second element of value includes the end of the comment and comment kind.
+    move_comment_map: MoveCommentMap,
 }
+pub(crate) type MoveCommentMap = FxHashMap<u32, Vec<AnnotationComment>>;
 
 impl<'a> Default for Codegen<'a> {
     fn default() -> Self {
@@ -140,6 +149,7 @@ impl<'a> Codegen<'a> {
             quote: b'"',
             sourcemap_builder: None,
             latest_consumed_comment_end: 0,
+            move_comment_map: MoveCommentMap::default(),
         }
     }
 
@@ -516,7 +526,39 @@ impl<'a> Codegen<'a> {
         self.code.extend_from_slice(self.source_text[range].as_bytes());
     }
 
-    fn get_leading_comments(&self, start: u32, end: u32) -> impl Iterator<Item = &'_ Comment> + '_ {
+    fn get_leading_comments(
+        &self,
+        start: u32,
+        end: u32,
+    ) -> impl DoubleEndedIterator<Item = &'_ Comment> + '_ {
         self.trivias.comments_range(start..end)
+    }
+    /// In some scenario, we want to move the comment that should be codegened to another position.
+    /// ```js
+    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
+    ///
+    ///  }, b = 10000;
+    ///
+    /// ```
+    /// should generate such output:
+    /// ```js
+    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
+    ///
+    ///  }, b = 10000;
+    /// ```
+    fn move_comments(&mut self, position: u32, full_comment_infos: Vec<AnnotationComment>) {
+        dbg!(&full_comment_infos,);
+        match self.move_comment_map.entry(position) {
+            Entry::Occupied(mut occ) => {
+                occ.get_mut().extend(full_comment_infos);
+            }
+            Entry::Vacant(vac) => {
+                vac.insert(full_comment_infos);
+            }
+        }
+    }
+
+    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Vec<AnnotationComment>> {
+        self.move_comment_map.remove(&node_start)
     }
 }
