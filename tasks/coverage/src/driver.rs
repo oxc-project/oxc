@@ -34,7 +34,7 @@ pub struct Driver {
 }
 
 impl CompilerInterface for Driver {
-    fn parser_options(&self) -> ParseOptions {
+    fn parse_options(&self) -> ParseOptions {
         ParseOptions {
             allow_return_outside_function: self.allow_return_outside_function,
             ..ParseOptions::default()
