@@ -1,7 +1,7 @@
 #![allow(clippy::print_stdout)]
 
 use oxc_allocator::Allocator;
-use oxc_regexp_parser::{ast, Parser, ParserOptions};
+use oxc_regular_expression::{ast, Parser, ParserOptions};
 
 fn main() {
     let allocator = Allocator::default();

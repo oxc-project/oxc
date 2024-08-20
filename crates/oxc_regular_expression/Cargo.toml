@@ -1,5 +1,5 @@
 [package]
-name                   = "oxc_regexp_parser"
+name                   = "oxc_regular_expression"
 version                = "0.0.0"
 publish                = false
 authors.workspace      = true
