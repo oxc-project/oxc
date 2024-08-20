@@ -17,16 +17,30 @@ pub struct NoConstAssign;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Disallow reassigning const variables
+    /// Disallow reassigning `const` variables.
     ///
     /// ### Why is this bad?
     /// We cannot modify variables that are declared using const keyword.
     /// It will raise a runtime error.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// const a = 0;
     /// a = 1;
+    ///
+    /// const b = 0;
+    /// b += 1;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// const a = 0;
+    /// console.log(a);
+    ///
+    /// var b = 0;
+    /// b += 1;
     /// ```
     NoConstAssign,
     correctness
