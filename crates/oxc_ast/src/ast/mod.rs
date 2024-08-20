@@ -70,6 +70,7 @@
 //! shared_enum_variants!(
 //!     Expression, MemberExpression,
 //!     is_member_expression,
+//!     into_member_expression,
 //!     as_member_expression, as_member_expression_mut,
 //!     to_member_expression, to_member_expression_mut,
 //!     [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]

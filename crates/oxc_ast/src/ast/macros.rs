@@ -56,6 +56,7 @@
 /// shared_enum_variants!(
 ///     Statement, Declaration,
 ///     is_declaration,
+///     into_declaration,
 ///     as_declaration, as_declaration_mut,
 ///     to_declaration, to_declaration_mut,
 ///     [VariableDeclaration, FunctionDeclaration, ...more]
@@ -64,6 +65,7 @@
 /// shared_enum_variants!(
 ///     Statement, ModuleDeclaration,
 ///     is_module_declaration,
+///     into_module_declaration,
 ///     as_module_declaration, as_module_declaration_mut,
 ///     to_module_declaration, to_module_declaration_mut,
 ///     [ImportDeclaration, ExportAllDeclaration, ...more]
@@ -181,6 +183,7 @@ macro_rules! inherit_variants {
             $ty,
             Expression,
             is_expression,
+            into_expression,
             as_expression,
             as_expression_mut,
             to_expression,
@@ -267,6 +270,7 @@ macro_rules! inherit_variants {
             $ty,
             MemberExpression,
             is_member_expression,
+            into_member_expression,
             as_member_expression,
             as_member_expression_mut,
             to_member_expression,
@@ -300,6 +304,7 @@ macro_rules! inherit_variants {
             $ty,
             AssignmentTarget,
             is_assignment_target,
+            into_assignment_target,
             as_assignment_target,
             as_assignment_target_mut,
             to_assignment_target,
@@ -359,6 +364,7 @@ macro_rules! inherit_variants {
             $ty,
             SimpleAssignmentTarget,
             is_simple_assignment_target,
+            into_simple_assignment_target,
             as_simple_assignment_target,
             as_simple_assignment_target_mut,
             to_simple_assignment_target,
@@ -404,6 +410,7 @@ macro_rules! inherit_variants {
             $ty,
             AssignmentTargetPattern,
             is_assignment_target_pattern,
+            into_assignment_target_pattern,
             as_assignment_target_pattern,
             as_assignment_target_pattern_mut,
             to_assignment_target_pattern,
@@ -454,6 +461,7 @@ macro_rules! inherit_variants {
             $ty,
             Declaration,
             is_declaration,
+            into_declaration,
             as_declaration,
             as_declaration_mut,
             to_declaration,
@@ -516,6 +524,7 @@ macro_rules! inherit_variants {
             $ty,
             ModuleDeclaration,
             is_module_declaration,
+            into_module_declaration,
             as_module_declaration,
             as_module_declaration_mut,
             to_module_declaration,
@@ -635,6 +644,7 @@ macro_rules! inherit_variants {
             $ty,
             TSType,
             is_ts_type,
+            into_ts_type,
             as_ts_type,
             as_ts_type_mut,
             to_ts_type,
@@ -709,6 +719,7 @@ macro_rules! inherit_variants {
             $ty,
             TSTypeName,
             is_ts_type_name,
+            into_ts_type_name,
             as_ts_type_name,
             as_ts_type_name_mut,
             to_ts_type_name,
@@ -743,6 +754,7 @@ pub(crate) use inherit_variants;
 /// shared_enum_variants!(
 ///     Statement, Declaration,
 ///     is_declaration,
+///     into_declaration,
 ///     as_declaration, as_declaration_mut,
 ///     to_declaration, to_declaration_mut,
 ///     [VariableDeclaration, FunctionDeclaration]
@@ -765,6 +777,14 @@ pub(crate) use inherit_variants;
 ///             Self::VariableDeclaration(_) | Self::FunctionDeclaration(_) => true,
 ///             _ => false,
 ///         }
+///     }
+///
+///     /// Convert `Statement` to `Declaration`.
+///     /// # Panic
+///     /// Panics if not convertible.
+///     #[inline]
+///     pub fn into_declaration(self) -> Declaration<'a> {
+///         Declaration::try_from(self).unwrap()
 ///     }
 ///
 ///     /// Convert `&Statement` to `&Declaration`.
@@ -833,6 +853,7 @@ macro_rules! shared_enum_variants {
     (
         $parent:ident, $child:ident,
         $is_child:ident,
+        $into_child:ident,
         $as_child:ident, $as_child_mut:ident,
         $to_child:ident, $to_child_mut:ident,
         [$($variant:ident),+ $(,)?]
@@ -859,6 +880,14 @@ macro_rules! shared_enum_variants {
                     self,
                     $(Self::$variant(_))|+
                 )
+            }
+
+            #[doc = concat!("Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
+            #[doc = "# Panic"]
+            #[doc = "Panics if not convertible."]
+            #[inline]
+            pub fn $into_child(self) -> $child<'a> {
+                $child::try_from(self).unwrap()
             }
 
             #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
