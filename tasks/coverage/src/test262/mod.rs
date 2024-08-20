@@ -105,6 +105,9 @@ impl Case for Test262Case {
             // Regex parser is required. See https://github.com/oxc-project/oxc/issues/385#issuecomment-1755566240
             "regexp-v-flag",
             "regexp-unicode-property-escapes",
+            // stage 3 https://github.com/tc39/proposal-json-modules
+            // ignored due to https://github.com/tc39/proposal-json-modules/issues/27
+            "json-modules",
         ]
         .iter()
         .any(|feature| self.meta.features.iter().any(|f| **f == **feature))
