@@ -31,7 +31,7 @@
 use std::cell::Cell;
 
 use oxc_semantic::{ReferenceFlag, SymbolFlags};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::*;
@@ -69,33 +69,6 @@ impl<'a> NullishCoalescingOperator<'a> {
         }
     }
 
-    pub fn transform_statements(
-        &mut self,
-        _statements: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.var_declarations.push(ctx.ast.vec());
-    }
-
-    pub fn transform_statements_on_exit(
-        &mut self,
-        statements: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if let Some(declarations) = self.var_declarations.pop() {
-            if declarations.is_empty() {
-                return;
-            }
-            let variable = ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                declarations,
-                false,
-            );
-            statements.insert(0, Statement::VariableDeclaration(variable));
-        }
-    }
-
     fn create_new_var_with_expression(
         &mut self,
         expr: &Expression<'a>,
@@ -130,8 +103,33 @@ impl<'a> NullishCoalescingOperator<'a> {
 
         ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read)
     }
+}
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
+    fn enter_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.var_declarations.push(ctx.ast.vec());
+    }
+
+    fn exit_statements(
+        &mut self,
+        statements: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(declarations) = self.var_declarations.pop() {
+            if declarations.is_empty() {
+                return;
+            }
+            let variable = ctx.ast.alloc_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Var,
+                declarations,
+                false,
+            );
+            statements.insert(0, Statement::VariableDeclaration(variable));
+        }
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ?? right
         if !matches!(expr, Expression::LogicalExpression(logical_expr) if logical_expr.operator == LogicalOperator::Coalesce)
         {

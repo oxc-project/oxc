@@ -178,7 +178,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr, ctx);
         self.x2_es2021.transform_expression(expr, ctx);
-        self.x2_es2020.transform_expression(expr, ctx);
+        self.x2_es2020.enter_expression(expr, ctx);
         self.x2_es2016.transform_expression(expr, ctx);
         self.x3_es2015.transform_expression(expr);
     }
@@ -269,7 +269,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_statements(stmts);
         self.x1_react.transform_statements(stmts, ctx);
         self.x2_es2021.transform_statements(stmts, ctx);
-        self.x2_es2020.transform_statements(stmts, ctx);
+        self.x2_es2020.enter_statements(stmts, ctx);
         self.x2_es2016.transform_statements(stmts, ctx);
         self.x3_es2015.enter_statements(stmts);
     }
@@ -278,7 +278,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_statements_on_exit(stmts, ctx);
         self.x1_react.transform_statements_on_exit(stmts, ctx);
         self.x2_es2021.transform_statements_on_exit(stmts, ctx);
-        self.x2_es2020.transform_statements_on_exit(stmts, ctx);
+        self.x2_es2020.exit_statements(stmts, ctx);
         self.x2_es2016.transform_statements_on_exit(stmts, ctx);
         self.x3_es2015.exit_statements(stmts);
     }
