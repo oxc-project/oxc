@@ -47,7 +47,7 @@ fn main() {
         let ret = parser.parse();
 
         match ret {
-            Ok(ast::RegExpLiteral { pattern, flags, .. }) => {
+            Ok(ast::RegularExpression { pattern, flags, .. }) => {
                 println!("✨ {}", pattern.span.source_text(source_text));
                 println!("{pattern:#?}");
                 println!("✨ {}", flags.span.source_text(source_text));

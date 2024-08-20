@@ -2,7 +2,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom as SpanAtom, Span};
 
 #[derive(Debug)]
-pub struct RegExpLiteral<'a> {
+pub struct RegularExpression<'a> {
     pub span: Span,
     pub pattern: Pattern<'a>,
     pub flags: Flags,

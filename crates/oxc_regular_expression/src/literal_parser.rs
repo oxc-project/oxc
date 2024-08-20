@@ -24,7 +24,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(self) -> Result<ast::RegExpLiteral<'a>> {
+    pub fn parse(self) -> Result<ast::RegularExpression<'a>> {
         // Precheck if the source text is a valid regular expression literal
         // If valid, parse the pattern and flags with returned span offsets
         let (body_start_offset, body_end_offset, flag_start_offset) =
@@ -54,7 +54,7 @@ impl<'a> Parser<'a> {
         )
         .parse()?;
 
-        Ok(ast::RegExpLiteral {
+        Ok(ast::RegularExpression {
             span: self.span_factory.create(0, self.source_text.len()),
             pattern,
             flags,

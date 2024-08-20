@@ -18,6 +18,7 @@ impl ParserOptions {
     pub fn with_unicode_mode(self) -> ParserOptions {
         ParserOptions { unicode_mode: true, ..self }
     }
+
     #[must_use]
     pub fn with_unicode_sets_mode(self) -> ParserOptions {
         ParserOptions { unicode_mode: true, unicode_sets_mode: true, ..self }
