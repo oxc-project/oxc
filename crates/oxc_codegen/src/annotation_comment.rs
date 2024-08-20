@@ -57,7 +57,7 @@ impl<'a> Codegen<'a> {
         dbg!(&node_start);
         let mut latest_comment_start = node_start;
         let mut ret = self
-            .get_leading_comments(0, node_start)
+            .get_leading_comments(self.latest_consumed_comment_end, node_start)
             .rev()
             // each comment should be separated by whitespaces
             .take_while(|comment| {
@@ -155,7 +155,6 @@ impl<'a> Codegen<'a> {
         for &comment in leading_annotate_comment {
             let kind = comment.annotation_kind();
             if !annotation_kind_set.contains(kind) {
-                dbg!(&kind);
                 annotation_kind_set.insert(kind);
                 self.print_comment(comment);
             }
