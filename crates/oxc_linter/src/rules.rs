@@ -156,6 +156,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
+    pub mod no_wrapper_object_types;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
@@ -584,6 +585,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unsafe_declaration_merging,
     typescript::no_useless_empty_export,
     typescript::no_var_requires,
+    typescript::no_wrapper_object_types,
     typescript::prefer_as_const,
     typescript::prefer_for_of,
     typescript::prefer_function_type,
