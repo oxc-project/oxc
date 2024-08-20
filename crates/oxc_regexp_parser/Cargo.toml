@@ -1,0 +1,29 @@
+[package]
+name                   = "oxc_regexp_parser"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+categories.workspace   = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+include                = ["/examples", "/src"]
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_allocator   = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_span        = { workspace = true }
+
+phf              = { workspace = true, features = ["macros"] }
+rustc-hash       = { workspace = true }
+unicode-id-start = { workspace = true }
