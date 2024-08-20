@@ -41,6 +41,7 @@ pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
     pub single_quote: bool,
 
+    /// Remove whitespace.
     pub minify: bool,
 }
 

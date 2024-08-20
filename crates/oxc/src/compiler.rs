@@ -65,10 +65,6 @@ pub trait CompilerInterface {
         Some(CodegenOptions::default())
     }
 
-    fn remove_whitespace(&self) -> bool {
-        false
-    }
-
     fn check_semantic_error(&self) -> bool {
         true
     }
@@ -215,9 +211,8 @@ pub trait CompilerInterface {
         options: CodegenOptions,
     ) -> String {
         let comment_options = CommentOptions { preserve_annotate_comments: true };
-
         CodeGenerator::new()
-            .with_options(CodegenOptions { minify: self.remove_whitespace(), ..options })
+            .with_options(options)
             .enable_comment(source_text, trivias.clone(), comment_options)
             .build(program)
             .source_text
