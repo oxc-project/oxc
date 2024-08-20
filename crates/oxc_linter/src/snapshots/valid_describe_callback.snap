@@ -162,18 +162,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove return statement in your describe callback
 
   ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
-    ╭─[valid_describe_callback.tsx:9:21]
-  8 │                     describe('nested', () => {
-  9 │ ╭─▶                     return Promise.resolve().then(() => {
- 10 │ │                           it('breaks', () => {
- 11 │ │                               throw new Error('Fail')
- 12 │ │                           })
- 13 │ ╰─▶                     })
- 14 │                     })
-    ╰────
-  help: Remove return statement in your describe callback
-
-  ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
    ╭─[valid_describe_callback.tsx:3:17]
  2 │                 describe('foo', () => {
  3 │ ╭─▶                 return Promise.resolve().then(() => {
@@ -186,14 +174,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove return statement in your describe callback
 
   ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
-    ╭─[valid_describe_callback.tsx:6:21]
-  5 │                     describe('nested', () => {
-  6 │ ╭─▶                     return Promise.resolve().then(() => {
-  7 │ │                           it('breaks', () => {
-  8 │ │                               throw new Error('Fail')
-  9 │ │                           })
- 10 │ ╰─▶                     })
- 11 │                     })
+    ╭─[valid_describe_callback.tsx:9:21]
+  8 │                     describe('nested', () => {
+  9 │ ╭─▶                     return Promise.resolve().then(() => {
+ 10 │ │                           it('breaks', () => {
+ 11 │ │                               throw new Error('Fail')
+ 12 │ │                           })
+ 13 │ ╰─▶                     })
+ 14 │                     })
     ╰────
   help: Remove return statement in your describe callback
 
@@ -214,6 +202,18 @@ source: crates/oxc_linter/src/tester.rs
  13 │                 
     ╰────
   help: Remove `async` keyword
+
+  ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
+    ╭─[valid_describe_callback.tsx:6:21]
+  5 │                     describe('nested', () => {
+  6 │ ╭─▶                     return Promise.resolve().then(() => {
+  7 │ │                           it('breaks', () => {
+  8 │ │                               throw new Error('Fail')
+  9 │ │                           })
+ 10 │ ╰─▶                     })
+ 11 │                     })
+    ╰────
+  help: Remove return statement in your describe callback
 
   ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
    ╭─[valid_describe_callback.tsx:1:23]
@@ -409,18 +409,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove return statement in your describe callback
 
   ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
-    ╭─[valid_describe_callback.tsx:9:25]
-  8 │                         describe('nested', () => {
-  9 │ ╭─▶                         return Promise.resolve().then(() => {
- 10 │ │                               it('breaks', () => {
- 11 │ │                                   throw new Error('Fail')
- 12 │ │                               })
- 13 │ ╰─▶                         })
- 14 │                         })
-    ╰────
-  help: Remove return statement in your describe callback
-
-  ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
    ╭─[valid_describe_callback.tsx:3:21]
  2 │                     describe('foo', () => {
  3 │ ╭─▶                     return Promise.resolve().then(() => {
@@ -433,14 +421,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove return statement in your describe callback
 
   ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
-    ╭─[valid_describe_callback.tsx:6:25]
-  5 │                         describe('nested', () => {
-  6 │ ╭─▶                         return Promise.resolve().then(() => {
-  7 │ │                               it('breaks', () => {
-  8 │ │                                   throw new Error('Fail')
-  9 │ │                               })
- 10 │ ╰─▶                         })
- 11 │                         })
+    ╭─[valid_describe_callback.tsx:9:25]
+  8 │                         describe('nested', () => {
+  9 │ ╭─▶                         return Promise.resolve().then(() => {
+ 10 │ │                               it('breaks', () => {
+ 11 │ │                                   throw new Error('Fail')
+ 12 │ │                               })
+ 13 │ ╰─▶                         })
+ 14 │                         })
     ╰────
   help: Remove return statement in your describe callback
 
@@ -461,6 +449,18 @@ source: crates/oxc_linter/src/tester.rs
  13 │                 
     ╰────
   help: Remove `async` keyword
+
+  ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
+    ╭─[valid_describe_callback.tsx:6:25]
+  5 │                         describe('nested', () => {
+  6 │ ╭─▶                         return Promise.resolve().then(() => {
+  7 │ │                               it('breaks', () => {
+  8 │ │                                   throw new Error('Fail')
+  9 │ │                               })
+ 10 │ ╰─▶                         })
+ 11 │                         })
+    ╰────
+  help: Remove return statement in your describe callback
 
   ⚠ eslint-plugin-vitest(valid-describe-callback): Unexpected return statement in describe callback
    ╭─[valid_describe_callback.tsx:3:21]

@@ -206,9 +206,9 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             ctx.ast.expression_call(
                 SPAN,
-                ctx.ast.vec(),
                 Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
                 Option::<TSTypeParameterInstantiation>::None,
+                ctx.ast.vec(),
                 false,
             ),
         );
@@ -226,9 +226,9 @@ impl<'a> ReactRefresh<'a> {
             ),
             Some(ctx.ast.expression_call(
                 SPAN,
-                ctx.ast.vec(),
                 ctx.ast.expression_from_identifier_reference(sig_identifier_reference.clone()),
                 Option::<TSTypeParameterInstantiation>::None,
+                ctx.ast.vec(),
                 false,
             )),
             false,
@@ -439,9 +439,9 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             ctx.ast.expression_call(
                 SPAN,
-                arguments,
                 Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
                 Option::<TSTypeParameterInstantiation>::None,
+                arguments,
                 false,
             ),
         ))
@@ -509,12 +509,12 @@ impl<'a> ReactRefresh<'a> {
                     SPAN,
                     ctx.ast.expression_call(
                         SPAN,
-                        arguments,
                         Self::create_identifier_reference_from_binding_identifier(
                             &binding_identifier,
                             ctx,
                         ),
                         Option::<TSTypeParameterInstantiation>::None,
+                        arguments,
                         false,
                     ),
                 ))
@@ -626,9 +626,9 @@ impl<'a> ReactRefresh<'a> {
                 SPAN,
                 ctx.ast.expression_call(
                     SPAN,
-                    arguments,
                     callee,
                     Option::<TSTypeParameterInstantiation>::None,
+                    arguments,
                     false,
                 ),
             ));
@@ -800,9 +800,9 @@ impl<'a> ReactRefresh<'a> {
         arguments.insert(0, Argument::from(ctx.ast.move_expression(expr)));
         *expr = self.ctx.ast.expression_call(
             SPAN,
-            arguments,
             Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
             Option::<TSTypeParameterInstantiation>::None,
+            arguments,
             false,
         );
     }

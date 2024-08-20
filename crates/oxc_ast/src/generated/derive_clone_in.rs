@@ -582,9 +582,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CallExpression<'old_alloc> 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CallExpression {
             span: self.span.clone_in(allocator),
-            arguments: self.arguments.clone_in(allocator),
             callee: self.callee.clone_in(allocator),
             type_parameters: self.type_parameters.clone_in(allocator),
+            arguments: self.arguments.clone_in(allocator),
             optional: self.optional.clone_in(allocator),
         }
     }

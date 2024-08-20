@@ -59,9 +59,9 @@ impl<'a> TypeScript<'a> {
                     ));
                     self.ctx.ast.expression_call(
                         SPAN,
-                        arguments,
                         callee,
                         Option::<TSTypeParameterInstantiation>::None,
+                        arguments,
                         false,
                     )
                 }
@@ -85,15 +85,12 @@ impl<'a> TypeScript<'a> {
     ) -> Expression<'a> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
+                let mut ident = ident.clone();
                 ident.reference_flag = ReferenceFlag::Read;
-                if let Some(reference_id) = ident.reference_id.get() {
-                    let reference = ctx.symbols_mut().get_reference_mut(reference_id);
-                    *reference.flag_mut() = ReferenceFlag::Read;
-                } else {
-                    unreachable!()
-                }
-                // SAFETY: `ast.copy` is unsound! We need to fix.
-                self.ctx.ast.expression_from_identifier_reference(unsafe { ctx.ast.copy(ident) })
+                let reference_id = ident.reference_id.get().unwrap();
+                let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+                *reference.flag_mut() = ReferenceFlag::Read;
+                self.ctx.ast.expression_from_identifier_reference(ident)
             }
             TSTypeName::QualifiedName(qualified_name) => self
                 .ctx

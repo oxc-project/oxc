@@ -20,6 +20,7 @@ mod symbol;
 mod unresolved_stack;
 
 pub mod dot;
+pub mod post_transform_checker;
 
 use std::sync::Arc;
 

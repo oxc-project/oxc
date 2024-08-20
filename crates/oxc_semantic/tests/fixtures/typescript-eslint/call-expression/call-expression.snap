@@ -25,15 +25,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "id": 0,
             "name": "foo",
-            "node_id": 15
+            "node_id": 13
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 3,
+            "id": 2,
             "name": "foo",
-            "node_id": 21
+            "node_id": 19
           }
         ]
       },
@@ -45,15 +45,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "id": 1,
             "name": "a",
-            "node_id": 14
+            "node_id": 15
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 2,
+            "id": 3,
             "name": "a",
-            "node_id": 20
+            "node_id": 21
           }
         ]
       }

@@ -67,32 +67,32 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Atom<'old_alloc> {
     }
 }
 
-impl<'a, 'b> FromIn<'a, &'b Atom<'a>> for Atom<'a> {
-    fn from_in(s: &'b Atom<'a>, _: &'a Allocator) -> Self {
+impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
+    fn from_in(s: &Atom<'alloc>, _: &'alloc Allocator) -> Self {
         Self::from(s.0)
     }
 }
 
-impl<'a, 'b> FromIn<'a, &'b str> for Atom<'a> {
-    fn from_in(s: &'b str, allocator: &'a Allocator) -> Self {
+impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
+    fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
         Self::from(oxc_allocator::String::from_str_in(s, allocator).into_bump_str())
     }
 }
 
-impl<'a> FromIn<'a, String> for Atom<'a> {
-    fn from_in(s: String, allocator: &'a Allocator) -> Self {
+impl<'alloc> FromIn<'alloc, String> for Atom<'alloc> {
+    fn from_in(s: String, allocator: &'alloc Allocator) -> Self {
         Self::from_in(s.as_str(), allocator)
     }
 }
 
-impl<'a> FromIn<'a, &String> for Atom<'a> {
-    fn from_in(s: &String, allocator: &'a Allocator) -> Self {
+impl<'alloc> FromIn<'alloc, &String> for Atom<'alloc> {
+    fn from_in(s: &String, allocator: &'alloc Allocator) -> Self {
         Self::from_in(s.as_str(), allocator)
     }
 }
 
-impl<'a, 'b> FromIn<'a, Cow<'b, str>> for Atom<'a> {
-    fn from_in(s: Cow<'b, str>, allocator: &'a Allocator) -> Self {
+impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Atom<'alloc> {
+    fn from_in(s: Cow<'_, str>, allocator: &'alloc Allocator) -> Self {
         Self::from_in(&*s, allocator)
     }
 }

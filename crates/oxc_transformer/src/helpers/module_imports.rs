@@ -146,9 +146,9 @@ impl<'a> ModuleImports<'a> {
         let decl = {
             let init = self.ast.expression_call(
                 SPAN,
-                args,
                 callee,
                 Option::<TSTypeParameterInstantiation>::None,
+                args,
                 false,
             );
             let decl = self.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);

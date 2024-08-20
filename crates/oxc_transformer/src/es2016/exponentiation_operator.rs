@@ -127,9 +127,9 @@ impl<'a> ExponentiationOperator<'a> {
         arguments.push(Argument::from(right));
         ctx.ast.expression_call(
             SPAN,
-            arguments,
             callee,
             None::<TSTypeParameterInstantiation<'_>>,
+            arguments,
             false,
         )
     }
