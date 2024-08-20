@@ -470,7 +470,7 @@ impl<'a> SemanticBuilder<'a> {
 
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
-                    let flag = *reference.flag();
+                    let flag = reference.flag();
                     if flag.is_type() && symbol_flag.can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.can_be_referenced_by_value()
                         || flag.is_ts_type_query() && symbol_flag.is_import()

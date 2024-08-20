@@ -81,7 +81,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
         let symbol_id = reference.symbol_id();
         let flag = reference.flag();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, *flag)
+        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flag)
     }
 
     pub fn maybe_generate_memoised(

@@ -91,8 +91,8 @@ impl Reference {
     }
 
     #[inline]
-    pub fn flag(&self) -> &ReferenceFlag {
-        &self.flag
+    pub fn flag(&self) -> ReferenceFlag {
+        self.flag
     }
 
     #[inline]

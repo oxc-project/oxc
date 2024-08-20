@@ -38,7 +38,7 @@ impl<'a> ExponentiationOperator<'a> {
         let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
         let symbol_id = reference.symbol_id();
         let flag = reference.flag();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, *flag)
+        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flag)
     }
 
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
