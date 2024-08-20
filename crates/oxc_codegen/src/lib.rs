@@ -547,7 +547,6 @@ impl<'a> Codegen<'a> {
     ///  }, b = 10000;
     /// ```
     fn move_comments(&mut self, position: u32, full_comment_infos: Vec<AnnotationComment>) {
-        dbg!(&full_comment_infos,);
         match self.move_comment_map.entry(position) {
             Entry::Occupied(mut occ) => {
                 occ.get_mut().extend(full_comment_infos);

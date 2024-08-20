@@ -62,7 +62,7 @@ impl<'a> Codegen<'a> {
                 let comment_end = comment.real_span_end();
                 let range_content =
                     &self.source_text[comment_end as usize..latest_comment_start as usize];
-                let all_whitespace = range_content.chars().all(|c| c.is_whitespace());
+                let all_whitespace = range_content.chars().all(char::is_whitespace);
                 latest_comment_start = comment.real_span_start();
                 all_whitespace
             })
@@ -131,7 +131,6 @@ impl<'a> Codegen<'a> {
             return;
         }
         let mut annotation_kind_set = AnnotationKind::empty();
-        dbg!(&node_start);
         if let Some(comments) = self.try_take_moved_comment(node_start) {
             self.print_comments(&comments, &mut annotation_kind_set);
         }

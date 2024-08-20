@@ -33,10 +33,7 @@ impl Comment {
 
     pub fn real_span_start(&self) -> u32 {
         match self.kind {
-            // length of `//`
-            CommentKind::SingleLine => self.span.start - 2,
-            // length of `/*`
-            CommentKind::MultiLine => self.span.start - 2,
+            CommentKind::SingleLine | CommentKind::MultiLine => self.span.start - 2,
         }
     }
 }

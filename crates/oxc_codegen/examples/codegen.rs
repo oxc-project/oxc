@@ -14,7 +14,7 @@ use pico_args::Arguments;
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
-    let twice = false || args.contains("--twice");
+    let twice = args.contains("--twice");
     let minify = args.contains("--minify");
 
     let path = Path::new(&name);
