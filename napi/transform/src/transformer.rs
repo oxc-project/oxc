@@ -108,5 +108,5 @@ fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
     .build(&mut ctx.program_mut());
 
     ctx.add_diagnostics(ret.errors);
-    ctx.codegen::<false>().build(&ctx.program())
+    ctx.codegen().build(&ctx.program())
 }

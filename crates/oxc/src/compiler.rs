@@ -2,7 +2,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, Trivias};
-use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions, WhitespaceRemover};
+use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
@@ -216,14 +216,10 @@ pub trait CompilerInterface {
     ) -> String {
         let comment_options = CommentOptions { preserve_annotate_comments: true };
 
-        if self.remove_whitespace() {
-            WhitespaceRemover::new().with_options(options).build(program).source_text
-        } else {
-            CodeGenerator::new()
-                .with_options(options)
-                .enable_comment(source_text, trivias.clone(), comment_options)
-                .build(program)
-                .source_text
-        }
+        CodeGenerator::new()
+            .with_options(CodegenOptions { minify: self.remove_whitespace(), ..options })
+            .enable_comment(source_text, trivias.clone(), comment_options)
+            .build(program)
+            .source_text
     }
 }

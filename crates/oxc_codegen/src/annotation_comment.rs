@@ -45,7 +45,7 @@ impl From<(Comment, AnnotationKind)> for AnnotationComment {
     }
 }
 
-impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
+impl<'a> Codegen<'a> {
     pub(crate) fn get_leading_annotate_comments(
         &mut self,
         node_start: u32,

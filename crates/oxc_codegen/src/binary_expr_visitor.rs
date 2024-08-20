@@ -47,8 +47,8 @@ pub enum BinaryishOperator {
     Logical(LogicalOperator),
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BinaryishOperator {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl Gen for BinaryishOperator {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Binary(op) => op.gen(p, ctx),
             Self::Logical(op) => op.gen(p, ctx),
@@ -89,7 +89,7 @@ pub struct BinaryExpressionVisitor<'a> {
 }
 
 impl<'a> BinaryExpressionVisitor<'a> {
-    pub fn gen_expr<const MINIFY: bool>(v: Self, p: &mut Codegen<'a, { MINIFY }>) {
+    pub fn gen_expr(v: Self, p: &mut Codegen<'a>) {
         let mut v = v;
         let stack_bottom = p.binary_expr_stack.len();
         loop {
@@ -133,7 +133,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         }
     }
 
-    pub fn check_and_prepare<const MINIFY: bool>(&mut self, p: &mut Codegen<{ MINIFY }>) -> bool {
+    pub fn check_and_prepare(&mut self, p: &mut Codegen) -> bool {
         let e = self.e;
         self.operator = e.operator();
 
@@ -181,7 +181,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         true
     }
 
-    pub fn visit_right_and_finish<const MINIFY: bool>(&self, p: &mut Codegen<{ MINIFY }>) {
+    pub fn visit_right_and_finish(&self, p: &mut Codegen) {
         p.print_soft_space();
         self.operator.gen(p, Context::empty());
         p.print_soft_space();

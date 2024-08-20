@@ -8,7 +8,7 @@ use std::{
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
 use oxc_allocator::Allocator;
-use oxc_codegen::WhitespaceRemover;
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -111,7 +111,11 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     let ret = Minifier::new(options).build(&allocator, program);
-    WhitespaceRemover::new().with_mangler(ret.mangler).build(program).source_text
+    CodeGenerator::new()
+        .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+        .with_mangler(ret.mangler)
+        .build(program)
+        .source_text
 }
 
 fn gzip_size(s: &str) -> usize {
