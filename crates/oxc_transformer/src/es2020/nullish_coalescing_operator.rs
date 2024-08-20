@@ -75,14 +75,8 @@ impl<'a> NullishCoalescingOperator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
         // Add `var name` to scope
-        let name = match expr {
-            Expression::Identifier(ident) => ident.name.as_str(),
-            // TODO: needs to port generateUidIdentifierBasedOnNode
-            // https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543-L545
-            _ => "nullish_coalescing_operator",
-        };
-        let symbol_id =
-            ctx.generate_uid_in_current_scope(name, SymbolFlags::FunctionScopedVariable);
+        let symbol_id = ctx
+            .generate_uid_in_current_scope_based_on_node(expr, SymbolFlags::FunctionScopedVariable);
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         {
