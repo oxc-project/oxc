@@ -799,7 +799,7 @@ pub(crate) use inherit_variants;
 ///     /// # Panic
 ///     /// Panics if not convertible.
 ///     #[inline]
-///     pub fn to_declaration_mut(&mut self) -> Option<&mut Declaration<'a>> {
+///     pub fn to_declaration_mut(&mut self) -> &mut Declaration<'a> {
 ///         self.as_declaration_mut().unwrap()
 ///     }
 /// }
