@@ -1,4 +1,3 @@
-use bitflags::Flags;
 use daachorse::DoubleArrayAhoCorasick;
 use once_cell::sync::Lazy;
 use oxc_ast::{Comment, CommentKind};
@@ -54,20 +53,16 @@ impl<'a> Codegen<'a> {
         if !self.comment_options.preserve_annotate_comments {
             return vec![];
         }
-        dbg!(&node_start);
         let mut latest_comment_start = node_start;
         let mut ret = self
             .get_leading_comments(self.latest_consumed_comment_end, node_start)
             .rev()
             // each comment should be separated by whitespaces
             .take_while(|comment| {
-                dbg!(&comment);
                 let comment_end = comment.real_span_end();
                 let range_content =
                     &self.source_text[comment_end as usize..latest_comment_start as usize];
-                println!("`{}`", range_content);
                 let all_whitespace = range_content.chars().all(|c| c.is_whitespace());
-                dbg!(&all_whitespace);
                 latest_comment_start = comment.real_span_start();
                 all_whitespace
             })
@@ -104,12 +99,12 @@ impl<'a> Codegen<'a> {
         // in this example, `Object.getOwnPropertyNames(Symbol)` and `Object.getOwnPropertyNames(Symbol).filter()`, `Object.getOwnPropertyNames(Symbol).filter().map()`
         // share the same leading comment. since they both are call expr and has same span start, we need to avoid print the same comment multiple times.
         let comment_span = comment.span();
-
-        if self.latest_consumed_comment_end >= comment.comment.real_span_end() {
+        let real_span_end = comment.comment.real_span_end();
+        if self.latest_consumed_comment_end >= real_span_end {
             return;
         }
-        self.update_last_consumed_comment_end(comment.comment.real_span_end());
-        let real_comment_end = match comment.kind() {
+        self.update_last_consumed_comment_end(real_span_end);
+        match comment.kind() {
             CommentKind::SingleLine => {
                 self.print_str("//");
                 self.print_range_of_source_code(
@@ -117,7 +112,6 @@ impl<'a> Codegen<'a> {
                 );
                 self.print_soft_newline();
                 self.print_indent();
-                comment_span.end
             }
             CommentKind::MultiLine => {
                 self.print_str("/*");
@@ -126,9 +120,8 @@ impl<'a> Codegen<'a> {
                 );
                 self.print_str("*/");
                 self.print_soft_space();
-                comment_span.end + 2
             }
-        };
+        }
         // FIXME: esbuild function `restoreExprStartFlags`
         self.start_of_default_export = self.code_len();
     }

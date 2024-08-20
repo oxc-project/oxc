@@ -155,10 +155,6 @@ impl<'a> Gen for Statement<'a> {
                 p.print_semicolon_after_statement();
             }
         }
-
-        // if p.comment_options.preserve_annotate_comments {
-        //     p.update_last_consumed_comment_end(self.span().end);
-        // }
     }
 }
 
@@ -879,9 +875,7 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
                             let leading_annotate_comments =
                                 p.get_leading_annotate_comments(self.span.start);
                             if !leading_annotate_comments.is_empty() {
-                                dbg!(&leading_annotate_comments);
                                 p.move_comments(init.span().start, leading_annotate_comments);
-                                dbg!(&p.move_comment_map);
                             }
                         }
                     }
@@ -1080,9 +1074,6 @@ impl<'a> GenExpr for Expression<'a> {
             Self::TSNonNullExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.gen_expr(p, precedence, ctx),
         }
-        // if p.comment_options.preserve_annotate_comments {
-        //     p.update_last_consumed_comment_end(self.span().end);
-        // }
     }
 }
 
@@ -1423,12 +1414,9 @@ impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         let annotate_comments = p.get_leading_annotate_comments(self.span.start);
-        dbg!(&precedence);
         if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
-        dbg!(&annotate_comments);
-        dbg!(&wrap);
         p.wrap(wrap, |p| {
             p.print_comments(&annotate_comments, &mut AnnotationKind::empty());
             p.add_source_mapping(self.span.start);
