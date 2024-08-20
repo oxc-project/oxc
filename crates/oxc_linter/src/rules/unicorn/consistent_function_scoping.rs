@@ -139,7 +139,7 @@ declare_oxc_lint!(
     /// })();
     /// ```
     ConsistentFunctionScoping,
-    suspicious,
+    correctness,
     pending
 );
 
