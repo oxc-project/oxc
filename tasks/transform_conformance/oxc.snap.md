@@ -9,16 +9,16 @@ Passed: 9/35
 # babel-plugin-transform-optional-catch-binding (0/1)
 * try-catch-shadow/input.js
   x Bindings mismatch:
-  | previous ScopeId(0): ["_unused", "_unused2"]
-  | current  ScopeId(0): ["_unused"]
+  | after transform: ScopeId(0): ["_unused", "_unused2"]
+  | rebuilt        : ScopeId(0): ["_unused"]
 
   x Bindings mismatch:
-  | previous No scope
-  | current  ScopeId(2): []
+  | after transform: No scope
+  | rebuilt        : ScopeId(2): []
 
   x Bindings mismatch:
-  | previous ScopeId(2): []
-  | current  ScopeId(3): ["_unused2"]
+  | after transform: ScopeId(2): []
+  | rebuilt        : ScopeId(3): ["_unused2"]
 
 
 
@@ -57,8 +57,8 @@ Passed: 9/35
 
 * elimination-declare/input.ts
   x Bindings mismatch:
-  | previous ScopeId(0): ["A", "ReactiveMarkerSymbol"]
-  | current  ScopeId(0): []
+  | after transform: ScopeId(0): ["A", "ReactiveMarkerSymbol"]
+  | rebuilt        : ScopeId(0): []
 
 
 * enum-member-reference/input.ts
@@ -115,350 +115,350 @@ Passed: 9/35
 # babel-plugin-transform-react-jsx (6/27)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(23): Some("_s")
-  | current  ReferenceId(0): None
+  | after transform: ReferenceId(23): Some("_s")
+  | rebuilt        : ReferenceId(0): None
 
   x Reference mismatch:
-  | previous ReferenceId(26): Some("_s2")
-  | current  ReferenceId(1): None
+  | after transform: ReferenceId(26): Some("_s2")
+  | rebuilt        : ReferenceId(1): None
 
   x Reference mismatch:
-  | previous ReferenceId(29): Some("_s3")
-  | current  ReferenceId(2): None
+  | after transform: ReferenceId(29): Some("_s3")
+  | rebuilt        : ReferenceId(2): None
 
   x Reference mismatch:
-  | previous ReferenceId(33): Some("_s4")
-  | current  ReferenceId(3): None
+  | after transform: ReferenceId(33): Some("_s4")
+  | rebuilt        : ReferenceId(3): None
 
   x Reference mismatch:
-  | previous ReferenceId(37): Some("_s5")
-  | current  ReferenceId(4): None
+  | after transform: ReferenceId(37): Some("_s5")
+  | rebuilt        : ReferenceId(4): None
 
   x Reference mismatch:
-  | previous ReferenceId(41): Some("_s6")
-  | current  ReferenceId(5): None
+  | after transform: ReferenceId(41): Some("_s6")
+  | rebuilt        : ReferenceId(5): None
 
   x Reference mismatch:
-  | previous ReferenceId(45): Some("_c")
-  | current  ReferenceId(45): None
+  | after transform: ReferenceId(45): Some("_c")
+  | rebuilt        : ReferenceId(45): None
 
   x Reference mismatch:
-  | previous ReferenceId(47): Some("_c2")
-  | current  ReferenceId(47): None
+  | after transform: ReferenceId(47): Some("_c2")
+  | rebuilt        : ReferenceId(47): None
 
   x Reference mismatch:
-  | previous ReferenceId(49): Some("_c3")
-  | current  ReferenceId(49): None
+  | after transform: ReferenceId(49): Some("_c3")
+  | rebuilt        : ReferenceId(49): None
 
   x Reference mismatch:
-  | previous ReferenceId(51): Some("_c4")
-  | current  ReferenceId(51): None
+  | after transform: ReferenceId(51): Some("_c4")
+  | rebuilt        : ReferenceId(51): None
 
   x Reference mismatch:
-  | previous ReferenceId(53): Some("_c5")
-  | current  ReferenceId(53): None
+  | after transform: ReferenceId(53): Some("_c5")
+  | rebuilt        : ReferenceId(53): None
 
 
 * refresh/does-not-consider-require-like-methods-to-be-hocs/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(21): Some("_c")
-  | current  ReferenceId(17): None
+  | after transform: ReferenceId(21): Some("_c")
+  | rebuilt        : ReferenceId(17): None
 
 
 * refresh/does-not-get-tripped-by-iifes/input.jsx
   x Bindings mismatch:
-  | previous ScopeId(0): []
-  | current  ScopeId(0): ["_s"]
+  | after transform: ScopeId(0): []
+  | rebuilt        : ScopeId(0): ["_s"]
 
   x Bindings mismatch:
-  | previous ScopeId(1): ["_s"]
-  | current  ScopeId(1): []
+  | after transform: ScopeId(1): ["_s"]
+  | rebuilt        : ScopeId(1): []
 
   x Reference mismatch:
-  | previous ReferenceId(3): Some("_s")
-  | current  ReferenceId(1): None
+  | after transform: ReferenceId(3): Some("_s")
+  | rebuilt        : ReferenceId(1): None
 
 
 * refresh/generates-signatures-for-function-declarations-calling-hooks/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(6): Some("_s")
-  | current  ReferenceId(0): None
+  | after transform: ReferenceId(6): Some("_s")
+  | rebuilt        : ReferenceId(0): None
 
   x Reference mismatch:
-  | previous ReferenceId(10): Some("_c")
-  | current  ReferenceId(10): None
+  | after transform: ReferenceId(10): Some("_c")
+  | rebuilt        : ReferenceId(10): None
 
 
 * refresh/generates-signatures-for-function-expressions-calling-hooks/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(26): Some("_s")
-  | current  ReferenceId(0): None
+  | after transform: ReferenceId(26): Some("_s")
+  | rebuilt        : ReferenceId(0): None
 
   x Reference mismatch:
-  | previous ReferenceId(32): Some("_s2")
-  | current  ReferenceId(1): None
+  | after transform: ReferenceId(32): Some("_s2")
+  | rebuilt        : ReferenceId(1): None
 
   x Reference mismatch:
-  | previous ReferenceId(38): Some("_s3")
-  | current  ReferenceId(32): None
+  | after transform: ReferenceId(38): Some("_s3")
+  | rebuilt        : ReferenceId(32): None
 
   x Reference mismatch:
-  | previous ReferenceId(41): Some("_c")
-  | current  ReferenceId(41): None
+  | after transform: ReferenceId(41): Some("_c")
+  | rebuilt        : ReferenceId(41): None
 
   x Reference mismatch:
-  | previous ReferenceId(43): Some("_c2")
-  | current  ReferenceId(43): None
+  | after transform: ReferenceId(43): Some("_c2")
+  | rebuilt        : ReferenceId(43): None
 
   x Reference mismatch:
-  | previous ReferenceId(45): Some("_c3")
-  | current  ReferenceId(45): None
+  | after transform: ReferenceId(45): Some("_c3")
+  | rebuilt        : ReferenceId(45): None
 
   x Reference mismatch:
-  | previous ReferenceId(47): Some("_c4")
-  | current  ReferenceId(47): None
+  | after transform: ReferenceId(47): Some("_c4")
+  | rebuilt        : ReferenceId(47): None
 
   x Reference mismatch:
-  | previous ReferenceId(49): Some("_c5")
-  | current  ReferenceId(49): None
+  | after transform: ReferenceId(49): Some("_c5")
+  | rebuilt        : ReferenceId(49): None
 
   x Reference mismatch:
-  | previous ReferenceId(51): Some("_c6")
-  | current  ReferenceId(51): None
+  | after transform: ReferenceId(51): Some("_c6")
+  | rebuilt        : ReferenceId(51): None
 
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
   x Bindings mismatch:
-  | previous No scope
-  | current  ScopeId(3): []
+  | after transform: No scope
+  | rebuilt        : ScopeId(3): []
 
   x Reference mismatch:
-  | previous ReferenceId(17): Some("_s2")
-  | current  ReferenceId(0): None
+  | after transform: ReferenceId(17): Some("_s2")
+  | rebuilt        : ReferenceId(0): None
 
   x Reference mismatch:
-  | previous ReferenceId(12): Some("_s")
-  | current  ReferenceId(2): None
+  | after transform: ReferenceId(12): Some("_s")
+  | rebuilt        : ReferenceId(2): None
 
   x Reference mismatch:
-  | previous ReferenceId(21): Some("_c")
-  | current  ReferenceId(21): None
+  | after transform: ReferenceId(21): Some("_c")
+  | rebuilt        : ReferenceId(21): None
 
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
   x Bindings mismatch:
-  | previous No scope
-  | current  ScopeId(2): []
+  | after transform: No scope
+  | rebuilt        : ScopeId(2): []
 
   x Bindings mismatch:
-  | previous No scope
-  | current  ScopeId(6): []
+  | after transform: No scope
+  | rebuilt        : ScopeId(6): []
 
   x Reference mismatch:
-  | previous ReferenceId(10): Some("_s")
-  | current  ReferenceId(0): None
+  | after transform: ReferenceId(10): Some("_s")
+  | rebuilt        : ReferenceId(0): None
 
   x Reference mismatch:
-  | previous ReferenceId(14): Some("_s2")
-  | current  ReferenceId(1): None
+  | after transform: ReferenceId(14): Some("_s2")
+  | rebuilt        : ReferenceId(1): None
 
   x Reference mismatch:
-  | previous ReferenceId(19): Some("_s3")
-  | current  ReferenceId(2): None
+  | after transform: ReferenceId(19): Some("_s3")
+  | rebuilt        : ReferenceId(2): None
 
   x Reference mismatch:
-  | previous ReferenceId(23): Some("_c")
-  | current  ReferenceId(23): None
+  | after transform: ReferenceId(23): Some("_c")
+  | rebuilt        : ReferenceId(23): None
 
 
 * refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(14): Some("_c")
-  | current  ReferenceId(14): None
+  | after transform: ReferenceId(14): Some("_c")
+  | rebuilt        : ReferenceId(14): None
 
   x Reference mismatch:
-  | previous ReferenceId(16): Some("_c2")
-  | current  ReferenceId(16): None
+  | after transform: ReferenceId(16): Some("_c2")
+  | rebuilt        : ReferenceId(16): None
 
   x Reference mismatch:
-  | previous ReferenceId(18): Some("_c3")
-  | current  ReferenceId(18): None
+  | after transform: ReferenceId(18): Some("_c3")
+  | rebuilt        : ReferenceId(18): None
 
   x Reference mismatch:
-  | previous ReferenceId(20): Some("_c4")
-  | current  ReferenceId(20): None
+  | after transform: ReferenceId(20): Some("_c4")
+  | rebuilt        : ReferenceId(20): None
 
 
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(53): Some("_c")
-  | current  ReferenceId(44): None
+  | after transform: ReferenceId(53): Some("_c")
+  | rebuilt        : ReferenceId(44): None
 
   x Reference mismatch:
-  | previous ReferenceId(55): Some("_c2")
-  | current  ReferenceId(46): None
+  | after transform: ReferenceId(55): Some("_c2")
+  | rebuilt        : ReferenceId(46): None
 
   x Reference mismatch:
-  | previous ReferenceId(57): Some("_c3")
-  | current  ReferenceId(48): None
+  | after transform: ReferenceId(57): Some("_c3")
+  | rebuilt        : ReferenceId(48): None
 
   x Reference mismatch:
-  | previous ReferenceId(59): Some("_c4")
-  | current  ReferenceId(50): None
+  | after transform: ReferenceId(59): Some("_c4")
+  | rebuilt        : ReferenceId(50): None
 
   x Reference mismatch:
-  | previous ReferenceId(61): Some("_c5")
-  | current  ReferenceId(52): None
+  | after transform: ReferenceId(61): Some("_c5")
+  | rebuilt        : ReferenceId(52): None
 
   x Reference mismatch:
-  | previous ReferenceId(63): Some("_c6")
-  | current  ReferenceId(54): None
+  | after transform: ReferenceId(63): Some("_c6")
+  | rebuilt        : ReferenceId(54): None
 
 
 * refresh/registers-identifiers-used-in-react-create-element-at-definition-site/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(45): Some("_c")
-  | current  ReferenceId(45): None
+  | after transform: ReferenceId(45): Some("_c")
+  | rebuilt        : ReferenceId(45): None
 
   x Reference mismatch:
-  | previous ReferenceId(47): Some("_c2")
-  | current  ReferenceId(47): None
+  | after transform: ReferenceId(47): Some("_c2")
+  | rebuilt        : ReferenceId(47): None
 
   x Reference mismatch:
-  | previous ReferenceId(49): Some("_c3")
-  | current  ReferenceId(49): None
+  | after transform: ReferenceId(49): Some("_c3")
+  | rebuilt        : ReferenceId(49): None
 
   x Reference mismatch:
-  | previous ReferenceId(51): Some("_c4")
-  | current  ReferenceId(51): None
+  | after transform: ReferenceId(51): Some("_c4")
+  | rebuilt        : ReferenceId(51): None
 
   x Reference mismatch:
-  | previous ReferenceId(53): Some("_c5")
-  | current  ReferenceId(53): None
+  | after transform: ReferenceId(53): Some("_c5")
+  | rebuilt        : ReferenceId(53): None
 
   x Reference mismatch:
-  | previous ReferenceId(55): Some("_c6")
-  | current  ReferenceId(55): None
+  | after transform: ReferenceId(55): Some("_c6")
+  | rebuilt        : ReferenceId(55): None
 
 
 * refresh/registers-likely-hocs-with-inline-functions-1/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(18): Some("_c")
-  | current  ReferenceId(18): None
+  | after transform: ReferenceId(18): Some("_c")
+  | rebuilt        : ReferenceId(18): None
 
   x Reference mismatch:
-  | previous ReferenceId(20): Some("_c2")
-  | current  ReferenceId(20): None
+  | after transform: ReferenceId(20): Some("_c2")
+  | rebuilt        : ReferenceId(20): None
 
   x Reference mismatch:
-  | previous ReferenceId(22): Some("_c3")
-  | current  ReferenceId(22): None
+  | after transform: ReferenceId(22): Some("_c3")
+  | rebuilt        : ReferenceId(22): None
 
   x Reference mismatch:
-  | previous ReferenceId(24): Some("_c4")
-  | current  ReferenceId(24): None
+  | after transform: ReferenceId(24): Some("_c4")
+  | rebuilt        : ReferenceId(24): None
 
   x Reference mismatch:
-  | previous ReferenceId(26): Some("_c5")
-  | current  ReferenceId(26): None
+  | after transform: ReferenceId(26): Some("_c5")
+  | rebuilt        : ReferenceId(26): None
 
   x Reference mismatch:
-  | previous ReferenceId(28): Some("_c6")
-  | current  ReferenceId(28): None
+  | after transform: ReferenceId(28): Some("_c6")
+  | rebuilt        : ReferenceId(28): None
 
   x Reference mismatch:
-  | previous ReferenceId(30): Some("_c7")
-  | current  ReferenceId(30): None
+  | after transform: ReferenceId(30): Some("_c7")
+  | rebuilt        : ReferenceId(30): None
 
   x Reference mismatch:
-  | previous ReferenceId(32): Some("_c8")
-  | current  ReferenceId(32): None
+  | after transform: ReferenceId(32): Some("_c8")
+  | rebuilt        : ReferenceId(32): None
 
 
 * refresh/registers-likely-hocs-with-inline-functions-2/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(6): Some("_c")
-  | current  ReferenceId(6): None
+  | after transform: ReferenceId(6): Some("_c")
+  | rebuilt        : ReferenceId(6): None
 
   x Reference mismatch:
-  | previous ReferenceId(8): Some("_c2")
-  | current  ReferenceId(8): None
+  | after transform: ReferenceId(8): Some("_c2")
+  | rebuilt        : ReferenceId(8): None
 
   x Reference mismatch:
-  | previous ReferenceId(10): Some("_c3")
-  | current  ReferenceId(10): None
+  | after transform: ReferenceId(10): Some("_c3")
+  | rebuilt        : ReferenceId(10): None
 
 
 * refresh/registers-likely-hocs-with-inline-functions-3/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(6): Some("_c")
-  | current  ReferenceId(6): None
+  | after transform: ReferenceId(6): Some("_c")
+  | rebuilt        : ReferenceId(6): None
 
   x Reference mismatch:
-  | previous ReferenceId(8): Some("_c2")
-  | current  ReferenceId(8): None
+  | after transform: ReferenceId(8): Some("_c2")
+  | rebuilt        : ReferenceId(8): None
 
   x Reference mismatch:
-  | previous ReferenceId(10): Some("_c3")
-  | current  ReferenceId(10): None
+  | after transform: ReferenceId(10): Some("_c3")
+  | rebuilt        : ReferenceId(10): None
 
 
 * refresh/registers-top-level-exported-function-declarations/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(14): Some("_c")
-  | current  ReferenceId(13): None
+  | after transform: ReferenceId(14): Some("_c")
+  | rebuilt        : ReferenceId(13): None
 
   x Reference mismatch:
-  | previous ReferenceId(16): Some("_c2")
-  | current  ReferenceId(15): None
+  | after transform: ReferenceId(16): Some("_c2")
+  | rebuilt        : ReferenceId(15): None
 
   x Reference mismatch:
-  | previous ReferenceId(18): Some("_c3")
-  | current  ReferenceId(17): None
+  | after transform: ReferenceId(18): Some("_c3")
+  | rebuilt        : ReferenceId(17): None
 
 
 * refresh/registers-top-level-exported-named-arrow-functions/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(12): Some("_c")
-  | current  ReferenceId(10): None
+  | after transform: ReferenceId(12): Some("_c")
+  | rebuilt        : ReferenceId(10): None
 
   x Reference mismatch:
-  | previous ReferenceId(14): Some("_c2")
-  | current  ReferenceId(12): None
+  | after transform: ReferenceId(14): Some("_c2")
+  | rebuilt        : ReferenceId(12): None
 
 
 * refresh/registers-top-level-function-declarations/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(9): Some("_c")
-  | current  ReferenceId(8): None
+  | after transform: ReferenceId(9): Some("_c")
+  | rebuilt        : ReferenceId(8): None
 
   x Reference mismatch:
-  | previous ReferenceId(11): Some("_c2")
-  | current  ReferenceId(10): None
+  | after transform: ReferenceId(11): Some("_c2")
+  | rebuilt        : ReferenceId(10): None
 
 
 * refresh/registers-top-level-variable-declarations-with-arrow-functions/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(12): Some("_c")
-  | current  ReferenceId(11): None
+  | after transform: ReferenceId(12): Some("_c")
+  | rebuilt        : ReferenceId(11): None
 
   x Reference mismatch:
-  | previous ReferenceId(14): Some("_c2")
-  | current  ReferenceId(13): None
+  | after transform: ReferenceId(14): Some("_c2")
+  | rebuilt        : ReferenceId(13): None
 
   x Reference mismatch:
-  | previous ReferenceId(16): Some("_c3")
-  | current  ReferenceId(15): None
+  | after transform: ReferenceId(16): Some("_c3")
+  | rebuilt        : ReferenceId(15): None
 
 
 * refresh/registers-top-level-variable-declarations-with-function-expressions/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(9): Some("_c")
-  | current  ReferenceId(8): None
+  | after transform: ReferenceId(9): Some("_c")
+  | rebuilt        : ReferenceId(8): None
 
   x Reference mismatch:
-  | previous ReferenceId(11): Some("_c2")
-  | current  ReferenceId(10): None
+  | after transform: ReferenceId(11): Some("_c2")
+  | rebuilt        : ReferenceId(10): None
 
 
 * refresh/supports-typescript-namespace-syntax/input.tsx
@@ -607,18 +607,18 @@ Passed: 9/35
 
 * refresh/uses-custom-identifiers-for-refresh-reg-and-refresh-sig/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(7): Some("_s")
-  | current  ReferenceId(0): None
+  | after transform: ReferenceId(7): Some("_s")
+  | rebuilt        : ReferenceId(0): None
 
   x Reference mismatch:
-  | previous ReferenceId(11): Some("_c")
-  | current  ReferenceId(10): None
+  | after transform: ReferenceId(11): Some("_c")
+  | rebuilt        : ReferenceId(10): None
 
 
 * refresh/uses-original-function-declaration-if-it-get-reassigned/input.jsx
   x Reference mismatch:
-  | previous ReferenceId(6): Some("_c")
-  | current  ReferenceId(6): None
+  | after transform: ReferenceId(6): Some("_c")
+  | rebuilt        : ReferenceId(6): None
 
 
 

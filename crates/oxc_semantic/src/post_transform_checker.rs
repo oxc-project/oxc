@@ -121,8 +121,8 @@ impl PostTransformChecker {
             let message = format!(
                 "
 Bindings mismatch:
-previous {result_transformer}
-current  {result_rebuild}
+after transform: {result_transformer}
+rebuilt        : {result_rebuild}
                 "
             );
             self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
@@ -166,8 +166,8 @@ current  {result_rebuild}
                 let message = format!(
                     "
 Symbol mismatch:
-previous {symbol_id_transformer:?}: {symbol_name_transformer:?}
-current  {symbol_id_rebuild:?}: {symbol_name_rebuild:?}
+after transform: {symbol_id_transformer:?}: {symbol_name_transformer:?}
+rebuilt        : {symbol_id_rebuild:?}: {symbol_name_rebuild:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
@@ -213,8 +213,8 @@ current  {symbol_id_rebuild:?}: {symbol_name_rebuild:?}
                 let message = format!(
                     "
 Reference mismatch:
-previous {reference_id_transformer:?}: {symbol_name_transformer:?}
-current  {reference_id_rebuild:?}: {symbol_name_rebuild:?}
+after transform: {reference_id_transformer:?}: {symbol_name_transformer:?}
+rebuilt        : {reference_id_rebuild:?}: {symbol_name_rebuild:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));

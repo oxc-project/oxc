@@ -3,58 +3,58 @@ AST Parsed     : 25/25 (100.00%)
 Positive Passed: 16/25 (64.00%)
 tasks/coverage/misc/pass/oxc-1288.ts
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["from"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["from"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-1289.ts
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["infer", "target", "type"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["infer", "target", "type"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-2087.ts
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["Helpers"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["Helpers"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-2394.ts
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["A"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["A"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-2592.ts
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["Foo"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["Foo"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/misc/pass/oxc-3443.tsx
 semantic error: Bindings mismatch:
-previous ScopeId(1): ["T"]
-current  ScopeId(1): []
+after transform: ScopeId(1): ["T"]
+rebuilt        : ScopeId(1): []
 Bindings mismatch:
-previous ScopeId(2): ["T"]
-current  ScopeId(2): []
+after transform: ScopeId(2): ["T"]
+rebuilt        : ScopeId(2): []
 
 tasks/coverage/misc/pass/oxc-3948-1.ts
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
-current  ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 
 tasks/coverage/misc/pass/oxc-4449.ts
 semantic error: Bindings mismatch:
-previous ScopeId(5): ["E", "baz"]
-current  ScopeId(5): ["E"]
+after transform: ScopeId(5): ["E", "baz"]
+rebuilt        : ScopeId(5): ["E"]
 Bindings mismatch:
-previous ScopeId(6): ["F", "baz"]
-current  ScopeId(6): ["F"]
+after transform: ScopeId(6): ["F", "baz"]
+rebuilt        : ScopeId(6): ["F"]
 Bindings mismatch:
-previous ScopeId(7): ["G", "baz"]
-current  ScopeId(7): ["G"]
+after transform: ScopeId(7): ["G", "baz"]
+rebuilt        : ScopeId(7): ["G"]
 Bindings mismatch:
-previous ScopeId(8): ["H", "baz"]
-current  ScopeId(8): ["H"]
+after transform: ScopeId(8): ["H", "baz"]
+rebuilt        : ScopeId(8): ["H"]
 
 tasks/coverage/misc/pass/swc-7187.ts
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["K"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["K"]
+rebuilt        : ScopeId(0): []
 

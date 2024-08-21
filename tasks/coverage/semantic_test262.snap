@@ -5,121 +5,121 @@ AST Parsed     : 46406/46406 (100.00%)
 Positive Passed: 46382/46406 (99.95%)
 tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns1", "ns3"]
-current  ScopeId(0): ["global"]
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns1", "ns3"]
+rebuilt        : ScopeId(0): ["global"]
 
 tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns1", "ns2"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns1", "ns2"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/eval-self-once.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns", "ns1"]
-current  ScopeId(0): ["global"]
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns", "ns1"]
+rebuilt        : ScopeId(0): ["global"]
 
 tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-many.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-trlng-comma.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-value-string-double.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-assertions/import-assertion-value-string-single.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-attributes/allow-nlt-before-with.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-many.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-trlng-comma.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-double.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-single.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous-as.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["y"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["y"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-as.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-dflt.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-as.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["y"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["y"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-dflt.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-named-err-not-found.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["x"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/instn-once.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns", "ns1", "x"]
-current  ScopeId(0): ["x"]
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns", "ns1", "x"]
+rebuilt        : ScopeId(0): ["x"]
 
 tasks/coverage/test262/test/language/module-code/instn-star-err-not-found.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["ns"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["ns"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-body.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["foo"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["foo"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-tick.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["foo"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["foo"]
+rebuilt        : ScopeId(0): []
 
 tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection.js
 semantic error: Bindings mismatch:
-previous ScopeId(0): ["resolved"]
-current  ScopeId(0): []
+after transform: ScopeId(0): ["resolved"]
+rebuilt        : ScopeId(0): []
 
