@@ -91,12 +91,12 @@ impl Reference {
     }
 
     #[inline]
-    pub fn flag(&self) -> ReferenceFlags {
+    pub fn flags(&self) -> ReferenceFlags {
         self.flag
     }
 
     #[inline]
-    pub fn flag_mut(&mut self) -> &mut ReferenceFlags {
+    pub fn flags_mut(&mut self) -> &mut ReferenceFlags {
         &mut self.flag
     }
 

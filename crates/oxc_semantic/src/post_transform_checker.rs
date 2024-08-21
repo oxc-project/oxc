@@ -161,7 +161,7 @@ current  symbol {cur_symbol_id:?}: {cur_symbol_id:?}
         // Check whether references are valid
         for reference_id in current_collect.reference_ids.iter().copied() {
             let reference = current_symbols.get_reference(reference_id);
-            if reference.flag().is_empty() {
+            if reference.flags().is_empty() {
                 self.errors.push(OxcDiagnostic::error(format!(
                     "Expect ReferenceFlags for IdentifierReference({reference_id:?}) to not be empty",
                 )));

@@ -89,7 +89,7 @@ impl<'a> TypeScript<'a> {
                 ident.reference_flags = ReferenceFlags::Read;
                 let reference_id = ident.reference_id.get().unwrap();
                 let reference = ctx.symbols_mut().get_reference_mut(reference_id);
-                *reference.flag_mut() = ReferenceFlags::Read;
+                *reference.flags_mut() = ReferenceFlags::Read;
                 self.ctx.ast.expression_from_identifier_reference(ident)
             }
             TSTypeName::QualifiedName(qualified_name) => self
