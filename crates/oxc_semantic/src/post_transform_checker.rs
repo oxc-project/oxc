@@ -150,8 +150,8 @@ current  scope {cur_scope_id:?}: {current_bindings:?}
                 let message = format!(
                     "
 Symbol Mismatch:
-previous symbol {prev_symbol_id:?}: {prev_symbol_id:?}
-current  symbol {cur_symbol_id:?}: {cur_symbol_id:?}
+previous symbol {prev_symbol_id:?}: {prev_symbol_name:?}
+current  symbol {cur_symbol_id:?}: {cur_symbol_name:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
