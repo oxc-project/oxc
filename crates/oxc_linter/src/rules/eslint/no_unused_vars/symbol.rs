@@ -1,4 +1,4 @@
-use oxc_ast::ast::VariableDeclarator;
+use oxc_ast::ast::{ImportDeclarationSpecifier, VariableDeclarator};
 use std::{cell::OnceCell, fmt};
 
 use oxc_ast::{
@@ -254,6 +254,12 @@ impl<'a> PartialEq<AssignmentTarget<'a>> for Symbol<'_, 'a> {
             AssignmentTarget::AssignmentTargetIdentifier(id) => self == id.as_ref(),
             _ => false,
         }
+    }
+}
+
+impl<'s, 'a> PartialEq<ImportDeclarationSpecifier<'a>> for Symbol<'s, 'a> {
+    fn eq(&self, import: &ImportDeclarationSpecifier<'a>) -> bool {
+        self == import.local()
     }
 }
 

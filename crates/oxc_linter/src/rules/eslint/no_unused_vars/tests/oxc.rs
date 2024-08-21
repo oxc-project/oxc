@@ -533,6 +533,25 @@ fn test_imports() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        // type imports
+        (
+            "import { type foo, bar } from './foo'; bar();",
+            "import { bar } from './foo'; bar();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, type bar, baz } from './foo'; foo(baz);",
+            "import { foo, baz } from './foo'; foo(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo, { type bar } from './foo'; foo();",
+            "import foo, { } from './foo'; foo();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
