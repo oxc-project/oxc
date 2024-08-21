@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-assertion/
         "node": "VariableDeclarator(x)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read | Write)",
+            "flag": "ReferenceFlags(Read | Write)",
             "id": 0,
             "name": "x",
             "node_id": 14

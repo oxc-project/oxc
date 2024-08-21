@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
-    reference::{ReferenceFlag, ReferenceId},
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -320,7 +320,7 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_bound_reference(
         &mut self,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_bound_reference(symbol_id, flag)
     }
@@ -333,7 +333,7 @@ impl<'a> TraverseCtx<'a> {
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         self.scoping.create_bound_reference_id(span, name, symbol_id, flag)
     }
@@ -344,7 +344,7 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_unbound_reference(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flag)
     }
@@ -356,7 +356,7 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         span: Span,
         name: Atom<'a>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         self.scoping.create_unbound_reference_id(span, name, flag)
     }
@@ -371,7 +371,7 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         name: CompactStr,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_reference(name, symbol_id, flag)
     }
@@ -387,7 +387,7 @@ impl<'a> TraverseCtx<'a> {
         span: Span,
         name: Atom<'a>,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         self.scoping.create_reference_id(span, name, symbol_id, flag)
     }
@@ -398,7 +398,7 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_reference_in_current_scope(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_reference_in_current_scope(name, flag)
     }
@@ -413,7 +413,7 @@ impl<'a> TraverseCtx<'a> {
     pub fn clone_identifier_reference(
         &mut self,
         ident: &IdentifierReference<'a>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         self.scoping.clone_identifier_reference(ident, flag)
     }

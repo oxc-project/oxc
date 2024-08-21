@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_syntax::reference::ReferenceFlag;
+use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::TraverseCtx;
 
 use super::TypeScript;
@@ -86,10 +86,10 @@ impl<'a> TypeScript<'a> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
                 let mut ident = ident.clone();
-                ident.reference_flag = ReferenceFlag::Read;
+                ident.reference_flag = ReferenceFlags::Read;
                 let reference_id = ident.reference_id.get().unwrap();
                 let reference = ctx.symbols_mut().get_reference_mut(reference_id);
-                *reference.flag_mut() = ReferenceFlag::Read;
+                *reference.flag_mut() = ReferenceFlags::Read;
                 self.ctx.ast.expression_from_identifier_reference(ident)
             }
             TSTypeName::QualifiedName(qualified_name) => self

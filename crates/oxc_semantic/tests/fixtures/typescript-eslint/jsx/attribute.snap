@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/attribute.t
         "node": "VariableDeclarator(x)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 1,
             "name": "x",
             "node_id": 17

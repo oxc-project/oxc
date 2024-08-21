@@ -9,7 +9,7 @@ use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     operator::AssignmentOperator,
-    reference::ReferenceFlag,
+    reference::ReferenceFlags,
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
@@ -594,7 +594,7 @@ struct Assignment<'a> {
 impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
-        let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlag::Read);
+        let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
         let id = IdentifierReference::new_read(self.span, self.name.clone(), Some(reference_id));
 
         ctx.ast.statement_expression(

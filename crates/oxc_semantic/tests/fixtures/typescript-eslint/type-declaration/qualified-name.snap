@@ -31,7 +31,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flag": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
             "node_id": 11

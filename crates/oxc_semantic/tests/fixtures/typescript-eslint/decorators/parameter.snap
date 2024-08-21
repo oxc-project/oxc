@@ -68,25 +68,25 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
         "node": "Function(decorator)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "decorator",
             "node_id": 15
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 1,
             "name": "decorator",
             "node_id": 19
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 2,
             "name": "decorator",
             "node_id": 24
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 3,
             "name": "decorator",
             "node_id": 31

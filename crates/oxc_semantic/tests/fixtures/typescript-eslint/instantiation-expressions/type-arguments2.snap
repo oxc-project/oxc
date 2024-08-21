@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "T",
                 "node_id": 12
@@ -32,7 +32,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "node": "FormalParameter(value)",
             "references": [
               {
-                "flag": "ReferenceFlag(Read)",
+                "flag": "ReferenceFlags(Read)",
                 "id": 1,
                 "name": "value",
                 "node_id": 19
@@ -54,7 +54,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 3,
                 "name": "T",
                 "node_id": 31
@@ -75,13 +75,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         "node": "Function(makeBox)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read | TSTypeQuery)",
+            "flag": "ReferenceFlags(Read | TSTypeQuery)",
             "id": 2,
             "name": "makeBox",
             "node_id": 27
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 4,
             "name": "makeBox",
             "node_id": 36

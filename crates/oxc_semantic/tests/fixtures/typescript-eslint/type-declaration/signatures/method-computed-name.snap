@@ -39,7 +39,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "VariableDeclarator(x)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "x",
             "node_id": 14
@@ -53,13 +53,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flag": "ReferenceFlags(Type)",
             "id": 1,
             "name": "T",
             "node_id": 21
           },
           {
-            "flag": "ReferenceFlag(Type)",
+            "flag": "ReferenceFlags(Type)",
             "id": 2,
             "name": "T",
             "node_id": 25

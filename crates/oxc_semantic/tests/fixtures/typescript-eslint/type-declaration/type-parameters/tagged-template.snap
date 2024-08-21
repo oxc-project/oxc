@@ -46,7 +46,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flag": "ReferenceFlags(Type)",
             "id": 1,
             "name": "StyledPaymentProps",
             "node_id": 31
@@ -60,7 +60,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "Function(div)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "div",
             "node_id": 26

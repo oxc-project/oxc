@@ -57,7 +57,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::*;
-use oxc_semantic::{ReferenceFlag, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
 use oxc_traverse::TraverseCtx;
@@ -117,7 +117,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
             .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
 
         // _name = name
-        Some(ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Write))
+        Some(ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Write))
     }
 
     pub fn transform_statements(

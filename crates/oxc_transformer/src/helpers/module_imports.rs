@@ -3,7 +3,7 @@ use std::cell::{Cell, RefCell};
 use indexmap::IndexMap;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_semantic::ReferenceFlag;
+use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::TraverseCtx;
@@ -123,7 +123,7 @@ impl<'a> ModuleImports<'a> {
         let var_kind = VariableDeclarationKind::Var;
         let symbol_id = ctx.scopes().get_root_binding("require");
         let ident =
-            ctx.create_reference_id(SPAN, Atom::from("require"), symbol_id, ReferenceFlag::read());
+            ctx.create_reference_id(SPAN, Atom::from("require"), symbol_id, ReferenceFlags::read());
         let callee = self.ast.expression_from_identifier_reference(ident);
 
         let args = {

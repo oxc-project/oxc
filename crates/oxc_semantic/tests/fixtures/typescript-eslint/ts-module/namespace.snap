@@ -32,13 +32,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/names
         "node": "TSModuleDeclaration(Foo)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Foo",
             "node_id": 12
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 2,
             "name": "Foo",
             "node_id": 20

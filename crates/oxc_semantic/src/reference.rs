@@ -1,7 +1,7 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
+pub use oxc_syntax::reference::{ReferenceFlags, ReferenceId};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -11,8 +11,8 @@ use crate::{symbol::SymbolId, AstNodeId};
 
 /// Describes where and how a Symbol is used in the AST.
 ///
-/// References indicate how they are being used using [`ReferenceFlag`]. Refer
-/// to the documentation for [`ReferenceFlag`] for more information.
+/// References indicate how they are being used using [`ReferenceFlags`]. Refer
+/// to the documentation for [`ReferenceFlags`] for more information.
 ///
 /// ## Resolution
 /// References to symbols that could be resolved have their `symbol_id` field
@@ -45,13 +45,13 @@ pub struct Reference {
     symbol_id: Option<SymbolId>,
     /// Describes how this referenced is used by other AST nodes. References can
     /// be reads, writes, or both.
-    flag: ReferenceFlag,
+    flag: ReferenceFlags,
 }
 
 impl Reference {
     /// Create a new unresolved reference.
     #[inline]
-    pub fn new(node_id: AstNodeId, flag: ReferenceFlag) -> Self {
+    pub fn new(node_id: AstNodeId, flag: ReferenceFlags) -> Self {
         Self { node_id, symbol_id: None, flag }
     }
 
@@ -60,7 +60,7 @@ impl Reference {
     pub fn new_with_symbol_id(
         node_id: AstNodeId,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> Self {
         Self { node_id, symbol_id: Some(symbol_id), flag }
     }
@@ -91,12 +91,12 @@ impl Reference {
     }
 
     #[inline]
-    pub fn flag(&self) -> ReferenceFlag {
+    pub fn flag(&self) -> ReferenceFlags {
         self.flag
     }
 
     #[inline]
-    pub fn flag_mut(&mut self) -> &mut ReferenceFlag {
+    pub fn flag_mut(&mut self) -> &mut ReferenceFlags {
         &mut self.flag
     }
 

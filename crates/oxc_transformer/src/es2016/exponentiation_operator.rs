@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::*;
-use oxc_semantic::{ReferenceFlag, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::TraverseCtx;
@@ -117,7 +117,7 @@ impl<'a> ExponentiationOperator<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let ident_math =
-            ctx.create_reference_id(SPAN, ctx.ast.atom("Math"), None, ReferenceFlag::Read);
+            ctx.create_reference_id(SPAN, ctx.ast.atom("Math"), None, ReferenceFlags::Read);
         let object = ctx.ast.expression_from_identifier_reference(ident_math);
         let property = ctx.ast.identifier_name(SPAN, "pow");
         let callee =
@@ -308,7 +308,7 @@ impl<'a> ExponentiationOperator<'a> {
         }
 
         let ident =
-            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
+            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Read);
 
         // let ident = self.create_new_var_with_expression(&expr);
         // Add new reference `_name = name` to nodes

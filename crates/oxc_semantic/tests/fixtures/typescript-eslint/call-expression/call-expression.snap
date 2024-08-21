@@ -24,13 +24,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
         "node": "VariableDeclarator(foo)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "foo",
             "node_id": 13
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 2,
             "name": "foo",
             "node_id": 19
@@ -44,13 +44,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
         "node": "VariableDeclarator(a)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 1,
             "name": "a",
             "node_id": 15
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 3,
             "name": "a",
             "node_id": 21

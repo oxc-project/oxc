@@ -14,7 +14,7 @@ use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
-    reference::{ReferenceFlag, ReferenceId},
+    reference::{ReferenceFlags, ReferenceId},
     scope::ScopeId,
     symbol::SymbolId,
 };
@@ -242,10 +242,10 @@ pub struct IdentifierReference<'a> {
     /// Flags indicating how the reference is used.
     ///
     /// This gets set in the bind step of semantic analysis, and will always be
-    /// [`ReferenceFlag::None`] immediately after parsing.
+    /// [`ReferenceFlags::None`] immediately after parsing.
     #[serde(skip)]
     #[clone_in(default)]
-    pub reference_flag: ReferenceFlag,
+    pub reference_flag: ReferenceFlags,
 }
 
 /// `x` in `const x = 0;`

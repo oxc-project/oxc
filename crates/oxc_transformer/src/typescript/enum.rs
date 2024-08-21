@@ -7,7 +7,7 @@ use oxc_syntax::{
     node::AstNodeId,
     number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
-    reference::ReferenceFlag,
+    reference::ReferenceFlags,
     symbol::SymbolFlags,
 };
 use oxc_traverse::TraverseCtx;
@@ -134,7 +134,7 @@ impl<'a> TypeScriptEnum<'a> {
                 decl.id.span,
                 enum_name.clone(),
                 var_symbol_id,
-                ReferenceFlag::Read,
+                ReferenceFlags::Read,
             );
             let left = ast.expression_from_identifier_reference(left);
             let right = ast.expression_object(SPAN, ast.vec(), None);
@@ -156,7 +156,7 @@ impl<'a> TypeScriptEnum<'a> {
                 decl.id.span,
                 enum_name.clone(),
                 var_symbol_id,
-                ReferenceFlag::Write,
+                ReferenceFlags::Write,
             );
             let left = ast.simple_assignment_target_from_identifier_reference(left);
             let expr = ast.expression_assignment(SPAN, op, left.into(), call_expression);
@@ -202,7 +202,7 @@ impl<'a> TypeScriptEnum<'a> {
                 param.span,
                 param.name.clone(),
                 param.symbol_id.get(),
-                ReferenceFlag::Read,
+                ReferenceFlags::Read,
             );
             ctx.ast.expression_from_identifier_reference(ident)
         };

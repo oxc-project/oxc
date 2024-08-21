@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "node": "FormalParameter(arg)",
             "references": [
               {
-                "flag": "ReferenceFlag(Read)",
+                "flag": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "arg",
                 "node_id": 18

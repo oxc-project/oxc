@@ -235,7 +235,7 @@ fn default_init_field(field: &FieldDef) -> bool {
             field!(scope_id: Cell<Option<ScopeId>>),
             field!(symbol_id: Cell<Option<SymbolId>>),
             field!(reference_id: Cell<Option<ReferenceId>>),
-            field!(reference_flag: ReferenceFlag),
+            field!(reference_flag: ReferenceFlags),
         ]);
     }
 

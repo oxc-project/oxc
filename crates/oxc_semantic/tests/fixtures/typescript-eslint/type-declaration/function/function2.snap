@@ -24,7 +24,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "VariableDeclarator(arg)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read | TSTypeQuery)",
+            "flag": "ReferenceFlags(Read | TSTypeQuery)",
             "id": 0,
             "name": "arg",
             "node_id": 15

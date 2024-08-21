@@ -4,7 +4,7 @@ use oxc_allocator::CloneIn;
 use oxc_ast::{
     ast::*, match_expression, match_member_expression, visit::walk::walk_variable_declarator, Visit,
 };
-use oxc_semantic::{ReferenceFlag, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, TraverseCtx};
@@ -55,7 +55,7 @@ impl<'a> ReactRefresh<'a> {
         let symbol_id = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
         self.registrations.push((symbol_id, persistent_id));
         let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-        let ident = ctx.create_reference_id(SPAN, name, Some(symbol_id), ReferenceFlag::Write);
+        let ident = ctx.create_reference_id(SPAN, name, Some(symbol_id), ReferenceFlags::Write);
         let ident = ctx.ast.simple_assignment_target_from_identifier_reference(ident);
         ctx.ast.assignment_target_simple(ident)
     }
@@ -152,7 +152,7 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             id.name.clone(),
             id.symbol_id.get(),
-            ReferenceFlag::Read,
+            ReferenceFlags::Read,
         ))
     }
 
@@ -167,7 +167,7 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             id.name.clone(),
             id.symbol_id.get().unwrap(),
-            ReferenceFlag::Read,
+            ReferenceFlags::Read,
         );
         let right = ctx.ast.expression_from_identifier_reference(right);
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
@@ -198,7 +198,7 @@ impl<'a> ReactRefresh<'a> {
             SPAN,
             self.refresh_sig.clone(),
             Some(symbol_id),
-            ReferenceFlag::Read,
+            ReferenceFlags::Read,
         );
 
         // _s();
@@ -612,7 +612,7 @@ impl<'a> ReactRefresh<'a> {
                 SPAN,
                 self.refresh_reg.clone(),
                 Some(symbol_id),
-                ReferenceFlag::Read,
+                ReferenceFlags::Read,
             );
             let callee = ctx.ast.expression_from_identifier_reference(refresh_reg_ident);
             let mut arguments = ctx.ast.vec_with_capacity(2);
@@ -858,7 +858,7 @@ impl<'a, 'b> CalculateSignatureKey<'a, 'b> {
                     SPAN,
                     binding_name.clone(),
                     Some(symbol_id),
-                    ReferenceFlag::Read,
+                    ReferenceFlags::Read,
                 );
 
                 let mut expr = self.ctx.ast.expression_from_identifier_reference(ident);

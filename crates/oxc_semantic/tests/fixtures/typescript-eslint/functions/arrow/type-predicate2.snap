@@ -25,7 +25,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
             "node": "FormalParameter(arg)",
             "references": [
               {
-                "flag": "ReferenceFlag(Read)",
+                "flag": "ReferenceFlags(Read)",
                 "id": 1,
                 "name": "arg",
                 "node_id": 23
@@ -46,7 +46,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flag": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
             "node_id": 18

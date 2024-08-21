@@ -39,7 +39,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/meth
         "node": "Function(decorator)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "decorator",
             "node_id": 10

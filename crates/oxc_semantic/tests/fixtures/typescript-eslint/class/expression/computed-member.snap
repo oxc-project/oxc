@@ -32,7 +32,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
         "node": "VariableDeclarator(outer1)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "outer1",
             "node_id": 16
@@ -46,7 +46,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
         "node": "VariableDeclarator(outer2)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer2",
             "node_id": 20

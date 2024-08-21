@@ -24,13 +24,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/namespac
         "node": "ImportNamespaceSpecifier",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "v",
             "node_id": 7
           },
           {
-            "flag": "ReferenceFlag(Type)",
+            "flag": "ReferenceFlags(Type)",
             "id": 1,
             "name": "v",
             "node_id": 12

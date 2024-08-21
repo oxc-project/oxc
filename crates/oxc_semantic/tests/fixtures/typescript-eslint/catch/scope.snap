@@ -27,7 +27,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
                 "node": "CatchParameter",
                 "references": [
                   {
-                    "flag": "ReferenceFlag(Read)",
+                    "flag": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "e",
                     "node_id": 8

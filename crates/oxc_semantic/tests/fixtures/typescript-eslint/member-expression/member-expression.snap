@@ -16,31 +16,31 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/member-expressi
         "node": "VariableDeclarator(x)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 0,
             "name": "x",
             "node_id": 7
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 1,
             "name": "x",
             "node_id": 14
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 2,
             "name": "x",
             "node_id": 21
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 3,
             "name": "x",
             "node_id": 28
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 4,
             "name": "x",
             "node_id": 35

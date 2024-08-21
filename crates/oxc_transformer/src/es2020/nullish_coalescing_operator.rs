@@ -30,7 +30,7 @@
 
 use std::cell::Cell;
 
-use oxc_semantic::{ReferenceFlag, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use oxc_allocator::{CloneIn, Vec};
@@ -117,7 +117,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
 
         let left =
             AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                ctx.clone_identifier_reference(&ident, ReferenceFlag::Write),
+                ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
             ));
 
         let reference = ctx.ast.expression_from_identifier_reference(ident);
@@ -183,7 +183,7 @@ impl<'a> NullishCoalescingOperator<'a> {
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
             Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlag::Read),
+                ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
             ),
             _ => expr.clone_in(ctx.ast.allocator),
         }
@@ -211,7 +211,7 @@ impl<'a> NullishCoalescingOperator<'a> {
         let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
         let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation<'_>>, false);
         let reference =
-            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
+            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Read);
 
         (id, reference)
     }

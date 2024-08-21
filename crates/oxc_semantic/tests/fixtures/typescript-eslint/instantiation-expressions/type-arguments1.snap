@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "T",
                 "node_id": 13
@@ -40,7 +40,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 2,
                 "name": "T",
                 "node_id": 28
@@ -61,7 +61,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         "node": "Class(Foo)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 1,
             "name": "Foo",
             "node_id": 24
@@ -75,7 +75,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         "node": "Class(Bar)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlags(Read)",
             "id": 3,
             "name": "Bar",
             "node_id": 31

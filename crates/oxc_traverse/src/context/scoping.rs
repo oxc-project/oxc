@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
-    reference::{ReferenceFlag, ReferenceId},
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
@@ -269,7 +269,7 @@ impl TraverseScoping {
     pub fn create_bound_reference(
         &mut self,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flag);
         let reference_id = self.symbols.create_reference(reference);
@@ -283,7 +283,7 @@ impl TraverseScoping {
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_bound_reference(symbol_id, flag);
         IdentifierReference {
@@ -298,7 +298,7 @@ impl TraverseScoping {
     pub fn create_unbound_reference(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         let reference = Reference::new(AstNodeId::DUMMY, flag);
         let reference_id = self.symbols.create_reference(reference);
@@ -311,7 +311,7 @@ impl TraverseScoping {
         &mut self,
         span: Span,
         name: Atom<'a>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_unbound_reference(name.to_compact_str(), flag);
         IdentifierReference {
@@ -330,7 +330,7 @@ impl TraverseScoping {
         &mut self,
         name: CompactStr,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         if let Some(symbol_id) = symbol_id {
             self.create_bound_reference(symbol_id, flag)
@@ -348,7 +348,7 @@ impl TraverseScoping {
         span: Span,
         name: Atom<'a>,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         if let Some(symbol_id) = symbol_id {
             self.create_bound_reference_id(span, name, symbol_id, flag)
@@ -361,7 +361,7 @@ impl TraverseScoping {
     pub fn create_reference_in_current_scope(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> ReferenceId {
         let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
         self.create_reference(name, symbol_id, flag)
@@ -375,7 +375,7 @@ impl TraverseScoping {
     pub fn clone_identifier_reference<'a>(
         &mut self,
         ident: &IdentifierReference<'a>,
-        flag: ReferenceFlag,
+        flag: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference =
             self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {

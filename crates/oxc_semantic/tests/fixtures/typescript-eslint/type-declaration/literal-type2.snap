@@ -18,25 +18,25 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 1,
                 "name": "T",
                 "node_id": 14
               },
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 3,
                 "name": "T",
                 "node_id": 21
               },
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 5,
                 "name": "T",
                 "node_id": 28
               },
               {
-                "flag": "ReferenceFlag(Type)",
+                "flag": "ReferenceFlags(Type)",
                 "id": 7,
                 "name": "T",
                 "node_id": 35
@@ -64,7 +64,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flag": "ReferenceFlags(Type)",
             "id": 8,
             "name": "EnthusiasticGreeting",
             "node_id": 40
