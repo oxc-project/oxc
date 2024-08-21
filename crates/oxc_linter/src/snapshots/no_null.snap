@@ -165,16 +165,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:14]
+   ╭─[no_null.tsx:1:8]
  1 │ Object[null](null)
-   ·              ────
+   ·        ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
-   ╭─[no_null.tsx:1:8]
+   ╭─[no_null.tsx:1:14]
  1 │ Object[null](null)
-   ·        ────
+   ·              ────
    ╰────
   help: Replace the `null` literal with `undefined`.
 

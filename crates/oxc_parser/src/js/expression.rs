@@ -226,7 +226,7 @@ impl<'a> ParserImpl<'a> {
             )
         };
 
-        Ok(if self.preserve_parens {
+        Ok(if self.options.preserve_parens {
             self.ast.expression_parenthesized(paren_span, expression)
         } else {
             expression
@@ -804,9 +804,9 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RParen)?;
         Ok(self.ast.expression_call(
             self.end_span(lhs_span),
-            call_arguments,
             lhs,
             type_parameters,
+            call_arguments,
             optional,
         ))
     }

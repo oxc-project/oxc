@@ -5,7 +5,7 @@ pub use nullish_coalescing_operator::NullishCoalescingOperator;
 pub use options::ES2020Options;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 use std::rc::Rc;
 
 use crate::context::Ctx;
@@ -27,30 +27,32 @@ impl<'a> ES2020<'a> {
             options,
         }
     }
+}
 
-    pub fn transform_statements(
+impl<'a> Traverse<'a> for ES2020<'a> {
+    fn enter_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.options.nullish_coalescing_operator {
-            self.nullish_coalescing_operator.transform_statements(statements, ctx);
+            self.nullish_coalescing_operator.enter_statements(statements, ctx);
         }
     }
 
-    pub fn transform_statements_on_exit(
+    fn exit_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.options.nullish_coalescing_operator {
-            self.nullish_coalescing_operator.transform_statements_on_exit(statements, ctx);
+            self.nullish_coalescing_operator.exit_statements(statements, ctx);
         }
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.nullish_coalescing_operator {
-            self.nullish_coalescing_operator.transform_expression(expr, ctx);
+            self.nullish_coalescing_operator.enter_expression(expr, ctx);
         }
     }
 }

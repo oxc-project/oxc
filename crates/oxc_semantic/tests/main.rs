@@ -14,14 +14,14 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         if index != 0 {
             result.push(',');
         }
-        let flag = semantic.scopes().get_flags(scope_id);
+        let flags = semantic.scopes().get_flags(scope_id);
         result.push('{');
         if let Some(child_ids) = semantic.scopes().get_child_ids(scope_id) {
             result.push_str("\"children\":");
             result.push_str(&get_scope_snapshot(semantic, child_ids.iter().copied()));
             result.push(',');
         }
-        result.push_str(format!("\"flag\": \"{flag:?}\",").as_str());
+        result.push_str(format!("\"flags\": \"{flags:?}\",").as_str());
         result.push_str(format!("\"id\": {},", scope_id.index()).as_str());
         result.push_str(
             format!(
@@ -39,7 +39,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
             }
             result.push('{');
             result.push_str(
-                format!("\"flag\": \"{:?}\",", semantic.symbols().get_flag(*symbol_id)).as_str(),
+                format!("\"flags\": \"{:?}\",", semantic.symbols().get_flags(*symbol_id)).as_str(),
             );
             result.push_str(format!("\"id\": {},", symbol_id.index()).as_str());
             result.push_str(format!("\"name\": {name:?},").as_str());
@@ -67,7 +67,8 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                         }
                         let reference = &semantic.symbols().references[*reference_id];
                         result.push('{');
-                        result.push_str(format!("\"flag\": \"{:?}\",", reference.flag()).as_str());
+                        result
+                            .push_str(format!("\"flags\": \"{:?}\",", reference.flags()).as_str());
                         result.push_str(format!("\"id\": {},", reference_id.index()).as_str());
                         result.push_str(
                             format!("\"name\": {:?},", semantic.reference_name(reference)).as_str(),

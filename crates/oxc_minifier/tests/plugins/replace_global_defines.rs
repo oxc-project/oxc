@@ -13,7 +13,7 @@ pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefin
     let program = allocator.alloc(ret.program);
     ReplaceGlobalDefines::new(&allocator, config).build(program);
     let result = CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
         .source_text;
     let expected = run(expected, source_type, None);

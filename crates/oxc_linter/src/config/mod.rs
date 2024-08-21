@@ -54,10 +54,12 @@ use crate::{
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct OxlintConfig {
-    /// See [Oxlint Rules](./rules)
+    /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).
     pub(crate) rules: OxlintRules,
     pub(crate) settings: OxlintSettings,
+    /// Environments enable and disable collections of global variables.
     pub(crate) env: OxlintEnv,
+    /// Enabled or disabled specific global variables.
     pub(crate) globals: OxlintGlobals,
 }
 

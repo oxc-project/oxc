@@ -2,15 +2,12 @@ mod meta;
 
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
+use oxc::span::SourceType;
 
 pub use self::meta::{MetaData, Phase, TestFlag};
-use crate::{
-    project_root,
-    suite::{Case, Suite, TestResult},
-};
+use crate::suite::{Case, Suite, TestResult};
 
-const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
+const FIXTURES_PATH: &str = "test262/test";
 
 pub struct Test262Suite<T: Case> {
     test_root: PathBuf,
@@ -19,7 +16,7 @@ pub struct Test262Suite<T: Case> {
 
 impl<T: Case> Test262Suite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
+        Self { test_root: PathBuf::from(FIXTURES_PATH), test_cases: vec![] }
     }
 }
 
@@ -108,6 +105,9 @@ impl Case for Test262Case {
             // Regex parser is required. See https://github.com/oxc-project/oxc/issues/385#issuecomment-1755566240
             "regexp-v-flag",
             "regexp-unicode-property-escapes",
+            // stage 3 https://github.com/tc39/proposal-json-modules
+            // ignored due to https://github.com/tc39/proposal-json-modules/issues/27
+            "json-modules",
         ]
         .iter()
         .any(|feature| self.meta.features.iter().any(|f| **f == **feature))

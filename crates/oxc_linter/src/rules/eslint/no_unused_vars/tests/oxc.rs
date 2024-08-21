@@ -496,7 +496,66 @@ fn test_imports() {
         ("import { a as b } from 'a'; console.log(a)", None),
     ];
 
+    let fix = vec![
+        // None used
+        ("import foo from './foo';", "", None, FixKind::DangerousSuggestion),
+        ("import * as foo from './foo';", "", None, FixKind::DangerousSuggestion),
+        ("import { Foo } from './foo';", "", None, FixKind::DangerousSuggestion),
+        ("import { Foo as Bar } from './foo';", "", None, FixKind::DangerousSuggestion),
+        // Some used
+        (
+            "import foo, { bar } from './foo'; bar();",
+            "import { bar } from './foo'; bar();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo, { bar } from './foo'; foo();",
+            "import foo, { } from './foo'; foo();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, bar, baz } from './foo'; foo(bar);",
+            "import { foo, bar, } from './foo'; foo(bar);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, bar, baz } from './foo'; foo(baz);",
+            "import { foo, baz } from './foo'; foo(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, bar, baz } from './foo'; bar(baz);",
+            "import { bar, baz } from './foo'; bar(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // type imports
+        (
+            "import { type foo, bar } from './foo'; bar();",
+            "import { bar } from './foo'; bar();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, type bar, baz } from './foo'; foo(baz);",
+            "import { foo, baz } from './foo'; foo(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo, { type bar } from './foo'; foo();",
+            "import foo, { } from './foo'; foo();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .expect_fix(fix)
         .with_snapshot_suffix("oxc-imports")
         .test_and_snapshot();
 }

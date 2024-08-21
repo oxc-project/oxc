@@ -3,243 +3,243 @@ commit: 12619ffe
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
 Positive Passed: 1813/2101 (86.29%)
-comments/interpreter-directive/interpreter-directive-import/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["spawn"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-comments/regression/10892/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/regression/10892/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-core/opts/allowNewTargetOutsideFunction-true/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 semantic error: Unexpected new.target expression
 Unexpected new.target expression
 
-core/uncategorised/327/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/327/input.js
 semantic error: A 'return' statement can only be used within a function body.
 
-core/uncategorised/328/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
 
-es2015/modules/import-declaration-trailing-comma/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/modules/import-declaration-trailing-comma/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-es2015/uncategorised/301/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/301/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-es2015/uncategorised/92/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/92/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["$"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-es2015/uncategorised/93/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/93/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["decrypt", "encrypt"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-es2015/uncategorised/94/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/94/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["enc"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-es2015/uncategorised/95/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/95/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["crypto", "decrypt", "enc"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-es2015/uncategorised/97/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/97/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["nil"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-es2015/uncategorised/98/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/uncategorised/98/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["crypto"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-default/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-default-and-named-specifiers/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default-and-named-specifiers/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-default-and-namespace-specifiers/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default-and-namespace-specifiers/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-default-as/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-default-as/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-jquery/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-jquery/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["$"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-named-as-specifier/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-as-specifier/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["baz"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-named-as-specifiers/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-as-specifiers/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["baz", "xyz"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-named-specifier/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-specifier/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-named-specifiers/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-specifiers/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "baz"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-named-specifiers-comma/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-named-specifiers-comma/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "baz"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-namespace-specifier/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-namespace-specifier/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-esprima/es2015-import-declaration/import-null-as-nil/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-declaration/import-null-as-nil/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["nil"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/arrow-function/async-await-null/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-await-null/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 Symbols mismatch after transform
 
-typescript/arrow-function/async-await-null-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-await-null-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 Symbols mismatch after transform
 
-typescript/arrow-function/async-generic-after-await/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-after-await/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T"]
 current  scope ScopeId(2): []
 Symbols mismatch after transform
 
-typescript/arrow-function/async-generic-after-await-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-after-await-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T"]
 current  scope ScopeId(2): []
 Symbols mismatch after transform
 
-typescript/arrow-function/async-generic-tokens-true/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-tokens-true/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "a"]
 current  scope ScopeId(1): ["a"]
 Symbols mismatch after transform
 
-typescript/arrow-function/async-generic-tokens-true-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/async-generic-tokens-true-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "a"]
 current  scope ScopeId(1): ["a"]
 Symbols mismatch after transform
 
-typescript/arrow-function/generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "a"]
 current  scope ScopeId(1): ["a"]
 Symbols mismatch after transform
 
-typescript/arrow-function/generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "a"]
 current  scope ScopeId(1): ["a"]
 Symbols mismatch after transform
 
-typescript/arrow-function/generic-tsx-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
 semantic error: Expected `<` but found `EOF`
 
-typescript/assign/TSTypeParameterInstantiation/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTypeParameterInstantiation/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/assign/TSTypeParameterInstantiation-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTypeParameterInstantiation-babel-7/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/abstract/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/accessor/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/accessor/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/class/async-named-properties/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-named-properties/input.ts
 semantic error: Scopes mismatch after transform
 
-typescript/class/async-optional-method/input.js
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-
-typescript/class/constructor/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/async-optional-method/input.js
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/constructor-with-modifier-names/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor/input.ts
+semantic error: Scopes mismatch after transform
+Symbols mismatch after transform
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 semantic error: Multiple constructor implementations are not allowed.
 
-typescript/class/constructor-with-override-modifer-names/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-override-modifer-names/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/class/declare/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare/input.ts
 semantic error: Identifier `x` has already been declared
 
-typescript/class/declare-readonly-field-initializer/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-readonly-field-initializer/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/class/expression-extends-implements/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-extends-implements/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/class/expression-generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
@@ -248,7 +248,7 @@ previous scope ScopeId(2): ["C", "T"]
 current  scope ScopeId(2): ["C"]
 Symbols mismatch after transform
 
-typescript/class/expression-generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
@@ -257,43 +257,43 @@ previous scope ScopeId(2): ["C", "T"]
 current  scope ScopeId(2): ["C"]
 Symbols mismatch after transform
 
-typescript/class/expression-implements/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/expression-implements/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/class/extends-implements/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/extends-implements/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/class/generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 Symbols mismatch after transform
 
-typescript/class/generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 Symbols mismatch after transform
 
-typescript/class/implements/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/implements/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/class/members-with-modifier-names/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/members-with-modifier-names-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names-babel-7/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/members-with-reserved-names/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-reserved-names/input.ts
 semantic error: Scopes mismatch after transform
 
-typescript/class/method-computed/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-computed/input.ts
 semantic error: Scopes mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/class/method-generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T", "a", "b", "c"]
 current  scope ScopeId(2): ["a", "b", "c"]
@@ -302,7 +302,7 @@ previous scope ScopeId(3): ["T"]
 current  scope ScopeId(3): []
 Symbols mismatch after transform
 
-typescript/class/method-generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T", "a", "b", "c"]
 current  scope ScopeId(2): ["a", "b", "c"]
@@ -311,7 +311,7 @@ previous scope ScopeId(3): ["T"]
 current  scope ScopeId(3): []
 Symbols mismatch after transform
 
-typescript/class/method-modifier-name-with-type-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-modifier-name-with-type-parameters/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T"]
 current  scope ScopeId(2): []
@@ -335,7 +335,7 @@ previous scope ScopeId(8): ["T"]
 current  scope ScopeId(8): []
 Symbols mismatch after transform
 
-typescript/class/method-modifier-name-with-type-parameters-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-modifier-name-with-type-parameters-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T"]
 current  scope ScopeId(2): []
@@ -359,97 +359,97 @@ previous scope ScopeId(8): ["T"]
 current  scope ScopeId(8): []
 Symbols mismatch after transform
 
-typescript/class/method-no-body/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-no-body/input.ts
 semantic error: Scopes mismatch after transform
 
-typescript/class/method-with-newline-without-body/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/method-with-newline-without-body/input.ts
 semantic error: Scopes mismatch after transform
 
-typescript/class/modifiers-accessors/input.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-
-typescript/class/modifiers-methods-async/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-accessors/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/modifiers-override/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-methods-async/input.ts
+semantic error: Scopes mismatch after transform
+Symbols mismatch after transform
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
 semantic error: Identifier `show` has already been declared
 Identifier `size` has already been declared
 
-typescript/class/modifiers-properties/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-properties/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/parameter-properties/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties/input.ts
 semantic error: A required parameter cannot follow an optional parameter.
 
-typescript/class/private-method-overload/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-method-overload/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/class/properties/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/properties/input.ts
 semantic error: Identifier `x` has already been declared
 Identifier `x` has already been declared
 Identifier `x` has already been declared
 Identifier `x` has already been declared
 Identifier `x` has already been declared
 
-typescript/class/static/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/static/input.ts
 semantic error: Scopes mismatch after transform
 
-typescript/const/initializer-ambient-context/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/const/initializer-ambient-context/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["N"]
 current  scope ScopeId(0): []
 
-typescript/declare/const/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/const/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x", "y"]
 current  scope ScopeId(0): []
 
-typescript/declare/destructure/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/destructure/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x", "y"]
 current  scope ScopeId(0): []
 
-typescript/declare/eval/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/eval/input.ts
 semantic error: Cannot assign to 'eval' in strict mode
 Cannot assign to 'arguments' in strict mode
 Cannot assign to 'eval' in strict mode
 Cannot assign to 'arguments' in strict mode
 
-typescript/declare/interface/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/interface/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/declare/interface-new-line/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/interface-new-line/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/declare/let/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/let/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 
-typescript/declare/pattern-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/pattern-parameters/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["B"]
 current  scope ScopeId(0): []
 
-typescript/declare/pattern-parameters-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/pattern-parameters-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["B"]
 current  scope ScopeId(0): []
 
-typescript/declare/var/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/var/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["x"]
 current  scope ScopeId(0): []
 
-typescript/disallow-jsx-ambiguity/type-parameter-unambiguous/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/disallow-jsx-ambiguity/type-parameter-unambiguous/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
@@ -464,7 +464,7 @@ previous scope ScopeId(4): ["T", "x"]
 current  scope ScopeId(4): ["x"]
 Symbols mismatch after transform
 
-typescript/disallow-jsx-ambiguity/type-parameter-unambiguous-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/disallow-jsx-ambiguity/type-parameter-unambiguous-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
@@ -479,461 +479,463 @@ previous scope ScopeId(4): ["T", "x"]
 current  scope ScopeId(4): ["x"]
 Symbols mismatch after transform
 
-typescript/enum/const/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/const/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/enum/declare/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/declare/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["E"]
 current  scope ScopeId(0): []
 
-typescript/enum/declare-const/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/declare-const/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["E"]
 current  scope ScopeId(0): []
 
-typescript/enum/declare-new-line/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/declare-new-line/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["E"]
 current  scope ScopeId(0): []
 
-typescript/enum/export/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/enum/export-const/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-const/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/enum/export-declare-const/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-declare-const/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["E"]
 current  scope ScopeId(0): []
 
-typescript/enum/members/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/enum/members-reserved-words/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-reserved-words/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/enum/members-strings/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-strings/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/enum/members-trailing-comma/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/enum/members-trailing-comma-with-initializer/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma-with-initializer/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/estree-compat/shorthand-ambient-module/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/estree-compat/shorthand-ambient-module/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["hot-new-module"]
 current  scope ScopeId(0): []
 
-typescript/export/declare/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I", "M", "N", "T", "_bar", "bar", "foo", "x"]
 current  scope ScopeId(0): []
 
-typescript/export/equals/input.ts
-semantic error: ReferenceId mismatch after transform
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
-typescript/export/equals-in-unambiguous/input.ts
-semantic error: ReferenceId mismatch after transform
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-unambiguous/input.ts
+semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
+Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
-typescript/export/export-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 ReferenceId mismatch after transform
 
-typescript/export/export-type-declaration/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type-declaration/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "B", "b"]
 current  scope ScopeId(0): []
 
-typescript/export/export-value-declaration/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-value-declaration/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/export/nested-same-name/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/function/annotated/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/annotated/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "x"]
 current  scope ScopeId(1): ["x"]
 Symbols mismatch after transform
 
-typescript/function/annotated-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/annotated-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "x"]
 current  scope ScopeId(1): ["x"]
 Symbols mismatch after transform
 
-typescript/function/anonymous/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/anonymous/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "x"]
 current  scope ScopeId(1): ["x"]
 Symbols mismatch after transform
 
-typescript/function/anonymous-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/anonymous-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "x"]
 current  scope ScopeId(1): ["x"]
 Symbols mismatch after transform
 
-typescript/function/anonymous-generator/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/anonymous-generator/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "input"]
 current  scope ScopeId(1): ["input"]
 Symbols mismatch after transform
 
-typescript/function/anonymous-generator-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/anonymous-generator-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "input"]
 current  scope ScopeId(1): ["input"]
 Symbols mismatch after transform
 
-typescript/function/declare-pattern-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
 semantic error: A required parameter cannot follow an optional parameter.
 
-typescript/import/equals/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals/input.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/import/equals-in-unambiguous/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-unambiguous/input.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/import/equals-require/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require/input.ts
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/import/equals-require-in-unambiguous/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-require/input.ts
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
-typescript/import/export-import/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-as-identifier/input.ts
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
-typescript/import/export-import-require/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-typescript/import/export-import-type-as-identifier/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-typescript/import/export-import-type-require/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-type-require/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["a"]
 current  scope ScopeId(0): []
 
-typescript/import/export-named-import-require/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-named-import-require/input.ts
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
-typescript/import/import-default-and-named-id-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-and-named-id-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "type"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/import/import-default-id-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-default-id-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["type"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/import/import-named/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-named/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/import/import-star-as/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-star-as/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["a"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/import/import-type-as-identifier/input.ts
-semantic error: Symbols mismatch after transform
-ReferenceId mismatch after transform
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/import-type-as-identifier/input.ts
+semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
+Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
-typescript/import/internal-comments/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/internal-comments/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "C", "D", "foo"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/import/not-top-level/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/not-top-level/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["m"]
 current  scope ScopeId(0): []
 
-typescript/import/type-asi/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-asi/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "B", "a", "b"]
 current  scope ScopeId(0): []
 
-typescript/import/type-equals-require/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/type-equals-require/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["a"]
 current  scope ScopeId(0): []
 
-typescript/interface/call-signature/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/call-signature/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/call-signature-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/call-signature-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/construct-signature/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/construct-signature/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/construct-signature-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/construct-signature-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/export/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/export/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 
-typescript/interface/extends/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/extends/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/function-like-node-1/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/function-like-node-1/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/function-like-node-2/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/function-like-node-2/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/function-like-node-3/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/function-like-node-3/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/function-like-node-4/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/function-like-node-4/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/function-like-node-5/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/function-like-node-5/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/get-set/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/get-set-ambiguous/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-ambiguous/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/get-set-ambiguous-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-ambiguous-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/get-set-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/get-set-methods/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-methods/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/get-set-methods-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-methods-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/interface/get-set-properties/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-properties/input.ts
 semantic error: Expected `(` but found `:`
 
-typescript/interface/index-signature/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/index-signature/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-computed/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-computed/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-computed-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-computed-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-optional/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-optional/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-optional-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-optional-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-plain/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-plain/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/method-plain-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/method-plain-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/modifiers/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/modifiers/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/pattern-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/pattern-parameters/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 
-typescript/interface/pattern-parameters-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/pattern-parameters-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 
-typescript/interface/properties/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/properties/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/property-computed/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/property-computed/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/property-named-public/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/property-named-public/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/reserved-method-name/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/reserved-method-name/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/reserved-method-name-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/reserved-method-name-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["I"]
 current  scope ScopeId(0): []
 
-typescript/interface/separators/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/separators/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Comma", "Newline", "Semi"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/body/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/module-namespace/body-declare/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["N"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/body-nested/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/body-nested-declare/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-nested-declare/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/declare-shorthand/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/declare-shorthand/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["m"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/global-in-module/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/global-in-module/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["m"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/head/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["M", "N", "m"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/head-declare/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["M", "N", "global", "m"]
 current  scope ScopeId(0): []
 
-typescript/module-namespace/head-export/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-export/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["X"]
 current  scope ScopeId(0): []
 
-typescript/regression/async-arrow-generic-9560/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/async-arrow-generic-9560/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T"]
 current  scope ScopeId(2): []
@@ -942,7 +944,7 @@ previous scope ScopeId(3): ["T"]
 current  scope ScopeId(3): []
 Symbols mismatch after transform
 
-typescript/regression/async-arrow-generic-9560-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/async-arrow-generic-9560-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(2): ["T"]
 current  scope ScopeId(2): []
@@ -951,426 +953,424 @@ previous scope ScopeId(3): ["T"]
 current  scope ScopeId(3): []
 Symbols mismatch after transform
 
-typescript/regression/destructuring-in-function-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/destructuring-in-function-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["AnotherType", "MyType"]
 current  scope ScopeId(0): []
 
-typescript/regression/destructuring-in-function-type-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/destructuring-in-function-type-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["AnotherType", "MyType"]
 current  scope ScopeId(0): []
 
-typescript/regression/is-default-export/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/is-default-export/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/regression/issue-7742/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/issue-7742/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/regression/issue-7742-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/issue-7742-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo"]
 current  scope ScopeId(0): []
 
-typescript/regression/keyword-qualified-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "T"]
 current  scope ScopeId(0): []
 
-typescript/regression/keyword-qualified-type-2/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "T"]
 current  scope ScopeId(0): []
 
-typescript/regression/nested-extends-in-arrow-type-param/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
 semantic error: Expected `,` but found `extends`
 
-typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts
 semantic error: Expected `,` but found `extends`
 
-typescript/regression/nested-extends-in-arrow-type-return/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-return/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Equals"]
 current  scope ScopeId(0): []
 
-typescript/regression/nested-extends-in-arrow-type-return-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-return-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Equals"]
 current  scope ScopeId(0): []
 
-typescript/scope/enum-block-scoped/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/enum-block-scoped/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/scope/export-declare-function-after/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-after/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/scope/export-declare-function-before/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-before/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/scope/export-enum-after/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-after/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/scope/export-enum-before/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-before/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/scope/export-func-in-declare-module/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-func-in-declare-module/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["m2"]
 current  scope ScopeId(0): []
 
-typescript/scope/export-import-in-declare-module/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-import-in-declare-module/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["~popsicle/dist/common"]
 current  scope ScopeId(0): []
 
-typescript/scope/export-interface-after/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-interface-after/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 ReferenceId mismatch after transform
 
-typescript/scope/export-interface-before/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-interface-before/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 ReferenceId mismatch after transform
 
-typescript/scope/export-namespace/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-namespace/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["N"]
 current  scope ScopeId(0): []
 ReferenceId mismatch after transform
 
-typescript/scope/export-type-after/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-type-after/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 ReferenceId mismatch after transform
 
-typescript/scope/export-type-before/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-type-before/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 ReferenceId mismatch after transform
 
-typescript/scope/module-declaration-var/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var/input.js
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar"]
 current  scope ScopeId(0): []
 
-typescript/scope/module-declaration-var-2/input.js
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var-2/input.js
+semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/scope/redeclaration-constenum-constenum/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum/input.ts
 semantic error: Scopes mismatch after transform
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/scope/redeclaration-enum-enum/input.ts
-semantic error: Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-typescript/scope/redeclaration-import-ambient-class/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-ambient-class/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Something"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/scope/redeclaration-import-equals-var/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["M", "a"]
 current  scope ScopeId(0): ["a"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/scope/redeclaration-import-let/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-let/input.ts
 semantic error: Symbols mismatch after transform
 
-typescript/scope/redeclaration-import-type-let/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-let/input.ts
 semantic error: Symbols mismatch after transform
 
-typescript/scope/redeclaration-import-type-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Global", "a"]
 current  scope ScopeId(0): ["a"]
 Symbols mismatch after transform
 
-typescript/scope/redeclaration-import-type-var/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-var/input.ts
 semantic error: Symbols mismatch after transform
 
-typescript/scope/redeclaration-import-var/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-var/input.ts
 semantic error: Symbols mismatch after transform
 
-typescript/scope/redeclaration-in-different-module/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T", "test", "test/submodule"]
 current  scope ScopeId(0): []
 
-typescript/scope/redeclaration-in-different-module-and-top-level/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module-and-top-level/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["JSONSchema7", "T", "foo", "fooBar", "test/submodule", "test/submodule2"]
 current  scope ScopeId(0): ["foo", "fooBar"]
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/scope/redeclaration-in-nested-module/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["test/sub1"]
 current  scope ScopeId(0): []
 
-typescript/scope/redeclaration-interface-interface/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-interface/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 
-typescript/tsx/anonymous-function-generator/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/anonymous-function-generator/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "input"]
 current  scope ScopeId(1): ["input"]
 Symbols mismatch after transform
 
-typescript/tsx/anonymous-function-generator-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/anonymous-function-generator-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "input"]
 current  scope ScopeId(1): ["input"]
 Symbols mismatch after transform
 
-typescript/tsx/assignment-in-conditional-expression/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/assignment-in-conditional-expression/input.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/tsx/brace-is-block/input.tsx
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/brace-is-block/input.tsx
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/tsx/type-arguments/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/type-arguments/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A"]
 current  scope ScopeId(0): []
 
-typescript/tsx/type-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/type-parameters/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 
-typescript/tsx/type-parameters-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/type-parameters-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 
-typescript/type-alias/declare/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/declare/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-alias/export/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/export/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-alias/generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-alias/generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-alias/generic-complex-tokens-true/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/generic-complex-tokens-true/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-alias/generic-complex-tokens-true-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/generic-complex-tokens-true-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-alias/plain/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-alias/plain/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-arguments/instantiation-expression-asi/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-asi/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["C", "C1", "C2", "C3", "C4", "I", "bar", "x10", "x11", "x12", "x13", "x14", "x5", "x6", "yy"]
 current  scope ScopeId(0): ["C", "C1", "C2", "C3", "C4", "bar", "x10", "x11", "x12", "x13", "x14", "x5", "x6", "yy"]
 ReferenceId mismatch after transform
 
-typescript/type-arguments/tsx/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/tsx/input.ts
 semantic error: Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/type-arguments/whitespace/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/whitespace/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 Symbols mismatch after transform
 
-typescript/type-arguments/whitespace-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/whitespace-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T"]
 current  scope ScopeId(1): []
 Symbols mismatch after transform
 
-typescript/type-arguments-bit-shift-left-like/call-expression/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/call-expression/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
 semantic error: Expected `{` but found `<<`
 
-typescript/type-arguments-bit-shift-left-like/decorator-call-expression/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/decorator-call-expression/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
 semantic error: Unexpected token
 
-typescript/type-arguments-bit-shift-left-like/new-expression/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/new-expression/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-arguments-bit-shift-left-like-babel-7/call-expression/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/call-expression/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts
 semantic error: Expected `{` but found `<<`
 
-typescript/type-arguments-bit-shift-left-like-babel-7/decorator-call-expression/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/decorator-call-expression/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx
 semantic error: Unexpected token
 
-typescript/type-arguments-bit-shift-left-like-babel-7/new-expression/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like-babel-7/new-expression/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/type-only-import-export-specifiers/export-type-only-as-as-keyword/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-type-only-as-as-keyword/input.ts
 semantic error: ReferenceId mismatch after transform
 
-typescript/type-only-import-export-specifiers/import-basic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-basic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "B", "C"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/type-only-import-export-specifiers/import-named-and-named-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-named-and-named-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Component", "ComponentProps"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/type-only-import-export-specifiers/import-named-type/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-named-type/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["type"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/type-only-import-export-specifiers/import-named-type-as-as/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-named-type-as-as/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["as"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/type-only-import-export-specifiers/import-type-only-and-export/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-type-only-and-export/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Foo1"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 ReferenceId mismatch after transform
 
-typescript/type-only-import-export-specifiers/import-type-only-named-as/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-type-only-named-as/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["as"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/type-only-import-export-specifiers/import-type-only-named-keywords-as/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-type-only-named-keywords-as/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["a", "b"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/types/conditional-infer/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/conditional-infer/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Element"]
 current  scope ScopeId(0): []
 
-typescript/types/conditional-infer-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/conditional-infer-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Element"]
 current  scope ScopeId(0): []
 
-typescript/types/const-type-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
 semantic error: Identifier `method` has already been declared
 Identifier `method` has already been declared
 
-typescript/types/const-type-parameters-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-babel-7/input.ts
 semantic error: Identifier `method` has already been declared
 Identifier `method` has already been declared
 
-typescript/types/function-generic/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-generic/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T", "f"]
 current  scope ScopeId(0): ["f"]
 
-typescript/types/function-generic-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/function-generic-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T", "f"]
 current  scope ScopeId(0): ["f"]
 
-typescript/types/import-type-declaration/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["A", "B", "T", "Types"]
 current  scope ScopeId(0): []
 Symbols mismatch after transform
 
-typescript/types/infer-with-constraints/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/infer-with-constraints/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["X3", "X4", "X5", "X6", "X7", "X8", "X9"]
 current  scope ScopeId(0): []
 
-typescript/types/infer-with-constraints-and-conditional-types/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/infer-with-constraints-and-conditional-types/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["X"]
 current  scope ScopeId(0): []
 
-typescript/types/infer-with-constraints-and-conditional-types-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/infer-with-constraints-and-conditional-types-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["X"]
 current  scope ScopeId(0): []
 
-typescript/types/infer-with-constraints-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/infer-with-constraints-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["X3", "X4", "X5", "X6", "X7", "X8", "X9"]
 current  scope ScopeId(0): []
 
-typescript/types/intrinsic-identifier/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-identifier/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["foo", "intrinsic"]
 current  scope ScopeId(0): ["foo"]
@@ -1378,129 +1378,129 @@ Bindings Mismatch:
 previous scope ScopeId(2): ["Foo", "X", "a", "x"]
 current  scope ScopeId(1): ["a", "x"]
 
-typescript/types/intrinsic-keyword/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Bar", "Foo"]
 current  scope ScopeId(0): []
 
-typescript/types/intrinsic-keyword-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Bar", "Foo"]
 current  scope ScopeId(0): []
 
-typescript/types/literal-string-4/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "x"]
 current  scope ScopeId(0): ["x"]
 
-typescript/types/literal-string-4-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/literal-string-4-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["bar", "x"]
 current  scope ScopeId(0): ["x"]
 
-typescript/types/mapped-as/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/mapped-as/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["MappedTypeWithNewKeys", "PickByValueType", "RemoveKindField"]
 current  scope ScopeId(0): []
 
-typescript/types/mapped-as-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/mapped-as-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["MappedTypeWithNewKeys", "PickByValueType", "RemoveKindField"]
 current  scope ScopeId(0): []
 
-typescript/types/object-shorthand/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/object-shorthand/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "value"]
 current  scope ScopeId(1): ["value"]
 Symbols mismatch after transform
 
-typescript/types/object-shorthand-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/object-shorthand-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(1): ["T", "value"]
 current  scope ScopeId(1): ["value"]
 Symbols mismatch after transform
 
-typescript/types/parenthesized/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/types/parenthesized-object/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/parenthesized-object/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/types/pattern-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/pattern-parameters/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["C"]
 current  scope ScopeId(0): []
 
-typescript/types/pattern-parameters-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/pattern-parameters-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["C"]
 current  scope ScopeId(0): []
 
-typescript/types/tuple-keyword-labeled/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-keyword-labeled/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["FuncWithDescription"]
 current  scope ScopeId(0): []
 
-typescript/types/tuple-keyword-labeled-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-keyword-labeled-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["FuncWithDescriptionBabel7"]
 current  scope ScopeId(0): []
 
-typescript/types/tuple-labeled/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/types/tuple-labeled-after-unlabeled/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-after-unlabeled/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/types/tuple-labeled-before-unlabeled/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-before-unlabeled/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/types/tuple-unlabeled-spread-after-labeled/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-unlabeled-spread-after-labeled/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/types/tuple-unlabeled-spread-before-labeled/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-unlabeled-spread-before-labeled/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["T"]
 current  scope ScopeId(0): []
 
-typescript/types/typeof-type-asi-false-parameters/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-type-asi-false-parameters/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Example"]
 current  scope ScopeId(0): []
 
-typescript/types/typeof-type-asi-false-parameters-babel-7/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/typeof-type-asi-false-parameters-babel-7/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["Example"]
 current  scope ScopeId(0): []
 
-typescript/types/types-named-abstract/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/types-named-abstract/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["abstract", "x"]
 current  scope ScopeId(0): ["x"]
 
-typescript/types/union-intersection/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/union-intersection/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["F", "J", "K", "M", "N", "O", "intersection", "precedence1", "precedence2", "union"]
 current  scope ScopeId(0): ["intersection", "precedence1", "precedence2", "union"]
 
-typescript/types-arrow-function/object-pattern-with-template/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types-arrow-function/object-pattern-with-template/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["F"]
 current  scope ScopeId(0): []
 
-typescript/types-arrow-function-babel-7/object-pattern-with-template/input.ts
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types-arrow-function-babel-7/object-pattern-with-template/input.ts
 semantic error: Bindings Mismatch:
 previous scope ScopeId(0): ["F"]
 current  scope ScopeId(0): []

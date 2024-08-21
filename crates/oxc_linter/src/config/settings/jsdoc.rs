@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use crate::utils::default_true;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -176,12 +177,6 @@ impl JSDocPluginSettings {
             _ => original_name,
         }
     }
-}
-
-// Deserialize helper types
-
-fn default_true() -> bool {
-    true
 }
 
 #[derive(Clone, Debug, Deserialize, JsonSchema)]

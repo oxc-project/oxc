@@ -50,7 +50,10 @@ pub struct NoUnusedVarsOptions {
     /// Specifies exceptions to this rule for unused arguments. Arguments whose
     /// names match this pattern will be ignored.
     ///
-    /// By default this pattern is [`None`].
+    /// By default, this pattern is `^_` unless options are configured with an
+    /// object. In this case it will default to [`None`]. Note that this
+    /// behavior deviates from both ESLint and TypeScript-ESLint, which never
+    /// provide a default pattern.
     ///
     /// ## Example
     ///
@@ -206,11 +209,12 @@ pub struct NoUnusedVarsOptions {
 
 impl Default for NoUnusedVarsOptions {
     fn default() -> Self {
+        let underscore = Some(Regex::new("^_").unwrap());
         Self {
             vars: VarsOption::default(),
-            vars_ignore_pattern: Some(Regex::new("^_").unwrap()),
+            vars_ignore_pattern: underscore.clone(),
             args: ArgsOption::default(),
-            args_ignore_pattern: None,
+            args_ignore_pattern: underscore,
             ignore_rest_siblings: false,
             caught_errors: CaughtErrors::default(),
             caught_errors_ignore_pattern: None,
@@ -506,7 +510,7 @@ mod tests {
         assert_eq!(rule.vars, VarsOption::All);
         assert!(rule.vars_ignore_pattern.is_some_and(|v| v.as_str() == "^_"));
         assert_eq!(rule.args, ArgsOption::AfterUsed);
-        assert!(rule.args_ignore_pattern.is_none());
+        assert!(rule.args_ignore_pattern.is_some_and(|v| v.as_str() == "^_"));
         assert_eq!(rule.caught_errors, CaughtErrors::all());
         assert!(rule.caught_errors_ignore_pattern.is_none());
         assert!(rule.destructured_array_ignore_pattern.is_none());
@@ -564,6 +568,17 @@ mod tests {
         // option object provided, no default varsIgnorePattern
         assert!(rule.vars_ignore_pattern.is_none());
         assert!(rule.args_ignore_pattern.unwrap().as_str() == "^_");
+
+        let rule: NoUnusedVarsOptions = json!([
+            {
+                "varsIgnorePattern": "^_",
+            }
+        ])
+        .into();
+
+        // option object provided, no default argsIgnorePattern
+        assert!(rule.vars_ignore_pattern.unwrap().as_str() == "^_");
+        assert!(rule.args_ignore_pattern.is_none());
     }
 
     #[test]
@@ -587,8 +602,7 @@ mod tests {
         assert!(default.vars_ignore_pattern.unwrap().as_str() == "^_");
 
         assert_eq!(opts.args, default.args);
-        assert!(opts.args_ignore_pattern.is_none());
-        assert!(default.args_ignore_pattern.is_none());
+        assert!(default.args_ignore_pattern.unwrap().as_str() == "^_");
 
         assert_eq!(opts.caught_errors, default.caught_errors);
         assert!(opts.caught_errors_ignore_pattern.is_none());

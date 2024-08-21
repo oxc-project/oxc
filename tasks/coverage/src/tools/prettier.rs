@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use oxc_allocator::Allocator;
-use oxc_parser::{Parser, ParserReturn};
+use oxc::allocator::Allocator;
+use oxc::parser::{ParseOptions, Parser, ParserReturn};
+use oxc::span::SourceType;
 use oxc_prettier::{Prettier, PrettierOptions};
-use oxc_span::SourceType;
 
 use crate::{
     babel::BabelCase,
@@ -18,13 +18,14 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let options = PrettierOptions::default();
 
     let allocator = Allocator::default();
+    let parse_options = ParseOptions { preserve_parens: false, ..ParseOptions::default() };
     let ParserReturn { program, trivias, .. } =
-        Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
+        Parser::new(&allocator, source_text, source_type).with_options(parse_options).parse();
     let source_text1 = Prettier::new(&allocator, source_text, trivias, options).build(&program);
 
     let allocator = Allocator::default();
     let ParserReturn { program, trivias, .. } =
-        Parser::new(&allocator, &source_text1, source_type).preserve_parens(false).parse();
+        Parser::new(&allocator, &source_text1, source_type).with_options(parse_options).parse();
     let source_text2 = Prettier::new(&allocator, &source_text1, trivias, options).build(&program);
 
     if source_text1 == source_text2 {

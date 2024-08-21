@@ -27,7 +27,7 @@ use crate::{
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
-    reference::{Reference, ReferenceFlag, ReferenceId},
+    reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     unresolved_stack::UnresolvedReferencesStack,
@@ -82,7 +82,7 @@ pub struct SemanticBuilder<'a> {
     // and when we reach a value declaration we set it
     // to value like
     pub(crate) namespace_stack: Vec<SymbolId>,
-    current_reference_flag: ReferenceFlag,
+    current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
     // builders
@@ -131,7 +131,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_id: AstNodeId::new(0),
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
-            current_reference_flag: ReferenceFlag::empty(),
+            current_reference_flags: ReferenceFlags::empty(),
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
@@ -345,9 +345,9 @@ impl<'a> SemanticBuilder<'a> {
         self.current_scope_flags().is_strict_mode()
     }
 
-    pub(crate) fn set_function_node_flag(&mut self, flag: NodeFlags) {
+    pub(crate) fn set_function_node_flags(&mut self, flags: NodeFlags) {
         if let Some(current_function) = self.function_stack.last() {
-            *self.nodes.get_node_mut(*current_function).flags_mut() |= flag;
+            *self.nodes.get_node_mut(*current_function).flags_mut() |= flags;
         }
     }
 
@@ -396,7 +396,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Check if a symbol with the same name has already been declared in the
-    /// current scope. Returns the symbol id if it exists and is not excluded by `excludes`.
+    /// current scope. Returns the symbol ID if it exists and is not excluded by `excludes`.
     ///
     /// Only records a redeclaration error if `report_error` is `true`.
     pub(crate) fn check_redeclaration(
@@ -410,7 +410,7 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scope.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
-        if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
+        if report_error && self.symbols.get_flags(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(redeclaration(name, symbol_span, span));
         }
@@ -425,14 +425,9 @@ impl<'a> SemanticBuilder<'a> {
         name: Atom<'a>,
         reference: Reference,
     ) -> ReferenceId {
-        let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
-        self.unresolved_references
-            .current_mut()
-            .entry(name)
-            .or_default()
-            .push((reference_id, reference_flag));
+        self.unresolved_references.current_mut().entry(name).or_default().push(reference_id);
         reference_id
     }
 
@@ -460,7 +455,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Try to resolve all references from the current scope that are not
     /// already resolved.
     ///
-    /// This gets called every time [`SemanticBuilder`] exists a scope.
+    /// This gets called every time [`SemanticBuilder`] exits a scope.
     fn resolve_references_for_current_scope(&mut self) {
         let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
 
@@ -469,38 +464,36 @@ impl<'a> SemanticBuilder<'a> {
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
-                let symbol_flag = self.symbols.get_flag(symbol_id);
+                let symbol_flags = self.symbols.get_flags(symbol_id);
 
-                let resolved_references: &mut Vec<_> =
-                    self.symbols.resolved_references[symbol_id].as_mut();
-                // Reserve space for all references to avoid reallocations.
-                resolved_references.reserve(references.len());
+                let resolved_references = &mut self.symbols.resolved_references[symbol_id];
 
-                references.retain(|(id, flag)| {
-                    if flag.is_type() && symbol_flag.can_be_referenced_by_type()
-                        || flag.is_value() && symbol_flag.can_be_referenced_by_value()
-                        || flag.is_ts_type_query() && symbol_flag.is_import()
+                references.retain(|&reference_id| {
+                    let reference = &mut self.symbols.references[reference_id];
+                    let flags = reference.flags();
+                    if flags.is_type() && symbol_flags.can_be_referenced_by_type()
+                        || flags.is_value() && symbol_flags.can_be_referenced_by_value()
+                        || flags.is_ts_type_query() && symbol_flags.is_import()
                     {
-                        let reference = &mut self.symbols.references[*id];
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
-                        if symbol_flag.is_value() && !flag.is_type_only() {
-                            *reference.flag_mut() -= ReferenceFlag::Type;
+                        if symbol_flags.is_value() && !flags.is_type_only() {
+                            *reference.flags_mut() -= ReferenceFlags::Type;
                         } else {
                             // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
-                            *reference.flag_mut() -= ReferenceFlag::Value;
+                            *reference.flags_mut() -= ReferenceFlags::Value;
                         }
 
                         // import type { T } from './mod'; type A = typeof T
                         //                                                 ^ can reference type-only import
-                        // If symbol is type-import, we need to replace the ReferenceFlag::Value with ReferenceFlag::Type
-                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
-                            *reference.flag_mut() -= ReferenceFlag::Value;
-                            *reference.flag_mut() |= ReferenceFlag::Type;
+                        // If symbol is type-import, we need to replace the ReferenceFlags::Value with ReferenceFlags::Type
+                        if flags.is_ts_type_query() && symbol_flags.is_type_import() {
+                            *reference.flags_mut() -= ReferenceFlags::Value;
+                            *reference.flags_mut() |= ReferenceFlags::Type;
                         }
 
                         reference.set_symbol_id(symbol_id);
-                        resolved_references.push(*id);
+                        resolved_references.push(reference_id);
                         false
                     } else {
                         true
@@ -1735,7 +1728,7 @@ impl<'a> SemanticBuilder<'a> {
 
         match kind {
             AstKind::ExportDefaultDeclaration(decl) => {
-                // Only if the declaration has an id, we mark it as an export
+                // Only if the declaration has an ID, we mark it as an export
                 if match &decl.declaration {
                     ExportDefaultDeclarationKind::FunctionDeclaration(ref func) => {
                         func.id.is_some()
@@ -1750,14 +1743,14 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ExportNamedDeclaration(decl) => {
                 self.current_symbol_flags |= SymbolFlags::Export;
                 if decl.export_kind.is_type() {
-                    self.current_reference_flag = ReferenceFlag::Type;
+                    self.current_reference_flags = ReferenceFlags::Type;
                 }
             }
             AstKind::ExportSpecifier(s) => {
-                if self.current_reference_flag.is_type() || s.export_kind.is_type() {
-                    self.current_reference_flag = ReferenceFlag::Type;
+                if self.current_reference_flags.is_type() || s.export_kind.is_type() {
+                    self.current_reference_flags = ReferenceFlags::Type;
                 } else {
-                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
+                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 }
             }
             AstKind::ImportSpecifier(specifier) => {
@@ -1846,17 +1839,17 @@ impl<'a> SemanticBuilder<'a> {
                 type_parameter.bind(self);
             }
             AstKind::TSInterfaceHeritage(_) => {
-                self.current_reference_flag = ReferenceFlag::Type;
+                self.current_reference_flags = ReferenceFlags::Type;
             }
             AstKind::TSTypeQuery(_) => {
                 // type A = typeof a;
                 //          ^^^^^^^^
-                self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+                self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::TSTypeQuery;
             }
             AstKind::TSTypeParameterInstantiation(_) => {
                 // type A<T> = typeof a<T>;
                 //                     ^^^ avoid treat T as a value and TSTypeQuery
-                self.current_reference_flag -= ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+                self.current_reference_flags -= ReferenceFlags::Read | ReferenceFlags::TSTypeQuery;
             }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
@@ -1865,15 +1858,15 @@ impl<'a> SemanticBuilder<'a> {
                         //            ^
                         AstKind::TSModuleReference(_),
                     ) => {
-                        self.current_reference_flag = ReferenceFlag::Read;
+                        self.current_reference_flags = ReferenceFlags::Read;
                     }
                     Some(AstKind::TSQualifiedName(_)) => {
                         // import A = a.b
                         //            ^^^ Keep the current reference flag
                     }
                     _ => {
-                        if !self.current_reference_flag.is_ts_type_query() {
-                            self.current_reference_flag = ReferenceFlag::Type;
+                        if !self.current_reference_flags.is_ts_type_query() {
+                            self.current_reference_flags = ReferenceFlags::Type;
                         }
                     }
                 }
@@ -1882,7 +1875,7 @@ impl<'a> SemanticBuilder<'a> {
                 // export = a;
                 //          ^ can reference value or type
                 if export.expression.is_identifier_reference() {
-                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
+                    self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Type;
                 }
             }
             AstKind::IdentifierReference(ident) => {
@@ -1892,27 +1885,27 @@ impl<'a> SemanticBuilder<'a> {
                 self.reference_jsx_identifier(ident);
             }
             AstKind::UpdateExpression(_) => {
-                if !self.current_reference_flag.is_type()
+                if !self.current_reference_flags.is_type()
                     && self.is_not_expression_statement_parent()
                 {
-                    self.current_reference_flag |= ReferenceFlag::Read;
+                    self.current_reference_flags |= ReferenceFlags::Read;
                 }
-                self.current_reference_flag |= ReferenceFlag::Write;
+                self.current_reference_flags |= ReferenceFlags::Write;
             }
             AstKind::AssignmentExpression(expr) => {
                 if expr.operator != AssignmentOperator::Assign
                     || self.is_not_expression_statement_parent()
                 {
-                    self.current_reference_flag |= ReferenceFlag::Read;
+                    self.current_reference_flags |= ReferenceFlags::Read;
                 }
             }
             AstKind::MemberExpression(_) => {
-                if !self.current_reference_flag.is_type() {
-                    self.current_reference_flag = ReferenceFlag::Read;
+                if !self.current_reference_flags.is_type() {
+                    self.current_reference_flags = ReferenceFlags::Read;
                 }
             }
             AstKind::AssignmentTarget(_) => {
-                self.current_reference_flag |= ReferenceFlag::Write;
+                self.current_reference_flags |= ReferenceFlags::Write;
             }
             AstKind::LabeledStatement(stmt) => {
                 self.label_builder.enter(stmt, self.current_node_id);
@@ -1924,7 +1917,7 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
-                self.set_function_node_flag(NodeFlags::HasYield);
+                self.set_function_node_flags(NodeFlags::HasYield);
             }
             _ => {}
         }
@@ -1944,8 +1937,8 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::ExportSpecifier(_) => {
-                if !self.current_reference_flag.is_type_only() {
-                    self.current_reference_flag = ReferenceFlag::empty();
+                if !self.current_reference_flags.is_type_only() {
+                    self.current_reference_flags = ReferenceFlags::empty();
                 }
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
@@ -1975,27 +1968,27 @@ impl<'a> SemanticBuilder<'a> {
                 self.namespace_stack.pop();
             }
             AstKind::TSTypeName(_) => {
-                self.current_reference_flag -= ReferenceFlag::Type;
+                self.current_reference_flags -= ReferenceFlags::Type;
             }
             AstKind::UpdateExpression(_) => {
                 if self.is_not_expression_statement_parent() {
-                    self.current_reference_flag -= ReferenceFlag::Read;
+                    self.current_reference_flags -= ReferenceFlags::Read;
                 }
-                self.current_reference_flag -= ReferenceFlag::Write;
+                self.current_reference_flags -= ReferenceFlags::Write;
             }
             AstKind::AssignmentExpression(expr) => {
                 if expr.operator != AssignmentOperator::Assign
                     || self.is_not_expression_statement_parent()
                 {
-                    self.current_reference_flag -= ReferenceFlag::Read;
+                    self.current_reference_flags -= ReferenceFlags::Read;
                 }
             }
             AstKind::MemberExpression(_)
             | AstKind::TSTypeQuery(_)
             | AstKind::ExportNamedDeclaration(_) => {
-                self.current_reference_flag = ReferenceFlag::empty();
+                self.current_reference_flags = ReferenceFlags::empty();
             }
-            AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
+            AstKind::AssignmentTarget(_) => self.current_reference_flags -= ReferenceFlags::Write,
             _ => {}
         }
     }
@@ -2003,7 +1996,7 @@ impl<'a> SemanticBuilder<'a> {
     fn make_all_namespaces_valuelike(&mut self) {
         for symbol_id in &self.namespace_stack {
             // Ambient modules cannot be value modules
-            if self.symbols.get_flag(*symbol_id).intersects(SymbolFlags::Ambient) {
+            if self.symbols.get_flags(*symbol_id).intersects(SymbolFlags::Ambient) {
                 continue;
             }
             self.symbols.union_flag(*symbol_id, SymbolFlags::ValueModule);
@@ -2011,18 +2004,18 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
-        let flag = self.resolve_reference_usages();
-        let reference = Reference::new(self.current_node_id, flag);
+        let flags = self.resolve_reference_usages();
+        let reference = Reference::new(self.current_node_id, flags);
         let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
 
     /// Resolve reference flags for the current ast node.
-    fn resolve_reference_usages(&self) -> ReferenceFlag {
-        if self.current_reference_flag.is_empty() {
-            ReferenceFlag::Read
+    fn resolve_reference_usages(&self) -> ReferenceFlags {
+        if self.current_reference_flags.is_empty() {
+            ReferenceFlags::Read
         } else {
-            self.current_reference_flag
+            self.current_reference_flags
         }
     }
 
@@ -2036,7 +2029,7 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(self.current_node_id, ReferenceFlag::read());
+        let reference = Reference::new(self.current_node_id, ReferenceFlags::read());
         self.declare_reference(ident.name.clone(), reference);
     }
 

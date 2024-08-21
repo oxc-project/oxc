@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc"
-version                = "0.24.2"
+version                = "0.24.3"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -20,6 +20,11 @@ workspace = true
 test    = false
 doctest = false
 
+[[example]]
+name              = "compiler"
+path              = "examples/compiler.rs"
+required-features = ["full"]
+
 [dependencies]
 oxc_allocator             = { workspace = true }
 oxc_ast                   = { workspace = true }
@@ -37,14 +42,19 @@ oxc_sourcemap             = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 
 [features]
-serialize             = ["oxc_ast/serialize", "oxc_semantic?/serialize", "oxc_span/serialize", "oxc_syntax/serialize"]
-semantic              = ["oxc_semantic"]
-transformer           = ["oxc_transformer"]
-minifier              = ["oxc_mangler", "oxc_minifier"]
-codegen               = ["oxc_codegen"]
-isolated_declarations = ["oxc_isolated_declarations"]
+full = ["codegen", "mangler", "minifier", "semantic", "transformer"]
+
+semantic    = ["oxc_semantic"]
+transformer = ["oxc_transformer"]
+minifier    = ["oxc_mangler", "oxc_minifier"]
+codegen     = ["oxc_codegen"]
+mangler     = ["oxc_mangler"]
+
+serialize = ["oxc_ast/serialize", "oxc_semantic?/serialize", "oxc_span/serialize", "oxc_syntax/serialize"]
 
 sourcemap            = ["oxc_sourcemap"]
 sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
+
+isolated_declarations = ["oxc_isolated_declarations"]
 
 wasm = ["oxc_transformer/wasm"]

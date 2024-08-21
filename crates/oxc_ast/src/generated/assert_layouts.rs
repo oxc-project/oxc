@@ -71,7 +71,7 @@ const _: () = {
     assert!(offset_of!(IdentifierReference, span) == 0usize);
     assert!(offset_of!(IdentifierReference, name) == 8usize);
     assert!(offset_of!(IdentifierReference, reference_id) == 24usize);
-    assert!(offset_of!(IdentifierReference, reference_flag) == 28usize);
+    assert!(offset_of!(IdentifierReference, reference_flags) == 28usize);
 
     assert!(size_of::<BindingIdentifier>() == 32usize);
     assert!(align_of::<BindingIdentifier>() == 8usize);
@@ -178,9 +178,9 @@ const _: () = {
     assert!(size_of::<CallExpression>() == 72usize);
     assert!(align_of::<CallExpression>() == 8usize);
     assert!(offset_of!(CallExpression, span) == 0usize);
-    assert!(offset_of!(CallExpression, arguments) == 8usize);
-    assert!(offset_of!(CallExpression, callee) == 40usize);
-    assert!(offset_of!(CallExpression, type_parameters) == 56usize);
+    assert!(offset_of!(CallExpression, callee) == 8usize);
+    assert!(offset_of!(CallExpression, type_parameters) == 24usize);
+    assert!(offset_of!(CallExpression, arguments) == 32usize);
     assert!(offset_of!(CallExpression, optional) == 64usize);
 
     assert!(size_of::<NewExpression>() == 64usize);
@@ -1476,7 +1476,7 @@ const _: () = {
     assert!(offset_of!(IdentifierReference, span) == 0usize);
     assert!(offset_of!(IdentifierReference, name) == 8usize);
     assert!(offset_of!(IdentifierReference, reference_id) == 16usize);
-    assert!(offset_of!(IdentifierReference, reference_flag) == 20usize);
+    assert!(offset_of!(IdentifierReference, reference_flags) == 20usize);
 
     assert!(size_of::<BindingIdentifier>() == 20usize);
     assert!(align_of::<BindingIdentifier>() == 4usize);
@@ -1583,9 +1583,9 @@ const _: () = {
     assert!(size_of::<CallExpression>() == 40usize);
     assert!(align_of::<CallExpression>() == 4usize);
     assert!(offset_of!(CallExpression, span) == 0usize);
-    assert!(offset_of!(CallExpression, arguments) == 8usize);
-    assert!(offset_of!(CallExpression, callee) == 24usize);
-    assert!(offset_of!(CallExpression, type_parameters) == 32usize);
+    assert!(offset_of!(CallExpression, callee) == 8usize);
+    assert!(offset_of!(CallExpression, type_parameters) == 16usize);
+    assert!(offset_of!(CallExpression, arguments) == 20usize);
     assert!(offset_of!(CallExpression, optional) == 36usize);
 
     assert!(size_of::<NewExpression>() == 36usize);

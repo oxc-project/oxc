@@ -28,6 +28,11 @@ fn main() {
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),
         "v8_test262_status" => args.run_sync_v8_test262_status(),
+        "all" => {
+            args.run_all();
+            args.run_codegen_runtime();
+            args.run_sync_v8_test262_status();
+        }
         _ => args.run_all(),
     };
 }

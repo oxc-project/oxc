@@ -15,7 +15,7 @@ use oxc_linter::{
     },
     FixKind, Linter,
 };
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use ropey::Rope;
@@ -270,7 +270,10 @@ impl IsolatedLintHandler {
                 source;
             let allocator = Allocator::default();
             let ret = Parser::new(&allocator, javascript_source_text, source_type)
-                .allow_return_outside_function(true)
+                .with_options(ParseOptions {
+                    allow_return_outside_function: true,
+                    ..ParseOptions::default()
+                })
                 .parse();
 
             if !ret.errors.is_empty() {

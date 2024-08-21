@@ -6,14 +6,14 @@ use oxc_ast::{
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
-    reference::{ReferenceFlag, ReferenceId},
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
 
 use crate::ancestor::{Ancestor, AncestorType};
-
 mod ancestry;
+mod ast_operations;
 pub use ancestry::TraverseAncestry;
 mod scoping;
 pub use scoping::TraverseScoping;
@@ -291,15 +291,38 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.generate_uid_in_root_scope(name, flags)
     }
 
+    /// Generate UID based on node.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_uid_based_on_node`.
+    pub fn generate_uid_based_on_node(
+        &mut self,
+        node: &Expression<'a>,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        self.scoping.generate_uid_based_on_node(node, scope_id, flags)
+    }
+
+    /// Generate UID in current scope based on node.
+    ///
+    /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope_based_on_node`.
+    pub fn generate_uid_in_current_scope_based_on_node(
+        &mut self,
+        node: &Expression<'a>,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        self.scoping.generate_uid_in_current_scope_based_on_node(node, flags)
+    }
+
     /// Create a reference bound to a `SymbolId`.
     ///
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
     pub fn create_bound_reference(
         &mut self,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_bound_reference(symbol_id, flag)
+        self.scoping.create_bound_reference(symbol_id, flags)
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.
@@ -310,9 +333,9 @@ impl<'a> TraverseCtx<'a> {
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_bound_reference_id(span, name, symbol_id, flag)
+        self.scoping.create_bound_reference_id(span, name, symbol_id, flags)
     }
 
     /// Create an unbound reference.
@@ -321,9 +344,9 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_unbound_reference(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_unbound_reference(name, flag)
+        self.scoping.create_unbound_reference(name, flags)
     }
 
     /// Create an unbound `IdentifierReference`.
@@ -333,9 +356,9 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         span: Span,
         name: Atom<'a>,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_unbound_reference_id(span, name, flag)
+        self.scoping.create_unbound_reference_id(span, name, flags)
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -348,9 +371,9 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         name: CompactStr,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_reference(name, symbol_id, flag)
+        self.scoping.create_reference(name, symbol_id, flags)
     }
 
     /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
@@ -364,9 +387,9 @@ impl<'a> TraverseCtx<'a> {
         span: Span,
         name: Atom<'a>,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_reference_id(span, name, symbol_id, flag)
+        self.scoping.create_reference_id(span, name, symbol_id, flags)
     }
 
     /// Create reference in current scope, looking up binding for `name`,
@@ -375,9 +398,9 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_reference_in_current_scope(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_reference_in_current_scope(name, flag)
+        self.scoping.create_reference_in_current_scope(name, flags)
     }
 
     /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
@@ -390,9 +413,9 @@ impl<'a> TraverseCtx<'a> {
     pub fn clone_identifier_reference(
         &mut self,
         ident: &IdentifierReference<'a>,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.clone_identifier_reference(ident, flag)
+        self.scoping.clone_identifier_reference(ident, flags)
     }
 }
 

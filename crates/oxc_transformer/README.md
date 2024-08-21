@@ -95,14 +95,26 @@ comment, so we can return to it later.
 * Entry points of transform should be implemented as `impl Traverse for MyTransform`.
 * Those methods have to be called `enter_*` and `exit_*`.
 * Parent transform will only interface with child transform via these entry points.
-* Those entry points go at top of the file.
+* Only other method exposed externally should be `new`. That should be at top of the file.
+* Entry points go directly below `new` method definition.
 * Internal methods implemented lower down in an `impl MyTransform` block.
 * Internal methods named descriptively - `add_id_to_function` not `transform_function`.
+
+i.e. File is laid out so logic flows from top of file to bottom.
 
 e.g.:
 
 ```rs
-struct FunctionRenamer;
+struct FunctionRenamer {
+    prefix: String,
+}
+
+// Initialization
+impl FunctionRenamer {
+    pub fn new(prefix: String) -> Self {
+        Self { prefix }
+    }
+}
 
 // Entry points
 impl<'a> Traverse<'a> for FunctionRenamer {
