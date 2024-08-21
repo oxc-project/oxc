@@ -182,7 +182,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for IdentifierReference<'old_al
             span: self.span.clone_in(allocator),
             name: self.name.clone_in(allocator),
             reference_id: Default::default(),
-            reference_flag: Default::default(),
+            reference_flags: Default::default(),
         }
     }
 }

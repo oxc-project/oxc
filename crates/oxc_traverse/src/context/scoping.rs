@@ -290,7 +290,7 @@ impl TraverseScoping {
             span,
             name,
             reference_id: Cell::new(Some(reference_id)),
-            reference_flag: flag,
+            reference_flags: flag,
         }
     }
 
@@ -318,7 +318,7 @@ impl TraverseScoping {
             span,
             name,
             reference_id: Cell::new(Some(reference_id)),
-            reference_flag: flag,
+            reference_flags: flag,
         }
     }
 

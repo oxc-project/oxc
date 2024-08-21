@@ -86,7 +86,7 @@ impl<'a> TypeScript<'a> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
                 let mut ident = ident.clone();
-                ident.reference_flag = ReferenceFlags::Read;
+                ident.reference_flags = ReferenceFlags::Read;
                 let reference_id = ident.reference_id.get().unwrap();
                 let reference = ctx.symbols_mut().get_reference_mut(reference_id);
                 *reference.flag_mut() = ReferenceFlags::Read;

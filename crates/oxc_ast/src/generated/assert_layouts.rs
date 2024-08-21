@@ -71,7 +71,7 @@ const _: () = {
     assert!(offset_of!(IdentifierReference, span) == 0usize);
     assert!(offset_of!(IdentifierReference, name) == 8usize);
     assert!(offset_of!(IdentifierReference, reference_id) == 24usize);
-    assert!(offset_of!(IdentifierReference, reference_flag) == 28usize);
+    assert!(offset_of!(IdentifierReference, reference_flags) == 28usize);
 
     assert!(size_of::<BindingIdentifier>() == 32usize);
     assert!(align_of::<BindingIdentifier>() == 8usize);
@@ -1476,7 +1476,7 @@ const _: () = {
     assert!(offset_of!(IdentifierReference, span) == 0usize);
     assert!(offset_of!(IdentifierReference, name) == 8usize);
     assert!(offset_of!(IdentifierReference, reference_id) == 16usize);
-    assert!(offset_of!(IdentifierReference, reference_flag) == 20usize);
+    assert!(offset_of!(IdentifierReference, reference_flags) == 20usize);
 
     assert!(size_of::<BindingIdentifier>() == 20usize);
     assert!(align_of::<BindingIdentifier>() == 4usize);

@@ -33,7 +33,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
                 .expressions
                 .iter()
                 .any(|expr| expr.check_for_state_change(check_for_new_objects)),
-            Self::Identifier(ident) => ident.reference_flag == ReferenceFlags::Write,
+            Self::Identifier(ident) => ident.reference_flags == ReferenceFlags::Write,
             Self::UnaryExpression(unary_expr) => {
                 unary_expr.check_for_state_change(check_for_new_objects)
             }

@@ -334,7 +334,7 @@ impl<'a> IdentifierReference<'a> {
             span,
             name,
             reference_id: Cell::default(),
-            reference_flag: ReferenceFlags::default(),
+            reference_flags: ReferenceFlags::default(),
         }
     }
 
@@ -343,7 +343,7 @@ impl<'a> IdentifierReference<'a> {
             span,
             name,
             reference_id: Cell::new(reference_id),
-            reference_flag: ReferenceFlags::Read,
+            reference_flags: ReferenceFlags::Read,
         }
     }
 

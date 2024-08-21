@@ -245,7 +245,7 @@ pub struct IdentifierReference<'a> {
     /// [`ReferenceFlags::None`] immediately after parsing.
     #[serde(skip)]
     #[clone_in(default)]
-    pub reference_flag: ReferenceFlags,
+    pub reference_flags: ReferenceFlags,
 }
 
 /// `x` in `const x = 0;`
