@@ -7,18 +7,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(foo)",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "T",
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlags(Type)",
+                "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "T",
                 "node_id": 12
@@ -26,7 +26,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             ]
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "a",
             "node": "FormalParameter(a)",
@@ -35,12 +35,12 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 0,
         "name": "foo",
         "node": "Function(foo)",

@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
@@ -16,24 +16,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(StrictMode)",
             "id": 3,
             "node": "TSMappedType",
             "symbols": [
               {
-                "flag": "SymbolFlags(TypeParameter)",
+                "flags": "SymbolFlags(TypeParameter)",
                 "id": 2,
                 "name": "k",
                 "node": "TSTypeParameter(k)",
                 "references": [
                   {
-                    "flag": "ReferenceFlags(Type)",
+                    "flags": "ReferenceFlags(Type)",
                     "id": 1,
                     "name": "k",
                     "node_id": 17
                   },
                   {
-                    "flag": "ReferenceFlags(Type)",
+                    "flags": "ReferenceFlags(Type)",
                     "id": 3,
                     "name": "k",
                     "node_id": 24
@@ -43,24 +43,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "T",
             "node_id": 21
@@ -68,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 1,
         "name": "A",
         "node": "TSTypeAliasDeclaration",

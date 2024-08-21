@@ -7,18 +7,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(makeBox)",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "T",
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlags(Type)",
+                "flags": "ReferenceFlags(Type)",
                 "id": 0,
                 "name": "T",
                 "node_id": 12
@@ -26,13 +26,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             ]
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "value",
             "node": "FormalParameter(value)",
             "references": [
               {
-                "flag": "ReferenceFlags(Read)",
+                "flags": "ReferenceFlags(Read)",
                 "id": 1,
                 "name": "value",
                 "node_id": 19
@@ -43,18 +43,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 4,
             "name": "T",
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlags(Type)",
+                "flags": "ReferenceFlags(Type)",
                 "id": 3,
                 "name": "T",
                 "node_id": 31
@@ -64,24 +64,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 0,
         "name": "makeBox",
         "node": "Function(makeBox)",
         "references": [
           {
-            "flag": "ReferenceFlags(Read | TSTypeQuery)",
+            "flags": "ReferenceFlags(Read | TSTypeQuery)",
             "id": 2,
             "name": "makeBox",
             "node_id": 27
           },
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "makeBox",
             "node_id": 36
@@ -89,14 +89,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 3,
         "name": "BoxFunc",
         "node": "TSTypeAliasDeclaration",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 5,
         "name": "makeStringBox",
         "node": "VariableDeclarator(makeStringBox)",

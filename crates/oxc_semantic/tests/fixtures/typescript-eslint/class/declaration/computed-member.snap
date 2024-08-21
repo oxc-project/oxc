@@ -9,30 +9,30 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function)",
+            "flags": "ScopeFlags(StrictMode | Function)",
             "id": 2,
             "node": "Function(<anonymous>)",
             "symbols": []
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "Class(A)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "outer1",
         "node": "VariableDeclarator(outer1)",
         "references": [
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "outer1",
             "node_id": 14
@@ -40,13 +40,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "outer2",
         "node": "VariableDeclarator(outer2)",
         "references": [
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer2",
             "node_id": 18
@@ -54,7 +54,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         ]
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 2,
         "name": "A",
         "node": "Class(A)",

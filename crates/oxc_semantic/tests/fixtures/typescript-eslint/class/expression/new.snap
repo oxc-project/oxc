@@ -7,24 +7,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "Class(<anonymous>)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "A",
         "node": "VariableDeclarator(A)",
         "references": [
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "A",
             "node_id": 8

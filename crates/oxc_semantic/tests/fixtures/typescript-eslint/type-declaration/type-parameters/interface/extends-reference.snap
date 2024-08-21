@@ -7,12 +7,12 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSInterfaceDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "T",
             "node": "TSTypeParameter(T)",
@@ -22,18 +22,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSInterfaceDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 3,
             "name": "T",
             "node": "TSTypeParameter(T)",
             "references": [
               {
-                "flag": "ReferenceFlags(Type)",
+                "flags": "ReferenceFlags(Type)",
                 "id": 1,
                 "name": "T",
                 "node_id": 13
@@ -43,18 +43,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 0,
         "name": "A",
         "node": "TSInterfaceDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "A",
             "node_id": 9
@@ -62,7 +62,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       },
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 2,
         "name": "Foo",
         "node": "TSInterfaceDeclaration",

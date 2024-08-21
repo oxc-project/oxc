@@ -5,18 +5,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/children.ts
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "child",
         "node": "VariableDeclarator(child)",
         "references": [
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "child",
             "node_id": 14

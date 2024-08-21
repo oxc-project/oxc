@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(decorator)",
         "symbols": []
@@ -16,33 +16,33 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function)",
+            "flags": "ScopeFlags(StrictMode | Function)",
             "id": 3,
             "node": "Function(<anonymous>)",
             "symbols": [
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "a",
                 "node": "FormalParameter(a)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 3,
                 "name": "b",
                 "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 4,
                 "name": "c",
                 "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 5,
                 "name": "d",
                 "node": "FormalParameter(d)",
@@ -51,42 +51,42 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "Class(A)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 0,
         "name": "decorator",
         "node": "Function(decorator)",
         "references": [
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "decorator",
             "node_id": 15
           },
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "decorator",
             "node_id": 19
           },
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "decorator",
             "node_id": 24
           },
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "decorator",
             "node_id": 31
@@ -94,7 +94,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
         ]
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 1,
         "name": "A",
         "node": "Class(A)",

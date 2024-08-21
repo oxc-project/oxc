@@ -5,18 +5,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/default2
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
         "id": 0,
         "name": "a",
         "node": "VariableDeclarator(a)",
         "references": [
           {
-            "flag": "ReferenceFlags(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "a",
             "node_id": 7

@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "BlockStatement",
         "symbols": []
@@ -16,18 +16,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(StrictMode)",
             "id": 3,
             "node": "BlockStatement",
             "symbols": [
               {
-                "flag": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
                 "id": 0,
                 "name": "e",
                 "node": "CatchParameter",
                 "references": [
                   {
-                    "flag": "ReferenceFlags(Read)",
+                    "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "e",
                     "node_id": 8
@@ -35,7 +35,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
                 ]
               },
               {
-                "flag": "SymbolFlags(BlockScopedVariable)",
+                "flags": "SymbolFlags(BlockScopedVariable)",
                 "id": 1,
                 "name": "a",
                 "node": "VariableDeclarator(a)",
@@ -44,25 +44,25 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode | CatchClause)",
+        "flags": "ScopeFlags(StrictMode | CatchClause)",
         "id": 2,
         "node": "CatchClause",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 2,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 3,
         "name": "dontReference2",
         "node": "VariableDeclarator(dontReference2)",
