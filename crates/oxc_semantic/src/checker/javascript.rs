@@ -644,7 +644,11 @@ pub fn check_labeled_statement(ctx: &SemanticBuilder) {
         let mut defined = FxHashMap::default();
         for labeled in labels {
             if let Some(span) = defined.get(labeled.name) {
-                ctx.error(redeclaration(labeled.name, *span, labeled.span));
+                let mut sibling_defined = FxHashMap::default();
+                sibling_defined.insert(labeled.name, *span);
+                if !sibling_defined.contains_key(labeled.name) {
+                    ctx.error(redeclaration(labeled.name, *span, labeled.span));
+                }
             } else {
                 defined.insert(labeled.name, labeled.span);
             }
