@@ -49,37 +49,24 @@ impl PostTransformChecker {
 
         let errors_count = self.errors.len();
 
-        self.check_bindings(
-            symbols_after_transform,
-            scopes_after_transform,
-            &collect_new,
-            &current_scopes,
-        );
+        self.check_bindings(scopes_after_transform, &current_scopes, &collect_new);
 
         self.check_symbols(
             symbols_after_transform,
-            scopes_after_transform,
-            &collect_new,
             &current_symbols,
             &current_scopes,
-        );
-        self.check_references(
-            symbols_after_transform,
-            scopes_after_transform,
             &collect_new,
-            &current_symbols,
-            &current_scopes,
         );
+        self.check_references(symbols_after_transform, &current_symbols, &collect_new);
 
         (errors_count != self.errors.len()).then(|| mem::take(&mut self.errors))
     }
 
     fn check_bindings(
         &mut self,
-        _previous_symbols: &SymbolTable,
         previous_scopes: &ScopeTree,
-        current_collect: &SemanticCollector,
         current_scopes: &ScopeTree,
+        current_collect: &SemanticCollector,
     ) {
         if self.collect_after_transform.scope_ids.len() != current_collect.scope_ids.len() {
             self.errors.push(OxcDiagnostic::error("Scopes mismatch after transform"));
@@ -134,10 +121,9 @@ current  {current}
     fn check_symbols(
         &mut self,
         previous_symbols: &SymbolTable,
-        _previous_scopes: &ScopeTree,
-        current_collect: &SemanticCollector,
         current_symbols: &SymbolTable,
         current_scopes: &ScopeTree,
+        current_collect: &SemanticCollector,
     ) {
         // Check whether symbols are valid
         for symbol_id in current_collect.symbol_ids.iter().copied() {
@@ -181,10 +167,8 @@ current  {cur_symbol_id:?}: {cur_symbol_name:?}
     fn check_references(
         &mut self,
         previous_symbols: &SymbolTable,
-        _previous_scopes: &ScopeTree,
-        current_collect: &SemanticCollector,
         current_symbols: &SymbolTable,
-        _current_scopes: &ScopeTree,
+        current_collect: &SemanticCollector,
     ) {
         // Check whether references are valid
         for reference_id in current_collect.reference_ids.iter().copied() {
