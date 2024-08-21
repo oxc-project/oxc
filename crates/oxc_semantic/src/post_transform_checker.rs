@@ -16,18 +16,18 @@ use crate::{ScopeTree, SemanticBuilder, SymbolTable};
 #[derive(Default)]
 pub struct PostTransformChecker {
     errors: Vec<OxcDiagnostic>,
-    collect_after_transform: SemanticCollector,
+    collector_transformer: SemanticCollector,
 }
 
 impl PostTransformChecker {
     pub fn after_transform(
         &mut self,
-        symbols_after_transform: &SymbolTable,
-        scopes_after_transform: &ScopeTree,
+        symbols_transformer: &SymbolTable,
+        scopes_transformer: &ScopeTree,
         program: &Program<'_>,
     ) -> Option<Vec<OxcDiagnostic>> {
-        self.collect_after_transform = SemanticCollector::default();
-        if let Some(errors) = self.collect_after_transform.check(program) {
+        self.collector_transformer = SemanticCollector::default();
+        if let Some(errors) = self.collector_transformer.check(program) {
             self.errors.push(OxcDiagnostic::error("Semantic Collector failed after transform"));
             self.errors.extend(errors);
             return Some(mem::take(&mut self.errors));
@@ -35,13 +35,13 @@ impl PostTransformChecker {
 
         let allocator = Allocator::default();
         let program = program.clone_in(&allocator);
-        let (current_symbols, current_scopes) = SemanticBuilder::new("", program.source_type)
+        let (symbols_rebuild, scopes_rebuild) = SemanticBuilder::new("", program.source_type)
             .build(&program)
             .semantic
             .into_symbol_table_and_scope_tree();
 
-        let mut collect_new = SemanticCollector::default();
-        if let Some(errors) = collect_new.check(&program) {
+        let mut collector_rebuild = SemanticCollector::default();
+        if let Some(errors) = collector_rebuild.check(&program) {
             self.errors.push(OxcDiagnostic::error("Semantic Collector failed after rebuild"));
             self.errors.extend(errors);
             return Some(mem::take(&mut self.errors));
@@ -49,33 +49,33 @@ impl PostTransformChecker {
 
         let errors_count = self.errors.len();
 
-        self.check_bindings(scopes_after_transform, &current_scopes, &collect_new);
+        self.check_bindings(scopes_transformer, &scopes_rebuild, &collector_rebuild);
 
         self.check_symbols(
-            symbols_after_transform,
-            &current_symbols,
-            &current_scopes,
-            &collect_new,
+            symbols_transformer,
+            &symbols_rebuild,
+            &scopes_rebuild,
+            &collector_rebuild,
         );
-        self.check_references(symbols_after_transform, &current_symbols, &collect_new);
+        self.check_references(symbols_transformer, &symbols_rebuild, &collector_rebuild);
 
         (errors_count != self.errors.len()).then(|| mem::take(&mut self.errors))
     }
 
     fn check_bindings(
         &mut self,
-        previous_scopes: &ScopeTree,
-        current_scopes: &ScopeTree,
-        current_collect: &SemanticCollector,
+        scopes_transformer: &ScopeTree,
+        scopes_rebuild: &ScopeTree,
+        collector_rebuild: &SemanticCollector,
     ) {
-        if self.collect_after_transform.scope_ids.len() != current_collect.scope_ids.len() {
+        if self.collector_transformer.scope_ids.len() != collector_rebuild.scope_ids.len() {
             self.errors.push(OxcDiagnostic::error("Scopes mismatch after transform"));
             return;
         }
 
         // Check whether bindings are the same for scopes in the same visitation order.
-        for (&prev_scope_id, &cur_scope_id) in
-            self.collect_after_transform.scope_ids.iter().zip(current_collect.scope_ids.iter())
+        for (&scope_id_transformer, &scope_id_rebuild) in
+            self.collector_transformer.scope_ids.iter().zip(collector_rebuild.scope_ids.iter())
         {
             fn get_sorted_bindings(scopes: &ScopeTree, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut bindings =
@@ -84,34 +84,45 @@ impl PostTransformChecker {
                 bindings
             }
 
-            let (previous, current) = match (prev_scope_id, cur_scope_id) {
-                (None, None) => continue,
-                (Some(prev_scope_id), Some(cur_scope_id)) => {
-                    let prev_bindings = get_sorted_bindings(previous_scopes, prev_scope_id);
-                    let current_bindings = get_sorted_bindings(current_scopes, cur_scope_id);
-                    if prev_bindings == current_bindings {
-                        continue;
+            let (result_transformer, result_rebuild) =
+                match (scope_id_transformer, scope_id_rebuild) {
+                    (None, None) => continue,
+                    (Some(scope_id_transformer), Some(scope_id_rebuild)) => {
+                        let bindings_transformer =
+                            get_sorted_bindings(scopes_transformer, scope_id_transformer);
+                        let bindings_rebuild =
+                            get_sorted_bindings(scopes_rebuild, scope_id_rebuild);
+                        if bindings_transformer == bindings_rebuild {
+                            continue;
+                        }
+                        (
+                            format!("{scope_id_transformer:?}: {bindings_transformer:?}"),
+                            format!("{scope_id_rebuild:?}: {bindings_rebuild:?}"),
+                        )
                     }
-                    (
-                        format!("{prev_scope_id:?}: {prev_bindings:?}"),
-                        format!("{cur_scope_id:?}: {current_bindings:?}"),
-                    )
-                }
-                (Some(prev_scope_id), None) => {
-                    let prev_bindings = get_sorted_bindings(previous_scopes, prev_scope_id);
-                    (format!("{prev_scope_id:?}: {prev_bindings:?}"), "No scope".to_string())
-                }
-                (None, Some(cur_scope_id)) => {
-                    let current_bindings = get_sorted_bindings(current_scopes, cur_scope_id);
-                    ("No scope".to_string(), format!("{cur_scope_id:?}: {current_bindings:?}"))
-                }
-            };
+                    (Some(scope_id_transformer), None) => {
+                        let bindings_transformer =
+                            get_sorted_bindings(scopes_transformer, scope_id_transformer);
+                        (
+                            format!("{scope_id_transformer:?}: {bindings_transformer:?}"),
+                            "No scope".to_string(),
+                        )
+                    }
+                    (None, Some(scope_id_rebuild)) => {
+                        let bindings_rebuild =
+                            get_sorted_bindings(scopes_rebuild, scope_id_rebuild);
+                        (
+                            "No scope".to_string(),
+                            format!("{scope_id_rebuild:?}: {bindings_rebuild:?}"),
+                        )
+                    }
+                };
 
             let message = format!(
                 "
 Bindings mismatch:
-previous {previous}
-current  {current}
+previous {result_transformer}
+current  {result_rebuild}
                 "
             );
             self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
@@ -120,19 +131,19 @@ current  {current}
 
     fn check_symbols(
         &mut self,
-        previous_symbols: &SymbolTable,
-        current_symbols: &SymbolTable,
-        current_scopes: &ScopeTree,
-        current_collect: &SemanticCollector,
+        symbols_transformer: &SymbolTable,
+        symbols_rebuild: &SymbolTable,
+        scopes_rebuild: &ScopeTree,
+        collector_rebuild: &SemanticCollector,
     ) {
         // Check whether symbols are valid
-        for symbol_id in current_collect.symbol_ids.iter().copied() {
-            if current_symbols.get_flags(symbol_id).is_empty() {
-                let name = current_symbols.get_name(symbol_id);
+        for symbol_id in collector_rebuild.symbol_ids.iter().copied() {
+            if symbols_rebuild.get_flags(symbol_id).is_empty() {
+                let name = symbols_rebuild.get_name(symbol_id);
                 self.errors.push(OxcDiagnostic::error(format!(
                     "Expect non-empty SymbolFlags for BindingIdentifier({name})"
                 )));
-                if !current_scopes.has_binding(current_symbols.get_scope_id(symbol_id), name) {
+                if !scopes_rebuild.has_binding(symbols_rebuild.get_scope_id(symbol_id), name) {
                     self.errors.push(OxcDiagnostic::error(
                         format!("Cannot find BindingIdentifier({name}) in the Scope corresponding to the Symbol"),
                     ));
@@ -140,23 +151,23 @@ current  {current}
             }
         }
 
-        if self.collect_after_transform.symbol_ids.len() != current_collect.symbol_ids.len() {
+        if self.collector_transformer.symbol_ids.len() != collector_rebuild.symbol_ids.len() {
             self.errors.push(OxcDiagnostic::error("Symbols mismatch after transform"));
             return;
         }
 
         // Check whether symbols match
-        for (prev_symbol_id, cur_symbol_id) in
-            self.collect_after_transform.symbol_ids.iter().zip(current_collect.symbol_ids.iter())
+        for (symbol_id_transformer, symbol_id_rebuild) in
+            self.collector_transformer.symbol_ids.iter().zip(collector_rebuild.symbol_ids.iter())
         {
-            let prev_symbol_name = &previous_symbols.names[*prev_symbol_id];
-            let cur_symbol_name = &current_symbols.names[*cur_symbol_id];
-            if prev_symbol_name != cur_symbol_name {
+            let symbol_name_transformer = &symbols_transformer.names[*symbol_id_transformer];
+            let symbol_name_rebuild = &symbols_rebuild.names[*symbol_id_rebuild];
+            if symbol_name_transformer != symbol_name_rebuild {
                 let message = format!(
                     "
 Symbol mismatch:
-previous {prev_symbol_id:?}: {prev_symbol_name:?}
-current  {cur_symbol_id:?}: {cur_symbol_name:?}
+previous {symbol_id_transformer:?}: {symbol_name_transformer:?}
+current  {symbol_id_rebuild:?}: {symbol_name_rebuild:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
@@ -166,13 +177,13 @@ current  {cur_symbol_id:?}: {cur_symbol_name:?}
 
     fn check_references(
         &mut self,
-        previous_symbols: &SymbolTable,
-        current_symbols: &SymbolTable,
-        current_collect: &SemanticCollector,
+        symbols_transformer: &SymbolTable,
+        symbols_rebuild: &SymbolTable,
+        collector_rebuild: &SemanticCollector,
     ) {
         // Check whether references are valid
-        for reference_id in current_collect.reference_ids.iter().copied() {
-            let reference = current_symbols.get_reference(reference_id);
+        for reference_id in collector_rebuild.reference_ids.iter().copied() {
+            let reference = symbols_rebuild.get_reference(reference_id);
             if reference.flags().is_empty() {
                 self.errors.push(OxcDiagnostic::error(format!(
                     "Expect ReferenceFlags for IdentifierReference({reference_id:?}) to not be empty",
@@ -180,28 +191,30 @@ current  {cur_symbol_id:?}: {cur_symbol_name:?}
             }
         }
 
-        if self.collect_after_transform.reference_ids.len() != current_collect.reference_ids.len() {
+        if self.collector_transformer.reference_ids.len() != collector_rebuild.reference_ids.len() {
             self.errors.push(OxcDiagnostic::error("ReferenceId mismatch after transform"));
             return;
         }
 
         // Check whether symbols match
-        for (prev_reference_id, cur_reference_id) in self
-            .collect_after_transform
+        for (reference_id_transformer, reference_id_rebuild) in self
+            .collector_transformer
             .reference_ids
             .iter()
-            .zip(current_collect.reference_ids.iter())
+            .zip(collector_rebuild.reference_ids.iter())
         {
-            let prev_symbol_id = previous_symbols.references[*prev_reference_id].symbol_id();
-            let prev_symbol_name = prev_symbol_id.map(|id| previous_symbols.names[id].clone());
-            let cur_symbol_id = &current_symbols.references[*cur_reference_id].symbol_id();
-            let cur_symbol_name = cur_symbol_id.map(|id| current_symbols.names[id].clone());
-            if prev_symbol_name != cur_symbol_name {
+            let symbol_id_transformer =
+                symbols_transformer.references[*reference_id_transformer].symbol_id();
+            let symbol_name_transformer =
+                symbol_id_transformer.map(|id| symbols_transformer.names[id].clone());
+            let symbol_id_rebuild = &symbols_rebuild.references[*reference_id_rebuild].symbol_id();
+            let symbol_name_rebuild = symbol_id_rebuild.map(|id| symbols_rebuild.names[id].clone());
+            if symbol_name_transformer != symbol_name_rebuild {
                 let message = format!(
                     "
 Reference mismatch:
-previous {prev_reference_id:?}: {prev_symbol_name:?}
-current  {cur_reference_id:?}: {cur_symbol_name:?}
+previous {reference_id_transformer:?}: {symbol_name_transformer:?}
+current  {reference_id_rebuild:?}: {symbol_name_rebuild:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
