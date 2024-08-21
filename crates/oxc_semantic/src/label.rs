@@ -58,7 +58,7 @@ impl<'a> LabelBuilder<'a> {
 
         self.depth += 1;
         let mut parent_id = None;
-        for labels_in in self.labels.iter() {
+        for labels_in in &self.labels {
             for labels in labels_in.iter().rev() {
                 if labels.depth + 1 == self.depth {
                     parent_id = Some(labels.id);
