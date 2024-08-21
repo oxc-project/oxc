@@ -144,13 +144,13 @@ impl SymbolTable {
         &mut self,
         span: Span,
         name: CompactStr,
-        flag: SymbolFlags,
+        flags: SymbolFlags,
         scope_id: ScopeId,
         node_id: AstNodeId,
     ) -> SymbolId {
         self.spans.push(span);
         self.names.push(name);
-        self.flags.push(flag);
+        self.flags.push(flags);
         self.scope_ids.push(scope_id);
         self.declarations.push(node_id);
         self.resolved_references.push(vec![]);

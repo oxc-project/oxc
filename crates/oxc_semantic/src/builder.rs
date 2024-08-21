@@ -345,9 +345,9 @@ impl<'a> SemanticBuilder<'a> {
         self.current_scope_flags().is_strict_mode()
     }
 
-    pub(crate) fn set_function_node_flag(&mut self, flag: NodeFlags) {
+    pub(crate) fn set_function_node_flag(&mut self, flags: NodeFlags) {
         if let Some(current_function) = self.function_stack.last() {
-            *self.nodes.get_node_mut(*current_function).flags_mut() |= flag;
+            *self.nodes.get_node_mut(*current_function).flags_mut() |= flags;
         }
     }
 
@@ -464,20 +464,20 @@ impl<'a> SemanticBuilder<'a> {
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
-                let symbol_flag = self.symbols.get_flag(symbol_id);
+                let symbol_flags = self.symbols.get_flag(symbol_id);
 
                 let resolved_references = &mut self.symbols.resolved_references[symbol_id];
 
                 references.retain(|&reference_id| {
                     let reference = &mut self.symbols.references[reference_id];
-                    let flag = reference.flags();
-                    if flag.is_type() && symbol_flag.can_be_referenced_by_type()
-                        || flag.is_value() && symbol_flag.can_be_referenced_by_value()
-                        || flag.is_ts_type_query() && symbol_flag.is_import()
+                    let flags = reference.flags();
+                    if flags.is_type() && symbol_flags.can_be_referenced_by_type()
+                        || flags.is_value() && symbol_flags.can_be_referenced_by_value()
+                        || flags.is_ts_type_query() && symbol_flags.is_import()
                     {
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
-                        if symbol_flag.is_value() && !flag.is_type_only() {
+                        if symbol_flags.is_value() && !flags.is_type_only() {
                             *reference.flags_mut() -= ReferenceFlags::Type;
                         } else {
                             // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
@@ -487,7 +487,7 @@ impl<'a> SemanticBuilder<'a> {
                         // import type { T } from './mod'; type A = typeof T
                         //                                                 ^ can reference type-only import
                         // If symbol is type-import, we need to replace the ReferenceFlags::Value with ReferenceFlags::Type
-                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
+                        if flags.is_ts_type_query() && symbol_flags.is_type_import() {
                             *reference.flags_mut() -= ReferenceFlags::Value;
                             *reference.flags_mut() |= ReferenceFlags::Type;
                         }
@@ -2004,8 +2004,8 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
-        let flag = self.resolve_reference_usages();
-        let reference = Reference::new(self.current_node_id, flag);
+        let flags = self.resolve_reference_usages();
+        let reference = Reference::new(self.current_node_id, flags);
         let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }

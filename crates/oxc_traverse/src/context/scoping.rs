@@ -269,9 +269,9 @@ impl TraverseScoping {
     pub fn create_bound_reference(
         &mut self,
         symbol_id: SymbolId,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flag);
+        let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.resolved_references[symbol_id].push(reference_id);
         reference_id
@@ -283,14 +283,14 @@ impl TraverseScoping {
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_bound_reference(symbol_id, flag);
+        let reference_id = self.create_bound_reference(symbol_id, flags);
         IdentifierReference {
             span,
             name,
             reference_id: Cell::new(Some(reference_id)),
-            reference_flags: flag,
+            reference_flags: flags,
         }
     }
 
@@ -298,9 +298,9 @@ impl TraverseScoping {
     pub fn create_unbound_reference(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        let reference = Reference::new(AstNodeId::DUMMY, flag);
+        let reference = Reference::new(AstNodeId::DUMMY, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
         reference_id
@@ -311,14 +311,14 @@ impl TraverseScoping {
         &mut self,
         span: Span,
         name: Atom<'a>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.to_compact_str(), flag);
+        let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
         IdentifierReference {
             span,
             name,
             reference_id: Cell::new(Some(reference_id)),
-            reference_flags: flag,
+            reference_flags: flags,
         }
     }
 
@@ -330,12 +330,12 @@ impl TraverseScoping {
         &mut self,
         name: CompactStr,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference(symbol_id, flag)
+            self.create_bound_reference(symbol_id, flags)
         } else {
-            self.create_unbound_reference(name, flag)
+            self.create_unbound_reference(name, flags)
         }
     }
 
@@ -348,12 +348,12 @@ impl TraverseScoping {
         span: Span,
         name: Atom<'a>,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference_id(span, name, symbol_id, flag)
+            self.create_bound_reference_id(span, name, symbol_id, flags)
         } else {
-            self.create_unbound_reference_id(span, name, flag)
+            self.create_unbound_reference_id(span, name, flags)
         }
     }
 
@@ -361,10 +361,10 @@ impl TraverseScoping {
     pub fn create_reference_in_current_scope(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
         let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
-        self.create_reference(name, symbol_id, flag)
+        self.create_reference(name, symbol_id, flags)
     }
 
     /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
@@ -375,14 +375,14 @@ impl TraverseScoping {
     pub fn clone_identifier_reference<'a>(
         &mut self,
         ident: &IdentifierReference<'a>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference =
             self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
                 unreachable!("IdentifierReference must have a reference_id");
             }));
         let symbol_id = reference.symbol_id();
-        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flag)
+        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
     }
 }
 

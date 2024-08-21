@@ -14,14 +14,14 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         if index != 0 {
             result.push(',');
         }
-        let flag = semantic.scopes().get_flags(scope_id);
+        let flags = semantic.scopes().get_flags(scope_id);
         result.push('{');
         if let Some(child_ids) = semantic.scopes().get_child_ids(scope_id) {
             result.push_str("\"children\":");
             result.push_str(&get_scope_snapshot(semantic, child_ids.iter().copied()));
             result.push(',');
         }
-        result.push_str(format!("\"flag\": \"{flag:?}\",").as_str());
+        result.push_str(format!("\"flag\": \"{flags:?}\",").as_str());
         result.push_str(format!("\"id\": {},", scope_id.index()).as_str());
         result.push_str(
             format!(

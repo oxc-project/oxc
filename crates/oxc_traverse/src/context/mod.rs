@@ -320,9 +320,9 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_bound_reference(
         &mut self,
         symbol_id: SymbolId,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_bound_reference(symbol_id, flag)
+        self.scoping.create_bound_reference(symbol_id, flags)
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.
@@ -333,9 +333,9 @@ impl<'a> TraverseCtx<'a> {
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_bound_reference_id(span, name, symbol_id, flag)
+        self.scoping.create_bound_reference_id(span, name, symbol_id, flags)
     }
 
     /// Create an unbound reference.
@@ -344,9 +344,9 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_unbound_reference(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_unbound_reference(name, flag)
+        self.scoping.create_unbound_reference(name, flags)
     }
 
     /// Create an unbound `IdentifierReference`.
@@ -356,9 +356,9 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         span: Span,
         name: Atom<'a>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_unbound_reference_id(span, name, flag)
+        self.scoping.create_unbound_reference_id(span, name, flags)
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -371,9 +371,9 @@ impl<'a> TraverseCtx<'a> {
         &mut self,
         name: CompactStr,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_reference(name, symbol_id, flag)
+        self.scoping.create_reference(name, symbol_id, flags)
     }
 
     /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
@@ -387,9 +387,9 @@ impl<'a> TraverseCtx<'a> {
         span: Span,
         name: Atom<'a>,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.create_reference_id(span, name, symbol_id, flag)
+        self.scoping.create_reference_id(span, name, symbol_id, flags)
     }
 
     /// Create reference in current scope, looking up binding for `name`,
@@ -398,9 +398,9 @@ impl<'a> TraverseCtx<'a> {
     pub fn create_reference_in_current_scope(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        self.scoping.create_reference_in_current_scope(name, flag)
+        self.scoping.create_reference_in_current_scope(name, flags)
     }
 
     /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
@@ -413,9 +413,9 @@ impl<'a> TraverseCtx<'a> {
     pub fn clone_identifier_reference(
         &mut self,
         ident: &IdentifierReference<'a>,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        self.scoping.clone_identifier_reference(ident, flag)
+        self.scoping.clone_identifier_reference(ident, flags)
     }
 }
 

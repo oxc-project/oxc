@@ -80,8 +80,8 @@ impl<'a> LogicalAssignmentOperators<'a> {
     ) -> IdentifierReference<'a> {
         let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
         let symbol_id = reference.symbol_id();
-        let flag = reference.flags();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flag)
+        let flags = reference.flags();
+        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
     }
 
     pub fn maybe_generate_memoised(

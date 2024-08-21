@@ -314,19 +314,19 @@ impl Oxc {
             let space = " ".repeat(depth * 2);
 
             for scope_id in scope_ids {
-                let flag = semantic.scopes().get_flags(*scope_id);
+                let flags = semantic.scopes().get_flags(*scope_id);
                 let next_scope_ids = semantic.scopes().get_child_ids(*scope_id);
 
                 scope_text
-                    .push_str(&format!("{space}Scope{:?} ({flag:?}) {{\n", scope_id.index() + 1));
+                    .push_str(&format!("{space}Scope{:?} ({flags:?}) {{\n", scope_id.index() + 1));
                 let bindings = semantic.scopes().get_bindings(*scope_id);
                 let binding_space = " ".repeat((depth + 1) * 2);
                 if !bindings.is_empty() {
                     scope_text.push_str(&format!("{binding_space}Bindings: {{"));
                 }
                 bindings.iter().for_each(|(name, symbol_id)| {
-                    let symbol_flag = semantic.symbols().get_flag(*symbol_id);
-                    scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flag:?})",));
+                    let symbol_flags = semantic.symbols().get_flag(*symbol_id);
+                    scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flags:?})",));
                 });
                 if !bindings.is_empty() {
                     scope_text.push_str(&format!("\n{binding_space}}}\n"));

@@ -135,9 +135,9 @@ impl<'a> BoundIdentifier<'a> {
     pub fn create_spanned_reference(
         &self,
         span: Span,
-        flag: ReferenceFlags,
+        flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, flag)
+        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, flags)
     }
 }
