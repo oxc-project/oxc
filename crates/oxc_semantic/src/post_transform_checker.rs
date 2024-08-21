@@ -129,8 +129,8 @@ current  scope {cur_scope_id:?}: {current_bindings:?}
                 )));
                 if !current_scopes.has_binding(current_symbols.get_scope_id(symbol_id), name) {
                     self.errors.push(OxcDiagnostic::error(
-                    format!("Cannot find BindingIdentifier({name}) in the Scope corresponding to the Symbol"),
-                ));
+                        format!("Cannot find BindingIdentifier({name}) in the Scope corresponding to the Symbol"),
+                    ));
                 }
             }
         }
