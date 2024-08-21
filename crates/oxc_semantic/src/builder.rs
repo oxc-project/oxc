@@ -345,7 +345,7 @@ impl<'a> SemanticBuilder<'a> {
         self.current_scope_flags().is_strict_mode()
     }
 
-    pub(crate) fn set_function_node_flag(&mut self, flags: NodeFlags) {
+    pub(crate) fn set_function_node_flags(&mut self, flags: NodeFlags) {
         if let Some(current_function) = self.function_stack.last() {
             *self.nodes.get_node_mut(*current_function).flags_mut() |= flags;
         }
@@ -1917,7 +1917,7 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
-                self.set_function_node_flag(NodeFlags::HasYield);
+                self.set_function_node_flags(NodeFlags::HasYield);
             }
             _ => {}
         }

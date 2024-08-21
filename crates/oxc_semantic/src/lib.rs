@@ -401,7 +401,7 @@ mod tests {
             (typescript, "let a: number; (a as any) = 1;", ReferenceFlags::write()),
         ];
 
-        for (source_type, source, flag) in sources {
+        for (source_type, source, flags) in sources {
             let semantic = get_semantic(&alloc, source, source_type);
             let a_id =
                 semantic.scopes().get_root_binding(&target_symbol_name).unwrap_or_else(|| {
@@ -415,7 +415,7 @@ mod tests {
                 "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}"
             );
             let ref_type = a_refs[0];
-            if flag.is_write() {
+            if flags.is_write() {
                 assert!(
                     ref_type.is_write(),
                     "expected reference to '{target_symbol_name}' to be write\n\nsource:\n{source}"
@@ -426,7 +426,7 @@ mod tests {
                     "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}"
                 );
             }
-            if flag.is_read() {
+            if flags.is_read() {
                 assert!(
                     ref_type.is_read(),
                     "expected reference to '{target_symbol_name}' to be read\n\nsource:\n{source}"
