@@ -9,7 +9,7 @@ use oxc::diagnostics::OxcDiagnostic;
 use oxc::minifier::CompressOptions;
 use oxc::parser::{ParseOptions, ParserReturn};
 use oxc::semantic::{
-    post_transform_checker::{PostTransformChecker, SemanticIds},
+    post_transform_checker::{check_semantic_after_transform, SemanticIds},
     SemanticBuilderReturn,
 };
 use oxc::span::{SourceType, Span};
@@ -32,8 +32,6 @@ pub struct Driver {
     pub panicked: bool,
     pub errors: Vec<OxcDiagnostic>,
     pub printed: String,
-    // states
-    pub checker: PostTransformChecker,
 }
 
 impl CompilerInterface for Driver {
@@ -93,7 +91,7 @@ impl CompilerInterface for Driver {
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = self.checker.after_transform(
+            if let Some(errors) = check_semantic_after_transform(
                 &transformer_return.symbols,
                 &transformer_return.scopes,
                 program,

@@ -3,7 +3,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc::{
     ast::ast::Program,
     diagnostics::OxcDiagnostic,
-    semantic::post_transform_checker::PostTransformChecker,
+    semantic::post_transform_checker::check_semantic_after_transform,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
@@ -13,7 +13,6 @@ pub struct Driver {
     options: TransformOptions,
     printed: String,
     errors: Vec<OxcDiagnostic>,
-    checker: PostTransformChecker,
 }
 
 impl CompilerInterface for Driver {
@@ -38,7 +37,7 @@ impl CompilerInterface for Driver {
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        if let Some(errors) = self.checker.after_transform(
+        if let Some(errors) = check_semantic_after_transform(
             &transformer_return.symbols,
             &transformer_return.scopes,
             program,
@@ -52,12 +51,7 @@ impl CompilerInterface for Driver {
 
 impl Driver {
     pub fn new(options: TransformOptions) -> Self {
-        Self {
-            options,
-            printed: String::new(),
-            errors: vec![],
-            checker: PostTransformChecker::default(),
-        }
+        Self { options, printed: String::new(), errors: vec![] }
     }
 
     pub fn execute(
