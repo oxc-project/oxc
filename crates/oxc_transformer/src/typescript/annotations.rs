@@ -568,7 +568,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             // If the symbol is still a value symbol after SymbolFlags::Import is removed, then it's a value redeclaration.
             // That means the import is shadowed, and we can safely remove the import.
             let has_value_redeclaration =
-                (ctx.symbols().get_flag(symbol_id) - SymbolFlags::Import).is_value();
+                (ctx.symbols().get_flags(symbol_id) - SymbolFlags::Import).is_value();
             if has_value_redeclaration {
                 return false;
             }

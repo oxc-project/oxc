@@ -28,7 +28,7 @@ impl PartialEq for Symbol<'_, '_> {
 // constructor and simple getters
 impl<'s, 'a> Symbol<'s, 'a> {
     pub fn new(semantic: &'s Semantic<'a>, symbol_id: SymbolId) -> Self {
-        let flags = semantic.symbols().get_flag(symbol_id);
+        let flags = semantic.symbols().get_flags(symbol_id);
         Self { semantic, id: symbol_id, flags, span: OnceCell::new() }
     }
 

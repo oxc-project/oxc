@@ -39,7 +39,7 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
             }
             result.push('{');
             result.push_str(
-                format!("\"flag\": \"{:?}\",", semantic.symbols().get_flag(*symbol_id)).as_str(),
+                format!("\"flag\": \"{:?}\",", semantic.symbols().get_flags(*symbol_id)).as_str(),
             );
             result.push_str(format!("\"id\": {},", symbol_id.index()).as_str());
             result.push_str(format!("\"name\": {name:?},").as_str());

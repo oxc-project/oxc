@@ -113,7 +113,7 @@ current  scope {cur_scope_id:?}: {current_bindings:?}
     ) {
         // Check whether symbols are valid
         for symbol_id in current_collect.symbol_ids.iter().copied() {
-            if current_symbols.get_flag(symbol_id).is_empty() {
+            if current_symbols.get_flags(symbol_id).is_empty() {
                 let name = current_symbols.get_name(symbol_id);
                 self.errors.push(OxcDiagnostic::error(format!(
                     "Expect non-empty SymbolFlags for BindingIdentifier({name})"

@@ -200,7 +200,7 @@ fn collect_ids_referenced_to_import<'a>(
         .resolved_references
         .iter_enumerated()
         .filter_map(|(symbol_id, reference_ids)| {
-            if ctx.symbols().get_flag(symbol_id).is_import() {
+            if ctx.symbols().get_flags(symbol_id).is_import() {
                 let id = ctx.symbols().get_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) = ctx.nodes().parent_kind(id)
                 else {

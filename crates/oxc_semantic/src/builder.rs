@@ -410,7 +410,7 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id = self.scope.get_binding(scope_id, name).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
-        if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
+        if report_error && self.symbols.get_flags(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(redeclaration(name, symbol_span, span));
         }
@@ -464,7 +464,7 @@ impl<'a> SemanticBuilder<'a> {
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
-                let symbol_flags = self.symbols.get_flag(symbol_id);
+                let symbol_flags = self.symbols.get_flags(symbol_id);
 
                 let resolved_references = &mut self.symbols.resolved_references[symbol_id];
 
@@ -1996,7 +1996,7 @@ impl<'a> SemanticBuilder<'a> {
     fn make_all_namespaces_valuelike(&mut self) {
         for symbol_id in &self.namespace_stack {
             // Ambient modules cannot be value modules
-            if self.symbols.get_flag(*symbol_id).intersects(SymbolFlags::Ambient) {
+            if self.symbols.get_flags(*symbol_id).intersects(SymbolFlags::Ambient) {
                 continue;
             }
             self.symbols.union_flag(*symbol_id, SymbolFlags::ValueModule);

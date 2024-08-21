@@ -325,7 +325,7 @@ impl Oxc {
                     scope_text.push_str(&format!("{binding_space}Bindings: {{"));
                 }
                 bindings.iter().for_each(|(name, symbol_id)| {
-                    let symbol_flags = semantic.symbols().get_flag(*symbol_id);
+                    let symbol_flags = semantic.symbols().get_flags(*symbol_id);
                     scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flags:?})",));
                 });
                 if !bindings.is_empty() {

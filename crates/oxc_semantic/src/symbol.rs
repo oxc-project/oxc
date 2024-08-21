@@ -98,7 +98,7 @@ impl SymbolTable {
     }
 
     #[inline]
-    pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
+    pub fn get_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
         self.flags[symbol_id]
     }
 

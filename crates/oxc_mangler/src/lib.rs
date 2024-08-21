@@ -198,7 +198,7 @@ impl Mangler {
     ) -> Vec<SlotFrequency> {
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            let symbol_flags = symbol_table.get_flag(symbol_id);
+            let symbol_flags = symbol_table.get_flags(symbol_id);
             // omit renaming `export { x }`
             if !symbol_flags.is_variable() || symbol_flags.is_export() {
                 continue;

@@ -201,7 +201,7 @@ pub fn get_parent_es5_component<'a, 'b>(
 
 pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b AstNode<'a>> {
     ctx.semantic().symbols().iter_rev().find_map(|symbol| {
-        let flags = ctx.semantic().symbols().get_flag(symbol);
+        let flags = ctx.semantic().symbols().get_flags(symbol);
         if flags.contains(SymbolFlags::Class) {
             let node = ctx.semantic().symbol_declaration(symbol);
             if is_es6_component(node) {
