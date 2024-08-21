@@ -642,15 +642,15 @@ pub fn check_continue_statement<'a>(
 pub fn check_labeled_statement(ctx: &SemanticBuilder) {
     ctx.label_builder.labels.iter().for_each(|labels| {
         let mut defined = FxHashMap::default();
+        let mut defined_parent = FxHashMap::default();
         for labeled in labels {
             if let Some(span) = defined.get(labeled.name) {
-                let mut sibling_defined = FxHashMap::default();
-                sibling_defined.insert(labeled.name, *span);
-                if !sibling_defined.contains_key(labeled.name) {
+                if labeled.parent_id != defined_parent[labeled.name] {
                     ctx.error(redeclaration(labeled.name, *span, labeled.span));
                 }
             } else {
                 defined.insert(labeled.name, labeled.span);
+                defined_parent.insert(labeled.name, labeled.parent_id);
             }
         }
     });

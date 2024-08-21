@@ -13,6 +13,8 @@ bb1: {
 	statement
 	statement
 	statement
+	statement
+	statement
 }
 
 bb2: {
@@ -26,14 +28,64 @@ bb3: {
 
 bb4: {
 	statement
+	statement
+	statement
+	statement
+}
+
+bb5: {
+	statement
+	statement
+}
+
+bb6: {
+
+}
+
+bb7: {
+
+}
+
+bb8: {
+	statement
+	statement
+	statement
+	statement
+	statement
+	statement
+}
+
+bb9: {
+	statement
+	statement
+}
+
+bb10: {
+
+}
+
+bb11: {
+
+}
+
+bb12: {
+
 }
 
 digraph {
     0 [ label = "" ]
-    1 [ label = "LabeledStatement(Parent)\nBlockStatement\nLabeledStatement(Child)\nExpressionStatement" ]
-    2 [ label = "LabeledStatement(Child)\nExpressionStatement" ]
+    1 [ label = "LabeledStatement(Parent1)\nBlockStatement\nLabeledStatement(Son1)\nBlockStatement\nLabeledStatement(Son11)\nExpressionStatement" ]
+    2 [ label = "LabeledStatement(Son11)\nExpressionStatement" ]
     3 [ label = "" ]
-    4 [ label = "EmptyStatement" ]
+    4 [ label = "LabeledStatement(Son2)\nBlockStatement\nLabeledStatement(Son21)\nExpressionStatement" ]
+    5 [ label = "LabeledStatement(Son22)\nExpressionStatement" ]
+    6 [ label = "" ]
+    7 [ label = "" ]
+    8 [ label = "LabeledStatement(Parent2)\nBlockStatement\nLabeledStatement(Son1)\nBlockStatement\nLabeledStatement(Son21)\nExpressionStatement" ]
+    9 [ label = "LabeledStatement(Son22)\nExpressionStatement" ]
+    10 [ label = "" ]
+    11 [ label = "" ]
+    12 [ label = "" ]
     1 -> 0 [ label = "Error(Implicit)" ]
     2 -> 0 [ label = "Error(Implicit)" ]
     1 -> 2 [ label = "Normal" ]
@@ -41,4 +93,20 @@ digraph {
     2 -> 3 [ label = "Normal" ]
     4 -> 0 [ label = "Error(Implicit)" ]
     3 -> 4 [ label = "Normal" ]
+    5 -> 0 [ label = "Error(Implicit)" ]
+    4 -> 5 [ label = "Normal" ]
+    6 -> 0 [ label = "Error(Implicit)" ]
+    5 -> 6 [ label = "Normal" ]
+    7 -> 0 [ label = "Error(Implicit)" ]
+    6 -> 7 [ label = "Normal" ]
+    8 -> 0 [ label = "Error(Implicit)" ]
+    7 -> 8 [ label = "Normal" ]
+    9 -> 0 [ label = "Error(Implicit)" ]
+    8 -> 9 [ label = "Normal" ]
+    10 -> 0 [ label = "Error(Implicit)" ]
+    9 -> 10 [ label = "Normal" ]
+    11 -> 0 [ label = "Error(Implicit)" ]
+    10 -> 11 [ label = "Normal" ]
+    12 -> 0 [ label = "Error(Implicit)" ]
+    11 -> 12 [ label = "Normal" ]
 }
