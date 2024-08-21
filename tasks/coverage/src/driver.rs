@@ -9,7 +9,7 @@ use oxc::diagnostics::OxcDiagnostic;
 use oxc::minifier::CompressOptions;
 use oxc::parser::{ParseOptions, ParserReturn};
 use oxc::semantic::{
-    post_transform_checker::{PostTransformChecker, SemanticCollector},
+    post_transform_checker::{PostTransformChecker, SemanticIds},
     SemanticBuilderReturn,
 };
 use oxc::span::{SourceType, Span};
@@ -78,7 +78,8 @@ impl CompilerInterface for Driver {
         _semantic_return: &mut SemanticBuilderReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = SemanticCollector::default().check(program) {
+            let mut ids = SemanticIds::default();
+            if let Some(errors) = ids.check(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());
             }

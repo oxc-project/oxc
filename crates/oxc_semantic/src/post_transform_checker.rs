@@ -103,7 +103,7 @@ use crate::{ScopeTree, SemanticBuilder, SymbolTable};
 #[derive(Default)]
 pub struct PostTransformChecker {
     errors: Vec<OxcDiagnostic>,
-    collector_transformer: SemanticCollector,
+    ids_transformer: SemanticIds,
 }
 
 impl PostTransformChecker {
@@ -114,8 +114,8 @@ impl PostTransformChecker {
         program: &Program<'_>,
     ) -> Option<Vec<OxcDiagnostic>> {
         // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
-        self.collector_transformer = SemanticCollector::default();
-        if let Some(errors) = self.collector_transformer.check(program) {
+        self.ids_transformer = SemanticIds::default();
+        if let Some(errors) = self.ids_transformer.check(program) {
             self.errors.push(OxcDiagnostic::error("Semantic Collector failed after transform"));
             self.errors.extend(errors);
             return Some(mem::take(&mut self.errors));
@@ -132,8 +132,8 @@ impl PostTransformChecker {
             .semantic
             .into_symbol_table_and_scope_tree();
 
-        let mut collector_rebuild = SemanticCollector::default();
-        if let Some(errors) = collector_rebuild.check(&program) {
+        let mut ids_rebuild = SemanticIds::default();
+        if let Some(errors) = ids_rebuild.check(&program) {
             self.errors.push(OxcDiagnostic::error("Semantic Collector failed after rebuild"));
             self.errors.extend(errors);
             return Some(mem::take(&mut self.errors));
@@ -142,15 +142,10 @@ impl PostTransformChecker {
         let errors_count = self.errors.len();
 
         // Compare post-transform semantic data to semantic data from fresh semantic analysis
-        self.check_bindings(scopes_transformer, &scopes_rebuild, &collector_rebuild);
+        self.check_bindings(scopes_transformer, &scopes_rebuild, &ids_rebuild);
 
-        self.check_symbols(
-            symbols_transformer,
-            &symbols_rebuild,
-            &scopes_rebuild,
-            &collector_rebuild,
-        );
-        self.check_references(symbols_transformer, &symbols_rebuild, &collector_rebuild);
+        self.check_symbols(symbols_transformer, &symbols_rebuild, &scopes_rebuild, &ids_rebuild);
+        self.check_references(symbols_transformer, &symbols_rebuild, &ids_rebuild);
 
         (errors_count != self.errors.len()).then(|| mem::take(&mut self.errors))
     }
@@ -159,16 +154,16 @@ impl PostTransformChecker {
         &mut self,
         scopes_transformer: &ScopeTree,
         scopes_rebuild: &ScopeTree,
-        collector_rebuild: &SemanticCollector,
+        ids_rebuild: &SemanticIds,
     ) {
-        if self.collector_transformer.scope_ids.len() != collector_rebuild.scope_ids.len() {
+        if self.ids_transformer.scope_ids.len() != ids_rebuild.scope_ids.len() {
             self.errors.push(OxcDiagnostic::error("Scopes mismatch after transform"));
             return;
         }
 
         // Check whether bindings are the same for scopes in the same visitation order.
         for (&scope_id_transformer, &scope_id_rebuild) in
-            self.collector_transformer.scope_ids.iter().zip(collector_rebuild.scope_ids.iter())
+            self.ids_transformer.scope_ids.iter().zip(ids_rebuild.scope_ids.iter())
         {
             fn get_sorted_bindings(scopes: &ScopeTree, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut bindings =
@@ -227,10 +222,10 @@ rebuilt        : {result_rebuild}
         symbols_transformer: &SymbolTable,
         symbols_rebuild: &SymbolTable,
         scopes_rebuild: &ScopeTree,
-        collector_rebuild: &SemanticCollector,
+        ids_rebuild: &SemanticIds,
     ) {
         // Check whether symbols are valid
-        for symbol_id in collector_rebuild.symbol_ids.iter().copied() {
+        for symbol_id in ids_rebuild.symbol_ids.iter().copied() {
             if symbols_rebuild.get_flags(symbol_id).is_empty() {
                 let name = symbols_rebuild.get_name(symbol_id);
                 self.errors.push(OxcDiagnostic::error(format!(
@@ -244,14 +239,14 @@ rebuilt        : {result_rebuild}
             }
         }
 
-        if self.collector_transformer.symbol_ids.len() != collector_rebuild.symbol_ids.len() {
+        if self.ids_transformer.symbol_ids.len() != ids_rebuild.symbol_ids.len() {
             self.errors.push(OxcDiagnostic::error("Symbols mismatch after transform"));
             return;
         }
 
         // Check whether symbols match
         for (symbol_id_transformer, symbol_id_rebuild) in
-            self.collector_transformer.symbol_ids.iter().zip(collector_rebuild.symbol_ids.iter())
+            self.ids_transformer.symbol_ids.iter().zip(ids_rebuild.symbol_ids.iter())
         {
             let symbol_name_transformer = &symbols_transformer.names[*symbol_id_transformer];
             let symbol_name_rebuild = &symbols_rebuild.names[*symbol_id_rebuild];
@@ -272,10 +267,10 @@ rebuilt        : {symbol_id_rebuild:?}: {symbol_name_rebuild:?}
         &mut self,
         symbols_transformer: &SymbolTable,
         symbols_rebuild: &SymbolTable,
-        collector_rebuild: &SemanticCollector,
+        ids_rebuild: &SemanticIds,
     ) {
         // Check whether references are valid
-        for reference_id in collector_rebuild.reference_ids.iter().copied() {
+        for reference_id in ids_rebuild.reference_ids.iter().copied() {
             let reference = symbols_rebuild.get_reference(reference_id);
             if reference.flags().is_empty() {
                 self.errors.push(OxcDiagnostic::error(format!(
@@ -284,17 +279,14 @@ rebuilt        : {symbol_id_rebuild:?}: {symbol_name_rebuild:?}
             }
         }
 
-        if self.collector_transformer.reference_ids.len() != collector_rebuild.reference_ids.len() {
+        if self.ids_transformer.reference_ids.len() != ids_rebuild.reference_ids.len() {
             self.errors.push(OxcDiagnostic::error("ReferenceId mismatch after transform"));
             return;
         }
 
         // Check whether symbols match
-        for (reference_id_transformer, reference_id_rebuild) in self
-            .collector_transformer
-            .reference_ids
-            .iter()
-            .zip(collector_rebuild.reference_ids.iter())
+        for (reference_id_transformer, reference_id_rebuild) in
+            self.ids_transformer.reference_ids.iter().zip(ids_rebuild.reference_ids.iter())
         {
             let symbol_id_transformer =
                 symbols_transformer.references[*reference_id_transformer].symbol_id();
@@ -316,26 +308,50 @@ rebuilt        : {reference_id_rebuild:?}: {symbol_name_rebuild:?}
     }
 }
 
-/// Collector of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
+/// Collection of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
 ///
 /// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
 #[derive(Default)]
-pub struct SemanticCollector {
+pub struct SemanticIds {
     scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<SymbolId>,
     reference_ids: Vec<ReferenceId>,
+}
 
+impl SemanticIds {
+    /// Collect IDs and check for errors
+    pub fn check(&mut self, program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
+        if program.source_type.is_typescript_definition() {
+            return None;
+        }
+
+        let mut collector = SemanticIdsCollector::new(self);
+        collector.visit_program(program);
+
+        let errors = collector.errors;
+        (!errors.is_empty()).then_some(errors)
+    }
+}
+
+struct SemanticIdsCollector<'c> {
+    ids: &'c mut SemanticIds,
     errors: Vec<OxcDiagnostic>,
 }
 
-impl<'a> Visit<'a> for SemanticCollector {
+impl<'c> SemanticIdsCollector<'c> {
+    fn new(ids: &'c mut SemanticIds) -> Self {
+        Self { ids, errors: vec![] }
+    }
+}
+
+impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'c> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        self.scope_ids.push(scope_id.get());
+        self.ids.scope_ids.push(scope_id.get());
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         if let Some(reference_id) = ident.reference_id.get() {
-            self.reference_ids.push(reference_id);
+            self.ids.reference_ids.push(reference_id);
         } else {
             let message = format!("Missing ReferenceId: {}", ident.name);
             self.errors.push(OxcDiagnostic::error(message).with_label(ident.span));
@@ -344,7 +360,7 @@ impl<'a> Visit<'a> for SemanticCollector {
 
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         if let Some(symbol_id) = ident.symbol_id.get() {
-            self.symbol_ids.push(symbol_id);
+            self.ids.symbol_ids.push(symbol_id);
         } else {
             let message = format!("Missing SymbolId: {}", ident.name);
             self.errors.push(OxcDiagnostic::error(message).with_label(ident.span));
@@ -383,20 +399,5 @@ impl<'a> Visit<'a> for SemanticCollector {
 
     fn visit_ts_type(&mut self, _it: &TSType<'a>) {
         /* noop */
-    }
-}
-
-impl SemanticCollector {
-    pub fn check(&mut self, program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
-        if program.source_type.is_typescript_definition() {
-            return None;
-        }
-        self.check_ast(program)
-    }
-
-    fn check_ast(&mut self, program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
-        self.visit_program(program);
-
-        (!self.errors.is_empty()).then(|| mem::take(&mut self.errors))
     }
 }
