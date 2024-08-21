@@ -4,7 +4,7 @@ type Span = { start: number; end: number }
 
 type RenderedSymbol = {
     name: string
-    flag: string
+    flags: string
     symbolId: number
     nodeId: number
     span: Span
@@ -14,7 +14,7 @@ type RenderedSymbol = {
         name: string
         nodeId: number
         symbolId: number | null
-        flag: string
+        flags: string
     }>
 
 }
@@ -31,7 +31,7 @@ export const renderSymbols = (symbols: SymbolTable): string => {
     (acc, nodeId, index) => {
       acc.push({
         name: symbols.names[index],
-        flag: symbols.flags[index],
+        flags: symbols.flags[index],
         symbolId: index,
         nodeId,
         span: symbols.spans[index],
