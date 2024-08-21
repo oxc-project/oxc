@@ -1,3 +1,90 @@
+//! Utility to check correctness of `ScopeTree` and `SymbolTable` after transformer has run.
+//!
+//! ## What it's for
+//!
+//! The transformer should keep `ScopeTree` and `SymbolTable` in sync with the AST as it makes changes.
+//! This utility checks the correctness of the semantic data after transformer has processed AST,
+//! to make sure it's working correctly.
+//!
+//! ## How
+//!
+//! We do this by:
+//! 1. Taking `ScopeTree` and `SymbolTable` after transformer has run.
+//! 2. Cloning the post-transform AST.
+//! 3. Running a fresh semantic analysis on that AST.
+//! 4. Comparing the 2 copies of `ScopeTree` and `SymbolTable` from after the transformer
+//!    vs from the fresh semantic analysis.
+//!
+//! We now have 2 sets of semantic data:
+//! * "transformer": Semantic data from after the transformer has run
+//! * "rebuild": Semantic data from the fresh semantic analysis
+//!
+//! If the transformer has behaved correctly, the state of `ScopeTree` and `SymbolTable` should match
+//! between "transformer" and "rebuild".
+//!
+//! ## Complication
+//!
+//! The complication is in the word "match".
+//!
+//! For example if this is the original input:
+//! ```ts
+//! if (x) enum Foo {}
+//! function f() {}
+//! ```
+//!
+//! The output of transformer is:
+//! ```js
+//! if (x) {}
+//! function f() {}
+//! ```
+//!
+//! The scope IDs are:
+//!
+//! Before transform:
+//! ```ts
+//! // Scope ID 0
+//! if (x) enum Foo { /* Scope ID 1 */ }
+//! function f() { /* Scope ID 2 */ }
+//! ```
+//!
+//! After transform:
+//! ```js
+//! // Scope ID 0
+//! if (x) { /* Scope ID 3 */ } // <-- newly created scope
+//! function f() { /* Scope ID 2 */ }
+//! ```
+//!
+//! vs fresh semantic analysis of post-transform AST:
+//! ```js
+//! // Scope ID 0
+//! if (x) { /* Scope ID 1 */ } // <-- numbered 1 as it's 2nd scope in visitation order
+//! function f() { /* Scope ID 2 */ }
+//! ```
+//!
+//! Scope IDs of the `if {}` block are different in the 2 versions, because in the post-transform version,
+//! that scope was newly created in transformer, so was pushed last to `ScopeTree`.
+//!
+//! However, despite the scope IDs being different, these 2 sets of semantic data *are* equivalent.
+//! The scope IDs are different, but they represent the same scopes.
+//! i.e. IDs don't need to be equal, but they do need to used in a consistent pattern between the 2
+//! semantic data sets. If scope ID 3 is used in the post-transform semantic data everywhere that
+//! scope ID 1 is used in the rebuilt semantic data, then the 2 are equivalent, and the tests pass.
+//!
+//! Same principle for `SymbolId`s and `ReferenceId`s.
+//!
+//! ## Mechanism for matching
+//!
+//! `SemanticCollector` visits the AST, and builds lists of `ScopeId`s, `SymbolId`s and `ReferenceId`s
+//! in visitation order. We run `SemanticCollector` once on the AST coming out of the transformer,
+//! and a 2nd time on the AST after the fresh semantic analysis.
+//!
+//! When we ZIP these lists together, we have pairs of `(transformer_id, rebuild_id)` which give the
+//! mapping between the 2 sets of IDs.
+//!
+//! ## Other notes
+//!
+//! See also: <https://github.com/oxc-project/oxc/issues/4790>
+
 use std::{cell::Cell, mem};
 
 use oxc_allocator::{Allocator, CloneIn};
@@ -26,6 +113,7 @@ impl PostTransformChecker {
         scopes_transformer: &ScopeTree,
         program: &Program<'_>,
     ) -> Option<Vec<OxcDiagnostic>> {
+        // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
         self.collector_transformer = SemanticCollector::default();
         if let Some(errors) = self.collector_transformer.check(program) {
             self.errors.push(OxcDiagnostic::error("Semantic Collector failed after transform"));
@@ -33,6 +121,10 @@ impl PostTransformChecker {
             return Some(mem::take(&mut self.errors));
         }
 
+        // Clone the post-transform AST, re-run semantic analysis on it, and collect `ScopeId`s,
+        // `SymbolId`s and `ReferenceId`s from AST.
+        // NB: `CloneIn` sets all `scope_id`, `symbol_id` and `reference_id` fields in AST to `None`,
+        // so the cloned AST will be "clean" of all semantic data, as if it had come fresh from the parser.
         let allocator = Allocator::default();
         let program = program.clone_in(&allocator);
         let (symbols_rebuild, scopes_rebuild) = SemanticBuilder::new("", program.source_type)
@@ -49,6 +141,7 @@ impl PostTransformChecker {
 
         let errors_count = self.errors.len();
 
+        // Compare post-transform semantic data to semantic data from fresh semantic analysis
         self.check_bindings(scopes_transformer, &scopes_rebuild, &collector_rebuild);
 
         self.check_symbols(
@@ -223,6 +316,9 @@ rebuilt        : {reference_id_rebuild:?}: {symbol_name_rebuild:?}
     }
 }
 
+/// Collector of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
+///
+/// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
 #[derive(Default)]
 pub struct SemanticCollector {
     scope_ids: Vec<Option<ScopeId>>,
