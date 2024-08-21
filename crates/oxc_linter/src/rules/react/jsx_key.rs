@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment,
-        Statement,
-    },
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -72,7 +69,7 @@ impl Rule for JsxKey {
     }
 }
 
-pub fn is_to_array<'a, 'b>(node: &'b AstNode<'a>) -> bool {
+pub fn is_to_array(node: &AstNode<'_>) -> bool {
     const TOARRAY: &str = "toArray";
 
     let AstKind::CallExpression(call) = node.kind() else { return false };
@@ -86,34 +83,32 @@ pub fn is_to_array<'a, 'b>(node: &'b AstNode<'a>) -> bool {
     true
 }
 
-
-pub fn import_matcher<'a, 'b>(ctx: &'b LintContext<'a>, actual_local_name: &'a str,
-    expected_module_name: &'a str) -> bool {
-            
-        ctx.semantic().module_record().import_entries
-            .iter().any(|import| {
-                import.module_request.name().as_str() == expected_module_name.to_lowercase()
-                    && import.local_name.name().as_str() == actual_local_name
-            })
-
-        
+pub fn import_matcher<'a>(
+    ctx: &LintContext<'a>,
+    actual_local_name: &'a str,
+    expected_module_name: &'a str,
+) -> bool {
+    ctx.semantic().module_record().import_entries.iter().any(|import| {
+        import.module_request.name().as_str() == expected_module_name.to_lowercase()
+            && import.local_name.name().as_str() == actual_local_name
+    })
 }
 
+pub fn is_import<'a>(
+    ctx: &LintContext<'a>,
+    actual_local_name: &'a str,
+    expected_local_name: &'a str,
+    expected_module_name: &'a str,
+) -> bool {
+    let total_imports = ctx.semantic().module_record().requested_modules.len();
+    let total_variables = ctx.scopes().get_bindings(ctx.scopes().root_scope_id()).len();
 
-pub fn is_import<'a, 'b>(ctx: &'b LintContext<'a>, actual_local_name: &'a str,
-    expected_local_name: &'a str, expected_module_name: &'a str) -> bool {
+    if total_variables == 0 && total_imports == 0 {
+        return actual_local_name == expected_local_name;
+    }
 
-        let total_imports = ctx.semantic().module_record().requested_modules.len();
-        let total_variables = ctx.scopes().get_bindings(ctx.scopes().root_scope_id()).len();
-
-        if total_variables == 0 && total_imports == 0 {            
-            return actual_local_name == expected_local_name
-        }
-        
-        return import_matcher(ctx, actual_local_name, expected_module_name)       
+    import_matcher(ctx, actual_local_name, expected_module_name)
 }
-
-
 
 pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     const REACT: &str = "React";
@@ -123,26 +118,25 @@ pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> b
 
     let Some(member) = call.callee.as_member_expression() else { return false };
 
-
     if let Expression::Identifier(ident) = member.object() {
         return is_import(ctx, ident.name.as_str(), CHILDREN, REACT);
     }
 
-
-    let Some(inner_member) = member.object().get_inner_expression().as_member_expression() else { return false };
+    let Some(inner_member) = member.object().get_inner_expression().as_member_expression() else {
+        return false;
+    };
 
     let Some(ident) = inner_member.object().get_identifier_reference() else { return false };
 
     let Some(local_name) = inner_member.static_property_name() else { return false };
 
     return is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN;
-
-
 }
 fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let parents_iter = ctx.nodes().iter_parents(node.id()).skip(2);
-    parents_iter.filter(|parent_node| matches!(parent_node.kind(), AstKind::CallExpression(_)))
-        .any(|parent_node| is_children(parent_node, ctx) && is_to_array(parent_node))                    
+    parents_iter
+        .filter(|parent_node| matches!(parent_node.kind(), AstKind::CallExpression(_)))
+        .any(|parent_node| is_children(parent_node, ctx) && is_to_array(parent_node))
 }
 
 enum InsideArrayOrIterator {
@@ -491,7 +485,7 @@ fn test() {
         "#,
         r#"import React from "react";        
         React.Children.toArray([1, 2 ,3].map(x => <App />));
-        "#,        
+        "#,
         r"React.Children.toArray([1, 2 ,3].map(x => <App />));",
     ];
 
