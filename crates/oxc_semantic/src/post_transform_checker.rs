@@ -1,4 +1,4 @@
-use std::{cell::Cell, collections::HashSet, mem};
+use std::{cell::Cell, mem};
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
@@ -87,28 +87,47 @@ impl PostTransformChecker {
         }
 
         // Check whether bindings are the same for scopes in the same visitation order.
-        for (prev_scope_id, cur_scope_id) in
+        for (&prev_scope_id, &cur_scope_id) in
             self.collect_after_transform.scope_ids.iter().zip(current_collect.scope_ids.iter())
         {
-            let mut prev_bindings =
-                previous_scopes.get_bindings(*prev_scope_id).keys().cloned().collect::<Vec<_>>();
-            prev_bindings.sort_unstable();
-            let mut current_bindings =
-                current_scopes.get_bindings(*cur_scope_id).keys().cloned().collect::<Vec<_>>();
-            current_bindings.sort_unstable();
-
-            if prev_bindings.iter().collect::<HashSet<&CompactStr>>()
-                != current_bindings.iter().collect::<HashSet<&CompactStr>>()
-            {
-                let message = format!(
-                    "
-Bindings mismatch:
-previous {prev_scope_id:?}: {prev_bindings:?}
-current  {cur_scope_id:?}: {current_bindings:?}
-                    "
-                );
-                self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
+            fn get_sorted_bindings(scopes: &ScopeTree, scope_id: ScopeId) -> Vec<CompactStr> {
+                let mut bindings =
+                    scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
+                bindings.sort_unstable();
+                bindings
             }
+
+            let (previous, current) = match (prev_scope_id, cur_scope_id) {
+                (None, None) => continue,
+                (Some(prev_scope_id), Some(cur_scope_id)) => {
+                    let prev_bindings = get_sorted_bindings(previous_scopes, prev_scope_id);
+                    let current_bindings = get_sorted_bindings(current_scopes, cur_scope_id);
+                    if prev_bindings == current_bindings {
+                        continue;
+                    }
+                    (
+                        format!("{prev_scope_id:?}: {prev_bindings:?}"),
+                        format!("{cur_scope_id:?}: {current_bindings:?}"),
+                    )
+                }
+                (Some(prev_scope_id), None) => {
+                    let prev_bindings = get_sorted_bindings(previous_scopes, prev_scope_id);
+                    (format!("{prev_scope_id:?}: {prev_bindings:?}"), "No scope".to_string())
+                }
+                (None, Some(cur_scope_id)) => {
+                    let current_bindings = get_sorted_bindings(current_scopes, cur_scope_id);
+                    ("No scope".to_string(), format!("{cur_scope_id:?}: {current_bindings:?}"))
+                }
+            };
+
+            let message = format!(
+                "
+Bindings mismatch:
+previous {previous}
+current  {current}
+                "
+            );
+            self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
         }
     }
 
@@ -209,7 +228,7 @@ current  {cur_reference_id:?}: {cur_symbol_name:?}
 
 #[derive(Default)]
 pub struct SemanticCollector {
-    scope_ids: Vec<ScopeId>,
+    scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<SymbolId>,
     reference_ids: Vec<ReferenceId>,
 
@@ -218,9 +237,7 @@ pub struct SemanticCollector {
 
 impl<'a> Visit<'a> for SemanticCollector {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        if let Some(scope_id) = scope_id.get() {
-            self.scope_ids.push(scope_id);
-        }
+        self.scope_ids.push(scope_id.get());
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {

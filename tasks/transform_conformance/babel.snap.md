@@ -1647,11 +1647,31 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 # babel-plugin-transform-optional-catch-binding (2/4)
 * optional-catch-bindings/try-catch-block-no-binding/input.js
-  x Scopes mismatch after transform
+  x Bindings mismatch:
+  | previous ScopeId(0): ["_unused"]
+  | current  ScopeId(0): []
+
+  x Bindings mismatch:
+  | previous No scope
+  | current  ScopeId(2): []
+
+  x Bindings mismatch:
+  | previous ScopeId(2): []
+  | current  ScopeId(3): ["_unused"]
 
 
 * optional-catch-bindings/try-catch-finally-no-binding/input.js
-  x Scopes mismatch after transform
+  x Bindings mismatch:
+  | previous ScopeId(0): ["_unused"]
+  | current  ScopeId(0): []
+
+  x Bindings mismatch:
+  | previous No scope
+  | current  ScopeId(2): []
+
+  x Bindings mismatch:
+  | previous ScopeId(2): []
+  | current  ScopeId(3): ["_unused"]
 
 
 

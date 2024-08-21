@@ -8,7 +8,17 @@ Passed: 9/35
 
 # babel-plugin-transform-optional-catch-binding (0/1)
 * try-catch-shadow/input.js
-  x Scopes mismatch after transform
+  x Bindings mismatch:
+  | previous ScopeId(0): ["_unused", "_unused2"]
+  | current  ScopeId(0): ["_unused"]
+
+  x Bindings mismatch:
+  | previous No scope
+  | current  ScopeId(2): []
+
+  x Bindings mismatch:
+  | previous ScopeId(2): []
+  | current  ScopeId(3): ["_unused2"]
 
 
 
@@ -218,7 +228,9 @@ Passed: 9/35
 
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
-  x Scopes mismatch after transform
+  x Bindings mismatch:
+  | previous No scope
+  | current  ScopeId(3): []
 
   x Reference mismatch:
   | previous ReferenceId(17): Some("_s2")
@@ -234,7 +246,13 @@ Passed: 9/35
 
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
-  x Scopes mismatch after transform
+  x Bindings mismatch:
+  | previous No scope
+  | current  ScopeId(2): []
+
+  x Bindings mismatch:
+  | previous No scope
+  | current  ScopeId(6): []
 
   x Reference mismatch:
   | previous ReferenceId(10): Some("_s")
