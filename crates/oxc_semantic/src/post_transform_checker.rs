@@ -102,9 +102,9 @@ impl PostTransformChecker {
             {
                 let message = format!(
                     "
-Bindings Mismatch:
-previous scope {prev_scope_id:?}: {prev_bindings:?}
-current  scope {cur_scope_id:?}: {current_bindings:?}
+Bindings mismatch:
+previous {prev_scope_id:?}: {prev_bindings:?}
+current  {cur_scope_id:?}: {current_bindings:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
@@ -149,9 +149,9 @@ current  scope {cur_scope_id:?}: {current_bindings:?}
             if prev_symbol_name != cur_symbol_name {
                 let message = format!(
                     "
-Symbol Mismatch:
-previous symbol {prev_symbol_id:?}: {prev_symbol_name:?}
-current  symbol {cur_symbol_id:?}: {cur_symbol_name:?}
+Symbol mismatch:
+previous {prev_symbol_id:?}: {prev_symbol_name:?}
+current  {cur_symbol_id:?}: {cur_symbol_name:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
@@ -196,9 +196,9 @@ current  symbol {cur_symbol_id:?}: {cur_symbol_name:?}
             if prev_symbol_name != cur_symbol_name {
                 let message = format!(
                     "
-reference Mismatch:
-previous reference {prev_reference_id:?}: {prev_symbol_name:?}
-current  reference {cur_reference_id:?}: {cur_symbol_name:?}
+Reference mismatch:
+previous {prev_reference_id:?}: {prev_symbol_name:?}
+current  {cur_reference_id:?}: {cur_symbol_name:?}
                     "
                 );
                 self.errors.push(OxcDiagnostic::error(message.trim().to_string()));

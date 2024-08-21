@@ -1662,21 +1662,21 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 # babel-plugin-transform-arrow-functions (1/6)
 * assumption-newableArrowFunctions-false/basic/input.js
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["f"]
-  | current  scope ScopeId(1): ["_this2", "f"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["f"]
+  | current  ScopeId(1): ["_this2", "f"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(4): []
-  | current  scope ScopeId(4): ["_this"]
+  x Bindings mismatch:
+  | previous ScopeId(4): []
+  | current  ScopeId(4): ["_this"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(5): ["_this"]
-  | current  scope ScopeId(5): []
+  x Bindings mismatch:
+  | previous ScopeId(5): ["_this"]
+  | current  ScopeId(5): []
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(6): ["_this2"]
-  | current  scope ScopeId(6): []
+  x Bindings mismatch:
+  | previous ScopeId(6): ["_this2"]
+  | current  ScopeId(6): []
 
 
 * assumption-newableArrowFunctions-false/naming/input.js
@@ -1706,15 +1706,15 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * node-extensions/type-param-arrow-in-ts/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["T"]
-  | current  scope ScopeId(1): []
+  x Bindings mismatch:
+  | previous ScopeId(1): ["T"]
+  | current  ScopeId(1): []
 
 
 * opts/optimizeConstEnums/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["A", "x"]
-  | current  scope ScopeId(1): ["A"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["A", "x"]
+  | current  ScopeId(1): ["A"]
 
 
 * opts/rewriteImportExtensions/input.ts
@@ -1745,86 +1745,86 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * class/head/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["T"]
-  | current  scope ScopeId(1): []
+  x Bindings mismatch:
+  | previous ScopeId(1): ["T"]
+  | current  ScopeId(1): []
 
 
 * declarations/erased/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
+  | current  ScopeId(0): []
 
 
 * declarations/export-declare-enum/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A"]
+  | current  ScopeId(0): []
 
 
 * declarations/nested-namespace/input.mjs
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["P"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["P"]
+  | current  ScopeId(0): []
 
 
 * enum/boolean-value/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["A", "E"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["A", "E"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/constant-folding/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h",
-  | "i", "j", "k", "l", "m", "n", "o", "p", "q", "r"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h", "i",
+  | "j", "k", "l", "m", "n", "o", "p", "q", "r"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/enum-merging-inner-references/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["Animals", "Cat", "Dog"]
-  | current  scope ScopeId(1): ["Animals"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["Animals", "Cat", "Dog"]
+  | current  ScopeId(1): ["Animals"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["Animals", "CatDog"]
-  | current  scope ScopeId(2): ["Animals"]
+  x Bindings mismatch:
+  | previous ScopeId(2): ["Animals", "CatDog"]
+  | current  ScopeId(2): ["Animals"]
 
 
 * enum/enum-merging-inner-references-shadow/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["Animals", "Cat"]
-  | current  scope ScopeId(1): ["Animals"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["Animals", "Cat"]
+  | current  ScopeId(1): ["Animals"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["Animals", "Dog"]
-  | current  scope ScopeId(2): ["Animals"]
+  x Bindings mismatch:
+  | previous ScopeId(2): ["Animals", "Dog"]
+  | current  ScopeId(2): ["Animals"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(3): ["Animals", "CatDog"]
-  | current  scope ScopeId(3): ["Animals"]
+  x Bindings mismatch:
+  | previous ScopeId(3): ["Animals", "CatDog"]
+  | current  ScopeId(3): ["Animals"]
 
 
 * enum/export/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["A", "E"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["A", "E"]
+  | current  ScopeId(1): ["E"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["B", "E"]
-  | current  scope ScopeId(2): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(2): ["B", "E"]
+  | current  ScopeId(2): ["E"]
 
 
 * enum/inferred/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["E", "x", "y"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["E", "x", "y"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/inner-references/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["E", "a", "b"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["E", "a", "b"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/mix-references/input.ts
@@ -1867,89 +1867,89 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * enum/non-foldable-constant/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["E", "a", "b"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["E", "a", "b"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/non-scoped/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["E", "x", "y"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["E", "x", "y"]
+  | current  ScopeId(1): ["E"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["E", "z"]
-  | current  scope ScopeId(2): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(2): ["E", "z"]
+  | current  ScopeId(2): ["E"]
 
 
 * enum/outer-references/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["IPC", "SERVER", "SOCKET", "socketType"]
-  | current  scope ScopeId(1): ["socketType"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["IPC", "SERVER", "SOCKET", "socketType"]
+  | current  ScopeId(1): ["socketType"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE",
+  x Bindings mismatch:
+  | previous ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE",
   | "UV_WRITABLE", "constants"]
-  | current  scope ScopeId(2): ["constants"]
+  | current  ScopeId(2): ["constants"]
 
 
 * enum/string-value/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["A", "A2", "B", "B2", "E"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["A", "A2", "B", "B2", "E"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/string-value-template/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["A", "E"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["A", "E"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/string-values-computed/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["A", "E"]
-  | current  scope ScopeId(1): ["E"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["A", "E"]
+  | current  ScopeId(1): ["E"]
 
 
 * enum/ts5.0-const-foldable/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["First", "Second", "Third", "Values"]
-  | current  scope ScopeId(1): ["Values"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["First", "Second", "Third", "Values"]
+  | current  ScopeId(1): ["Values"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["Invoices", "Parts", "Routes", "x", "y"]
-  | current  scope ScopeId(2): ["Routes"]
+  x Bindings mismatch:
+  | previous ScopeId(2): ["Invoices", "Parts", "Routes", "x", "y"]
+  | current  ScopeId(2): ["Routes"]
 
 
 * exports/declared-types/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E",
-  | "I", "II2", "II3", "M", "N", "T", "foo", "m", "x"]
-  | current  scope ScopeId(0): ["BB", "BB2", "C2", "foo"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E", "I",
+  | "II2", "II3", "M", "N", "T", "foo", "m", "x"]
+  | current  ScopeId(0): ["BB", "BB2", "C2", "foo"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(12): ["BB", "K"]
-  | current  scope ScopeId(2): ["BB"]
+  x Bindings mismatch:
+  | previous ScopeId(12): ["BB", "K"]
+  | current  ScopeId(2): ["BB"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(13): ["BB", "L"]
-  | current  scope ScopeId(3): ["BB"]
+  x Bindings mismatch:
+  | previous ScopeId(13): ["BB", "L"]
+  | current  ScopeId(3): ["BB"]
 
-  x reference Mismatch:
-  | previous reference ReferenceId(0): Some("x")
-  | current  reference ReferenceId(0): None
+  x Reference mismatch:
+  | previous ReferenceId(0): Some("x")
+  | current  ReferenceId(0): None
 
-  x reference Mismatch:
-  | previous reference ReferenceId(2): Some("E")
-  | current  reference ReferenceId(1): None
+  x Reference mismatch:
+  | previous ReferenceId(2): Some("E")
+  | current  ReferenceId(1): None
 
-  x reference Mismatch:
-  | previous reference ReferenceId(8): Some("x")
-  | current  reference ReferenceId(2): None
+  x Reference mismatch:
+  | previous ReferenceId(8): Some("x")
+  | current  ReferenceId(2): None
 
-  x reference Mismatch:
-  | previous reference ReferenceId(11): Some("E")
-  | current  reference ReferenceId(3): None
+  x Reference mismatch:
+  | previous ReferenceId(11): Some("E")
+  | current  ReferenceId(3): None
 
 
 * exports/export-import=/input.ts
@@ -1964,9 +1964,9 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * exports/export-type/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A"]
+  | current  ScopeId(0): []
 
 
 * exports/export=/input.ts
@@ -1980,69 +1980,69 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * exports/imported-types/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "B", "C"]
-  | current  scope ScopeId(0): ["C"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "B", "C"]
+  | current  ScopeId(0): ["C"]
 
 
 * exports/imported-types-only-remove-type-imports/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "B", "C"]
-  | current  scope ScopeId(0): ["C"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "B", "C"]
+  | current  ScopeId(0): ["C"]
 
 
 * exports/interface/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "I"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "I"]
+  | current  ScopeId(0): []
 
 
 * exports/issue-9916-1/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-  | current  scope ScopeId(0): ["a"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
+  | current  ScopeId(0): ["a"]
 
 
 * exports/issue-9916-2/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
+  | current  ScopeId(0): []
 
 
 * exports/issue-9916-3/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-  | current  scope ScopeId(0): ["a"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
+  | current  ScopeId(0): ["a"]
 
 
 * function/parameters/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["T", "x", "y"]
-  | current  scope ScopeId(1): ["x", "y"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["T", "x", "y"]
+  | current  ScopeId(1): ["x", "y"]
 
 
 * imports/elide-preact/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["FooBar", "Fragment", "h", "x"]
-  | current  scope ScopeId(0): ["x"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["FooBar", "Fragment", "h", "x"]
+  | current  ScopeId(0): ["x"]
 
 
 * imports/elide-preact-no-1/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["Fragment", "h", "render"]
-  | current  scope ScopeId(0): ["Fragment", "h"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["Fragment", "h", "render"]
+  | current  ScopeId(0): ["Fragment", "h"]
 
 
 * imports/elide-preact-no-2/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["Fragment", "render"]
-  | current  scope ScopeId(0): ["Fragment"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["Fragment", "render"]
+  | current  ScopeId(0): ["Fragment"]
 
 
 * imports/elide-react/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["React", "x"]
-  | current  scope ScopeId(0): ["x"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["React", "x"]
+  | current  ScopeId(0): ["x"]
 
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
@@ -2064,76 +2064,76 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/elide-typeof/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "x"]
-  | current  scope ScopeId(0): ["x"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "x"]
+  | current  ScopeId(0): ["x"]
 
 
 * imports/elision/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "B", "C", "D", "Used", "Used2", "Used3",
-  | "x", "y", "z"]
-  | current  scope ScopeId(0): ["Used", "Used2", "Used3", "x", "y", "z"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "B", "C", "D", "Used", "Used2", "Used3", "x",
+  | "y", "z"]
+  | current  ScopeId(0): ["Used", "Used2", "Used3", "x", "y", "z"]
 
 
 * imports/elision-export-type/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "B", "T", "T1"]
-  | current  scope ScopeId(0): ["A", "B"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "B", "T", "T1"]
+  | current  ScopeId(0): ["A", "B"]
 
 
 * imports/elision-locations/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G",
-  | "H", "Iface", "x", "y"]
-  | current  scope ScopeId(0): ["A", "Class", "x", "y"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G", "H",
+  | "Iface", "x", "y"]
+  | current  ScopeId(0): ["A", "Class", "x", "y"]
 
 
 * imports/elision-qualifiedname/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "x"]
-  | current  scope ScopeId(0): ["x"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "x"]
+  | current  ScopeId(0): ["x"]
 
 
 * imports/elision-rename/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["B", "x"]
-  | current  scope ScopeId(0): ["x"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["B", "x"]
+  | current  ScopeId(0): ["x"]
 
 
 * imports/enum-id/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "Enum"]
-  | current  scope ScopeId(0): ["Enum"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "Enum"]
+  | current  ScopeId(0): ["Enum"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["A", "Enum"]
-  | current  scope ScopeId(1): ["Enum"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["A", "Enum"]
+  | current  ScopeId(1): ["Enum"]
 
 
 * imports/enum-value/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["Enum", "id"]
-  | current  scope ScopeId(1): ["Enum"]
+  x Bindings mismatch:
+  | previous ScopeId(1): ["Enum", "id"]
+  | current  ScopeId(1): ["Enum"]
 
 
 * imports/import-removed-exceptions/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["H", "I", "I2", "J", "a", "b", "c2", "d",
-  | "d2", "e", "e4"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["H", "I", "I2", "J", "a", "b", "c2", "d", "d2",
+  | "e", "e4"]
+  | current  ScopeId(0): []
 
 
 * imports/import-type/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "B", "T", "Types"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "B", "T", "Types"]
+  | current  ScopeId(0): []
 
 
 * imports/import-type-not-removed/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "B"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "B"]
+  | current  ScopeId(0): []
 
 
 * imports/import=-module/input.ts
@@ -2150,53 +2150,53 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/only-remove-type-imports/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2",
-  | "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
-  | current  scope ScopeId(0): ["K1", "K2", "L1", "L2", "L3", "a", "b", "c2",
-  | "d", "d2", "e", "e4"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3",
+  | "a", "b", "c2", "d", "d2", "e", "e4"]
+  | current  ScopeId(0): ["K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d",
+  | "d2", "e", "e4"]
 
 
 * imports/property-signature/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["A", "obj"]
-  | current  scope ScopeId(0): ["obj"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["A", "obj"]
+  | current  ScopeId(0): ["obj"]
 
 
 * imports/type-only-export-specifier-1/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["bar", "baz", "foo"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["bar", "baz", "foo"]
+  | current  ScopeId(0): []
 
 
 * imports/type-only-export-specifier-2/input.ts
 
 
 * imports/type-only-import-specifier-1/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["Foo1", "Foo2"]
-  | current  scope ScopeId(0): ["Foo1"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["Foo1", "Foo2"]
+  | current  ScopeId(0): ["Foo1"]
 
 
 * imports/type-only-import-specifier-2/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["Foo1", "Foo2"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["Foo1", "Foo2"]
+  | current  ScopeId(0): []
 
 
 * imports/type-only-import-specifier-3/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["Foo1", "Foo2"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["Foo1", "Foo2"]
+  | current  ScopeId(0): []
 
 
 * imports/type-only-import-specifier-4/input.ts
 
 
 * lvalues/TSTypeParameterInstantiation/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["M"]
-  | current  scope ScopeId(1): []
+  x Bindings mismatch:
+  | previous ScopeId(1): ["M"]
+  | current  ScopeId(1): []
 
 
 * namespace/alias/input.ts
@@ -3667,9 +3667,9 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * namespace/export-type-only/input.ts
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["Platform"]
-  | current  scope ScopeId(0): []
+  x Bindings mismatch:
+  | previous ScopeId(0): ["Platform"]
+  | current  ScopeId(0): []
 
 
 * namespace/module-nested/input.ts
@@ -4881,21 +4881,21 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
 
 # babel-plugin-transform-react-jsx (133/142)
 * react/arrow-functions/input.js
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): []
-  | current  scope ScopeId(1): ["_this"]
+  x Bindings mismatch:
+  | previous ScopeId(1): []
+  | current  ScopeId(1): ["_this"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["_this"]
-  | current  scope ScopeId(2): []
+  x Bindings mismatch:
+  | previous ScopeId(2): ["_this"]
+  | current  ScopeId(2): []
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(3): []
-  | current  scope ScopeId(3): ["_this2"]
+  x Bindings mismatch:
+  | previous ScopeId(3): []
+  | current  ScopeId(3): ["_this2"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(4): ["_this2"]
-  | current  scope ScopeId(4): []
+  x Bindings mismatch:
+  | previous ScopeId(4): ["_this2"]
+  | current  ScopeId(4): []
 
 
 * react/should-disallow-valueless-key/input.js
@@ -4929,21 +4929,21 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
 
 
 * react-automatic/arrow-functions/input.js
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): []
-  | current  scope ScopeId(1): ["_this"]
+  x Bindings mismatch:
+  | previous ScopeId(1): []
+  | current  ScopeId(1): ["_this"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): ["_this"]
-  | current  scope ScopeId(2): []
+  x Bindings mismatch:
+  | previous ScopeId(2): ["_this"]
+  | current  ScopeId(2): []
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(3): []
-  | current  scope ScopeId(3): ["_this2"]
+  x Bindings mismatch:
+  | previous ScopeId(3): []
+  | current  ScopeId(3): ["_this2"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(4): ["_this2"]
-  | current  scope ScopeId(4): []
+  x Bindings mismatch:
+  | previous ScopeId(4): ["_this2"]
+  | current  ScopeId(4): []
 
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -4982,21 +4982,21 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 # babel-plugin-transform-react-jsx-self (2/3)
 * react-source/arrow-function/input.js
-  x Bindings Mismatch:
-  | previous scope ScopeId(0): ["fn"]
-  | current  scope ScopeId(0): ["_this", "fn"]
+  x Bindings mismatch:
+  | previous ScopeId(0): ["fn"]
+  | current  ScopeId(0): ["_this", "fn"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(1): ["_this"]
-  | current  scope ScopeId(1): []
+  x Bindings mismatch:
+  | previous ScopeId(1): ["_this"]
+  | current  ScopeId(1): []
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(2): []
-  | current  scope ScopeId(2): ["_this2"]
+  x Bindings mismatch:
+  | previous ScopeId(2): []
+  | current  ScopeId(2): ["_this2"]
 
-  x Bindings Mismatch:
-  | previous scope ScopeId(3): ["_this2"]
-  | current  scope ScopeId(3): []
+  x Bindings mismatch:
+  | previous ScopeId(3): ["_this2"]
+  | current  ScopeId(3): []
 
 
 
