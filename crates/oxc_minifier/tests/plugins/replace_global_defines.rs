@@ -42,3 +42,29 @@ fn replace_global_definitions_dot() {
         test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config);
     }
 }
+
+#[test]
+fn replace_global_definitions_dot_with_postfix_wildcard() {
+    {
+        let config =
+            ReplaceGlobalDefinesConfig::new(&[("import.meta.env.*", "undefined")]).unwrap();
+        test("import.meta.env.result", "undefined", config.clone());
+        test("import.meta.env", "import.meta.env", config);
+    }
+}
+
+#[test]
+fn replace_global_definitions_dot_with_postfix_mixed() {
+    {
+        let config = ReplaceGlobalDefinesConfig::new(&[
+            ("import.meta.env.*", "undefined"),
+            ("import.meta.env", "env"),
+        ])
+        .unwrap();
+        test("import.meta.env.result", "undefined", config.clone());
+        test("import.meta.env.result.many.nested", "undefined", config.clone());
+        test("import.meta.env", "env", config.clone());
+        test("import.meta.somethingelse", "import.meta.somethingelse", config.clone());
+        test("import.meta", "import.meta", config);
+    }
+}
