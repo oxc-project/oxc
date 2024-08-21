@@ -60,7 +60,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -73,62 +73,14 @@ impl<'a> LogicalAssignmentOperators<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { _ctx: ctx, var_declarations: vec![] }
     }
+}
 
-    fn clone_identifier_reference(
-        ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
-        let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
-        let symbol_id = reference.symbol_id();
-        let flags = reference.flags();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
-    }
-
-    pub fn maybe_generate_memoised(
-        &mut self,
-        expr: &Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<IdentifierReference<'a>> {
-        let name = match expr {
-            Expression::Super(_) | Expression::ThisExpression(_) => return None,
-            Expression::Identifier(ident) => ident.name.clone(),
-            Expression::StringLiteral(str) => str.value.clone(),
-            _ => {
-                return None;
-            }
-        };
-
-        let symbol_id =
-            ctx.generate_uid_in_current_scope(name.as_str(), SymbolFlags::FunctionScopedVariable);
-        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-
-        // var _name;
-        let binding_identifier = BindingIdentifier {
-            span: SPAN,
-            name: symbol_name.clone(),
-            symbol_id: Cell::new(Some(symbol_id)),
-        };
-        let kind = VariableDeclarationKind::Var;
-        let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation>, false);
-        self.var_declarations
-            .last_mut()
-            .unwrap()
-            .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
-
-        // _name = name
-        Some(ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Write))
-    }
-
-    pub fn transform_statements(
-        &mut self,
-        _statements: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
+    fn enter_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.var_declarations.push(ctx.ast.vec());
     }
 
-    pub fn transform_statements_on_exit(
+    fn exit_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -147,7 +99,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         }
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::AssignmentExpression(assignment_expr) = expr else { return };
 
         // `&&=` `||=` `??=`
@@ -317,5 +269,53 @@ impl<'a> LogicalAssignmentOperators<'a> {
         let logical_expr = ctx.ast.expression_logical(SPAN, left_expr, operator, right);
 
         *expr = logical_expr;
+    }
+}
+
+impl<'a> LogicalAssignmentOperators<'a> {
+    fn clone_identifier_reference(
+        ident: &IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
+        let symbol_id = reference.symbol_id();
+        let flags = reference.flags();
+        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
+    }
+
+    pub fn maybe_generate_memoised(
+        &mut self,
+        expr: &Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<IdentifierReference<'a>> {
+        let name = match expr {
+            Expression::Super(_) | Expression::ThisExpression(_) => return None,
+            Expression::Identifier(ident) => ident.name.clone(),
+            Expression::StringLiteral(str) => str.value.clone(),
+            _ => {
+                return None;
+            }
+        };
+
+        let symbol_id =
+            ctx.generate_uid_in_current_scope(name.as_str(), SymbolFlags::FunctionScopedVariable);
+        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+
+        // var _name;
+        let binding_identifier = BindingIdentifier {
+            span: SPAN,
+            name: symbol_name.clone(),
+            symbol_id: Cell::new(Some(symbol_id)),
+        };
+        let kind = VariableDeclarationKind::Var;
+        let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
+        let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation>, false);
+        self.var_declarations
+            .last_mut()
+            .unwrap()
+            .push(ctx.ast.variable_declarator(SPAN, kind, id, None, false));
+
+        // _name = name
+        Some(ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Write))
     }
 }
