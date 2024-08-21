@@ -1,8 +1,9 @@
 commit: 12619ffe
 
-Passed: 260/953
+Passed: 406/953
 
 # All Passed:
+* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-source
 
@@ -1275,115 +1276,408 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
-# babel-plugin-transform-logical-assignment-operators (0/6)
-* logical-assignment/anonymous-functions-transform/input.js
-ReferenceId mismatch after transform
-
-* logical-assignment/arrow-functions-transform/input.js
-ReferenceId mismatch after transform
-
+# babel-plugin-transform-logical-assignment-operators (4/6)
 * logical-assignment/general-semantics/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
 
-* logical-assignment/named-functions-transform/input.js
-ReferenceId mismatch after transform
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:32:8]
+ 31 | 
+ 32 | expect(deep.obj.x ||= 1).toBe(1);
+    :        ^^^^
+ 33 | expect(gets).toBe(1);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:32:8]
+ 31 | 
+ 32 | expect(deep.obj.x ||= 1).toBe(1);
+    :        ^^^^
+ 33 | expect(gets).toBe(1);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:34:8]
+ 33 | expect(gets).toBe(1);
+ 34 | expect(deep.obj.x ||= 2).toBe(1);
+    :        ^^^^
+ 35 | expect(gets).toBe(2);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:34:8]
+ 33 | expect(gets).toBe(1);
+ 34 | expect(deep.obj.x ||= 2).toBe(1);
+    :        ^^^^
+ 35 | expect(gets).toBe(2);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:37:8]
+ 36 | 
+ 37 | expect(deep.obj.x &&= 0).toBe(0);
+    :        ^^^^
+ 38 | expect(gets).toBe(3);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:37:8]
+ 36 | 
+ 37 | expect(deep.obj.x &&= 0).toBe(0);
+    :        ^^^^
+ 38 | expect(gets).toBe(3);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:39:8]
+ 38 | expect(gets).toBe(3);
+ 39 | expect(deep.obj.x &&= 3).toBe(0);
+    :        ^^^^
+ 40 | expect(gets).toBe(4);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:39:8]
+ 38 | expect(gets).toBe(3);
+ 39 | expect(deep.obj.x &&= 3).toBe(0);
+    :        ^^^^
+ 40 | expect(gets).toBe(4);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:43:14]
+ 42 | var key = 0;
+ 43 | expect(obj[++key] ||= 1).toBe(1);
+    :              ^^^
+ 44 | expect(key).toBe(1);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:46:14]
+ 45 | key = 0;
+ 46 | expect(obj[++key] ||= 2).toBe(1);
+    :              ^^^
+ 47 | expect(key).toBe(1);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:50:14]
+ 49 | key = 0;
+ 50 | expect(obj[++key] &&= 0).toBe(0);
+    :              ^^^
+ 51 | expect(key).toBe(1);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:53:14]
+ 52 | key = 0;
+ 53 | expect(obj[++key] &&= 3).toBe(0);
+    :              ^^^
+ 54 | expect(key).toBe(1);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:8]
+ 56 | key = 0;
+ 57 | expect(deep.obj[++key] ||= 1).toBe(1);
+    :        ^^^^
+ 58 | expect(gets).toBe(5);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:19]
+ 56 | key = 0;
+ 57 | expect(deep.obj[++key] ||= 1).toBe(1);
+    :                   ^^^
+ 58 | expect(gets).toBe(5);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:8]
+ 56 | key = 0;
+ 57 | expect(deep.obj[++key] ||= 1).toBe(1);
+    :        ^^^^
+ 58 | expect(gets).toBe(5);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:19]
+ 56 | key = 0;
+ 57 | expect(deep.obj[++key] ||= 1).toBe(1);
+    :                   ^^^
+ 58 | expect(gets).toBe(5);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:8]
+ 60 | key = 0;
+ 61 | expect(deep.obj[++key] ||= 2).toBe(1);
+    :        ^^^^
+ 62 | expect(gets).toBe(6);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:19]
+ 60 | key = 0;
+ 61 | expect(deep.obj[++key] ||= 2).toBe(1);
+    :                   ^^^
+ 62 | expect(gets).toBe(6);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:8]
+ 60 | key = 0;
+ 61 | expect(deep.obj[++key] ||= 2).toBe(1);
+    :        ^^^^
+ 62 | expect(gets).toBe(6);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:19]
+ 60 | key = 0;
+ 61 | expect(deep.obj[++key] ||= 2).toBe(1);
+    :                   ^^^
+ 62 | expect(gets).toBe(6);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:8]
+ 65 | key = 0;
+ 66 | expect(deep.obj[++key] &&= 0).toBe(0);
+    :        ^^^^
+ 67 | expect(gets).toBe(7);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:19]
+ 65 | key = 0;
+ 66 | expect(deep.obj[++key] &&= 0).toBe(0);
+    :                   ^^^
+ 67 | expect(gets).toBe(7);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:8]
+ 65 | key = 0;
+ 66 | expect(deep.obj[++key] &&= 0).toBe(0);
+    :        ^^^^
+ 67 | expect(gets).toBe(7);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:19]
+ 65 | key = 0;
+ 66 | expect(deep.obj[++key] &&= 0).toBe(0);
+    :                   ^^^
+ 67 | expect(gets).toBe(7);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:8]
+ 69 | key = 0;
+ 70 | expect(deep.obj[++key] &&= 3).toBe(0);
+    :        ^^^^
+ 71 | expect(gets).toBe(8);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:19]
+ 69 | key = 0;
+ 70 | expect(deep.obj[++key] &&= 3).toBe(0);
+    :                   ^^^
+ 71 | expect(gets).toBe(8);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:8]
+ 69 | key = 0;
+ 70 | expect(deep.obj[++key] &&= 3).toBe(0);
+    :        ^^^^
+ 71 | expect(gets).toBe(8);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:19]
+ 69 | key = 0;
+ 70 | expect(deep.obj[++key] &&= 3).toBe(0);
+    :                   ^^^
+ 71 | expect(gets).toBe(8);
+    `----
+
 
 * logical-assignment/null-coalescing/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
 
-* logical-assignment/null-coalescing-without-other/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:28:8]
+ 27 | obj.x = undefined;
+ 28 | expect(deep.obj.x ??= 1).toBe(1);
+    :        ^^^^
+ 29 | expect(gets, 1);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:28:8]
+ 27 | obj.x = undefined;
+ 28 | expect(deep.obj.x ??= 1).toBe(1);
+    :        ^^^^
+ 29 | expect(gets, 1);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:30:8]
+ 29 | expect(gets, 1);
+ 30 | expect(deep.obj.x ??= 2).toBe(1);
+    :        ^^^^
+ 31 | expect(gets, 2);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:30:8]
+ 29 | expect(gets, 1);
+ 30 | expect(deep.obj.x ??= 2).toBe(1);
+    :        ^^^^
+ 31 | expect(gets, 2);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:35:14]
+ 34 | obj.x = undefined;
+ 35 | expect(obj[++key] ??= 1).toBe(1);
+    :              ^^^
+ 36 | expect(key, 1);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:38:14]
+ 37 | key = 0;
+ 38 | expect(obj[++key] ??= 2).toBe(1);
+    :              ^^^
+ 39 | expect(key, 1);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:8]
+ 42 | key = 0;
+ 43 | expect(deep.obj[++key] ??= 1).toBe(1);
+    :        ^^^^
+ 44 | expect(gets, 3);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:19]
+ 42 | key = 0;
+ 43 | expect(deep.obj[++key] ??= 1).toBe(1);
+    :                   ^^^
+ 44 | expect(gets, 3);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:8]
+ 42 | key = 0;
+ 43 | expect(deep.obj[++key] ??= 1).toBe(1);
+    :        ^^^^
+ 44 | expect(gets, 3);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:19]
+ 42 | key = 0;
+ 43 | expect(deep.obj[++key] ??= 1).toBe(1);
+    :                   ^^^
+ 44 | expect(gets, 3);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:8]
+ 46 | key = 0;
+ 47 | expect(deep.obj[++key] ??= 2).toBe(1);
+    :        ^^^^
+ 48 | expect(gets, 4);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:19]
+ 46 | key = 0;
+ 47 | expect(deep.obj[++key] ??= 2).toBe(1);
+    :                   ^^^
+ 48 | expect(gets, 4);
+    `----
+
+  x Missing ReferenceId: deep
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:8]
+ 46 | key = 0;
+ 47 | expect(deep.obj[++key] ??= 2).toBe(1);
+    :        ^^^^
+ 48 | expect(gets, 4);
+    `----
+
+  x Missing ReferenceId: key
+    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:19]
+ 46 | key = 0;
+ 47 | expect(deep.obj[++key] ??= 2).toBe(1);
+    :                   ^^^
+ 48 | expect(gets, 4);
+    `----
 
 
-# babel-plugin-transform-nullish-coalescing-operator (1/12)
+
+# babel-plugin-transform-nullish-coalescing-operator (5/12)
 * assumption-noDocumentAll/transform/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+
 
 * assumption-noDocumentAll/transform-in-default-destructuring/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+
 
 * assumption-noDocumentAll/transform-in-default-param/input.js
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+
 
 * assumption-noDocumentAll/transform-in-function/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+
 
 * assumption-noDocumentAll/transform-static-refs-in-default/input.js
-ReferenceId mismatch after transform
+
 
 * assumption-noDocumentAll/transform-static-refs-in-function/input.js
 
 
-* nullish-coalescing/transform-in-default-destructuring/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* nullish-coalescing/transform-in-default-param/input.js
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* nullish-coalescing/transform-in-function/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
 * nullish-coalescing/transform-loose/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
-* nullish-coalescing/transform-static-refs-in-default/input.js
-ReferenceId mismatch after transform
 
 
 # babel-plugin-transform-optional-catch-binding (2/4)
 * optional-catch-bindings/try-catch-block-no-binding/input.js
-Scopes mismatch after transform
-Symbols mismatch after transform
+  x Scopes mismatch after transform
+
 
 * optional-catch-bindings/try-catch-finally-no-binding/input.js
-Scopes mismatch after transform
-Symbols mismatch after transform
+  x Scopes mismatch after transform
 
 
-# babel-plugin-transform-exponentiation-operator (0/4)
-* exponentiation-operator/assignment/input.js
-ReferenceId mismatch after transform
 
-* exponentiation-operator/binary/input.js
-ReferenceId mismatch after transform
-
+# babel-plugin-transform-exponentiation-operator (3/4)
 * regression/4349/input.js
-ReferenceId mismatch after transform
 
-* regression/4403/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 
 # babel-plugin-transform-arrow-functions (1/6)
 * assumption-newableArrowFunctions-false/basic/input.js
-Bindings Mismatch:
-previous scope ScopeId(1): ["f"]
-current  scope ScopeId(1): ["_this2", "f"]
-Bindings Mismatch:
-previous scope ScopeId(4): []
-current  scope ScopeId(4): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(5): ["_this"]
-current  scope ScopeId(5): []
-Bindings Mismatch:
-previous scope ScopeId(6): ["_this2"]
-current  scope ScopeId(6): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["f"]
+  | current  scope ScopeId(1): ["_this2", "f"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(4): []
+  | current  scope ScopeId(4): ["_this"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(5): ["_this"]
+  | current  scope ScopeId(5): []
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(6): ["_this2"]
+  | current  scope ScopeId(6): []
+
 
 * assumption-newableArrowFunctions-false/naming/input.js
 
@@ -1398,473 +1692,3105 @@ ReferenceId mismatch after transform
 
 
 
-# babel-preset-typescript (4/10)
-* jsx-compat/js-valid/input.js
-ReferenceId mismatch after transform
+# babel-preset-typescript (5/10)
+* jsx-compat/ts-invalid/input.ts
+  x Expected `>` but found `/`
+   ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
+ 1 | (<div />);
+   :       |
+   :       `-- `>` expected
+   `----
 
-* jsx-compat/tsx-valid/input.tsx
-ReferenceId mismatch after transform
 
 * node-extensions/import-in-cts/input.cts
 
 
 * node-extensions/type-param-arrow-in-ts/input.ts
-Bindings Mismatch:
-previous scope ScopeId(1): ["T"]
-current  scope ScopeId(1): []
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["T"]
+  | current  scope ScopeId(1): []
+
 
 * opts/optimizeConstEnums/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["A", "x"]
+  | current  scope ScopeId(1): ["A"]
+
 
 * opts/rewriteImportExtensions/input.ts
 
 
 
-# babel-plugin-transform-typescript (53/151)
-* class/abstract-allowDeclareFields-false/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-
-* class/abstract-allowDeclareFields-true/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-
+# babel-plugin-transform-typescript (61/151)
 * class/accessor-allowDeclareFields-false/input.ts
-TS(18010): An accessibility modifier cannot be used with a private identifier.
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
+ 7 |   abstract accessor prop6: number;
+ 8 |   private accessor #p: any;
+   :   ^^^^^^^
+ 9 | 
+   `----
+
 
 * class/accessor-allowDeclareFields-true/input.ts
-TS(18010): An accessibility modifier cannot be used with a private identifier.
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]
+ 7 |   abstract accessor prop6: number;
+ 8 |   private accessor #p: any;
+   :   ^^^^^^^
+ 9 | 
+   `----
+
 
 * class/head/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["T"]
+  | current  scope ScopeId(1): []
 
-* class/methods/input.ts
-Scopes mismatch after transform
-
-* class/parameter-properties/input.ts
-ReferenceId mismatch after transform
-
-* class/parameter-properties-late-super/input.ts
-Scopes mismatch after transform
-ReferenceId mismatch after transform
-
-* class/parameter-properties-with-super/input.ts
-ReferenceId mismatch after transform
-
-* class/private-method-override/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
 
 * declarations/erased/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
-current  scope ScopeId(0): []
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
+  | current  scope ScopeId(0): []
+
 
 * declarations/export-declare-enum/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A"]
-current  scope ScopeId(0): []
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A"]
+  | current  scope ScopeId(0): []
+
 
 * declarations/nested-namespace/input.mjs
-Bindings Mismatch:
-previous scope ScopeId(0): ["P"]
-current  scope ScopeId(0): []
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["P"]
+  | current  scope ScopeId(0): []
+
 
 * enum/boolean-value/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["A", "E"]
+  | current  scope ScopeId(1): ["E"]
 
-* enum/const/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 * enum/constant-folding/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h",
+  | "i", "j", "k", "l", "m", "n", "o", "p", "q", "r"]
+  | current  scope ScopeId(1): ["E"]
+
 
 * enum/enum-merging-inner-references/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["Animals", "Cat", "Dog"]
+  | current  scope ScopeId(1): ["Animals"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["Animals", "CatDog"]
+  | current  scope ScopeId(2): ["Animals"]
+
 
 * enum/enum-merging-inner-references-shadow/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["Animals", "Cat"]
+  | current  scope ScopeId(1): ["Animals"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["Animals", "Dog"]
+  | current  scope ScopeId(2): ["Animals"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(3): ["Animals", "CatDog"]
+  | current  scope ScopeId(3): ["Animals"]
+
 
 * enum/export/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["A", "E"]
+  | current  scope ScopeId(1): ["E"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["B", "E"]
+  | current  scope ScopeId(2): ["E"]
+
 
 * enum/inferred/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["E", "x", "y"]
+  | current  scope ScopeId(1): ["E"]
+
 
 * enum/inner-references/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["E", "a", "b"]
+  | current  scope ScopeId(1): ["E"]
+
 
 * enum/mix-references/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing ReferenceId: Foo
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/mix-references/input.ts:1:1]
+ 1 | var x = 10;
+   : ^
+ 2 | 
+   `----
+
+  x Missing ReferenceId: Bar
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/mix-references/input.ts:1:1]
+ 1 | var x = 10;
+   : ^
+ 2 | 
+   `----
+
+  x Missing ReferenceId: Baz
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/mix-references/input.ts:1:1]
+ 1 | var x = 10;
+   : ^
+ 2 | 
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/mix-references/input.ts:1:1]
+ 1 | var x = 10;
+   : ^
+ 2 | 
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/mix-references/input.ts:1:1]
+ 1 | var x = 10;
+   : ^
+ 2 | 
+   `----
+
 
 * enum/non-foldable-constant/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["E", "a", "b"]
+  | current  scope ScopeId(1): ["E"]
+
 
 * enum/non-scoped/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["E", "x", "y"]
+  | current  scope ScopeId(1): ["E"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["E", "z"]
+  | current  scope ScopeId(2): ["E"]
+
 
 * enum/outer-references/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["IPC", "SERVER", "SOCKET", "socketType"]
+  | current  scope ScopeId(1): ["socketType"]
 
-* enum/scoped/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE",
+  | "UV_WRITABLE", "constants"]
+  | current  scope ScopeId(2): ["constants"]
+
 
 * enum/string-value/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["A", "A2", "B", "B2", "E"]
+  | current  scope ScopeId(1): ["E"]
+
 
 * enum/string-value-template/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["A", "E"]
+  | current  scope ScopeId(1): ["E"]
+
 
 * enum/string-values-computed/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["A", "E"]
+  | current  scope ScopeId(1): ["E"]
+
 
 * enum/ts5.0-const-foldable/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["First", "Second", "Third", "Values"]
+  | current  scope ScopeId(1): ["Values"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["Invoices", "Parts", "Routes", "x", "y"]
+  | current  scope ScopeId(2): ["Routes"]
+
 
 * exports/declared-types/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E",
+  | "I", "II2", "II3", "M", "N", "T", "foo", "m", "x"]
+  | current  scope ScopeId(0): ["BB", "BB2", "C2", "foo"]
 
-* exports/export-const-enums/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(12): ["BB", "K"]
+  | current  scope ScopeId(2): ["BB"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(13): ["BB", "L"]
+  | current  scope ScopeId(3): ["BB"]
+
+  x reference Mismatch:
+  | previous reference ReferenceId(0): Some("x")
+  | current  reference ReferenceId(0): None
+
+  x reference Mismatch:
+  | previous reference ReferenceId(2): Some("E")
+  | current  reference ReferenceId(1): None
+
+  x reference Mismatch:
+  | previous reference ReferenceId(8): Some("x")
+  | current  reference ReferenceId(2): None
+
+  x reference Mismatch:
+  | previous reference ReferenceId(11): Some("E")
+  | current  reference ReferenceId(3): None
+
 
 * exports/export-import=/input.ts
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: JGraph
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/exports/export-import=/input.ts:1:1]
+ 1 | import * as joint from '@joint/core';
+   : ^
+ 2 | 
+   `----
+
 
 * exports/export-type/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A"]
-current  scope ScopeId(0): []
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A"]
+  | current  scope ScopeId(0): []
+
+
+* exports/export=/input.ts
+  ! `export = <value>;` is only supported when compiling modules to CommonJS.
+  | Please consider using `export default <value>;`, or add @babel/plugin-
+  | transform-modules-commonjs to your Babel config.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/exports/export=/input.ts:1:1]
+ 1 | export = 0;
+   : ^^^^^^^^^^^
+   `----
+
 
 * exports/imported-types/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B", "C"]
-current  scope ScopeId(0): ["C"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "B", "C"]
+  | current  scope ScopeId(0): ["C"]
+
 
 * exports/imported-types-only-remove-type-imports/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B", "C"]
-current  scope ScopeId(0): ["C"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "B", "C"]
+  | current  scope ScopeId(0): ["C"]
+
 
 * exports/interface/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "I"]
+  | current  scope ScopeId(0): []
+
 
 * exports/issue-9916-1/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-current  scope ScopeId(0): ["a"]
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
+  | current  scope ScopeId(0): ["a"]
+
 
 * exports/issue-9916-2/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
-current  scope ScopeId(0): []
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
+  | current  scope ScopeId(0): []
+
 
 * exports/issue-9916-3/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-current  scope ScopeId(0): ["a"]
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
+  | current  scope ScopeId(0): ["a"]
 
-* exports/type-only-export-specifier-1/input.ts
-ReferenceId mismatch after transform
 
 * function/parameters/input.ts
-Bindings Mismatch:
-previous scope ScopeId(1): ["T", "x", "y"]
-current  scope ScopeId(1): ["x", "y"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["T", "x", "y"]
+  | current  scope ScopeId(1): ["x", "y"]
+
 
 * imports/elide-preact/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["FooBar", "Fragment", "h", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["FooBar", "Fragment", "h", "x"]
+  | current  scope ScopeId(0): ["x"]
+
 
 * imports/elide-preact-no-1/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["Fragment", "h", "render"]
-current  scope ScopeId(0): ["Fragment", "h"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["Fragment", "h", "render"]
+  | current  scope ScopeId(0): ["Fragment", "h"]
+
 
 * imports/elide-preact-no-2/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["Fragment", "render"]
-current  scope ScopeId(0): ["Fragment"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["Fragment", "render"]
+  | current  scope ScopeId(0): ["Fragment"]
+
 
 * imports/elide-react/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["React", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["React", "x"]
+  | current  scope ScopeId(0): ["x"]
+
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: foo
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/elide-type-referenced-in-imports-equal-no/input.ts:1:1]
+ 1 | import nsa from "./module-a";
+   : ^
+ 2 | import foo = nsa.bar;
+   `----
+
+  x Missing SymbolId: bar
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/elide-type-referenced-in-imports-equal-no/input.ts:1:1]
+ 1 | import nsa from "./module-a";
+   : ^
+ 2 | import foo = nsa.bar;
+   `----
+
 
 * imports/elide-typeof/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "x"]
+  | current  scope ScopeId(0): ["x"]
+
 
 * imports/elision/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B", "C", "D", "Used", "Used2", "Used3", "x", "y", "z"]
-current  scope ScopeId(0): ["Used", "Used2", "Used3", "x", "y", "z"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "B", "C", "D", "Used", "Used2", "Used3",
+  | "x", "y", "z"]
+  | current  scope ScopeId(0): ["Used", "Used2", "Used3", "x", "y", "z"]
+
 
 * imports/elision-export-type/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B", "T", "T1"]
-current  scope ScopeId(0): ["A", "B"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "B", "T", "T1"]
+  | current  scope ScopeId(0): ["A", "B"]
+
 
 * imports/elision-locations/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G", "H", "Iface", "x", "y"]
-current  scope ScopeId(0): ["A", "Class", "x", "y"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G",
+  | "H", "Iface", "x", "y"]
+  | current  scope ScopeId(0): ["A", "Class", "x", "y"]
+
 
 * imports/elision-qualifiedname/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "x"]
+  | current  scope ScopeId(0): ["x"]
+
 
 * imports/elision-rename/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["B", "x"]
-current  scope ScopeId(0): ["x"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["B", "x"]
+  | current  scope ScopeId(0): ["x"]
+
 
 * imports/enum-id/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "Enum"]
+  | current  scope ScopeId(0): ["Enum"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["A", "Enum"]
+  | current  scope ScopeId(1): ["Enum"]
+
 
 * imports/enum-value/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["Enum", "id"]
+  | current  scope ScopeId(1): ["Enum"]
+
 
 * imports/import-removed-exceptions/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["H", "I", "I2", "J", "a", "b", "c2", "d", "d2", "e", "e4"]
-current  scope ScopeId(0): []
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["H", "I", "I2", "J", "a", "b", "c2", "d",
+  | "d2", "e", "e4"]
+  | current  scope ScopeId(0): []
+
 
 * imports/import-type/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B", "T", "Types"]
-current  scope ScopeId(0): []
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "B", "T", "Types"]
+  | current  scope ScopeId(0): []
 
-* imports/import-type-func-with-duplicate-name/input.ts
-Symbols mismatch after transform
 
 * imports/import-type-not-removed/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "B"]
-current  scope ScopeId(0): []
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "B"]
+  | current  scope ScopeId(0): []
+
+
+* imports/import=-module/input.ts
+  ! `import lib = require(...);` is only supported when compiling modules
+  | to CommonJS.
+  | Please consider using `import lib from '...';` alongside Typescript's
+  | --allowSyntheticDefaultImports option, or add @babel/plugin-transform-
+  | modules-commonjs to your Babel config.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/import=-module/input.ts:1:1]
+ 1 | import lib = require("lib");
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | lib();
+   `----
+
 
 * imports/only-remove-type-imports/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
-current  scope ScopeId(0): ["K1", "K2", "L1", "L2", "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2",
+  | "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
+  | current  scope ScopeId(0): ["K1", "K2", "L1", "L2", "L3", "a", "b", "c2",
+  | "d", "d2", "e", "e4"]
+
 
 * imports/property-signature/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["A", "obj"]
-current  scope ScopeId(0): ["obj"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["A", "obj"]
+  | current  scope ScopeId(0): ["obj"]
+
 
 * imports/type-only-export-specifier-1/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["bar", "baz", "foo"]
-current  scope ScopeId(0): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["bar", "baz", "foo"]
+  | current  scope ScopeId(0): []
+
 
 * imports/type-only-export-specifier-2/input.ts
-ReferenceId mismatch after transform
+
 
 * imports/type-only-import-specifier-1/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["Foo1", "Foo2"]
-current  scope ScopeId(0): ["Foo1"]
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["Foo1", "Foo2"]
+  | current  scope ScopeId(0): ["Foo1"]
+
 
 * imports/type-only-import-specifier-2/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["Foo1", "Foo2"]
-current  scope ScopeId(0): []
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["Foo1", "Foo2"]
+  | current  scope ScopeId(0): []
+
 
 * imports/type-only-import-specifier-3/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["Foo1", "Foo2"]
-current  scope ScopeId(0): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["Foo1", "Foo2"]
+  | current  scope ScopeId(0): []
+
 
 * imports/type-only-import-specifier-4/input.ts
 
 
 * lvalues/TSTypeParameterInstantiation/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["M"]
+  | current  scope ScopeId(1): []
+
 
 * namespace/alias/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["AliasModule", "LongNameModule", "b", "babel", "bar", "baz", "node", "some", "str"]
-current  scope ScopeId(0): ["AliasModule", "b", "babel", "bar", "baz", "node", "some", "str"]
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: b
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/alias/input.ts:1:1]
+ 1 | declare module LongNameModule {
+   : ^
+ 2 |   export type SomeType = number;
+   `----
+
+  x Missing SymbolId: AliasModule
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/alias/input.ts:1:1]
+ 1 | declare module LongNameModule {
+   : ^
+ 2 |   export type SomeType = number;
+   `----
+
 
 * namespace/clobber-class/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-class/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-class/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-class/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-class/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
 
 * namespace/clobber-enum/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-enum/input.ts:1:1]
+ 1 | enum A {
+   : ^
+ 2 |   C = 2,
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-enum/input.ts:1:1]
+ 1 | enum A {
+   : ^
+ 2 |   C = 2,
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-enum/input.ts:1:1]
+ 1 | enum A {
+   : ^
+ 2 |   C = 2,
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-enum/input.ts:1:1]
+ 1 | enum A {
+   : ^
+ 2 |   C = 2,
+   `----
+
 
 * namespace/clobber-export/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: _N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-export/input.ts:1:1]
+ 1 | export class N {}
+   : ^
+ 2 | export namespace N { var x; }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-export/input.ts:1:1]
+ 1 | export class N {}
+   : ^
+ 2 | export namespace N { var x; }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-export/input.ts:1:1]
+ 1 | export class N {}
+   : ^
+ 2 | export namespace N { var x; }
+   `----
+
 
 * namespace/contentious-names/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: constructor
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _constructor
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: constructor
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: constructor
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: length
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _length
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: length
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: length
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: concat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _concat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: concat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: concat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: copyWithin
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _copyWithin
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: copyWithin
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: copyWithin
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: fill
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _fill
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: fill
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: fill
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: find
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _find
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: find
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: find
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: findIndex
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _findIndex
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: findIndex
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: findIndex
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: lastIndexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _lastIndexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: lastIndexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: lastIndexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: pop
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _pop
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: pop
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: pop
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: push
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _push
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: push
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: push
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: reverse
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _reverse
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: reverse
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: reverse
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: shift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _shift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: shift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: shift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: unshift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _unshift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: unshift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: unshift
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: slice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _slice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: slice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: slice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: sort
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _sort
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: sort
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: sort
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: splice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _splice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: splice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: splice
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: includes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _includes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: includes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: includes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: indexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _indexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: indexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: indexOf
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: join
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _join
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: join
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: join
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: keys
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _keys
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: keys
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: keys
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: entries
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _entries
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: entries
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: entries
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: values
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _values
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: values
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: values
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: forEach
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _forEach
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: forEach
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: forEach
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: filter
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _filter
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: filter
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: filter
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: map
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _map
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: map
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: map
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: every
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _every
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: every
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: every
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: some
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _some
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: some
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: some
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: reduce
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _reduce
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: reduce
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: reduce
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: reduceRight
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _reduceRight
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: reduceRight
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: reduceRight
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: toLocaleString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _toLocaleString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: toLocaleString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: toLocaleString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: toString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _toString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: toString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: toString
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: flat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _flat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: flat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: flat
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: flatMap
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing SymbolId: _flatMap
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: flatMap
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: flatMap
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace N { var x }
+   `----
+
 
 * namespace/declare/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare/input.ts:1:1]
+ 1 | export namespace N {
+   : ^
+ 2 |   export declare class C {
+   `----
+
+  x Missing SymbolId: _N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare/input.ts:1:1]
+ 1 | export namespace N {
+   : ^
+ 2 |   export declare class C {
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare/input.ts:1:1]
+ 1 | export namespace N {
+   : ^
+ 2 |   export declare class C {
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare/input.ts:1:1]
+ 1 | export namespace N {
+   : ^
+ 2 |   export declare class C {
+   `----
+
 
 * namespace/declare-global-nested-namespace/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare-global-nested-namespace/input.ts:1:1]
+ 1 | declare global { namespace globalThis { var i18n: any; } }
+   : ^
+ 2 | 
+   `----
+
+  x Missing SymbolId: _X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare-global-nested-namespace/input.ts:1:1]
+ 1 | declare global { namespace globalThis { var i18n: any; } }
+   : ^
+ 2 | 
+   `----
+
+  x Missing ReferenceId: X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare-global-nested-namespace/input.ts:1:1]
+ 1 | declare global { namespace globalThis { var i18n: any; } }
+   : ^
+ 2 | 
+   `----
+
+  x Missing ReferenceId: X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare-global-nested-namespace/input.ts:1:1]
+ 1 | declare global { namespace globalThis { var i18n: any; } }
+   : ^
+ 2 | 
+   `----
+
 
 * namespace/empty-removed/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: a
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _a
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: c
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _c
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: c
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: c
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: a
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: a
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: WithTypes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _WithTypes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: d
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _d2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: d
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: d
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: WithTypes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: WithTypes
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: WithValues
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _WithValues
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: a
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _a3
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: a
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: a
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: b
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _b3
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: b
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: b
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: c
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _c3
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: c
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: c
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: d
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _d3
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: d
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: d
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: e
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing SymbolId: _e2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: e
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: e
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: WithValues
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
+  x Missing ReferenceId: WithValues
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
+ 1 | namespace a {
+   : ^
+ 2 |   namespace b {}
+   `----
+
 
 * namespace/export/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/export/input.ts:1:1]
+ 1 | export namespace N { var x }
+   : ^
+   `----
+
+  x Missing SymbolId: _N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/export/input.ts:1:1]
+ 1 | export namespace N { var x }
+   : ^
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/export/input.ts:1:1]
+ 1 | export namespace N { var x }
+   : ^
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/export/input.ts:1:1]
+ 1 | export namespace N { var x }
+   : ^
+   `----
+
 
 * namespace/export-type-only/input.ts
-Bindings Mismatch:
-previous scope ScopeId(0): ["Platform"]
-current  scope ScopeId(0): []
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["Platform"]
+  | current  scope ScopeId(0): []
+
 
 * namespace/module-nested/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: ns1
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: _ns
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _ns
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: foo
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns1
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns1
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: _ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: foo
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
+ 1 | module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
 
 * namespace/module-nested-export/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: ns1
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: _ns
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _ns
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: foo
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns1
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns1
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing SymbolId: _ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: foo
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: ns2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: _src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
+  x Missing ReferenceId: src
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
+ 1 | export module src {
+   : ^
+ 2 |   export namespace ns1 {
+   `----
+
 
 * namespace/multiple/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
+ 1 | namespace N { var x; }
+   : ^
+ 2 | namespace N { var y; }
+   `----
+
+  x Missing SymbolId: _N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
+ 1 | namespace N { var x; }
+   : ^
+ 2 | namespace N { var y; }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
+ 1 | namespace N { var x; }
+   : ^
+ 2 | namespace N { var y; }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
+ 1 | namespace N { var x; }
+   : ^
+ 2 | namespace N { var y; }
+   `----
+
+  x Missing SymbolId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
+ 1 | namespace N { var x; }
+   : ^
+ 2 | namespace N { var y; }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
+ 1 | namespace N { var x; }
+   : ^
+ 2 | namespace N { var y; }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
+ 1 | namespace N { var x; }
+   : ^
+ 2 | namespace N { var y; }
+   `----
+
+
+* namespace/mutable-fail/input.ts
+  ! Namespaces exporting non-const are not supported by Babel. Change to const
+  | or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/mutable-fail/input.ts:2:14]
+ 1 | namespace N {
+ 2 |   export let V;
+   :              ^
+ 3 | }
+   `----
+
+
+* namespace/namespace-flag/input.ts
+  ! Namespace not marked type-only declare. Non-declarative namespaces are
+  | only supported experimentally in Babel. To enable and review caveats see:
+  | https://babeljs.io/docs/en/babel-plugin-transform-typescript
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/namespace-flag/input.ts:1:1]
+ 1 | namespace N {}
+   : ^^^^^^^^^^^^^^
+   `----
+
 
 * namespace/nested/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing SymbolId: C
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing SymbolId: _C
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _C
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: G
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _C
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: C
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: C
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing SymbolId: _M
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _M
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: M
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: M
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: D
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing SymbolId: _D
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _D
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: H
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: D
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: D
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing SymbolId: _F
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: F
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: F
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing SymbolId: G
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing SymbolId: _G
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: G
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: G
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
+ 1 | class A { }
+   : ^
+ 2 | namespace A {
+   `----
+
 
 * namespace/nested-namespace/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-namespace/input.ts:1:1]
+ 1 | export namespace A {
+   : ^
+ 2 |   export namespace B {
+   `----
+
+  x Missing SymbolId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-namespace/input.ts:1:1]
+ 1 | export namespace A {
+   : ^
+ 2 |   export namespace B {
+   `----
+
+  x Missing ReferenceId: _A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-namespace/input.ts:1:1]
+ 1 | export namespace A {
+   : ^
+ 2 |   export namespace B {
+   `----
+
+  x Missing ReferenceId: G
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-namespace/input.ts:1:1]
+ 1 | export namespace A {
+   : ^
+ 2 |   export namespace B {
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-namespace/input.ts:1:1]
+ 1 | export namespace A {
+   : ^
+ 2 |   export namespace B {
+   `----
+
+  x Missing ReferenceId: A
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-namespace/input.ts:1:1]
+ 1 | export namespace A {
+   : ^
+ 2 |   export namespace B {
+   `----
+
 
 * namespace/nested-shorthand/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: _X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: Y
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: _Y
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _Y
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: Y
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: Y
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: X
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: proj
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: _proj
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: data
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: _data
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: util
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: _util
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: api
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing SymbolId: _api
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _api
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: api
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: api
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _util
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _util
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: util
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: util
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _data
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _data
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: data
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: data
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _proj
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: _proj
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: proj
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
+  x Missing ReferenceId: proj
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
+ 1 | namespace X.Y {
+   : ^
+ 2 |   export const Z = 1;
+   `----
+
 
 * namespace/same-name/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing SymbolId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing SymbolId: _N7
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing SymbolId: _N4
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N7
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N7
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing SymbolId: _N6
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N6
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N3
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing SymbolId: _N8
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N8
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N5
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing SymbolId: _N9
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N9
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: _N2
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
+ 1 | namespace N {
+   : ^
+ 2 |   namespace _N7 { var x }
+   `----
+
 
 * namespace/undeclared/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/undeclared/input.ts:1:1]
+ 1 | namespace N { var x }
+   : ^
+   `----
+
+  x Missing SymbolId: _N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/undeclared/input.ts:1:1]
+ 1 | namespace N { var x }
+   : ^
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/undeclared/input.ts:1:1]
+ 1 | namespace N { var x }
+   : ^
+   `----
+
+  x Missing ReferenceId: N
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/undeclared/input.ts:1:1]
+ 1 | namespace N { var x }
+   : ^
+   `----
+
 
 * optimize-const-enums/custom-values/input.ts
 transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
@@ -1900,546 +4826,234 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
 transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
 
 * regression/15768/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing ReferenceId: Infinity
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
+ 1 | const v = 42;
+   : ^
+ 2 | const v2 = Infinity;
+   `----
+
+  x Missing ReferenceId: Infinity
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
+ 1 | const v = 42;
+   : ^
+ 2 | const v2 = Infinity;
+   `----
+
+  x Missing ReferenceId: Infinity
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
+ 1 | const v = 42;
+   : ^
+ 2 | const v2 = Infinity;
+   `----
+
+  x Missing ReferenceId: Infinity
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
+ 1 | const v = 42;
+   : ^
+ 2 | const v2 = Infinity;
+   `----
+
+  x Missing ReferenceId: StateEnum
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
+ 1 | const v = 42;
+   : ^
+ 2 | const v2 = Infinity;
+   `----
+
+  x Missing ReferenceId: StateEnum
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
+ 1 | const v = 42;
+   : ^
+ 2 | const v2 = Infinity;
+   `----
+
+  x Missing ReferenceId: StateEnum
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
+ 1 | const v = 42;
+   : ^
+ 2 | const v2 = Infinity;
+   `----
 
 
-# babel-preset-react (2/9)
-* preset-options/development/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
-* preset-options/development-runtime-automatic/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* preset-options/empty-options/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* preset-options/runtime-automatic/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* preset-options/runtime-classic/input.js
-ReferenceId mismatch after transform
-
-* preset-options/runtime-classic-pragma-no-frag/input.js
-ReferenceId mismatch after transform
-
-* regression/11294/input.mjs
-ReferenceId mismatch after transform
-
-
-# babel-plugin-transform-react-jsx (19/142)
-* autoImport/after-polyfills/input.mjs
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/after-polyfills-2/input.mjs
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/after-polyfills-script-not-supported/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/auto-import-react-source-type-module/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/auto-import-react-source-type-script/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/complicated-scope-module/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/complicated-scope-script/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/import-source/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/import-source-pragma/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* autoImport/react-defined/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* pure/false-default-pragma-automatic-runtime/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* pure/false-default-pragma-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/false-pragma-comment-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/false-pragma-option-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/true-default-pragma-automatic-runtime/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* pure/true-default-pragma-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/true-pragma-comment-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/true-pragma-option-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/unset-default-pragma-automatic-runtime/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* pure/unset-default-pragma-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/unset-pragma-comment-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* pure/unset-pragma-option-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* react/adds-appropriate-newlines-when-using-spread-attribute/input.js
-ReferenceId mismatch after transform
-
+# babel-plugin-transform-react-jsx (133/142)
 * react/arrow-functions/input.js
-Bindings Mismatch:
-previous scope ScopeId(1): []
-current  scope ScopeId(1): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Bindings Mismatch:
-previous scope ScopeId(3): []
-current  scope ScopeId(3): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this2"]
-current  scope ScopeId(4): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): []
+  | current  scope ScopeId(1): ["_this"]
 
-* react/assignment/input.js
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["_this"]
+  | current  scope ScopeId(2): []
 
-* react/concatenates-adjacent-string-literals/input.js
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(3): []
+  | current  scope ScopeId(3): ["_this2"]
 
-* react/does-not-add-source-self/input.mjs
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(4): ["_this2"]
+  | current  scope ScopeId(4): []
 
-* react/dont-coerce-expression-containers/input.js
-ReferenceId mismatch after transform
 
-* react/duplicate-props/input.js
-ReferenceId mismatch after transform
+* react/should-disallow-valueless-key/input.js
+  ! Please provide an explicit key value. Using "key" as a shorthand for
+  | "key={true}" is not allowed.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-disallow-valueless-key/input.js:2:15]
+ 1 | 
+ 2 | var x = [<div key></div>];
+   :               ^^^
+   `----
 
-* react/flattens-spread/input.js
-ReferenceId mismatch after transform
 
-* react/handle-spread-with-proto/input.js
-ReferenceId mismatch after transform
+* react/should-disallow-xml-namespacing/input.js
+  ! Namespace tags are not supported by default. React's JSX doesn't support
+  | namespace tags. You can set `throwIfNamespace: false` to bypass this
+  | warning.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-disallow-xml-namespacing/input.js:1:2]
+ 1 | <Namespace:Component />;
+   :  ^^^^^^^^^^^^^^^^^^^
+   `----
 
-* react/honor-custom-jsx-comment/input.js
-ReferenceId mismatch after transform
 
-* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
-ReferenceId mismatch after transform
+* react/should-throw-error-namespaces-if-not-flag/input.js
+  ! Namespace tags are not supported by default. React's JSX doesn't support
+  | namespace tags. You can set `throwIfNamespace: false` to bypass this
+  | warning.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react/should-throw-error-namespaces-if-not-flag/input.js:1:2]
+ 1 | <f:image />;
+   :  ^^^^^^^
+   `----
 
-* react/honor-custom-jsx-pragma-option/input.js
-ReferenceId mismatch after transform
-
-* react/jsx-with-retainlines-option/input.js
-ReferenceId mismatch after transform
-
-* react/jsx-without-retainlines-option/input.js
-ReferenceId mismatch after transform
-
-* react/pragma-works-with-no-space-at-the-end/input.js
-ReferenceId mismatch after transform
-
-* react/proto-in-jsx-attribute/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-constructor-as-prop/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-deeper-js-namespacing/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-elements-as-attributes/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-js-namespacing/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-jsx-docs-comment-with-pragma/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-nested-fragments/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-no-pragmafrag-if-frag-unused/input.js
-ReferenceId mismatch after transform
-
-* react/should-allow-pragmafrag-and-frag/input.js
-ReferenceId mismatch after transform
-
-* react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-ReferenceId mismatch after transform
-
-* react/should-convert-simple-tags/input.js
-ReferenceId mismatch after transform
-
-* react/should-convert-simple-text/input.js
-ReferenceId mismatch after transform
-
-* react/should-escape-xhtml-jsxattribute/input.js
-ReferenceId mismatch after transform
-
-* react/should-escape-xhtml-jsxtext/input.js
-ReferenceId mismatch after transform
-
-* react/should-handle-attributed-elements/input.js
-ReferenceId mismatch after transform
-
-* react/should-handle-has-own-property-correctly/input.js
-ReferenceId mismatch after transform
-
-* react/should-have-correct-comma-in-nested-children/input.js
-ReferenceId mismatch after transform
-
-* react/should-insert-commas-after-expressions-before-whitespace/input.js
-ReferenceId mismatch after transform
-
-* react/should-not-add-quotes-to-identifier-names/input.js
-ReferenceId mismatch after transform
-
-* react/should-not-allow-jsx-pragma-to-be-anywhere-in-comment/input.js
-ReferenceId mismatch after transform
-
-* react/should-not-mangle-expressioncontainer-attribute-values/input.js
-ReferenceId mismatch after transform
-
-* react/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
-ReferenceId mismatch after transform
-
-* react/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
-ReferenceId mismatch after transform
-
-* react/should-properly-handle-comments-between-props/input.js
-ReferenceId mismatch after transform
-
-* react/should-quote-jsx-attributes/input.js
-ReferenceId mismatch after transform
-
-* react/should-support-xml-namespaces-if-flag/input.js
-ReferenceId mismatch after transform
-
-* react/should-transform-known-hyphenated-tags/input.js
-ReferenceId mismatch after transform
-
-* react/this-tag-name/input.js
-ReferenceId mismatch after transform
-
-* react/weird-symbols/input.js
-ReferenceId mismatch after transform
-
-* react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
-ReferenceId mismatch after transform
-
-* react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-ReferenceId mismatch after transform
-
-* react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-ReferenceId mismatch after transform
-
-* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 * react-automatic/arrow-functions/input.js
-Bindings Mismatch:
-previous scope ScopeId(1): []
-current  scope ScopeId(1): ["_this"]
-Bindings Mismatch:
-previous scope ScopeId(2): ["_this"]
-current  scope ScopeId(2): []
-Bindings Mismatch:
-previous scope ScopeId(3): []
-current  scope ScopeId(3): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(4): ["_this2"]
-current  scope ScopeId(4): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): []
+  | current  scope ScopeId(1): ["_this"]
 
-* react-automatic/assignment/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): ["_this"]
+  | current  scope ScopeId(2): []
 
-* react-automatic/concatenates-adjacent-string-literals/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(3): []
+  | current  scope ScopeId(3): ["_this2"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(4): ["_this2"]
+  | current  scope ScopeId(4): []
+
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
-* react-automatic/dont-coerce-expression-containers/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+* react-automatic/should-disallow-valueless-key/input.js
+  ! Please provide an explicit key value. Using "key" as a shorthand for
+  | "key={true}" is not allowed.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-disallow-valueless-key/input.js:2:15]
+ 1 | 
+ 2 | var x = [<div key></div>];
+   :               ^^^
+   `----
 
-* react-automatic/duplicate-props/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
-* react-automatic/flattens-spread/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+* react-automatic/should-disallow-xml-namespacing/input.js
+  ! Namespace tags are not supported by default. React's JSX doesn't support
+  | namespace tags. You can set `throwIfNamespace: false` to bypass this
+  | warning.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-disallow-xml-namespacing/input.js:1:2]
+ 1 | <Namespace:Component />;
+   :  ^^^^^^^^^^^^^^^^^^^
+   `----
 
-* react-automatic/handle-fragments/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
-* react-automatic/handle-fragments-with-key/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
+  ! Namespace tags are not supported by default. React's JSX doesn't support
+  | namespace tags. You can set `throwIfNamespace: false` to bypass this
+  | warning.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx/test/fixtures/react-automatic/should-throw-error-namespaces-if-not-flag/input.js:1:2]
+ 1 | <f:image />;
+   :  ^^^^^^^
+   `----
 
-* react-automatic/handle-fragments-with-no-children/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/handle-nonstatic-children/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/handle-spread-with-proto/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/handle-static-children/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/jsx-with-retainlines-option/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/jsx-without-retainlines-option/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/key-undefined-works/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/pragma-works-with-no-space-at-the-end/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-allow-constructor-as-prop/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-allow-deeper-js-namespacing/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-allow-elements-as-attributes/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-allow-js-namespacing/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-allow-nested-fragments/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-convert-simple-tags/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-convert-simple-text/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-escape-xhtml-jsxattribute/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-escape-xhtml-jsxtext/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-handle-attributed-elements/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-handle-has-own-property-correctly/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-have-correct-comma-in-nested-children/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-not-add-quotes-to-identifier-names/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-not-mangle-expressioncontainer-attribute-values/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-properly-handle-comments-between-props/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-properly-handle-keys/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-properly-handle-null-prop-spread/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-quote-jsx-attributes/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-support-xml-namespaces-if-flag/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-transform-known-hyphenated-tags/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/this-tag-name/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/weird-symbols/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* regression/pragma-frag-set-default-classic-runtime/input.js
-ReferenceId mismatch after transform
-
-* runtime/classic/input.js
-ReferenceId mismatch after transform
-
-* runtime/defaults-to-automatic/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* runtime/pragma-runtime-classsic/input.js
-ReferenceId mismatch after transform
-
-* runtime/runtime-automatic/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* sourcemaps/JSXText/input.js
-ReferenceId mismatch after transform
 
 
 # babel-plugin-transform-react-jsx-self (2/3)
 * react-source/arrow-function/input.js
-Bindings Mismatch:
-previous scope ScopeId(0): ["fn"]
-current  scope ScopeId(0): ["_this", "fn"]
-Bindings Mismatch:
-previous scope ScopeId(1): ["_this"]
-current  scope ScopeId(1): []
-Bindings Mismatch:
-previous scope ScopeId(2): []
-current  scope ScopeId(2): ["_this2"]
-Bindings Mismatch:
-previous scope ScopeId(3): ["_this2"]
-current  scope ScopeId(3): []
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Bindings Mismatch:
+  | previous scope ScopeId(0): ["fn"]
+  | current  scope ScopeId(0): ["_this", "fn"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(1): ["_this"]
+  | current  scope ScopeId(1): []
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(2): []
+  | current  scope ScopeId(2): ["_this2"]
+
+  x Bindings Mismatch:
+  | previous scope ScopeId(3): ["_this2"]
+  | current  scope ScopeId(3): []
 
 
-# babel-plugin-transform-react-jsx-development (2/10)
-* cross-platform/auto-import-dev/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
-* cross-platform/classic-runtime/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+# babel-plugin-transform-react-jsx-development (7/10)
+* cross-platform/disallow-__self-as-jsx-attribute/input.js
+  ! Duplicate __self prop found.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
+ 1 | var x = <div __self={self}></div>;
+   :              ^^^^^^
+   `----
 
-* cross-platform/fragments/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
-* cross-platform/handle-fragments-with-key/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+* cross-platform/disallow-__source-as-jsx-attribute/input.js
+  ! Duplicate __source prop found.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__source-as-jsx-attribute/input.js:1:14]
+ 1 | var x = <div __source={source}></div>;
+   :              ^^^^^^^^
+   `----
 
-* cross-platform/handle-nonstatic-children/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* cross-platform/handle-static-children/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
-
-* cross-platform/within-derived-classes-constructor/input.js
-Symbols mismatch after transform
-ReferenceId mismatch after transform
 
 * cross-platform/within-ts-module-block/input.ts
-Scopes mismatch after transform
-Symbols mismatch after transform
-ReferenceId mismatch after transform
+  x Semantic Collector failed after transform
+
+  x Missing SymbolId: Namespaced
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/within-ts-module-block/input.ts:1:1]
+ 1 | export namespace Namespaced {
+   : ^
+ 2 |     export const Component = () => (
+   `----
+
+  x Missing SymbolId: _Namespaced
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/within-ts-module-block/input.ts:1:1]
+ 1 | export namespace Namespaced {
+   : ^
+ 2 |     export const Component = () => (
+   `----
+
+  x Missing ReferenceId: _Namespaced
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/within-ts-module-block/input.ts:1:1]
+ 1 | export namespace Namespaced {
+   : ^
+ 2 |     export const Component = () => (
+   `----
+
+  x Missing ReferenceId: Namespaced
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/within-ts-module-block/input.ts:1:1]
+ 1 | export namespace Namespaced {
+   : ^
+ 2 |     export const Component = () => (
+   `----
+
+  x Missing ReferenceId: Namespaced
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/within-ts-module-block/input.ts:1:1]
+ 1 | export namespace Namespaced {
+   : ^
+ 2 |     export const Component = () => (
+   `----
+
 
 

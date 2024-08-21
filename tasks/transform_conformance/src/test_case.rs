@@ -5,11 +5,11 @@ use std::{
 
 use oxc::allocator::Allocator;
 use oxc::codegen::CodeGenerator;
-use oxc::diagnostics::{Error, OxcDiagnostic};
+use oxc::diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc::parser::Parser;
 use oxc::span::{SourceType, VALID_EXTENSIONS};
 use oxc::transformer::{BabelOptions, TransformOptions};
-use oxc_tasks_common::{normalize_path, print_diff_in_terminal};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
@@ -249,6 +249,7 @@ impl TestCase for ConformanceTestCase {
             println!("output_path: {output_path:?}");
         }
 
+        let project_root = project_root();
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
         let mut transform_options = None;
@@ -261,9 +262,13 @@ impl TestCase for ConformanceTestCase {
                         transformed_code = printed;
                     }
                     Err(errors) => {
+                        let source = NamedSource::new(
+                            self.path.strip_prefix(project_root).unwrap().to_string_lossy(),
+                            input.to_string(),
+                        );
                         let error = errors
                             .into_iter()
-                            .map(|err| err.to_string())
+                            .map(|err| format!("{:?}", err.with_source_code(source.clone())))
                             .collect::<Vec<_>>()
                             .join("\n");
                         actual_errors = get_babel_error(&error);

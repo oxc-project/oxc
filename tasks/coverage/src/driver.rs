@@ -8,7 +8,10 @@ use oxc::codegen::CodegenOptions;
 use oxc::diagnostics::OxcDiagnostic;
 use oxc::minifier::CompressOptions;
 use oxc::parser::{ParseOptions, ParserReturn};
-use oxc::semantic::{post_transform_checker::PostTransformChecker, SemanticBuilderReturn};
+use oxc::semantic::{
+    post_transform_checker::{PostTransformChecker, SemanticCollector},
+    SemanticBuilderReturn,
+};
 use oxc::span::{SourceType, Span};
 use oxc::transformer::{TransformOptions, TransformerReturn};
 
@@ -75,7 +78,7 @@ impl CompilerInterface for Driver {
         _semantic_return: &mut SemanticBuilderReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = self.checker.before_transform(program) {
+            if let Some(errors) = SemanticCollector::default().check(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());
             }
