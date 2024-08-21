@@ -121,11 +121,11 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
         match &mut assignment_expr.left {
             AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                 left_expr = ctx.ast.expression_from_identifier_reference(
-                    Self::clone_identifier_reference(ident, ctx),
+                    ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
                 );
                 assign_target = AssignmentTarget::from(
                     ctx.ast.simple_assignment_target_from_identifier_reference(
-                        Self::clone_identifier_reference(ident, ctx),
+                        ctx.clone_identifier_reference(ident, ReferenceFlags::Write),
                     ),
                 );
             }
@@ -142,7 +142,7 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
                             let right = ctx.ast.move_expression(&mut static_expr.object);
                             let target = AssignmentTarget::from(
                                 ctx.ast.simple_assignment_target_from_identifier_reference(
-                                    Self::clone_identifier_reference(&ident, ctx),
+                                    ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
                                 ),
                             );
                             let object = ctx.ast.expression_assignment(SPAN, op, target, right);
@@ -184,7 +184,7 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
                             let right = ctx.ast.move_expression(&mut computed_expr.object);
                             let target = AssignmentTarget::from(
                                 ctx.ast.simple_assignment_target_from_identifier_reference(
-                                    Self::clone_identifier_reference(&ident, ctx),
+                                    ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
                                 ),
                             );
                             let object = ctx.ast.expression_assignment(SPAN, op, target, right);
@@ -198,7 +198,10 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
                             if let Some(ref property) = property {
                                 let left = AssignmentTarget::from(
                                     ctx.ast.simple_assignment_target_from_identifier_reference(
-                                        Self::clone_identifier_reference(property, ctx),
+                                        ctx.clone_identifier_reference(
+                                            property,
+                                            ReferenceFlags::Write,
+                                        ),
                                     ),
                                 );
                                 expression =
@@ -210,7 +213,10 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
                                 AssignmentTarget::from(ctx.ast.member_expression_computed(
                                     SPAN,
                                     ctx.ast.expression_from_identifier_reference(
-                                        Self::clone_identifier_reference(&ident, ctx),
+                                        ctx.clone_identifier_reference(
+                                            &ident,
+                                            ReferenceFlags::Read,
+                                        ),
                                     ),
                                     property.map_or_else(
                                         || expression.clone_in(ctx.ast.allocator),
@@ -273,16 +279,6 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
 }
 
 impl<'a> LogicalAssignmentOperators<'a> {
-    fn clone_identifier_reference(
-        ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
-        let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
-        let symbol_id = reference.symbol_id();
-        let flags = reference.flags();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
-    }
-
     pub fn maybe_generate_memoised(
         &mut self,
         expr: &Expression<'a>,
