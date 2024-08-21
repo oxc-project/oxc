@@ -175,6 +175,7 @@ mod jest {
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
+    pub mod no_conditional_in_test;
     pub mod no_confusing_set_timeout;
     pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
@@ -454,7 +455,6 @@ mod promise {
 }
 
 mod vitest {
-    pub mod no_conditional_in_test;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_to_be_falsy;
@@ -607,6 +607,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
+    jest::no_conditional_in_test,
     jest::no_confusing_set_timeout,
     jest::no_deprecated_functions,
     jest::no_disabled_tests,
@@ -874,6 +875,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_truthy,
     vitest::no_conditional_tests,
-    vitest::no_conditional_in_test,
     vitest::require_local_test_context_for_concurrent_snapshots,
 }
