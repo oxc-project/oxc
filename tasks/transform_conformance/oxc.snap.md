@@ -151,9 +151,17 @@ Passed: 8/35
   | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : SymbolId(0): [ReferenceId(0)]
 
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 79, end: 83 }]
+  | rebuilt        : SymbolId(0): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(Export | Import | TypeAlias)
   | rebuilt        : SymbolId(1): SymbolFlags(Export | Import)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(1): [Span { start: 170, end: 171 }]
+  | rebuilt        : SymbolId(1): []
 
   x Symbol flags mismatch:
   | after transform: SymbolId(2): SymbolFlags(BlockScopedVariable |
@@ -168,6 +176,11 @@ Passed: 8/35
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
   | rebuilt        : SymbolId(2): [ReferenceId(2)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(2): [Span { start: 289, end: 293 }, Span
+  | { start: 304, end: 305 }]
+  | rebuilt        : SymbolId(2): []
 
 
 

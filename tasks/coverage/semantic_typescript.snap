@@ -868,6 +868,9 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch:
 after transform: SymbolId(1): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 55, end: 57 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules3b.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -894,6 +897,9 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 29, end: 32 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/avoidCycleWithVoidExpressionReturnedFromArrow.ts
 semantic error: Bindings mismatch:
@@ -2921,6 +2927,9 @@ rebuilt        : SymbolId(2): Span { start: 551, end: 569 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(11): [ReferenceId(13), ReferenceId(14), ReferenceId(15)]
 rebuilt        : SymbolId(2): [ReferenceId(4)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(11): [Span { start: 551, end: 569 }]
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/contextualExpressionTypecheckingDoesntBlowStack.ts
 semantic error: Bindings mismatch:
@@ -3853,6 +3862,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | 
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 5, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 32, end: 35 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 32, end: 35 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/defaultNamedExportWithType2.ts
 semantic error: Scope children mismatch:
@@ -3864,6 +3876,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | 
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 5, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 25, end: 28 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 25, end: 28 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/defaultNamedExportWithType3.ts
 semantic error: Scope children mismatch:
@@ -3875,6 +3890,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | 
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 30, end: 33 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 30, end: 33 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/defaultNamedExportWithType4.ts
 semantic error: Scope children mismatch:
@@ -3886,6 +3904,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | 
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 23, end: 26 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 23, end: 26 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/deferredConditionalTypes.ts
 semantic error: Bindings mismatch:
@@ -5148,6 +5169,9 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 7, end: 8 }
 rebuilt        : SymbolId(0): Span { start: 19, end: 20 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 19, end: 20 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/errorConstructorSubtypes.ts
 semantic error: Bindings mismatch:
@@ -7148,6 +7172,9 @@ rebuilt        : SymbolId(1): Span { start: 152, end: 158 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(2): [ReferenceId(3)]
 rebuilt        : SymbolId(1): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(2): [Span { start: 152, end: 158 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportAssignedTypeAsTypeAnnotation.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -7282,6 +7309,9 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 121, end: 122 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportDefaultVariable.ts
 semantic error: Bindings mismatch:
@@ -7307,6 +7337,9 @@ after transform: SymbolId(0): Span { start: 15, end: 21 }
 rebuilt        : SymbolId(1): Span { start: 149, end: 155 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4)]
+rebuilt        : SymbolId(1): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 77, end: 83 }, Span { start: 149, end: 155 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportEqualsClassNoRedeclarationError.ts
@@ -7365,6 +7398,9 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 12, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 73, end: 76 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 73, end: 76 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/exportSpecifierAndExportedMemberDeclaration.ts
 semantic error: Bindings mismatch:
@@ -7858,6 +7894,9 @@ rebuilt        : SymbolId(0): Span { start: 26, end: 27 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 26, end: 27 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/functionExpressionWithResolutionOfTypeNamedArguments01.ts
 semantic error: Bindings mismatch:
@@ -8978,6 +9017,9 @@ rebuilt        : SymbolId(4): Span { start: 724, end: 731 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(111)]
 rebuilt        : SymbolId(4): [ReferenceId(3)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 724, end: 731 }]
+rebuilt        : SymbolId(4): []
 
 tasks/coverage/typescript/tests/cases/compiler/getAccessorWithImpliedReturnTypeAndFunctionClassMerge.ts
 semantic error: Semantic Collector failed after transform
@@ -9290,6 +9332,9 @@ rebuilt        : SymbolId(0): Span { start: 52, end: 62 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 52, end: 62 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpers.ts
 semantic error: Bindings mismatch:
@@ -10740,6 +10785,9 @@ rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 149, end: 152 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 149, end: 152 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceClassMerging2.ts
 semantic error: Scope children mismatch:
@@ -10751,12 +10799,18 @@ rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 89, end: 92 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 89, end: 92 }]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch:
 after transform: SymbolId(1): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 194, end: 197 }
 rebuilt        : SymbolId(1): Span { start: 273, end: 276 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 273, end: 276 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceContextualType.ts
 semantic error: Bindings mismatch:
@@ -10779,18 +10833,27 @@ rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 42, end: 44 }
 rebuilt        : SymbolId(0): Span { start: 55, end: 57 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 55, end: 57 }]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch:
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(2): Span { start: 73, end: 75 }
 rebuilt        : SymbolId(1): Span { start: 89, end: 91 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(2): [Span { start: 89, end: 91 }]
+rebuilt        : SymbolId(1): []
 Symbol flags mismatch:
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(3): Span { start: 109, end: 111 }
 rebuilt        : SymbolId(2): Span { start: 120, end: 129 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(3): [Span { start: 120, end: 129 }]
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceDeclaration5.ts
 semantic error: Bindings mismatch:
@@ -10883,6 +10946,9 @@ after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(0): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 38, end: 39 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleNotReferencingInstanceNoConflict.ts
@@ -11417,6 +11483,9 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule)
 rebuilt        : SymbolId(1): SymbolFlags(Export | Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 106, end: 107 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/jsxMultilineAttributeValuesReact.tsx
 semantic error: Bindings mismatch:
@@ -11984,6 +12053,9 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 33, end: 34 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/mergedInstantiationAssignment.ts
 semantic error: Bindings mismatch:
@@ -12608,6 +12680,9 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 19, end: 20 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/moduleReopenedTypeOtherBlock.ts
 semantic error: Semantic Collector failed after transform
@@ -13634,6 +13709,9 @@ rebuilt        : SymbolId(1): SymbolFlags(Class)
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(0)]
 rebuilt        : SymbolId(1): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 61, end: 64 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/noCollisionThisExpressionAndLocalVarInFunction.ts
 semantic error: Scope children mismatch:
@@ -14629,6 +14707,9 @@ rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 15, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 59, end: 62 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 59, end: 62 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/partiallyAmbientFundule.ts
 semantic error: Scope children mismatch:
@@ -14640,6 +14721,9 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 15, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 62, end: 65 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 62, end: 65 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/partiallyDiscriminantedUnions.ts
 semantic error: Bindings mismatch:
@@ -16885,6 +16969,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | 
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 12, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 39, end: 45 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 39, end: 45 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/relatedViaDiscriminatedTypeNoError.ts
 semantic error: Bindings mismatch:
@@ -17061,6 +17148,9 @@ rebuilt        : SymbolId(0): Span { start: 22, end: 30 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 22, end: 30 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveInterfaceNameWithSameLetDeclarationName2.ts
 semantic error: Scope children mismatch:
@@ -17075,6 +17165,9 @@ rebuilt        : SymbolId(0): Span { start: 40, end: 54 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 40, end: 54 }]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Interface)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
@@ -17083,6 +17176,9 @@ after transform: SymbolId(0): Span { start: 10, end: 13 }
 rebuilt        : SymbolId(1): Span { start: 60, end: 74 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3)]
+rebuilt        : SymbolId(1): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 60, end: 74 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveModuleNameWithSameLetDeclarationName1.ts
@@ -17095,6 +17191,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 15, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 56, end: 68 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 56, end: 68 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveModuleNameWithSameLetDeclarationName2.ts
 semantic error: Bindings mismatch:
@@ -17114,6 +17213,9 @@ rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 44, end: 52 }
 rebuilt        : SymbolId(0): Span { start: 91, end: 99 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 91, end: 99 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/resolveTypeAliasWithSameLetDeclarationName1.ts
 semantic error: Scope children mismatch:
@@ -17130,6 +17232,9 @@ after transform: SymbolId(1): Span { start: 17, end: 20 }
 rebuilt        : SymbolId(1): Span { start: 30, end: 38 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(1)]
+rebuilt        : SymbolId(1): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 30, end: 38 }]
 rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/restParamUsingMappedTypeOverUnionConstraint.ts
@@ -19484,6 +19589,9 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 31, end: 32 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/superWithGenericSpecialization.ts
 semantic error: Bindings mismatch:
@@ -19521,6 +19629,9 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 9, end: 10 }
 rebuilt        : SymbolId(0): Span { start: 35, end: 36 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 35, end: 36 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/systemExportAssignment.ts
 semantic error: Bindings mismatch:
@@ -19922,6 +20033,9 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol flags mismatch:
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Function | NameSpaceModule | ValueModule)
 rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+Symbol redeclarations mismatch:
+after transform: SymbolId(2): [Span { start: 243, end: 256 }]
+rebuilt        : SymbolId(1): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(8): [ReferenceId(5), ReferenceId(6), ReferenceId(8)]
 rebuilt        : SymbolId(5): [ReferenceId(2)]
@@ -20118,6 +20232,9 @@ after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | TypeAlias)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(3), ReferenceId(6)]
+rebuilt        : SymbolId(0): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 152, end: 157 }]
 rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/typeAnnotationBestCommonTypeInArrayLiteral.ts
@@ -20474,6 +20591,9 @@ rebuilt        : SymbolId(1): Span { start: 29, end: 33 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(1): [ReferenceId(0)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 29, end: 33 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/typeParameterAsElementType.ts
 semantic error: Bindings mismatch:
@@ -20878,6 +20998,9 @@ rebuilt        : SymbolId(0): Span { start: 35, end: 38 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 35, end: 38 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/typeVariableConstraintIntersections.ts
 semantic error: Bindings mismatch:
@@ -20972,6 +21095,9 @@ after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 32, end: 33 }]
 rebuilt        : SymbolId(0): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(2)]
@@ -21568,9 +21694,15 @@ rebuilt        : ScopeId(2): []
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 46, end: 48 }]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch:
 after transform: SymbolId(3): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(1): SymbolFlags(Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(3): [Span { start: 116, end: 118 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/compiler/unusedTypeParametersNotCheckedByNoUnusedLocals.ts
 semantic error: Bindings mismatch:
@@ -23034,12 +23166,18 @@ rebuilt        : SymbolId(1): Span { start: 213, end: 218 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(2): [ReferenceId(4)]
 rebuilt        : SymbolId(1): []
+Symbol redeclarations mismatch:
+after transform: SymbolId(2): [Span { start: 213, end: 218 }]
+rebuilt        : SymbolId(1): []
 Symbol flags mismatch:
 after transform: SymbolId(3): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(2): SymbolFlags(Class)
 Symbol span mismatch:
 after transform: SymbolId(3): Span { start: 294, end: 310 }
 rebuilt        : SymbolId(2): Span { start: 368, end: 384 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(3): [Span { start: 368, end: 384 }]
+rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(4): [ReferenceId(12)]
 rebuilt        : SymbolId(3): []
@@ -23258,6 +23396,9 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch:
 after transform: SymbolId(1): SymbolFlags(Class | Interface)
 rebuilt        : SymbolId(0): SymbolFlags(Class)
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 185, end: 186 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldDestructuredBinding.ts
 semantic error: Symbol reference IDs mismatch:
@@ -23315,6 +23456,9 @@ rebuilt        : SymbolId(0): SymbolFlags(Class)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 40, end: 41 }
 rebuilt        : SymbolId(0): Span { start: 62, end: 63 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 62, end: 63 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty8.ts
 semantic error: Bindings mismatch:
@@ -23349,6 +23493,9 @@ rebuilt        : SymbolId(2): Span { start: 558, end: 579 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(8): [ReferenceId(17), ReferenceId(19), ReferenceId(24)]
 rebuilt        : SymbolId(2): [ReferenceId(4)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(8): [Span { start: 558, end: 579 }]
+rebuilt        : SymbolId(2): []
 
 tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorAllowedModifiers.ts
 semantic error: Scope children mismatch:
@@ -24396,6 +24543,9 @@ rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 45, end: 52 }, Span { start: 78, end: 85 }]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/conformance/enums/enumMerging.ts
 semantic error: Semantic Collector failed after transform
@@ -27701,6 +27851,9 @@ rebuilt        : SymbolId(8): Span { start: 240, end: 262 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(9): [ReferenceId(1), ReferenceId(2), ReferenceId(15)]
 rebuilt        : SymbolId(8): [ReferenceId(8)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(9): [Span { start: 240, end: 262 }]
+rebuilt        : SymbolId(8): []
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/nullishCoalescingOperator/nullishCoalescingOperator1.ts
 semantic error: Bindings mismatch:
@@ -29219,12 +29372,18 @@ rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export | Functio
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 12, end: 13 }
 rebuilt        : SymbolId(0): Span { start: 33, end: 34 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(0): [Span { start: 33, end: 34 }]
+rebuilt        : SymbolId(0): []
 Symbol flags mismatch:
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Export | TypeAlias)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable | Export)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 67, end: 68 }
 rebuilt        : SymbolId(1): Span { start: 83, end: 84 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(1): [Span { start: 83, end: 84 }]
+rebuilt        : SymbolId(1): []
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/umd-augmentation-1.ts
 semantic error: Symbol reference IDs mismatch:
@@ -30198,6 +30357,9 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "x"]
 Symbol span mismatch:
 after transform: SymbolId(9): Span { start: 231, end: 236 }
 rebuilt        : SymbolId(2): Span { start: 537, end: 538 }
+Symbol redeclarations mismatch:
+after transform: SymbolId(9): [Span { start: 537, end: 538 }]
+rebuilt        : SymbolId(2): []
 Reference mismatch:
 after transform: ReferenceId(44): Some("Component")
 rebuilt        : ReferenceId(11): None
@@ -32629,6 +32791,9 @@ rebuilt        : SymbolId(59): Span { start: 2256, end: 2263 }
 Symbol reference IDs mismatch:
 after transform: SymbolId(63): [ReferenceId(55), ReferenceId(58), ReferenceId(66), ReferenceId(68)]
 rebuilt        : SymbolId(59): [ReferenceId(50), ReferenceId(54)]
+Symbol redeclarations mismatch:
+after transform: SymbolId(63): [Span { start: 2256, end: 2263 }]
+rebuilt        : SymbolId(59): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(90): [ReferenceId(97), ReferenceId(99)]
 rebuilt        : SymbolId(76): [ReferenceId(70)]

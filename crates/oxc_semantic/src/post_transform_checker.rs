@@ -418,7 +418,6 @@ impl<'s> PostTransformChecker<'s> {
             return;
         }
 
-        // Check whether symbols match
         for symbol_ids in self
             .after_transform
             .ids
@@ -465,6 +464,20 @@ impl<'s> PostTransformChecker<'s> {
                     "Symbol reference IDs mismatch",
                     symbol_ids,
                     reference_ids,
+                );
+            }
+
+            // Check redeclarations match
+            let redeclaration_spans = self.get_pair(symbol_ids, |data, symbol_id| {
+                let mut spans = data.symbols.get_redeclarations(symbol_id).to_vec();
+                spans.sort_unstable();
+                spans
+            });
+            if redeclaration_spans.is_mismatch() {
+                self.errors.push_mismatch(
+                    "Symbol redeclarations mismatch",
+                    symbol_ids,
+                    redeclaration_spans,
                 );
             }
         }

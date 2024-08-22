@@ -1690,6 +1690,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(0): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 41, end: 48 }]
+  | rebuilt        : SymbolId(0): []
+
 
 * enum/enum-merging-inner-references-shadow/input.ts
   x Bindings mismatch:
@@ -1728,6 +1732,11 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(2): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(2): [Span { start: 65, end: 72 }, Span { start:
+  | 92, end: 99 }]
+  | rebuilt        : SymbolId(2): []
+
 
 * enum/export/input.ts
   x Bindings mismatch:
@@ -1749,6 +1758,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
   | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 40, end: 41 }]
+  | rebuilt        : SymbolId(0): []
 
 
 * enum/inferred/input.ts
@@ -1852,6 +1865,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 40, end: 41 }]
+  | rebuilt        : SymbolId(0): []
 
 
 * enum/outer-references/input.ts
@@ -1991,6 +2008,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
   | rebuilt        : SymbolId(0): [ReferenceId(1)]
 
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 83, end: 84 }]
+  | rebuilt        : SymbolId(0): []
+
 
 * exports/declare-shadowed/input.ts
   x Scope children mismatch:
@@ -2036,6 +2057,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Symbol flags mismatch:
   | after transform: SymbolId(10): SymbolFlags(Export | RegularEnum)
   | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable | Export)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(10): [Span { start: 495, end: 497 }]
+  | rebuilt        : SymbolId(1): []
 
   x Symbol flags mismatch:
   | after transform: SymbolId(15): SymbolFlags(Export | RegularEnum)
@@ -2324,6 +2349,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(0): Span { start: 13, end: 16 }
   | rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
 
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 70, end: 73 }]
+  | rebuilt        : SymbolId(0): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function
   | | TypeImport)
@@ -2332,6 +2361,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Symbol span mismatch:
   | after transform: SymbolId(1): Span { start: 43, end: 47 }
   | rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(1): [Span { start: 87, end: 91 }]
+  | rebuilt        : SymbolId(1): []
 
 
 * imports/import-type-not-removed/input.ts
