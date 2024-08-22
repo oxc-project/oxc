@@ -650,15 +650,16 @@ pub fn check_labeled_statement(ctx: &SemanticBuilder) {
     ctx.label_builder.labels.iter().for_each(|labels| {
         let mut defined = FxHashMap::default();
         //only need to care about the monotone increasing depth of the array
-        let mut rise_depth = vec![];
+        let mut increase_depth = vec![];
         for labeled in labels {
-            rise_depth.push(labeled);
+            increase_depth.push(labeled);
             // have to traverse because HashMap can only delete one by one
-            while rise_depth.len() > 2
-                && rise_depth[rise_depth.len() - 2].depth >= rise_depth[rise_depth.len() - 1].depth
+            while increase_depth.len() > 2
+                && increase_depth.iter().rev().nth(1).unwrap().depth
+                    >= increase_depth.iter().rev().next().unwrap().depth
             {
-                defined.remove(rise_depth[rise_depth.len() - 2].name);
-                rise_depth.remove(rise_depth.len() - 2);
+                defined.remove(increase_depth[increase_depth.len() - 2].name);
+                increase_depth.remove(increase_depth.len() - 2);
             }
             if let Some(span) = defined.get(labeled.name) {
                 ctx.error(label_redeclaration(labeled.name, *span, labeled.span));
