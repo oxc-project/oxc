@@ -2,7 +2,7 @@ commit: 12619ffe
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1786/2101 (85.01%)
+Positive Passed: 1784/2101 (84.91%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -196,6 +196,11 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-this-with-predicate/input.ts
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): []
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assert-predicate/asserts-var/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
@@ -210,11 +215,23 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTyp
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["M"]
 rebuilt        : ScopeId(1): []
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
+rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/assign/TSTypeParameterInstantiation-babel-7/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["M"]
 rebuilt        : ScopeId(1): []
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
+rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/abstract/input.ts
 semantic error: Scope children mismatch:
@@ -1480,18 +1497,27 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 16, end: 23 }
 rebuilt        : SymbolId(1): Span { start: 104, end: 124 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Symbol flags mismatch:
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Import)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(2): Span { start: 49, end: 50 }
 rebuilt        : SymbolId(2): Span { start: 156, end: 160 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(2)]
+rebuilt        : SymbolId(2): []
 Symbol flags mismatch:
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Import)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(3): Span { start: 81, end: 82 }
 rebuilt        : SymbolId(3): Span { start: 170, end: 174 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(3): [ReferenceId(3)]
+rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-let/input.ts
 semantic error: Symbol flags mismatch:
@@ -1500,18 +1526,27 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 21, end: 28 }
 rebuilt        : SymbolId(1): Span { start: 119, end: 139 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Symbol flags mismatch:
 after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | TypeImport)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(2): Span { start: 59, end: 60 }
 rebuilt        : SymbolId(2): Span { start: 171, end: 175 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(2)]
+rebuilt        : SymbolId(2): []
 Symbol flags mismatch:
 after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | TypeImport)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(3): Span { start: 96, end: 97 }
 rebuilt        : SymbolId(3): Span { start: 185, end: 189 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(3): [ReferenceId(3)]
+rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-type/input.ts
 semantic error: Bindings mismatch:
@@ -1528,18 +1563,27 @@ rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 21, end: 28 }
 rebuilt        : SymbolId(1): Span { start: 119, end: 139 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Symbol flags mismatch:
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | TypeImport)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(2): Span { start: 59, end: 60 }
 rebuilt        : SymbolId(2): Span { start: 171, end: 175 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(2)]
+rebuilt        : SymbolId(2): []
 Symbol flags mismatch:
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | TypeImport)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(3): Span { start: 96, end: 97 }
 rebuilt        : SymbolId(3): Span { start: 185, end: 189 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(3): [ReferenceId(3)]
+rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-var/input.ts
 semantic error: Symbol flags mismatch:
@@ -1548,18 +1592,27 @@ rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 16, end: 23 }
 rebuilt        : SymbolId(1): Span { start: 104, end: 124 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(0)]
+rebuilt        : SymbolId(1): []
 Symbol flags mismatch:
 after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(2): Span { start: 49, end: 50 }
 rebuilt        : SymbolId(2): Span { start: 156, end: 160 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(2)]
+rebuilt        : SymbolId(2): []
 Symbol flags mismatch:
 after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch:
 after transform: SymbolId(3): Span { start: 81, end: 82 }
 rebuilt        : SymbolId(3): Span { start: 170, end: 174 }
+Symbol reference IDs mismatch:
+after transform: SymbolId(3): [ReferenceId(3)]
+rebuilt        : SymbolId(3): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module/input.ts
 semantic error: Bindings mismatch:
@@ -1576,6 +1629,9 @@ rebuilt        : ScopeId(0): ["foo", "fooBar"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(0): []
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4)]
+rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-nested-module/input.ts
 semantic error: Bindings mismatch:
@@ -1711,6 +1767,11 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/anonymou
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T", "input"]
 rebuilt        : ScopeId(1): ["input"]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/brace-is-block/input.tsx
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3)]
+rebuilt        : SymbolId(2): [ReferenceId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/type-arguments/input.ts
 semantic error: Bindings mismatch:

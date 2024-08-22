@@ -453,6 +453,20 @@ impl<'s> PostTransformChecker<'s> {
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch("Symbol scope ID mismatch", symbol_ids, scope_ids);
             }
+
+            // NB: Skip checking declarations match - transformer does not set `AstNodeId`s
+
+            // Check resolved references match
+            let reference_ids = self.get_pair(symbol_ids, |data, symbol_id| {
+                data.symbols.resolved_references[symbol_id].clone()
+            });
+            if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
+                self.errors.push_mismatch(
+                    "Symbol reference IDs mismatch",
+                    symbol_ids,
+                    reference_ids,
+                );
+            }
         }
     }
 
@@ -546,6 +560,27 @@ impl<'s> PostTransformChecker<'s> {
             .map(|&symbol_id| self.symbol_ids_map.get(symbol_id))
             .collect::<Vec<_>>();
         let mut rebuilt = symbol_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
+
+        after_transform.sort_unstable();
+        rebuilt.sort_unstable();
+
+        Pair::new(after_transform, rebuilt)
+    }
+
+    /// Remap pair of arrays of `ReferenceId`s.
+    /// Map `after_transform` IDs to `rebuilt` IDs.
+    /// Sort both sets.
+    fn remap_reference_ids_sets(
+        &self,
+        reference_ids: &Pair<Vec<ReferenceId>>,
+    ) -> Pair<Vec<Option<ReferenceId>>> {
+        let mut after_transform = reference_ids
+            .after_transform
+            .iter()
+            .map(|&reference_id| self.reference_ids_map.get(reference_id))
+            .collect::<Vec<_>>();
+        let mut rebuilt =
+            reference_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
 
         after_transform.sort_unstable();
         rebuilt.sort_unstable();

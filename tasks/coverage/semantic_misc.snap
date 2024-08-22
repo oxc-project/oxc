@@ -47,6 +47,48 @@ tasks/coverage/misc/pass/oxc-3948-1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["BrowserWorkingCopyBackupTracker", "CancellationToken", "DisposableStore", "EditorPart", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "IInstantiationService", "ILifecycleService", "ILogService", "IUntitledTextResourceEditorInput", "IWorkingCopyBackup", "IWorkingCopyBackupService", "IWorkingCopyEditorHandler", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
 rebuilt        : ScopeId(0): ["BrowserWorkingCopyBackupTracker", "DisposableStore", "EditorService", "IEditorGroupsService", "IEditorService", "IFilesConfigurationService", "ILifecycleService", "ILogService", "IWorkingCopyBackupService", "IWorkingCopyEditorService", "IWorkingCopyService", "InMemoryTestWorkingCopyBackupService", "LifecyclePhase", "Schemas", "TestServiceAccessor", "TestWorkingCopy", "URI", "UntitledTextEditorInput", "VSBuffer", "assert", "bufferToReadable", "createEditorPart", "ensureNoDisposablesAreLeakedInTestSuite", "isWindows", "registerTestResourceEditor", "timeout", "toResource", "toTypedWorkingCopyId", "toUntypedWorkingCopyId", "workbenchInstantiationService", "workbenchTeardown"]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(109), ReferenceId(117), ReferenceId(156), ReferenceId(158), ReferenceId(160), ReferenceId(162)]
+rebuilt        : SymbolId(1): [ReferenceId(127), ReferenceId(129), ReferenceId(131), ReferenceId(133)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(23), ReferenceId(24), ReferenceId(67), ReferenceId(184)]
+rebuilt        : SymbolId(2): [ReferenceId(16), ReferenceId(49), ReferenceId(154)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(4): [ReferenceId(25), ReferenceId(26), ReferenceId(57), ReferenceId(176)]
+rebuilt        : SymbolId(3): [ReferenceId(17), ReferenceId(40), ReferenceId(147)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(5): [ReferenceId(61), ReferenceId(64), ReferenceId(178), ReferenceId(181)]
+rebuilt        : SymbolId(4): [ReferenceId(46), ReferenceId(151)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(7): [ReferenceId(11), ReferenceId(12), ReferenceId(51), ReferenceId(170)]
+rebuilt        : SymbolId(5): [ReferenceId(10), ReferenceId(34), ReferenceId(141)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(10): [ReferenceId(13), ReferenceId(14)]
+rebuilt        : SymbolId(8): [ReferenceId(11)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(11): [ReferenceId(15), ReferenceId(16)]
+rebuilt        : SymbolId(9): [ReferenceId(12)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(13): [ReferenceId(19), ReferenceId(20)]
+rebuilt        : SymbolId(10): [ReferenceId(14)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(14): [ReferenceId(17), ReferenceId(18)]
+rebuilt        : SymbolId(11): [ReferenceId(13)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(17): [ReferenceId(38), ReferenceId(87)]
+rebuilt        : SymbolId(13): [ReferenceId(27)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(19): [ReferenceId(43), ReferenceId(46), ReferenceId(165)]
+rebuilt        : SymbolId(15): [ReferenceId(29), ReferenceId(136)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(21): [ReferenceId(1), ReferenceId(40), ReferenceId(71), ReferenceId(155), ReferenceId(188)]
+rebuilt        : SymbolId(17): [ReferenceId(53), ReferenceId(158)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(32): [ReferenceId(21), ReferenceId(22)]
+rebuilt        : SymbolId(26): [ReferenceId(15)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(39): [ReferenceId(42), ReferenceId(74), ReferenceId(154), ReferenceId(215)]
+rebuilt        : SymbolId(33): [ReferenceId(56), ReferenceId(185)]
 
 tasks/coverage/misc/pass/oxc-4449.ts
 semantic error: Scope flags mismatch:

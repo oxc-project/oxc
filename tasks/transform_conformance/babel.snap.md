@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 395/953
+Passed: 385/953
 
 # All Passed:
 * babel-preset-react
@@ -1276,8 +1276,79 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
-# babel-plugin-transform-logical-assignment-operators (5/6)
+# babel-plugin-transform-logical-assignment-operators (0/6)
+* logical-assignment/anonymous-functions-transform/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(7), ReferenceId(8)]
+  | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
+
+
+* logical-assignment/arrow-functions-transform/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(7), ReferenceId(8)]
+  | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
+
+
+* logical-assignment/general-semantics/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(15): [ReferenceId(117), ReferenceId(118),
+  | ReferenceId(121)]
+  | rebuilt        : SymbolId(8): [ReferenceId(87), ReferenceId(91)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(17): [ReferenceId(122), ReferenceId(123),
+  | ReferenceId(126)]
+  | rebuilt        : SymbolId(10): [ReferenceId(99), ReferenceId(103)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(19): [ReferenceId(127), ReferenceId(128),
+  | ReferenceId(131)]
+  | rebuilt        : SymbolId(12): [ReferenceId(111), ReferenceId(115)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(21): [ReferenceId(132), ReferenceId(133),
+  | ReferenceId(136)]
+  | rebuilt        : SymbolId(14): [ReferenceId(123), ReferenceId(127)]
+
+
+* logical-assignment/named-functions-transform/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(7), ReferenceId(8)]
+  | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
+
+
 * logical-assignment/null-coalescing/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(17): [ReferenceId(86), ReferenceId(87),
+  | ReferenceId(90)]
+  | rebuilt        : SymbolId(12): [ReferenceId(73), ReferenceId(79)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(20): [ReferenceId(94), ReferenceId(95),
+  | ReferenceId(98)]
+  | rebuilt        : SymbolId(14): [ReferenceId(88), ReferenceId(94)]
+
+
+* logical-assignment/null-coalescing-without-other/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(7), ReferenceId(8),
+  | ReferenceId(11)]
+  | rebuilt        : SymbolId(1): [ReferenceId(5), ReferenceId(8)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4)]
+  | rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(3), ReferenceId(6)]
 
 
 
@@ -1368,7 +1439,14 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-exponentiation-operator (3/4)
+# babel-plugin-transform-exponentiation-operator (2/4)
+* exponentiation-operator/assignment/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2)]
+  | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+
+
 * regression/4349/input.js
 
 
@@ -1479,7 +1557,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-typescript (50/151)
+# babel-plugin-transform-typescript (49/151)
 * class/accessor-allowDeclareFields-false/input.ts
   x TS(18010): An accessibility modifier cannot be used with a private
   | identifier.
@@ -1638,6 +1716,14 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(3): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0)]
+  | rebuilt        : SymbolId(0): []
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(1)]
+  | rebuilt        : SymbolId(1): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(2): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -1790,6 +1876,11 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(0): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(10)]
+  | rebuilt        : SymbolId(0): [ReferenceId(7)]
+
   x Symbol flags mismatch:
   | after transform: SymbolId(4): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
@@ -1864,9 +1955,22 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(3), ReferenceId(4)]
+  | rebuilt        : SymbolId(1): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(2): SymbolFlags(ConstEnum)
   | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(1), ReferenceId(5),
+  | ReferenceId(16)]
+  | rebuilt        : SymbolId(2): [ReferenceId(10), ReferenceId(11)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(6)]
+  | rebuilt        : SymbolId(5): []
 
   x Symbol flags mismatch:
   | after transform: SymbolId(8): SymbolFlags(ConstEnum)
@@ -1882,6 +1986,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule
   | | Ambient)
   | rebuilt        : SymbolId(0): SymbolFlags(Export | Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : SymbolId(0): [ReferenceId(1)]
 
 
 * exports/declare-shadowed/input.ts
@@ -1965,6 +2073,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : SymbolId(0): [ReferenceId(1)]
+
 
 * exports/export-import=/input.ts
   x Semantic Collector failed after transform
@@ -2047,6 +2159,12 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope children mismatch:
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
+
+
+* exports/type-only-export-specifier-1/input.ts
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0)]
+  | rebuilt        : SymbolId(0): []
 
 
 * function/overloads/input.ts
@@ -2256,13 +2374,25 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/type-only-export-specifier-2/input.ts
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0)]
+  | rebuilt        : SymbolId(0): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(Export | Import)
   | rebuilt        : SymbolId(1): SymbolFlags(Import)
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(1)]
+  | rebuilt        : SymbolId(1): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(2): SymbolFlags(Export | TypeImport)
   | rebuilt        : SymbolId(2): SymbolFlags(TypeImport)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(2)]
+  | rebuilt        : SymbolId(2): []
 
 
 * imports/type-only-import-specifier-1/input.ts
@@ -2290,6 +2420,15 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Bindings mismatch:
   | after transform: ScopeId(1): ["M"]
   | rebuilt        : ScopeId(1): []
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2),
+  | ReferenceId(3)]
+  | rebuilt        : SymbolId(0): [ReferenceId(0)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
+  | rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 
 * namespace/alias/input.ts
@@ -4976,7 +5115,7 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
 
 
 
-# babel-plugin-transform-react-jsx (133/142)
+# babel-plugin-transform-react-jsx (130/142)
 * react/arrow-functions/input.js
   x Bindings mismatch:
   | after transform: ScopeId(1): []
@@ -5023,6 +5162,12 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
    `----
 
 
+* react/should-handle-attributed-elements/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(2), ReferenceId(5)]
+  | rebuilt        : SymbolId(0): [ReferenceId(4)]
+
+
 * react/should-throw-error-namespaces-if-not-flag/input.js
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
@@ -5062,6 +5207,13 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
+* react-automatic/handle-fragments-with-key/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2)]
+  | rebuilt        : SymbolId(0): [ReferenceId(1)]
+
+
 * react-automatic/should-disallow-valueless-key/input.js
   ! Please provide an explicit key value. Using "key" as a shorthand for
   | "key={true}" is not allowed.
@@ -5080,6 +5232,12 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
  1 | <Namespace:Component />;
    :  ^^^^^^^^^^^^^^^^^^^
    `----
+
+
+* react-automatic/should-handle-attributed-elements/input.js
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(2), ReferenceId(5)]
+  | rebuilt        : SymbolId(2): [ReferenceId(4)]
 
 
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js

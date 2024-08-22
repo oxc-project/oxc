@@ -147,6 +147,10 @@ Passed: 8/35
   | after transform: SymbolId(0): Span { start: 57, end: 58 }
   | rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : SymbolId(0): [ReferenceId(0)]
+
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(Export | Import | TypeAlias)
   | rebuilt        : SymbolId(1): SymbolFlags(Export | Import)
@@ -161,10 +165,70 @@ Passed: 8/35
   | after transform: SymbolId(2): Span { start: 267, end: 268 }
   | rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
+  | rebuilt        : SymbolId(2): [ReferenceId(2)]
+
 
 
 # babel-plugin-transform-react-jsx (6/27)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(23), ReferenceId(24),
+  | ReferenceId(25)]
+  | rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(10): [ReferenceId(26), ReferenceId(27),
+  | ReferenceId(28)]
+  | rebuilt        : SymbolId(1): [ReferenceId(18), ReferenceId(19)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(11): [ReferenceId(29), ReferenceId(30),
+  | ReferenceId(31), ReferenceId(32)]
+  | rebuilt        : SymbolId(2): [ReferenceId(29), ReferenceId(32),
+  | ReferenceId(33)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(12): [ReferenceId(33), ReferenceId(34),
+  | ReferenceId(36)]
+  | rebuilt        : SymbolId(3): [ReferenceId(10), ReferenceId(13)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(13): [ReferenceId(37), ReferenceId(38),
+  | ReferenceId(40)]
+  | rebuilt        : SymbolId(4): [ReferenceId(22), ReferenceId(25)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(14): [ReferenceId(41), ReferenceId(42),
+  | ReferenceId(44)]
+  | rebuilt        : SymbolId(5): [ReferenceId(38), ReferenceId(41)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(14), ReferenceId(45),
+  | ReferenceId(46)]
+  | rebuilt        : SymbolId(10): [ReferenceId(15), ReferenceId(46)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(16), ReferenceId(47),
+  | ReferenceId(48)]
+  | rebuilt        : SymbolId(11): [ReferenceId(27), ReferenceId(48)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): [ReferenceId(18), ReferenceId(49),
+  | ReferenceId(50)]
+  | rebuilt        : SymbolId(12): [ReferenceId(31), ReferenceId(50)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(19), ReferenceId(51),
+  | ReferenceId(52)]
+  | rebuilt        : SymbolId(13): [ReferenceId(36), ReferenceId(52)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): [ReferenceId(21), ReferenceId(53),
+  | ReferenceId(54)]
+  | rebuilt        : SymbolId(14): [ReferenceId(43), ReferenceId(54)]
+
   x Reference mismatch:
   | after transform: ReferenceId(23): Some("_s")
   | rebuilt        : ReferenceId(0): None
@@ -211,6 +275,27 @@ Passed: 8/35
 
 
 * refresh/does-not-consider-require-like-methods-to-be-hocs/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(6), ReferenceId(12)]
+  | rebuilt        : SymbolId(2): [ReferenceId(8)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(7), ReferenceId(14)]
+  | rebuilt        : SymbolId(3): [ReferenceId(10)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(8), ReferenceId(16)]
+  | rebuilt        : SymbolId(4): [ReferenceId(12)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(9), ReferenceId(18)]
+  | rebuilt        : SymbolId(5): [ReferenceId(14)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(10), ReferenceId(21),
+  | ReferenceId(22)]
+  | rebuilt        : SymbolId(7): [ReferenceId(15), ReferenceId(18)]
+
   x Reference mismatch:
   | after transform: ReferenceId(21): Some("_c")
   | rebuilt        : ReferenceId(17): None
@@ -229,12 +314,27 @@ Passed: 8/35
   | after transform: SymbolId(1): ScopeId(1)
   | rebuilt        : SymbolId(0): ScopeId(0)
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(3), ReferenceId(4),
+  | ReferenceId(5)]
+  | rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
+
   x Reference mismatch:
   | after transform: ReferenceId(3): Some("_s")
   | rebuilt        : ReferenceId(1): None
 
 
 * refresh/generates-signatures-for-function-declarations-calling-hooks/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7),
+  | ReferenceId(9)]
+  | rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(6)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(3), ReferenceId(10),
+  | ReferenceId(11)]
+  | rebuilt        : SymbolId(5): [ReferenceId(8), ReferenceId(11)]
+
   x Reference mismatch:
   | after transform: ReferenceId(6): Some("_s")
   | rebuilt        : ReferenceId(0): None
@@ -245,6 +345,53 @@ Passed: 8/35
 
 
 * refresh/generates-signatures-for-function-expressions-calling-hooks/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(22): [ReferenceId(26), ReferenceId(27),
+  | ReferenceId(28), ReferenceId(29), ReferenceId(30)]
+  | rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(5),
+  | ReferenceId(8), ReferenceId(9)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(23): [ReferenceId(32), ReferenceId(33),
+  | ReferenceId(34), ReferenceId(35), ReferenceId(36)]
+  | rebuilt        : SymbolId(2): [ReferenceId(17), ReferenceId(20),
+  | ReferenceId(23), ReferenceId(24)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(24): [ReferenceId(38), ReferenceId(39),
+  | ReferenceId(40)]
+  | rebuilt        : SymbolId(14): [ReferenceId(33), ReferenceId(34)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(15): [ReferenceId(17), ReferenceId(41),
+  | ReferenceId(42)]
+  | rebuilt        : SymbolId(19): [ReferenceId(7), ReferenceId(42)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(16): [ReferenceId(18), ReferenceId(43),
+  | ReferenceId(44)]
+  | rebuilt        : SymbolId(20): [ReferenceId(4), ReferenceId(44)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(17): [ReferenceId(19), ReferenceId(45),
+  | ReferenceId(46)]
+  | rebuilt        : SymbolId(21): [ReferenceId(15), ReferenceId(46)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(18): [ReferenceId(21), ReferenceId(47),
+  | ReferenceId(48)]
+  | rebuilt        : SymbolId(22): [ReferenceId(22), ReferenceId(48)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(19): [ReferenceId(22), ReferenceId(49),
+  | ReferenceId(50)]
+  | rebuilt        : SymbolId(23): [ReferenceId(19), ReferenceId(50)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(20): [ReferenceId(23), ReferenceId(51),
+  | ReferenceId(52)]
+  | rebuilt        : SymbolId(24): [ReferenceId(30), ReferenceId(52)]
+
   x Reference mismatch:
   | after transform: ReferenceId(26): Some("_s")
   | rebuilt        : ReferenceId(0): None
@@ -291,6 +438,21 @@ Passed: 8/35
   | after transform: No scope
   | rebuilt        : ScopeId(3): []
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(10): [ReferenceId(17), ReferenceId(18),
+  | ReferenceId(20)]
+  | rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(16)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(12), ReferenceId(13),
+  | ReferenceId(15)]
+  | rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(9), ReferenceId(21),
+  | ReferenceId(22)]
+  | rebuilt        : SymbolId(10): [ReferenceId(19), ReferenceId(22)]
+
   x Reference mismatch:
   | after transform: ReferenceId(17): Some("_s2")
   | rebuilt        : ReferenceId(0): None
@@ -318,6 +480,26 @@ Passed: 8/35
   | after transform: No scope
   | rebuilt        : ScopeId(6): []
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): [ReferenceId(10), ReferenceId(11),
+  | ReferenceId(13)]
+  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(7)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(14), ReferenceId(15),
+  | ReferenceId(17)]
+  | rebuilt        : SymbolId(2): [ReferenceId(10), ReferenceId(12)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(10): [ReferenceId(19), ReferenceId(20),
+  | ReferenceId(22)]
+  | rebuilt        : SymbolId(3): [ReferenceId(14), ReferenceId(18)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): [ReferenceId(6), ReferenceId(23),
+  | ReferenceId(24)]
+  | rebuilt        : SymbolId(10): [ReferenceId(21), ReferenceId(24)]
+
   x Reference mismatch:
   | after transform: ReferenceId(10): Some("_s")
   | rebuilt        : ReferenceId(0): None
@@ -336,6 +518,26 @@ Passed: 8/35
 
 
 * refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(6), ReferenceId(14),
+  | ReferenceId(15)]
+  | rebuilt        : SymbolId(4): [ReferenceId(1), ReferenceId(15)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(8), ReferenceId(16),
+  | ReferenceId(17)]
+  | rebuilt        : SymbolId(5): [ReferenceId(3), ReferenceId(17)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(9), ReferenceId(18),
+  | ReferenceId(19)]
+  | rebuilt        : SymbolId(6): [ReferenceId(8), ReferenceId(19)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): [ReferenceId(11), ReferenceId(20),
+  | ReferenceId(21)]
+  | rebuilt        : SymbolId(7): [ReferenceId(12), ReferenceId(21)]
+
   x Reference mismatch:
   | after transform: ReferenceId(14): Some("_c")
   | rebuilt        : ReferenceId(14): None
@@ -354,6 +556,78 @@ Passed: 8/35
 
 
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(5), ReferenceId(7),
+  | ReferenceId(8), ReferenceId(9), ReferenceId(19), ReferenceId(21),
+  | ReferenceId(34)]
+  | rebuilt        : SymbolId(0): [ReferenceId(9), ReferenceId(13),
+  | ReferenceId(14), ReferenceId(17), ReferenceId(37), ReferenceId(41)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(16), ReferenceId(23),
+  | ReferenceId(48)]
+  | rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(31)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(11), ReferenceId(25),
+  | ReferenceId(38)]
+  | rebuilt        : SymbolId(5): [ReferenceId(6), ReferenceId(21)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(12), ReferenceId(40)]
+  | rebuilt        : SymbolId(6): [ReferenceId(23)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(13), ReferenceId(42)]
+  | rebuilt        : SymbolId(7): [ReferenceId(25)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(14), ReferenceId(44)]
+  | rebuilt        : SymbolId(9): [ReferenceId(27)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): [ReferenceId(15), ReferenceId(46)]
+  | rebuilt        : SymbolId(10): [ReferenceId(29)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(17), ReferenceId(50)]
+  | rebuilt        : SymbolId(11): [ReferenceId(33)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(11): [ReferenceId(10), ReferenceId(31),
+  | ReferenceId(36)]
+  | rebuilt        : SymbolId(13): [ReferenceId(19), ReferenceId(39)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(13): [ReferenceId(22), ReferenceId(53),
+  | ReferenceId(54)]
+  | rebuilt        : SymbolId(15): [ReferenceId(2), ReferenceId(45)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(14): [ReferenceId(24), ReferenceId(55),
+  | ReferenceId(56)]
+  | rebuilt        : SymbolId(16): [ReferenceId(5), ReferenceId(47)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(15): [ReferenceId(26), ReferenceId(57),
+  | ReferenceId(58)]
+  | rebuilt        : SymbolId(17): [ReferenceId(11), ReferenceId(49)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(16): [ReferenceId(28), ReferenceId(59),
+  | ReferenceId(60)]
+  | rebuilt        : SymbolId(18): [ReferenceId(34), ReferenceId(51)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(17): [ReferenceId(30), ReferenceId(61),
+  | ReferenceId(62)]
+  | rebuilt        : SymbolId(19): [ReferenceId(38), ReferenceId(53)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(18): [ReferenceId(32), ReferenceId(63),
+  | ReferenceId(64)]
+  | rebuilt        : SymbolId(20): [ReferenceId(42), ReferenceId(55)]
+
   x Reference mismatch:
   | after transform: ReferenceId(53): Some("_c")
   | rebuilt        : ReferenceId(44): None
@@ -380,6 +654,36 @@ Passed: 8/35
 
 
 * refresh/registers-identifiers-used-in-react-create-element-at-definition-site/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(13): [ReferenceId(33), ReferenceId(45),
+  | ReferenceId(46)]
+  | rebuilt        : SymbolId(13): [ReferenceId(2), ReferenceId(46)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(14): [ReferenceId(35), ReferenceId(47),
+  | ReferenceId(48)]
+  | rebuilt        : SymbolId(14): [ReferenceId(5), ReferenceId(48)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(15): [ReferenceId(37), ReferenceId(49),
+  | ReferenceId(50)]
+  | rebuilt        : SymbolId(15): [ReferenceId(11), ReferenceId(50)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(16): [ReferenceId(39), ReferenceId(51),
+  | ReferenceId(52)]
+  | rebuilt        : SymbolId(16): [ReferenceId(33), ReferenceId(52)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(17): [ReferenceId(41), ReferenceId(53),
+  | ReferenceId(54)]
+  | rebuilt        : SymbolId(17): [ReferenceId(39), ReferenceId(54)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(18): [ReferenceId(43), ReferenceId(55),
+  | ReferenceId(56)]
+  | rebuilt        : SymbolId(18): [ReferenceId(43), ReferenceId(56)]
+
   x Reference mismatch:
   | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(45): None
@@ -406,6 +710,46 @@ Passed: 8/35
 
 
 * refresh/registers-likely-hocs-with-inline-functions-1/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(5), ReferenceId(18),
+  | ReferenceId(19)]
+  | rebuilt        : SymbolId(5): [ReferenceId(1), ReferenceId(19)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(6), ReferenceId(20),
+  | ReferenceId(21)]
+  | rebuilt        : SymbolId(6): [ReferenceId(3), ReferenceId(21)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): [ReferenceId(8), ReferenceId(22),
+  | ReferenceId(23)]
+  | rebuilt        : SymbolId(7): [ReferenceId(8), ReferenceId(23)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(9), ReferenceId(24),
+  | ReferenceId(25)]
+  | rebuilt        : SymbolId(8): [ReferenceId(6), ReferenceId(25)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): [ReferenceId(10), ReferenceId(26),
+  | ReferenceId(27)]
+  | rebuilt        : SymbolId(9): [ReferenceId(10), ReferenceId(27)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(12), ReferenceId(28),
+  | ReferenceId(29)]
+  | rebuilt        : SymbolId(10): [ReferenceId(16), ReferenceId(29)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(10): [ReferenceId(13), ReferenceId(30),
+  | ReferenceId(31)]
+  | rebuilt        : SymbolId(11): [ReferenceId(14), ReferenceId(31)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(11): [ReferenceId(14), ReferenceId(32),
+  | ReferenceId(33)]
+  | rebuilt        : SymbolId(12): [ReferenceId(12), ReferenceId(33)]
+
   x Reference mismatch:
   | after transform: ReferenceId(18): Some("_c")
   | rebuilt        : ReferenceId(18): None
@@ -440,6 +784,21 @@ Passed: 8/35
 
 
 * refresh/registers-likely-hocs-with-inline-functions-2/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(2), ReferenceId(6),
+  | ReferenceId(7)]
+  | rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(7)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(3), ReferenceId(8),
+  | ReferenceId(9)]
+  | rebuilt        : SymbolId(4): [ReferenceId(2), ReferenceId(9)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(4), ReferenceId(10),
+  | ReferenceId(11)]
+  | rebuilt        : SymbolId(5): [ReferenceId(0), ReferenceId(11)]
+
   x Reference mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
@@ -454,6 +813,21 @@ Passed: 8/35
 
 
 * refresh/registers-likely-hocs-with-inline-functions-3/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(2), ReferenceId(6),
+  | ReferenceId(7)]
+  | rebuilt        : SymbolId(4): [ReferenceId(4), ReferenceId(7)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(3), ReferenceId(8),
+  | ReferenceId(9)]
+  | rebuilt        : SymbolId(5): [ReferenceId(2), ReferenceId(9)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(4), ReferenceId(10),
+  | ReferenceId(11)]
+  | rebuilt        : SymbolId(6): [ReferenceId(0), ReferenceId(11)]
+
   x Reference mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
@@ -468,6 +842,26 @@ Passed: 8/35
 
 
 * refresh/registers-top-level-exported-function-declarations/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(1), ReferenceId(5),
+  | ReferenceId(11)]
+  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(4), ReferenceId(14),
+  | ReferenceId(15)]
+  | rebuilt        : SymbolId(8): [ReferenceId(2), ReferenceId(14)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): [ReferenceId(6), ReferenceId(16),
+  | ReferenceId(17)]
+  | rebuilt        : SymbolId(9): [ReferenceId(6), ReferenceId(16)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(8), ReferenceId(18),
+  | ReferenceId(19)]
+  | rebuilt        : SymbolId(10): [ReferenceId(9), ReferenceId(18)]
+
   x Reference mismatch:
   | after transform: ReferenceId(14): Some("_c")
   | rebuilt        : ReferenceId(13): None
@@ -482,6 +876,22 @@ Passed: 8/35
 
 
 * refresh/registers-top-level-exported-named-arrow-functions/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(1), ReferenceId(2),
+  | ReferenceId(4), ReferenceId(8), ReferenceId(10)]
+  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5),
+  | ReferenceId(9)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(3), ReferenceId(12),
+  | ReferenceId(13)]
+  | rebuilt        : SymbolId(5): [ReferenceId(2), ReferenceId(11)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(5), ReferenceId(14),
+  | ReferenceId(15)]
+  | rebuilt        : SymbolId(6): [ReferenceId(6), ReferenceId(13)]
+
   x Reference mismatch:
   | after transform: ReferenceId(12): Some("_c")
   | rebuilt        : ReferenceId(10): None
@@ -492,6 +902,21 @@ Passed: 8/35
 
 
 * refresh/registers-top-level-function-declarations/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3),
+  | ReferenceId(7)]
+  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(2), ReferenceId(9),
+  | ReferenceId(10)]
+  | rebuilt        : SymbolId(4): [ReferenceId(2), ReferenceId(9)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(4), ReferenceId(11),
+  | ReferenceId(12)]
+  | rebuilt        : SymbolId(5): [ReferenceId(6), ReferenceId(11)]
+
   x Reference mismatch:
   | after transform: ReferenceId(9): Some("_c")
   | rebuilt        : ReferenceId(8): None
@@ -502,6 +927,26 @@ Passed: 8/35
 
 
 * refresh/registers-top-level-variable-declarations-with-arrow-functions/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3),
+  | ReferenceId(9)]
+  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(2), ReferenceId(12),
+  | ReferenceId(13)]
+  | rebuilt        : SymbolId(6): [ReferenceId(2), ReferenceId(12)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): [ReferenceId(4), ReferenceId(14),
+  | ReferenceId(15)]
+  | rebuilt        : SymbolId(7): [ReferenceId(6), ReferenceId(14)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(6), ReferenceId(16),
+  | ReferenceId(17)]
+  | rebuilt        : SymbolId(8): [ReferenceId(9), ReferenceId(16)]
+
   x Reference mismatch:
   | after transform: ReferenceId(12): Some("_c")
   | rebuilt        : ReferenceId(11): None
@@ -516,6 +961,21 @@ Passed: 8/35
 
 
 * refresh/registers-top-level-variable-declarations-with-function-expressions/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(1), ReferenceId(3),
+  | ReferenceId(7)]
+  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(5)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(2), ReferenceId(9),
+  | ReferenceId(10)]
+  | rebuilt        : SymbolId(8): [ReferenceId(2), ReferenceId(9)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): [ReferenceId(4), ReferenceId(11),
+  | ReferenceId(12)]
+  | rebuilt        : SymbolId(9): [ReferenceId(6), ReferenceId(11)]
+
   x Reference mismatch:
   | after transform: ReferenceId(9): Some("_c")
   | rebuilt        : ReferenceId(8): None
@@ -670,6 +1130,16 @@ Passed: 8/35
 
 
 * refresh/uses-custom-identifiers-for-refresh-reg-and-refresh-sig/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(7), ReferenceId(8),
+  | ReferenceId(10)]
+  | rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(6)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11),
+  | ReferenceId(12)]
+  | rebuilt        : SymbolId(3): [ReferenceId(8), ReferenceId(11)]
+
   x Reference mismatch:
   | after transform: ReferenceId(7): Some("_s")
   | rebuilt        : ReferenceId(0): None
@@ -680,6 +1150,11 @@ Passed: 8/35
 
 
 * refresh/uses-original-function-declaration-if-it-get-reassigned/input.jsx
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(3), ReferenceId(6),
+  | ReferenceId(7)]
+  | rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(7)]
+
   x Reference mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None

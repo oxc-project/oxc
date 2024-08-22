@@ -7,6 +7,12 @@ tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-fu
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -102,6 +108,12 @@ tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-fu
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
 rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -197,6 +209,12 @@ tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -292,6 +310,12 @@ tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-b
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -387,6 +411,12 @@ tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func
 semantic error: Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): [ScopeId(2)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -482,6 +512,12 @@ tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-glob
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -567,6 +603,12 @@ tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-glob
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -652,6 +694,12 @@ tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -737,6 +785,12 @@ tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-b
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -822,6 +876,12 @@ tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
