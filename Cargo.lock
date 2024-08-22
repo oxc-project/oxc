@@ -1705,6 +1705,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",
@@ -1768,7 +1769,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.0.0"
+version = "0.24.3"
 dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",

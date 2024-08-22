@@ -2,9 +2,9 @@
 pub struct ParserOptions {
     /// Used to adjust Span positions to fit the global source code.
     pub span_offset: u32,
-    /// Unicode mode enabled or not.
+    /// Unicode mode(`u` or `v` flag) enabled or not.
     pub unicode_mode: bool,
-    /// Extended Unicode mode enabled or not.
+    /// Extended Unicode mode(`v` flag) enabled or not.
     pub unicode_sets_mode: bool,
 }
 

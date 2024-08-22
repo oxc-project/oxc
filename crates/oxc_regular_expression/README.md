@@ -1,4 +1,4 @@
-# oxc_regexp_parser
+# oxc_regular_expression
 
 Implements ECMAScript® 2024 Language Specification
 

@@ -36,6 +36,21 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
             // these 2 relies on the ts "target" option
             "functionWithUseStrictAndSimpleParameterList.ts",
             "parameterInitializerBeforeDestructuringEmit.ts",
+            // these also relies on "target: es5" option w/ RegExp `u` flag
+            "unicodeExtendedEscapesInRegularExpressions01.ts",
+            "unicodeExtendedEscapesInRegularExpressions02.ts",
+            "unicodeExtendedEscapesInRegularExpressions03.ts",
+            "unicodeExtendedEscapesInRegularExpressions04.ts",
+            "unicodeExtendedEscapesInRegularExpressions05.ts",
+            "unicodeExtendedEscapesInRegularExpressions06.ts",
+            "unicodeExtendedEscapesInRegularExpressions08.ts",
+            "unicodeExtendedEscapesInRegularExpressions09.ts",
+            "unicodeExtendedEscapesInRegularExpressions10.ts",
+            "unicodeExtendedEscapesInRegularExpressions11.ts",
+            "unicodeExtendedEscapesInRegularExpressions13.ts",
+            "unicodeExtendedEscapesInRegularExpressions15.ts",
+            "unicodeExtendedEscapesInRegularExpressions16.ts",
+            "unicodeExtendedEscapesInRegularExpressions18.ts",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));

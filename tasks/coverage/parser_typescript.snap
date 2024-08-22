@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 6446/6456 (99.85%)
 Positive Passed: 6423/6456 (99.49%)
-Negative Passed: 1169/5653 (20.68%)
+Negative Passed: 1179/5639 (20.91%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -1786,10 +1786,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reexportMiss
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/reexportedMissingAlias.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/regExpWithOpenBracketInCharClass.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/regularExpressionAnnexB.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/regularExpressionGroupNameSuggestions.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/regularExpressionUnicodePropertyValueExpressionSuggestions.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/relationComplexityError.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/relationalOperatorComparable.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/relativeNamesInClassicResolution.ts
@@ -2903,25 +2899,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/templ
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringWithEmbeddedInstanceOfES6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringsWithTypeErrorInFunctionExpressionsInSubstitutionExpression.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/templates/templateStringsWithTypeErrorInFunctionExpressionsInSubstitutionExpressionES6.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions01.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions02.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions03.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions04.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions05.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions06.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions07.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions08.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions09.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions10.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions11.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions12.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions13.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions14.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions15.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions16.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions17.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions18.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions19.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression10_es6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression11_es6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/YieldExpression1_es6.ts
@@ -3830,7 +3807,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509693.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser509698.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser536727.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser579071.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression2.ts
@@ -10247,6 +10223,188 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  22 │ 
     ╰────
 
+  × Invalid regular expression: Unterminated character class
+   ╭─[typescript/tests/cases/compiler/regExpWithOpenBracketInCharClass.ts:4:4]
+ 3 │   /[[]/u, // Valid
+ 4 │   /[[]/v, // Well-terminated regex with an incomplete character class
+   ·    ───
+ 5 │ ];
+   ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:7:5]
+ 6 │   // Compare to
+ 7 │   /\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s/u,
+   ·     ▲
+ 8 │   /[\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s]/u,
+   ╰────
+
+  × Invalid regular expression: Invalid class atom
+   ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:8:5]
+ 7 │   /\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s/u,
+ 8 │   /[\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s]/u,
+   ·     ─
+ 9 │   /\P[\P\w-_]/u,
+   ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:9:4]
+  8 │   /[\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s]/u,
+  9 │   /\P[\P\w-_]/u,
+    ·    ──
+ 10 │ ];
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:23:4]
+ 22 │   /{,1}??/,
+ 23 │   /{1}??/,
+    ·    ────
+ 24 │   /{1,}??/,
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:24:4]
+ 23 │   /{1}??/,
+ 24 │   /{1,}??/,
+    ·    ─────
+ 25 │   /{1,2}??/,
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:25:4]
+ 24 │   /{1,}??/,
+ 25 │   /{1,2}??/,
+    ·    ──────
+ 26 │   /{2,1}??/,
+    ╰────
+
+  × Numbers out of order in braced quantifier
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:26:4]
+ 25 │   /{1,2}??/,
+ 26 │   /{2,1}??/,
+    ·    ─────
+ 27 │ 
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:29:4]
+ 28 │   // Compare to
+ 29 │   /{??/u,
+    ·    ▲
+ 30 │   /{,??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:30:4]
+ 29 │   /{??/u,
+ 30 │   /{,??/u,
+    ·    ▲
+ 31 │   /{,1??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:31:4]
+ 30 │   /{,??/u,
+ 31 │   /{,1??/u,
+    ·    ▲
+ 32 │   /{1??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:32:4]
+ 31 │   /{,1??/u,
+ 32 │   /{1??/u,
+    ·    ▲
+ 33 │   /{1,??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:33:4]
+ 32 │   /{1??/u,
+ 33 │   /{1,??/u,
+    ·    ▲
+ 34 │   /{1,2??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:34:4]
+ 33 │   /{1,??/u,
+ 34 │   /{1,2??/u,
+    ·    ▲
+ 35 │   /{2,1??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:35:4]
+ 34 │   /{1,2??/u,
+ 35 │   /{2,1??/u,
+    ·    ▲
+ 36 │   /{}??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:36:4]
+ 35 │   /{2,1??/u,
+ 36 │   /{}??/u,
+    ·    ▲
+ 37 │   /{,}??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:37:4]
+ 36 │   /{}??/u,
+ 37 │   /{,}??/u,
+    ·    ▲
+ 38 │   /{,1}??/u,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:38:4]
+ 37 │   /{,}??/u,
+ 38 │   /{,1}??/u,
+    ·    ▲
+ 39 │   /{1}??/u,
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:39:4]
+ 38 │   /{,1}??/u,
+ 39 │   /{1}??/u,
+    ·    ────
+ 40 │   /{1,}??/u,
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:40:4]
+ 39 │   /{1}??/u,
+ 40 │   /{1,}??/u,
+    ·    ─────
+ 41 │   /{1,2}??/u,
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:41:4]
+ 40 │   /{1,}??/u,
+ 41 │   /{1,2}??/u,
+    ·    ──────
+ 42 │   /{2,1}??/u,
+    ╰────
+
+  × Numbers out of order in braced quantifier
+    ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:42:4]
+ 41 │   /{1,2}??/u,
+ 42 │   /{2,1}??/u,
+    ·    ─────
+ 43 │ ];
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+   ╭─[typescript/tests/cases/compiler/regularExpressionGroupNameSuggestions.ts:1:24]
+ 1 │ const regex = /(?<foo>)\k<Foo>/;
+   ·                        ───────
+   ╰────
+
   × Unexpected flag a in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:12]
  2 │     // Flags
@@ -10335,12 +10493,201 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  4 │     // Pattern modifiers
    ╰────
 
+  × Invalid regular expression: Capturing group name is missing
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:5:3]
+ 4 │     // Pattern modifiers
+ 5 │     /(?med-ium:bar)/,
+   ·      ──
+ 6 │     // Capturing groups
+   ╰────
+
+  × Invalid regular expression: Invalid indexed reference
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:13:8]
+ 12 │     /\2()(\12)(foo)\1\0[\0\1\01\123\08\8](\3\03)\5\005\9\009/,
+ 13 │     /\2()(\12)(foo)\1\0[\0\1\01\123\08\8](\3\03)\5\005\9\009/u,
+    ·           ───
+ 14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
+    ╰────
+
+  × Invalid regular expression: Duplicated group name
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:14:46]
+ 13 │     /\2()(\12)(foo)\1\0[\0\1\01\123\08\8](\3\03)\5\005\9\009/u,
+ 14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
+    ·                                                 ───         ───
+ 15 │     /(\k<bar>)\k<absent>(?<foo>foo)|(?<bar>)((?<foo>)|(bar(?<bar>bar)))/,
+    ╰────
+
+  × Invalid regular expression: Duplicated group name
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:15:59]
+ 14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
+ 15 │     /(\k<bar>)\k<absent>(?<foo>foo)|(?<bar>)((?<foo>)|(bar(?<bar>bar)))/,
+    ·                                                              ───
+ 16 │     // Quantifiers
+    ╰────
+
+  × Numbers out of order in braced quantifier
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:17:31]
+ 16 │     // Quantifiers
+ 17 │     /{}{1,2}_{3}.{4,}?(foo){008}${32,16}\b{064,128}.+&*?\???\n{,256}{\\{,/,
+    ·                                  ───────
+ 18 │     // Character classes
+    ╰────
+
+  × Invalid regular expression: Character class range out of order
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:19:13]
+ 18 │     // Character classes
+ 19 │     /[-A-Za-z-z-aZ-A\d_-\d-.-.\r-\n\w-\W]/,
+    ·                ──
+ 20 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:21:28]
+ 20 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/,
+ 21 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/u,
+    ·                               ───────
+ 22 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:22:28]
+ 21 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/u,
+ 22 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/v,
+    ·                               ───────
+ 23 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:24:22]
+ 23 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/,
+ 24 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/u,
+    ·                         ─────
+ 25 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/v,
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:25:22]
+ 24 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/u,
+ 25 │     /\p{InvalidProperty=Value}\p{=}\p{sc=}\P{=foo}[\p{}\p\\\P\P{]\p{/v,
+    ·                         ─────
+ 26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:27:6]
+ 26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
+ 27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
+    ·         ─────────
+ 28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:28:16]
+ 27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
+ 28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
+    ·                   ─────────────
+ 29 │     // Character escapes
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:31:4]
+ 30 │     /\c[\c0\ca\cQ\c\C]\c1\C/,
+ 31 │     /\c[\c0\ca\cQ\c\C]\c1\C/u,
+    ·       ▲
+ 32 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:33:4]
+ 32 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/,
+ 33 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/u,
+    ·       ▲
+ 34 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/v,
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:34:4]
+ 33 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/u,
+ 34 │     /\q\\\`[\q\\\`[\Q\\\Q{\q{foo|bar|baz]\q{]\q{/v,
+    ·       ▲
+ 35 │     // Unicode sets notation
+    ╰────
+
+  × Invalid regular expression: Character class range out of order
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:36:5]
+ 35 │     // Unicode sets notation
+ 36 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/,
+    ·        ──
+ 37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
+    ╰────
+
+  × Invalid regular expression: Character class range out of order
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:37:5]
+ 36 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/,
+ 37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
+    ·        ──
+ 38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
+    ╰────
+
+  × Invalid character in character class set subtraction
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:38:8]
+ 37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
+ 38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
+    ·           ▲
+ 39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
+    ╰────
+
+  × Invalid character in character class set interseciton
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:39:56]
+ 38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
+ 39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
+    ·                                                           ▲
+ 40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:40:3]
+ 39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
+ 40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
+    ·      ─────────────────────────
+ 41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:41:3]
+ 40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
+ 41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
+    ·      ─────────────────────────
+ 42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:42:3]
+ 41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
+ 42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
+    ·      ───────────────────────
+ 43 │     /[^\p{Emoji}[[\p{RGI_Emoji}]]][^\p{Emoji}--[[\p{RGI_Emoji}]]][^\p{Emoji}&&[[\p{RGI_Emoji}]]]/v,
+    ╰────
+
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:2]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
    ·     ─────────────────────
  4 │     // Pattern modifiers
+   ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+   ╭─[typescript/tests/cases/compiler/regularExpressionUnicodePropertyValueExpressionSuggestions.ts:1:19]
+ 1 │ const regex = /\p{ascii}\p{Sc=Unknown}\p{sc=unknownX}\p{Script_Declensions=Inherited}\p{scx=inherit}/u;
+   ·                   ─────
+   ╰────
+
+  × Invalid regular expression: Capturing group name is missing
+   ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:31]
+ 6 │ // See https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
+ 7 │ const 𝘳𝘦𝘨𝘦𝘹 = /(?𝘴𝘪-𝘮:^𝘧𝘰𝘰.)/𝘨𝘮𝘶;
+   ·                ──
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -15418,6 +15765,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │     // Once this is supported, yield *must* be parenthesized.
    ╰────
 
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions07.ts:3:11]
+ 2 │ //  1. Assert: 0 ≤ cp ≤ 0x10FFFF.
+ 3 │ var x = /\u{110000}/gu;
+   ·           ─
+   ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions12.ts:1:11]
+ 1 │ var x = /\u{FFFFFFFF}/gu;
+   ·           ─
+   ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions14.ts:2:11]
+ 1 │ // Shouldn't work, negatives are not allowed.
+ 2 │ var x = /\u{-DDDD}/gu;
+   ·           ─
+   ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions17.ts:1:11]
+ 1 │ var x = /\u{r}\u{n}\u{t}/gu;
+   ·           ─
+   ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+   ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions19.ts:1:11]
+ 1 │ var x = /\u{}/gu;
+   ·           ─
+   ╰────
+
   × Invalid escape sequence
    ╭─[typescript/tests/cases/conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings07.ts:3:10]
  2 │ //  1. Assert: 0 ≤ cp ≤ 0x10FFFF.
@@ -19913,6 +20292,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·         ──
    ╰────
 
+  × Invalid regular expression: Unterminated capturing group
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser579071.ts:1:12]
+ 1 │ var x = /fo(o/;
+   ·            ──
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:6]
  1 │ class Foo2 {
@@ -19969,6 +20354,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:5]
  1 │ foo(/notregexp);
    ·     ────────────
+   ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:15]
+ 1 │ foo(/notregexp);
+   ·               ▲
    ╰────
 
   × Expected `)` but found `EOF`

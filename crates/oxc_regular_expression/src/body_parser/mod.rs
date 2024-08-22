@@ -11,7 +11,6 @@ mod test {
     use crate::{ParserOptions, PatternParser};
     use oxc_allocator::Allocator;
 
-    // NOTE: These may be useless when integlation tests are added
     #[test]
     fn should_pass() {
         let allocator = Allocator::default();
@@ -40,6 +39,7 @@ mod test {
             (r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$", ParserOptions::default()),
             ("a.b..", ParserOptions::default()),
             (r"\d\D\s\S\w\W", ParserOptions::default()),
+            (r"\x", ParserOptions::default()),
             (
                 r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{Basic_Emoji}",
                 ParserOptions::default(),
@@ -48,8 +48,10 @@ mod test {
                 r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
                 ParserOptions::default().with_unicode_mode(),
             ),
+            (r"^\p{General_Category=cntrl}+$", ParserOptions::default().with_unicode_mode()),
             (r"\p{Basic_Emoji}", ParserOptions::default().with_unicode_sets_mode()),
             (r"\n\cM\0\x41\u1f60\.\/", ParserOptions::default()),
+            (r"\c0", ParserOptions::default()),
             (r"\0", ParserOptions::default()),
             (r"\0", ParserOptions::default().with_unicode_mode()),
             (r"\u", ParserOptions::default()),
@@ -137,7 +139,8 @@ mod test {
             ("a{,", ParserOptions::default().with_unicode_mode()),
             ("(?=a", ParserOptions::default()),
             ("(?<!a", ParserOptions::default()),
-            (r"\xa", ParserOptions::default()),
+            (r"\c0", ParserOptions::default().with_unicode_mode()),
+            (r"\xa", ParserOptions::default().with_unicode_mode()),
             (r"a\u", ParserOptions::default().with_unicode_mode()),
             (r"\p{Emoji_Presentation", ParserOptions::default().with_unicode_mode()),
             (r"\p{Script=", ParserOptions::default().with_unicode_mode()),
@@ -152,6 +155,10 @@ mod test {
             ("a(?:", ParserOptions::default()),
             ("(a", ParserOptions::default()),
             ("(?<a>", ParserOptions::default()),
+            (r"(?<a\>.)", ParserOptions::default()),
+            (r"(?<a\>.)", ParserOptions::default().with_unicode_mode()),
+            (r"(?<\>.)", ParserOptions::default()),
+            (r"(?<\>.)", ParserOptions::default().with_unicode_mode()),
             ("(?)", ParserOptions::default()),
             ("(?=a){1}", ParserOptions::default().with_unicode_mode()),
             ("(?!a){1}", ParserOptions::default().with_unicode_mode()),
@@ -183,6 +190,7 @@ mod test {
         let allocator = Allocator::default();
 
         for (source_text, options, is_err) in &[
+            // No tests for 4,294,967,295 left parens
             (r"(?<n>..)(?<n>..)", ParserOptions::default(), true),
             (r"a{2,1}", ParserOptions::default(), true),
             (r"(?<a>)\k<n>", ParserOptions::default(), true),

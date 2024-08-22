@@ -106,6 +106,11 @@ pub struct ParserReturn<'a> {
 /// Parse options
 #[derive(Debug, Clone, Copy)]
 pub struct ParseOptions {
+    /// Whether to parse regular expressions or not.
+    ///
+    /// Default: false
+    pub parse_regular_expression: bool,
+
     /// Allow return outside of function
     ///
     /// By default, a return statement at the top level raises an error.
@@ -124,7 +129,11 @@ pub struct ParseOptions {
 
 impl Default for ParseOptions {
     fn default() -> Self {
-        Self { allow_return_outside_function: false, preserve_parens: true }
+        Self {
+            parse_regular_expression: false,
+            allow_return_outside_function: false,
+            preserve_parens: true,
+        }
     }
 }
 
