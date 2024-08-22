@@ -1,4 +1,4 @@
-use oxc_ast::ast::VariableDeclarator;
+use oxc_ast::ast::{ImportDeclarationSpecifier, VariableDeclarator};
 use std::{cell::OnceCell, fmt};
 
 use oxc_ast::{
@@ -28,7 +28,7 @@ impl PartialEq for Symbol<'_, '_> {
 // constructor and simple getters
 impl<'s, 'a> Symbol<'s, 'a> {
     pub fn new(semantic: &'s Semantic<'a>, symbol_id: SymbolId) -> Self {
-        let flags = semantic.symbols().get_flag(symbol_id);
+        let flags = semantic.symbols().get_flags(symbol_id);
         Self { semantic, id: symbol_id, flags, span: OnceCell::new() }
     }
 
@@ -254,6 +254,12 @@ impl<'a> PartialEq<AssignmentTarget<'a>> for Symbol<'_, 'a> {
             AssignmentTarget::AssignmentTargetIdentifier(id) => self == id.as_ref(),
             _ => false,
         }
+    }
+}
+
+impl<'s, 'a> PartialEq<ImportDeclarationSpecifier<'a>> for Symbol<'s, 'a> {
+    fn eq(&self, import: &ImportDeclarationSpecifier<'a>) -> bool {
+        self == import.local()
     }
 }
 

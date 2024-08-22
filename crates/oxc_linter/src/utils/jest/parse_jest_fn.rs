@@ -88,7 +88,8 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest)) {
+        if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest | JestGeneralFnKind::Vitest))
+        {
             return parse_jest_jest_fn_call(members, name, resolved.local);
         }
 
@@ -244,12 +245,17 @@ fn parse_jest_jest_fn_call<'a>(
     name: &'a str,
     local: &'a str,
 ) -> Option<ParsedJestFnCall<'a>> {
-    if !name.to_ascii_lowercase().eq_ignore_ascii_case("jest") {
+    let lowercase_name = name.to_ascii_lowercase();
+
+    if !(lowercase_name == "jest" || lowercase_name == "vi") {
         return None;
     }
 
+    let kind =
+        if lowercase_name == "jest" { JestGeneralFnKind::Jest } else { JestGeneralFnKind::Vitest };
+
     return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
-        kind: JestFnKind::General(JestGeneralFnKind::Jest),
+        kind: JestFnKind::General(kind),
         members,
         name: Cow::Borrowed(name),
         local: Cow::Borrowed(local),

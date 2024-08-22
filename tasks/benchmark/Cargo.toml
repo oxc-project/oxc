@@ -109,7 +109,7 @@ codspeed_napi = ["criterion2/codspeed", "dep:serde", "dep:serde_json"]
 # e.g. `cargo build --release -p oxc_benchmark --bench parser --no-default-features --features parser`
 lexer = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
 parser = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
-transformer = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common", "dep:oxc_transformer"]
+transformer = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common", "dep:oxc_transformer", "dep:oxc_semantic"]
 semantic = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_semantic", "dep:oxc_span", "dep:oxc_tasks_common"]
 minifier = ["dep:oxc_allocator", "dep:oxc_minifier", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]
 codegen = ["dep:oxc_allocator", "dep:oxc_codegen", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_tasks_common"]

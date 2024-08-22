@@ -30,9 +30,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
         // ignore markdown files
         path.ends_with(".md") ||
         // ignore fixtures
-        path.contains("_FIXTURE") ||
-        // ignore regexp as we don't have a regexp parser for now
-        (path.contains("literals") && path.contains("regexp"))
+        path.contains("_FIXTURE")
     }
 
     fn save_test_cases(&mut self, cases: Vec<T>) {
@@ -102,9 +100,13 @@ impl Case for Test262Case {
 
     fn skip_test_case(&self) -> bool {
         [
-            // Regex parser is required. See https://github.com/oxc-project/oxc/issues/385#issuecomment-1755566240
-            "regexp-v-flag",
-            "regexp-unicode-property-escapes",
+            // ES2025 https://github.com/tc39/proposal-duplicate-named-capturing-groups
+            "regexp-duplicate-named-groups",
+            // stage 3 https://github.com/tc39/proposal-regexp-modifiers
+            "regexp-modifiers",
+            // stage 3 https://github.com/tc39/proposal-json-modules
+            // ignored due to https://github.com/tc39/proposal-json-modules/issues/27
+            "json-modules",
         ]
         .iter()
         .any(|feature| self.meta.features.iter().any(|f| **f == **feature))

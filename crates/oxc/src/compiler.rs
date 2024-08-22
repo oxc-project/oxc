@@ -2,8 +2,9 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, Trivias};
-use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions, WhitespaceRemover};
+use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_mangler::{MangleOptions, Mangler};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
@@ -49,7 +50,7 @@ impl Compiler {
 pub trait CompilerInterface {
     fn handle_errors(&mut self, _errors: Vec<OxcDiagnostic>) {}
 
-    fn parser_options(&self) -> ParseOptions {
+    fn parse_options(&self) -> ParseOptions {
         ParseOptions::default()
     }
 
@@ -61,12 +62,12 @@ pub trait CompilerInterface {
         None
     }
 
-    fn codegen_options(&self) -> Option<CodegenOptions> {
-        Some(CodegenOptions::default())
+    fn mangle_options(&self) -> Option<MangleOptions> {
+        None
     }
 
-    fn remove_whitespace(&self) -> bool {
-        false
+    fn codegen_options(&self) -> Option<CodegenOptions> {
+        Some(CodegenOptions::default())
     }
 
     fn check_semantic_error(&self) -> bool {
@@ -149,12 +150,20 @@ pub trait CompilerInterface {
             }
         }
 
+        /* Compress */
+
         if let Some(options) = self.compress_options() {
             self.compress(&allocator, &mut program, options);
         }
 
+        /* Mangler */
+
+        let mangler = self.mangle_options().map(|options| self.mangle(&mut program, options));
+
+        /* Codegen */
+
         if let Some(options) = self.codegen_options() {
-            let printed = self.codegen(&program, source_text, &trivias, options);
+            let printed = self.codegen(&program, source_text, &trivias, mangler, options);
             self.after_codegen(printed);
         }
     }
@@ -165,7 +174,7 @@ pub trait CompilerInterface {
         source_text: &'a str,
         source_type: SourceType,
     ) -> ParserReturn<'a> {
-        Parser::new(allocator, source_text, source_type).with_options(self.parser_options()).parse()
+        Parser::new(allocator, source_text, source_type).with_options(self.parse_options()).parse()
     }
 
     fn semantic<'a>(
@@ -207,23 +216,24 @@ pub trait CompilerInterface {
         Compressor::new(allocator, options).build(program);
     }
 
+    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> Mangler {
+        Mangler::new().with_options(options).build(program)
+    }
+
     fn codegen<'a>(
         &self,
         program: &Program<'a>,
         source_text: &'a str,
         trivias: &Trivias,
+        mangler: Option<Mangler>,
         options: CodegenOptions,
     ) -> String {
         let comment_options = CommentOptions { preserve_annotate_comments: true };
-
-        if self.remove_whitespace() {
-            WhitespaceRemover::new().with_options(options).build(program).source_text
-        } else {
-            CodeGenerator::new()
-                .with_options(options)
-                .enable_comment(source_text, trivias.clone(), comment_options)
-                .build(program)
-                .source_text
-        }
+        CodeGenerator::new()
+            .with_options(options)
+            .with_mangler(mangler)
+            .enable_comment(source_text, trivias.clone(), comment_options)
+            .build(program)
+            .source_text
     }
 }

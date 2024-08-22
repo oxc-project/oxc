@@ -67,17 +67,11 @@ fn test_vars_simple() {
             None,
             FixKind::DangerousSuggestion,
         ),
-        // function expressions do not get changed
-        (r"const foo = () => {}", r"const foo = () => {}", None, FixKind::DangerousSuggestion),
+        // vars initialized to `await` are not removed
+        ("const x = await foo();", "const x = await foo();", None, FixKind::DangerousSuggestion),
         (
-            r"const foo = function() {}",
-            r"const foo = function() {}",
-            None,
-            FixKind::DangerousSuggestion,
-        ),
-        (
-            r"const foo = function foo() {}",
-            r"const foo = function foo() {}",
+            "const x = (await foo()) as unknown as MyType",
+            "const x = (await foo()) as unknown as MyType",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -469,8 +463,61 @@ fn test_functions() {
 
     let fail = vec!["function foo() {}", "function foo() { foo() }"];
 
+    let fix = vec![
+        // function declarations are never removed
+        ("function foo() {}", "function foo() {}", None, FixKind::DangerousSuggestion),
+        (
+            "function foo() { function bar() {} }",
+            "function foo() { function bar() {} }",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "function foo() { function bar() {} }\nfoo()",
+            "function foo() { function bar() {} }\nfoo()",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // function expressions + arrow functions are not removed if declared in
+        // the root scope
+        (
+            "const foo = function foo() {}",
+            "const foo = function foo() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (r"const foo = () => {}", r"const foo = () => {}", None, FixKind::DangerousSuggestion),
+        // function expressions + arrow functions are removed if not declared in
+        // root scope
+        (
+            "
+                function foo() { const bar = function bar() {} }
+                foo();
+            ",
+            "
+                function foo() {  }
+                foo();
+            ",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "
+                function foo() { const bar = x => x }
+                foo();
+            ",
+            "
+                function foo() {  }
+                foo();
+            ",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
     Tester::new(NoUnusedVars::NAME, pass, fail)
         .with_snapshot_suffix("oxc-functions")
+        .expect_fix(fix)
         .test_and_snapshot();
 }
 
@@ -530,6 +577,25 @@ fn test_imports() {
         (
             "import { foo, bar, baz } from './foo'; bar(baz);",
             "import { bar, baz } from './foo'; bar(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // type imports
+        (
+            "import { type foo, bar } from './foo'; bar();",
+            "import { bar } from './foo'; bar();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, type bar, baz } from './foo'; foo(baz);",
+            "import { foo, baz } from './foo'; foo(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo, { type bar } from './foo'; foo();",
+            "import foo, { } from './foo'; foo();",
             None,
             FixKind::DangerousSuggestion,
         ),

@@ -49,7 +49,9 @@ impl JsonSchema for OxlintRules {
 
         #[allow(unused)]
         #[derive(Debug, JsonSchema)]
-        #[schemars(description = "See [Oxlint Rules](./rules)")]
+        #[schemars(
+            description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+        )]
         struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
 
         gen.subschema_for::<DummyRuleMap>()

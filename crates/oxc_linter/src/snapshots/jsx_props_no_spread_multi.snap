@@ -10,6 +10,22 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prop 'props' is spread multiple times.
 
+  ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Disallow JSX prop spreading the same member expression multiple times.
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
+ 2 │           const props = {};
+ 3 │           <App {...props.foo} {...props.foo} />
+   ·                ────────────── ──────────────
+ 4 │         
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Disallow JSX prop spreading the same member expression multiple times.
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
+ 2 │           const props = {};
+ 3 │           <App {...(props.foo).baz} {...(props.foo.baz)} />
+   ·                ──────────────────── ────────────────────
+ 4 │         
+   ╰────
+
   ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Disallow JSX prop spreading the same identifier multiple times.
    ╭─[jsx_props_no_spread_multi.tsx:3:16]
  2 │           const props = {};

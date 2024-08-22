@@ -5,7 +5,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/all.ts
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": []

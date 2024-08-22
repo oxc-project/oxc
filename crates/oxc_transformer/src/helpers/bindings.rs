@@ -3,7 +3,7 @@ use std::cell::Cell;
 use oxc_ast::ast::{BindingIdentifier, IdentifierReference};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
-    reference::ReferenceFlag,
+    reference::ReferenceFlags,
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
@@ -95,7 +95,7 @@ impl<'a> BoundIdentifier<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        self.create_spanned_reference(span, ReferenceFlag::Read, ctx)
+        self.create_spanned_reference(span, ReferenceFlags::Read, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is written to, with dummy `Span`
@@ -109,7 +109,7 @@ impl<'a> BoundIdentifier<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        self.create_spanned_reference(span, ReferenceFlag::Write, ctx)
+        self.create_spanned_reference(span, ReferenceFlags::Write, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
@@ -128,16 +128,16 @@ impl<'a> BoundIdentifier<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        self.create_spanned_reference(span, ReferenceFlag::Read | ReferenceFlag::Write, ctx)
+        self.create_spanned_reference(span, ReferenceFlags::Read | ReferenceFlags::Write, ctx)
     }
 
-    /// Create `IdentifierReference` referencing this binding, with specified `Span` and `ReferenceFlag`
+    /// Create `IdentifierReference` referencing this binding, with specified `Span` and `ReferenceFlags`
     pub fn create_spanned_reference(
         &self,
         span: Span,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, flag)
+        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, flags)
     }
 }

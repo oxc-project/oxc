@@ -3,7 +3,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc::{
     ast::ast::Program,
     diagnostics::OxcDiagnostic,
-    semantic::{post_transform_checker::PostTransformChecker, SemanticBuilderReturn},
+    semantic::post_transform_checker::check_semantic_after_transform,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
@@ -13,8 +13,6 @@ pub struct Driver {
     options: TransformOptions,
     printed: String,
     errors: Vec<OxcDiagnostic>,
-    check_semantic: bool,
-    checker: PostTransformChecker,
 }
 
 impl CompilerInterface for Driver {
@@ -34,34 +32,18 @@ impl CompilerInterface for Driver {
         self.printed = printed;
     }
 
-    fn after_semantic(
-        &mut self,
-        program: &mut Program<'_>,
-        _semantic_return: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
-        if self.check_semantic {
-            if let Some(errors) = self.checker.before_transform(program) {
-                self.errors.extend(errors);
-                return ControlFlow::Break(());
-            }
-        }
-        ControlFlow::Continue(())
-    }
-
     fn after_transform(
         &mut self,
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        if self.check_semantic {
-            if let Some(errors) = self.checker.after_transform(
-                &transformer_return.symbols,
-                &transformer_return.scopes,
-                program,
-            ) {
-                self.errors.extend(errors);
-                return ControlFlow::Break(());
-            }
+        if let Some(errors) = check_semantic_after_transform(
+            &transformer_return.symbols,
+            &transformer_return.scopes,
+            program,
+        ) {
+            self.errors.extend(errors);
+            return ControlFlow::Break(());
         }
         ControlFlow::Continue(())
     }
@@ -69,13 +51,7 @@ impl CompilerInterface for Driver {
 
 impl Driver {
     pub fn new(options: TransformOptions) -> Self {
-        Self {
-            options,
-            printed: String::new(),
-            errors: vec![],
-            check_semantic: false,
-            checker: PostTransformChecker::default(),
-        }
+        Self { options, printed: String::new(), errors: vec![] }
     }
 
     pub fn execute(

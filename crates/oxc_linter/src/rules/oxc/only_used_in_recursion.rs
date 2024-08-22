@@ -101,7 +101,7 @@ impl Rule for OnlyUsedInRecursion {
                     && !ctx
                         .semantic()
                         .symbols()
-                        .get_flag(function_id.symbol_id.get().expect("`symbol_id` should be set"))
+                        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
                         .is_export()
                 {
                     ctx.diagnostic_with_dangerous_fix(

@@ -13,7 +13,7 @@ pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefin
     let program = allocator.alloc(ret.program);
     ReplaceGlobalDefines::new(&allocator, config).build(program);
     let result = CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
         .source_text;
     let expected = run(expected, source_type, None);
@@ -40,5 +40,31 @@ fn replace_global_definitions_dot() {
     {
         let config = ReplaceGlobalDefinesConfig::new(&[("process", "production")]).unwrap();
         test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config);
+    }
+}
+
+#[test]
+fn replace_global_definitions_dot_with_postfix_wildcard() {
+    {
+        let config =
+            ReplaceGlobalDefinesConfig::new(&[("import.meta.env.*", "undefined")]).unwrap();
+        test("import.meta.env.result", "undefined", config.clone());
+        test("import.meta.env", "import.meta.env", config);
+    }
+}
+
+#[test]
+fn replace_global_definitions_dot_with_postfix_mixed() {
+    {
+        let config = ReplaceGlobalDefinesConfig::new(&[
+            ("import.meta.env.*", "undefined"),
+            ("import.meta.env", "env"),
+        ])
+        .unwrap();
+        test("import.meta.env.result", "undefined", config.clone());
+        test("import.meta.env.result.many.nested", "undefined", config.clone());
+        test("import.meta.env", "env", config.clone());
+        test("import.meta.somethingelse", "import.meta.somethingelse", config.clone());
+        test("import.meta", "import.meta", config);
     }
 }

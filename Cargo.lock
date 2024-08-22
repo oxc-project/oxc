@@ -1504,6 +1504,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -1561,14 +1562,6 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",
-]
-
-[[package]]
-name = "oxc_js_regex"
-version = "0.0.0"
-dependencies = [
- "oxc_allocator",
- "oxc_span",
 ]
 
 [[package]]
@@ -1712,6 +1705,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",
@@ -1771,6 +1765,21 @@ dependencies = [
  "oxc_tasks_common",
  "pico-args",
  "walkdir",
+]
+
+[[package]]
+name = "oxc_regular_expression"
+version = "0.24.3"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_semantic",
+ "oxc_span",
+ "phf 0.11.2",
+ "rustc-hash",
+ "unicode-id-start",
 ]
 
 [[package]]
@@ -1896,6 +1905,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_isolated_declarations",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_sourcemap",
  "oxc_span",
  "oxc_transformer",
@@ -3312,6 +3322,7 @@ dependencies = [
  "oxc_span",
  "oxlint",
  "pico-args",
+ "project-root",
  "schemars",
  "scraper",
  "serde",

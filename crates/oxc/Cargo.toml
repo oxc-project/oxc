@@ -42,12 +42,13 @@ oxc_sourcemap             = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
 
 [features]
-full = ["codegen", "minifier", "semantic", "transformer"]
+full = ["codegen", "mangler", "minifier", "semantic", "transformer"]
 
 semantic    = ["oxc_semantic"]
 transformer = ["oxc_transformer"]
 minifier    = ["oxc_mangler", "oxc_minifier"]
 codegen     = ["oxc_codegen"]
+mangler     = ["oxc_mangler"]
 
 serialize = ["oxc_ast/serialize", "oxc_semantic?/serialize", "oxc_span/serialize", "oxc_syntax/serialize"]
 
