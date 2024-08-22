@@ -1,41 +1,41 @@
 Parent: {
-    Son: {
-        Son1: console.log("Son1");
-        Son1: console.log("Son2");
+    Child: {
+        Child1: console.log("Child1");
+        Child1: console.log("Child2");
     }
-    Son: {
-        Son1: console.log("Son3");
-        Son1: console.log("Son4");
+    Child: {
+        Child1: console.log("Child3");
+        Child1: console.log("Child4");
     }
-    Son: {
-        Son1: console.log("Son5");
-        Son1: console.log("Son6");
-    }
-}
-
-Parent: {
-    Son: {
-        Son1: console.log("Son7");
-        Son1: console.log("Son8");
+    Child: {
+        Child1: console.log("Child5");
+        Child1: console.log("Child6");
     }
 }
 
 Parent: {
-    Son: {
-        Son1: {
-            Son2: {
-                Son3: console.log("Son9");
+    Child: {
+        Child1: console.log("Child7");
+        Child1: console.log("Child8");
+    }
+}
+
+Parent: {
+    Child: {
+        Child1: {
+            Child2: {
+                Child3: console.log("Child9");
             }
         }
     }
-    Son: console.log("Son10");
-    Son: console.log("Son11");
-    Son: {
-        Son1: {
-            Son2: {
-                Son3: console.log("Son12");
+    Child: console.log("Child10");
+    Child: console.log("Child11");
+    Child: {
+        Child1: {
+            Child2: {
+                Child3: console.log("Child12");
             }
         }
     }
-    Son: console.log("Son13");
+    Child: console.log("Child13");
 }
