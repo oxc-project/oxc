@@ -642,15 +642,21 @@ pub fn check_continue_statement<'a>(
 pub fn check_labeled_statement(ctx: &SemanticBuilder) {
     ctx.label_builder.labels.iter().for_each(|labels| {
         let mut defined = FxHashMap::default();
-        let mut defined_parent = FxHashMap::default();
+        //only need to care about the monotone increasing depth of the array
+        let mut rise_depth = vec![];
         for labeled in labels {
+            rise_depth.push(labeled);
+            // have to traverse because HashMap can only delete one by one
+            while rise_depth.len() > 2
+                && rise_depth[rise_depth.len() - 2].depth >= rise_depth[rise_depth.len() - 1].depth
+            {
+                defined.remove(rise_depth[rise_depth.len() - 2].name);
+                rise_depth.remove(rise_depth.len() - 2);
+            }
             if let Some(span) = defined.get(labeled.name) {
-                if labeled.parent_id != defined_parent[labeled.name] {
-                    ctx.error(redeclaration(labeled.name, *span, labeled.span));
-                }
+                ctx.error(redeclaration(labeled.name, *span, labeled.span));
             } else {
                 defined.insert(labeled.name, labeled.span);
-                defined_parent.insert(labeled.name, labeled.parent_id);
             }
         }
     });

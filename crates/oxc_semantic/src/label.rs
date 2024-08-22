@@ -7,12 +7,11 @@ use crate::AstNodeId;
 #[derive(Debug)]
 pub struct Label<'a> {
     pub id: AstNodeId,
-    pub parent_id: Option<AstNodeId>,
     pub name: &'a str,
     pub span: Span,
     used: bool,
     /// depth is the number of nested labeled statements
-    depth: usize,
+    pub depth: usize,
     /// is accessible means that the label is accessible from the current position
     is_accessible: bool,
     /// is_inside_function_or_static_block means that the label is inside a function or static block
@@ -22,7 +21,6 @@ pub struct Label<'a> {
 impl<'a> Label<'a> {
     pub fn new(
         id: AstNodeId,
-        parent_id: Option<AstNodeId>,
         name: &'a str,
         span: Span,
         depth: usize,
@@ -30,7 +28,6 @@ impl<'a> Label<'a> {
     ) -> Self {
         Self {
             id,
-            parent_id,
             name,
             span,
             depth,
@@ -57,18 +54,9 @@ impl<'a> LabelBuilder<'a> {
         }
 
         self.depth += 1;
-        let mut parent_id = None;
-        for labels_in in &self.labels {
-            for labels in labels_in.iter().rev() {
-                if labels.depth + 1 == self.depth {
-                    parent_id = Some(labels.id);
-                    break;
-                }
-            }
-        }
+
         self.labels.last_mut().unwrap_or_else(|| unreachable!()).push(Label::new(
             current_node_id,
-            parent_id,
             stmt.label.name.as_str(),
             stmt.label.span,
             self.depth,
