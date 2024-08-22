@@ -95,24 +95,16 @@ impl ScopeTree {
         list.into_iter()
     }
 
-    /// Get the child scopes of a scope.
-    ///
-    /// Will return [`None`] if no scope exists, which should never happen if
-    /// you obtained `scope_id` through valid means. Scopes with no children
-    /// return [`Some`] empty [`Vec`].
+    /// Get the child scopes of a scope
     #[inline]
-    pub fn get_child_ids(&self, scope_id: ScopeId) -> Option<&Vec<ScopeId>> {
-        self.child_ids.get(scope_id)
+    pub fn get_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
+        &self.child_ids[scope_id]
     }
 
-    /// Get a mutable reference to a scope's children.
-    ///
-    /// Will return [`None`] if no scope exists, which should never happen if
-    /// you obtained `scope_id` through valid means. Scopes with no children
-    /// return [`Some`] empty [`Vec`].
+    /// Get a mutable reference to a scope's children
     #[inline]
-    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> Option<&mut Vec<ScopeId>> {
-        self.child_ids.get_mut(scope_id)
+    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> &mut Vec<ScopeId> {
+        &mut self.child_ids[scope_id]
     }
 
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {

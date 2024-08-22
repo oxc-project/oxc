@@ -52,8 +52,8 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
         // Collect all scopes where variable hoisting can occur
         for scope_id in builder.scope.ancestors(target_scope_id) {
-            let flag = builder.scope.get_flags(scope_id);
-            if flag.is_var() {
+            let flags = builder.scope.get_flags(scope_id);
+            if flags.is_var() {
                 target_scope_id = scope_id;
                 break;
             }
@@ -181,10 +181,10 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(AstKind::ObjectProperty(prop)) =
             builder.nodes.parent_kind(builder.current_node_id)
         {
-            let flag = builder.scope.get_flags_mut(current_scope_id);
+            let flags = builder.scope.get_flags_mut(current_scope_id);
             match prop.kind {
-                PropertyKind::Get => *flag |= ScopeFlags::GetAccessor,
-                PropertyKind::Set => *flag |= ScopeFlags::SetAccessor,
+                PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
+                PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
                 PropertyKind::Init => {}
             };
         }

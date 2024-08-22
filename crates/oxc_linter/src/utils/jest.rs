@@ -31,6 +31,7 @@ pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "fit",
     "it",
     "jest",
+    "vi",
     "test",
     "xdescribe",
     "xit",
@@ -51,6 +52,7 @@ impl JestFnKind {
         match name {
             "expect" => Self::Expect,
             "expectTypeOf" => Self::ExpectTypeOf,
+            "vi" => Self::General(JestGeneralFnKind::Vitest),
             "jest" => Self::General(JestGeneralFnKind::Jest),
             "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
             "fit" | "it" | "test" | "xit" | "xtest" => Self::General(JestGeneralFnKind::Test),
@@ -75,6 +77,7 @@ pub enum JestGeneralFnKind {
     Describe,
     Test,
     Jest,
+    Vitest,
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
@@ -200,7 +203,7 @@ fn collect_ids_referenced_to_import<'a>(
         .resolved_references
         .iter_enumerated()
         .filter_map(|(symbol_id, reference_ids)| {
-            if ctx.symbols().get_flag(symbol_id).is_import() {
+            if ctx.symbols().get_flags(symbol_id).is_import() {
                 let id = ctx.symbols().get_declaration(symbol_id);
                 let Some(AstKind::ImportDeclaration(import_decl)) = ctx.nodes().parent_kind(id)
                 else {

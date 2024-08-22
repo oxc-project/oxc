@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
+use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -68,7 +68,10 @@ fn main() -> std::io::Result<()> {
     if minify {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let minified = WhitespaceRemover::new().build(&ret.program).source_text;
+        let minified = CodeGenerator::new()
+            .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+            .build(&ret.program)
+            .source_text;
         println!("Minified:");
         println!("{minified}");
     }

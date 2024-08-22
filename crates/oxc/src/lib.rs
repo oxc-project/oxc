@@ -61,7 +61,7 @@ pub mod minifier {
     pub use oxc_minifier::*;
 }
 
-#[cfg(feature = "minifier")]
+#[cfg(feature = "mangler")]
 pub mod mangler {
     #[doc(inline)]
     pub use oxc_mangler::*;

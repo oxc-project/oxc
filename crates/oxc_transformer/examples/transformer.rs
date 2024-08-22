@@ -4,6 +4,7 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{
     ArrowFunctionsOptions, ES2015Options, ReactOptions, TransformOptions, Transformer,
@@ -47,6 +48,12 @@ fn main() {
         },
         ..Default::default()
     };
+
+    let (symbols, scopes) = SemanticBuilder::new(&source_text, source_type)
+        .build(&program)
+        .semantic
+        .into_symbol_table_and_scope_tree();
+
     let _ = Transformer::new(
         &allocator,
         path,
@@ -55,7 +62,7 @@ fn main() {
         ret.trivias.clone(),
         transform_options,
     )
-    .build(&mut program);
+    .build_with_symbols_and_scopes(symbols, scopes, &mut program);
 
     let printed = CodeGenerator::new().build(&program).source_text;
     println!("Transformed:\n");

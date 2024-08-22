@@ -1,7 +1,7 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
+pub use oxc_syntax::reference::{ReferenceFlags, ReferenceId};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -11,8 +11,8 @@ use crate::{symbol::SymbolId, AstNodeId};
 
 /// Describes where and how a Symbol is used in the AST.
 ///
-/// References indicate how they are being used using [`ReferenceFlag`]. Refer
-/// to the documentation for [`ReferenceFlag`] for more information.
+/// References indicate how they are being used using [`ReferenceFlags`]. Refer
+/// to the documentation for [`ReferenceFlags`] for more information.
 ///
 /// ## Resolution
 /// References to symbols that could be resolved have their `symbol_id` field
@@ -45,14 +45,14 @@ pub struct Reference {
     symbol_id: Option<SymbolId>,
     /// Describes how this referenced is used by other AST nodes. References can
     /// be reads, writes, or both.
-    flag: ReferenceFlag,
+    flags: ReferenceFlags,
 }
 
 impl Reference {
     /// Create a new unresolved reference.
     #[inline]
-    pub fn new(node_id: AstNodeId, flag: ReferenceFlag) -> Self {
-        Self { node_id, symbol_id: None, flag }
+    pub fn new(node_id: AstNodeId, flags: ReferenceFlags) -> Self {
+        Self { node_id, symbol_id: None, flags }
     }
 
     /// Create a new resolved reference on a symbol.
@@ -60,9 +60,9 @@ impl Reference {
     pub fn new_with_symbol_id(
         node_id: AstNodeId,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> Self {
-        Self { node_id, symbol_id: Some(symbol_id), flag }
+        Self { node_id, symbol_id: Some(symbol_id), flags }
     }
 
     /// Get the id of the node that is referencing the symbol.
@@ -91,32 +91,32 @@ impl Reference {
     }
 
     #[inline]
-    pub fn flag(&self) -> &ReferenceFlag {
-        &self.flag
+    pub fn flags(&self) -> ReferenceFlags {
+        self.flags
     }
 
     #[inline]
-    pub fn flag_mut(&mut self) -> &mut ReferenceFlag {
-        &mut self.flag
+    pub fn flags_mut(&mut self) -> &mut ReferenceFlags {
+        &mut self.flags
     }
 
     /// Returns `true` if the identifier value was read. This is not mutually
     /// exclusive with [`#is_write`]
     #[inline]
     pub fn is_read(&self) -> bool {
-        self.flag.is_read()
+        self.flags.is_read()
     }
 
     /// Returns `true` if the identifier was written to. This is not mutually
     /// exclusive with [`#is_read`]
     #[inline]
     pub fn is_write(&self) -> bool {
-        self.flag.is_write()
+        self.flags.is_write()
     }
 
     /// Returns `true` if this reference is used in a type context.
     #[inline]
     pub fn is_type(&self) -> bool {
-        self.flag.is_type() || self.flag.is_ts_type_query()
+        self.flags.is_type() || self.flags.is_ts_type_query()
     }
 }

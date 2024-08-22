@@ -8,10 +8,10 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc};
 use oxc::{
     allocator::Allocator,
     ast::{CommentKind, Trivias},
-    codegen::{CodeGenerator, WhitespaceRemover},
+    codegen::{CodeGenerator, CodegenOptions},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
-    parser::Parser,
+    parser::{ParseOptions, Parser},
     semantic::{ScopeId, Semantic, SemanticBuilder},
     span::SourceType,
     transformer::{TransformOptions, Transformer},
@@ -169,7 +169,10 @@ impl Oxc {
         let source_type = SourceType::from_path(&path).unwrap_or_default();
 
         let ret = Parser::new(&allocator, source_text, source_type)
-            .allow_return_outside_function(parser_options.allow_return_outside_function)
+            .with_options(ParseOptions {
+                allow_return_outside_function: parser_options.allow_return_outside_function,
+                ..ParseOptions::default()
+            })
             .parse();
 
         self.comments = self.map_comments(&ret.trivias);
@@ -204,7 +207,10 @@ impl Oxc {
 
         if run_options.prettier_format() {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .allow_return_outside_function(parser_options.allow_return_outside_function)
+                .with_options(ParseOptions {
+                    allow_return_outside_function: parser_options.allow_return_outside_function,
+                    ..ParseOptions::default()
+                })
                 .parse();
             let printed =
                 Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
@@ -214,7 +220,10 @@ impl Oxc {
 
         if run_options.prettier_ir() {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .allow_return_outside_function(parser_options.allow_return_outside_function)
+                .with_options(ParseOptions {
+                    allow_return_outside_function: parser_options.allow_return_outside_function,
+                    ..ParseOptions::default()
+                })
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
@@ -232,6 +241,10 @@ impl Oxc {
         }
 
         if run_options.transform() {
+            let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
+                .build(program)
+                .semantic
+                .into_symbol_table_and_scope_tree();
             let options = TransformOptions::default();
             let result = Transformer::new(
                 &allocator,
@@ -241,7 +254,7 @@ impl Oxc {
                 ret.trivias.clone(),
                 options,
             )
-            .build(program);
+            .build_with_symbols_and_scopes(symbols, scopes, program);
             if !result.errors.is_empty() {
                 let errors = result.errors.into_iter().map(Error::from).collect::<Vec<_>>();
                 self.save_diagnostics(errors);
@@ -284,11 +297,13 @@ impl Oxc {
             Minifier::new(options).build(&allocator, program);
         }
 
-        self.codegen_text = if minifier_options.whitespace() {
-            WhitespaceRemover::new().build(program).source_text
-        } else {
-            CodeGenerator::new().build(program).source_text
-        };
+        self.codegen_text = CodeGenerator::new()
+            .with_options(CodegenOptions {
+                minify: minifier_options.whitespace(),
+                ..CodegenOptions::default()
+            })
+            .build(program)
+            .source_text;
 
         Ok(())
     }
@@ -298,38 +313,36 @@ impl Oxc {
             semantic: &Semantic,
             scope_text: &mut String,
             depth: usize,
-            scope_ids: &Vec<ScopeId>,
+            scope_ids: &[ScopeId],
         ) {
             let space = " ".repeat(depth * 2);
 
             for scope_id in scope_ids {
-                let flag = semantic.scopes().get_flags(*scope_id);
+                let flags = semantic.scopes().get_flags(*scope_id);
                 let next_scope_ids = semantic.scopes().get_child_ids(*scope_id);
 
                 scope_text
-                    .push_str(&format!("{space}Scope{:?} ({flag:?}) {{\n", scope_id.index() + 1));
+                    .push_str(&format!("{space}Scope{:?} ({flags:?}) {{\n", scope_id.index() + 1));
                 let bindings = semantic.scopes().get_bindings(*scope_id);
                 let binding_space = " ".repeat((depth + 1) * 2);
                 if !bindings.is_empty() {
                     scope_text.push_str(&format!("{binding_space}Bindings: {{"));
                 }
                 bindings.iter().for_each(|(name, symbol_id)| {
-                    let symbol_flag = semantic.symbols().get_flag(*symbol_id);
-                    scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flag:?})",));
+                    let symbol_flags = semantic.symbols().get_flags(*symbol_id);
+                    scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flags:?})",));
                 });
                 if !bindings.is_empty() {
                     scope_text.push_str(&format!("\n{binding_space}}}\n"));
                 }
 
-                if let Some(next_scope_ids) = next_scope_ids {
-                    write_scope_text(semantic, scope_text, depth + 1, next_scope_ids);
-                }
+                write_scope_text(semantic, scope_text, depth + 1, next_scope_ids);
                 scope_text.push_str(&format!("{space}}}\n"));
             }
         }
 
         let mut scope_text = String::default();
-        write_scope_text(semantic, &mut scope_text, 0, &vec![semantic.scopes().root_scope_id()]);
+        write_scope_text(semantic, &mut scope_text, 0, &[semantic.scopes().root_scope_id()]);
         scope_text
     }
 

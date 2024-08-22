@@ -44,11 +44,16 @@ impl std::ops::Deref for ConsistentFunctionScoping {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow functions that are declared in a scope which does not capture any variables from the outer scope.
+    /// Disallow functions that are declared in a scope which does not capture
+    /// any variables from the outer scope.
     ///
     /// ### Why is this bad?
     ///
-    /// Moving function declarations to the highest possible scope improves readability, directly improves performance and allows JavaScript engines to better optimize your performance.
+    /// Moving function declarations to the highest possible scope improves
+    /// readability, directly [improves
+    /// performance](https://stackoverflow.com/questions/80802/does-use-of-anonymous-functions-affect-performance/81329#81329)
+    /// and allows JavaScript engines to better [optimize your
+    /// performance](https://ponyfoo.com/articles/javascript-performance-pitfalls-v8#optimization-limit).
     ///
     ///
     /// ### Examples
@@ -87,8 +92,54 @@ declare_oxc_lint!(
     /// 	return doBar;
     /// }
     /// ```
+    /// ## Options
+    ///
+    /// ### checkArrowFunctions
+    ///
+    /// Type: `boolean`\
+    /// Default: `true`
+    ///
+    /// Pass `"checkArrowFunctions": false` to disable linting of arrow functions.
+    ///
+    /// ## Limitations
+    ///
+    /// This rule does not detect or remove extraneous code blocks inside of functions:
+    ///
+    /// ```js
+    /// function doFoo(foo) {
+    /// 	{
+    /// 		function doBar(bar) {
+    /// 			return bar;
+    /// 		}
+    /// 	}
+    ///
+    /// 	return foo;
+    /// }
+    /// ```
+    ///
+    /// It also ignores functions that contain `JSXElement` references:
+    ///
+    /// ```jsx
+    /// function doFoo(FooComponent) {
+    /// 	function Bar() {
+    /// 		return <FooComponent/>;
+    /// 	}
+    ///
+    /// 	return Bar;
+    /// };
+    /// ```
+    ///
+    /// [Immediately invoked function expressions (IIFE)](https://en.wikipedia.org/wiki/Immediately_invoked_function_expression) are ignored:
+    ///
+    /// ```js
+    /// (function () {
+    /// 	function doFoo(bar) {
+    /// 		return bar;
+    /// 	}
+    /// })();
+    /// ```
     ConsistentFunctionScoping,
-    correctness,
+    suspicious,
     pending
 );
 
@@ -113,13 +164,16 @@ impl Rule for ConsistentFunctionScoping {
                     return;
                 }
 
+                // NOTE: function.body will always be some here because of
+                // checks in `is_typescript_syntax`
                 let Some(function_body) = &function.body else { return };
 
                 if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
                     (
                         binding_ident.symbol_id.get().unwrap(),
                         function_body,
-                        Span::new(function.span.start, function.span.start + 8),
+                        // 8 for "function"
+                        Span::sized(function.span.start, 8),
                     )
                 } else if let Some(function_id) = &function.id {
                     (function_id.symbol_id.get().unwrap(), function_body, function_id.span())
@@ -127,10 +181,7 @@ impl Rule for ConsistentFunctionScoping {
                     return;
                 }
             }
-            AstKind::ArrowFunctionExpression(arrow_function) => {
-                if !self.check_arrow_functions {
-                    return;
-                }
+            AstKind::ArrowFunctionExpression(arrow_function) if self.check_arrow_functions => {
                 if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
                     (
                         binding_ident.symbol_id.get().unwrap(),
@@ -143,6 +194,7 @@ impl Rule for ConsistentFunctionScoping {
             }
             _ => return,
         };
+
         // if the function is declared at the root scope, we don't need to check anything
         if ctx.symbols().get_scope_id(function_declaration_symbol_id)
             == ctx.scopes().root_scope_id()
@@ -150,9 +202,10 @@ impl Rule for ConsistentFunctionScoping {
             return;
         }
 
-        if let Some(AstKind::ReturnStatement(_)) =
-            outermost_paren_parent(node, ctx).map(oxc_semantic::AstNode::kind)
-        {
+        if matches!(
+            outermost_paren_parent(node, ctx).map(AstNode::kind),
+            Some(AstKind::ReturnStatement(_) | AstKind::Argument(_))
+        ) {
             return;
         }
 
@@ -258,504 +311,263 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("function doFoo(foo) { return foo; }", None),
+        ("function doFoo(foo) { return bar; }", None),
+        ("const doFoo = function() {};", None),
+        ("const doFoo = foo => foo;", None),
+        ("foo => foo;", None),
+        ("function doFoo(foo) { function doBar(bar) { return foo + bar; } return foo; }", None),
         (
-            "
-						function doFoo(foo) {
-							return foo;
-						}
-					",
+            "const doFoo = function(foo) {
+                function doBar(bar) {
+                    return foo + bar;
+                }
+                return foo;
+            };",
             None,
         ),
         (
-            "
-						function doFoo(foo) {
-							return bar;
-						}
-					",
+            "const doFoo = function(foo) {
+                const doBar = function(bar) {
+                    return foo + bar;
+                };
+                return foo;
+            };",
             None,
         ),
         (
-            "
-						const doFoo = function() {};
-					",
+            "function doFoo(foo) {
+                const doBar = function(bar) {
+                    return foo + bar;
+                };
+                return foo;
+            }",
             None,
         ),
         (
-            "
-						const doFoo = foo => foo;
-					",
+            "function doFoo(foo) {
+                function doBar(bar) {
+                    return foo + bar;
+                }
+            }",
             None,
         ),
         (
-            "
-						foo => foo;
-					",
+            "function doFoo(foo = 'foo') {
+                function doBar(bar) {
+                    return foo + bar;
+                }
+            }",
             None,
         ),
         (
-            "
-						function doFoo(foo) {
-							function doBar(bar) {
-								return foo + bar;
-							}
-							return foo;
-						}
-					",
+            "function doFoo() {
+                const foo = 'foo';
+                function doBar(bar) {
+                    return foo + bar;
+                }
+                return foo;
+            }",
             None,
         ),
         (
-            "
-						const doFoo = function(foo) {
-							function doBar(bar) {
-								return foo + bar;
-							}
-							return foo;
-						};
-					",
+            "function doFoo(foo) {
+                function doBar(bar) {
+                    function doZaz(zaz) {
+                        return foo + bar + zaz;
+                    }
+                    return bar;
+                }
+                return foo;
+            }",
+            None,
+        ),
+        ("for (let foo = 0; foo < 1; foo++) { function doBar(bar) { return bar + foo; } }", None),
+        (
+            "let foo = 0;
+            function doFoo() {
+                foo = 1;
+                function doBar(bar) {
+                    return foo + bar;
+                }
+                return foo;
+            }",
+            None,
+        ),
+        ("const doFoo = foo => { return foo; }", None),
+        ("const doFoo = foo => bar => foo + bar;", None),
+        ("const doFoo = () => { return bar => bar; } ", None),
+        (
+            "const doFoo = foo => {
+                const doBar = bar => {
+                    return foo + bar;
+                }
+                return foo;
+            }",
             None,
         ),
         (
-            "
-						const doFoo = function(foo) {
-							const doBar = function(bar) {
-								return foo + bar;
-							};
-							return foo;
-						};
-					",
+            "function doFoo() {
+                {
+                    const foo = 'foo';
+                    function doBar(bar) {
+                        return bar + foo;
+                    }
+                }
+            }",
             None,
         ),
         (
-            "
-						function doFoo(foo) {
-							const doBar = function(bar) {
-								return foo + bar;
-							};
-							return foo;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo(foo) {
-							function doBar(bar) {
-								return foo + bar;
-							}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo(foo = 'foo') {
-							function doBar(bar) {
-								return foo + bar;
-							}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo() {
-							const foo = 'foo';
-							function doBar(bar) {
-								return foo + bar;
-							}
-							return foo;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo(foo) {
-							function doBar(bar) {
-								function doZaz(zaz) {
-									return foo + bar + zaz;
-								}
-								return bar;
-							}
-							return foo;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						for (let foo = 0; foo < 1; foo++) {
-							function doBar(bar) {
-								return bar + foo;
-							}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						let foo = 0;
-						function doFoo() {
-							foo = 1;
-							function doBar(bar) {
-								return foo + bar;
-							}
-							return foo;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						const doFoo = foo => {
-							return foo;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						const doFoo =
-							foo =>
-							bar =>
-							foo + bar;
-					",
-            None,
-        ),
-        (
-            "
-						const doFoo = () => {
-							return bar => bar;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo() {
-							return bar => bar;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						const doFoo = foo => {
-							const doBar = bar => {
-								return foo + bar;
-							}
-							return foo;
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo() {
-							{
-								const foo = 'foo';
-								function doBar(bar) {
-									return bar + foo;
-								}
-							}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo(foo) {
-							function doBar(bar) {
-								foo.bar = bar;
-							}
-							function doZaz(zaz) {
-								doBar(zaz);
-							}
-			
-							doZaz('zaz');
-						};
-					",
-            None,
-        ),
-        (
-            "
-        				function doFoo() {
-        					return function doBar() {};
-        				}
-        			",
-            None,
-        ),
-        (
-            "
-        				function doFoo(Foo) {
-        					function doBar() {
-        						return new Foo();
-        					}
-        					return doBar;
-        				};
-        			",
-            None,
-        ),
-        (
-            "
-        				function doFoo(FooComponent) {
-        					return <FooComponent />;
-        				}
-        			",
-            None,
-        ),
-        (
-            "
-        				const foo = <JSX/>;
-        			",
-            None,
-        ),
-        (
-            "
-        				function foo() {
-        					function bar() {
-        						return <JSX a={foo()}/>;
-        					}
-        				}
-        			",
-            None,
-        ),
-        (
-            "
-        				function doFoo(Foo) {
-        					const doBar = () => this;
-        					return doBar();
-        				};
-        			",
-            None,
-        ),
-        (
-            "
-        				function doFoo(Foo) {
-        					const doBar = () => () => this;
-        					return doBar();
-        				};
-        			",
-            None,
-        ),
-        (
-            "
-        				function doFoo(Foo) {
-        					const doBar = () => () => () => this;
-        					return doBar();
-        				};
-        			",
-            None,
-        ),
-        (
-            "
-        				useEffect(() => {
-        					function foo() {}
-        				}, [])
-        			",
-            None,
-        ),
-        (
-            "
-        				React.useEffect(() => {
-        					function foo() {}
-        				}, [])
-        			",
-            None,
-        ),
-        (
-            "
-        				(function() {
-        					function bar() {}
-        				})();
-        			",
-            None,
-        ),
-        (
-            "
-        				(function() {
-        					function bar() {}
-        				}());
-        			",
-            None,
-        ),
-        (
-            "
-        				!function() {
-        					function bar() {}
-        				}();
-        			",
-            None,
-        ),
-        (
-            "
-        				(() => {
-        					function bar() {}
-        				})();
-        			",
-            None,
-        ),
-        (
-            "
-        				(async function() {
-        					function bar() {}
-        				})();
-        			",
-            None,
-        ),
-        (
-            "
-        				(async function * () {
-        					function bar() {}
-        				})();
-        			",
-            None,
-        ),
-        (
-            "
-        				function doFoo() {
-        					const doBar = (function(bar) {
-        						return bar;
-        					})();
-        				}
-        			",
-            None,
-        ),
-        (
-            "
-        				const enrichErrors = (packageName, cliArgs, f) => async (...args) => {
-        					try {
-        						return await f(...args);
-        					} catch (error) {
-        						error.packageName = packageName;
-        						error.cliArgs = cliArgs;
-        						throw error;
-        					}
-        				};
-        			",
-            None,
-        ),
-        (
-            "
-        				export const canStepForward = ([X, Y]) => ([x, y]) => direction => {
-        					switch (direction) {
-        						case 0:
-        							return y !== 0
-        						case 1:
-        							return x !== X - 1
-        						case 2:
-        							return y !== Y - 1
-        						case 3:
-        							return x !== 0
-        						default:
-        							throw new Error('unknown direction')
-        					}
-        				}
-        			",
-            None,
-        ),
-        (
-            "
-        				'use strict';
+            "function doFoo(foo) {
+                function doBar(bar) {
+                    foo.bar = bar;
+                }
+                function doZaz(zaz) {
+                    doBar(zaz);
+                }
 
-        				module.exports = function recordErrors(eventEmitter, stateArgument) {
-        					const stateVariable = stateArgument;
-        					function onError(error) {
-        						stateVariable.inputError = error;
-        					}
-        					eventEmitter.once('error', onError);
-        				};
-        			",
+                doZaz('zaz');
+            };",
+            None,
+        ),
+        ("function doFoo() { return function doBar() {}; }", None),
+        ("function doFoo(Foo) { function doBar() { return new Foo(); } return doBar; };", None),
+        ("function doFoo(FooComponent) { return <FooComponent />; } ", None),
+        ("const foo = <JSX/>;", None),
+        ("function foo() { function bar() { return <JSX a={foo()}/>; } }", None),
+        ("function doFoo(Foo) { const doBar = () => this; return doBar(); };", None),
+        ("function doFoo(Foo) { const doBar = () => () => this; return doBar(); };", None),
+        ("function doFoo(Foo) { const doBar = () => () => () => this; return doBar(); };", None),
+        ("useEffect(() => { function foo() {} }, []) ", None),
+        ("React.useEffect(() => { function foo() {} }, [])", None),
+        ("(function() { function bar() {} })();", None),
+        ("(function() { function bar() {} }());", None),
+        ("!function() { function bar() {} }();", None),
+        ("(() => { function bar() {} })();", None),
+        ("(async function() { function bar() {} })();", None),
+        (" (async function * () { function bar() {} })();", None),
+        ("function doFoo() { const doBar = (function(bar) { return bar; })(); }", None),
+        (
+            "const enrichErrors = (packageName, cliArgs, f) => async (...args) => {
+                try {
+                    return await f(...args);
+                } catch (error) {
+                    error.packageName = packageName;
+                    error.cliArgs = cliArgs;
+                    throw error;
+                }
+            };",
+            None,
+        ),
+        (
+            "export const canStepForward = ([X, Y]) => ([x, y]) => direction => {
+                switch (direction) {
+                    case 0:
+                        return y !== 0
+                    case 1:
+                        return x !== X - 1
+                    case 2:
+                        return y !== Y - 1
+                    case 3:
+                        return x !== 0
+                    default:
+                        throw new Error('unknown direction')
+                }
+            }",
             None,
         ),
         (
             "
-        				module.exports = function recordErrors(eventEmitter, stateArgument) {
-        					function onError(error) {
-        						stateArgument.inputError = error;
-        					}
-        					function onError2(error) {
-        						onError(error);
-        					}
-
-        					eventEmitter.once('error', onError2);
-        				};
-        			",
+            'use strict';
+            module.exports = function recordErrors(eventEmitter, stateArgument) {
+                const stateVariable = stateArgument;
+                function onError(error) {
+                    stateVariable.inputError = error;
+                }
+                eventEmitter.once('error', onError);
+            };",
             None,
         ),
         (
-            "
-        				function outer(stream) {
-        					let content;
+            "module.exports = function recordErrors(eventEmitter, stateArgument) {
+                function onError(error) {
+                    stateArgument.inputError = error;
+                }
+                function onError2(error) {
+                    onError(error);
+                }
 
-        					function inner() {
-        						process.stdout.write(content);
-        					}
-
-        					inner();
-        				}
-        			",
+                eventEmitter.once('error', onError2);
+            };",
             None,
         ),
         (
-            "
-        					function outer () {
-        						const inner = () => {}
-        					}
-        				",
-            Some(serde_json::json!([{"checkArrowFunctions": false}])),
-        ),
-        (
-            "
-        				type Data<T> = T extends 'error' ? Error : Record<string, unknown> | unknown[]
+            "function outer(stream) {
+                let content;
 
-        				type Method = 'info' | 'error'
+                function inner() {
+                    process.stdout.write(content);
+                }
 
-        				export function createLogger(name: string) {
-        						// Two lint errors are on the next line.
-        						const log = <T extends Method>(method: T) => (data: Data<T>) => {
-        								try {
-        										// eslint-disable-next-line no-console
-        										console[method](JSON.stringify({ name, data }))
-        								} catch (error) {
-        										console.error(error)
-        								}
-        						}
-
-        						return {
-        								info: log('info'),
-        								error: log('error'),
-        						}
-        				}
-        			",
+                inner();
+            }",
             None,
         ),
         (
-            "
-        				test('it works', async function(assert) {
-        					function assertHeader(assertions) {
-        						for (const [key, value] of Object.entries(assertions)) {
-        							assert.strictEqual(
-        								native[key],
-        								value
-        							);
-        						}
-        					}
-
-        					// ...
-        				});
-        			",
-            None,
+            "function outer () { const inner = () => {} }",
+            Some(serde_json::json!([{ "checkArrowFunctions": false }])),
         ),
         (
             "
-        				export function a(x: number) {
-        					const b = (y: number) => (z: number): number => x + y + z;
-        					return b(1)(2);
-        				}
-        			",
+                type Data<T> = T extends 'error' ? Error : Record<string, unknown> | unknown[]
+
+                type Method = 'info' | 'error'
+
+                export function createLogger(name: string) {
+                    // Two lint errors are on the next line.
+                    const log = <T extends Method>(method: T) => (data: Data<T>) => {
+                            try {
+                                    // eslint-disable-next-line no-console
+                                    console[method](JSON.stringify({ name, data }))
+                            } catch (error) {
+                                    console.error(error)
+                            }
+                    }
+
+                    return {
+                            info: log('info'),
+                            error: log('error'),
+                    }
+                }
+            ",
             None,
         ),
+        (
+            "test('it works', async function(assert) {
+                function assertHeader(assertions) {
+                    for (const [key, value] of Object.entries(assertions)) {
+                        assert.strictEqual(
+                            native[key],
+                            value
+                        );
+                    }
+                }
+
+                // ...
+            });",
+            None,
+        ),
+        (
+            "export function a(x: number) {
+                const b = (y: number) => (z: number): number => x + y + z;
+                return b(1)(2);
+            }",
+            None,
+        ),
+        // https://github.com/oxc-project/oxc/pull/4948#issuecomment-2295819822
+        ("t.throws(() => receiveString(function a() {}), {})", None),
+        ("function test () { t.throws(() => receiveString(function a() {}), {}) }", None),
+        ("function foo() { let x = new Bar(function b() {}) }", None),
     ];
 
     let fail = vec![
@@ -763,260 +575,119 @@ fn test() {
 
         // declared function is inside a block statement
         (
-            "
-         					function doFoo(foo) {
-         						{
-         							function doBar(bar) {
-         								return bar;
-         							}
-         						}
-         						return foo;
-         					}
-         				",
+            "function doFoo(foo) {
+                {
+                    function doBar(bar) {
+                        return bar;
+                    }
+                }
+                return foo;
+            }",
             None,
         ),
         (
-            "
-        				function doFoo(FooComponent) {
-        					function Bar() {
-        						return <FooComponent />;
-        					}
-        					return Bar;
-        				};
-        			",
+            "function doFoo(FooComponent) {
+                function Bar() {
+                    return <FooComponent />;
+                }
+                return Bar;
+            };",
             None,
         ),
         (
-            "
-        				function Foo() {
-        					function Bar () {
-        						return <div />
-        					}
-        					return <div>{ Bar() }</div>
-        				}
-        			",
+            "function Foo() {
+                function Bar () {
+                    return <div />
+                }
+                return <div>{ Bar() }</div>
+            }",
             None,
         ),
-        (
-            "
-        				function foo() {
-        					function bar() {
-        						return <JSX/>;
-        					}
-        				}
-        			",
-            None,
-        ),
-        (
-            "
-        				function doFoo(Foo) {
-        					const doBar = () => arguments;
-        					return doBar();
-        				};
-        			",
-            None,
-        ),
+        ("function foo() { function bar() { return <JSX/>; } }", None),
+        ("function doFoo(Foo) { const doBar = () => arguments; return doBar(); };", None),
         // end of cases that eslint-plugin-unicorn passes, but we fail.
         (
-            "
-							function doFoo(foo) {
-								function doBar(bar) {
-									return bar;
-								}
-								return foo;
-							}
-						",
+            "function doFoo(foo) {
+                function doBar(bar) {
+                    return bar;
+                }
+                return foo;
+            }",
             None,
         ),
         (
-            "
-							function doFoo() {
-								const foo = 'foo';
-								function doBar(bar) {
-									return bar;
-								}
-								return foo;
-							}
-						",
+            "function doFoo() {
+                const foo = 'foo';
+                function doBar(bar) {
+                    return bar;
+                }
+                return foo;
+            }",
+            None,
+        ),
+        ("function doFoo() { function doBar(bar) { return bar; } }", None),
+        ("const doFoo = function() { function doBar(bar) { return bar; } };", None),
+        (
+            "const doFoo = function() {
+                const doBar = function(bar) {
+                    return bar;
+                };
+            };",
+            None,
+        ),
+        ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
+        ("function doFoo() { const doBar = function(bar) { return bar; }; doBar(); }", None),
+        ("const doFoo = () => { const doBar = bar => { return bar; } }", None),
+        ("function doFoo(Foo) { function doBar() { return this; } return doBar(); };", None),
+        (
+            "function doFoo(Foo) { const doBar = () => (function() {return this})(); return doBar(); };",
             None,
         ),
         (
-            "
-							function doFoo() {
-								function doBar(bar) {
-									return bar;
-								}
-							}
-						",
+            "function doFoo(Foo) {
+                const doBar = () => (function() {return () => this})();
+                return doBar();
+            };",
             None,
         ),
         (
-            "
-							const doFoo = function() {
-								function doBar(bar) {
-									return bar;
-								}
-							};
-						",
+            "function doFoo(Foo) {
+                function doBar() {
+                    return arguments;
+                }
+                return doBar();
+            };",
             None,
         ),
         (
-            "
-							const doFoo = function() {
-								const doBar = function(bar) {
-									return bar;
-								};
-							};
-						",
+            "function doFoo(Foo) {
+                const doBar = () => (function() {return arguments})();
+                return doBar();
+            };",
             None,
         ),
         (
-            "
-							function doFoo() {
-								const doBar = function(bar) {
-									return bar;
-								};
-							}
-						",
+            "function doFoo(foo) {
+                function doBar(bar) {
+                    return doBar(bar);
+                }
+                return foo;
+            }",
             None,
         ),
         (
-            "
-							function doFoo() {
-								const doBar = function(bar) {
-									return bar;
-								};
-								doBar();
-							}
-						",
+            "function doFoo(foo) {
+                function doBar(bar) {
+                    return bar;
+                }
+                return doBar;
+            }",
             None,
         ),
-        (
-            "
-							const doFoo = () => {
-								const doBar = bar => {
-									return bar;
-								}
-							}
-						",
-            None,
-        ),
-        (
-            "
-							function doFoo(Foo) {
-								function doBar() {
-									return this;
-								}
-								return doBar();
-							};
-						",
-            None,
-        ),
-        (
-            "
-							function doFoo(Foo) {
-								const doBar = () => (function() {return this})();
-								return doBar();
-							};
-						",
-            None,
-        ),
-        (
-            "
-							function doFoo(Foo) {
-								const doBar = () => (function() {return () => this})();
-								return doBar();
-							};
-						",
-            None,
-        ),
-        (
-            "
-							function doFoo(Foo) {
-								function doBar() {
-									return arguments;
-								}
-								return doBar();
-							};
-						",
-            None,
-        ),
-        (
-            "
-							function doFoo(Foo) {
-								const doBar = () => (function() {return arguments})();
-								return doBar();
-							};
-						",
-            None,
-        ),
-        (
-            "
-        					function doFoo(foo) {
-        						function doBar(bar) {
-        							return doBar(bar);
-        						}
-        						return foo;
-        					}
-        				",
-            None,
-        ),
-        (
-            "
-							function doFoo(foo) {
-								function doBar(bar) {
-									return bar;
-								}
-								return doBar;
-							}
-						",
-            None,
-        ),
-        (
-            "
-							function doFoo() {
-								function doBar() {}
-							}
-						",
-            None,
-        ),
-        (
-            "
-							function doFoo(foo) {
-								{
-									{
-										function doBar(bar) {
-											return bar;
-										}
-									}
-								}
-								return foo;
-							}
-						",
-            None,
-        ),
-        (
-            "
-							{
-								{
-									function doBar(bar) {
-										return bar;
-									}
-								}
-							}
-						",
-            None,
-        ),
-        (
-            "
-							for (let foo = 0; foo < 1; foo++) {
-								function doBar(bar) {
-									return bar;
-								}
-							}
-						",
-            None,
-        ),
+        ("function doFoo() { function doBar() {} }", None),
+        ("function doFoo(foo) { { { function doBar(bar) { return bar; } } } return foo; }", None),
+        ("{ { function doBar(bar) { return bar; } } }", None),
+        ("for (let foo = 0; foo < 1; foo++) { function doBar(bar) { return bar; } }", None),
         ("function foo() { function bar() {} }", None),
         ("function foo() { async function bar() {} }", None),
         ("function foo() { function* bar() {} }", None),
@@ -1026,179 +697,108 @@ fn test() {
         ("function foo() { const bar = async () => {} }", None),
         ("function foo() { async function* baz() {} }", None),
         (
-            "
-							useEffect(() => {
-								function foo() {
-									function bar() {
-									}
-								}
-							}, [])
-						",
+            "useEffect(() => {
+                function foo() {
+                    function bar() {
+                    }
+                }
+            }, [])",
             None,
         ),
         (
-            "
-							(function() {
-								function foo() {
-									function bar() {
-									}
-								}
-							})();
-						",
+            "(function() {
+                function foo() {
+                    function bar() {
+                    }
+                }
+            })();",
             None,
         ),
         (
-            "
-							process.nextTick(() => {
-								function returnsZero() {
-									return true;
-								}
-								process.exitCode = returnsZero();
-							});
-						",
+            "process.nextTick(() => {
+                function returnsZero() {
+                    return true;
+                }
+                process.exitCode = returnsZero();
+            });",
             None,
         ),
         (
-            "
-							foo(
-								// This is not IIFE
-								function() {
-									function bar() {
-									}
-								},
-								// This is IIFE
-								(function() {
-									function baz() {
-									}
-								})(),
-							)
-						",
+            "foo(
+                // This is not an IIFE
+                function() {
+                    function bar() {
+                    }
+                },
+                // This is an IIFE
+                (function() {
+                    function baz() {
+                    }
+                })(),
+            )",
             None,
         ),
         (
-            "
-							// This is IIFE
-							(function() {
-								function bar() {
-								}
-							})(
-								// This is not IIFE
-								function() {
-									function baz() {
-									}
-								},
-							)
-						",
+            "// This is an IIFE
+            (function() {
+                function bar() {
+                }
+            })(
+                // This is not IIFE
+                function() {
+                    function baz() {
+                    }
+                },
+            )",
             None,
         ),
         (
-            "
-							function Foo() {
-								const Bar = <div />
-								function doBaz() {
-									return 42
-								}
-								return <div>{ doBaz() }</div>
-							}
-						",
+            "function Foo() {
+                const Bar = <div />
+                function doBaz() {
+                    return 42
+                }
+                return <div>{ doBaz() }</div>
+            }",
             None,
         ),
         (
-            "
-							function Foo() {
-								function Bar () {
-									return <div />
-								}
-								function doBaz() {
-									return 42
-								}
-								return <div>{ doBaz() }</div>
-							}
-						",
+            "function Foo() {
+                function Bar () {
+                    return <div />
+                }
+                function doBaz() {
+                    return 42
+                }
+                return <div>{ doBaz() }</div>
+            }",
             None,
         ),
         (
-            "
-							function fn1() {
-								function a() {
-									return <JSX a={b()}/>;
-								}
-								function b() {}
-								function c() {}
-							}
-							function fn2() {
-								function foo() {}
-							}
-						",
+            "function fn1() {
+                function a() {
+                    return <JSX a={b()}/>;
+                }
+                function b() {}
+                function c() {}
+            }
+            function fn2() {
+                function foo() {}
+            }",
             None,
         ),
         (
-            "
-							const outer = () => {
-								function inner() {}
-							}
-						",
-            Some(serde_json::json!([{"checkArrowFunctions": false}])),
+            "const outer = () => { function inner() {} }",
+            Some(serde_json::json!([{ "checkArrowFunctions": false }])),
         ),
-        (
-            "
-						function foo() {
-							function bar() {}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function foo() {
-							async function bar() {}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function foo() {
-							function * bar() {}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function foo() {
-							async function * bar() {}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function foo() {
-							const bar = () => {}
-						}
-					",
-            None,
-        ),
+        ("function foo() { function bar() {} }", None),
+        ("function foo() { async function bar() {} }", None),
+        ("function foo() { function * bar() {} }", None),
+        ("function foo() { async function * bar() {} }", None),
+        ("function foo() { const bar = () => {} }", None),
         // ("const doFoo = () => bar => bar;", None),
-        (
-            "
-						function foo() {
-							const bar = async () => {}
-						}
-					",
-            None,
-        ),
-        (
-            "
-						function doFoo() {
-							const doBar = function(bar) {
-								return bar;
-							};
-						}
-					",
-            None,
-        ),
+        ("function foo() { const bar = async () => {} }", None),
+        ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, pass, fail).test_and_snapshot();

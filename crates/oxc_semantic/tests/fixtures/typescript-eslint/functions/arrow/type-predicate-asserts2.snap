@@ -7,19 +7,19 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function | Arrow)",
+        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
         "id": 2,
         "node": "ArrowFunctionExpression",
         "symbols": [
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "arg",
             "node": "FormalParameter(arg)",
@@ -28,18 +28,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
             "node_id": 18
@@ -47,7 +47,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction)",
         "id": 1,
         "name": "foo",
         "node": "VariableDeclarator(foo)",

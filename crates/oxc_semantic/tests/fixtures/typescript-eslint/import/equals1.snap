@@ -5,18 +5,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/equals1.
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Import)",
+        "flags": "SymbolFlags(Import)",
         "id": 0,
         "name": "foo",
         "node": "TSImportEqualsDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "foo",
             "node_id": 7

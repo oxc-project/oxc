@@ -7,18 +7,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/block/scope.ts
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "BlockStatement",
         "symbols": [
           {
-            "flag": "SymbolFlags(BlockScopedVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 0,
             "name": "i",
             "node": "VariableDeclarator(i)",
             "references": [
               {
-                "flag": "ReferenceFlag(Read)",
+                "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "i",
                 "node_id": 11
@@ -26,7 +26,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/block/scope.ts
             ]
           },
           {
-            "flag": "SymbolFlags(BlockScopedVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable)",
             "id": 1,
             "name": "j",
             "node": "VariableDeclarator(j)",
@@ -35,7 +35,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/block/scope.ts
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": []

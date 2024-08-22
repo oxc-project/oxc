@@ -7,24 +7,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(<anonymous>)",
         "symbols": [
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "a",
             "node": "FormalParameter(a)",
             "references": [
               {
-                "flag": "ReferenceFlag(Read)",
+                "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "a",
                 "node_id": 27
               },
               {
-                "flag": "ReferenceFlag(Read)",
+                "flags": "ReferenceFlags(Read)",
                 "id": 2,
                 "name": "a",
                 "node_id": 36
@@ -32,42 +32,42 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             ]
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 3,
             "name": "b",
             "node": "FormalParameter(<destructure>)",
             "references": []
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 4,
             "name": "c",
             "node": "FormalParameter(<destructure>)",
             "references": []
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 5,
             "name": "d",
             "node": "FormalParameter(d)",
             "references": []
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 6,
             "name": "e",
             "node": "FormalParameter(e)",
             "references": []
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 7,
             "name": "f",
             "node": "FormalParameter(f)",
             "references": []
           },
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 8,
             "name": "g",
             "node": "FormalParameter(g)",
@@ -76,18 +76,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "outer",
         "node": "VariableDeclarator(outer)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer",
             "node_id": 31
@@ -95,14 +95,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "foo",
         "node": "VariableDeclarator(foo)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 9,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",

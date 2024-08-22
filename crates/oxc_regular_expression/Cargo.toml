@@ -1,0 +1,36 @@
+[package]
+name                   = "oxc_regular_expression"
+version                = "0.24.3"
+publish                = false
+authors.workspace      = true
+categories.workspace   = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+include                = ["/examples", "/src"]
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_allocator   = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_span        = { workspace = true }
+
+phf              = { workspace = true, features = ["macros"] }
+rustc-hash       = { workspace = true }
+unicode-id-start = { workspace = true }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast       = { workspace = true }
+oxc_parser    = { workspace = true }
+oxc_semantic  = { workspace = true }
+oxc_span      = { workspace = true }

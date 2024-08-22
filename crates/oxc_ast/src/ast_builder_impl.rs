@@ -69,16 +69,6 @@ impl<'a> AstBuilder<'a> {
         unsafe { std::mem::transmute_copy(src) }
     }
 
-    /// Moves the identifier reference out by replacing it with a dummy identifier reference.
-    #[inline]
-    pub fn move_identifier_reference(
-        self,
-        expr: &mut IdentifierReference<'a>,
-    ) -> IdentifierReference<'a> {
-        let dummy = self.identifier_reference(expr.span(), "");
-        mem::replace(expr, dummy)
-    }
-
     /// Moves the expression out by replacing it with a null expression.
     #[inline]
     pub fn move_expression(self, expr: &mut Expression<'a>) -> Expression<'a> {
@@ -86,27 +76,10 @@ impl<'a> AstBuilder<'a> {
         mem::replace(expr, null_expr)
     }
 
-    /// Moves the member expression out by replacing it with a dummy expression.
-    #[inline]
-    pub fn move_member_expression(self, expr: &mut MemberExpression<'a>) -> MemberExpression<'a> {
-        let dummy = self.member_expression_computed(
-            expr.span(),
-            self.expression_null_literal(expr.span()),
-            self.expression_null_literal(expr.span()),
-            false,
-        );
-        mem::replace(expr, dummy)
-    }
-
     #[inline]
     pub fn move_statement(self, stmt: &mut Statement<'a>) -> Statement<'a> {
         let empty_stmt = self.empty_statement(stmt.span());
         mem::replace(stmt, Statement::EmptyStatement(self.alloc(empty_stmt)))
-    }
-
-    #[inline]
-    pub fn move_statement_vec(self, stmts: &mut Vec<'a, Statement<'a>>) -> Vec<'a, Statement<'a>> {
-        mem::replace(stmts, self.vec())
     }
 
     #[inline]
@@ -125,6 +98,11 @@ impl<'a> AstBuilder<'a> {
         );
         let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
         mem::replace(decl, empty_decl)
+    }
+
+    #[inline]
+    pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
+        mem::replace(vec, self.vec())
     }
 
     /* ---------- Constructors ---------- */

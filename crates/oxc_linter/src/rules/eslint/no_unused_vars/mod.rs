@@ -27,7 +27,8 @@ pub struct NoUnusedVars(Box<NoUnusedVarsOptions>);
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows variable declarations or imports that are not used in code.
+    /// Disallows variable declarations, imports, or type declarations that are
+    /// not used in code.
     ///
     /// ### Why is this bad?
     ///
@@ -35,17 +36,44 @@ declare_oxc_lint!(
     /// likely an error due to incomplete refactoring. Such variables take up
     /// space in the code and can lead to confusion by readers.
     ///
+    /// ```ts
+    /// // `b` is unused; this indicates a bug.
+    /// function add(a: number, b: number) {
+    ///     return a;
+    /// }
+    /// console.log(add(1, 2));
+    /// ```
+    ///
     /// A variable `foo` is considered to be used if any of the following are
     /// true:
     ///
     /// * It is called (`foo()`) or constructed (`new foo()`)
     /// * It is read (`var bar = foo`)
-    /// * It is passed into a function as an argument (`doSomething(foo)`)
+    /// * It is passed into a function or constructor as an argument (`doSomething(foo)`)
     /// * It is read inside of a function that is passed to another function
     ///   (`doSomething(function() { foo(); })`)
+    /// * It is exported (`export const foo = 42`)
+    /// * It is used as an operand to TypeScript's `typeof` operator (`const bar:
+    ///   typeof foo = 4`)
     ///
     /// A variable is _not_ considered to be used if it is only ever declared
     /// (`var foo = 5`) or assigned to (`foo = 7`).
+    ///
+    /// #### Types
+    /// This rule has full support for TypeScript types, interfaces, enums, and
+    /// namespaces.
+    ///
+    /// A type or interface `Foo` is considered to be used if it is used in any
+    /// of the following ways:
+    /// - It is used in the definition of another type or interface.
+    /// - It is used as a type annotation or as part of a function signature.
+    /// - It is used in a cast or `satisfies` expression.
+    ///
+    /// A type or interface is _not_ considered to be used if it is only ever
+    /// used in its own definition, e.g. `type Foo = Array<Foo>`.
+    ///
+    /// Enums and namespaces are treated the same as variables, classes,
+    /// functions, etc.
     ///
     /// #### Ignored Files
     /// This rule ignores `.d.ts` files and `.vue` files entirely. Variables,
@@ -100,8 +128,18 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
+    /// ```ts
+    /// type A = Array<A>;
+    ///
+    /// enum Color {
+    ///     Red,
+    ///     Green,
+    ///     Blue
+    /// }
+    /// ```
+    ///
     /// Examples of **correct** code for this rule:
-    /// ```javascript
+    /// ```js
     /// /*eslint no-unused-vars: "error"*/
     ///
     /// var x = 10;
@@ -128,8 +166,19 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
+    /// ```ts
+    /// export const x = 1;
+    /// const y = 1;
+    /// export { y };
+    ///
+    /// type A = Record<string, unknown>;
+    /// type B<T> = T extends Record<infer K, any> ? K : never;
+    /// const x = 'foo' as B<A>;
+    /// console.log(x);
+    /// ```
+    ///
     /// Examples of **incorrect** code for `/* exported variableName */` operation:
-    /// ```javascript
+    /// ```js
     /// /* exported global_var */
     ///
     /// // Not respected, use ES6 modules instead.

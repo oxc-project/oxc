@@ -10,7 +10,7 @@ use std::{
 use dashmap::DashMap;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -254,7 +254,10 @@ impl Runtime {
         tx_error: &DiagnosticSender,
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
-            .allow_return_outside_function(true)
+            .with_options(ParseOptions {
+                allow_return_outside_function: true,
+                ..ParseOptions::default()
+            })
             .parse();
 
         if !ret.errors.is_empty() {
