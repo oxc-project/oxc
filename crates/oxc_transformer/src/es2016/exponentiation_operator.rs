@@ -37,7 +37,7 @@ use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -62,27 +62,10 @@ impl<'a> ExponentiationOperator<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { _ctx: ctx, var_declarations: vec![] }
     }
+}
 
-    fn clone_identifier_reference(
-        ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
-        let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
-        let symbol_id = reference.symbol_id();
-        let flags = reference.flags();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
-    }
-
-    fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
-        match expr {
-            Expression::Identifier(ident) => ctx
-                .ast
-                .expression_from_identifier_reference(Self::clone_identifier_reference(ident, ctx)),
-            _ => expr.clone_in(ctx.ast.allocator),
-        }
-    }
-
-    pub fn transform_statements(
+impl<'a> Traverse<'a> for ExponentiationOperator<'a> {
+    fn enter_statements(
         &mut self,
         _statements: &mut Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -90,7 +73,7 @@ impl<'a> ExponentiationOperator<'a> {
         self.var_declarations.push(ctx.ast.vec());
     }
 
-    pub fn transform_statements_on_exit(
+    fn exit_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -109,7 +92,7 @@ impl<'a> ExponentiationOperator<'a> {
         }
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         // left ** right
         if let Expression::BinaryExpression(binary_expr) = expr {
             if binary_expr.operator == BinaryOperator::Exponential {
@@ -139,6 +122,27 @@ impl<'a> ExponentiationOperator<'a> {
                 nodes.push(assign_expr);
                 *expr = ctx.ast.expression_sequence(SPAN, nodes);
             }
+        }
+    }
+}
+
+impl<'a> ExponentiationOperator<'a> {
+    fn clone_identifier_reference(
+        ident: &IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
+        let symbol_id = reference.symbol_id();
+        let flags = reference.flags();
+        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
+    }
+
+    fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        match expr {
+            Expression::Identifier(ident) => ctx
+                .ast
+                .expression_from_identifier_reference(Self::clone_identifier_reference(ident, ctx)),
+            _ => expr.clone_in(ctx.ast.allocator),
         }
     }
 
