@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 403/953
+Passed: 396/953
 
 # All Passed:
 * babel-preset-react
@@ -1651,6 +1651,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): ["_unused"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
   x Bindings mismatch:
   | after transform: No scope
   | rebuilt        : ScopeId(2): []
@@ -1668,6 +1672,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Bindings mismatch:
   | after transform: ScopeId(0): ["_unused"]
   | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 
   x Bindings mismatch:
   | after transform: No scope
@@ -1753,7 +1761,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-typescript (58/151)
+# babel-plugin-transform-typescript (51/151)
 * class/accessor-allowDeclareFields-false/input.ts
   x TS(18010): An accessibility modifier cannot be used with a private
   | identifier.
@@ -1782,9 +1790,27 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : ScopeId(1): []
 
 
+* class/methods/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4),
+  | ScopeId(5)]
+  | rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+
+* class/private-method-override/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+  | rebuilt        : ScopeId(1): [ScopeId(2)]
+
+
 * declarations/erased/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -1793,10 +1819,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): ["A"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
+
 
 * declarations/nested-namespace/input.mjs
   x Bindings mismatch:
   | after transform: ScopeId(0): ["P"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2049,11 +2083,32 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 
+* exports/declare-namespace/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
+
+
+* exports/declare-shadowed/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+
 * exports/declared-types/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E",
   | "I", "II2", "II3", "M", "N", "T", "foo", "m", "x"]
   | rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9),
+  | ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14),
+  | ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5)]
 
   x Bindings mismatch:
   | after transform: ScopeId(12): ["BB", "K"]
@@ -2092,6 +2147,12 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : ReferenceId(3): None
 
 
+* exports/default-function/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
+
+
 * exports/export-const-enums/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
@@ -2112,6 +2173,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 * exports/export-type/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2142,11 +2207,19 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): ["A", "I"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
+
 
 * exports/issue-9916-1/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
   | rebuilt        : ScopeId(0): ["a"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
 
 
 * exports/issue-9916-2/input.ts
@@ -2154,11 +2227,31 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
+
 
 * exports/issue-9916-3/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
   | rebuilt        : ScopeId(0): ["a"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
+
+
+* function/overloads/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
+
+
+* function/overloads-exports/input.mjs
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
 
 
 * function/parameters/input.ts
@@ -2233,6 +2326,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G",
   | "H", "Iface", "x", "y"]
   | rebuilt        : ScopeId(0): ["A", "Class", "x", "y"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
 
 
 * imports/elision-qualifiedname/input.ts
@@ -3823,6 +3920,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 * namespace/export-type-only/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["Platform"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 

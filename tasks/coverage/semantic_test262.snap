@@ -2,7 +2,907 @@ commit: a1587416
 
 semantic_test262 Summary:
 AST Parsed     : 46406/46406 (100.00%)
-Positive Passed: 46382/46406 (99.95%)
+Positive Passed: 46200/46406 (99.56%)
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-dft-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-skip-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-dft-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-skip-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-dft-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6)]
+rebuilt        : ScopeId(5): [ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-skip-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-dft-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6)]
+rebuilt        : ScopeId(5): [ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-skip-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-dft-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(5): [ScopeId(6)]
+rebuilt        : ScopeId(5): [ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-skip-param.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(1): [ScopeId(2)]
+rebuilt        : ScopeId(1): [ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4), ScopeId(5)]
+rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-block-scoping.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-block-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-block-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-fn-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-fn-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-var-no-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-var-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-init.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-no-skip-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err-block.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err-for-in.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err-for-of.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err-for.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(3): [ScopeId(4)]
+rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err-switch.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(2): [ScopeId(3)]
+rebuilt        : ScopeId(2): [ScopeId(3)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err-try.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5)]
+rebuilt        : ScopeId(4): [ScopeId(5)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-skip-early-err.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-update.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+
 tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns1", "ns3"]
@@ -122,4 +1022,14 @@ tasks/coverage/test262/test/language/module-code/top-level-await/module-import-r
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["resolved"]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/statements/if/S12.5_A10_T1.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+
+tasks/coverage/test262/test/language/statements/if/S12.5_A5.js
+semantic error: Scope children mismatch:
+after transform: ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 

@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 9/35
+Passed: 8/35
 
 # All Passed:
 
@@ -11,6 +11,10 @@ Passed: 9/35
   x Bindings mismatch:
   | after transform: ScopeId(0): ["_unused", "_unused2"]
   | rebuilt        : ScopeId(0): ["_unused"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
   x Bindings mismatch:
   | after transform: No scope
@@ -26,7 +30,7 @@ Passed: 9/35
 
 
 
-# babel-plugin-transform-typescript (3/7)
+# babel-plugin-transform-typescript (2/7)
 * computed-constant-value/input.ts
   x Semantic Collector failed after transform
 
@@ -62,6 +66,10 @@ Passed: 9/35
 * elimination-declare/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A", "ReactiveMarkerSymbol"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -113,6 +121,12 @@ Passed: 9/35
    : ^
  2 | class Foo {}
    `----
+
+
+* redeclarations/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
 
 
 
@@ -232,6 +246,10 @@ Passed: 9/35
 
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
   x Bindings mismatch:
   | after transform: No scope
   | rebuilt        : ScopeId(3): []
@@ -250,6 +268,11 @@ Passed: 9/35
 
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(5), ScopeId(6)]
+
   x Bindings mismatch:
   | after transform: No scope
   | rebuilt        : ScopeId(2): []

@@ -373,6 +373,26 @@ impl<'s> PostTransformChecker<'s> {
             if !is_match {
                 self.errors.push_mismatch("Scope parent mismatch", scope_ids, parent_ids);
             }
+
+            // Check children match
+            let child_ids = self.get_pair(scope_ids, |data, scope_id| {
+                data.scopes.get_child_ids(scope_id).cloned().unwrap_or_default()
+            });
+            let is_match = child_ids.after_transform.len() == child_ids.rebuilt.len() && {
+                let mut child_ids_after_transform = child_ids
+                    .after_transform
+                    .iter()
+                    .map(|child_id| self.scope_ids_map.get(child_id).copied())
+                    .collect::<Vec<_>>();
+                child_ids_after_transform.sort_unstable();
+                let mut child_ids_rebuilt =
+                    child_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
+                child_ids_rebuilt.sort_unstable();
+                child_ids_after_transform == child_ids_rebuilt
+            };
+            if !is_match {
+                self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
+            }
         }
     }
 
