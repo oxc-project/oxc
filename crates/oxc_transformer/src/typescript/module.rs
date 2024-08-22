@@ -85,8 +85,7 @@ impl<'a> TypeScript<'a> {
     ) -> Expression<'a> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
-                let mut ident = ident.clone();
-                ident.reference_flags = ReferenceFlags::Read;
+                let ident = ident.clone();
                 let reference_id = ident.reference_id.get().unwrap();
                 let reference = ctx.symbols_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;

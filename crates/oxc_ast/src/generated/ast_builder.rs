@@ -1509,7 +1509,6 @@ impl<'a> AstBuilder<'a> {
             span,
             name: name.into_in(self.allocator),
             reference_id: Default::default(),
-            reference_flags: Default::default(),
         }
     }
 
