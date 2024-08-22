@@ -27,7 +27,7 @@ fn test_only_program() {
 
     // children
     assert_eq!(scopes.descendants(root).count(), 0);
-    assert!(scopes.get_child_ids(root).unwrap().is_empty());
+    assert!(scopes.get_child_ids(root).is_empty());
 }
 
 #[test]

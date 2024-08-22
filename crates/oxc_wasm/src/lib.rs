@@ -309,7 +309,7 @@ impl Oxc {
             semantic: &Semantic,
             scope_text: &mut String,
             depth: usize,
-            scope_ids: &Vec<ScopeId>,
+            scope_ids: &[ScopeId],
         ) {
             let space = " ".repeat(depth * 2);
 
@@ -332,15 +332,13 @@ impl Oxc {
                     scope_text.push_str(&format!("\n{binding_space}}}\n"));
                 }
 
-                if let Some(next_scope_ids) = next_scope_ids {
-                    write_scope_text(semantic, scope_text, depth + 1, next_scope_ids);
-                }
+                write_scope_text(semantic, scope_text, depth + 1, next_scope_ids);
                 scope_text.push_str(&format!("{space}}}\n"));
             }
         }
 
         let mut scope_text = String::default();
-        write_scope_text(semantic, &mut scope_text, 0, &vec![semantic.scopes().root_scope_id()]);
+        write_scope_text(semantic, &mut scope_text, 0, &[semantic.scopes().root_scope_id()]);
         scope_text
     }
 
