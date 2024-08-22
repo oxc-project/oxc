@@ -141,20 +141,19 @@ pub fn check_semantic_after_transform(
     let mut checker = PostTransformChecker {
         after_transform: data_after_transform,
         rebuilt: data_rebuilt,
-        errors: vec![],
+        errors: Errors::default(),
     };
     checker.check_bindings();
     checker.check_symbols();
     checker.check_references();
 
-    let errors = checker.errors;
-    (!errors.is_empty()).then_some(errors)
+    checker.errors.get()
 }
 
 struct PostTransformChecker<'s> {
     after_transform: SemanticData<'s>,
     rebuilt: SemanticData<'s>,
-    errors: Vec<OxcDiagnostic>,
+    errors: Errors,
 }
 
 struct SemanticData<'s> {
@@ -163,10 +162,27 @@ struct SemanticData<'s> {
     ids: SemanticIds,
 }
 
+#[derive(Default)]
+struct Errors(Vec<OxcDiagnostic>);
+
+impl Errors {
+    fn push<S: AsRef<str>>(&mut self, message: S) {
+        self.0.push(OxcDiagnostic::error(message.as_ref().trim().to_string()));
+    }
+
+    fn get(self) -> Option<Vec<OxcDiagnostic>> {
+        if self.0.is_empty() {
+            None
+        } else {
+            Some(self.0)
+        }
+    }
+}
+
 impl<'s> PostTransformChecker<'s> {
     fn check_bindings(&mut self) {
         if self.after_transform.ids.scope_ids.len() != self.rebuilt.ids.scope_ids.len() {
-            self.errors.push(OxcDiagnostic::error("Scopes mismatch after transform"));
+            self.errors.push("Scopes mismatch after transform");
             return;
         }
 
@@ -219,14 +235,13 @@ impl<'s> PostTransformChecker<'s> {
                     }
                 };
 
-            let message = format!(
+            self.errors.push(format!(
                 "
 Bindings mismatch:
 after transform: {result_after_transform}
 rebuilt        : {result_rebuilt}
                 "
-            );
-            self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
+            ));
         }
     }
 
@@ -235,23 +250,22 @@ rebuilt        : {result_rebuilt}
         for symbol_id in self.rebuilt.ids.symbol_ids.iter().copied() {
             if self.rebuilt.symbols.get_flags(symbol_id).is_empty() {
                 let name = self.rebuilt.symbols.get_name(symbol_id);
-                self.errors.push(OxcDiagnostic::error(format!(
-                    "Expect non-empty SymbolFlags for BindingIdentifier({name})"
-                )));
+                self.errors
+                    .push(format!("Expect non-empty SymbolFlags for BindingIdentifier({name})"));
                 if !self
                     .rebuilt
                     .scopes
                     .has_binding(self.rebuilt.symbols.get_scope_id(symbol_id), name)
                 {
-                    self.errors.push(OxcDiagnostic::error(
-                        format!("Cannot find BindingIdentifier({name}) in the Scope corresponding to the Symbol"),
+                    self.errors.push(format!(
+                        "Cannot find BindingIdentifier({name}) in the Scope corresponding to the Symbol"
                     ));
                 }
             }
         }
 
         if self.after_transform.ids.symbol_ids.len() != self.rebuilt.ids.symbol_ids.len() {
-            self.errors.push(OxcDiagnostic::error("Symbols mismatch after transform"));
+            self.errors.push("Symbols mismatch after transform");
             return;
         }
 
@@ -263,14 +277,13 @@ rebuilt        : {result_rebuilt}
                 &self.after_transform.symbols.names[symbol_id_after_transform];
             let symbol_name_rebuilt = &self.rebuilt.symbols.names[symbol_id_rebuilt];
             if symbol_name_after_transform != symbol_name_rebuilt {
-                let message = format!(
+                self.errors.push(format!(
                     "
 Symbol mismatch:
 after transform: {symbol_id_after_transform:?}: {symbol_name_after_transform:?}
 rebuilt        : {symbol_id_rebuilt:?}: {symbol_name_rebuilt:?}
                     "
-                );
-                self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
+                ));
             }
         }
     }
@@ -280,14 +293,14 @@ rebuilt        : {symbol_id_rebuilt:?}: {symbol_name_rebuilt:?}
         for reference_id in self.rebuilt.ids.reference_ids.iter().copied() {
             let reference = self.rebuilt.symbols.get_reference(reference_id);
             if reference.flags().is_empty() {
-                self.errors.push(OxcDiagnostic::error(format!(
-                    "Expect ReferenceFlags for IdentifierReference({reference_id:?}) to not be empty",
-                )));
+                self.errors.push(format!(
+                    "Expect ReferenceFlags for IdentifierReference({reference_id:?}) to not be empty"
+                ));
             }
         }
 
         if self.after_transform.ids.reference_ids.len() != self.rebuilt.ids.reference_ids.len() {
-            self.errors.push(OxcDiagnostic::error("ReferenceId mismatch after transform"));
+            self.errors.push("ReferenceId mismatch after transform");
             return;
         }
 
@@ -304,14 +317,13 @@ rebuilt        : {symbol_id_rebuilt:?}: {symbol_name_rebuilt:?}
             let symbol_name_rebuilt =
                 symbol_id_rebuilt.map(|id| self.rebuilt.symbols.names[id].clone());
             if symbol_name_after_transform != symbol_name_rebuilt {
-                let message = format!(
+                self.errors.push(format!(
                     "
 Reference mismatch:
 after transform: {reference_id_after_transform:?}: {symbol_name_after_transform:?}
 rebuilt        : {reference_id_rebuilt:?}: {symbol_name_rebuilt:?}
                     "
-                );
-                self.errors.push(OxcDiagnostic::error(message.trim().to_string()));
+                ));
             }
         }
     }
