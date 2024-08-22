@@ -219,7 +219,7 @@ Negative Passed: 15/15 (100.00%)
    ·           ─────────────
    ╰────
 
-  × Identifier `Test` has already been declared
+  × Label `Test` has already been declared
    ╭─[misc/fail/oxc-5036.js:1:1]
  1 │ Test: {
    · ──┬─

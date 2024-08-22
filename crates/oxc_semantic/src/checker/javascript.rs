@@ -656,7 +656,7 @@ pub fn check_labeled_statement(ctx: &SemanticBuilder) {
             // have to traverse because HashMap can only delete one by one
             while increase_depth.len() > 2
                 && increase_depth.iter().rev().nth(1).unwrap().depth
-                    >= increase_depth.iter().rev().next().unwrap().depth
+                    >= increase_depth.iter().next_back().unwrap().depth
             {
                 defined.remove(increase_depth[increase_depth.len() - 2].name);
                 increase_depth.remove(increase_depth.len() - 2);
