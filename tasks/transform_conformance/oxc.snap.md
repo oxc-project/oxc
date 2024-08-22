@@ -28,6 +28,15 @@ Passed: 8/35
   | after transform: ScopeId(2): Some(ScopeId(0))
   | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(CatchVariable)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable |
+  | CatchVariable)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(1): ScopeId(0)
+  | rebuilt        : SymbolId(1): ScopeId(3)
+
 
 
 # babel-plugin-transform-typescript (2/7)
@@ -128,6 +137,30 @@ Passed: 8/35
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | Import)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+
+  x Symbol span mismatch:
+  | after transform: SymbolId(0): Span { start: 57, end: 58 }
+  | rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(Export | Import | TypeAlias)
+  | rebuilt        : SymbolId(1): SymbolFlags(Export | Import)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | Import | TypeAlias)
+  | rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+
+  x Symbol span mismatch:
+  | after transform: SymbolId(2): Span { start: 267, end: 268 }
+  | rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
+
 
 
 # babel-plugin-transform-react-jsx (6/27)
@@ -191,6 +224,10 @@ Passed: 8/35
   x Bindings mismatch:
   | after transform: ScopeId(1): ["_s"]
   | rebuilt        : ScopeId(1): []
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(1): ScopeId(1)
+  | rebuilt        : SymbolId(0): ScopeId(0)
 
   x Reference mismatch:
   | after transform: ReferenceId(3): Some("_s")

@@ -638,6 +638,13 @@ pub fn check_continue_statement<'a>(
     }
 }
 
+fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Label `{x0}` has already been declared")).with_labels([
+        span1.label(format!("`{x0}` has already been declared here")),
+        span2.label("It can not be redeclared here"),
+    ])
+}
+
 #[allow(clippy::option_if_let_else)]
 pub fn check_labeled_statement(ctx: &SemanticBuilder) {
     ctx.label_builder.labels.iter().for_each(|labels| {
@@ -654,7 +661,7 @@ pub fn check_labeled_statement(ctx: &SemanticBuilder) {
                 rise_depth.remove(rise_depth.len() - 2);
             }
             if let Some(span) = defined.get(labeled.name) {
-                ctx.error(redeclaration(labeled.name, *span, labeled.span));
+                ctx.error(label_redeclaration(labeled.name, *span, labeled.span));
             } else {
                 defined.insert(labeled.name, labeled.span);
             }

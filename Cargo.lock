@@ -1772,7 +1772,10 @@ name = "oxc_regular_expression"
 version = "0.24.3"
 dependencies = [
  "oxc_allocator",
+ "oxc_ast",
  "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_semantic",
  "oxc_span",
  "phf 0.11.2",
  "rustc-hash",
@@ -1902,6 +1905,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_isolated_declarations",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_sourcemap",
  "oxc_span",
  "oxc_transformer",

@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 396/953
+Passed: 395/953
 
 # All Passed:
 * babel-preset-react
@@ -1276,349 +1276,8 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
-# babel-plugin-transform-logical-assignment-operators (4/6)
-* logical-assignment/general-semantics/input.js
-  x Semantic Collector failed after transform
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:32:8]
- 31 | 
- 32 | expect(deep.obj.x ||= 1).toBe(1);
-    :        ^^^^
- 33 | expect(gets).toBe(1);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:32:8]
- 31 | 
- 32 | expect(deep.obj.x ||= 1).toBe(1);
-    :        ^^^^
- 33 | expect(gets).toBe(1);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:34:8]
- 33 | expect(gets).toBe(1);
- 34 | expect(deep.obj.x ||= 2).toBe(1);
-    :        ^^^^
- 35 | expect(gets).toBe(2);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:34:8]
- 33 | expect(gets).toBe(1);
- 34 | expect(deep.obj.x ||= 2).toBe(1);
-    :        ^^^^
- 35 | expect(gets).toBe(2);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:37:8]
- 36 | 
- 37 | expect(deep.obj.x &&= 0).toBe(0);
-    :        ^^^^
- 38 | expect(gets).toBe(3);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:37:8]
- 36 | 
- 37 | expect(deep.obj.x &&= 0).toBe(0);
-    :        ^^^^
- 38 | expect(gets).toBe(3);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:39:8]
- 38 | expect(gets).toBe(3);
- 39 | expect(deep.obj.x &&= 3).toBe(0);
-    :        ^^^^
- 40 | expect(gets).toBe(4);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:39:8]
- 38 | expect(gets).toBe(3);
- 39 | expect(deep.obj.x &&= 3).toBe(0);
-    :        ^^^^
- 40 | expect(gets).toBe(4);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:43:14]
- 42 | var key = 0;
- 43 | expect(obj[++key] ||= 1).toBe(1);
-    :              ^^^
- 44 | expect(key).toBe(1);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:46:14]
- 45 | key = 0;
- 46 | expect(obj[++key] ||= 2).toBe(1);
-    :              ^^^
- 47 | expect(key).toBe(1);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:50:14]
- 49 | key = 0;
- 50 | expect(obj[++key] &&= 0).toBe(0);
-    :              ^^^
- 51 | expect(key).toBe(1);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:53:14]
- 52 | key = 0;
- 53 | expect(obj[++key] &&= 3).toBe(0);
-    :              ^^^
- 54 | expect(key).toBe(1);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:8]
- 56 | key = 0;
- 57 | expect(deep.obj[++key] ||= 1).toBe(1);
-    :        ^^^^
- 58 | expect(gets).toBe(5);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:19]
- 56 | key = 0;
- 57 | expect(deep.obj[++key] ||= 1).toBe(1);
-    :                   ^^^
- 58 | expect(gets).toBe(5);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:8]
- 56 | key = 0;
- 57 | expect(deep.obj[++key] ||= 1).toBe(1);
-    :        ^^^^
- 58 | expect(gets).toBe(5);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:57:19]
- 56 | key = 0;
- 57 | expect(deep.obj[++key] ||= 1).toBe(1);
-    :                   ^^^
- 58 | expect(gets).toBe(5);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:8]
- 60 | key = 0;
- 61 | expect(deep.obj[++key] ||= 2).toBe(1);
-    :        ^^^^
- 62 | expect(gets).toBe(6);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:19]
- 60 | key = 0;
- 61 | expect(deep.obj[++key] ||= 2).toBe(1);
-    :                   ^^^
- 62 | expect(gets).toBe(6);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:8]
- 60 | key = 0;
- 61 | expect(deep.obj[++key] ||= 2).toBe(1);
-    :        ^^^^
- 62 | expect(gets).toBe(6);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:61:19]
- 60 | key = 0;
- 61 | expect(deep.obj[++key] ||= 2).toBe(1);
-    :                   ^^^
- 62 | expect(gets).toBe(6);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:8]
- 65 | key = 0;
- 66 | expect(deep.obj[++key] &&= 0).toBe(0);
-    :        ^^^^
- 67 | expect(gets).toBe(7);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:19]
- 65 | key = 0;
- 66 | expect(deep.obj[++key] &&= 0).toBe(0);
-    :                   ^^^
- 67 | expect(gets).toBe(7);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:8]
- 65 | key = 0;
- 66 | expect(deep.obj[++key] &&= 0).toBe(0);
-    :        ^^^^
- 67 | expect(gets).toBe(7);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:66:19]
- 65 | key = 0;
- 66 | expect(deep.obj[++key] &&= 0).toBe(0);
-    :                   ^^^
- 67 | expect(gets).toBe(7);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:8]
- 69 | key = 0;
- 70 | expect(deep.obj[++key] &&= 3).toBe(0);
-    :        ^^^^
- 71 | expect(gets).toBe(8);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:19]
- 69 | key = 0;
- 70 | expect(deep.obj[++key] &&= 3).toBe(0);
-    :                   ^^^
- 71 | expect(gets).toBe(8);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:8]
- 69 | key = 0;
- 70 | expect(deep.obj[++key] &&= 3).toBe(0);
-    :        ^^^^
- 71 | expect(gets).toBe(8);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/general-semantics/input.js:70:19]
- 69 | key = 0;
- 70 | expect(deep.obj[++key] &&= 3).toBe(0);
-    :                   ^^^
- 71 | expect(gets).toBe(8);
-    `----
-
-
+# babel-plugin-transform-logical-assignment-operators (5/6)
 * logical-assignment/null-coalescing/input.js
-  x Semantic Collector failed after transform
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:28:8]
- 27 | obj.x = undefined;
- 28 | expect(deep.obj.x ??= 1).toBe(1);
-    :        ^^^^
- 29 | expect(gets, 1);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:28:8]
- 27 | obj.x = undefined;
- 28 | expect(deep.obj.x ??= 1).toBe(1);
-    :        ^^^^
- 29 | expect(gets, 1);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:30:8]
- 29 | expect(gets, 1);
- 30 | expect(deep.obj.x ??= 2).toBe(1);
-    :        ^^^^
- 31 | expect(gets, 2);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:30:8]
- 29 | expect(gets, 1);
- 30 | expect(deep.obj.x ??= 2).toBe(1);
-    :        ^^^^
- 31 | expect(gets, 2);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:35:14]
- 34 | obj.x = undefined;
- 35 | expect(obj[++key] ??= 1).toBe(1);
-    :              ^^^
- 36 | expect(key, 1);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:38:14]
- 37 | key = 0;
- 38 | expect(obj[++key] ??= 2).toBe(1);
-    :              ^^^
- 39 | expect(key, 1);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:8]
- 42 | key = 0;
- 43 | expect(deep.obj[++key] ??= 1).toBe(1);
-    :        ^^^^
- 44 | expect(gets, 3);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:19]
- 42 | key = 0;
- 43 | expect(deep.obj[++key] ??= 1).toBe(1);
-    :                   ^^^
- 44 | expect(gets, 3);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:8]
- 42 | key = 0;
- 43 | expect(deep.obj[++key] ??= 1).toBe(1);
-    :        ^^^^
- 44 | expect(gets, 3);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:43:19]
- 42 | key = 0;
- 43 | expect(deep.obj[++key] ??= 1).toBe(1);
-    :                   ^^^
- 44 | expect(gets, 3);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:8]
- 46 | key = 0;
- 47 | expect(deep.obj[++key] ??= 2).toBe(1);
-    :        ^^^^
- 48 | expect(gets, 4);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:19]
- 46 | key = 0;
- 47 | expect(deep.obj[++key] ??= 2).toBe(1);
-    :                   ^^^
- 48 | expect(gets, 4);
-    `----
-
-  x Missing ReferenceId: deep
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:8]
- 46 | key = 0;
- 47 | expect(deep.obj[++key] ??= 2).toBe(1);
-    :        ^^^^
- 48 | expect(gets, 4);
-    `----
-
-  x Missing ReferenceId: key
-    ,-[tasks/coverage/babel/packages/babel-plugin-transform-logical-assignment-operators/test/fixtures/logical-assignment/null-coalescing/input.js:47:19]
- 46 | key = 0;
- 47 | expect(deep.obj[++key] ??= 2).toBe(1);
-    :                   ^^^
- 48 | expect(gets, 4);
-    `----
 
 
 
@@ -1667,6 +1326,15 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): Some(ScopeId(0))
   | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
+  | CatchVariable)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(0): ScopeId(0)
+  | rebuilt        : SymbolId(0): ScopeId(3)
+
 
 * optional-catch-bindings/try-catch-finally-no-binding/input.js
   x Bindings mismatch:
@@ -1689,6 +1357,15 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): Some(ScopeId(0))
   | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
+  | CatchVariable)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(0): ScopeId(0)
+  | rebuilt        : SymbolId(0): ScopeId(3)
+
 
 
 # babel-plugin-transform-exponentiation-operator (3/4)
@@ -1696,7 +1373,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-arrow-functions (1/6)
+# babel-plugin-transform-arrow-functions (0/6)
 * assumption-newableArrowFunctions-false/basic/input.js
   x Bindings mismatch:
   | after transform: ScopeId(1): ["f"]
@@ -1714,17 +1391,54 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(6): ["_this2"]
   | rebuilt        : ScopeId(6): []
 
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(6): ScopeId(6)
+  | rebuilt        : SymbolId(1): ScopeId(1)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(5): ScopeId(5)
+  | rebuilt        : SymbolId(6): ScopeId(4)
+
 
 * assumption-newableArrowFunctions-false/naming/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | ArrowFunction)
+  | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
 
 
 * assumption-newableArrowFunctions-false/self-referential/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * spec/newableArrowFunction-default/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 * spec/newableArrowFunction-vs-spec-false/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+
+
+* spec/newableArrowFunction-vs-spec-true/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 
@@ -1756,12 +1470,16 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * opts/rewriteImportExtensions/input.ts
 
 
 
-# babel-plugin-transform-typescript (51/151)
+# babel-plugin-transform-typescript (50/151)
 * class/accessor-allowDeclareFields-false/input.ts
   x TS(18010): An accessibility modifier cannot be used with a private
   | identifier.
@@ -1843,11 +1561,19 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/const/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/constant-folding/input.ts
@@ -1859,6 +1585,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/enum-merging-inner-references/input.ts
@@ -1877,6 +1607,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/enum-merging-inner-references-shadow/input.ts
@@ -1904,6 +1638,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(3): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/export/input.ts
   x Bindings mismatch:
@@ -1922,6 +1660,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
 
 * enum/inferred/input.ts
   x Bindings mismatch:
@@ -1932,6 +1674,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/inner-references/input.ts
   x Bindings mismatch:
@@ -1941,6 +1687,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/mix-references/input.ts
@@ -1991,6 +1741,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/non-scoped/input.ts
   x Bindings mismatch:
@@ -2008,6 +1762,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/outer-references/input.ts
@@ -2028,11 +1786,23 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(4): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/scoped/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 * enum/string-value/input.ts
@@ -2044,6 +1814,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/string-value-template/input.ts
   x Bindings mismatch:
@@ -2054,6 +1828,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/string-values-computed/input.ts
   x Bindings mismatch:
@@ -2063,6 +1841,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/ts5.0-const-foldable/input.ts
@@ -2082,11 +1864,24 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(8): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+
 
 * exports/declare-namespace/input.ts
   x Scope children mismatch:
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
   | rebuilt        : ScopeId(0): [ScopeId(1)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule
+  | | Ambient)
+  | rebuilt        : SymbolId(0): SymbolFlags(Export | Class)
 
 
 * exports/declare-shadowed/input.ts
@@ -2130,6 +1925,14 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(16): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(10): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable | Export)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(15): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable | Export)
+
   x Reference mismatch:
   | after transform: ReferenceId(0): Some("x")
   | rebuilt        : ReferenceId(0): None
@@ -2157,6 +1960,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * exports/export-import=/input.ts
@@ -2357,6 +2164,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * imports/enum-value/input.ts
   x Bindings mismatch:
@@ -2366,6 +2177,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * imports/import-removed-exceptions/input.ts
@@ -2379,6 +2194,26 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A", "B", "T", "Types"]
   | rebuilt        : ScopeId(0): []
+
+
+* imports/import-type-func-with-duplicate-name/input.ts
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function
+  | | TypeImport)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+
+  x Symbol span mismatch:
+  | after transform: SymbolId(0): Span { start: 13, end: 16 }
+  | rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function
+  | | TypeImport)
+  | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+
+  x Symbol span mismatch:
+  | after transform: SymbolId(1): Span { start: 43, end: 47 }
+  | rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
 
 
 * imports/import-type-not-removed/input.ts
@@ -2421,6 +2256,13 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/type-only-export-specifier-2/input.ts
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(Export | Import)
+  | rebuilt        : SymbolId(1): SymbolFlags(Import)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(Export | TypeImport)
+  | rebuilt        : SymbolId(2): SymbolFlags(TypeImport)
 
 
 * imports/type-only-import-specifier-1/input.ts
@@ -5152,6 +4994,14 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   | after transform: ScopeId(4): ["_this2"]
   | rebuilt        : ScopeId(4): []
 
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(2): ScopeId(2)
+  | rebuilt        : SymbolId(1): ScopeId(1)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(3): ScopeId(4)
+  | rebuilt        : SymbolId(3): ScopeId(3)
+
 
 * react/should-disallow-valueless-key/input.js
   ! Please provide an explicit key value. Using "key" as a shorthand for
@@ -5199,6 +5049,14 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   x Bindings mismatch:
   | after transform: ScopeId(4): ["_this2"]
   | rebuilt        : ScopeId(4): []
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(3): ScopeId(2)
+  | rebuilt        : SymbolId(2): ScopeId(1)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(4): ScopeId(4)
+  | rebuilt        : SymbolId(4): ScopeId(3)
 
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -5252,6 +5110,14 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
   x Bindings mismatch:
   | after transform: ScopeId(3): ["_this2"]
   | rebuilt        : ScopeId(3): []
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(1): ScopeId(1)
+  | rebuilt        : SymbolId(0): ScopeId(0)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(2): ScopeId(3)
+  | rebuilt        : SymbolId(2): ScopeId(2)
 
 
 

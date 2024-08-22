@@ -590,7 +590,7 @@ impl<'a> PatternParser<'a> {
         };
 
         if self.reader.eat('{') {
-            if let Some((name, value, is_strings_related)) =
+            if let Some((name, value, strings)) =
                 self.consume_unicode_property_value_expression()?
             {
                 if self.reader.eat('}') {
@@ -599,7 +599,7 @@ impl<'a> PatternParser<'a> {
                     // MayContainStrings is true
                     // - if the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
                     //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
-                    if negative && is_strings_related {
+                    if negative && strings {
                         return Err(OxcDiagnostic::error(
                             "Invalid property name(negative + property of strings)",
                         )
@@ -609,7 +609,7 @@ impl<'a> PatternParser<'a> {
                     return Ok(Some(ast::UnicodePropertyEscape {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         negative,
-                        strings: is_strings_related,
+                        strings,
                         name,
                         value,
                     }));
@@ -1299,21 +1299,21 @@ impl<'a> PatternParser<'a> {
                         //   - && ClassUnion has ClassOperands
                         //     - && at least 1 ClassOperand has MayContainStrings: true
                         ast::CharacterClassContentsKind::Union => {
-                            body.iter().any(|item| may_contain_strings(item))
+                            body.iter().any(may_contain_strings)
                         }
                         // MayContainStrings is true
                         // - if ClassContents is ClassIntersection
                         //   - && ClassIntersection has ClassOperands
                         //     - && all ClassOperands have MayContainStrings: true
                         ast::CharacterClassContentsKind::Intersection => {
-                            body.iter().all(|item| may_contain_strings(item))
+                            body.iter().all(may_contain_strings)
                         }
                         // MayContainStrings is true
                         // - if ClassContents is ClassSubtraction
                         //   - && ClassSubtraction has ClassOperands
                         //     - && the first ClassOperand has MayContainStrings: true
                         ast::CharacterClassContentsKind::Subtraction => {
-                            body.iter().next().map_or(false, |item| may_contain_strings(item))
+                            body.iter().next().map_or(false, may_contain_strings)
                         }
                     } {
                         return Err(OxcDiagnostic::error(
@@ -1377,11 +1377,13 @@ impl<'a> PatternParser<'a> {
         let mut strings = false;
 
         loop {
-            let (class_string, contain_strings) = self.parse_class_string()?;
-            body.push(class_string);
-            if contain_strings {
+            let class_string = self.parse_class_string()?;
+
+            // Propagate strings flag
+            if class_string.strings {
                 strings = true;
             }
+            body.push(class_string);
 
             if !self.reader.eat('|') {
                 break;
@@ -1404,7 +1406,7 @@ impl<'a> PatternParser<'a> {
     //   ClassSetCharacter NonEmptyClassString[opt]
     // ```
     // Returns (ClassString, contain_strings)
-    fn parse_class_string(&mut self) -> Result<(ast::ClassString<'a>, bool)> {
+    fn parse_class_string(&mut self) -> Result<ast::ClassString<'a>> {
         let span_start = self.reader.offset();
 
         let mut body = Vec::new_in(self.allocator);
@@ -1412,16 +1414,14 @@ impl<'a> PatternParser<'a> {
             body.push(class_set_character);
         }
 
-        // True if empty or contains 2 or more characters
-        let contain_strings = body.len() != 1;
+        // `true` if empty or contains 2 or more characters
+        let strings = body.len() != 1;
 
-        Ok((
-            ast::ClassString {
-                span: self.span_factory.create(span_start, self.reader.offset()),
-                body,
-            },
-            contain_strings,
-        ))
+        Ok(ast::ClassString {
+            span: self.span_factory.create(span_start, self.reader.offset()),
+            strings,
+            body,
+        })
     }
 
     // ```
@@ -1864,11 +1864,9 @@ impl<'a> PatternParser<'a> {
     //   [~UnicodeMode] UnicodeLeadSurrogate UnicodeTrailSurrogate
     // ```
     fn consume_reg_exp_idenfigier_part(&mut self) -> Result<Option<u32>> {
-        if let Some(cp) = self.reader.peek() {
-            if unicode::is_identifier_part_char(cp) {
-                self.reader.advance();
-                return Ok(Some(cp));
-            }
+        if let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_identifier_part_char(cp)) {
+            self.reader.advance();
+            return Ok(Some(cp));
         }
 
         let span_start = self.reader.offset();
@@ -2004,6 +2002,7 @@ impl<'a> PatternParser<'a> {
                 )
                 .with_label(self.span_factory.create(span_start, self.reader.offset())));
             }
+
             self.reader.rewind(checkpoint);
         }
 

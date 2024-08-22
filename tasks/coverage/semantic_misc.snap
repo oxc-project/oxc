@@ -85,6 +85,30 @@ rebuilt        : ScopeId(8): ["H"]
 Scope flags mismatch:
 after transform: ScopeId(8): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(1): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(2): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(3): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(4): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(6): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(8): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(12): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(10): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/misc/pass/swc-7187.ts
 semantic error: Bindings mismatch:
