@@ -85,7 +85,7 @@
 //!
 //! See also: <https://github.com/oxc-project/oxc/issues/4790>
 
-use std::{cell::Cell, fmt::Debug};
+use std::{cell::Cell, fmt::Debug, hash::Hash};
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
@@ -142,9 +142,9 @@ pub fn check_semantic_after_transform(
     let mut checker = PostTransformChecker {
         after_transform: data_after_transform,
         rebuilt: data_rebuilt,
-        scope_ids_map: FxHashMap::default(),
-        symbol_ids_map: FxHashMap::default(),
-        reference_ids_map: FxHashMap::default(),
+        scope_ids_map: IdMapping::default(),
+        symbol_ids_map: IdMapping::default(),
+        reference_ids_map: IdMapping::default(),
         errors: Errors::default(),
     };
     checker.create_mappings();
@@ -159,9 +159,9 @@ struct PostTransformChecker<'s> {
     after_transform: SemanticData<'s>,
     rebuilt: SemanticData<'s>,
     // Mappings from after transform ID to rebuilt ID
-    scope_ids_map: FxHashMap<ScopeId, ScopeId>,
-    symbol_ids_map: FxHashMap<SymbolId, SymbolId>,
-    reference_ids_map: FxHashMap<ReferenceId, ReferenceId>,
+    scope_ids_map: IdMapping<ScopeId>,
+    symbol_ids_map: IdMapping<SymbolId>,
+    reference_ids_map: IdMapping<ReferenceId>,
     errors: Errors,
 }
 
@@ -169,6 +169,25 @@ struct SemanticData<'s> {
     symbols: &'s SymbolTable,
     scopes: &'s ScopeTree,
     ids: SemanticIds,
+}
+
+/// Mapping from "after transform" ID to "rebuilt" ID
+struct IdMapping<Id>(FxHashMap<Id, Id>);
+
+impl<Id: Copy + Eq + Hash> IdMapping<Id> {
+    fn insert(&mut self, after_transform_id: Id, rebuilt_id: Id) {
+        self.0.insert(after_transform_id, rebuilt_id);
+    }
+
+    fn get(&self, after_transform_id: Id) -> Option<Id> {
+        self.0.get(&after_transform_id).copied()
+    }
+}
+
+impl<Id> Default for IdMapping<Id> {
+    fn default() -> Self {
+        Self(FxHashMap::default())
+    }
 }
 
 /// Pair of values from after transform and rebuilt
@@ -339,7 +358,7 @@ impl<'s> PostTransformChecker<'s> {
                         let mut symbol_ids_after_transform = symbol_ids
                             .after_transform
                             .iter()
-                            .map(|symbol_id| self.symbol_ids_map.get(symbol_id).copied())
+                            .map(|&symbol_id| self.symbol_ids_map.get(symbol_id))
                             .collect::<Vec<_>>();
                         symbol_ids_after_transform.sort_unstable();
                         let mut symbol_ids_rebuilt = symbol_ids
@@ -406,7 +425,7 @@ impl<'s> PostTransformChecker<'s> {
                 let mut child_ids_after_transform = child_ids
                     .after_transform
                     .iter()
-                    .map(|child_id| self.scope_ids_map.get(child_id).copied())
+                    .map(|&child_id| self.scope_ids_map.get(child_id))
                     .collect::<Vec<_>>();
                 child_ids_after_transform.sort_unstable();
                 let mut child_ids_rebuilt =
@@ -521,10 +540,7 @@ impl<'s> PostTransformChecker<'s> {
 
     /// Map `after_transform` scope ID to `rebuilt` scope ID
     fn remap_scope_ids(&self, scope_ids: Pair<ScopeId>) -> Pair<Option<ScopeId>> {
-        Pair::new(
-            self.scope_ids_map.get(&scope_ids.after_transform).copied(),
-            Some(scope_ids.rebuilt),
-        )
+        Pair::new(self.scope_ids_map.get(scope_ids.after_transform), Some(scope_ids.rebuilt))
     }
 }
 
