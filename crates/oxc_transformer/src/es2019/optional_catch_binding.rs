@@ -37,7 +37,7 @@ use std::cell::Cell;
 use oxc_ast::ast::*;
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -49,10 +49,12 @@ impl<'a> OptionalCatchBinding<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { _ctx: ctx }
     }
+}
 
+impl<'a> Traverse<'a> for OptionalCatchBinding<'a> {
     /// If CatchClause has no param, add a parameter called `unused`.
     #[allow(clippy::unused_self)]
-    pub fn transform_catch_clause(&self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         if clause.param.is_some() {
             return;
         }

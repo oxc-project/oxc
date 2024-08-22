@@ -333,7 +333,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x2_es2019.transform_catch_clause(clause, ctx);
+        self.x2_es2019.enter_catch_clause(clause, ctx);
     }
 
     fn enter_ts_export_assignment(
