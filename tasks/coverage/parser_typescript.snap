@@ -7269,7 +7269,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  20 │     return 0;
     ╰────
 
-  × Identifier `target` has already been declared
+  × Label `target` has already been declared
    ╭─[typescript/tests/cases/compiler/duplicateLabel1.ts:1:1]
  1 │ target:
    · ───┬──
@@ -7280,7 +7280,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │ while (true) {
    ╰────
 
-  × Identifier `target` has already been declared
+  × Label `target` has already been declared
    ╭─[typescript/tests/cases/compiler/duplicateLabel2.ts:1:1]
  1 │ target:
    · ───┬──
@@ -20674,7 +20674,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │ }
    ╰────
 
-  × Identifier `target` has already been declared
+  × Label `target` has already been declared
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel1.ts:1:1]
  1 │ target:
    · ───┬──
@@ -20685,7 +20685,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │ while (true) {
    ╰────
 
-  × Identifier `target` has already been declared
+  × Label `target` has already been declared
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel2.ts:1:1]
  1 │ target:
    · ───┬──

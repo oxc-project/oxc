@@ -21564,7 +21564,7 @@ Negative Passed: 4220/4220 (100.00%)
     ·                ╰── It cannot be redeclared here
     ╰────
 
-  × Identifier `label` has already been declared
+  × Label `label` has already been declared
     ╭─[test262/test/language/module-code/early-dup-lables.js:16:1]
  15 │ 
  16 │ label: {
@@ -30302,7 +30302,7 @@ Negative Passed: 4220/4220 (100.00%)
  31 │     }
     ╰────
 
-  × Identifier `x` has already been declared
+  × Label `x` has already been declared
     ╭─[test262/test/language/statements/class/static-init-invalid-label-dup.js:21:5]
  20 │   static {
  21 │     x: x: 0;

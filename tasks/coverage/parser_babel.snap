@@ -1887,7 +1887,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
-  × Identifier `x` has already been declared
+  × Label `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/465/input.js:1:1]
  1 │ x: while (true) { x: while (true) { } }
    · ┬                 ┬
@@ -9131,7 +9131,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
-  × Identifier `x` has already been declared
+  × Label `x` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0182/input.js:1:1]
  1 │ x: while (true) { x: while (true) { } }
    · ┬                 ┬
@@ -9540,7 +9540,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·             ───────
    ╰────
 
-  × Identifier `__proto__` has already been declared
+  × Label `__proto__` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0248/input.js:1:1]
  1 │ __proto__: __proto__: 42;
    · ────┬────  ────┬────
