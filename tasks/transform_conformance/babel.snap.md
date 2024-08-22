@@ -2359,6 +2359,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ReferenceId(0): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
 
+  x Unbound references mismatch:
+  | after transform: ReferenceId(0): []
+  | rebuilt        : ReferenceId(0): ["x"]
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(2): Some("E")
   | rebuilt        : ReferenceId(1): None
@@ -2366,6 +2370,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Type)
+
+  x Unbound references mismatch:
+  | after transform: ReferenceId(2): []
+  | rebuilt        : ReferenceId(1): ["E"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("x")
@@ -2375,6 +2383,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ReferenceId(8): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(2): ReferenceFlags(Read | Type)
 
+  x Unbound references mismatch:
+  | after transform: ReferenceId(8): []
+  | rebuilt        : ReferenceId(2): ["x"]
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("E")
   | rebuilt        : ReferenceId(3): None
@@ -2382,6 +2394,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Reference flags mismatch:
   | after transform: ReferenceId(11): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Type)
+
+  x Unbound references mismatch:
+  | after transform: ReferenceId(11): []
+  | rebuilt        : ReferenceId(3): ["E"]
 
 
 * exports/default-function/input.ts

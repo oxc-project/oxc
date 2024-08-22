@@ -530,6 +530,27 @@ impl<'s> PostTransformChecker<'s> {
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Reference flags mismatch", reference_ids, flags);
             }
+
+            // Check unbound references
+            let unresolved_names = self.get_pair(reference_ids, |data, reference_id| {
+                let mut unresolved: Vec<CompactStr> = vec![];
+                for (name, unresolved_reference_ids) in &data.scopes.root_unresolved_references {
+                    let count =
+                        unresolved_reference_ids.iter().filter(|&&id| id == reference_id).count();
+                    if count > 0 {
+                        unresolved.extend((0..count).map(|_| name.clone()));
+                    }
+                }
+                unresolved.sort_unstable();
+                unresolved
+            });
+            if unresolved_names.is_mismatch() {
+                self.errors.push_mismatch(
+                    "Unbound references mismatch",
+                    reference_ids,
+                    unresolved_names,
+                );
+            }
         }
     }
 
