@@ -449,6 +449,12 @@ impl<'s> PostTransformChecker<'s> {
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Symbol flags mismatch", symbol_ids, flags);
             }
+
+            // Check spans match
+            let spans = self.get_pair(symbol_ids, |data, symbol_id| data.symbols.spans[symbol_id]);
+            if spans.is_mismatch() {
+                self.errors.push_mismatch("Symbol span mismatch", symbol_ids, spans);
+            }
         }
     }
 

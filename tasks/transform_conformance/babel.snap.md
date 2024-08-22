@@ -2186,10 +2186,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | | TypeImport)
   | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
 
+  x Symbol span mismatch:
+  | after transform: SymbolId(0): Span { start: 13, end: 16 }
+  | rebuilt        : SymbolId(0): Span { start: 70, end: 73 }
+
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function
   | | TypeImport)
   | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
+
+  x Symbol span mismatch:
+  | after transform: SymbolId(1): Span { start: 43, end: 47 }
+  | rebuilt        : SymbolId(1): Span { start: 87, end: 91 }
 
 
 * imports/import-type-not-removed/input.ts

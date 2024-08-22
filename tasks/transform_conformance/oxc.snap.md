@@ -139,6 +139,10 @@ Passed: 8/35
   | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
   | ConstVariable | Export)
 
+  x Symbol span mismatch:
+  | after transform: SymbolId(0): Span { start: 57, end: 58 }
+  | rebuilt        : SymbolId(0): Span { start: 79, end: 83 }
+
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(Export | Import | TypeAlias)
   | rebuilt        : SymbolId(1): SymbolFlags(Export | Import)
@@ -148,6 +152,10 @@ Passed: 8/35
   | ConstVariable | Export | Import | TypeAlias)
   | rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable |
   | ConstVariable | Export)
+
+  x Symbol span mismatch:
+  | after transform: SymbolId(2): Span { start: 267, end: 268 }
+  | rebuilt        : SymbolId(2): Span { start: 289, end: 293 }
 
 
 
