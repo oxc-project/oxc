@@ -127,21 +127,11 @@ impl<'a> Traverse<'a> for ExponentiationOperator<'a> {
 }
 
 impl<'a> ExponentiationOperator<'a> {
-    fn clone_identifier_reference(
-        ident: &IdentifierReference<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
-        let reference = ctx.symbols().get_reference(ident.reference_id.get().unwrap());
-        let symbol_id = reference.symbol_id();
-        let flags = reference.flags();
-        ctx.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
-    }
-
     fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
-            Expression::Identifier(ident) => ctx
-                .ast
-                .expression_from_identifier_reference(Self::clone_identifier_reference(ident, ctx)),
+            Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
+                ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
+            ),
             _ => expr.clone_in(ctx.ast.allocator),
         }
     }
@@ -184,9 +174,10 @@ impl<'a> ExponentiationOperator<'a> {
         let obj = self.get_obj_ref(node, nodes, ctx)?;
         let (reference, uid) = match node {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                let reference = AssignmentTarget::AssignmentTargetIdentifier(
-                    ctx.ast.alloc(Self::clone_identifier_reference(ident.as_ref(), ctx)),
-                );
+                let reference =
+                    AssignmentTarget::AssignmentTargetIdentifier(ctx.ast.alloc(
+                        ctx.clone_identifier_reference(ident.as_ref(), ReferenceFlags::Write),
+                    ));
                 (reference, obj)
             }
             match_member_expression!(SimpleAssignmentTarget) => {
@@ -250,13 +241,13 @@ impl<'a> ExponentiationOperator<'a> {
                     // that evaluating it multiple times won't trigger a getter
                     // or something else
                     return Some(ctx.ast.expression_from_identifier_reference(
-                        Self::clone_identifier_reference(ident, ctx),
+                        ctx.clone_identifier_reference(ident, ReferenceFlags::Write),
                     ));
                 }
                 // could possibly trigger a getter so we need to only evaluate it once
-                ctx.ast.expression_from_identifier_reference(Self::clone_identifier_reference(
-                    ident, ctx,
-                ))
+                ctx.ast.expression_from_identifier_reference(
+                    ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
+                )
             }
             match_member_expression!(SimpleAssignmentTarget) => {
                 let expr = match node {
@@ -349,7 +340,7 @@ impl<'a> ExponentiationOperator<'a> {
         // let ident = self.create_new_var_with_expression(&expr);
         // Add new reference `_name = name` to nodes
         let left = ctx.ast.simple_assignment_target_from_identifier_reference(
-            Self::clone_identifier_reference(&ident, ctx),
+            ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
         );
         let op = AssignmentOperator::Assign;
         nodes.push(ctx.ast.expression_assignment(SPAN, op, AssignmentTarget::from(left), expr));
