@@ -1,3 +1,35 @@
+//! ES2016: Exponentiation Operator
+//!
+//! This plugin transforms the exponentiation operator (`**`) to `Math.pow`.
+//!
+//! > This plugin is included in `preset-env`, in ES2016
+//!
+//! ## Example
+//!
+//! Input:
+//! ```js
+//! let x = 10 ** 2;
+//!
+//! x **= 3;
+//! ```
+//!
+//! Output:
+//! ```js
+//! let x = Math.pow(10, 2);
+//!
+//! x = Math.pow(x, 3);
+//! ```
+//!
+//! ## Implementation
+//!
+//! Implementation based on [@babel/plugin-transform-exponentiation-operator](https://babel.dev/docs/babel-plugin-transform-exponentiation-operator).
+//!
+//! ## References:
+//!
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-exponentiation-operator>
+//! * Exponentiation operator TC39 proposal: <https://github.com/tc39/proposal-exponentiation-operator>
+//! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
+
 use std::cell::Cell;
 
 use oxc_allocator::{CloneIn, Vec};
