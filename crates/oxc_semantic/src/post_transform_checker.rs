@@ -317,18 +317,18 @@ impl<'s> PostTransformChecker<'s> {
             .map(Pair::from_tuple)
         {
             // Check bindings are the same
-            fn get_sorted_bindings(data: &SemanticData, scope_id: ScopeId) -> Vec<CompactStr> {
-                let mut bindings =
+            fn get_sorted_binding_names(data: &SemanticData, scope_id: ScopeId) -> Vec<CompactStr> {
+                let mut binding_names =
                     data.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
-                bindings.sort_unstable();
-                bindings
+                binding_names.sort_unstable();
+                binding_names
             }
 
             let scope_ids = match scope_ids.into_parts() {
                 (None, None) => continue,
                 (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
                     let scope_ids = Pair::new(scope_id_after_transform, scope_id_rebuilt);
-                    let binding_names = self.get_pair(scope_ids, get_sorted_bindings);
+                    let binding_names = self.get_pair(scope_ids, get_sorted_binding_names);
                     if binding_names.is_mismatch() {
                         self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
                     } else {
@@ -361,18 +361,18 @@ impl<'s> PostTransformChecker<'s> {
                     scope_ids
                 }
                 (Some(scope_id), None) => {
-                    let bindings = get_sorted_bindings(&self.after_transform, scope_id);
+                    let binding_names = get_sorted_binding_names(&self.after_transform, scope_id);
                     self.errors.push_mismatch_strs(
                         "Bindings mismatch",
-                        Pair::new(format!("{scope_id:?}: {bindings:?}").as_str(), "No scope"),
+                        Pair::new(format!("{scope_id:?}: {binding_names:?}").as_str(), "No scope"),
                     );
                     continue;
                 }
                 (None, Some(scope_id)) => {
-                    let bindings = get_sorted_bindings(&self.rebuilt, scope_id);
+                    let binding_names = get_sorted_binding_names(&self.rebuilt, scope_id);
                     self.errors.push_mismatch_strs(
                         "Bindings mismatch",
-                        Pair::new("No scope", format!("{scope_id:?}: {bindings:?}").as_str()),
+                        Pair::new("No scope", format!("{scope_id:?}: {binding_names:?}").as_str()),
                     );
                     continue;
                 }
