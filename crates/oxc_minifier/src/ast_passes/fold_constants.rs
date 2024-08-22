@@ -2,7 +2,7 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
-use std::{cmp::Ordering, mem};
+use std::cmp::Ordering;
 
 use num_bigint::BigInt;
 
@@ -98,6 +98,9 @@ impl<'a> FoldConstants<'a> {
         let Expression::ConditionalExpression(conditional_expr) = expr else {
             return;
         };
+        if ctx.ancestry.parent().is_tagged_template_expression() {
+            return;
+        }
         match self.fold_expression_and_get_boolean_value(&mut conditional_expr.test, ctx) {
             Some(true) => {
                 *expr = self.ast.move_expression(&mut conditional_expr.consequent);
@@ -582,27 +585,42 @@ impl<'a> FoldConstants<'a> {
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
+        if ctx.ancestry.parent().is_tagged_template_expression() {
+            return None;
+        }
         let op = logical_expr.operator;
         if !matches!(op, LogicalOperator::And | LogicalOperator::Or) {
             return None;
         }
+
         if let Some(boolean_value) = ctx.get_boolean_value(&logical_expr.left) {
+            // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
+            if !boolean_value {
+                if let Expression::AssignmentExpression(assign_expr) = &logical_expr.right {
+                    if let Some(member_expr) = assign_expr.left.as_member_expression() {
+                        if member_expr.is_specific_member_access("module", "exports") {
+                            return None;
+                        }
+                    }
+                }
+            }
+
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if (boolean_value && op == LogicalOperator::Or)
                 || (!boolean_value && op == LogicalOperator::And)
             {
-                return Some(self.move_out_expression(&mut logical_expr.left));
+                return Some(self.ast.move_expression(&mut logical_expr.left));
             } else if !logical_expr.left.may_have_side_effects() {
                 // (FALSE || x) => x
                 // (TRUE && x) => x
-                return Some(self.move_out_expression(&mut logical_expr.right));
+                return Some(self.ast.move_expression(&mut logical_expr.right));
             }
             // Left side may have side effects, but we know its boolean value.
             // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = self.move_out_expression(&mut logical_expr.left);
-            let right = self.move_out_expression(&mut logical_expr.right);
+            let left = self.ast.move_expression(&mut logical_expr.left);
+            let right = self.ast.move_expression(&mut logical_expr.right);
             let mut vec = self.ast.vec_with_capacity(2);
             vec.push(left);
             vec.push(right);
@@ -619,8 +637,8 @@ impl<'a> FoldConstants<'a> {
                         if !right_boolean && left_child_op == LogicalOperator::Or
                             || right_boolean && left_child_op == LogicalOperator::And
                         {
-                            let left = self.move_out_expression(&mut left_child.left);
-                            let right = self.move_out_expression(&mut logical_expr.right);
+                            let left = self.ast.move_expression(&mut left_child.left);
+                            let right = self.ast.move_expression(&mut logical_expr.right);
                             let logic_expr = self.ast.expression_logical(
                                 logical_expr.span,
                                 left,
@@ -677,7 +695,7 @@ impl<'a> FoldConstants<'a> {
                     let should_fold = Self::try_minimize_not(&mut unary_expr.argument);
 
                     if should_fold {
-                        Some(self.move_out_expression(&mut unary_expr.argument))
+                        Some(self.ast.move_expression(&mut unary_expr.argument))
                     } else {
                         None
                     }
@@ -688,11 +706,6 @@ impl<'a> FoldConstants<'a> {
         };
 
         folded_expr
-    }
-
-    fn move_out_expression(&mut self, expr: &mut Expression<'a>) -> Expression<'a> {
-        let null_expr = self.ast.expression_null_literal(expr.span());
-        mem::replace(expr, null_expr)
     }
 
     /// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java#L401-L435)

@@ -8,7 +8,7 @@ use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
 use oxc_ast::CommentKind;
 use oxc_diagnostics::{Error, NamedSource};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
 pub use crate::module_lexer::*;
@@ -64,7 +64,10 @@ fn parse<'a>(
         _ => source_type,
     };
     Parser::new(allocator, source_text, source_type)
-        .preserve_parens(options.preserve_parens.unwrap_or(true))
+        .with_options(ParseOptions {
+            preserve_parens: options.preserve_parens.unwrap_or(true),
+            ..ParseOptions::default()
+        })
         .parse()
 }
 

@@ -156,6 +156,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
+    pub mod no_wrapper_object_types;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
@@ -174,6 +175,7 @@ mod jest {
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
+    pub mod no_conditional_in_test;
     pub mod no_confusing_set_timeout;
     pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
@@ -227,6 +229,7 @@ mod react {
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
+    pub mod jsx_props_no_spread_multi;
     pub mod no_children_prop;
     pub mod no_danger;
     pub mod no_direct_mutation_state;
@@ -253,6 +256,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -451,9 +455,11 @@ mod promise {
 }
 
 mod vitest {
+    pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_truthy;
+    pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -580,6 +586,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unsafe_declaration_merging,
     typescript::no_useless_empty_export,
     typescript::no_var_requires,
+    typescript::no_wrapper_object_types,
     typescript::prefer_as_const,
     typescript::prefer_for_of,
     typescript::prefer_function_type,
@@ -600,6 +607,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
+    jest::no_conditional_in_test,
     jest::no_confusing_set_timeout,
     jest::no_deprecated_functions,
     jest::no_disabled_tests,
@@ -641,6 +649,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
@@ -733,6 +742,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_useless_fragment,
+    react::jsx_props_no_spread_multi,
     react::jsx_no_undef,
     react::react_in_jsx_scope,
     react::no_children_prop,
@@ -864,4 +874,6 @@ oxc_macros::declare_all_lint_rules! {
     vitest::no_import_node_test,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_truthy,
+    vitest::no_conditional_tests,
+    vitest::require_local_test_context_for_concurrent_snapshots,
 }

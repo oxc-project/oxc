@@ -29,7 +29,6 @@ declare_oxc_lint!(
     /// ### Example
     ///
     /// Examples of **incorrect** code for this rule:
-    ///
     /// ```js
     /// var x = foo;
     /// function bar() {
@@ -39,8 +38,8 @@ declare_oxc_lint!(
     ///   }
     /// }
     /// ```
-    /// Examples of **correct** code for this rule:
     ///
+    /// Examples of **correct** code for this rule:
     /// ```js
     /// // The variable that has the same name as the label is not in scope.
     ///

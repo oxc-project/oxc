@@ -1,17 +1,27 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "OxlintConfig",
-  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
   "type": "object",
   "properties": {
     "env": {
-      "$ref": "#/definitions/OxlintEnv"
+      "description": "Environments enable and disable collections of global variables.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintEnv"
+        }
+      ]
     },
     "globals": {
-      "$ref": "#/definitions/OxlintGlobals"
+      "description": "Enabled or disabled specific global variables.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintGlobals"
+        }
+      ]
     },
     "rules": {
-      "description": "See [Oxlint Rules](./rules)",
+      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).",
       "allOf": [
         {
           "$ref": "#/definitions/OxlintRules"
@@ -95,6 +105,13 @@
           "items": true
         }
       ]
+    },
+    "DummyRuleMap": {
+      "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/DummyRule"
+      }
     },
     "GlobalValue": {
       "type": "string",
@@ -190,24 +207,21 @@
       ]
     },
     "OxlintEnv": {
-      "description": "Predefine global variables.",
+      "description": "Predefine global variables.\n\nEnvironments specify what global variables are predefined. See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments) for what environments are available and what each one provides.",
       "type": "object",
       "additionalProperties": {
         "type": "boolean"
       }
     },
     "OxlintGlobals": {
-      "description": "Add or remove global variables.",
+      "description": "Add or remove global variables.\n\nFor each global variable, set the corresponding value equal to `\"writable\"` to allow the variable to be overwritten or `\"readonly\"` to disallow overwriting.\n\nGlobals can be disabled by setting their value to `\"off\"`. For example, in an environment where most Es2015 globals are available but `Promise` is unavailable, you might use this config:\n\n```json\n\n{ \"env\": { \"es6\": true }, \"globals\": { \"Promise\": \"off\" } }\n\n```\n\nYou may also use `\"readable\"` or `false` to represent `\"readonly\"`, and `\"writeable\"` or `true` to represent `\"writable\"`.",
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/GlobalValue"
       }
     },
     "OxlintRules": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/DummyRule"
-      }
+      "$ref": "#/definitions/DummyRuleMap"
     },
     "OxlintSettings": {
       "description": "Shared settings for plugins",

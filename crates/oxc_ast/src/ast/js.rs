@@ -1,6 +1,6 @@
-// NB: `#[span]`, `#[scope(...)]` and `#[visit(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in
-// `tasks/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
+// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// Read [`macro@oxc_ast_macros::ast`] for more information.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
@@ -14,7 +14,7 @@ use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
-    reference::{ReferenceFlag, ReferenceId},
+    reference::ReferenceId,
     scope::ScopeId,
     symbol::SymbolId,
 };
@@ -44,6 +44,8 @@ pub struct Program<'a> {
     pub hashbang: Option<Hashbang<'a>>,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -235,13 +237,8 @@ pub struct IdentifierReference<'a> {
     /// set in the bind step of semantic analysis, and will always be [`None`]
     /// immediately after parsing.
     #[serde(skip)]
+    #[clone_in(default)]
     pub reference_id: Cell<Option<ReferenceId>>,
-    /// Flags indicating how the reference is used.
-    ///
-    /// This gets set in the bind step of semantic analysis, and will always be
-    /// [`ReferenceFlag::None`] immediately after parsing.
-    #[serde(skip)]
-    pub reference_flag: ReferenceFlag,
 }
 
 /// `x` in `const x = 0;`
@@ -266,6 +263,7 @@ pub struct BindingIdentifier<'a> {
     ///
     /// [`semantic analysis`]: <https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html>
     #[serde(skip)]
+    #[clone_in(default)]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
@@ -601,9 +599,9 @@ pub struct PrivateFieldExpression<'a> {
 pub struct CallExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub arguments: Vec<'a, Argument<'a>>,
     pub callee: Expression<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
 }
 
@@ -1183,6 +1181,8 @@ pub struct BlockStatement<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1357,6 +1357,8 @@ pub struct ForStatement<'a> {
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
     pub body: Statement<'a>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1392,6 +1394,8 @@ pub struct ForInStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1427,6 +1431,8 @@ pub struct ForOfStatement<'a> {
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1492,6 +1498,8 @@ pub struct SwitchStatement<'a> {
     pub discriminant: Expression<'a>,
     #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1558,6 +1566,8 @@ pub struct CatchClause<'a> {
     pub span: Span,
     pub param: Option<CatchParameter<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1725,6 +1735,8 @@ pub struct Function<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1821,6 +1833,8 @@ pub struct ArrowFunctionExpression<'a> {
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1907,6 +1921,8 @@ pub struct Class<'a> {
     pub declare: bool,
     /// Id of the scope created by the [`Class`], including type parameters and
     /// statements within the [`ClassBody`].
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -2163,6 +2179,8 @@ pub struct StaticBlock<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

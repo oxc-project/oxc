@@ -122,7 +122,7 @@ impl<'a> SymbolTester<'a> {
     pub fn contains_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
-                let found_flags = self.semantic.symbols().get_flag(symbol_id);
+                let found_flags = self.semantic.symbols().get_flags(symbol_id);
                 if found_flags.contains(flags) {
                     Ok(symbol_id)
                 } else {
@@ -140,7 +140,7 @@ impl<'a> SymbolTester<'a> {
     pub fn intersects_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
-                let found_flags = self.semantic.symbols().get_flag(symbol_id);
+                let found_flags = self.semantic.symbols().get_flags(symbol_id);
                 if found_flags.intersects(flags) {
                     Ok(symbol_id)
                 } else {
@@ -214,7 +214,7 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let binding = self.target_symbol_name.clone();
-                if self.semantic.symbols().get_flag(symbol_id).is_export() {
+                if self.semantic.symbols().get_flags(symbol_id).is_export() {
                     Ok(symbol_id)
                 } else {
                     Err(OxcDiagnostic::error(format!(
@@ -238,7 +238,7 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let binding = self.target_symbol_name.clone();
-                if self.semantic.symbols().get_flag(symbol_id).contains(SymbolFlags::Export) {
+                if self.semantic.symbols().get_flags(symbol_id).contains(SymbolFlags::Export) {
                     Err(OxcDiagnostic::error(format!(
                         "Expected {binding} to not be exported. Symbol has export flag."
                     )))

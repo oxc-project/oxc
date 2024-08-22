@@ -4,11 +4,7 @@ use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
-use oxc_syntax::{
-    operator::UnaryOperator,
-    reference::{ReferenceFlag, ReferenceId},
-    scope::ScopeFlags,
-};
+use oxc_syntax::{operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -216,6 +212,20 @@ impl<'a> Expression<'a> {
         }
     }
 
+    pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
+        match self {
+            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSInstantiationExpression(expr) => {
+                expr.expression.get_inner_expression_mut()
+            }
+            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression_mut(),
+            _ => self,
+        }
+    }
+
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
@@ -285,6 +295,14 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn is_require_call(&self) -> bool {
+        if let Self::CallExpression(call_expr) = self {
+            call_expr.is_require_call()
+        } else {
+            false
+        }
+    }
 }
 
 impl<'a> IdentifierName<'a> {
@@ -308,16 +326,11 @@ impl<'a> Hash for IdentifierReference<'a> {
 
 impl<'a> IdentifierReference<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
+        Self { span, name, reference_id: Cell::default() }
     }
 
     pub fn new_read(span: Span, name: Atom<'a>, reference_id: Option<ReferenceId>) -> Self {
-        Self {
-            span,
-            name,
-            reference_id: Cell::new(reference_id),
-            reference_flag: ReferenceFlag::Read,
-        }
+        Self { span, name, reference_id: Cell::new(reference_id) }
     }
 
     #[inline]
@@ -604,6 +617,10 @@ impl<'a> AssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
+    }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
@@ -621,6 +638,17 @@ impl<'a> SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
             Self::TSNonNullExpression(expr) => Some(&expr.expression),
             Self::TSTypeAssertion(expr) => Some(&expr.expression),
+            _ => None,
+        }
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        match self {
+            Self::TSAsExpression(expr) => Some(&mut expr.expression),
+            Self::TSSatisfiesExpression(expr) => Some(&mut expr.expression),
+            Self::TSNonNullExpression(expr) => Some(&mut expr.expression),
+            Self::TSTypeAssertion(expr) => Some(&mut expr.expression),
+            Self::TSInstantiationExpression(expr) => Some(&mut expr.expression),
             _ => None,
         }
     }
@@ -694,10 +722,10 @@ impl<'a> Statement<'a> {
 }
 
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
-    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+    fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
         Statement::ExpressionStatement(Box::from_in(
             ExpressionStatement { span: expression.span(), expression },
-            alloc,
+            allocator,
         ))
     }
 }

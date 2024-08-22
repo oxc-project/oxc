@@ -43,6 +43,15 @@ impl<'a> Collapse<'a> {
                 Statement::VariableDeclaration(prev_decl),
             ) = (cur, prev)
             {
+                // Do not join `require` calls for cjs-module-lexer.
+                if cur_decl
+                    .declarations
+                    .first()
+                    .and_then(|d| d.init.as_ref())
+                    .is_some_and(Expression::is_require_call)
+                {
+                    break;
+                }
                 if cur_decl.kind == prev_decl.kind {
                     if i - 1 != range.end {
                         range.start = i - 1;

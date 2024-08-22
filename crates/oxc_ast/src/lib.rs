@@ -90,22 +90,22 @@ pub use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use static_assertions::assert_eq_size;
+    use std::mem::size_of;
 
     use crate::ast;
 
-    assert_eq_size!(ast::Statement, [u8; 16]);
-    assert_eq_size!(ast::Expression, [u8; 16]);
-    assert_eq_size!(ast::Declaration, [u8; 16]);
-    assert_eq_size!(ast::BindingPatternKind, [u8; 16]);
-    assert_eq_size!(ast::ModuleDeclaration, [u8; 16]);
-    assert_eq_size!(ast::ClassElement, [u8; 16]);
-    assert_eq_size!(ast::ExportDefaultDeclarationKind, [u8; 16]);
-    assert_eq_size!(ast::AssignmentTargetPattern, [u8; 16]);
-    assert_eq_size!(ast::AssignmentTargetMaybeDefault, [u8; 16]);
-    assert_eq_size!(ast::AssignmentTargetProperty, [u8; 16]);
-    assert_eq_size!(ast::TSLiteral, [u8; 16]);
-    assert_eq_size!(ast::TSType, [u8; 16]);
+    assert!(size_of::<ast::Statement>() == 16);
+    assert!(size_of::<ast::Expression>() == 16);
+    assert!(size_of::<ast::Declaration>() == 16);
+    assert!(size_of::<ast::BindingPatternKind>() == 16);
+    assert!(size_of::<ast::ModuleDeclaration>() == 16);
+    assert!(size_of::<ast::ClassElement>() == 16);
+    assert!(size_of::<ast::ExportDefaultDeclarationKind>() == 16);
+    assert!(size_of::<ast::AssignmentTargetPattern>() == 16);
+    assert!(size_of::<ast::AssignmentTargetMaybeDefault>() == 16);
+    assert!(size_of::<ast::AssignmentTargetProperty>() == 16);
+    assert!(size_of::<ast::TSLiteral>() == 16);
+    assert!(size_of::<ast::TSType>() == 16);
 }
 
 #[test]

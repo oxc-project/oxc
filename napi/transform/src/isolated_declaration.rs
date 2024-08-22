@@ -32,5 +32,5 @@ pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDe
 pub(crate) fn build_declarations(ctx: &TransformContext<'_>) -> CodegenReturn {
     let transformed_ret = IsolatedDeclarations::new(ctx.allocator).build(&ctx.program());
     ctx.add_diagnostics(transformed_ret.errors);
-    ctx.codegen::<false>().build(&transformed_ret.program)
+    ctx.codegen().build(&transformed_ret.program)
 }

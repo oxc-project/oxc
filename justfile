@@ -87,6 +87,9 @@ coverage:
   cargo run -p oxc_prettier_conformance
   # cargo minsize
 
+conformance *args='':
+  cargo coverage -- {{args}}
+
 # Get code coverage
 codecov:
   cargo codecov --html
@@ -174,5 +177,5 @@ website path:
 
 # sync ast changes
 ast:
-  cargo run -p oxc_ast_codegen
+  cargo run -p oxc_ast_tools
   just check

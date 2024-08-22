@@ -493,23 +493,6 @@ fn get_method_name(call_expr: &CallExpression) -> Option<String> {
 }
 
 #[test]
-fn test_debug() {
-    use crate::tester::Tester;
-
-    let pass = vec![];
-
-    let fail = vec![
-        // "[...arr.reduce(f, new Set())]",
-        "const obj = { a, ...{ b, c } }",
-        // "const promise = Promise.all([...iterable])",
-        // "const obj = { ...(foo ? { a: 1 } : { a: 2 }) }",
-        // "const array = [...[a]]",
-    ];
-
-    Tester::new(NoUselessSpread::NAME, pass, fail).test();
-}
-
-#[test]
 fn test() {
     use crate::tester::Tester;
 
@@ -578,6 +561,7 @@ fn test() {
         // r"[...Int8Array.from(foo)]",
         // r"[...Int8Array.of()]",
         // r"[...new Int8Array(3)]",
+        r"[...new Set(iter)]",
         r"[...Promise.all(foo)]",
         r"[...Promise.allSettled(foo)]",
         r"[...await Promise.all(foo, extraArgument)]",
@@ -585,6 +569,10 @@ fn test() {
         r"const obj = { ...obj, ...(addFoo ? { foo: 'foo' } : {}) }",
         r"<Button {...(isLoading ? { data: undefined } : { data: dataFromApi })} />",
         r"const obj = { ...(foo ? getObjectInOpaqueManner() : { a: 2 }) }",
+        "[...arr.reduce((set, b) => set.add(b), new Set())]",
+        "[...arr.reduce((set, b) => set.add(b), new Set(iter))]",
+        // NOTE: we may want to consider this a violation in the future
+        "[...(foo ? new Set() : [])]",
     ];
 
     let fail = vec![
@@ -707,8 +695,6 @@ fn test() {
         "[...arr.reduce((a, b) => a.push(b), Array.from(iter))]",
         "[...arr.reduce((a, b) => a.push(b), foo.map(x => x))]",
         "[...arr.reduce((a, b) => a.push(b), await Promise.all(promises))]",
-        "[...arr.reduce((set, b) => set.add(b), new Set())]",
-        "[...arr.reduce((set, b) => set.add(b), new Set(iter))]",
         // useless object clones with complex expressions
         r"const obj = { ...(foo ? { a: 1 } : { a: 2 }) }",
         r"const obj = { ...(foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 }) }",

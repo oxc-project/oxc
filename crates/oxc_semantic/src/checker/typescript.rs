@@ -120,6 +120,31 @@ pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder
     }
 }
 
+/// An interface can only extend an identifier/qualified-name with optional type arguments.(2499)
+fn invalid_interface_extend(span0: Span) -> OxcDiagnostic {
+    ts_error(
+        "2499",
+        "An interface can only extend an identifier/qualified-name with optional type arguments.",
+    )
+    .with_label(span0)
+}
+
+pub fn check_ts_interface_declaration<'a>(
+    decl: &TSInterfaceDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    if let Some(extends) = &decl.extends {
+        for extend in extends {
+            if !matches!(
+                &extend.expression,
+                Expression::Identifier(_) | Expression::StaticMemberExpression(_),
+            ) {
+                ctx.error(invalid_interface_extend(extend.span));
+            }
+        }
+    }
+}
+
 fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "A namespace declaration is only allowed at the top level of a namespace or module.",

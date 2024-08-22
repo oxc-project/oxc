@@ -7,7 +7,7 @@ use oxc_syntax::{
     node::AstNodeId,
     number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
-    reference::ReferenceFlag,
+    reference::ReferenceFlags,
     symbol::SymbolFlags,
 };
 use oxc_traverse::TraverseCtx;
@@ -31,8 +31,9 @@ impl<'a> TypeScriptEnum<'a> {
                 self.transform_ts_enum(ts_enum_decl, None, ctx)
             }
             Statement::ExportNamedDeclaration(decl) => {
-                if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
-                    self.transform_ts_enum(ts_enum_decl, Some(decl.span), ctx)
+                let span = decl.span;
+                if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &mut decl.declaration {
+                    self.transform_ts_enum(ts_enum_decl, Some(span), ctx)
                 } else {
                     None
                 }
@@ -60,7 +61,7 @@ impl<'a> TypeScriptEnum<'a> {
     /// ```
     fn transform_ts_enum(
         &mut self,
-        decl: &TSEnumDeclaration<'a>,
+        decl: &mut TSEnumDeclaration<'a>,
         export_span: Option<Span>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
@@ -104,7 +105,7 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let is_already_declared = self.enums.contains_key(&enum_name);
 
-        let statements = self.transform_ts_enum_members(&decl.members, &ident, ctx);
+        let statements = self.transform_ts_enum_members(&mut decl.members, &ident, ctx);
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = Expression::FunctionExpression(ctx.alloc(Function {
             r#type: FunctionType::FunctionExpression,
@@ -133,7 +134,7 @@ impl<'a> TypeScriptEnum<'a> {
                 decl.id.span,
                 enum_name.clone(),
                 var_symbol_id,
-                ReferenceFlag::Read,
+                ReferenceFlags::Read,
             );
             let left = ast.expression_from_identifier_reference(left);
             let right = ast.expression_object(SPAN, ast.vec(), None);
@@ -143,9 +144,9 @@ impl<'a> TypeScriptEnum<'a> {
 
         let call_expression = ast.expression_call(
             SPAN,
-            arguments,
             callee,
             Option::<TSTypeParameterInstantiation>::None,
+            arguments,
             false,
         );
 
@@ -155,7 +156,7 @@ impl<'a> TypeScriptEnum<'a> {
                 decl.id.span,
                 enum_name.clone(),
                 var_symbol_id,
-                ReferenceFlag::Write,
+                ReferenceFlags::Write,
             );
             let left = ast.simple_assignment_target_from_identifier_reference(left);
             let expr = ast.expression_assignment(SPAN, op, left.into(), call_expression);
@@ -192,7 +193,7 @@ impl<'a> TypeScriptEnum<'a> {
     #[allow(clippy::needless_pass_by_value)]
     fn transform_ts_enum_members(
         &mut self,
-        members: &Vec<'a, TSEnumMember<'a>>,
+        members: &mut Vec<'a, TSEnumMember<'a>>,
         param: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Vec<'a, Statement<'a>> {
@@ -201,7 +202,7 @@ impl<'a> TypeScriptEnum<'a> {
                 param.span,
                 param.name.clone(),
                 param.symbol_id.get(),
-                ReferenceFlag::Read,
+                ReferenceFlags::Read,
             );
             ctx.ast.expression_from_identifier_reference(ident)
         };
@@ -214,7 +215,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let mut prev_member_name: Option<Atom<'a>> = None;
 
-        for member in members {
+        for member in members.iter_mut() {
             let member_name: &Atom<'_> = match &member.id {
                 TSEnumMemberName::StaticIdentifier(id) => &id.name,
                 TSEnumMemberName::StaticStringLiteral(str)
@@ -230,7 +231,7 @@ impl<'a> TypeScriptEnum<'a> {
                 }
             };
 
-            let init = if let Some(initializer) = member.initializer.as_ref() {
+            let init = if let Some(initializer) = &mut member.initializer {
                 let constant_value =
                     self.computed_constant_value(initializer, &previous_enum_members);
 
@@ -238,7 +239,7 @@ impl<'a> TypeScriptEnum<'a> {
                 let init = match constant_value {
                     None => {
                         prev_constant_value = None;
-                        let mut new_initializer = ast.copy(initializer);
+                        let mut new_initializer = ast.move_expression(initializer);
 
                         // If the initializer is a binding identifier,
                         // and it is not a binding in the current scope and parent scopes,

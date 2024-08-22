@@ -6,7 +6,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::get_function_like_declaration, context::LintContext, fixer::Fix, rule::Rule, AstNode,
+};
 
 fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -55,28 +57,29 @@ declare_oxc_lint!(
     /// }
     /// ```
     OnlyUsedInRecursion,
-    correctness
+    correctness,
+    dangerous_fix
 );
 
 impl Rule for OnlyUsedInRecursion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_id, function_parameters) = match node.kind() {
+        let (function_id, function_parameters, function_span) = match node.kind() {
             AstKind::Function(function) => {
                 if function.is_typescript_syntax() {
                     return;
                 }
 
                 if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
-                    (binding_ident, &function.params)
+                    (binding_ident, &function.params, function.span)
                 } else if let Some(function_id) = &function.id {
-                    (function_id, &function.params)
+                    (function_id, &function.params, function.span)
                 } else {
                     return;
                 }
             }
             AstKind::ArrowFunctionExpression(arrow_function) => {
                 if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
-                    (binding_ident, &arrow_function.params)
+                    (binding_ident, &arrow_function.params, arrow_function.span)
                 } else {
                     return;
                 }
@@ -94,23 +97,68 @@ impl Rule for OnlyUsedInRecursion {
             };
 
             if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
+                if arg_index == function_parameters.items.len() - 1
+                    && !ctx
+                        .semantic()
+                        .symbols()
+                        .get_flags(function_id.symbol_id.get().expect("`symbol_id` should be set"))
+                        .is_export()
+                {
+                    ctx.diagnostic_with_dangerous_fix(
+                        only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()),
+                        |fixer| {
+                            let mut fix = fixer.new_fix_with_capacity(
+                                ctx.semantic()
+                                    .symbol_references(
+                                        arg.symbol_id.get().expect("`symbol_id` should be set"),
+                                    )
+                                    .count()
+                                    + 1,
+                            );
+                            fix.push(Fix::delete(arg.span()));
+
+                            for reference in ctx.semantic().symbol_references(
+                                arg.symbol_id.get().expect("`symbol_id` should be set"),
+                            ) {
+                                let node = ctx.nodes().get_node(reference.node_id());
+
+                                fix.push(Fix::delete(node.span()));
+                            }
+
+                            // search for references to the function and remove the argument
+                            for reference in ctx.semantic().symbol_references(
+                                function_id.symbol_id.get().expect("`symbol_id` should be set"),
+                            ) {
+                                let node = ctx.nodes().get_node(reference.node_id());
+
+                                if let Some(AstKind::CallExpression(call_expr)) =
+                                    ctx.nodes().parent_kind(node.id())
+                                {
+                                    // check if the number of arguments is the same
+                                    if call_expr.arguments.len() != function_parameters.items.len()
+                                        || function_span.contains_inclusive(call_expr.span)
+                                    {
+                                        continue;
+                                    }
+
+                                    // remove the argument
+                                    let arg_to_delete = call_expr.arguments[arg_index].span();
+
+                                    fix.push(Fix::delete(Span::new(
+                                        arg_to_delete.start,
+                                        skip_to_next_char(ctx.source_text(), arg_to_delete.end),
+                                    )));
+                                }
+                            }
+
+                            fix
+                        },
+                    );
+                } else {
+                    ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
+                }
             }
         }
-    }
-}
-
-fn get_function_like_declaration<'b>(
-    node: &AstNode<'b>,
-    ctx: &LintContext<'b>,
-) -> Option<&'b BindingIdentifier<'b>> {
-    let parent = outermost_paren_parent(node, ctx)?;
-
-    if let AstKind::VariableDeclarator(decl) = parent.kind() {
-        let ident = decl.id.get_binding_identifier()?;
-        Some(ident)
-    } else {
-        None
     }
 }
 
@@ -182,6 +230,20 @@ fn is_function_maybe_reassigned<'a>(
     }
 
     is_maybe_reassigned
+}
+
+// skipping whitespace, commas, finds the next character (exclusive)
+#[allow(clippy::cast_possible_truncation)]
+fn skip_to_next_char(s: &str, start: u32) -> u32 {
+    let mut i = start as usize;
+    while i < s.len() {
+        let c = s.chars().nth(i).unwrap();
+        if !c.is_whitespace() && c != ',' {
+            break;
+        }
+        i += 1;
+    }
+    i as u32
 }
 
 #[test]
@@ -342,5 +404,71 @@ fn test() {
         ",
     ];
 
-    Tester::new(OnlyUsedInRecursion::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            r#"function test(a) {
+             test(a)
+            }
+
+            test("")
+            "#,
+            r"function test() {
+             test()
+            }
+
+            test()
+            ",
+        ),
+        (
+            r#"
+            test(foo, bar);
+            function test(arg0, arg1) {
+                return test("", arg1);
+            }
+            "#,
+            r#"
+            test(foo, );
+            function test(arg0, ) {
+                return test("", );
+            }
+            "#,
+        ),
+        // Expecting no fix: function is exported
+        (
+            r"export function test(a) {
+                  test(a)
+              }
+            ",
+            r"export function test(a) {
+                  test(a)
+              }
+            ",
+        ),
+        (
+            r"function test(a) {
+                  test(a)
+              }
+              export { test };
+            ",
+            r"function test(a) {
+                  test(a)
+              }
+              export { test };
+            ",
+        ),
+        (
+            r"function test(a) {
+                  test(a)
+              }
+              export default test;
+            ",
+            r"function test(a) {
+                  test(a)
+              }
+              export default test;
+            ",
+        ),
+    ];
+
+    Tester::new(OnlyUsedInRecursion::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

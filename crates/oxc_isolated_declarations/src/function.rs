@@ -30,12 +30,15 @@ impl<'a> IsolatedDeclarations<'a> {
             Some(self.ast.alloc_function(
                 func.r#type,
                 func.span,
-                self.ast.copy(&func.id),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.id) },
                 false,
                 false,
                 declare.unwrap_or_else(|| self.is_declare()),
-                self.ast.copy(&func.type_parameters),
-                self.ast.copy(&func.this_param),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.type_parameters) },
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.this_param) },
                 params,
                 return_type,
                 Option::<FunctionBody>::None,
@@ -61,9 +64,11 @@ impl<'a> IsolatedDeclarations<'a> {
         let is_assignment_pattern = pattern.kind.is_assignment_pattern();
         let mut pattern =
             if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
-                self.ast.copy(&pattern.left)
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&pattern.left) }
             } else {
-                self.ast.copy(&param.pattern)
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&param.pattern) }
             };
 
         FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
@@ -72,7 +77,10 @@ impl<'a> IsolatedDeclarations<'a> {
             let type_annotation = pattern
                 .type_annotation
                 .as_ref()
-                .map(|type_annotation| self.ast.copy(&type_annotation.type_annotation))
+                .map(|type_annotation| {
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&type_annotation.type_annotation) }
+                })
                 .or_else(|| {
                     // report error for has no type annotation
                     let new_type = self.infer_type_from_formal_parameter(param);
@@ -106,7 +114,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 });
 
             pattern = self.ast.binding_pattern(
-                self.ast.copy(&pattern.kind),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&pattern.kind) },
                 type_annotation,
                 // if it's assignment pattern, it's optional
                 pattern.optional || (!is_remaining_params_have_required && is_assignment_pattern),
@@ -121,7 +130,8 @@ impl<'a> IsolatedDeclarations<'a> {
         params: &FormalParameters<'a>,
     ) -> Box<'a, FormalParameters<'a>> {
         if params.kind.is_signature() || (params.rest.is_none() && params.items.is_empty()) {
-            return self.ast.alloc(self.ast.copy(params));
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            return self.ast.alloc(unsafe { self.ast.copy(params) });
         }
 
         let items =
@@ -143,7 +153,8 @@ impl<'a> IsolatedDeclarations<'a> {
             params.span,
             FormalParameterKind::Signature,
             items,
-            self.ast.copy(&params.rest),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&params.rest) },
         )
     }
 }

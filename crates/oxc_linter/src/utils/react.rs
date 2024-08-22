@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use oxc_ast::{
     ast::{
         CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXOpeningElement, MemberExpression,
+        JSXChild, JSXElement, JSXExpression, JSXOpeningElement, MemberExpression,
     },
     match_member_expression, AstKind,
 };
@@ -28,40 +28,22 @@ pub fn has_jsx_prop<'a, 'b>(
     node: &'b JSXOpeningElement<'a>,
     target_prop: &'b str,
 ) -> Option<&'b JSXAttributeItem<'a>> {
-    node.attributes.iter().find(|attr| match attr {
-        JSXAttributeItem::SpreadAttribute(_) => false,
-        JSXAttributeItem::Attribute(attr) => {
-            let JSXAttributeName::Identifier(name) = &attr.name else {
-                return false;
-            };
-
-            name.name == target_prop
-        }
-    })
+    node.attributes
+        .iter()
+        .find(|attr| attr.as_attribute().is_some_and(|attr| attr.is_identifier(target_prop)))
 }
 
 pub fn has_jsx_prop_ignore_case<'a, 'b>(
     node: &'b JSXOpeningElement<'a>,
     target_prop: &'b str,
 ) -> Option<&'b JSXAttributeItem<'a>> {
-    node.attributes.iter().find(|attr| match attr {
-        JSXAttributeItem::SpreadAttribute(_) => false,
-        JSXAttributeItem::Attribute(attr) => {
-            let JSXAttributeName::Identifier(name) = &attr.name else {
-                return false;
-            };
-
-            name.name.eq_ignore_ascii_case(target_prop)
-        }
+    node.attributes.iter().find(|attr| {
+        attr.as_attribute().is_some_and(|attr| attr.is_identifier_ignore_case(target_prop))
     })
 }
 
 pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXAttributeValue<'a>> {
-    if let JSXAttributeItem::Attribute(attr) = item {
-        attr.value.as_ref()
-    } else {
-        None
-    }
+    item.as_attribute().and_then(|item| item.value.as_ref())
 }
 
 pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
@@ -74,13 +56,7 @@ pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
 }
 
 pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
-    get_prop_value(item).and_then(|v| {
-        if let JSXAttributeValue::StringLiteral(s) = v {
-            Some(s.value.as_str())
-        } else {
-            None
-        }
-    })
+    get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
 }
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/src/util/isHiddenFromScreenReader.js
@@ -132,11 +108,8 @@ pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
     let Some(role) = has_jsx_prop(jsx_opening_el, "role") else {
         return false;
     };
-    let Some("presentation" | "none") = get_string_literal_prop_value(role) else {
-        return false;
-    };
 
-    true
+    matches!(get_string_literal_prop_value(role), Some("presentation" | "none"))
 }
 
 // TODO: Should re-implement
@@ -228,7 +201,7 @@ pub fn get_parent_es5_component<'a, 'b>(
 
 pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b AstNode<'a>> {
     ctx.semantic().symbols().iter_rev().find_map(|symbol| {
-        let flags = ctx.semantic().symbols().get_flag(symbol);
+        let flags = ctx.semantic().symbols().get_flags(symbol);
         if flags.contains(SymbolFlags::Class) {
             let node = ctx.semantic().symbol_declaration(symbol);
             if is_es6_component(node) {
@@ -246,9 +219,7 @@ pub fn get_element_type<'c, 'a>(
     context: &'c LintContext<'a>,
     element: &JSXOpeningElement<'a>,
 ) -> Option<Cow<'c, str>> {
-    let JSXElementName::Identifier(ident) = &element.name else {
-        return None;
-    };
+    let name = element.name.as_identifier()?;
 
     let OxlintSettings { jsx_a11y, .. } = context.settings();
 
@@ -259,17 +230,14 @@ pub fn get_element_type<'c, 'a>(
             has_jsx_prop_ignore_case(element, polymorphic_prop_name_value)
         })
         .and_then(get_prop_value)
-        .and_then(|prop_value| match prop_value {
-            JSXAttributeValue::StringLiteral(str) => Some(str.value.as_str()),
-            _ => None,
-        });
+        .and_then(JSXAttributeValue::as_string_literal)
+        .map(|s| s.value.as_str());
 
-    let raw_type = polymorphic_prop.unwrap_or_else(|| ident.name.as_str());
+    let raw_type = polymorphic_prop.unwrap_or_else(|| name.name.as_str());
     match jsx_a11y.components.get(raw_type) {
         Some(component) => Some(Cow::Borrowed(component)),
         None => Some(Cow::Borrowed(raw_type)),
     }
-    // Some(String::from(jsx_a11y.components.get(raw_type).map_or(raw_type, |c| c)))
 }
 
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {

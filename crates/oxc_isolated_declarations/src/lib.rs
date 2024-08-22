@@ -26,7 +26,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, AstBuilder, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, SPAN};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::scope::ScopeTree;
 
@@ -99,12 +99,15 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
         let mut new_ast_stmts = self.ast.vec::<Statement<'a>>();
-        for stmt in Self::remove_function_overloads_implementation(self.ast.copy(stmts)) {
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        for stmt in Self::remove_function_overloads_implementation(unsafe { self.ast.copy(stmts) })
+        {
             if let Some(decl) = stmt.as_declaration() {
                 if let Some(decl) = self.transform_declaration(decl, false) {
                     new_ast_stmts.push(Statement::from(decl));
                 } else {
-                    new_ast_stmts.push(Statement::from(self.ast.copy(decl)));
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    new_ast_stmts.push(Statement::from(unsafe { self.ast.copy(decl) }));
                 }
             }
         }
@@ -127,19 +130,27 @@ impl<'a> IsolatedDeclarations<'a> {
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
         // 4. Collect transformed indexes
-        for stmt in Self::remove_function_overloads_implementation(self.ast.copy(stmts)) {
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        for stmt in Self::remove_function_overloads_implementation(unsafe { self.ast.copy(stmts) })
+        {
             match stmt {
                 match_declaration!(Statement) => {
                     match stmt.to_declaration() {
                         Declaration::VariableDeclaration(decl) => {
                             variables_declarations.push_back(
-                                self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&decl.declarations) }
+                                    .into_iter()
+                                    .collect::<Vec<_>>(),
                             );
                             variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::UsingDeclaration(decl) => {
                             variables_declarations.push_back(
-                                self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&decl.declarations) }
+                                    .into_iter()
+                                    .collect::<Vec<_>>(),
                             );
                             variable_transformed_indexes.push_back(FxHashSet::default());
                         }
@@ -314,6 +325,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         new_ast_stmts.push(Statement::ImportDeclaration(decl));
                     }
                 }
+                Statement::TSModuleDeclaration(decl) => {
+                    if decl.kind.is_global() || decl.id.is_string_literal() {
+                        new_ast_stmts.push(Statement::TSModuleDeclaration(decl));
+                    }
+                }
                 _ => {}
             }
         }
@@ -404,7 +420,86 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
+    fn get_assignable_properties_for_namespaces(
+        stmts: &'a oxc_allocator::Vec<'a, Statement<'a>>,
+    ) -> FxHashMap<&'a str, FxHashSet<Atom>> {
+        let mut assignable_properties_for_namespace = FxHashMap::<&str, FxHashSet<Atom>>::default();
+        for stmt in stmts {
+            let decl = match stmt {
+                Statement::ExportNamedDeclaration(decl) => {
+                    if let Some(Declaration::TSModuleDeclaration(decl)) = &decl.declaration {
+                        decl
+                    } else {
+                        continue;
+                    }
+                }
+                Statement::TSModuleDeclaration(decl) => decl,
+                _ => continue,
+            };
+
+            if decl.kind != TSModuleDeclarationKind::Namespace {
+                continue;
+            }
+            let TSModuleDeclarationName::Identifier(ident) = &decl.id else { continue };
+            let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &decl.body else {
+                continue;
+            };
+            for stmt in &block.body {
+                let Statement::ExportNamedDeclaration(decl) = stmt else { continue };
+                match &decl.declaration {
+                    Some(Declaration::VariableDeclaration(var)) => {
+                        for declarator in &var.declarations {
+                            if let Some(name) = declarator.id.get_identifier() {
+                                assignable_properties_for_namespace
+                                    .entry(&ident.name)
+                                    .or_default()
+                                    .insert(name);
+                            }
+                        }
+                    }
+                    Some(Declaration::FunctionDeclaration(func)) => {
+                        if let Some(id) = func.id.as_ref() {
+                            assignable_properties_for_namespace
+                                .entry(&ident.name)
+                                .or_default()
+                                .insert(id.name.clone());
+                        }
+                    }
+                    Some(Declaration::ClassDeclaration(cls)) => {
+                        if let Some(id) = cls.id.as_ref() {
+                            assignable_properties_for_namespace
+                                .entry(&ident.name)
+                                .or_default()
+                                .insert(id.name.clone());
+                        }
+                    }
+                    Some(Declaration::TSEnumDeclaration(decl)) => {
+                        assignable_properties_for_namespace
+                            .entry(&ident.name)
+                            .or_default()
+                            .insert(decl.id.name.clone());
+                    }
+                    Some(Declaration::UsingDeclaration(decl)) => {
+                        for declarator in &decl.declarations {
+                            if let Some(name) = declarator.id.get_identifier() {
+                                assignable_properties_for_namespace
+                                    .entry(&ident.name)
+                                    .or_default()
+                                    .insert(name);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        assignable_properties_for_namespace
+    }
+
     pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+        let assignable_properties_for_namespace =
+            IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
+
         let mut can_expando_function_names = FxHashSet::default();
         for stmt in stmts {
             match stmt {
@@ -468,7 +563,13 @@ impl<'a> IsolatedDeclarations<'a> {
                             &assignment.left
                         {
                             if let Expression::Identifier(ident) = &static_member_expr.object {
-                                if can_expando_function_names.contains(&ident.name) {
+                                if can_expando_function_names.contains(&ident.name)
+                                    && !assignable_properties_for_namespace
+                                        .get(&ident.name.as_str())
+                                        .map_or(false, |properties| {
+                                            properties.contains(&static_member_expr.property.name)
+                                        })
+                                {
                                     self.error(function_with_assigning_properties(
                                         static_member_expr.span,
                                     ));

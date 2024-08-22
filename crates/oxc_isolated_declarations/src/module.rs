@@ -44,7 +44,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 .transform_class(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                Some((None, self.ast.copy(&decl.declaration)))
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                Some((None, unsafe { self.ast.copy(&decl.declaration) }))
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => {
                 let expr = expr.to_expression();
@@ -95,7 +96,8 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<Box<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
-        let mut specifiers = self.ast.copy(specifiers);
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        let mut specifiers = unsafe { self.ast.copy(specifiers) };
         specifiers.retain(|specifier| match specifier {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                 self.scope.has_reference(&specifier.local.name)
@@ -114,8 +116,10 @@ impl<'a> IsolatedDeclarations<'a> {
             Some(self.ast.alloc_import_declaration(
                 decl.span,
                 Some(specifiers),
-                self.ast.copy(&decl.source),
-                self.ast.copy(&decl.with_clause),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&decl.source) },
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&decl.with_clause) },
                 decl.import_kind,
             ))
         }

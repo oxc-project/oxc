@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/visit.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
 
 //! Visitor Pattern
 //!
@@ -3024,11 +3024,11 @@ pub mod walk_mut {
     pub fn walk_call_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CallExpression<'a>) {
         let kind = AstType::CallExpression;
         visitor.enter_node(kind);
-        visitor.visit_arguments(&mut it.arguments);
         visitor.visit_expression(&mut it.callee);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_instantiation(type_parameters);
         }
+        visitor.visit_arguments(&mut it.arguments);
         visitor.leave_node(kind);
     }
 

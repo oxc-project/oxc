@@ -3,9 +3,9 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-// NB: `#[span]`, `#[scope(...)]` and `#[visit(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in
-// `tasks/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
+// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// Read [`macro@oxc_ast_macros::ast`] for more information.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
@@ -76,6 +76,8 @@ pub struct TSEnumDeclaration<'a> {
     pub members: Vec<'a, TSEnumMember<'a>>,
     pub r#const: bool,
     pub declare: bool,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -313,6 +315,8 @@ pub struct TSConditionalType<'a> {
     pub extends_type: TSType<'a>,
     pub true_type: TSType<'a>,
     pub false_type: TSType<'a>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -757,6 +761,8 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub type_annotation: TSType<'a>,
     pub declare: bool,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -802,6 +808,8 @@ pub struct TSInterfaceDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub declare: bool,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -910,6 +918,8 @@ pub struct TSMethodSignature<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -925,6 +935,8 @@ pub struct TSConstructSignatureDeclaration<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1001,6 +1013,8 @@ pub struct TSModuleDeclaration<'a> {
     /// ```
     pub kind: TSModuleDeclarationKind,
     pub declare: bool,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1198,6 +1212,8 @@ pub struct TSMappedType<'a> {
     pub type_annotation: Option<TSType<'a>>,
     pub optional: TSMappedTypeModifierOperator,
     pub readonly: TSMappedTypeModifierOperator,
+    #[serde(skip)]
+    #[clone_in(default)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

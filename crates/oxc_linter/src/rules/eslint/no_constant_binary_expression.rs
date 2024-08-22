@@ -22,13 +22,13 @@ declare_oxc_lint!(
     /// Disallow expressions where the operation doesn't affect the value
     ///
     /// ### Why is this bad?
-    /// Comparisons which will always evaluate to true or false and logical expressions (||, &&, ??) which either always
+    /// Comparisons which will always evaluate to true or false and logical expressions (`||`, `&&`, `??`) which either always
     /// short-circuit or never short-circuit are both likely indications of programmer error.
     ///
     /// These errors are especially common in complex expressions where operator precedence is easy to misjudge.
     ///
     /// Additionally, this rule detects comparisons to newly constructed objects/arrays/functions/etc.
-    /// In JavaScript, where objects are compared by reference, a newly constructed object can never === any other value.
+    /// In JavaScript, where objects are compared by reference, a newly constructed object can never `===` any other value.
     /// This can be surprising for programmers coming from languages where objects are compared by value.
     ///
     /// ### Example

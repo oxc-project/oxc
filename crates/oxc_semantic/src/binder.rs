@@ -12,14 +12,14 @@ use oxc_span::{GetSpan, SourceType};
 
 use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
-pub trait Binder<'a> {
+pub(crate) trait Binder<'a> {
     #[allow(unused_variables)]
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {}
 }
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let (includes, excludes) = match self.kind {
+        let (mut includes, excludes) = match self.kind {
             VariableDeclarationKind::Const => (
                 SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
                 SymbolFlags::BlockScopedVariableExcludes,
@@ -31,6 +31,12 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };
+
+        if self.init.as_ref().is_some_and(|init| {
+            matches!(init.get_inner_expression(), Expression::ArrowFunctionExpression(_))
+        }) {
+            includes |= SymbolFlags::ArrowFunction;
+        }
 
         if self.kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
@@ -46,8 +52,8 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
         // Collect all scopes where variable hoisting can occur
         for scope_id in builder.scope.ancestors(target_scope_id) {
-            let flag = builder.scope.get_flags(scope_id);
-            if flag.is_var() {
+            let flags = builder.scope.get_flags(scope_id);
+            if flags.is_var() {
                 target_scope_id = scope_id;
                 break;
             }
@@ -175,10 +181,10 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(AstKind::ObjectProperty(prop)) =
             builder.nodes.parent_kind(builder.current_node_id)
         {
-            let flag = builder.scope.get_flags_mut(current_scope_id);
+            let flags = builder.scope.get_flags_mut(current_scope_id);
             match prop.kind {
-                PropertyKind::Get => *flag |= ScopeFlags::GetAccessor,
-                PropertyKind::Set => *flag |= ScopeFlags::SetAccessor,
+                PropertyKind::Get => *flags |= ScopeFlags::GetAccessor,
+                PropertyKind::Set => *flags |= ScopeFlags::SetAccessor,
                 PropertyKind::Init => {}
             };
         }

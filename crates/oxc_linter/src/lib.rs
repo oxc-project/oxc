@@ -44,12 +44,10 @@ use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use static_assertions::assert_eq_size;
-
     // `RuleEnum` runs in a really tight loop, make sure it is small for CPU cache.
     // A reduction from 168 bytes to 16 results 15% performance improvement.
     // See codspeed in https://github.com/oxc-project/oxc/pull/1783
-    assert_eq_size!(RuleEnum, [u8; 16]);
+    assert!(std::mem::size_of::<RuleEnum>() == 16);
 }
 
 #[derive(Debug)]

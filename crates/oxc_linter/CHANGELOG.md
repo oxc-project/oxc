@@ -4,6 +4,81 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.7.2] - 2024-08-15
+
+### Features
+
+- 97e38cd linter: Add fixer for unicorn/prefer-optional-catch-binding (#4867) (heygsc)
+- 93ae1c7 linter: Eslint-plugin-react jsx-props-no-spread-multi (#4866) (keita hino)
+- 0a23610 linter: Add fixer for unicorn/prefer-array-flat-map (#4844) (heygsc)
+- 13c7b1b linter/jsx-a11y: Add fixer for aria-unsupported-elements (#4854) (DonIsaac)
+- a6195a6 linter/jsx-a11y: Add fixer for anchor-has-content (#4852) (DonIsaac)
+- 4d28d03 task/website: Support render `subschemas.all_of` (#4800) (mysteryven)
+
+### Bug Fixes
+
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- a08d7a7 linter/jsx-a11y: Reduce false negatives for html-has-lang (#4855) (DonIsaac)
+- a81ce3a linter/no-unused-vars: Do not delete function expressions when fixing (#4848) (DonIsaac)
+
+### Refactor
+
+- 56f033c linter: Improve diagnostics for several jsx-a11y rules (#4853) (DonIsaac)
+- c53c210 linter/no-unused-vars: Split fixer logic into multiple files (#4847) (DonIsaac)
+
+## [0.7.1] - 2024-08-12
+
+### Features
+
+- 3d40528 linter: Add fix emoji to rules table and doc pages (#4715) (DonIsaac)
+- d2734f3 linter: Start fixer for no-unused-vars (#4718) (DonIsaac)
+- 070ae53 linter: Add fixer for unicorn prefer-string-replace-all (#4801) (camc314)
+- b3c3125 linter: Overhaul unicorn/no-useless-spread (#4791) (DonIsaac)
+- 5992b75 linter: Implement `eslint-plugin-promise/no-return-in-finally, prefer-await-to-then` rule (#4318) (Jelle van der Waa)
+- b259f47 linter: Add fixer for unicorn/no-length-as-slice-end (#4780) (heygsc)
+- abd83fa linter: Add fixer for jsx_ally/no_aria_hidden_on_focusable (#4772) (heygsc)
+- b20e335 linter: Add fixer for eslint/no-eq-null (#4758) (heygsc)
+- 2f6c3b9 linter: Add fixer for eslint/no-compare-neg-zero (#4748) (heygsc)
+- eaddc8f linter: Add fixer for eslint/func_names (#4714) (DonIsaac)
+- 80557a9 linter: Add fixer for eslint/for-direction (#4679) (heygsc)
+- c3c5766 linter/eslint-plugin-promise: Implement valid-params (#4598) (Jelle van der Waa)
+- c509a21 linter/eslint-plugin-vitest: Implement prefer-to-be-falsy (#4770) (dalaoshu)
+- 41f861f linter/eslint-plugin-vitest: Implement prefer-to-be-truthy (#4755) (dalaoshu)
+- cc922f4 vscode: Provide config's schema to oxlint config files (#4826) (Don Isaac)
+- f629514 website: Auto-generate rule docs pages (#4640) (DonIsaac)
+
+### Bug Fixes
+
+- b22ed45 linter: Improve prefer_namespace_keyword rule (#4751) (Burlin)
+- db68a6c linter: Fixer for eslint/for-direction (#4727) (heygsc)
+- 6273994 linter: Block in eslint/no_cond_assign (#4721) (heygsc)
+- b9d6aa5 linter: Fix false positives in no-confusing-non-null-assertion (#4665) (Renée)
+- cbf08d2 linter: Skip no-multi-str on jsx attributes (#4666) (heygsc)
+- a6f9f96 linter: No unused errors should be warnings (Boshen)
+- 7345bc9 linter/func-names: Handle ts accessibility when reporting missing names (#4713) (DonIsaac)
+
+### Performance
+
+- d191823 linter: Optmize allocations in jest fn parsing (#4787) (lucab)
+- e3abdfa linter: Reduce String allocations and clones (#4673) (DonIsaac)
+
+### Documentation
+
+- 4b7dfd6 linter: Correct docs for no-unused-vars (#4716) (Don Isaac)
+
+### Refactor
+
+- 096ac7b linter: Clean up jsx-a11y/anchor-is-valid (#4831) (DonIsaac)
+- 15a0fd4 linter: Use Option to reduce nested level in `eslint/getter-return` (#4814) (IWANABETHATGUY)
+- 63f274c linter: Simplify NoObjCalls resolution logic (#4765) (lucab)
+- 6708680 linter: Replace Windows-style line breaks with Unix-style in test fixture (#4768) (overlookmotel)
+- e285903 linter: Clean up eslint/func_names (#4710) (DonIsaac)
+
+### Testing
+
+- 8f2a566 linter: Ensure rule docs have valid syntax (#4644) (DonIsaac)
+- 4dd29db linter: Add fixer test for unicorn/no-zero-fractions (#4783) (heygsc)
+
 ## [0.7.0] - 2024-08-05
 
 - 85a7cea semantic: [**BREAKING**] Remove name from `reference` (#4329) (Dunqing)

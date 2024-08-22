@@ -5,28 +5,6 @@ use crate::{tester::Tester, FixKind, RuleMeta as _};
 use serde_json::json;
 
 #[test]
-fn test_debug() {
-    let pass: Vec<&'static str> = vec![];
-    let fail = vec![];
-    let fix = vec![
-        // (
-        //     "const { foo: fooBar, baz } = obj; f(baz);",
-        //     "const { baz } = obj; f(baz);",
-        //     None,
-        //     FixKind::DangerousSuggestion,
-        // ),
-        ("const [a, b] = arr; f(a)", "const [a] = arr; f(a)", None, FixKind::DangerousSuggestion),
-        // (
-        //     "let x = 1; x = 2;",
-        //     "let x = 1; x = 2;",
-        //     Some(json!( [{ "varsIgnorePattern": "^tooCompli[cated]" }] )),
-        //     FixKind::DangerousFix,
-        // ),
-    ];
-    Tester::new(NoUnusedVars::NAME, pass, fail).expect_fix(fix).test();
-}
-
-#[test]
 fn test_vars_simple() {
     let pass = vec![
         ("let a = 1; console.log(a)", None),
@@ -86,6 +64,20 @@ fn test_vars_simple() {
         (
             "let a = 1, b = 2, c = 3; console.log(b + c);",
             "let b = 2, c = 3; console.log(b + c);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // function expressions do not get changed
+        (r"const foo = () => {}", r"const foo = () => {}", None, FixKind::DangerousSuggestion),
+        (
+            r"const foo = function() {}",
+            r"const foo = function() {}",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            r"const foo = function foo() {}",
+            r"const foo = function foo() {}",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -267,20 +259,49 @@ fn test_vars_reassignment() {
 #[test]
 fn test_vars_destructure() {
     let pass = vec![
-        // ("const { a, ...rest } = obj; console.log(rest)", Some(json![{ "ignoreRestSiblings": true }]))
+        (
+            "const { a, ...rest } = obj; console.log(rest)",
+            Some(json![[{ "ignoreRestSiblings": true }]]),
+        ),
+        (
+            "const { a, ...rest } = obj; console.log(rest)",
+            Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
+        ),
+        (
+            "const { a, ...rest } = obj; console.log(rest)",
+            Some(json!( [{ "ignoreRestSiblings": true, "vars": "all" }] )),
+        ),
+        // https://github.com/oxc-project/oxc/issues/4888
+        (
+            "const { text, ...dbEntry } = entry; return doSomething({ ...dbEntry, someOtherProp });",
+            Some(json!([{
+                "args": "none",
+                "caughtErrors": "none",
+                "ignoreRestSiblings": true,
+                "vars": "all"
+            }]))
+        )
     ];
     let fail = vec![
-        ("const { a, ...rest } = obj", Some(json![{ "ignoreRestSiblings": true }])),
-        ("const [a, ...rest] = arr", Some(json![{ "ignoreRestSiblings": true }])),
+        ("const { a, ...rest } = obj", Some(json!( [{ "ignoreRestSiblings": true }] ))),
+        ("const [a, ...rest] = arr", Some(json!( [{ "ignoreRestSiblings": true }] ))),
         (
             "const { a: { b }, ...rest } = obj; console.log(a)",
-            Some(json![{ "ignoreRestSiblings": true }]),
+            Some(json!( [{ "ignoreRestSiblings": true }] )),
         ),
+        (
+            "const { a: { b }, ...rest } = obj; console.log(rest)",
+            Some(json!( [{ "ignoreRestSiblings": true }] )),
+        ),
+        // https://github.com/oxc-project/oxc/issues/4839
+        (r#"const l="",{e}=r"#, None),
     ];
 
     let fix = vec![
+        // single destructure
         ("const { a } = obj;", "", None, FixKind::DangerousSuggestion),
         ("const [a] = arr;", "", None, FixKind::DangerousSuggestion),
+        // multi destructure
         (
             "const { a, b } = obj; f(b)",
             "const { b } = obj; f(b)",
@@ -313,6 +334,15 @@ fn test_vars_destructure() {
             None,
             FixKind::DangerousSuggestion,
         ),
+        // multi destructure with rename
+        (
+            "const { a: foo, b: bar } = obj; f(bar)",
+            "const { b: bar } = obj; f(bar)",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // TODO: destructures in VariableDeclarations with more than one declarator
+        (r#"const l="",{e}=r"#, r"const {e}=r", None, FixKind::All),
         // renaming
         // (
         //     "let a = 1; a = 2;",
@@ -466,7 +496,66 @@ fn test_imports() {
         ("import { a as b } from 'a'; console.log(a)", None),
     ];
 
+    let fix = vec![
+        // None used
+        ("import foo from './foo';", "", None, FixKind::DangerousSuggestion),
+        ("import * as foo from './foo';", "", None, FixKind::DangerousSuggestion),
+        ("import { Foo } from './foo';", "", None, FixKind::DangerousSuggestion),
+        ("import { Foo as Bar } from './foo';", "", None, FixKind::DangerousSuggestion),
+        // Some used
+        (
+            "import foo, { bar } from './foo'; bar();",
+            "import { bar } from './foo'; bar();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo, { bar } from './foo'; foo();",
+            "import foo, { } from './foo'; foo();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, bar, baz } from './foo'; foo(bar);",
+            "import { foo, bar, } from './foo'; foo(bar);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, bar, baz } from './foo'; foo(baz);",
+            "import { foo, baz } from './foo'; foo(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, bar, baz } from './foo'; bar(baz);",
+            "import { bar, baz } from './foo'; bar(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        // type imports
+        (
+            "import { type foo, bar } from './foo'; bar();",
+            "import { bar } from './foo'; bar();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import { foo, type bar, baz } from './foo'; foo(baz);",
+            "import { foo, baz } from './foo'; foo(baz);",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+        (
+            "import foo, { type bar } from './foo'; foo();",
+            "import foo, { } from './foo'; foo();",
+            None,
+            FixKind::DangerousSuggestion,
+        ),
+    ];
+
     Tester::new(NoUnusedVars::NAME, pass, fail)
+        .expect_fix(fix)
         .with_snapshot_suffix("oxc-imports")
         .test_and_snapshot();
 }
