@@ -438,10 +438,10 @@ impl<'s> PostTransformChecker<'s> {
             .map(Pair::from_tuple)
         {
             // Check names match
-            let symbol_names =
+            let names =
                 self.get_pair(symbol_ids, |data, symbol_id| data.symbols.names[symbol_id].clone());
-            if symbol_names.is_mismatch() {
-                self.errors.push_mismatch("Symbol mismatch", symbol_ids, symbol_names);
+            if names.is_mismatch() {
+                self.errors.push_mismatch("Symbol name mismatch", symbol_ids, names);
             }
 
             // Check flags match
