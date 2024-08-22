@@ -2,7 +2,7 @@ commit: 12619ffe
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1792/2101 (85.29%)
+Positive Passed: 1790/2101 (85.20%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -26,6 +26,11 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-ca
 semantic error: Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4)]
 rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/230/input.js
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/327/input.js
 semantic error: A 'return' statement can only be used within a function body.
@@ -132,6 +137,11 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/es2015-import-d
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["nil"]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0002/input.js
+semantic error: Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
 semantic error: Scope children mismatch:

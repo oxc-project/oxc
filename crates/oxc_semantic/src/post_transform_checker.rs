@@ -328,9 +328,35 @@ impl<'s> PostTransformChecker<'s> {
                 (None, None) => continue,
                 (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
                     let scope_ids = Pair::new(scope_id_after_transform, scope_id_rebuilt);
-                    let bindings = self.get_pair(scope_ids, get_sorted_bindings);
-                    if bindings.is_mismatch() {
-                        self.errors.push_mismatch("Bindings mismatch", scope_ids, bindings);
+                    let binding_names = self.get_pair(scope_ids, get_sorted_bindings);
+                    if binding_names.is_mismatch() {
+                        self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
+                    } else {
+                        let symbol_ids = self.get_pair(scope_ids, |data, scope_id| {
+                            data.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
+                        });
+
+                        let mut symbol_ids_after_transform = symbol_ids
+                            .after_transform
+                            .iter()
+                            .map(|symbol_id| self.symbol_ids_map.get(symbol_id).copied())
+                            .collect::<Vec<_>>();
+                        symbol_ids_after_transform.sort_unstable();
+                        let mut symbol_ids_rebuilt = symbol_ids
+                            .rebuilt
+                            .iter()
+                            .copied()
+                            .map(Option::Some)
+                            .collect::<Vec<_>>();
+                        symbol_ids_rebuilt.sort_unstable();
+
+                        if symbol_ids_after_transform != symbol_ids_rebuilt {
+                            self.errors.push_mismatch(
+                                "Binding symbols mismatch",
+                                scope_ids,
+                                symbol_ids,
+                            );
+                        }
                     }
                     scope_ids
                 }
