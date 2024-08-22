@@ -85,7 +85,7 @@
 //!
 //! See also: <https://github.com/oxc-project/oxc/issues/4790>
 
-use std::cell::Cell;
+use std::{cell::Cell, fmt::Debug};
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
@@ -162,14 +162,99 @@ struct SemanticData<'s> {
     ids: SemanticIds,
 }
 
+/// Pair of values from after transform and rebuilt
+struct Pair<T> {
+    after_transform: T,
+    rebuilt: T,
+}
+
+impl<T> Pair<T> {
+    fn new(after_transform: T, rebuilt: T) -> Self {
+        Self { after_transform, rebuilt }
+    }
+
+    fn from_tuple(values: (T, T)) -> Self {
+        Self::new(values.0, values.1)
+    }
+
+    fn parts(&self) -> (&T, &T) {
+        (&self.after_transform, &self.rebuilt)
+    }
+
+    fn into_parts(self) -> (T, T) {
+        (self.after_transform, self.rebuilt)
+    }
+}
+
+impl<T: PartialEq> Pair<T> {
+    fn is_match(&self) -> bool {
+        self.after_transform == self.rebuilt
+    }
+
+    fn is_mismatch(&self) -> bool {
+        !self.is_match()
+    }
+}
+
+impl<T> AsRef<Pair<T>> for Pair<T> {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
+#[allow(clippy::expl_impl_clone_on_copy)]
+impl<T: Clone> Clone for Pair<T> {
+    fn clone(&self) -> Self {
+        Self::new(self.after_transform.clone(), self.rebuilt.clone())
+    }
+}
+
+impl<T: Copy> Copy for Pair<T> {}
+
+/// Errors collection
 #[derive(Default)]
 struct Errors(Vec<OxcDiagnostic>);
 
 impl Errors {
+    /// Add an error string
     fn push<S: AsRef<str>>(&mut self, message: S) {
         self.0.push(OxcDiagnostic::error(message.as_ref().trim().to_string()));
     }
 
+    /// Add an error for a mismatch between a pair of values, with IDs
+    fn push_mismatch<Id, Ids, Value, Values>(&mut self, title: &str, ids: Ids, values: Values)
+    where
+        Id: Debug,
+        Value: Debug,
+        Ids: AsRef<Pair<Id>>,
+        Values: AsRef<Pair<Value>>,
+    {
+        let (id_after_transform, id_rebuilt) = ids.as_ref().parts();
+        let (value_after_transform, value_rebuilt) = values.as_ref().parts();
+        let str_after_transform = format!("{id_after_transform:?}: {value_after_transform:?}");
+        let str_rebuilt = format!("{id_rebuilt:?}: {value_rebuilt:?}");
+        self.push_mismatch_strs(title, Pair::new(str_after_transform, str_rebuilt));
+    }
+
+    /// Add an error for a mismatch between a pair of values
+    fn push_mismatch_strs<Value, Values>(&mut self, title: &str, values: Values)
+    where
+        Value: AsRef<str>,
+        Values: AsRef<Pair<Value>>,
+    {
+        let (value_after_transform, value_rebuilt) = values.as_ref().parts();
+        let value_after_transform = value_after_transform.as_ref();
+        let value_rebuilt = value_rebuilt.as_ref();
+        self.push(format!(
+            "
+{title}:
+after transform: {value_after_transform}
+rebuilt        : {value_rebuilt}
+            "
+        ));
+    }
+
+    /// Get errors
     fn get(self) -> Option<Vec<OxcDiagnostic>> {
         if self.0.is_empty() {
             None
@@ -181,81 +266,60 @@ impl Errors {
 
 impl<'s> PostTransformChecker<'s> {
     fn check_scopes(&mut self) {
-        if self.after_transform.ids.scope_ids.len() != self.rebuilt.ids.scope_ids.len() {
+        if self.get_static_pair(|data| data.ids.scope_ids.len()).is_mismatch() {
             self.errors.push("Scopes mismatch after transform");
         }
 
-        let PostTransformChecker { after_transform, rebuilt, .. } = self;
-        for (&scope_id_after_transform, &scope_id_rebuilt) in
-            after_transform.ids.scope_ids.iter().zip(rebuilt.ids.scope_ids.iter())
+        for scope_ids in self
+            .after_transform
+            .ids
+            .scope_ids
+            .iter()
+            .copied()
+            .zip(self.rebuilt.ids.scope_ids.iter().copied())
+            .map(Pair::from_tuple)
         {
             // Check bindings are the same
-            fn get_sorted_bindings(scopes: &ScopeTree, scope_id: ScopeId) -> Vec<CompactStr> {
+            fn get_sorted_bindings(data: &SemanticData, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut bindings =
-                    scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
+                    data.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
                 bindings.sort_unstable();
                 bindings
             }
 
-            let (result_after_transform, result_rebuilt) =
-                match (scope_id_after_transform, scope_id_rebuilt) {
-                    (None, None) => continue,
-                    (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
-                        let bindings_after_transform =
-                            get_sorted_bindings(after_transform.scopes, scope_id_after_transform);
-                        let bindings_rebuilt =
-                            get_sorted_bindings(rebuilt.scopes, scope_id_rebuilt);
-                        if bindings_after_transform == bindings_rebuilt {
-                            continue;
-                        }
-                        (
-                            format!("{scope_id_after_transform:?}: {bindings_after_transform:?}"),
-                            format!("{scope_id_rebuilt:?}: {bindings_rebuilt:?}"),
-                        )
+            let scope_ids = match scope_ids.into_parts() {
+                (None, None) => continue,
+                (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
+                    let scope_ids = Pair::new(scope_id_after_transform, scope_id_rebuilt);
+                    let bindings = self.get_pair(scope_ids, get_sorted_bindings);
+                    if bindings.is_match() {
+                        continue;
                     }
-                    (Some(scope_id_after_transform), None) => {
-                        let bindings_after_transform =
-                            get_sorted_bindings(after_transform.scopes, scope_id_after_transform);
-                        (
-                            format!("{scope_id_after_transform:?}: {bindings_after_transform:?}"),
-                            "No scope".to_string(),
-                        )
-                    }
-                    (None, Some(scope_id_rebuilt)) => {
-                        let bindings_rebuilt =
-                            get_sorted_bindings(rebuilt.scopes, scope_id_rebuilt);
-                        (
-                            "No scope".to_string(),
-                            format!("{scope_id_rebuilt:?}: {bindings_rebuilt:?}"),
-                        )
-                    }
-                };
-
-            self.errors.push(format!(
-                "
-Bindings mismatch:
-after transform: {result_after_transform}
-rebuilt        : {result_rebuilt}
-                "
-            ));
-
-            let (Some(scope_id_after_transform), Some(scope_id_rebuilt)) =
-                (scope_id_after_transform, scope_id_rebuilt)
-            else {
-                continue;
+                    self.errors.push_mismatch("Bindings mismatch", scope_ids, bindings);
+                    scope_ids
+                }
+                (Some(scope_id), None) => {
+                    let bindings = get_sorted_bindings(&self.after_transform, scope_id);
+                    self.errors.push_mismatch_strs(
+                        "Bindings mismatch",
+                        Pair::new(format!("{scope_id:?}: {bindings:?}").as_str(), "No scope"),
+                    );
+                    continue;
+                }
+                (None, Some(scope_id)) => {
+                    let bindings = get_sorted_bindings(&self.rebuilt, scope_id);
+                    self.errors.push_mismatch_strs(
+                        "Bindings mismatch",
+                        Pair::new("No scope", format!("{scope_id:?}: {bindings:?}").as_str()),
+                    );
+                    continue;
+                }
             };
 
             // Check flags match
-            let flags_after_transform = after_transform.scopes.get_flags(scope_id_after_transform);
-            let flags_rebuilt = rebuilt.scopes.get_flags(scope_id_rebuilt);
-            if flags_after_transform != flags_rebuilt {
-                self.errors.push(format!(
-                    "
-Scope flags mismatch:
-after transform: {scope_id_after_transform:?}: {flags_after_transform:?}
-rebuilt        : {scope_id_rebuilt:?}: {flags_rebuilt:?}
-                    "
-                ));
+            let flags = self.get_pair(scope_ids, |data, scope_id| data.scopes.get_flags(scope_id));
+            if flags.is_mismatch() {
+                self.errors.push_mismatch("Scope flags mismatch", scope_ids, flags);
             }
         }
     }
@@ -279,26 +343,25 @@ rebuilt        : {scope_id_rebuilt:?}: {flags_rebuilt:?}
             }
         }
 
-        if self.after_transform.ids.symbol_ids.len() != self.rebuilt.ids.symbol_ids.len() {
+        if self.get_static_pair(|data| data.ids.symbol_ids.len()).is_mismatch() {
             self.errors.push("Symbols mismatch after transform");
             return;
         }
 
         // Check whether symbols match
-        for (&symbol_id_after_transform, &symbol_id_rebuilt) in
-            self.after_transform.ids.symbol_ids.iter().zip(self.rebuilt.ids.symbol_ids.iter())
+        for symbol_ids in self
+            .after_transform
+            .ids
+            .symbol_ids
+            .iter()
+            .copied()
+            .zip(self.rebuilt.ids.symbol_ids.iter().copied())
+            .map(Pair::from_tuple)
         {
-            let symbol_name_after_transform =
-                &self.after_transform.symbols.names[symbol_id_after_transform];
-            let symbol_name_rebuilt = &self.rebuilt.symbols.names[symbol_id_rebuilt];
-            if symbol_name_after_transform != symbol_name_rebuilt {
-                self.errors.push(format!(
-                    "
-Symbol mismatch:
-after transform: {symbol_id_after_transform:?}: {symbol_name_after_transform:?}
-rebuilt        : {symbol_id_rebuilt:?}: {symbol_name_rebuilt:?}
-                    "
-                ));
+            let symbol_names =
+                self.get_pair(symbol_ids, |data, symbol_id| data.symbols.names[symbol_id].clone());
+            if symbol_names.is_mismatch() {
+                self.errors.push_mismatch("Symbol mismatch", symbol_ids, symbol_names);
             }
         }
     }
@@ -314,33 +377,48 @@ rebuilt        : {symbol_id_rebuilt:?}: {symbol_name_rebuilt:?}
             }
         }
 
-        if self.after_transform.ids.reference_ids.len() != self.rebuilt.ids.reference_ids.len() {
+        if self.get_static_pair(|data| data.ids.reference_ids.len()).is_mismatch() {
             self.errors.push("ReferenceId mismatch after transform");
             return;
         }
 
         // Check whether symbols match
-        for (&reference_id_after_transform, &reference_id_rebuilt) in
-            self.after_transform.ids.reference_ids.iter().zip(self.rebuilt.ids.reference_ids.iter())
+        for reference_ids in self
+            .after_transform
+            .ids
+            .reference_ids
+            .iter()
+            .copied()
+            .zip(self.rebuilt.ids.reference_ids.iter().copied())
+            .map(Pair::from_tuple)
         {
-            let symbol_id_after_transform =
-                self.after_transform.symbols.references[reference_id_after_transform].symbol_id();
-            let symbol_name_after_transform =
-                symbol_id_after_transform.map(|id| self.after_transform.symbols.names[id].clone());
-            let symbol_id_rebuilt =
-                &self.rebuilt.symbols.references[reference_id_rebuilt].symbol_id();
-            let symbol_name_rebuilt =
-                symbol_id_rebuilt.map(|id| self.rebuilt.symbols.names[id].clone());
-            if symbol_name_after_transform != symbol_name_rebuilt {
-                self.errors.push(format!(
-                    "
-Reference mismatch:
-after transform: {reference_id_after_transform:?}: {symbol_name_after_transform:?}
-rebuilt        : {reference_id_rebuilt:?}: {symbol_name_rebuilt:?}
-                    "
-                ));
+            let symbol_ids = self.get_pair(reference_ids, |data, reference_id| {
+                data.symbols.references[reference_id].symbol_id()
+            });
+            let symbol_names = self.get_pair(symbol_ids, |data, symbol_id| {
+                symbol_id.map(|symbol_id| data.symbols.names[symbol_id].clone())
+            });
+            if symbol_names.is_mismatch() {
+                self.errors.push_mismatch("Reference mismatch", reference_ids, symbol_names);
             }
         }
+    }
+
+    /// Get same data from `after_transform` and `rebuilt` from a pair of IDs
+    fn get_pair<R, I: Copy, F: Fn(&SemanticData, I) -> R>(
+        &self,
+        ids: Pair<I>,
+        getter: F,
+    ) -> Pair<R> {
+        Pair::new(
+            getter(&self.after_transform, ids.after_transform),
+            getter(&self.rebuilt, ids.rebuilt),
+        )
+    }
+
+    /// Get same data from `after_transform` and `rebuilt`
+    fn get_static_pair<R, F: Fn(&SemanticData) -> R>(&self, getter: F) -> Pair<R> {
+        Pair::new(getter(&self.after_transform), getter(&self.rebuilt))
     }
 }
 
