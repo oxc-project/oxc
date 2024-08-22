@@ -36,7 +36,7 @@ use es2021::ES2021;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
+use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::SourceType;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
@@ -100,16 +100,6 @@ impl<'a> Transformer<'a> {
             x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
             x3_es2015: ES2015::new(options.es2015, ctx),
         }
-    }
-
-    pub fn build(mut self, program: &mut Program<'a>) -> TransformerReturn {
-        let (symbols, scopes) = SemanticBuilder::new(self.ctx.source_text, self.ctx.source_type)
-            .build(program)
-            .semantic
-            .into_symbol_table_and_scope_tree();
-        let allocator: &'a Allocator = self.ctx.ast.allocator;
-        let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
-        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
 
     pub fn build_with_symbols_and_scopes(

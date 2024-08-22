@@ -3,6 +3,7 @@ use napi_derive::napi;
 use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
 use oxc_allocator::Allocator;
 use oxc_codegen::CodegenReturn;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::Transformer;
 
@@ -97,6 +98,10 @@ pub fn transform(
 }
 
 fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
+    let (symbols, scopes) = SemanticBuilder::new(ctx.source_text(), ctx.source_type())
+        .build(&ctx.program())
+        .semantic
+        .into_symbol_table_and_scope_tree();
     let ret = Transformer::new(
         ctx.allocator,
         ctx.file_path(),
@@ -105,7 +110,7 @@ fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
         ctx.trivias.clone(),
         ctx.oxc_options(),
     )
-    .build(&mut ctx.program_mut());
+    .build_with_symbols_and_scopes(symbols, scopes, &mut ctx.program_mut());
 
     ctx.add_diagnostics(ret.errors);
     ctx.codegen().build(&ctx.program())

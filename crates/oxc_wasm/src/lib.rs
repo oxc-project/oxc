@@ -241,6 +241,10 @@ impl Oxc {
         }
 
         if run_options.transform() {
+            let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
+                .build(program)
+                .semantic
+                .into_symbol_table_and_scope_tree();
             let options = TransformOptions::default();
             let result = Transformer::new(
                 &allocator,
@@ -250,7 +254,7 @@ impl Oxc {
                 ret.trivias.clone(),
                 options,
             )
-            .build(program);
+            .build_with_symbols_and_scopes(symbols, scopes, program);
             if !result.errors.is_empty() {
                 let errors = result.errors.into_iter().map(Error::from).collect::<Vec<_>>();
                 self.save_diagnostics(errors);
