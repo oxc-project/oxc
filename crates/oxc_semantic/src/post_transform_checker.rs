@@ -292,10 +292,9 @@ impl<'s> PostTransformChecker<'s> {
                 (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
                     let scope_ids = Pair::new(scope_id_after_transform, scope_id_rebuilt);
                     let bindings = self.get_pair(scope_ids, get_sorted_bindings);
-                    if bindings.is_match() {
-                        continue;
+                    if bindings.is_mismatch() {
+                        self.errors.push_mismatch("Bindings mismatch", scope_ids, bindings);
                     }
-                    self.errors.push_mismatch("Bindings mismatch", scope_ids, bindings);
                     scope_ids
                 }
                 (Some(scope_id), None) => {

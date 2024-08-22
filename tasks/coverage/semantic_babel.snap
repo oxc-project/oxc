@@ -2,7 +2,7 @@ commit: 12619ffe
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1853/2101 (88.20%)
+Positive Passed: 1845/2101 (87.82%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["spawn"]
@@ -363,6 +363,11 @@ Bindings mismatch:
 after transform: ScopeId(4): ["T", "x"]
 rebuilt        : ScopeId(4): ["x"]
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/const/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/declare/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["E"]
@@ -377,6 +382,16 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/declare
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["E"]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-const/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-declare-const/input.ts
 semantic error: Bindings mismatch:
@@ -455,6 +470,9 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/expor
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["C", "D", "E", "a", "b"]
 rebuilt        : ScopeId(0): ["C", "D", "a", "b"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
 semantic error: Semantic Collector failed after transform
@@ -843,6 +861,9 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/i
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["E", "I", "T"]
 rebuilt        : ScopeId(0): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/issue-7742/input.ts
 semantic error: Bindings mismatch:
@@ -879,6 +900,21 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/n
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Equals"]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/enum-block-scoped/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-after/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-before/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-func-in-declare-module/input.ts
 semantic error: Bindings mismatch:
@@ -922,6 +958,22 @@ rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var-2/input.js
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum/input.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-ambient-class/input.ts
 semantic error: Bindings mismatch:

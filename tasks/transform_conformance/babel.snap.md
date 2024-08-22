@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 406/953
+Passed: 403/953
 
 # All Passed:
 * babel-preset-react
@@ -1745,7 +1745,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-typescript (61/151)
+# babel-plugin-transform-typescript (58/151)
 * class/accessor-allowDeclareFields-false/input.ts
   x TS(18010): An accessibility modifier cannot be used with a private
   | identifier.
@@ -1797,6 +1797,12 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["A", "E"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+
+* enum/const/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
@@ -1981,6 +1987,12 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 
+* enum/scoped/input.ts
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+
 * enum/string-value/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["A", "A2", "B", "B2", "E"]
@@ -2051,6 +2063,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(13): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(16): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
+
   x Reference mismatch:
   | after transform: ReferenceId(0): Some("x")
   | rebuilt        : ReferenceId(0): None
@@ -2066,6 +2082,12 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Reference mismatch:
   | after transform: ReferenceId(11): Some("E")
   | rebuilt        : ReferenceId(3): None
+
+
+* exports/export-const-enums/input.ts
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 
 * exports/export-import=/input.ts

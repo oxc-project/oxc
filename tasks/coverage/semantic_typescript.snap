@@ -2,7 +2,7 @@ commit: d8086f14
 
 semantic_typescript Summary:
 AST Parsed     : 6456/6456 (100.00%)
-Positive Passed: 3815/6456 (59.09%)
+Positive Passed: 3810/6456 (59.01%)
 tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
 semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
@@ -3389,6 +3389,11 @@ rebuilt        : ReferenceId(0): None
 Reference mismatch:
 after transform: ReferenceId(1): Some("a")
 rebuilt        : ReferenceId(1): None
+
+tasks/coverage/typescript/tests/cases/compiler/emptyEnum.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/emptyIndexer.ts
 semantic error: Bindings mismatch:
@@ -10447,6 +10452,14 @@ tasks/coverage/typescript/tests/cases/compiler/optionalTupleElementsAndUndefined
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "Test", "UnNullify", "v"]
 rebuilt        : ScopeId(0): ["v"]
+
+tasks/coverage/typescript/tests/cases/compiler/overload2.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/overloadBindingAcrossDeclarationBoundaries.ts
 semantic error: Bindings mismatch:
@@ -18446,6 +18459,11 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "x"]
 rebuilt        : ScopeId(0): ["x"]
 
+tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolType19.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+
 tasks/coverage/typescript/tests/cases/conformance/es6/classDeclaration/emitClassDeclarationWithExtensionAndTypeArgumentInES6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
@@ -21287,6 +21305,14 @@ Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 
+tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardEnums.ts
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+
 tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunction.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "D", "I1", "a", "b", "f1", "obj", "subType", "union", "union2", "union3"]
@@ -21301,6 +21327,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGua
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Tag", "Tag2", "value"]
 rebuilt        : ScopeId(0): ["Tag2", "value"]
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardOfFormInstanceOfOnInterface.ts
 semantic error: Bindings mismatch:
@@ -21422,7 +21451,10 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voi
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithEnumType.ts
-semantic error: Bindings mismatch:
+semantic error: Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Bindings mismatch:
 after transform: ScopeId(2): ["", "A", "B", "ENUM1"]
 rebuilt        : ScopeId(2): ["ENUM1"]
 Scope flags mismatch:
@@ -23442,6 +23474,11 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["IsIndexer", "IsNumberIndexer", "IsStringIndexer", "None", "SignatureFlags"]
 rebuilt        : ScopeId(1): ["SignatureFlags"]
 Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+
+tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum3.ts
+semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(0x0)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
 
