@@ -33,6 +33,10 @@ Passed: 8/35
   | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable |
   | CatchVariable)
 
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(1): ScopeId(0)
+  | rebuilt        : SymbolId(1): ScopeId(3)
+
 
 
 # babel-plugin-transform-typescript (2/7)
@@ -220,6 +224,10 @@ Passed: 8/35
   x Bindings mismatch:
   | after transform: ScopeId(1): ["_s"]
   | rebuilt        : ScopeId(1): []
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(1): ScopeId(1)
+  | rebuilt        : SymbolId(0): ScopeId(0)
 
   x Reference mismatch:
   | after transform: ReferenceId(3): Some("_s")

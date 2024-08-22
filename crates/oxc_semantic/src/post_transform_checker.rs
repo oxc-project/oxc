@@ -389,9 +389,8 @@ impl<'s> PostTransformChecker<'s> {
                 self.get_pair(scope_ids, |data, scope_id| data.scopes.get_parent_id(scope_id));
             let is_match = match parent_ids.into_parts() {
                 (Some(parent_id_after_transform), Some(parent_id_rebuilt)) => {
-                    let parent_id_after_transform =
-                        self.scope_ids_map.get(&parent_id_after_transform);
-                    parent_id_after_transform == Some(&parent_id_rebuilt)
+                    let parent_ids = Pair::new(parent_id_after_transform, parent_id_rebuilt);
+                    self.remap_scope_ids(parent_ids).is_match()
                 }
                 (None, None) => true,
                 _ => false,
@@ -455,6 +454,13 @@ impl<'s> PostTransformChecker<'s> {
             if spans.is_mismatch() {
                 self.errors.push_mismatch("Symbol span mismatch", symbol_ids, spans);
             }
+
+            // Check scope IDs match
+            let scope_ids =
+                self.get_pair(symbol_ids, |data, symbol_id| data.symbols.scope_ids[symbol_id]);
+            if self.remap_scope_ids(scope_ids).is_mismatch() {
+                self.errors.push_mismatch("Symbol scope ID mismatch", symbol_ids, scope_ids);
+            }
         }
     }
 
@@ -511,6 +517,14 @@ impl<'s> PostTransformChecker<'s> {
     /// Get same data from `after_transform` and `rebuilt`
     fn get_static_pair<R, F: Fn(&SemanticData) -> R>(&self, getter: F) -> Pair<R> {
         Pair::new(getter(&self.after_transform), getter(&self.rebuilt))
+    }
+
+    /// Map `after_transform` scope ID to `rebuilt` scope ID
+    fn remap_scope_ids(&self, scope_ids: Pair<ScopeId>) -> Pair<Option<ScopeId>> {
+        Pair::new(
+            self.scope_ids_map.get(&scope_ids.after_transform).copied(),
+            Some(scope_ids.rebuilt),
+        )
     }
 }
 

@@ -1331,6 +1331,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
   | CatchVariable)
 
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(0): ScopeId(0)
+  | rebuilt        : SymbolId(0): ScopeId(3)
+
 
 * optional-catch-bindings/try-catch-finally-no-binding/input.js
   x Bindings mismatch:
@@ -1358,6 +1362,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
   | CatchVariable)
 
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(0): ScopeId(0)
+  | rebuilt        : SymbolId(0): ScopeId(3)
+
 
 
 # babel-plugin-transform-exponentiation-operator (3/4)
@@ -1383,10 +1391,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(6): ["_this2"]
   | rebuilt        : ScopeId(6): []
 
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(6): ScopeId(6)
+  | rebuilt        : SymbolId(1): ScopeId(1)
+
   x Symbol flags mismatch:
   | after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable |
   | ArrowFunction)
   | rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(5): ScopeId(5)
+  | rebuilt        : SymbolId(6): ScopeId(4)
 
 
 * assumption-newableArrowFunctions-false/naming/input.js
@@ -4978,6 +4994,14 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   | after transform: ScopeId(4): ["_this2"]
   | rebuilt        : ScopeId(4): []
 
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(2): ScopeId(2)
+  | rebuilt        : SymbolId(1): ScopeId(1)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(3): ScopeId(4)
+  | rebuilt        : SymbolId(3): ScopeId(3)
+
 
 * react/should-disallow-valueless-key/input.js
   ! Please provide an explicit key value. Using "key" as a shorthand for
@@ -5025,6 +5049,14 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   x Bindings mismatch:
   | after transform: ScopeId(4): ["_this2"]
   | rebuilt        : ScopeId(4): []
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(3): ScopeId(2)
+  | rebuilt        : SymbolId(2): ScopeId(1)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(4): ScopeId(4)
+  | rebuilt        : SymbolId(4): ScopeId(3)
 
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -5078,6 +5110,14 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
   x Bindings mismatch:
   | after transform: ScopeId(3): ["_this2"]
   | rebuilt        : ScopeId(3): []
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(1): ScopeId(1)
+  | rebuilt        : SymbolId(0): ScopeId(0)
+
+  x Symbol scope ID mismatch:
+  | after transform: SymbolId(2): ScopeId(3)
+  | rebuilt        : SymbolId(2): ScopeId(2)
 
 
 
