@@ -354,22 +354,7 @@ impl<'s> PostTransformChecker<'s> {
                         let symbol_ids = self.get_pair(scope_ids, |data, scope_id| {
                             data.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
                         });
-
-                        let mut symbol_ids_after_transform = symbol_ids
-                            .after_transform
-                            .iter()
-                            .map(|&symbol_id| self.symbol_ids_map.get(symbol_id))
-                            .collect::<Vec<_>>();
-                        symbol_ids_after_transform.sort_unstable();
-                        let mut symbol_ids_rebuilt = symbol_ids
-                            .rebuilt
-                            .iter()
-                            .copied()
-                            .map(Option::Some)
-                            .collect::<Vec<_>>();
-                        symbol_ids_rebuilt.sort_unstable();
-
-                        if symbol_ids_after_transform != symbol_ids_rebuilt {
+                        if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
                             self.errors.push_mismatch(
                                 "Binding symbols mismatch",
                                 scope_ids,
@@ -421,19 +406,7 @@ impl<'s> PostTransformChecker<'s> {
             // Check children match
             let child_ids = self
                 .get_pair(scope_ids, |data, scope_id| data.scopes.get_child_ids(scope_id).to_vec());
-            let is_match = child_ids.after_transform.len() == child_ids.rebuilt.len() && {
-                let mut child_ids_after_transform = child_ids
-                    .after_transform
-                    .iter()
-                    .map(|&child_id| self.scope_ids_map.get(child_id))
-                    .collect::<Vec<_>>();
-                child_ids_after_transform.sort_unstable();
-                let mut child_ids_rebuilt =
-                    child_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
-                child_ids_rebuilt.sort_unstable();
-                child_ids_after_transform == child_ids_rebuilt
-            };
-            if !is_match {
+            if self.remap_scope_ids_sets(&child_ids).is_mismatch() {
                 self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
             }
         }
@@ -541,6 +514,43 @@ impl<'s> PostTransformChecker<'s> {
     /// Map `after_transform` scope ID to `rebuilt` scope ID
     fn remap_scope_ids(&self, scope_ids: Pair<ScopeId>) -> Pair<Option<ScopeId>> {
         Pair::new(self.scope_ids_map.get(scope_ids.after_transform), Some(scope_ids.rebuilt))
+    }
+
+    /// Remap pair of arrays of `ScopeId`s.
+    /// Map `after_transform` IDs to `rebuilt` IDs.
+    /// Sort both sets.
+    fn remap_scope_ids_sets(&self, scope_ids: &Pair<Vec<ScopeId>>) -> Pair<Vec<Option<ScopeId>>> {
+        let mut after_transform = scope_ids
+            .after_transform
+            .iter()
+            .map(|&scope_id| self.scope_ids_map.get(scope_id))
+            .collect::<Vec<_>>();
+        let mut rebuilt = scope_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
+
+        after_transform.sort_unstable();
+        rebuilt.sort_unstable();
+
+        Pair::new(after_transform, rebuilt)
+    }
+
+    /// Remap pair of arrays of `SymbolId`s.
+    /// Map `after_transform` IDs to `rebuilt` IDs.
+    /// Sort both sets.
+    fn remap_symbol_ids_sets(
+        &self,
+        symbol_ids: &Pair<Vec<SymbolId>>,
+    ) -> Pair<Vec<Option<SymbolId>>> {
+        let mut after_transform = symbol_ids
+            .after_transform
+            .iter()
+            .map(|&symbol_id| self.symbol_ids_map.get(symbol_id))
+            .collect::<Vec<_>>();
+        let mut rebuilt = symbol_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
+
+        after_transform.sort_unstable();
+        rebuilt.sort_unstable();
+
+        Pair::new(after_transform, rebuilt)
     }
 }
 
