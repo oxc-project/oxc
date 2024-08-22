@@ -31,6 +31,7 @@ pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "fit",
     "it",
     "jest",
+    "vi",
     "test",
     "xdescribe",
     "xit",
@@ -51,6 +52,7 @@ impl JestFnKind {
         match name {
             "expect" => Self::Expect,
             "expectTypeOf" => Self::ExpectTypeOf,
+            "vi" => Self::General(JestGeneralFnKind::Vitest),
             "jest" => Self::General(JestGeneralFnKind::Jest),
             "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
             "fit" | "it" | "test" | "xit" | "xtest" => Self::General(JestGeneralFnKind::Test),
@@ -75,6 +77,7 @@ pub enum JestGeneralFnKind {
     Describe,
     Test,
     Jest,
+    Vitest,
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
