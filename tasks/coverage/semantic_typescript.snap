@@ -271,6 +271,9 @@ tasks/coverage/typescript/tests/cases/compiler/amdModuleConstEnumUsage.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "CharCode"]
 rebuilt        : ScopeId(1): ["CharCode"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/anonterface.ts
 semantic error: Semantic Collector failed after transform
@@ -443,6 +446,9 @@ tasks/coverage/typescript/tests/cases/compiler/assignmentCompatForEnums.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["One", "TokenType", "Two"]
 rebuilt        : ScopeId(1): ["TokenType"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -505,6 +511,9 @@ tasks/coverage/typescript/tests/cases/compiler/assignmentNonObjectTypeConstraint
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["T", "x", "y"]
 rebuilt        : ScopeId(2): ["x", "y"]
@@ -635,9 +644,15 @@ tasks/coverage/typescript/tests/cases/compiler/autonumberingInEnums.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Foo", "a"]
 rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Foo", "b"]
 rebuilt        : ScopeId(2): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/avoidCycleWithVoidExpressionReturnedFromArrow.ts
 semantic error: Bindings mismatch:
@@ -1135,9 +1150,15 @@ rebuilt        : ScopeId(0): ["SyntaxKind", "SyntaxKind1", "bar", "f1", "f2", "f
 Bindings mismatch:
 after transform: ScopeId(14): ["Block", "CaseClause", "FunctionDeclaration", "FunctionExpression", "Identifier", "SyntaxKind"]
 rebuilt        : ScopeId(6): ["SyntaxKind"]
+Scope flags mismatch:
+after transform: ScopeId(14): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(30): ["ClassExpression", "ClassStatement", "SyntaxKind1"]
 rebuilt        : ScopeId(9): ["SyntaxKind1"]
+Scope flags mismatch:
+after transform: ScopeId(30): ScopeFlags(0x0)
+rebuilt        : ScopeId(9): ScopeFlags(Function)
 Reference mismatch:
 after transform: ReferenceId(106): Some("statement")
 rebuilt        : ReferenceId(53): None
@@ -1152,6 +1173,9 @@ rebuilt        : ScopeId(0): ["SyntaxKind", "foo"]
 Bindings mismatch:
 after transform: ScopeId(27): ["AssertClause", "Decorator", "ImportClause", "ImportDeclaration", "Modifier", "SyntaxKind"]
 rebuilt        : ScopeId(1): ["SyntaxKind"]
+Scope flags mismatch:
+after transform: ScopeId(27): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference mismatch:
 after transform: ReferenceId(124): Some("updateImportDeclaration")
 rebuilt        : ReferenceId(13): None
@@ -1175,6 +1199,9 @@ rebuilt        : ScopeId(0): ["SyntaxKind", "foo"]
 Bindings mismatch:
 after transform: ScopeId(1): ["Decorator", "Modifier", "SyntaxKind"]
 rebuilt        : ScopeId(1): ["SyntaxKind"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference mismatch:
 after transform: ReferenceId(17): Some("modifiers")
 rebuilt        : ReferenceId(7): None
@@ -1210,6 +1237,9 @@ tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenEnumWithEnumMembe
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Color", "Thing"]
 rebuilt        : ScopeId(1): ["Color"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithAccessorChildren.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -1388,6 +1418,9 @@ tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndEnumInG
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["_this", "_thisVal1", "_thisVal2"]
 rebuilt        : ScopeId(1): ["_this"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndModuleInGlobal.ts
 semantic error: Semantic Collector failed after transform
@@ -1465,6 +1498,9 @@ tasks/coverage/typescript/tests/cases/compiler/commentOnExportEnumDeclaration.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Color", "b", "g", "r"]
 rebuilt        : ScopeId(1): ["Color"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/commentOnInterface1.ts
 semantic error: Bindings mismatch:
@@ -1498,6 +1534,9 @@ rebuilt        : ScopeId(0): ["AutomationMode", "getMockData"]
 Bindings mismatch:
 after transform: ScopeId(1): ["AutomationMode", "LOCATION", "NONE", "SYSTEM", "TIME"]
 rebuilt        : ScopeId(1): ["AutomationMode"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/comparisonOfPartialDeepAndIndexedAccessTerminatesWithoutError.ts
 semantic error: Bindings mismatch:
@@ -1706,6 +1745,9 @@ tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCauses
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["ConstFooEnum", "Here", "Some", "Values"]
 rebuilt        : ScopeId(1): ["ConstFooEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumNamespaceReferenceCausesNoImport2.ts
 semantic error: Semantic Collector failed after transform
@@ -1720,6 +1762,9 @@ tasks/coverage/typescript/tests/cases/compiler/constEnumNoEmitReexport.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bar", "Foo", "MyConstEnum"]
 rebuilt        : ScopeId(1): ["MyConstEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumOnlyModuleMerging.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -1728,21 +1773,33 @@ tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport1
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "Foo"]
 rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "Foo"]
 rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitReexport.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bar", "Foo", "MyConstEnum"]
 rebuilt        : ScopeId(1): ["MyConstEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumSyntheticNodesComments.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "D", "En"]
 rebuilt        : ScopeId(1): ["En"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["T", "x"]
 rebuilt        : ScopeId(2): ["x"]
@@ -1751,11 +1808,17 @@ tasks/coverage/typescript/tests/cases/compiler/constEnumToStringNoComments.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "Foo", "X", "Y", "Z"]
 rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnumToStringWithComments.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "Foo", "X", "Y", "Z"]
 rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constEnums.ts
 semantic error: Semantic Collector failed after transform
@@ -1846,9 +1909,15 @@ rebuilt        : ScopeId(0): ["n", "n1", "n2", "n3", "numbers", "numbersNotConst
 Bindings mismatch:
 after transform: ScopeId(1): ["numbers", "one", "zero"]
 rebuilt        : ScopeId(1): ["numbers"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["numbersNotConst", "one", "zero"]
 rebuilt        : ScopeId(2): ["numbersNotConst"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/constraintCheckInGenericBaseTypeReference.ts
 semantic error: Bindings mismatch:
@@ -2190,6 +2259,9 @@ tasks/coverage/typescript/tests/cases/compiler/controlFlowBreakContinueWithLabel
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "User"]
 rebuilt        : ScopeId(1): ["User"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/controlFlowCommaExpressionAssertionMultiple.ts
 semantic error: Bindings mismatch:
@@ -2293,6 +2365,9 @@ tasks/coverage/typescript/tests/cases/compiler/controlFlowManyConsecutiveConditi
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Choice", "One", "Two"]
 rebuilt        : ScopeId(1): ["Choice"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/controlFlowOuterVariable.ts
 semantic error: Bindings mismatch:
@@ -2767,9 +2842,15 @@ rebuilt        : ScopeId(0): ["BarEnum", "DoesNotWork", "Types", "WorksProperly"
 Bindings mismatch:
 after transform: ScopeId(21): ["Num", "Str", "Types"]
 rebuilt        : ScopeId(17): ["Types"]
+Scope flags mismatch:
+after transform: ScopeId(21): ScopeFlags(0x0)
+rebuilt        : ScopeId(17): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(44): ["BarEnum", "bar1", "bar2"]
 rebuilt        : ScopeId(28): ["BarEnum"]
+Scope flags mismatch:
+after transform: ScopeId(44): ScopeFlags(0x0)
+rebuilt        : ScopeId(28): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/discriminantPropertyInference.ts
 semantic error: Bindings mismatch:
@@ -2808,6 +2889,9 @@ rebuilt        : ScopeId(0): ["EnumTypeNode", "f1", "f2", "f3", "f4", "n"]
 Bindings mismatch:
 after transform: ScopeId(15): ["Disjunction", "EnumTypeNode", "Pattern"]
 rebuilt        : ScopeId(13): ["EnumTypeNode"]
+Scope flags mismatch:
+after transform: ScopeId(15): ScopeFlags(0x0)
+rebuilt        : ScopeId(13): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/discriminantsAndTypePredicates.ts
 semantic error: Bindings mismatch:
@@ -3324,16 +3408,25 @@ tasks/coverage/typescript/tests/cases/compiler/enumCodeGenNewLines1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["b", "c", "d", "foo"]
 rebuilt        : ScopeId(1): ["foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumFromExternalModule.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Mode", "Open"]
 rebuilt        : ScopeId(1): ["Mode"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumIndexer.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["MyEnumType", "bar", "foo"]
 rebuilt        : ScopeId(1): ["MyEnumType"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumInitializersWithExponents.ts
 semantic error: Bindings mismatch:
@@ -3347,9 +3440,15 @@ rebuilt        : ScopeId(0): ["A", "B", "List", "asList", "fn1", "fn2"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "one", "two"]
 rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["B", "bar", "foo"]
 rebuilt        : ScopeId(2): ["B"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(5): ["T"]
 rebuilt        : ScopeId(3): []
@@ -3361,77 +3460,125 @@ tasks/coverage/typescript/tests/cases/compiler/enumLiteralsSubtypeReduction.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "E0", "E1", "E10", "E100", "E1000", "E1001", "E1002", "E1003", "E1004", "E1005", "E1006", "E1007", "E1008", "E1009", "E101", "E1010", "E1011", "E1012", "E1013", "E1014", "E1015", "E1016", "E1017", "E1018", "E1019", "E102", "E1020", "E1021", "E1022", "E1023", "E103", "E104", "E105", "E106", "E107", "E108", "E109", "E11", "E110", "E111", "E112", "E113", "E114", "E115", "E116", "E117", "E118", "E119", "E12", "E120", "E121", "E122", "E123", "E124", "E125", "E126", "E127", "E128", "E129", "E13", "E130", "E131", "E132", "E133", "E134", "E135", "E136", "E137", "E138", "E139", "E14", "E140", "E141", "E142", "E143", "E144", "E145", "E146", "E147", "E148", "E149", "E15", "E150", "E151", "E152", "E153", "E154", "E155", "E156", "E157", "E158", "E159", "E16", "E160", "E161", "E162", "E163", "E164", "E165", "E166", "E167", "E168", "E169", "E17", "E170", "E171", "E172", "E173", "E174", "E175", "E176", "E177", "E178", "E179", "E18", "E180", "E181", "E182", "E183", "E184", "E185", "E186", "E187", "E188", "E189", "E19", "E190", "E191", "E192", "E193", "E194", "E195", "E196", "E197", "E198", "E199", "E2", "E20", "E200", "E201", "E202", "E203", "E204", "E205", "E206", "E207", "E208", "E209", "E21", "E210", "E211", "E212", "E213", "E214", "E215", "E216", "E217", "E218", "E219", "E22", "E220", "E221", "E222", "E223", "E224", "E225", "E226", "E227", "E228", "E229", "E23", "E230", "E231", "E232", "E233", "E234", "E235", "E236", "E237", "E238", "E239", "E24", "E240", "E241", "E242", "E243", "E244", "E245", "E246", "E247", "E248", "E249", "E25", "E250", "E251", "E252", "E253", "E254", "E255", "E256", "E257", "E258", "E259", "E26", "E260", "E261", "E262", "E263", "E264", "E265", "E266", "E267", "E268", "E269", "E27", "E270", "E271", "E272", "E273", "E274", "E275", "E276", "E277", "E278", "E279", "E28", "E280", "E281", "E282", "E283", "E284", "E285", "E286", "E287", "E288", "E289", "E29", "E290", "E291", "E292", "E293", "E294", "E295", "E296", "E297", "E298", "E299", "E3", "E30", "E300", "E301", "E302", "E303", "E304", "E305", "E306", "E307", "E308", "E309", "E31", "E310", "E311", "E312", "E313", "E314", "E315", "E316", "E317", "E318", "E319", "E32", "E320", "E321", "E322", "E323", "E324", "E325", "E326", "E327", "E328", "E329", "E33", "E330", "E331", "E332", "E333", "E334", "E335", "E336", "E337", "E338", "E339", "E34", "E340", "E341", "E342", "E343", "E344", "E345", "E346", "E347", "E348", "E349", "E35", "E350", "E351", "E352", "E353", "E354", "E355", "E356", "E357", "E358", "E359", "E36", "E360", "E361", "E362", "E363", "E364", "E365", "E366", "E367", "E368", "E369", "E37", "E370", "E371", "E372", "E373", "E374", "E375", "E376", "E377", "E378", "E379", "E38", "E380", "E381", "E382", "E383", "E384", "E385", "E386", "E387", "E388", "E389", "E39", "E390", "E391", "E392", "E393", "E394", "E395", "E396", "E397", "E398", "E399", "E4", "E40", "E400", "E401", "E402", "E403", "E404", "E405", "E406", "E407", "E408", "E409", "E41", "E410", "E411", "E412", "E413", "E414", "E415", "E416", "E417", "E418", "E419", "E42", "E420", "E421", "E422", "E423", "E424", "E425", "E426", "E427", "E428", "E429", "E43", "E430", "E431", "E432", "E433", "E434", "E435", "E436", "E437", "E438", "E439", "E44", "E440", "E441", "E442", "E443", "E444", "E445", "E446", "E447", "E448", "E449", "E45", "E450", "E451", "E452", "E453", "E454", "E455", "E456", "E457", "E458", "E459", "E46", "E460", "E461", "E462", "E463", "E464", "E465", "E466", "E467", "E468", "E469", "E47", "E470", "E471", "E472", "E473", "E474", "E475", "E476", "E477", "E478", "E479", "E48", "E480", "E481", "E482", "E483", "E484", "E485", "E486", "E487", "E488", "E489", "E49", "E490", "E491", "E492", "E493", "E494", "E495", "E496", "E497", "E498", "E499", "E5", "E50", "E500", "E501", "E502", "E503", "E504", "E505", "E506", "E507", "E508", "E509", "E51", "E510", "E511", "E512", "E513", "E514", "E515", "E516", "E517", "E518", "E519", "E52", "E520", "E521", "E522", "E523", "E524", "E525", "E526", "E527", "E528", "E529", "E53", "E530", "E531", "E532", "E533", "E534", "E535", "E536", "E537", "E538", "E539", "E54", "E540", "E541", "E542", "E543", "E544", "E545", "E546", "E547", "E548", "E549", "E55", "E550", "E551", "E552", "E553", "E554", "E555", "E556", "E557", "E558", "E559", "E56", "E560", "E561", "E562", "E563", "E564", "E565", "E566", "E567", "E568", "E569", "E57", "E570", "E571", "E572", "E573", "E574", "E575", "E576", "E577", "E578", "E579", "E58", "E580", "E581", "E582", "E583", "E584", "E585", "E586", "E587", "E588", "E589", "E59", "E590", "E591", "E592", "E593", "E594", "E595", "E596", "E597", "E598", "E599", "E6", "E60", "E600", "E601", "E602", "E603", "E604", "E605", "E606", "E607", "E608", "E609", "E61", "E610", "E611", "E612", "E613", "E614", "E615", "E616", "E617", "E618", "E619", "E62", "E620", "E621", "E622", "E623", "E624", "E625", "E626", "E627", "E628", "E629", "E63", "E630", "E631", "E632", "E633", "E634", "E635", "E636", "E637", "E638", "E639", "E64", "E640", "E641", "E642", "E643", "E644", "E645", "E646", "E647", "E648", "E649", "E65", "E650", "E651", "E652", "E653", "E654", "E655", "E656", "E657", "E658", "E659", "E66", "E660", "E661", "E662", "E663", "E664", "E665", "E666", "E667", "E668", "E669", "E67", "E670", "E671", "E672", "E673", "E674", "E675", "E676", "E677", "E678", "E679", "E68", "E680", "E681", "E682", "E683", "E684", "E685", "E686", "E687", "E688", "E689", "E69", "E690", "E691", "E692", "E693", "E694", "E695", "E696", "E697", "E698", "E699", "E7", "E70", "E700", "E701", "E702", "E703", "E704", "E705", "E706", "E707", "E708", "E709", "E71", "E710", "E711", "E712", "E713", "E714", "E715", "E716", "E717", "E718", "E719", "E72", "E720", "E721", "E722", "E723", "E724", "E725", "E726", "E727", "E728", "E729", "E73", "E730", "E731", "E732", "E733", "E734", "E735", "E736", "E737", "E738", "E739", "E74", "E740", "E741", "E742", "E743", "E744", "E745", "E746", "E747", "E748", "E749", "E75", "E750", "E751", "E752", "E753", "E754", "E755", "E756", "E757", "E758", "E759", "E76", "E760", "E761", "E762", "E763", "E764", "E765", "E766", "E767", "E768", "E769", "E77", "E770", "E771", "E772", "E773", "E774", "E775", "E776", "E777", "E778", "E779", "E78", "E780", "E781", "E782", "E783", "E784", "E785", "E786", "E787", "E788", "E789", "E79", "E790", "E791", "E792", "E793", "E794", "E795", "E796", "E797", "E798", "E799", "E8", "E80", "E800", "E801", "E802", "E803", "E804", "E805", "E806", "E807", "E808", "E809", "E81", "E810", "E811", "E812", "E813", "E814", "E815", "E816", "E817", "E818", "E819", "E82", "E820", "E821", "E822", "E823", "E824", "E825", "E826", "E827", "E828", "E829", "E83", "E830", "E831", "E832", "E833", "E834", "E835", "E836", "E837", "E838", "E839", "E84", "E840", "E841", "E842", "E843", "E844", "E845", "E846", "E847", "E848", "E849", "E85", "E850", "E851", "E852", "E853", "E854", "E855", "E856", "E857", "E858", "E859", "E86", "E860", "E861", "E862", "E863", "E864", "E865", "E866", "E867", "E868", "E869", "E87", "E870", "E871", "E872", "E873", "E874", "E875", "E876", "E877", "E878", "E879", "E88", "E880", "E881", "E882", "E883", "E884", "E885", "E886", "E887", "E888", "E889", "E89", "E890", "E891", "E892", "E893", "E894", "E895", "E896", "E897", "E898", "E899", "E9", "E90", "E900", "E901", "E902", "E903", "E904", "E905", "E906", "E907", "E908", "E909", "E91", "E910", "E911", "E912", "E913", "E914", "E915", "E916", "E917", "E918", "E919", "E92", "E920", "E921", "E922", "E923", "E924", "E925", "E926", "E927", "E928", "E929", "E93", "E930", "E931", "E932", "E933", "E934", "E935", "E936", "E937", "E938", "E939", "E94", "E940", "E941", "E942", "E943", "E944", "E945", "E946", "E947", "E948", "E949", "E95", "E950", "E951", "E952", "E953", "E954", "E955", "E956", "E957", "E958", "E959", "E96", "E960", "E961", "E962", "E963", "E964", "E965", "E966", "E967", "E968", "E969", "E97", "E970", "E971", "E972", "E973", "E974", "E975", "E976", "E977", "E978", "E979", "E98", "E980", "E981", "E982", "E983", "E984", "E985", "E986", "E987", "E988", "E989", "E99", "E990", "E991", "E992", "E993", "E994", "E995", "E996", "E997", "E998", "E999"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumMapBackIntoItself.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Large", "Medium", "Small", "TShirtSize"]
 rebuilt        : ScopeId(1): ["TShirtSize"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumMemberReduction.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "MyEnum"]
 rebuilt        : ScopeId(1): ["MyEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "B", "C", "MyStringEnum"]
 rebuilt        : ScopeId(2): ["MyStringEnum"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "B", "C", "MyStringEnumWithEmpty"]
 rebuilt        : ScopeId(3): ["MyStringEnumWithEmpty"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumNegativeLiteral1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumNumbering1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "D", "E", "Test"]
 rebuilt        : ScopeId(1): ["Test"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumOperations.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Enum", "None"]
 rebuilt        : ScopeId(1): ["Enum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumWithInfinityProperty.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "Infinity"]
 rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumWithNaNProperty.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "NaN"]
 rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumWithNegativeInfinityProperty.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["-Infinity", "A"]
 rebuilt        : ScopeId(1): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumWithQuotedElementName1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "fo\"o"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumWithQuotedElementName2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "fo'o"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumWithUnicodeEscape1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "gold ✰"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumWithoutInitializerAfterComputedMember.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/enumsWithMultipleDeclarations3.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/errorConstructorSubtypes.ts
 semantic error: Bindings mismatch:
@@ -5706,6 +5853,9 @@ rebuilt        : ScopeId(0): ["Kind", "foo", "isBoth"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "Kind"]
 rebuilt        : ScopeId(1): ["Kind"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/forAwaitForUnion.ts
 semantic error: Bindings mismatch:
@@ -6723,12 +6873,21 @@ rebuilt        : ScopeId(0): ["empty1", "empty2", "f1", "f2", "f3", "f4", "f5", 
 Bindings mismatch:
 after transform: ScopeId(9): ["A", "B", "E1"]
 rebuilt        : ScopeId(6): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(9): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(10): ["A", "B", "E2"]
 rebuilt        : ScopeId(7): ["E2"]
+Scope flags mismatch:
+after transform: ScopeId(10): ScopeFlags(0x0)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(11): ["A", "B", "E3"]
 rebuilt        : ScopeId(8): ["E3"]
+Scope flags mismatch:
+after transform: ScopeId(11): ScopeFlags(0x0)
+rebuilt        : ScopeId(8): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/importAliasAnExternalModuleInsideAnInternalModule.ts
 semantic error: Semantic Collector failed after transform
@@ -6755,6 +6914,9 @@ tasks/coverage/typescript/tests/cases/compiler/importElisionEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["MyEnum", "a", "b", "c", "d"]
 rebuilt        : ScopeId(1): ["MyEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/importHelpers.ts
 semantic error: Bindings mismatch:
@@ -7956,16 +8118,25 @@ tasks/coverage/typescript/tests/cases/compiler/isolatedModulesImportConstEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["BAR", "Foo"]
 rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesImportConstEnumTypeOnly.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bar", "Foo"]
 rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesNonAmbientConstEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "X"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/isolatedModulesReExportAlias.ts
 semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
@@ -8013,6 +8184,9 @@ tasks/coverage/typescript/tests/cases/compiler/jsdocAccessEnumType.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefNoCrash.ts
 semantic error: Cannot use export statement outside a module
@@ -8409,6 +8583,9 @@ rebuilt        : ScopeId(0): ["E", "x"]
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "B", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference mismatch:
 after transform: ReferenceId(2): Some("fn")
 rebuilt        : ReferenceId(0): None
@@ -8550,9 +8727,15 @@ tasks/coverage/typescript/tests/cases/compiler/mergedEnumDeclarationCodeGen.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E", "c"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/mergedInstantiationAssignment.ts
 semantic error: Bindings mismatch:
@@ -8744,6 +8927,9 @@ tasks/coverage/typescript/tests/cases/compiler/metadataOfUnion.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(4): ["A", "B", "C", "D", "E"]
 rebuilt        : ScopeId(4): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(0x0)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/metadataReferencedWithinFilteredUnion.ts
 semantic error: Bindings mismatch:
@@ -8969,9 +9155,15 @@ tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(7): ["A", "E1"]
 rebuilt        : ScopeId(7): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(0x0)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["B", "E2"]
 rebuilt        : ScopeId(8): ["E2"]
+Scope flags mismatch:
+after transform: ScopeId(8): ScopeFlags(0x0)
+rebuilt        : ScopeId(8): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleCodegenTest4.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -9273,6 +9465,9 @@ tasks/coverage/typescript/tests/cases/compiler/moduleSameValueDuplicateExportedB
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Animals", "Cat", "Dog"]
 rebuilt        : ScopeId(1): ["Animals"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/moduleScopingBug.ts
 semantic error: Semantic Collector failed after transform
@@ -9860,6 +10055,9 @@ rebuilt        : ScopeId(0): ["GatewayOpcode", "adaptSession", "assertMessage", 
 Bindings mismatch:
 after transform: ScopeId(14): ["DISPATCH", "GatewayOpcode", "HEARTBEAT", "HEARTBEAT_ACK", "HELLO", "IDENTIFY", "INVALID_SESSION", "PRESENCE_UPDATE", "RECONNECT", "REQUEST_GUILD_MEMBERS", "RESUME", "VOICE_STATE_UPDATE"]
 rebuilt        : ScopeId(5): ["GatewayOpcode"]
+Scope flags mismatch:
+after transform: ScopeId(14): ScopeFlags(0x0)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/newArrays.ts
 semantic error: Semantic Collector failed after transform
@@ -9943,12 +10141,21 @@ tasks/coverage/typescript/tests/cases/compiler/noUncheckedIndexAccess.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bacon", "Meat", "Sausage"]
 rebuilt        : ScopeId(1): ["Meat"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "a", "b", "c"]
 rebuilt        : ScopeId(2): ["A"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["B", "x", "y", "z"]
 rebuilt        : ScopeId(3): ["B"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/noUsedBeforeDefinedErrorInTypeContext.ts
 semantic error: Bindings mismatch:
@@ -10118,6 +10325,9 @@ tasks/coverage/typescript/tests/cases/compiler/numberAssignableToEnumInsideUnion
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/objectAssignLikeNonUnionResult.ts
 semantic error: Bindings mismatch:
@@ -10171,9 +10381,15 @@ rebuilt        : ScopeId(0): ["Nums", "Strs", "a", "an", "b", "bn", "m", "n", "u
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "Strs"]
 rebuilt        : ScopeId(1): ["Strs"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["A", "B", "Nums"]
 rebuilt        : ScopeId(2): ["Nums"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/objectLiteralIndexerNoImplicitAny.ts
 semantic error: Bindings mismatch:
@@ -10371,6 +10587,9 @@ tasks/coverage/typescript/tests/cases/compiler/parseEntityNameWithReservedWord.t
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bool", "false"]
 rebuilt        : ScopeId(1): ["Bool"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/parseGenericArrowRatherThanLeftShift.ts
 semantic error: Bindings mismatch:
@@ -10535,6 +10754,9 @@ tasks/coverage/typescript/tests/cases/compiler/preserveConstEnums.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "Value", "Value2"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/prespecializedGenericMembers1.ts
 semantic error: Bindings mismatch:
@@ -12018,6 +12240,9 @@ rebuilt        : ScopeId(0): ["ActionType", "assertNever", "reducer"]
 Bindings mismatch:
 after transform: ScopeId(3): ["ActionType", "Bar", "Batch", "Baz", "Foo"]
 rebuilt        : ScopeId(1): ["ActionType"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/recursiveClassInstantiationsWithDefaultConstructors.ts
 semantic error: Semantic Collector failed after transform
@@ -12284,6 +12509,9 @@ rebuilt        : ScopeId(0): ["Type", "payloads2"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "Type"]
 rebuilt        : ScopeId(1): ["Type"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/reexportMissingDefault8.ts
 semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
@@ -14277,6 +14505,9 @@ tasks/coverage/typescript/tests/cases/compiler/strictModeEnumMemberNameReserved.
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "static"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/strictNullNotNullIndexTypeShouldWork.ts
 semantic error: Bindings mismatch:
@@ -14725,6 +14956,9 @@ tasks/coverage/typescript/tests/cases/compiler/tsxDefaultImports.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["SomeEnum", "one"]
 rebuilt        : ScopeId(1): ["SomeEnum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/tsxDiscriminantPropertyInference.tsx
 semantic error: Bindings mismatch:
@@ -14950,6 +15184,9 @@ rebuilt        : ScopeId(0): ["E"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference mismatch:
 after transform: ReferenceId(1): Some("m")
 rebuilt        : ReferenceId(6): None
@@ -14964,6 +15201,9 @@ rebuilt        : ScopeId(0): ["E"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference mismatch:
 after transform: ReferenceId(1): Some("m")
 rebuilt        : ReferenceId(4): None
@@ -15444,6 +15684,9 @@ tasks/coverage/typescript/tests/cases/compiler/typeofEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "e1", "e2"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/typeofImportInstantiationExpression.ts
 semantic error: Bindings mismatch:
@@ -15495,6 +15738,9 @@ tasks/coverage/typescript/tests/cases/compiler/unaryPlus.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "some", "thing"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/uncalledFunctionChecksInConditionalPerf.ts
 semantic error: Bindings mismatch:
@@ -15648,6 +15894,9 @@ tasks/coverage/typescript/tests/cases/compiler/underscoreEscapedNameInEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "__foo", "bar"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
 semantic error: Bindings mismatch:
@@ -15711,6 +15960,9 @@ rebuilt        : ScopeId(0): ["Enum", "bar", "foo"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "Enum"]
 rebuilt        : ScopeId(1): ["Enum"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["T", "x"]
 rebuilt        : ScopeId(2): ["x"]
@@ -17265,6 +17517,9 @@ rebuilt        : ScopeId(0): ["TestType", "f1", "f2"]
 Bindings mismatch:
 after transform: ScopeId(1): ["TestType", "bar", "foo"]
 rebuilt        : ScopeId(1): ["TestType"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum4.ts
 semantic error: Bindings mismatch:
@@ -17275,6 +17530,9 @@ tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnumPropertyAc
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "D", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/controlFlow/assertionTypePredicates2.ts
 semantic error: Cannot use export statement outside a module
@@ -17783,41 +18041,77 @@ tasks/coverage/typescript/tests/cases/conformance/enums/enumBasics.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "E1"]
 rebuilt        : ScopeId(1): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "B", "C", "E2"]
 rebuilt        : ScopeId(2): ["E2"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["E3", "X", "Y", "Z"]
 rebuilt        : ScopeId(3): ["E3"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["E4", "X", "Y", "Z"]
 rebuilt        : ScopeId(4): ["E4"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(0x0)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(5): ["A", "B", "C", "E5"]
 rebuilt        : ScopeId(5): ["E5"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(0x0)
+rebuilt        : ScopeId(5): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(6): ["A", "B", "C", "E6"]
 rebuilt        : ScopeId(6): ["E6"]
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(7): ["A", "E7"]
 rebuilt        : ScopeId(7): ["E7"]
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(0x0)
+rebuilt        : ScopeId(7): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["B", "E8"]
 rebuilt        : ScopeId(8): ["E8"]
+Scope flags mismatch:
+after transform: ScopeId(8): ScopeFlags(0x0)
+rebuilt        : ScopeId(8): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(9): ["A", "B", "E9"]
 rebuilt        : ScopeId(9): ["E9"]
+Scope flags mismatch:
+after transform: ScopeId(9): ScopeFlags(0x0)
+rebuilt        : ScopeId(9): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/enums/enumExportMergingES6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Animals", "Cat"]
 rebuilt        : ScopeId(1): ["Animals"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animals", "Dog"]
 rebuilt        : ScopeId(2): ["Animals"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["Animals", "CatDog"]
 rebuilt        : ScopeId(3): ["Animals"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/enums/enumMerging.ts
 semantic error: Semantic Collector failed after transform
@@ -17884,6 +18178,9 @@ rebuilt        : ScopeId(0): ["E", "a", "entries", "entries1", "entries2", "entr
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "B", "E"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es2019/globalThisTypeIndexAccess.ts
 semantic error: Bindings mismatch:
@@ -18202,37 +18499,61 @@ tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/compute
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E1", "x"]
 rebuilt        : ScopeId(1): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E2", "x"]
 rebuilt        : ScopeId(2): ["E2"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames47_ES6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E1", "x"]
 rebuilt        : ScopeId(1): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E2", "x"]
 rebuilt        : ScopeId(2): ["E2"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames48_ES5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["E", "x"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames48_ES6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["E", "x"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames7_ES5.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "member"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames7_ES6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "member"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNamesContextualType1_ES5.ts
 semantic error: Bindings mismatch:
@@ -18331,6 +18652,9 @@ tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructurin
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["K", "a", "b"]
 rebuilt        : ScopeId(1): ["K"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es6/destructuring/destructuringObjectBindingPatternAndAssignment9SiblingInitializer.ts
 semantic error: Bindings mismatch:
@@ -18501,14 +18825,23 @@ tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exp
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/es7/exponentiationOperator/exponentiationOperatorWithEnumUnion.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["F", "c", "d"]
 rebuilt        : ScopeId(2): ["F"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStatic.ts
 semantic error: Bindings mismatch:
@@ -19516,9 +19849,15 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arra
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["AdvancedList", "AppType", "Composite", "HeaderDetail", "HeaderMultiDetail", "ListOnly", "ModuleSettings", "Relationship", "Report", "Standard"]
 rebuilt        : ScopeId(1): ["AppType"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["AppStyle", "MiniApp", "PivotTable", "Standard", "Tree", "TreeEntity"]
 rebuilt        : ScopeId(2): ["AppStyle"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/arrayLiterals/arrayLiterals2ES5.ts
 semantic error: Bindings mismatch:
@@ -19569,27 +19908,45 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/ad
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["F", "c", "d"]
 rebuilt        : ScopeId(2): ["F"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithStringAndEveryType.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/arithmeticOperator/arithmeticOperatorWithEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/arithmeticOperator/arithmeticOperatorWithEnumUnion.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["F", "c", "d"]
 rebuilt        : ScopeId(2): ["F"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithIdenticalObjects.ts
 semantic error: Bindings mismatch:
@@ -19610,6 +19967,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/co
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["T", "foo_r1", "foo_r2", "foo_r3", "foo_r4", "foo_r5", "foo_r6", "foo_r7", "foo_r8", "t"]
 rebuilt        : ScopeId(2): ["foo_r1", "foo_r2", "foo_r3", "foo_r4", "foo_r5", "foo_r6", "foo_r7", "foo_r8", "t"]
@@ -19618,6 +19978,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/co
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["T", "foo_r1", "foo_r2", "foo_r3", "foo_r4", "foo_r5", "foo_r6", "foo_r7", "foo_r8", "t"]
 rebuilt        : ScopeId(2): ["foo_r1", "foo_r2", "foo_r3", "foo_r4", "foo_r5", "foo_r6", "foo_r7", "foo_r8", "t"]
@@ -19626,6 +19989,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/co
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeObjectOnOptionalProperty.ts
 semantic error: Bindings mismatch:
@@ -20137,6 +20503,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/f
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E", "blue", "red"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["T"]
 rebuilt        : ScopeId(3): []
@@ -20202,6 +20571,9 @@ rebuilt        : ScopeId(0): ["E", "snb"]
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Reference mismatch:
 after transform: ReferenceId(2): Some("item")
 rebuilt        : ReferenceId(5): None
@@ -20903,11 +21275,17 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/con
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "Foo"]
 rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/TypeGuardWithEnumUnion.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["B", "Color", "G", "R"]
 rebuilt        : ScopeId(1): ["Color"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardFunction.ts
 semantic error: Bindings mismatch:
@@ -21018,6 +21396,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bit
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["", "A", "B", "ENUM1"]
 rebuilt        : ScopeId(1): ["ENUM1"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithNumberType.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -21044,6 +21425,9 @@ tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voi
 semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["", "A", "B", "ENUM1"]
 rebuilt        : ScopeId(2): ["ENUM1"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithNumberType.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -21055,6 +21439,9 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/amdImportAsPri
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "E1"]
 rebuilt        : ScopeId(1): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/amdImportNotAsPrimaryExpression.ts
 semantic error: Bindings mismatch:
@@ -21063,6 +21450,9 @@ rebuilt        : ScopeId(0): ["C1", "E1"]
 Bindings mismatch:
 after transform: ScopeId(5): ["A", "B", "C", "E1"]
 rebuilt        : ScopeId(2): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/asiPreventsParsingAsAmbientExternalModule02.ts
 semantic error: Semantic Collector failed after transform
@@ -21082,6 +21472,9 @@ rebuilt        : ScopeId(0): ["C1", "E1"]
 Bindings mismatch:
 after transform: ScopeId(5): ["A", "B", "C", "E1"]
 rebuilt        : ScopeId(2): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target12.ts
 semantic error: Semantic Collector failed after transform
@@ -21110,9 +21503,15 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulek
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E1", "value1"]
 rebuilt        : ScopeId(1): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E2", "value1"]
 rebuilt        : ScopeId(2): ["E2"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/es6/es6modulekindWithES5Target7.ts
 semantic error: Semantic Collector failed after transform
@@ -21148,9 +21547,15 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextm
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E1", "value1"]
 rebuilt        : ScopeId(1): ["E1"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E2", "value1"]
 rebuilt        : ScopeId(2): ["E2"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/esnext/esnextmodulekindWithES5Target7.ts
 semantic error: Semantic Collector failed after transform
@@ -21381,11 +21786,17 @@ tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModule
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxConstEnumUsage.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Foo", "a", "b", "c"]
 rebuilt        : ScopeId(1): ["Foo"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsESM.ts
 semantic error: Bindings mismatch:
@@ -23022,21 +23433,33 @@ tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclara
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["IsIndexer", "IsNumberIndexer", "IsStringIndexer", "None", "SignatureFlags"]
 rebuilt        : ScopeId(1): ["SignatureFlags"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["IsIndexer", "IsNumberIndexer", "IsStringIndexer", "None", "SignatureFlags"]
 rebuilt        : ScopeId(1): ["SignatureFlags"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnum6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bar", "E", "Foo"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.ts
 semantic error: Bindings mismatch:
@@ -23047,21 +23470,33 @@ tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclara
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "D", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration6.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "D", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserInterfaceKeywordInEnum.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bar", "interface"]
 rebuilt        : ScopeId(1): ["Bar"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserInterfaceKeywordInEnum1.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["Bar", "interface"]
 rebuilt        : ScopeId(1): ["Bar"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic14.ts
 semantic error: Bindings mismatch:
@@ -23389,6 +23824,9 @@ tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerEnu
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["CodeGenTarget", "ES3", "ES5"]
 rebuilt        : ScopeId(1): ["CodeGenTarget"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithAnnotationAndInitializer.ts
 semantic error: Semantic Collector failed after transform
@@ -23693,6 +24131,9 @@ rebuilt        : ScopeId(0): ["C", "E", "a", "b", "c", "d", "e", "e2", "f", "g",
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(5): ["T", "x"]
 rebuilt        : ScopeId(4): ["x"]
@@ -23798,6 +24239,9 @@ tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectio
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "D", "E", "F"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/intersection/intersectionThisTypes.ts
 semantic error: Bindings mismatch:
@@ -23880,6 +24324,9 @@ rebuilt        : ScopeId(0): ["Choice", "assertNever", "f1", "f10", "f11", "f12"
 Bindings mismatch:
 after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
 rebuilt        : ScopeId(1): ["Choice"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/literal/enumLiteralTypes2.ts
 semantic error: Bindings mismatch:
@@ -23888,6 +24335,9 @@ rebuilt        : ScopeId(0): ["Choice", "assertNever", "f1", "f10", "f11", "f12"
 Bindings mismatch:
 after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
 rebuilt        : ScopeId(1): ["Choice"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/literal/literalTypeWidening.ts
 semantic error: Bindings mismatch:
@@ -23914,6 +24364,9 @@ rebuilt        : ScopeId(17): ["a", "obj", "rest"]
 Bindings mismatch:
 after transform: ScopeId(26): ["A", "B", "E"]
 rebuilt        : ScopeId(18): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(26): ScopeFlags(0x0)
+rebuilt        : ScopeId(18): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/literal/literalTypes1.ts
 semantic error: Bindings mismatch:
@@ -23927,6 +24380,9 @@ rebuilt        : ScopeId(0): ["C1", "C2", "E", "a", "aa", "append", "cond", "f1"
 Bindings mismatch:
 after transform: ScopeId(1): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(35): ["T", "x"]
 rebuilt        : ScopeId(27): ["x"]
@@ -23980,6 +24436,9 @@ rebuilt        : ScopeId(0): ["Choice", "assertNever", "f1", "f10", "f11", "f12"
 Bindings mismatch:
 after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
 rebuilt        : ScopeId(1): ["Choice"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/literal/stringEnumLiteralTypes2.ts
 semantic error: Bindings mismatch:
@@ -23988,6 +24447,9 @@ rebuilt        : ScopeId(0): ["Choice", "assertNever", "f1", "f10", "f11", "f12"
 Bindings mismatch:
 after transform: ScopeId(1): ["Choice", "No", "Unknown", "Yes"]
 rebuilt        : ScopeId(1): ["Choice"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/literal/stringMappingDeferralInConditionalTypes.ts
 semantic error: Bindings mismatch:
@@ -24020,6 +24482,9 @@ rebuilt        : ScopeId(0): ["E", "z1", "z2"]
 Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/localTypes/localTypes1.ts
 semantic error: Bindings mismatch:
@@ -24028,18 +24493,27 @@ rebuilt        : ScopeId(1): ["C", "E", "a"]
 Bindings mismatch:
 after transform: ScopeId(2): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(7): ["A", "C", "E", "I", "a"]
 rebuilt        : ScopeId(5): ["C", "a"]
 Bindings mismatch:
 after transform: ScopeId(8): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(6): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(8): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(13): ["E"]
 rebuilt        : ScopeId(9): []
 Bindings mismatch:
 after transform: ScopeId(14): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(10): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(14): ScopeFlags(0x0)
+rebuilt        : ScopeId(10): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(15): ["A", "C", "I", "a"]
 rebuilt        : ScopeId(11): ["C", "a"]
@@ -24052,30 +24526,45 @@ rebuilt        : ScopeId(16): ["C"]
 Bindings mismatch:
 after transform: ScopeId(25): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(17): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(25): ScopeFlags(0x0)
+rebuilt        : ScopeId(17): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(27): ["C", "E"]
 rebuilt        : ScopeId(19): ["C"]
 Bindings mismatch:
 after transform: ScopeId(28): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(20): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(28): ScopeFlags(0x0)
+rebuilt        : ScopeId(20): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(31): ["C", "E"]
 rebuilt        : ScopeId(23): ["C"]
 Bindings mismatch:
 after transform: ScopeId(32): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(24): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(32): ScopeFlags(StrictMode | Constructor)
+rebuilt        : ScopeId(24): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(34): ["C", "E"]
 rebuilt        : ScopeId(26): ["C"]
 Bindings mismatch:
 after transform: ScopeId(35): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(27): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(35): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(27): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(37): ["C", "E"]
 rebuilt        : ScopeId(29): ["C"]
 Bindings mismatch:
 after transform: ScopeId(38): ["A", "B", "C", "E"]
 rebuilt        : ScopeId(30): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(38): ScopeFlags(StrictMode | GetAccessor)
+rebuilt        : ScopeId(30): ScopeFlags(StrictMode | Function)
 Reference mismatch:
 after transform: ReferenceId(67): Some("E")
 rebuilt        : ReferenceId(11): None
@@ -24196,9 +24685,15 @@ rebuilt        : ScopeId(0): ["AlienAnimalTypes", "TerrestrialAnimalTypes", "cat
 Bindings mismatch:
 after transform: ScopeId(1): ["CAT", "DOG", "TerrestrialAnimalTypes"]
 rebuilt        : ScopeId(1): ["TerrestrialAnimalTypes"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["AlienAnimalTypes", "CAT"]
 rebuilt        : ScopeId(2): ["AlienAnimalTypes"]
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/mapped/mappedTypesGenericTuples.ts
 semantic error: Bindings mismatch:
@@ -24518,6 +25013,9 @@ rebuilt        : ScopeId(0): ["C", "E", "a", "c", "i", "r1", "r2", "r3", "r4", "
 Bindings mismatch:
 after transform: ScopeId(3): ["E", "abstract", "as", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "debugger", "default", "delete", "do", "double", "else", "enum", "export", "extends", "false", "final", "finally", "float", "for", "function", "goto", "if", "implements", "import", "in", "instanceof", "int", "interface", "is", "long", "namespace", "native", "new", "null", "package", "private", "protected", "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "true", "try", "typeof", "use", "var", "void", "volatile", "while", "with"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/stringNamedPropertyAccess.ts
 semantic error: Bindings mismatch:
@@ -24538,6 +25036,9 @@ tasks/coverage/typescript/tests/cases/conformance/types/primitives/number/validN
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/primitives/string/extendStringInterface.ts
 semantic error: Bindings mismatch:
@@ -24849,6 +25350,9 @@ rebuilt        : ScopeId(0): ["C7", "E", "x", "x1", "x10", "x11", "x13_1", "x13_
 Bindings mismatch:
 after transform: ScopeId(24): ["E", "x"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(24): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeParameters/typeArgumentLists/callGenericFunctionWithZeroTypeArguments.ts
 semantic error: Bindings mismatch:
@@ -25184,6 +25688,9 @@ rebuilt        : ScopeId(0): ["C", "E", "a", "ac", "ae", "ai", "b", "c", "d", "e
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "E"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["T", "U", "V", "x", "y", "z"]
 rebuilt        : ScopeId(3): ["x", "y", "z"]
@@ -25265,6 +25772,9 @@ rebuilt        : ScopeId(0): ["C", "E", "a", "ac", "ae", "ai", "b", "c", "d", "e
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "E"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["T", "U", "V", "x", "y", "z"]
 rebuilt        : ScopeId(3): ["x", "y", "z"]
@@ -25284,6 +25794,9 @@ rebuilt        : ScopeId(0): ["C", "E", "ac", "ae", "ai", "b", "c", "d", "e", "f
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "E"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["T", "U", "V", "x", "y", "z"]
 rebuilt        : ScopeId(3): ["x", "y", "z"]
@@ -25292,6 +25805,9 @@ tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assign
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/undefinedAssignableToEveryType.ts
 semantic error: Bindings mismatch:
@@ -25300,6 +25816,9 @@ rebuilt        : ScopeId(0): ["C", "E", "ac", "ae", "ai", "b", "c", "d", "e", "f
 Bindings mismatch:
 after transform: ScopeId(3): ["A", "E"]
 rebuilt        : ScopeId(2): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["T", "U", "V", "x", "y", "z"]
 rebuilt        : ScopeId(3): ["x", "y", "z"]
@@ -25458,6 +25977,9 @@ rebuilt        : ScopeId(34): ["x"]
 Bindings mismatch:
 after transform: ScopeId(62): ["A", "E"]
 rebuilt        : ScopeId(35): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(62): ScopeFlags(0x0)
+rebuilt        : ScopeId(35): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(68): ["T", "U", "x"]
 rebuilt        : ScopeId(37): ["x"]
@@ -25691,6 +26213,9 @@ rebuilt        : ScopeId(3): []
 Bindings mismatch:
 after transform: ScopeId(5): ["A", "E"]
 rebuilt        : ScopeId(4): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(0x0)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentityWithCallSignatures.ts
 semantic error: Bindings mismatch:
@@ -26195,6 +26720,9 @@ tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAn
 semantic error: Bindings mismatch:
 after transform: ScopeId(17): ["A", "E"]
 rebuilt        : ScopeId(6): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(17): ScopeFlags(0x0)
+rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/typeParametersAreIdenticalToThemselves.ts
 semantic error: Bindings mismatch:

@@ -43,15 +43,27 @@ tasks/coverage/misc/pass/oxc-4449.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(5): ["E", "baz"]
 rebuilt        : ScopeId(5): ["E"]
+Scope flags mismatch:
+after transform: ScopeId(5): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(5): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(6): ["F", "baz"]
 rebuilt        : ScopeId(6): ["F"]
+Scope flags mismatch:
+after transform: ScopeId(6): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(6): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(7): ["G", "baz"]
 rebuilt        : ScopeId(7): ["G"]
+Scope flags mismatch:
+after transform: ScopeId(7): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(7): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(8): ["H", "baz"]
 rebuilt        : ScopeId(8): ["H"]
+Scope flags mismatch:
+after transform: ScopeId(8): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
 
 tasks/coverage/misc/pass/swc-7187.ts
 semantic error: Bindings mismatch:

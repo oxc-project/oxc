@@ -143,7 +143,7 @@ pub fn check_semantic_after_transform(
         rebuilt: data_rebuilt,
         errors: Errors::default(),
     };
-    checker.check_bindings();
+    checker.check_scopes();
     checker.check_symbols();
     checker.check_references();
 
@@ -180,16 +180,16 @@ impl Errors {
 }
 
 impl<'s> PostTransformChecker<'s> {
-    fn check_bindings(&mut self) {
+    fn check_scopes(&mut self) {
         if self.after_transform.ids.scope_ids.len() != self.rebuilt.ids.scope_ids.len() {
             self.errors.push("Scopes mismatch after transform");
-            return;
         }
 
-        // Check whether bindings are the same for scopes in the same visitation order.
+        let PostTransformChecker { after_transform, rebuilt, .. } = self;
         for (&scope_id_after_transform, &scope_id_rebuilt) in
-            self.after_transform.ids.scope_ids.iter().zip(self.rebuilt.ids.scope_ids.iter())
+            after_transform.ids.scope_ids.iter().zip(rebuilt.ids.scope_ids.iter())
         {
+            // Check bindings are the same
             fn get_sorted_bindings(scopes: &ScopeTree, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut bindings =
                     scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
@@ -201,12 +201,10 @@ impl<'s> PostTransformChecker<'s> {
                 match (scope_id_after_transform, scope_id_rebuilt) {
                     (None, None) => continue,
                     (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
-                        let bindings_after_transform = get_sorted_bindings(
-                            self.after_transform.scopes,
-                            scope_id_after_transform,
-                        );
+                        let bindings_after_transform =
+                            get_sorted_bindings(after_transform.scopes, scope_id_after_transform);
                         let bindings_rebuilt =
-                            get_sorted_bindings(self.rebuilt.scopes, scope_id_rebuilt);
+                            get_sorted_bindings(rebuilt.scopes, scope_id_rebuilt);
                         if bindings_after_transform == bindings_rebuilt {
                             continue;
                         }
@@ -216,10 +214,8 @@ impl<'s> PostTransformChecker<'s> {
                         )
                     }
                     (Some(scope_id_after_transform), None) => {
-                        let bindings_after_transform = get_sorted_bindings(
-                            self.after_transform.scopes,
-                            scope_id_after_transform,
-                        );
+                        let bindings_after_transform =
+                            get_sorted_bindings(after_transform.scopes, scope_id_after_transform);
                         (
                             format!("{scope_id_after_transform:?}: {bindings_after_transform:?}"),
                             "No scope".to_string(),
@@ -227,7 +223,7 @@ impl<'s> PostTransformChecker<'s> {
                     }
                     (None, Some(scope_id_rebuilt)) => {
                         let bindings_rebuilt =
-                            get_sorted_bindings(self.rebuilt.scopes, scope_id_rebuilt);
+                            get_sorted_bindings(rebuilt.scopes, scope_id_rebuilt);
                         (
                             "No scope".to_string(),
                             format!("{scope_id_rebuilt:?}: {bindings_rebuilt:?}"),
@@ -242,6 +238,25 @@ after transform: {result_after_transform}
 rebuilt        : {result_rebuilt}
                 "
             ));
+
+            let (Some(scope_id_after_transform), Some(scope_id_rebuilt)) =
+                (scope_id_after_transform, scope_id_rebuilt)
+            else {
+                continue;
+            };
+
+            // Check flags match
+            let flags_after_transform = after_transform.scopes.get_flags(scope_id_after_transform);
+            let flags_rebuilt = rebuilt.scopes.get_flags(scope_id_rebuilt);
+            if flags_after_transform != flags_rebuilt {
+                self.errors.push(format!(
+                    "
+Scope flags mismatch:
+after transform: {scope_id_after_transform:?}: {flags_after_transform:?}
+rebuilt        : {scope_id_rebuilt:?}: {flags_rebuilt:?}
+                    "
+                ));
+            }
         }
     }
 

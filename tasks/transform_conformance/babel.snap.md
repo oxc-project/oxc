@@ -1736,6 +1736,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["A", "x"]
   | rebuilt        : ScopeId(1): ["A"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * opts/rewriteImportExtensions/input.ts
 
@@ -1793,6 +1797,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["A", "E"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * enum/constant-folding/input.ts
   x Bindings mismatch:
@@ -1800,15 +1808,27 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | "i", "j", "k", "l", "m", "n", "o", "p", "q", "r"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * enum/enum-merging-inner-references/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["Animals", "Cat", "Dog"]
   | rebuilt        : ScopeId(1): ["Animals"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(2): ["Animals", "CatDog"]
   | rebuilt        : ScopeId(2): ["Animals"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 
 * enum/enum-merging-inner-references-shadow/input.ts
@@ -1816,13 +1836,25 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["Animals", "Cat"]
   | rebuilt        : ScopeId(1): ["Animals"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(2): ["Animals", "Dog"]
   | rebuilt        : ScopeId(2): ["Animals"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(3): ["Animals", "CatDog"]
   | rebuilt        : ScopeId(3): ["Animals"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(3): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 
 
 * enum/export/input.ts
@@ -1830,9 +1862,17 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["A", "E"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(2): ["B", "E"]
   | rebuilt        : ScopeId(2): ["E"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 
 * enum/inferred/input.ts
@@ -1840,11 +1880,19 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["E", "x", "y"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * enum/inner-references/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["E", "a", "b"]
   | rebuilt        : ScopeId(1): ["E"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 
 * enum/mix-references/input.ts
@@ -1891,15 +1939,27 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["E", "a", "b"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * enum/non-scoped/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["E", "x", "y"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(2): ["E", "z"]
   | rebuilt        : ScopeId(2): ["E"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 
 * enum/outer-references/input.ts
@@ -1907,10 +1967,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["IPC", "SERVER", "SOCKET", "socketType"]
   | rebuilt        : ScopeId(1): ["socketType"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE",
   | "UV_WRITABLE", "constants"]
   | rebuilt        : ScopeId(2): ["constants"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 
 * enum/string-value/input.ts
@@ -1918,11 +1986,19 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["A", "A2", "B", "B2", "E"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * enum/string-value-template/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["A", "E"]
   | rebuilt        : ScopeId(1): ["E"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 
 * enum/string-values-computed/input.ts
@@ -1930,15 +2006,27 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["A", "E"]
   | rebuilt        : ScopeId(1): ["E"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * enum/ts5.0-const-foldable/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["First", "Second", "Third", "Values"]
   | rebuilt        : ScopeId(1): ["Values"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(2): ["Invoices", "Parts", "Routes", "x", "y"]
   | rebuilt        : ScopeId(2): ["Routes"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
 
 * exports/declared-types/input.ts
@@ -1951,9 +2039,17 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(12): ["BB", "K"]
   | rebuilt        : ScopeId(2): ["BB"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(12): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
   x Bindings mismatch:
   | after transform: ScopeId(13): ["BB", "L"]
   | rebuilt        : ScopeId(3): ["BB"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(13): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 
   x Reference mismatch:
   | after transform: ReferenceId(0): Some("x")
@@ -2130,11 +2226,19 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ["A", "Enum"]
   | rebuilt        : ScopeId(1): ["Enum"]
 
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
 
 * imports/enum-value/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["Enum", "id"]
   | rebuilt        : ScopeId(1): ["Enum"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
 
 * imports/import-removed-exceptions/input.ts
