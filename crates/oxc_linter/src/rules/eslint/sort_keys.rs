@@ -81,12 +81,8 @@ declare_oxc_lint!(
     /// };
     /// ```
     SortKeys,
-    pedantic, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    pedantic,
+    pending
 );
 
 impl Rule for SortKeys {
