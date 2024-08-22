@@ -21348,6 +21348,9 @@ rebuilt        : SymbolId(0): [ReferenceId(6)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
+Reference mismatch:
+after transform: ReferenceId(0): Some("E")
+rebuilt        : ReferenceId(4): Some("E")
 
 tasks/coverage/typescript/tests/cases/compiler/underscoreMapFirst.ts
 semantic error: Bindings mismatch:

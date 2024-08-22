@@ -499,7 +499,6 @@ impl<'s> PostTransformChecker<'s> {
             return;
         }
 
-        // Check whether symbols match
         for reference_ids in self
             .after_transform
             .ids
@@ -509,13 +508,18 @@ impl<'s> PostTransformChecker<'s> {
             .zip(self.rebuilt.ids.reference_ids.iter().copied())
             .map(Pair::from_tuple)
         {
+            // Check symbol IDs match
             let symbol_ids = self.get_pair(reference_ids, |data, reference_id| {
                 data.symbols.references[reference_id].symbol_id()
             });
-            let symbol_names = self.get_pair(symbol_ids, |data, symbol_id| {
-                symbol_id.map(|symbol_id| data.symbols.names[symbol_id].clone())
-            });
-            if symbol_names.is_mismatch() {
+            let symbol_ids_remapped = Pair::new(
+                symbol_ids.after_transform.map(|symbol_id| self.symbol_ids_map.get(symbol_id)),
+                symbol_ids.rebuilt.map(Option::Some),
+            );
+            if symbol_ids_remapped.is_mismatch() {
+                let symbol_names = self.get_pair(symbol_ids, |data, symbol_id| {
+                    symbol_id.map(|symbol_id| data.symbols.names[symbol_id].clone())
+                });
                 self.errors.push_mismatch("Reference mismatch", reference_ids, symbol_names);
             }
         }
