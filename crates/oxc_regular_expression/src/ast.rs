@@ -207,7 +207,7 @@ pub struct CharacterClassRange {
 #[derive(Debug)]
 pub struct ClassStringDisjunction<'a> {
     pub span: Span,
-    /// `true` if body is empty or contain 2 more characters.
+    /// `true` if body is empty or contain [`ClassString`] which `strings` is `true`
     pub strings: bool,
     pub body: Vec<'a, ClassString<'a>>,
 }
@@ -216,6 +216,8 @@ pub struct ClassStringDisjunction<'a> {
 #[derive(Debug)]
 pub struct ClassString<'a> {
     pub span: Span,
+    /// `true` if body is empty or contain 2 more characters.
+    pub strings: bool,
     pub body: Vec<'a, Character>,
 }
 
