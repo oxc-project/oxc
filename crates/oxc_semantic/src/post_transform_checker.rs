@@ -422,24 +422,6 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     fn check_symbols(&mut self) {
-        // Check whether symbols are valid
-        for symbol_id in self.rebuilt.ids.symbol_ids.iter().copied() {
-            if self.rebuilt.symbols.get_flags(symbol_id).is_empty() {
-                let name = self.rebuilt.symbols.get_name(symbol_id);
-                self.errors
-                    .push(format!("Expect non-empty SymbolFlags for BindingIdentifier({name})"));
-                if !self
-                    .rebuilt
-                    .scopes
-                    .has_binding(self.rebuilt.symbols.get_scope_id(symbol_id), name)
-                {
-                    self.errors.push(format!(
-                        "Cannot find BindingIdentifier({name}) in the Scope corresponding to the Symbol"
-                    ));
-                }
-            }
-        }
-
         if self.get_static_pair(|data| data.ids.symbol_ids.len()).is_mismatch() {
             self.errors.push("Symbols mismatch after transform");
             return;
@@ -455,10 +437,17 @@ impl<'s> PostTransformChecker<'s> {
             .zip(self.rebuilt.ids.symbol_ids.iter().copied())
             .map(Pair::from_tuple)
         {
+            // Check names match
             let symbol_names =
                 self.get_pair(symbol_ids, |data, symbol_id| data.symbols.names[symbol_id].clone());
             if symbol_names.is_mismatch() {
                 self.errors.push_mismatch("Symbol mismatch", symbol_ids, symbol_names);
+            }
+
+            // Check flags match
+            let flags = self.get_pair(symbol_ids, |data, symbol_id| data.symbols.flags[symbol_id]);
+            if flags.is_mismatch() {
+                self.errors.push_mismatch("Symbol flags mismatch", symbol_ids, flags);
             }
         }
     }

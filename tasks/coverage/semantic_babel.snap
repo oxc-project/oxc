@@ -2,7 +2,7 @@ commit: 12619ffe
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1790/2101 (85.20%)
+Positive Passed: 1786/2101 (85.01%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -510,6 +510,9 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/const/i
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/declare/input.ts
 semantic error: Bindings mismatch:
@@ -539,11 +542,17 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export/
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-const/input.ts
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/export-declare-const/input.ts
 semantic error: Bindings mismatch:
@@ -560,6 +569,9 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-reserved-words/input.ts
 semantic error: Bindings mismatch:
@@ -568,6 +580,9 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-strings/input.ts
 semantic error: Bindings mismatch:
@@ -576,6 +591,9 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma/input.ts
 semantic error: Bindings mismatch:
@@ -584,6 +602,9 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-trailing-comma-with-initializer/input.ts
 semantic error: Bindings mismatch:
@@ -592,6 +613,9 @@ rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/estree-compat/shorthand-ambient-module/input.ts
 semantic error: Bindings mismatch:
@@ -643,6 +667,9 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(3): SymbolFlags(Export | RegularEnum)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
 semantic error: Semantic Collector failed after transform
@@ -1201,6 +1228,9 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(1): SymbolFlags(Export | RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/issue-7742/input.ts
 semantic error: Bindings mismatch:
@@ -1270,6 +1300,9 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/enum-b
 semantic error: Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-declare-function-after/input.ts
 semantic error: Scope children mismatch:
@@ -1285,11 +1318,17 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-enum-before/input.ts
 semantic error: Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/export-func-in-declare-module/input.ts
 semantic error: Bindings mismatch:
@@ -1372,11 +1411,17 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(Class | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-const-type/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-constenum-constenum/input.ts
 semantic error: Scope flags mismatch:
@@ -1385,6 +1430,9 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(ConstEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-enum-enum/input.ts
 semantic error: Scope flags mismatch:
@@ -1393,16 +1441,25 @@ rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(RegularEnum)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-function-interface/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-function-type/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-ambient-class/input.ts
 semantic error: Bindings mismatch:
@@ -1416,6 +1473,28 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Semantic Collector failed after transform
 Missing SymbolId: a
 
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-let/input.ts
+semantic error: Symbol flags mismatch:
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Import)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | Import)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Import)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-let/input.ts
+semantic error: Symbol flags mismatch:
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | TypeImport)
+rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | TypeImport)
+rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | TypeImport)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-type/input.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Global", "a"]
@@ -1423,6 +1502,28 @@ rebuilt        : ScopeId(0): ["a"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-type-var/input.ts
+semantic error: Symbol flags mismatch:
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | TypeImport)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | TypeImport)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | TypeImport)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-var/input.ts
+semantic error: Symbol flags mismatch:
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
+rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable | Import)
+rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+Symbol flags mismatch:
+after transform: SymbolId(3): SymbolFlags(FunctionScopedVariable | Import)
+rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-in-different-module/input.ts
 semantic error: Bindings mismatch:
@@ -1452,11 +1553,17 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(Class | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(Class)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-function/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-interface/input.ts
 semantic error: Bindings mismatch:
@@ -1470,46 +1577,73 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redecl
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-interface-var/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-let-interface/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-let-type/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-function/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-let/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-type-var/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-var-interface/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-var-type/input.ts
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
+Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | TypeAlias)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/anonymous-function-generator/input.ts
 semantic error: Bindings mismatch:

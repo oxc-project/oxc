@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 397/953
+Passed: 395/953
 
 # All Passed:
 * babel-preset-react
@@ -1326,6 +1326,11 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): Some(ScopeId(0))
   | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
+  | CatchVariable)
+
 
 * optional-catch-bindings/try-catch-finally-no-binding/input.js
   x Bindings mismatch:
@@ -1348,6 +1353,11 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): Some(ScopeId(0))
   | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
+  | CatchVariable)
+
 
 
 # babel-plugin-transform-exponentiation-operator (3/4)
@@ -1355,7 +1365,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-arrow-functions (1/6)
+# babel-plugin-transform-arrow-functions (0/6)
 * assumption-newableArrowFunctions-false/basic/input.js
   x Bindings mismatch:
   | after transform: ScopeId(1): ["f"]
@@ -1373,17 +1383,46 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(6): ["_this2"]
   | rebuilt        : ScopeId(6): []
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+
 
 * assumption-newableArrowFunctions-false/naming/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | ArrowFunction)
+  | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
 
 
 * assumption-newableArrowFunctions-false/self-referential/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * spec/newableArrowFunction-default/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 * spec/newableArrowFunction-vs-spec-false/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
+
+
+* spec/newableArrowFunction-vs-spec-true/input.js
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 
@@ -1415,12 +1454,16 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * opts/rewriteImportExtensions/input.ts
 
 
 
-# babel-plugin-transform-typescript (51/151)
+# babel-plugin-transform-typescript (50/151)
 * class/accessor-allowDeclareFields-false/input.ts
   x TS(18010): An accessibility modifier cannot be used with a private
   | identifier.
@@ -1502,11 +1545,19 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/const/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/constant-folding/input.ts
@@ -1518,6 +1569,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/enum-merging-inner-references/input.ts
@@ -1536,6 +1591,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/enum-merging-inner-references-shadow/input.ts
@@ -1563,6 +1622,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(3): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/export/input.ts
   x Bindings mismatch:
@@ -1581,6 +1644,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
 
 * enum/inferred/input.ts
   x Bindings mismatch:
@@ -1591,6 +1658,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/inner-references/input.ts
   x Bindings mismatch:
@@ -1600,6 +1671,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/mix-references/input.ts
@@ -1650,6 +1725,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/non-scoped/input.ts
   x Bindings mismatch:
@@ -1667,6 +1746,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/outer-references/input.ts
@@ -1687,11 +1770,23 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(4): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/scoped/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 * enum/string-value/input.ts
@@ -1703,6 +1798,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/string-value-template/input.ts
   x Bindings mismatch:
@@ -1713,6 +1812,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * enum/string-values-computed/input.ts
   x Bindings mismatch:
@@ -1722,6 +1825,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/ts5.0-const-foldable/input.ts
@@ -1741,11 +1848,24 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(8): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+
 
 * exports/declare-namespace/input.ts
   x Scope children mismatch:
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
   | rebuilt        : ScopeId(0): [ScopeId(1)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule
+  | | Ambient)
+  | rebuilt        : SymbolId(0): SymbolFlags(Export | Class)
 
 
 * exports/declare-shadowed/input.ts
@@ -1789,6 +1909,14 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(16): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(10): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable | Export)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(15): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable | Export)
+
   x Reference mismatch:
   | after transform: ReferenceId(0): Some("x")
   | rebuilt        : ReferenceId(0): None
@@ -1816,6 +1944,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
 * exports/export-import=/input.ts
@@ -2016,6 +2148,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * imports/enum-value/input.ts
   x Bindings mismatch:
@@ -2025,6 +2161,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
   | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * imports/import-removed-exceptions/input.ts
@@ -2038,6 +2178,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A", "B", "T", "Types"]
   | rebuilt        : ScopeId(0): []
+
+
+* imports/import-type-func-with-duplicate-name/input.ts
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Function
+  | | TypeImport)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | Function
+  | | TypeImport)
+  | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
 
 
 * imports/import-type-not-removed/input.ts
@@ -2080,6 +2232,13 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/type-only-export-specifier-2/input.ts
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(Export | Import)
+  | rebuilt        : SymbolId(1): SymbolFlags(Import)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(Export | TypeImport)
+  | rebuilt        : SymbolId(2): SymbolFlags(TypeImport)
 
 
 * imports/type-only-import-specifier-1/input.ts

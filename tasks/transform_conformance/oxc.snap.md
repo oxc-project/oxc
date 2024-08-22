@@ -28,6 +28,11 @@ Passed: 8/35
   | after transform: ScopeId(2): Some(ScopeId(0))
   | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(CatchVariable)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable |
+  | CatchVariable)
+
 
 
 # babel-plugin-transform-typescript (2/7)
@@ -127,6 +132,22 @@ Passed: 8/35
   x Scope children mismatch:
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | Import)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(Export | Import | TypeAlias)
+  | rebuilt        : SymbolId(1): SymbolFlags(Export | Import)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | Import | TypeAlias)
+  | rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
 
 
 
