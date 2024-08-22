@@ -1659,6 +1659,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(2): []
   | rebuilt        : ScopeId(3): ["_unused"]
 
+  x Scope parent mismatch:
+  | after transform: ScopeId(2): Some(ScopeId(0))
+  | rebuilt        : ScopeId(3): Some(ScopeId(2))
+
 
 * optional-catch-bindings/try-catch-finally-no-binding/input.js
   x Bindings mismatch:
@@ -1672,6 +1676,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Bindings mismatch:
   | after transform: ScopeId(2): []
   | rebuilt        : ScopeId(3): ["_unused"]
+
+  x Scope parent mismatch:
+  | after transform: ScopeId(2): Some(ScopeId(0))
+  | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
 
 

@@ -20,6 +20,10 @@ Passed: 9/35
   | after transform: ScopeId(2): []
   | rebuilt        : ScopeId(3): ["_unused2"]
 
+  x Scope parent mismatch:
+  | after transform: ScopeId(2): Some(ScopeId(0))
+  | rebuilt        : ScopeId(3): Some(ScopeId(2))
+
 
 
 # babel-plugin-transform-typescript (3/7)

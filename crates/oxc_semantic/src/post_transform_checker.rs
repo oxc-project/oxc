@@ -97,6 +97,7 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
+use rustc_hash::FxHashMap;
 
 use crate::{ScopeTree, SemanticBuilder, SymbolTable};
 
@@ -141,8 +142,12 @@ pub fn check_semantic_after_transform(
     let mut checker = PostTransformChecker {
         after_transform: data_after_transform,
         rebuilt: data_rebuilt,
+        scope_ids_map: FxHashMap::default(),
+        symbol_ids_map: FxHashMap::default(),
+        reference_ids_map: FxHashMap::default(),
         errors: Errors::default(),
     };
+    checker.create_mappings();
     checker.check_scopes();
     checker.check_symbols();
     checker.check_references();
@@ -153,6 +158,10 @@ pub fn check_semantic_after_transform(
 struct PostTransformChecker<'s> {
     after_transform: SemanticData<'s>,
     rebuilt: SemanticData<'s>,
+    // Mappings from after transform ID to rebuilt ID
+    scope_ids_map: FxHashMap<ScopeId, ScopeId>,
+    symbol_ids_map: FxHashMap<SymbolId, SymbolId>,
+    reference_ids_map: FxHashMap<ReferenceId, ReferenceId>,
     errors: Errors,
 }
 
@@ -265,6 +274,34 @@ rebuilt        : {value_rebuilt}
 }
 
 impl<'s> PostTransformChecker<'s> {
+    fn create_mappings(&mut self) {
+        // Scope IDs
+        for (&scope_id_after_transform, &scope_id_rebuilt) in
+            self.after_transform.ids.scope_ids.iter().zip(self.rebuilt.ids.scope_ids.iter())
+        {
+            let (Some(scope_id_after_transform), Some(scope_id_rebuilt)) =
+                (scope_id_after_transform, scope_id_rebuilt)
+            else {
+                continue;
+            };
+            self.scope_ids_map.insert(scope_id_after_transform, scope_id_rebuilt);
+        }
+
+        // Symbol IDs
+        for (&symbol_id_after_transform, &symbol_id_rebuilt) in
+            self.after_transform.ids.symbol_ids.iter().zip(self.rebuilt.ids.symbol_ids.iter())
+        {
+            self.symbol_ids_map.insert(symbol_id_after_transform, symbol_id_rebuilt);
+        }
+
+        // Reference IDs
+        for (&reference_id_after_transform, &reference_id_rebuilt) in
+            self.after_transform.ids.reference_ids.iter().zip(self.rebuilt.ids.reference_ids.iter())
+        {
+            self.reference_ids_map.insert(reference_id_after_transform, reference_id_rebuilt);
+        }
+    }
+
     fn check_scopes(&mut self) {
         if self.get_static_pair(|data| data.ids.scope_ids.len()).is_mismatch() {
             self.errors.push("Scopes mismatch after transform");
@@ -319,6 +356,22 @@ impl<'s> PostTransformChecker<'s> {
             let flags = self.get_pair(scope_ids, |data, scope_id| data.scopes.get_flags(scope_id));
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Scope flags mismatch", scope_ids, flags);
+            }
+
+            // Check parents match
+            let parent_ids =
+                self.get_pair(scope_ids, |data, scope_id| data.scopes.get_parent_id(scope_id));
+            let is_match = match parent_ids.into_parts() {
+                (Some(parent_id_after_transform), Some(parent_id_rebuilt)) => {
+                    let parent_id_after_transform =
+                        self.scope_ids_map.get(&parent_id_after_transform);
+                    parent_id_after_transform == Some(&parent_id_rebuilt)
+                }
+                (None, None) => true,
+                _ => false,
+            };
+            if !is_match {
+                self.errors.push_mismatch("Scope parent mismatch", scope_ids, parent_ids);
             }
         }
     }
