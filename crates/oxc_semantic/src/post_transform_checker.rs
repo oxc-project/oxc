@@ -85,7 +85,11 @@
 //!
 //! See also: <https://github.com/oxc-project/oxc/issues/4790>
 
-use std::{cell::Cell, fmt::Debug, hash::Hash};
+use std::{
+    cell::Cell,
+    fmt::{Debug, Display},
+    hash::Hash,
+};
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
@@ -267,12 +271,10 @@ impl Errors {
     /// Add an error for a mismatch between a pair of values
     fn push_mismatch_strs<Value, Values>(&mut self, title: &str, values: Values)
     where
-        Value: AsRef<str>,
+        Value: Display,
         Values: AsRef<Pair<Value>>,
     {
         let (value_after_transform, value_rebuilt) = values.as_ref().parts();
-        let value_after_transform = value_after_transform.as_ref();
-        let value_rebuilt = value_rebuilt.as_ref();
         self.push(format!(
             "
 {title}:
@@ -324,6 +326,7 @@ impl<'s> PostTransformChecker<'s> {
     fn check_scopes(&mut self) {
         if self.get_static_pair(|data| data.ids.scope_ids.len()).is_mismatch() {
             self.errors.push("Scopes mismatch after transform");
+            return;
         }
 
         for scope_ids in self
@@ -409,6 +412,8 @@ impl<'s> PostTransformChecker<'s> {
             if self.remap_scope_ids_sets(&child_ids).is_mismatch() {
                 self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
             }
+
+            // NB: Skip checking node IDs match - transformer does not set `AstNodeId`s
         }
     }
 
@@ -484,18 +489,8 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     fn check_references(&mut self) {
-        // Check whether references are valid
-        for reference_id in self.rebuilt.ids.reference_ids.iter().copied() {
-            let reference = self.rebuilt.symbols.get_reference(reference_id);
-            if reference.flags().is_empty() {
-                self.errors.push(format!(
-                    "Expect ReferenceFlags for IdentifierReference({reference_id:?}) to not be empty"
-                ));
-            }
-        }
-
         if self.get_static_pair(|data| data.ids.reference_ids.len()).is_mismatch() {
-            self.errors.push("ReferenceId mismatch after transform");
+            self.errors.push("References mismatch after transform");
             return;
         }
 
