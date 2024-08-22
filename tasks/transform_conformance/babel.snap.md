@@ -2066,19 +2066,19 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(15): SymbolFlags(Export | RegularEnum)
   | rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable | Export)
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(0): Some("x")
   | rebuilt        : ReferenceId(0): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(2): Some("E")
   | rebuilt        : ReferenceId(1): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("x")
   | rebuilt        : ReferenceId(2): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("E")
   | rebuilt        : ReferenceId(3): None
 

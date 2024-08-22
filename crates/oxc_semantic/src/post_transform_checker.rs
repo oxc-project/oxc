@@ -520,7 +520,7 @@ impl<'s> PostTransformChecker<'s> {
                 let symbol_names = self.get_pair(symbol_ids, |data, symbol_id| {
                     symbol_id.map(|symbol_id| data.symbols.names[symbol_id].clone())
                 });
-                self.errors.push_mismatch("Reference mismatch", reference_ids, symbol_names);
+                self.errors.push_mismatch("Reference symbol mismatch", reference_ids, symbol_names);
             }
         }
     }

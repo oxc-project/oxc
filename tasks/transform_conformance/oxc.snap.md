@@ -242,47 +242,47 @@ Passed: 8/35
   | ReferenceId(54)]
   | rebuilt        : SymbolId(14): [ReferenceId(43), ReferenceId(54)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(23): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(26): Some("_s2")
   | rebuilt        : ReferenceId(1): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(29): Some("_s3")
   | rebuilt        : ReferenceId(2): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(33): Some("_s4")
   | rebuilt        : ReferenceId(3): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(37): Some("_s5")
   | rebuilt        : ReferenceId(4): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(41): Some("_s6")
   | rebuilt        : ReferenceId(5): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(45): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(47): Some("_c2")
   | rebuilt        : ReferenceId(47): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(49): Some("_c3")
   | rebuilt        : ReferenceId(49): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(51): Some("_c4")
   | rebuilt        : ReferenceId(51): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(53): Some("_c5")
   | rebuilt        : ReferenceId(53): None
 
@@ -309,7 +309,7 @@ Passed: 8/35
   | ReferenceId(22)]
   | rebuilt        : SymbolId(7): [ReferenceId(15), ReferenceId(18)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(21): Some("_c")
   | rebuilt        : ReferenceId(17): None
 
@@ -332,7 +332,7 @@ Passed: 8/35
   | ReferenceId(5)]
   | rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(3): Some("_s")
   | rebuilt        : ReferenceId(1): None
 
@@ -348,11 +348,11 @@ Passed: 8/35
   | ReferenceId(11)]
   | rebuilt        : SymbolId(5): [ReferenceId(8), ReferenceId(11)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(6): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c")
   | rebuilt        : ReferenceId(10): None
 
@@ -405,39 +405,39 @@ Passed: 8/35
   | ReferenceId(52)]
   | rebuilt        : SymbolId(24): [ReferenceId(30), ReferenceId(52)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(26): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(32): Some("_s2")
   | rebuilt        : ReferenceId(1): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(38): Some("_s3")
   | rebuilt        : ReferenceId(32): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(41): Some("_c")
   | rebuilt        : ReferenceId(41): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(43): Some("_c2")
   | rebuilt        : ReferenceId(43): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(45): Some("_c3")
   | rebuilt        : ReferenceId(45): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(47): Some("_c4")
   | rebuilt        : ReferenceId(47): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(49): Some("_c5")
   | rebuilt        : ReferenceId(49): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(51): Some("_c6")
   | rebuilt        : ReferenceId(51): None
 
@@ -466,15 +466,15 @@ Passed: 8/35
   | ReferenceId(22)]
   | rebuilt        : SymbolId(10): [ReferenceId(19), ReferenceId(22)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(17): Some("_s2")
   | rebuilt        : ReferenceId(0): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(12): Some("_s")
   | rebuilt        : ReferenceId(2): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(21): Some("_c")
   | rebuilt        : ReferenceId(21): None
 
@@ -513,19 +513,19 @@ Passed: 8/35
   | ReferenceId(24)]
   | rebuilt        : SymbolId(10): [ReferenceId(21), ReferenceId(24)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_s2")
   | rebuilt        : ReferenceId(1): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(19): Some("_s3")
   | rebuilt        : ReferenceId(2): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(23): Some("_c")
   | rebuilt        : ReferenceId(23): None
 
@@ -551,19 +551,19 @@ Passed: 8/35
   | ReferenceId(21)]
   | rebuilt        : SymbolId(7): [ReferenceId(12), ReferenceId(21)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_c")
   | rebuilt        : ReferenceId(14): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(16): Some("_c2")
   | rebuilt        : ReferenceId(16): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(18): Some("_c3")
   | rebuilt        : ReferenceId(18): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(20): Some("_c4")
   | rebuilt        : ReferenceId(20): None
 
@@ -641,27 +641,27 @@ Passed: 8/35
   | ReferenceId(64)]
   | rebuilt        : SymbolId(20): [ReferenceId(42), ReferenceId(55)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(53): Some("_c")
   | rebuilt        : ReferenceId(44): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(55): Some("_c2")
   | rebuilt        : ReferenceId(46): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(57): Some("_c3")
   | rebuilt        : ReferenceId(48): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(59): Some("_c4")
   | rebuilt        : ReferenceId(50): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(61): Some("_c5")
   | rebuilt        : ReferenceId(52): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(63): Some("_c6")
   | rebuilt        : ReferenceId(54): None
 
@@ -697,27 +697,27 @@ Passed: 8/35
   | ReferenceId(56)]
   | rebuilt        : SymbolId(18): [ReferenceId(43), ReferenceId(56)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(45): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(47): Some("_c2")
   | rebuilt        : ReferenceId(47): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(49): Some("_c3")
   | rebuilt        : ReferenceId(49): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(51): Some("_c4")
   | rebuilt        : ReferenceId(51): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(53): Some("_c5")
   | rebuilt        : ReferenceId(53): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(55): Some("_c6")
   | rebuilt        : ReferenceId(55): None
 
@@ -763,35 +763,35 @@ Passed: 8/35
   | ReferenceId(33)]
   | rebuilt        : SymbolId(12): [ReferenceId(12), ReferenceId(33)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(18): Some("_c")
   | rebuilt        : ReferenceId(18): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(20): Some("_c2")
   | rebuilt        : ReferenceId(20): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(22): Some("_c3")
   | rebuilt        : ReferenceId(22): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(24): Some("_c4")
   | rebuilt        : ReferenceId(24): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(26): Some("_c5")
   | rebuilt        : ReferenceId(26): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(28): Some("_c6")
   | rebuilt        : ReferenceId(28): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(30): Some("_c7")
   | rebuilt        : ReferenceId(30): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(32): Some("_c8")
   | rebuilt        : ReferenceId(32): None
 
@@ -812,15 +812,15 @@ Passed: 8/35
   | ReferenceId(11)]
   | rebuilt        : SymbolId(5): [ReferenceId(0), ReferenceId(11)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("_c2")
   | rebuilt        : ReferenceId(8): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c3")
   | rebuilt        : ReferenceId(10): None
 
@@ -841,15 +841,15 @@ Passed: 8/35
   | ReferenceId(11)]
   | rebuilt        : SymbolId(6): [ReferenceId(0), ReferenceId(11)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("_c2")
   | rebuilt        : ReferenceId(8): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c3")
   | rebuilt        : ReferenceId(10): None
 
@@ -875,15 +875,15 @@ Passed: 8/35
   | ReferenceId(19)]
   | rebuilt        : SymbolId(10): [ReferenceId(9), ReferenceId(18)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_c")
   | rebuilt        : ReferenceId(13): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(16): Some("_c2")
   | rebuilt        : ReferenceId(15): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(18): Some("_c3")
   | rebuilt        : ReferenceId(17): None
 
@@ -905,11 +905,11 @@ Passed: 8/35
   | ReferenceId(15)]
   | rebuilt        : SymbolId(6): [ReferenceId(6), ReferenceId(13)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(12): Some("_c")
   | rebuilt        : ReferenceId(10): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_c2")
   | rebuilt        : ReferenceId(12): None
 
@@ -930,11 +930,11 @@ Passed: 8/35
   | ReferenceId(12)]
   | rebuilt        : SymbolId(5): [ReferenceId(6), ReferenceId(11)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(9): Some("_c")
   | rebuilt        : ReferenceId(8): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c2")
   | rebuilt        : ReferenceId(10): None
 
@@ -960,15 +960,15 @@ Passed: 8/35
   | ReferenceId(17)]
   | rebuilt        : SymbolId(8): [ReferenceId(9), ReferenceId(16)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(12): Some("_c")
   | rebuilt        : ReferenceId(11): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_c2")
   | rebuilt        : ReferenceId(13): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(16): Some("_c3")
   | rebuilt        : ReferenceId(15): None
 
@@ -989,11 +989,11 @@ Passed: 8/35
   | ReferenceId(12)]
   | rebuilt        : SymbolId(9): [ReferenceId(6), ReferenceId(11)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(9): Some("_c")
   | rebuilt        : ReferenceId(8): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c2")
   | rebuilt        : ReferenceId(10): None
 
@@ -1153,11 +1153,11 @@ Passed: 8/35
   | ReferenceId(12)]
   | rebuilt        : SymbolId(3): [ReferenceId(8), ReferenceId(11)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(7): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c")
   | rebuilt        : ReferenceId(10): None
 
@@ -1168,7 +1168,7 @@ Passed: 8/35
   | ReferenceId(7)]
   | rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(7)]
 
-  x Reference mismatch:
+  x Reference symbol mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
 
