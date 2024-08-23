@@ -4,6 +4,61 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.8.0] - 2024-08-23
+
+- 5f4c9ab semantic: [**BREAKING**] Rename `SymbolTable::get_flag` to `get_flags` (#5030) (overlookmotel)
+
+- ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)
+
+- b2ff2df parser: [**BREAKING**] Remove builder pattern from `Parser` struct (#5000) (Boshen)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 2292606 linter: Typescript-eslint/no-wrapper-object-types (#5022) (camc314)
+- a0effab linter: Support more flexible config.globals values (#4990) (Don Isaac)
+- cdbfcfb linter: Start import fixer for eslint/no-unused-vars (#4849) (DonIsaac)
+- 915cb4d linter: Add dangerous fixer for oxc only used in recursion (#4805) (camc314)
+- 3f28c77 linter/eslint: Improve no-dupe-keys (#4943) (DonIsaac)
+- e1582a5 linter/eslint: Improve no-duplicate-case rule (#4942) (DonIsaac)
+- f1e4611 linter/eslint-plugin-vitest: Implement no-conditional-in-test (#4971) (dalaoshu)
+- 14bf5d5 linter/eslint-plugin-vitest: Implement no-restricted-vi-methods (#4956) (dalaoshu)
+- ed9a1c4 linter/eslint-plugin-vitest: Implement require-local-test-context-for-concurrent-snapshots (#4951) (dalaoshu)
+- 7859f58 linter/eslint-plugin-vitest: Implement no-conditional-tests (#4955) (dalaoshu)
+- 841174f linter/no-unused-vars: Delete non-root arrows, skip `await` (#5083) (Don Isaac)
+
+### Bug Fixes
+
+- 86d0c0c linter: Change consistent-function-scoping to suspicious (#5010) (DonIsaac)
+- 7b99386 linter: Missing closing ticks in some example blocks (#4994) (DonIsaac)
+- 9c64b12 linter: Improve no-zero-fractions rule for member expressions and scientific notation (#4793) (Burlin)
+- c43945c linter/consistent-function-scoping: Allow functions passed as arguments (#5011) (Don Isaac)
+- 9354779 linter/no-unused-vars: Give `argsIgnorePattern` the same default behavior as `varsIgnorePattern` (#5018) (DonIsaac)
+- 5a55dcf linter/no-unused-vars: `type` specifier not deleted for type imports (#5029) (DonIsaac)
+- 4081293 linter/no-unused-vars: Panic in fixer when removing destructures (#4923) (Don Isaac)
+- ddf83ff linter/react: Fixed false positive with missing key inside React.Children.toArray() (#4945) (Earl Chase)
+- 508644a linter/tree-shaking: Correct the calculation of `>>`, `<<` and `>>>` (#4932) (mysteryven)
+- e99836d linter/unicorn: Allow set spreading in no-useless-spread (#4944) (Don Isaac)
+- 5f8a7c2 oxlint: Rules in the configuration file are not being correctly … (#4949) (dalaoshu)
+
+### Documentation
+
+- e331ca0 linter: Improve documentation for several rules (#4997) (DonIsaac)
+- cd9f1cd linter/consistent-function-scoping: Improve rule documentation (#5015) (DonIsaac)
+
+### Refactor
+
+- eca6fdb linter: Move plugin options into separate struct (#5100) (DonIsaac)
+- 06f2d81 linter: Avoid unnecessary temp `Vec`s (#4963) (overlookmotel)
+- 4cb8c37 linter: Move default_true to utils (#4947) (Don Isaac)
+- ca70cc7 linter, mangler, parser, semantic, transformer, traverse, wasm: Rename various `flag` vars to `flags` (#5028) (overlookmotel)
+- 59d15c7 semantic: `root_unresolved_references` contain only `ReferenceId` (#4959) (overlookmotel)
+
+### Testing
+
+- c21d735 linter/no-unused-vars: Add ignored destructuring test cases (#4922) (Don Isaac)
+
 ## [0.7.2] - 2024-08-15
 
 ### Features
