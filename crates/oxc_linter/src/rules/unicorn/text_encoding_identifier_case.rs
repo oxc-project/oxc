@@ -46,7 +46,7 @@ declare_oxc_lint!(
     /// ```
     TextEncodingIdentifierCase,
     style,
-    pending
+    fix
 );
 
 impl Rule for TextEncodingIdentifierCase {
@@ -72,7 +72,10 @@ impl Rule for TextEncodingIdentifierCase {
             return;
         }
 
-        ctx.diagnostic(text_encoding_identifier_case_diagnostic(span, replacement, s));
+        ctx.diagnostic_with_fix(
+            text_encoding_identifier_case_diagnostic(span, replacement, s),
+            |fixer| fixer.replace(Span::new(span.start + 1, span.end - 1), replacement),
+        );
     }
 }
 
@@ -169,5 +172,31 @@ fn test() {
         r#"<META CHARSET="ASCII" />"#,
     ];
 
-    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#""UTF-8""#, r#""utf8""#),
+        (r#""utf-8""#, r#""utf8""#),
+        (r"'utf-8'", r"'utf8'"),
+        (r#""Utf8""#, r#""utf8""#),
+        (r#""ASCII""#, r#""ascii""#),
+        (r#"fs.readFile?.(file, "UTF-8")"#, r#"fs.readFile?.(file, "utf8")"#),
+        (r#"fs?.readFile(file, "UTF-8")"#, r#"fs?.readFile(file, "utf8")"#),
+        (r#"readFile(file, "UTF-8")"#, r#"readFile(file, "utf8")"#),
+        (r#"fs.readFile(...file, "UTF-8")"#, r#"fs.readFile(...file, "utf8")"#),
+        (r#"new fs.readFile(file, "UTF-8")"#, r#"new fs.readFile(file, "utf8")"#),
+        (r#"fs.readFile(file, {encoding: "UTF-8"})"#, r#"fs.readFile(file, {encoding: "utf8"})"#),
+        (r#"fs.readFile("UTF-8")"#, r#"fs.readFile("utf8")"#),
+        (r#"fs.readFile(file, "UTF-8", () => {})"#, r#"fs.readFile(file, "utf8", () => {})"#),
+        (r#"fs.readFileSync(file, "UTF-8")"#, r#"fs.readFileSync(file, "utf8")"#),
+        (r#"fs[readFile](file, "UTF-8")"#, r#"fs[readFile](file, "utf8")"#),
+        (r#"fs["readFile"](file, "UTF-8")"#, r#"fs["readFile"](file, "utf8")"#),
+        (r#"await fs.readFile(file, "UTF-8",)"#, r#"await fs.readFile(file, "utf8",)"#),
+        (r#"fs.promises.readFile(file, "UTF-8",)"#, r#"fs.promises.readFile(file, "utf8",)"#),
+        (r#"whatever.readFile(file, "UTF-8",)"#, r#"whatever.readFile(file, "utf8",)"#),
+        (r#"<not-meta charset="utf-8" />"#, r#"<not-meta charset="utf8" />"#),
+        (r#"<meta not-charset="utf-8" />"#, r#"<meta not-charset="utf8" />"#),
+        (r#"<meta charset="ASCII" />"#, r#"<meta charset="ascii" />"#),
+        (r#"<META CHARSET="ASCII" />"#, r#"<META CHARSET="ascii" />"#),
+    ];
+
+    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
