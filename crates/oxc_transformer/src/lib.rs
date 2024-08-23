@@ -108,7 +108,7 @@ impl<'a> Transformer<'a> {
         scopes: ScopeTree,
         program: &mut Program<'a>,
     ) -> TransformerReturn {
-        let allocator: &'a Allocator = self.ctx.ast.allocator;
+        let allocator = self.ctx.ast.allocator;
         let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
         TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
