@@ -18,7 +18,7 @@ pub use allow_warn_deny::AllowWarnDeny;
 pub use plugins::LintPluginOptions;
 
 #[derive(Debug)]
-pub struct LintOptions {
+pub struct OxlintOptions {
     /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
     /// Defaults to [("deny", "correctness")]
     pub filter: Vec<(AllowWarnDeny, String)>,
@@ -33,7 +33,15 @@ pub struct LintOptions {
     pub framework_hints: FrameworkFlags,
 }
 
-impl Default for LintOptions {
+#[derive(Debug, Default)]
+#[cfg_attr(test, derive(PartialEq))]
+pub(crate) struct LintOptions {
+    pub fix: FixKind,
+    pub framework_hints: FrameworkFlags,
+    pub plugins: LintPluginOptions,
+}
+
+impl Default for OxlintOptions {
     fn default() -> Self {
         Self {
             filter: vec![(AllowWarnDeny::Warn, String::from("correctness"))],
@@ -44,8 +52,22 @@ impl Default for LintOptions {
         }
     }
 }
+/// Subset of options used directly by the [`Linter`]. Derived from
+/// [`OxlintOptions`], which is the public-facing API. Do not expose this
+/// outside of this crate.
+///
+/// [`Linter`]: crate::Linter
+impl From<OxlintOptions> for LintOptions {
+    fn from(options: OxlintOptions) -> Self {
+        Self {
+            fix: options.fix,
+            framework_hints: options.framework_hints,
+            plugins: options.plugins,
+        }
+    }
+}
 
-impl LintOptions {
+impl OxlintOptions {
     #[must_use]
     pub fn with_filter(mut self, filter: Vec<(AllowWarnDeny, String)>) -> Self {
         if !filter.is_empty() {
@@ -149,7 +171,7 @@ impl LintOptions {
     }
 }
 
-impl LintOptions {
+impl OxlintOptions {
     /// # Errors
     ///
     /// * Returns `Err` if there are any errors parsing the configuration file.
@@ -249,5 +271,17 @@ impl LintOptions {
             })
             .cloned()
             .collect::<Vec<_>>()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_default_conversion() {
+        let lint_options = LintOptions::default();
+        let oxlint_options = OxlintOptions::default();
+        assert_eq!(lint_options, oxlint_options.into());
     }
 }

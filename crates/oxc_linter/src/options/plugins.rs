@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 #[non_exhaustive]
 pub struct LintPluginOptions {
     /// On by default.
@@ -115,22 +116,6 @@ impl<'s> FromIterator<&'s str> for LintPluginOptions {
 #[cfg(test)]
 mod test {
     use super::*;
-    impl PartialEq for LintPluginOptions {
-        fn eq(&self, other: &Self) -> bool {
-            self.react == other.react
-                && self.unicorn == other.unicorn
-                && self.typescript == other.typescript
-                && self.oxc == other.oxc
-                && self.import == other.import
-                && self.jsdoc == other.jsdoc
-                && self.jest == other.jest
-                && self.vitest == other.vitest
-                && self.jsx_a11y == other.jsx_a11y
-                && self.nextjs == other.nextjs
-                && self.react_perf == other.react_perf
-                && self.promise == other.promise
-        }
-    }
 
     #[test]
     fn test_collect_empty() {

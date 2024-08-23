@@ -65,6 +65,11 @@ pub struct OxlintConfig {
     pub globals: OxlintGlobals,
 }
 
+/// Configuration used by the linter, fixer, and rules.
+///
+/// This is a mapping from the public [`OxlintConfig`] API to a trimmed down
+/// version that is also better suited for internal use. Do not expose this
+/// struct outside this crate.
 #[derive(Debug, Default)]
 pub(crate) struct LintConfig {
     pub(crate) settings: OxlintSettings,

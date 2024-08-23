@@ -23,6 +23,7 @@ pub mod table;
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
 use config::LintConfig;
+use options::LintOptions;
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
@@ -31,7 +32,7 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, LintOptions},
+    options::{AllowWarnDeny, OxlintOptions},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
@@ -60,7 +61,7 @@ pub struct Linter {
 
 impl Default for Linter {
     fn default() -> Self {
-        Self::from_options(LintOptions::default()).unwrap()
+        Self::from_options(OxlintOptions::default()).unwrap()
     }
 }
 
@@ -68,9 +69,9 @@ impl Linter {
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
-    pub fn from_options(options: LintOptions) -> Result<Self, Error> {
+    pub fn from_options(options: OxlintOptions) -> Result<Self, Error> {
         let (rules, config) = options.derive_rules_and_config()?;
-        Ok(Self { rules, options, config: Arc::new(config) })
+        Ok(Self { rules, options: options.into(), config: Arc::new(config) })
     }
 
     #[cfg(test)]
@@ -104,7 +105,7 @@ impl Linter {
         self
     }
 
-    pub fn options(&self) -> &LintOptions {
+    pub(crate) fn options(&self) -> &LintOptions {
         &self.options
     }
 
