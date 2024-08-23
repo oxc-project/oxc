@@ -437,19 +437,23 @@ impl Rule for FuncNames {
             let func_name = get_function_name(func);
             let func_name_complete = get_function_name_with_kind(func, parent_node);
 
-            let span = Span::new(func.span.start, func.params.span.start);
+            let report_span = Span::new(func.span.start, func.params.span.start);
+            let replace_span = Span::sized(func.span.start, 8);
             if func_name.is_some() {
                 ctx.diagnostic_with_suggestion(
-                    named_diagnostic(&func_name_complete, span),
+                    named_diagnostic(&func_name_complete, report_span),
                     |fixer| func.id.as_ref().map_or(fixer.noop(), |id| fixer.delete(id)),
                 );
             } else {
-                ctx.diagnostic_with_fix(unnamed_diagnostic(&func_name_complete, span), |fixer| {
-                    guess_function_name(ctx, parent_node.id()).map_or_else(
-                        || fixer.noop(),
-                        |name| fixer.insert_text_after(&span, format!(" {name}")),
-                    )
-                });
+                ctx.diagnostic_with_fix(
+                    unnamed_diagnostic(&func_name_complete, report_span),
+                    |fixer| {
+                        guess_function_name(ctx, parent_node.id()).map_or_else(
+                            || fixer.noop(),
+                            |name| fixer.insert_text_after(&replace_span, format!(" {name}")),
+                        )
+                    },
+                );
             }
         }
     }
@@ -729,6 +733,11 @@ fn test() {
             never.clone(),
         ),
         ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never.clone()),
+        (
+            "const restoreGracefully = function <T>(entries: T[]) { }",
+            "const restoreGracefully = function restoreGracefully <T>(entries: T[]) { }",
+            None,
+        ),
     ];
 
     Tester::new(FuncNames::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
