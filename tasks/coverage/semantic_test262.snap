@@ -13,6 +13,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -114,6 +117,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -215,6 +221,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -316,6 +325,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -417,6 +429,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
 
 tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -518,6 +533,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -609,6 +627,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -700,6 +721,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -791,6 +815,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:
@@ -882,6 +909,9 @@ rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
 rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
 
 tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-existing-block-fn-no-init.js
 semantic error: Scope children mismatch:

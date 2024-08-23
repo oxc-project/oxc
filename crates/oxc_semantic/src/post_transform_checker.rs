@@ -155,6 +155,7 @@ pub fn check_semantic_after_transform(
     checker.check_scopes();
     checker.check_symbols();
     checker.check_references();
+    checker.check_unresolved_references();
 
     checker.errors.get()
 }
@@ -216,6 +217,10 @@ impl<T> Pair<T> {
     fn into_parts(self) -> (T, T) {
         (self.after_transform, self.rebuilt)
     }
+
+    fn map<U, F: Fn(&T) -> U>(&self, mapper: F) -> Pair<U> {
+        Pair::new(mapper(&self.after_transform), mapper(&self.rebuilt))
+    }
 }
 
 impl<T: PartialEq> Pair<T> {
@@ -269,6 +274,15 @@ impl Errors {
     }
 
     /// Add an error for a mismatch between a pair of values
+    fn push_mismatch_single<Value, Values>(&mut self, title: &str, values: Values)
+    where
+        Value: Debug,
+        Values: AsRef<Pair<Value>>,
+    {
+        self.push_mismatch_strs(title, values.as_ref().map(|value| format!("{value:?}")));
+    }
+
+    /// Add an error for a mismatch between a pair of values, without `Debug` formatting
     fn push_mismatch_strs<Value, Values>(&mut self, title: &str, values: Values)
     where
         Value: Display,
@@ -525,26 +539,33 @@ impl<'s> PostTransformChecker<'s> {
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Reference flags mismatch", reference_ids, flags);
             }
+        }
+    }
 
-            // Check unbound references
-            let unresolved_names = self.get_pair(reference_ids, |data, reference_id| {
-                let mut unresolved: Vec<CompactStr> = vec![];
-                for (name, unresolved_reference_ids) in &data.scopes.root_unresolved_references {
-                    let count =
-                        unresolved_reference_ids.iter().filter(|&&id| id == reference_id).count();
-                    if count > 0 {
-                        unresolved.extend((0..count).map(|_| name.clone()));
-                    }
+    fn check_unresolved_references(&mut self) {
+        let unresolved_names = self.get_static_pair(|data| {
+            let mut names =
+                data.scopes.root_unresolved_references.keys().cloned().collect::<Vec<_>>();
+            names.sort_unstable();
+            names
+        });
+        if unresolved_names.is_mismatch() {
+            self.errors.push_mismatch_single("Unresolved references mismatch", unresolved_names);
+        }
+
+        for (name, reference_ids_after_transform) in
+            &self.after_transform.scopes.root_unresolved_references
+        {
+            if let Some(reference_ids_rebuilt) =
+                &self.rebuilt.scopes.root_unresolved_references.get(name)
+            {
+                let reference_ids = Pair::new(reference_ids_after_transform, reference_ids_rebuilt);
+                if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
+                    self.errors.push_mismatch_single(
+                        &format!("Unresolved reference IDs mismatch for {name:?}"),
+                        reference_ids,
+                    );
                 }
-                unresolved.sort_unstable();
-                unresolved
-            });
-            if unresolved_names.is_mismatch() {
-                self.errors.push_mismatch(
-                    "Unbound references mismatch",
-                    reference_ids,
-                    unresolved_names,
-                );
             }
         }
     }
@@ -574,13 +595,18 @@ impl<'s> PostTransformChecker<'s> {
     /// Remap pair of arrays of `ScopeId`s.
     /// Map `after_transform` IDs to `rebuilt` IDs.
     /// Sort both sets.
-    fn remap_scope_ids_sets(&self, scope_ids: &Pair<Vec<ScopeId>>) -> Pair<Vec<Option<ScopeId>>> {
+    fn remap_scope_ids_sets<V: AsRef<Vec<ScopeId>>>(
+        &self,
+        scope_ids: &Pair<V>,
+    ) -> Pair<Vec<Option<ScopeId>>> {
         let mut after_transform = scope_ids
             .after_transform
+            .as_ref()
             .iter()
             .map(|&scope_id| self.scope_ids_map.get(scope_id))
             .collect::<Vec<_>>();
-        let mut rebuilt = scope_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
+        let mut rebuilt =
+            scope_ids.rebuilt.as_ref().iter().copied().map(Option::Some).collect::<Vec<_>>();
 
         after_transform.sort_unstable();
         rebuilt.sort_unstable();
@@ -591,16 +617,18 @@ impl<'s> PostTransformChecker<'s> {
     /// Remap pair of arrays of `SymbolId`s.
     /// Map `after_transform` IDs to `rebuilt` IDs.
     /// Sort both sets.
-    fn remap_symbol_ids_sets(
+    fn remap_symbol_ids_sets<V: AsRef<Vec<SymbolId>>>(
         &self,
-        symbol_ids: &Pair<Vec<SymbolId>>,
+        symbol_ids: &Pair<V>,
     ) -> Pair<Vec<Option<SymbolId>>> {
         let mut after_transform = symbol_ids
             .after_transform
+            .as_ref()
             .iter()
             .map(|&symbol_id| self.symbol_ids_map.get(symbol_id))
             .collect::<Vec<_>>();
-        let mut rebuilt = symbol_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
+        let mut rebuilt =
+            symbol_ids.rebuilt.as_ref().iter().copied().map(Option::Some).collect::<Vec<_>>();
 
         after_transform.sort_unstable();
         rebuilt.sort_unstable();
@@ -611,17 +639,18 @@ impl<'s> PostTransformChecker<'s> {
     /// Remap pair of arrays of `ReferenceId`s.
     /// Map `after_transform` IDs to `rebuilt` IDs.
     /// Sort both sets.
-    fn remap_reference_ids_sets(
+    fn remap_reference_ids_sets<V: AsRef<Vec<ReferenceId>>>(
         &self,
-        reference_ids: &Pair<Vec<ReferenceId>>,
+        reference_ids: &Pair<V>,
     ) -> Pair<Vec<Option<ReferenceId>>> {
         let mut after_transform = reference_ids
             .after_transform
+            .as_ref()
             .iter()
             .map(|&reference_id| self.reference_ids_map.get(reference_id))
             .collect::<Vec<_>>();
         let mut rebuilt =
-            reference_ids.rebuilt.iter().copied().map(Option::Some).collect::<Vec<_>>();
+            reference_ids.rebuilt.as_ref().iter().copied().map(Option::Some).collect::<Vec<_>>();
 
         after_transform.sort_unstable();
         rebuilt.sort_unstable();

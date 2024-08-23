@@ -1,9 +1,8 @@
 commit: 12619ffe
 
-Passed: 383/953
+Passed: 338/953
 
 # All Passed:
-* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-source
 
@@ -1827,7 +1826,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-preset-typescript (5/10)
+# babel-preset-typescript (4/10)
 * jsx-compat/ts-invalid/input.ts
   x Expected `>` but found `/`
    ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
@@ -1838,6 +1837,12 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * node-extensions/import-in-cts/input.cts
+
+
+* node-extensions/type-assertion-in-ts/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "x"]
+  | rebuilt        : ["x"]
 
 
 * node-extensions/type-param-arrow-in-ts/input.ts
@@ -1864,11 +1869,27 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-typescript (51/151)
+# babel-plugin-transform-typescript (43/151)
+* cast/as-expression/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "x"]
+  | rebuilt        : ["x"]
+
+
+* cast/type-assertion/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "x"]
+  | rebuilt        : ["x"]
+
+
 * class/head/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["T"]
   | rebuilt        : ScopeId(1): []
+
+  x Unresolved references mismatch:
+  | after transform: ["D", "I"]
+  | rebuilt        : ["D"]
 
 
 * class/methods/input.ts
@@ -1978,6 +1999,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Symbol redeclarations mismatch:
   | after transform: SymbolId(0): [Span { start: 41, end: 48 }]
   | rebuilt        : SymbolId(0): []
+
+  x Unresolved references mismatch:
+  | after transform: ["Cat", "Dog"]
+  | rebuilt        : []
 
 
 * enum/enum-merging-inner-references-shadow/input.ts
@@ -2304,6 +2329,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | ScopeId(4)]
   | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
+  x Unresolved references mismatch:
+  | after transform: ["Signal", "Signal2"]
+  | rebuilt        : []
+
 
 * exports/declared-types/input.ts
   x Bindings mismatch:
@@ -2359,10 +2388,6 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ReferenceId(0): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(0): []
-  | rebuilt        : ReferenceId(0): ["x"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(2): Some("E")
   | rebuilt        : ReferenceId(1): None
@@ -2370,10 +2395,6 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Type)
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(2): []
-  | rebuilt        : ReferenceId(1): ["E"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("x")
@@ -2383,10 +2404,6 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ReferenceId(8): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(2): ReferenceFlags(Read | Type)
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(8): []
-  | rebuilt        : ReferenceId(2): ["x"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("E")
   | rebuilt        : ReferenceId(3): None
@@ -2395,9 +2412,9 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ReferenceId(11): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Type)
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(11): []
-  | rebuilt        : ReferenceId(3): ["E"]
+  x Unresolved references mismatch:
+  | after transform: ["Bar", "C", "M", "N", "f"]
+  | rebuilt        : ["Bar", "E", "x"]
 
 
 * exports/default-function/input.ts
@@ -2482,6 +2499,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
 
+  x Unresolved references mismatch:
+  | after transform: ["PromiseLike"]
+  | rebuilt        : []
+
 
 * exports/issue-9916-2/input.ts
   x Bindings mismatch:
@@ -2492,6 +2513,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
 
+  x Unresolved references mismatch:
+  | after transform: ["PromiseLike"]
+  | rebuilt        : []
+
 
 * exports/issue-9916-3/input.ts
   x Bindings mismatch:
@@ -2501,6 +2526,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope children mismatch:
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
+
+  x Unresolved references mismatch:
+  | after transform: ["PromiseLike"]
+  | rebuilt        : []
 
 
 * exports/type-only-export-specifier-1/input.ts
@@ -4257,6 +4286,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
+  x Unresolved references mismatch:
+  | after transform: ["Platform"]
+  | rebuilt        : []
+
 
 * namespace/module-nested/input.ts
   x Semantic Collector failed after transform
@@ -5464,8 +5497,82 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
    `----
 
 
+* type-arguments/call/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "f"]
+  | rebuilt        : ["f"]
 
-# babel-plugin-transform-react-jsx (130/142)
+
+* type-arguments/expr/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "f"]
+  | rebuilt        : ["f"]
+
+
+* type-arguments/new/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["C", "T"]
+  | rebuilt        : ["C"]
+
+
+* type-arguments/optional-call/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["Q", "T", "f", "x"]
+  | rebuilt        : ["f", "x"]
+
+
+* type-arguments/tagged-template/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "f"]
+  | rebuilt        : ["f"]
+
+
+* type-arguments/tsx/input.ts
+  x Unresolved reference IDs mismatch for "C":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+
+
+
+# babel-preset-react (4/9)
+* preset-options/development/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* preset-options/development-runtime-automatic/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* preset-options/empty-options/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* preset-options/runtime-automatic/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* preset-options/runtime-classic/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+
+# babel-plugin-transform-react-jsx (100/142)
+* react/adds-appropriate-newlines-when-using-spread-attribute/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
 * react/arrow-functions/input.js
   x Bindings mismatch:
   | after transform: ScopeId(1): []
@@ -5490,6 +5597,73 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   x Symbol scope ID mismatch:
   | after transform: SymbolId(3): ScopeId(4)
   | rebuilt        : SymbolId(3): ScopeId(3)
+
+  x Unresolved references mismatch:
+  | after transform: ["React", "this"]
+  | rebuilt        : ["React"]
+
+
+* react/assignment/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/dont-coerce-expression-containers/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/honor-custom-jsx-comment/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/honor-custom-jsx-pragma-option/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-constructor-as-prop/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-deeper-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+  x Unresolved reference IDs mismatch for "Composite":
+  | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(12), ReferenceId(14)]
+  | rebuilt        : [ReferenceId(6), ReferenceId(9)]
+
+  x Unresolved reference IDs mismatch for "Composite2":
+  | after transform: [ReferenceId(7), ReferenceId(15)]
+  | rebuilt        : [ReferenceId(11)]
+
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(8)]
+  | rebuilt        : [ReferenceId(2)]
 
 
 * react/should-disallow-valueless-key/input.js
@@ -5518,6 +5692,18 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   | rebuilt        : SymbolId(0): [ReferenceId(4)]
 
 
+* react/should-have-correct-comma-in-nested-children/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(6)]
+  | rebuilt        : [ReferenceId(4)]
+
+
+* react/should-not-add-quotes-to-identifier-names/input.js
+  x Unresolved reference IDs mismatch for "F":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
 * react/should-throw-error-namespaces-if-not-flag/input.js
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
@@ -5526,6 +5712,42 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
  1 | <f:image />;
    :  ^^^^^^^
    `----
+
+
+* react/this-tag-name/input.js
+  x Unresolved references mismatch:
+  | after transform: ["React", "this"]
+  | rebuilt        : ["React"]
+
+
+* react/weird-symbols/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/arrow-functions/input.js
@@ -5553,15 +5775,64 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   | after transform: SymbolId(4): ScopeId(4)
   | rebuilt        : SymbolId(4): ScopeId(3)
 
+  x Unresolved references mismatch:
+  | after transform: ["this"]
+  | rebuilt        : []
+
+
+* react-automatic/assignment/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* react-automatic/dont-coerce-expression-containers/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
 
 * react-automatic/handle-fragments-with-key/input.js
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
   | ReferenceId(2)]
   | rebuilt        : SymbolId(0): [ReferenceId(1)]
+
+
+* react-automatic/should-allow-constructor-as-prop/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/should-allow-deeper-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/should-allow-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+  x Unresolved reference IDs mismatch for "Composite":
+  | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(12), ReferenceId(16)]
+  | rebuilt        : [ReferenceId(6), ReferenceId(9)]
+
+  x Unresolved reference IDs mismatch for "Composite2":
+  | after transform: [ReferenceId(7), ReferenceId(14)]
+  | rebuilt        : [ReferenceId(11)]
+
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(8)]
+  | rebuilt        : [ReferenceId(2)]
 
 
 * react-automatic/should-disallow-valueless-key/input.js
@@ -5590,6 +5861,18 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
   | rebuilt        : SymbolId(2): [ReferenceId(4)]
 
 
+* react-automatic/should-have-correct-comma-in-nested-children/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(7)]
+  | rebuilt        : [ReferenceId(4)]
+
+
+* react-automatic/should-not-add-quotes-to-identifier-names/input.js
+  x Unresolved reference IDs mismatch for "F":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
@@ -5598,6 +5881,30 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
  1 | <f:image />;
    :  ^^^^^^^
    `----
+
+
+* react-automatic/this-tag-name/input.js
+  x Unresolved references mismatch:
+  | after transform: ["this"]
+  | rebuilt        : []
+
+
+* react-automatic/weird-symbols/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
 
 
 
@@ -5629,7 +5936,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 
-# babel-plugin-transform-react-jsx-development (7/10)
+# babel-plugin-transform-react-jsx-development (6/10)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
@@ -5644,6 +5951,12 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
  1 | var x = <div __source={source}></div>;
    :              ^^^^^^^^
    `----
+
+
+* cross-platform/handle-fragments-with-key/input.js
+  x Unresolved reference IDs mismatch for "React":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(2)]
 
 
 * cross-platform/within-ts-module-block/input.ts

@@ -246,49 +246,25 @@ Passed: 8/35
   | after transform: ReferenceId(23): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(23): []
-  | rebuilt        : ReferenceId(0): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(26): Some("_s2")
   | rebuilt        : ReferenceId(1): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(26): []
-  | rebuilt        : ReferenceId(1): ["$RefreshSig$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(29): Some("_s3")
   | rebuilt        : ReferenceId(2): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(29): []
-  | rebuilt        : ReferenceId(2): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(33): Some("_s4")
   | rebuilt        : ReferenceId(3): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(33): []
-  | rebuilt        : ReferenceId(3): ["$RefreshSig$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(37): Some("_s5")
   | rebuilt        : ReferenceId(4): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(37): []
-  | rebuilt        : ReferenceId(4): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(41): Some("_s6")
   | rebuilt        : ReferenceId(5): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(41): []
-  | rebuilt        : ReferenceId(5): ["$RefreshSig$"]
 
   x Reference flags mismatch:
   | after transform: ReferenceId(18): ReferenceFlags(Write)
@@ -298,41 +274,26 @@ Passed: 8/35
   | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(45): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(45): []
-  | rebuilt        : ReferenceId(45): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(47): Some("_c2")
   | rebuilt        : ReferenceId(47): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(47): []
-  | rebuilt        : ReferenceId(47): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(49): Some("_c3")
   | rebuilt        : ReferenceId(49): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(49): []
-  | rebuilt        : ReferenceId(49): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(51): Some("_c4")
   | rebuilt        : ReferenceId(51): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(51): []
-  | rebuilt        : ReferenceId(51): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(53): Some("_c5")
   | rebuilt        : ReferenceId(53): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(53): []
-  | rebuilt        : ReferenceId(53): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["X", "memo", "module", "useContext"]
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "X", "memo", "module",
+  | "useContext"]
 
 
 * refresh/does-not-consider-require-like-methods-to-be-hocs/input.jsx
@@ -361,9 +322,9 @@ Passed: 8/35
   | after transform: ReferenceId(21): Some("_c")
   | rebuilt        : ReferenceId(17): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(21): []
-  | rebuilt        : ReferenceId(17): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["foo", "gk", "require", "requireCond"]
+  | rebuilt        : ["$RefreshReg$", "foo", "gk", "require", "requireCond"]
 
 
 * refresh/does-not-get-tripped-by-iifes/input.jsx
@@ -388,9 +349,9 @@ Passed: 8/35
   | after transform: ReferenceId(3): Some("_s")
   | rebuilt        : ReferenceId(1): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(3): []
-  | rebuilt        : ReferenceId(1): ["$RefreshSig$"]
+  x Unresolved references mismatch:
+  | after transform: ["item", "useFoo"]
+  | rebuilt        : ["$RefreshSig$", "item", "useFoo"]
 
 
 * refresh/generates-signatures-for-function-declarations-calling-hooks/input.jsx
@@ -408,17 +369,13 @@ Passed: 8/35
   | after transform: ReferenceId(6): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(6): []
-  | rebuilt        : ReferenceId(0): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c")
   | rebuilt        : ReferenceId(10): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(10): []
-  | rebuilt        : ReferenceId(10): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "useState"]
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React", "useState"]
 
 
 * refresh/generates-signatures-for-function-expressions-calling-hooks/input.jsx
@@ -473,17 +430,9 @@ Passed: 8/35
   | after transform: ReferenceId(26): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(26): []
-  | rebuilt        : ReferenceId(0): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(32): Some("_s2")
   | rebuilt        : ReferenceId(1): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(32): []
-  | rebuilt        : ReferenceId(1): ["$RefreshSig$"]
 
   x Reference flags mismatch:
   | after transform: ReferenceId(18): ReferenceFlags(Write)
@@ -505,57 +454,34 @@ Passed: 8/35
   | after transform: ReferenceId(38): Some("_s3")
   | rebuilt        : ReferenceId(32): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(38): []
-  | rebuilt        : ReferenceId(32): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(41): Some("_c")
   | rebuilt        : ReferenceId(41): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(41): []
-  | rebuilt        : ReferenceId(41): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(43): Some("_c2")
   | rebuilt        : ReferenceId(43): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(43): []
-  | rebuilt        : ReferenceId(43): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(45): Some("_c3")
   | rebuilt        : ReferenceId(45): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(45): []
-  | rebuilt        : ReferenceId(45): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(47): Some("_c4")
   | rebuilt        : ReferenceId(47): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(47): []
-  | rebuilt        : ReferenceId(47): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(49): Some("_c5")
   | rebuilt        : ReferenceId(49): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(49): []
-  | rebuilt        : ReferenceId(49): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(51): Some("_c6")
   | rebuilt        : ReferenceId(51): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(51): []
-  | rebuilt        : ReferenceId(51): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "ref", "useState"]
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React", "ref",
+  | "useState"]
 
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
@@ -586,25 +512,18 @@ Passed: 8/35
   | after transform: ReferenceId(17): Some("_s2")
   | rebuilt        : ReferenceId(0): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(17): []
-  | rebuilt        : ReferenceId(0): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(12): Some("_s")
   | rebuilt        : ReferenceId(2): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(12): []
-  | rebuilt        : ReferenceId(2): ["$RefreshSig$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(21): Some("_c")
   | rebuilt        : ReferenceId(21): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(21): []
-  | rebuilt        : ReferenceId(21): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "useFancyEffect", "useThePlatform"]
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React",
+  | "useFancyEffect", "useThePlatform"]
 
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
@@ -645,33 +564,21 @@ Passed: 8/35
   | after transform: ReferenceId(10): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(10): []
-  | rebuilt        : ReferenceId(0): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_s2")
   | rebuilt        : ReferenceId(1): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(14): []
-  | rebuilt        : ReferenceId(1): ["$RefreshSig$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(19): Some("_s3")
   | rebuilt        : ReferenceId(2): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(19): []
-  | rebuilt        : ReferenceId(2): ["$RefreshSig$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(23): Some("_c")
   | rebuilt        : ReferenceId(23): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(23): []
-  | rebuilt        : ReferenceId(23): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React"]
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React"]
 
 
 * refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
@@ -703,33 +610,21 @@ Passed: 8/35
   | after transform: ReferenceId(14): Some("_c")
   | rebuilt        : ReferenceId(14): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(14): []
-  | rebuilt        : ReferenceId(14): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(16): Some("_c2")
   | rebuilt        : ReferenceId(16): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(16): []
-  | rebuilt        : ReferenceId(16): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(18): Some("_c3")
   | rebuilt        : ReferenceId(18): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(18): []
-  | rebuilt        : ReferenceId(18): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(20): Some("_c4")
   | rebuilt        : ReferenceId(20): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(20): []
-  | rebuilt        : ReferenceId(20): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["hoc"]
+  | rebuilt        : ["$RefreshReg$", "hoc"]
 
 
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
@@ -809,49 +704,29 @@ Passed: 8/35
   | after transform: ReferenceId(53): Some("_c")
   | rebuilt        : ReferenceId(44): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(53): []
-  | rebuilt        : ReferenceId(44): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(55): Some("_c2")
   | rebuilt        : ReferenceId(46): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(55): []
-  | rebuilt        : ReferenceId(46): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(57): Some("_c3")
   | rebuilt        : ReferenceId(48): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(57): []
-  | rebuilt        : ReferenceId(48): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(59): Some("_c4")
   | rebuilt        : ReferenceId(50): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(59): []
-  | rebuilt        : ReferenceId(50): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(61): Some("_c5")
   | rebuilt        : ReferenceId(52): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(61): []
-  | rebuilt        : ReferenceId(52): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(63): Some("_c6")
   | rebuilt        : ReferenceId(54): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(63): []
-  | rebuilt        : ReferenceId(54): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["funny", "hoc", "styled", "wow"]
+  | rebuilt        : ["$RefreshReg$", "funny", "hoc", "styled", "wow"]
 
 
 * refresh/registers-identifiers-used-in-react-create-element-at-definition-site/input.jsx
@@ -889,49 +764,30 @@ Passed: 8/35
   | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(45): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(45): []
-  | rebuilt        : ReferenceId(45): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(47): Some("_c2")
   | rebuilt        : ReferenceId(47): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(47): []
-  | rebuilt        : ReferenceId(47): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(49): Some("_c3")
   | rebuilt        : ReferenceId(49): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(49): []
-  | rebuilt        : ReferenceId(49): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(51): Some("_c4")
   | rebuilt        : ReferenceId(51): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(51): []
-  | rebuilt        : ReferenceId(51): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(53): Some("_c5")
   | rebuilt        : ReferenceId(53): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(53): []
-  | rebuilt        : ReferenceId(53): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(55): Some("_c6")
   | rebuilt        : ReferenceId(55): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(55): []
-  | rebuilt        : ReferenceId(55): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "funny", "hoc", "jsx", "styled", "wow"]
+  | rebuilt        : ["$RefreshReg$", "React", "funny", "hoc", "jsx",
+  | "styled", "wow"]
 
 
 * refresh/registers-likely-hocs-with-inline-functions-1/input.jsx
@@ -1003,65 +859,37 @@ Passed: 8/35
   | after transform: ReferenceId(18): Some("_c")
   | rebuilt        : ReferenceId(18): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(18): []
-  | rebuilt        : ReferenceId(18): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(20): Some("_c2")
   | rebuilt        : ReferenceId(20): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(20): []
-  | rebuilt        : ReferenceId(20): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(22): Some("_c3")
   | rebuilt        : ReferenceId(22): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(22): []
-  | rebuilt        : ReferenceId(22): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(24): Some("_c4")
   | rebuilt        : ReferenceId(24): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(24): []
-  | rebuilt        : ReferenceId(24): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(26): Some("_c5")
   | rebuilt        : ReferenceId(26): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(26): []
-  | rebuilt        : ReferenceId(26): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(28): Some("_c6")
   | rebuilt        : ReferenceId(28): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(28): []
-  | rebuilt        : ReferenceId(28): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(30): Some("_c7")
   | rebuilt        : ReferenceId(30): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(30): []
-  | rebuilt        : ReferenceId(30): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(32): Some("_c8")
   | rebuilt        : ReferenceId(32): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(32): []
-  | rebuilt        : ReferenceId(32): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "forwardRef", "memo"]
+  | rebuilt        : ["$RefreshReg$", "React", "forwardRef", "memo"]
 
 
 * refresh/registers-likely-hocs-with-inline-functions-2/input.jsx
@@ -1096,25 +924,17 @@ Passed: 8/35
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(6): []
-  | rebuilt        : ReferenceId(6): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("_c2")
   | rebuilt        : ReferenceId(8): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(8): []
-  | rebuilt        : ReferenceId(8): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c3")
   | rebuilt        : ReferenceId(10): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(10): []
-  | rebuilt        : ReferenceId(10): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "forwardRef"]
+  | rebuilt        : ["$RefreshReg$", "React", "forwardRef"]
 
 
 * refresh/registers-likely-hocs-with-inline-functions-3/input.jsx
@@ -1149,25 +969,17 @@ Passed: 8/35
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(6): []
-  | rebuilt        : ReferenceId(6): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("_c2")
   | rebuilt        : ReferenceId(8): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(8): []
-  | rebuilt        : ReferenceId(8): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c3")
   | rebuilt        : ReferenceId(10): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(10): []
-  | rebuilt        : ReferenceId(10): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "forwardRef"]
+  | rebuilt        : ["$RefreshReg$", "React", "forwardRef"]
 
 
 * refresh/registers-top-level-exported-function-declarations/input.jsx
@@ -1195,25 +1007,17 @@ Passed: 8/35
   | after transform: ReferenceId(14): Some("_c")
   | rebuilt        : ReferenceId(13): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(14): []
-  | rebuilt        : ReferenceId(13): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(16): Some("_c2")
   | rebuilt        : ReferenceId(15): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(16): []
-  | rebuilt        : ReferenceId(15): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(18): Some("_c3")
   | rebuilt        : ReferenceId(17): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(18): []
-  | rebuilt        : ReferenceId(17): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["$RefreshReg$"]
 
 
 * refresh/registers-top-level-exported-named-arrow-functions/input.jsx
@@ -1237,17 +1041,13 @@ Passed: 8/35
   | after transform: ReferenceId(12): Some("_c")
   | rebuilt        : ReferenceId(10): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(12): []
-  | rebuilt        : ReferenceId(10): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_c2")
   | rebuilt        : ReferenceId(12): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(14): []
-  | rebuilt        : ReferenceId(12): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["$RefreshReg$"]
 
 
 * refresh/registers-top-level-function-declarations/input.jsx
@@ -1270,17 +1070,13 @@ Passed: 8/35
   | after transform: ReferenceId(9): Some("_c")
   | rebuilt        : ReferenceId(8): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(9): []
-  | rebuilt        : ReferenceId(8): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c2")
   | rebuilt        : ReferenceId(10): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(11): []
-  | rebuilt        : ReferenceId(10): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["$RefreshReg$"]
 
 
 * refresh/registers-top-level-variable-declarations-with-arrow-functions/input.jsx
@@ -1308,25 +1104,17 @@ Passed: 8/35
   | after transform: ReferenceId(12): Some("_c")
   | rebuilt        : ReferenceId(11): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(12): []
-  | rebuilt        : ReferenceId(11): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_c2")
   | rebuilt        : ReferenceId(13): None
-
-  x Unbound references mismatch:
-  | after transform: ReferenceId(14): []
-  | rebuilt        : ReferenceId(13): ["$RefreshReg$"]
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(16): Some("_c3")
   | rebuilt        : ReferenceId(15): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(16): []
-  | rebuilt        : ReferenceId(15): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["$RefreshReg$"]
 
 
 * refresh/registers-top-level-variable-declarations-with-function-expressions/input.jsx
@@ -1349,17 +1137,13 @@ Passed: 8/35
   | after transform: ReferenceId(9): Some("_c")
   | rebuilt        : ReferenceId(8): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(9): []
-  | rebuilt        : ReferenceId(8): ["$RefreshReg$"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c2")
   | rebuilt        : ReferenceId(10): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(11): []
-  | rebuilt        : ReferenceId(10): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["$RefreshReg$"]
 
 
 * refresh/supports-typescript-namespace-syntax/input.tsx
@@ -1521,17 +1305,18 @@ Passed: 8/35
   | after transform: ReferenceId(7): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(7): []
-  | rebuilt        : ReferenceId(0): ["import.meta.refreshSig"]
-
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c")
   | rebuilt        : ReferenceId(10): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(11): []
-  | rebuilt        : ReferenceId(10): ["import.meta.refreshReg"]
+  x Unresolved references mismatch:
+  | after transform: ["Foo", "X", "useContext"]
+  | rebuilt        : ["Foo", "X", "import.meta.refreshReg",
+  | "import.meta.refreshSig", "useContext"]
+
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(2), ReferenceId(5)]
+  | rebuilt        : [ReferenceId(5)]
 
 
 * refresh/uses-original-function-declaration-if-it-get-reassigned/input.jsx
@@ -1544,9 +1329,9 @@ Passed: 8/35
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
 
-  x Unbound references mismatch:
-  | after transform: ReferenceId(6): []
-  | rebuilt        : ReferenceId(6): ["$RefreshReg$"]
+  x Unresolved references mismatch:
+  | after transform: ["connect"]
+  | rebuilt        : ["$RefreshReg$", "connect"]
 
 
 
