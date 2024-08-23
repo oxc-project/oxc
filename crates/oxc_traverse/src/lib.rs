@@ -69,11 +69,13 @@ pub use context::{TraverseAncestry, TraverseCtx, TraverseScoping};
 
 mod generated {
     pub mod ancestor;
+    pub(super) mod scopes_collector;
     pub mod traverse;
     pub(super) mod walk;
 }
 pub use generated::ancestor;
 pub use generated::ancestor::Ancestor;
+use generated::scopes_collector;
 pub use generated::traverse::Traverse;
 use generated::walk;
 

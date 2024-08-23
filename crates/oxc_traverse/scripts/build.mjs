@@ -19,6 +19,7 @@ import getTypesFromCode from './lib/parse.mjs';
 import generateTraverseTraitCode from './lib/traverse.mjs';
 import generateAncestorsCode from './lib/ancestor.mjs';
 import generateWalkFunctionsCode from './lib/walk.mjs';
+import generateScopesCollectorCode from './lib/scopes_collector.mjs';
 
 const execAsync = promisify(exec);
 
@@ -32,6 +33,7 @@ const outputDirPath = pathJoin(fileURLToPath(import.meta.url), '../../src/genera
 await writeToFile('traverse.rs', generateTraverseTraitCode(types));
 await writeToFile('ancestor.rs', generateAncestorsCode(types));
 await writeToFile('walk.rs', generateWalkFunctionsCode(types));
+await writeToFile('scopes_collector.rs', generateScopesCollectorCode(types));
 
 async function writeToFile(filename, code) {
     code = `${PREAMBLE}${code}`;
