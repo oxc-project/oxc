@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 25/25 (100.00%)
-Positive Passed: 25/25 (100.00%)
-Negative Passed: 14/14 (100.00%)
+AST Parsed     : 26/26 (100.00%)
+Positive Passed: 26/26 (100.00%)
+Negative Passed: 15/15 (100.00%)
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -217,6 +217,17 @@ Negative Passed: 14/14 (100.00%)
  6 │ enum E { `baz` = 2 }           // Enum member expected.
  7 │ enum F { ['baz' + 'baz'] }     // Computed property names are not allowed in enums.
    ·           ─────────────
+   ╰────
+
+  × Label `Test` has already been declared
+   ╭─[misc/fail/oxc-5036.js:1:1]
+ 1 │ Test: {
+   · ──┬─
+   ·   ╰── `Test` has already been declared here
+ 2 │     Test: console.log('Test');
+   ·     ──┬─
+   ·       ╰── It can not be redeclared here
+ 3 │ }
    ╰────
 
   × The keyword 'let' is reserved

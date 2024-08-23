@@ -649,7 +649,18 @@ fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
 pub fn check_labeled_statement(ctx: &SemanticBuilder) {
     ctx.label_builder.labels.iter().for_each(|labels| {
         let mut defined = FxHashMap::default();
+        //only need to care about the monotone increasing depth of the array
+        let mut increase_depth = vec![];
         for labeled in labels {
+            increase_depth.push(labeled);
+            // have to traverse because HashMap can only delete one by one
+            while increase_depth.len() > 2
+                && increase_depth.iter().rev().nth(1).unwrap().depth
+                    >= increase_depth.iter().next_back().unwrap().depth
+            {
+                defined.remove(increase_depth[increase_depth.len() - 2].name);
+                increase_depth.remove(increase_depth.len() - 2);
+            }
             if let Some(span) = defined.get(labeled.name) {
                 ctx.error(label_redeclaration(labeled.name, *span, labeled.span));
             } else {
