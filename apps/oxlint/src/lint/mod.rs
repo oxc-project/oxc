@@ -8,9 +8,11 @@ use oxc_linter::{
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    command::{LintCommand, OutputFormat, OutputOptions, WarningOptions},
+    cli::{
+        CliRunResult, LintCommand, LintResult, MiscOptions, OutputFormat, OutputOptions, Runner,
+        WarningOptions,
+    },
     walk::{Extensions, Walk},
-    CliRunResult, LintResult, MiscOptions, Runner,
 };
 
 pub struct LintRunner {
@@ -184,7 +186,7 @@ impl LintRunner {
 #[cfg(all(test, not(target_os = "windows")))]
 mod test {
     use super::LintRunner;
-    use crate::{lint_command, CliRunResult, LintResult, Runner};
+    use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
 
     fn test(args: &[&str]) -> LintResult {
         let mut new_args = vec!["--silent"];
