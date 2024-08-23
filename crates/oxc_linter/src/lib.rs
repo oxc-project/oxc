@@ -22,6 +22,7 @@ pub mod table;
 
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
+use config::LintConfig;
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
@@ -54,7 +55,7 @@ fn size_asserts() {
 pub struct Linter {
     rules: Vec<RuleWithSeverity>,
     options: LintOptions,
-    eslint_config: Arc<OxlintConfig>,
+    config: Arc<LintConfig>,
 }
 
 impl Default for Linter {
@@ -68,8 +69,8 @@ impl Linter {
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
     pub fn from_options(options: LintOptions) -> Result<Self, Error> {
-        let (rules, eslint_config) = options.derive_rules_and_config()?;
-        Ok(Self { rules, options, eslint_config: Arc::new(eslint_config) })
+        let (rules, config) = options.derive_rules_and_config()?;
+        Ok(Self { rules, options, config: Arc::new(config) })
     }
 
     #[cfg(test)]
@@ -79,9 +80,11 @@ impl Linter {
         self
     }
 
+    /// Used for testing
+    #[cfg(test)]
     #[must_use]
-    pub fn with_eslint_config(mut self, eslint_config: OxlintConfig) -> Self {
-        self.eslint_config = Arc::new(eslint_config);
+    pub(crate) fn with_eslint_config(mut self, config: LintConfig) -> Self {
+        self.config = Arc::new(config);
         self
     }
 
@@ -153,7 +156,7 @@ impl Linter {
     fn create_ctx<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> LintContext<'a> {
         let mut ctx = LintContext::new(path.to_path_buf().into_boxed_path(), semantic)
             .with_fix(self.options.fix)
-            .with_eslint_config(&self.eslint_config)
+            .with_config(&self.config)
             .with_frameworks(self.options.framework_hints);
 
         // set file-specific jest/vitest flags

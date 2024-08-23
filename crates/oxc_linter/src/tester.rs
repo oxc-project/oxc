@@ -364,7 +364,7 @@ impl Tester {
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])
-            .with_eslint_config(eslint_config);
+            .with_eslint_config(eslint_config.into());
         let path_to_lint = if self.plugins.import {
             assert!(path.is_none(), "import plugin does not support path");
             self.current_working_directory.join(&self.rule_path)
