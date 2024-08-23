@@ -44,11 +44,11 @@ declare_oxc_lint!(
     /// ```
     NoRedundantRoles,
     correctness,
-    pending
+    fix
 );
 
 static DEFAULT_ROLE_EXCEPTIONS: phf::Map<&'static str, &'static str> = phf_map! {
-    "nav" =>"navigation",
+    "nav" => "navigation",
     "button" => "button",
     "body" => "document",
 };
@@ -69,9 +69,10 @@ impl Rule for NoRedundantRoles {
                         for role in &roles {
                             let exceptions = DEFAULT_ROLE_EXCEPTIONS.get(&component);
                             if exceptions.map_or(false, |set| set.contains(role)) {
-                                ctx.diagnostic(no_redundant_roles_diagnostic(
-                                    attr.span, &component, role,
-                                ));
+                                ctx.diagnostic_with_fix(
+                                    no_redundant_roles_diagnostic(attr.span, &component, role),
+                                    |fixer| fixer.delete_range(attr.span),
+                                );
                             }
                         }
                     }
@@ -109,5 +110,10 @@ fn test() {
         ("<Button role='button' />", None, Some(settings()), None),
     ];
 
-    Tester::new(NoRedundantRoles::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("<button role='button' />", "<button  />"),
+        ("<body role='document' />", "<body  />"),
+    ];
+
+    Tester::new(NoRedundantRoles::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
