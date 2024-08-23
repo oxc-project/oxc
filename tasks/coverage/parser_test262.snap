@@ -1,9 +1,9 @@
 commit: a1587416
 
 parser_test262 Summary:
-AST Parsed     : 45837/45837 (100.00%)
-Positive Passed: 45837/45837 (100.00%)
-Negative Passed: 3925/3925 (100.00%)
+AST Parsed     : 46287/46287 (100.00%)
+Positive Passed: 46287/46287 (100.00%)
+Negative Passed: 4220/4220 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:18:4]
@@ -56,6 +56,1350 @@ Negative Passed: 3925/3925 (100.00%)
  14 │ for (var {a} = 0 in {});
     ·      ───────────
  15 │ 
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_F-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=F}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_F.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=F}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Invalid-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=Invalid}/u;
+    ·           ───────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Invalid.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=Invalid}/u;
+    ·           ───────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_N-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=N}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_N.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=N}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_No-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=No}/u;
+    ·           ──
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_No.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=No}/u;
+    ·           ──
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_T-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=T}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_T.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=T}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Y-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=Y}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Y.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=Y}/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Yes-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=Yes}/u;
+    ·           ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Yes.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=Yes}/u;
+    ·           ───
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-end.js:20:3]
+ 19 │ 
+ 20 │ /[--\p{Hex}]/u;
+    ·   ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-no-dash-end.js:20:3]
+ 19 │ 
+ 20 │ /[\uFFFF-\p{Hex}]/u;
+    ·   ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-no-dash-start.js:20:3]
+ 19 │ 
+ 20 │ /[\p{Hex}-\uFFFF]/u;
+    ·   ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/built-ins/RegExp/property-escapes/character-class-range-start.js:20:3]
+ 19 │ 
+ 20 │ /[\p{Hex}--]/u;
+    ·   ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{Basic_Emoji}]/v;
+    ·  ──────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{Basic_Emoji}/v;
+    ·  ───────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{Basic_Emoji}/u;
+    ·     ───────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{Emoji_Keycap_Sequence}]/v;
+    ·  ────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{Emoji_Keycap_Sequence}/v;
+    ·  ─────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{Emoji_Keycap_Sequence}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji}]/v;
+    ·  ────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji}/v;
+    ·  ─────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_Flag_Sequence}]/v;
+    ·  ──────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_Flag_Sequence}/v;
+    ·  ───────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_Flag_Sequence}/u;
+    ·     ───────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_Modifier_Sequence}]/v;
+    ·  ──────────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_Modifier_Sequence}/v;
+    ·  ───────────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_Modifier_Sequence}/u;
+    ·     ───────────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_Tag_Sequence}]/v;
+    ·  ─────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_Tag_Sequence}/v;
+    ·  ──────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_Tag_Sequence}/u;
+    ·     ──────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid character class
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_ZWJ_Sequence}]/v;
+    ·  ─────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_ZWJ_Sequence}/v;
+    ·  ──────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_ZWJ_Sequence}/u;
+    ·     ──────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Block-implicit-negated.js:21:5]
+ 20 │ 
+ 21 │ /\P{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Block-implicit.js:21:5]
+ 20 │ 
+ 21 │ /\p{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-implicit-negated.js:21:5]
+ 20 │ 
+ 21 │ /\P{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-implicit.js:21:5]
+ 20 │ 
+ 21 │ /\p{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-negated.js:21:14]
+ 20 │ 
+ 21 │ /\P{InScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script.js:21:14]
+ 20 │ 
+ 21 │ /\p{InScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-Is-prefix-Script-negated.js:21:14]
+ 20 │ 
+ 21 │ /\P{IsScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-Is-prefix-Script.js:21:14]
+ 20 │ 
+ 21 │ /\p{IsScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-circumflex-negation-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{^General_Category=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-circumflex-negation.js:21:2]
+ 20 │ 
+ 21 │ /\p{^General_Category=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-empty-negated.js:21:3]
+ 20 │ 
+ 21 │ /[\p{}]/u;
+    ·   ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-empty.js:21:3]
+ 20 │ 
+ 21 │ /[\P{}]/u;
+    ·   ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-invalid-negated.js:21:6]
+ 20 │ 
+ 21 │ /[\P{invalid}]/u;
+    ·      ───────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-invalid.js:21:6]
+ 20 │ 
+ 21 │ /[\p{invalid}]/u;
+    ·      ───────
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces-value-negated.js:21:2]
+ 20 │ 
+ 21 │ /\PL/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces-value.js:21:2]
+ 20 │ 
+ 21 │ /\pL/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-no-braces.js:21:2]
+ 20 │ 
+ 21 │ /\p/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-and-value-only-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-and-value-only.js:21:2]
+ 20 │ 
+ 21 │ /\p{=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-negated.js:21:5]
+ 20 │ 
+ 21 │ /\P{General_Category:Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-only-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{=}/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator-only.js:21:2]
+ 20 │ 
+ 21 │ /\p{=}/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-separator.js:21:5]
+ 20 │ 
+ 21 │ /\p{General_Category:Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unclosed-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unclosed.js:21:2]
+ 20 │ 
+ 21 │ /\p{/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unopened-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P}/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/grammar-extension-unopened.js:21:2]
+ 20 │ 
+ 21 │ /\p}/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-01-negated.js:18:2]
+ 17 │ 
+ 18 │ /\P{ General_Category=Uppercase_Letter }/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-01.js:18:2]
+ 17 │ 
+ 18 │ /\p{ General_Category=Uppercase_Letter }/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-02-negated.js:18:2]
+ 17 │ 
+ 18 │ /\P{ Lowercase }/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Unterminated unicode property escape
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-02.js:18:2]
+ 17 │ 
+ 18 │ /\p{ Lowercase }/u;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-03-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{ANY}/u;
+    ·     ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-03.js:18:5]
+ 17 │ 
+ 18 │ /\p{ANY}/u;
+    ·     ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-04-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{ASSIGNED}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-04.js:18:5]
+ 17 │ 
+ 18 │ /\p{ASSIGNED}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-05-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-05.js:18:5]
+ 17 │ 
+ 18 │ /\p{Ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-06-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{General_Category = Uppercase_Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-06.js:18:5]
+ 17 │ 
+ 18 │ /\p{General_Category = Uppercase_Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-07-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{_-_lOwEr_C-A_S-E_-_}/u;
+    ·     ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-07.js:18:5]
+ 17 │ 
+ 18 │ /\p{_-_lOwEr_C-A_S-E_-_}/u;
+    ·     ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-08-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{any}/u;
+    ·     ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-08.js:18:5]
+ 17 │ 
+ 18 │ /\p{any}/u;
+    ·     ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-09-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-09.js:18:5]
+ 17 │ 
+ 18 │ /\p{ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-10-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{assigned}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-10.js:18:5]
+ 17 │ 
+ 18 │ /\p{assigned}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-11-negated.js:18:8]
+ 17 │ 
+ 18 │ /\P{gC=uppercase_letter}/u;
+    ·        ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-11.js:18:8]
+ 17 │ 
+ 18 │ /\p{gC=uppercase_letter}/u;
+    ·        ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-12-negated.js:18:8]
+ 17 │ 
+ 18 │ /\P{gc=uppercaseletter}/u;
+    ·        ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-12.js:18:8]
+ 17 │ 
+ 18 │ /\p{gc=uppercaseletter}/u;
+    ·        ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-13-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-13.js:18:5]
+ 17 │ 
+ 18 │ /\p{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-14-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/loose-matching-14.js:18:5]
+ 17 │ 
+ 18 │ /\p{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-equals-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{General_Category=}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-equals.js:17:5]
+ 16 │ 
+ 17 │ /\p{General_Category=}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{General_Category}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category.js:17:5]
+ 16 │ 
+ 17 │ /\p{General_Category}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-equals-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script=}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-equals.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script=}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-equals-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script_Extensions=}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-equals.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script_Extensions=}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script_Extensions}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script_Extensions}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-binary-property-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{UnknownBinaryProperty}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-binary-property.js:17:5]
+ 16 │ 
+ 17 │ /\p{UnknownBinaryProperty}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-and-value-negated.js:18:17]
+ 17 │ 
+ 18 │ /\P{Line_Breakz=WAT}/u;
+    ·                 ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-and-value.js:18:17]
+ 17 │ 
+ 18 │ /\p{Line_Breakz=WAT}/u;
+    ·                 ───
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-existing-value-negated.js:17:17]
+ 16 │ 
+ 17 │ /\P{Line_Breakz=Alphabetic}/u;
+    ·                 ──────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-existing-value.js:17:17]
+ 16 │ 
+ 17 │ /\p{Line_Breakz=Alphabetic}/u;
+    ·                 ──────────
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-General_Category-negated.js:18:5]
+ 17 │ 
+ 18 │ /\\P{General_Category=WAT}/u;
+    ·     ▲
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script-negated.js:18:5]
+ 17 │ 
+ 18 │ /\\P{Script=FooBarBazInvalid}/u;
+    ·     ▲
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script.js:18:5]
+ 17 │ 
+ 18 │ /\\p{Script=FooBarBazInvalid}/u;
+    ·     ▲
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script_Extensions-negated.js:18:5]
+ 17 │ 
+ 18 │ /\\P{Script_Extensions=H_e_h}/u;
+    ·     ▲
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-Script_Extensions.js:18:5]
+ 17 │ 
+ 18 │ /\\p{Script_Extensions=H_e_h}/u;
+    ·     ▲
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/built-ins/RegExp/property-escapes/non-existent-property-value-general-category.js:18:5]
+ 17 │ 
+ 18 │ /\\p{General_Category=WAT}/u;
+    ·     ▲
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Composition_Exclusion-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Composition_Exclusion}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Composition_Exclusion.js:18:5]
+ 17 │ 
+ 18 │ /\p{Composition_Exclusion}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFC-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFC}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFC.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFC}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFD-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFD}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFD.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFD}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKC-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFKC}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKC.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFKC}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKD-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFKD}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKD.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFKD}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-FC_NFKC_Closure-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-FC_NFKC_Closure.js:18:5]
+ 17 │ 
+ 18 │ /\p{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Full_Composition_Exclusion-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Full_Composition_Exclusion}/u;
+    ·     ──────────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Full_Composition_Exclusion.js:18:5]
+ 17 │ 
+ 18 │ /\p{Full_Composition_Exclusion}/u;
+    ·     ──────────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Grapheme_Link-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Grapheme_Link}/u;
+    ·     ─────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Grapheme_Link.js:18:5]
+ 17 │ 
+ 18 │ /\p{Grapheme_Link}/u;
+    ·     ─────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Hyphen-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Hyphen}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Hyphen.js:18:5]
+ 17 │ 
+ 18 │ /\p{Hyphen}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Alphabetic-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Alphabetic}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Alphabetic.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Alphabetic}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Default_Ignorable_Code_Point-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Default_Ignorable_Code_Point}/u;
+    ·     ──────────────────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Default_Ignorable_Code_Point.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Default_Ignorable_Code_Point}/u;
+    ·     ──────────────────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Grapheme_Extend-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Grapheme_Extend}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Grapheme_Extend.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Grapheme_Extend}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Continue-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_ID_Continue}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Continue.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_ID_Continue}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Start-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_ID_Start}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Start.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_ID_Start}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Lowercase-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Lowercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Lowercase.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Lowercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Math-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Math}/u;
+    ·     ──────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Math.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Math}/u;
+    ·     ──────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Uppercase-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Uppercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Uppercase.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Uppercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Prepended_Concatenation_Mark-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Prepended_Concatenation_Mark}/u;
+    ·     ────────────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-binary-property-Prepended_Concatenation_Mark.js:18:5]
+ 17 │ 
+ 18 │ /\p{Prepended_Concatenation_Mark}/u;
+    ·     ────────────────────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Block-with-value-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{Block=Adlam}/u;
+    ·           ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Block-with-value.js:18:11]
+ 17 │ 
+ 18 │ /\p{Block=Adlam}/u;
+    ·           ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-FC_NFKC_Closure-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-FC_NFKC_Closure.js:18:5]
+ 17 │ 
+ 18 │ /\p{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break-negated.js:18:16]
+ 17 │ 
+ 18 │ /\P{Line_Break=Alphabetic}/u;
+    ·                ──────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break-with-value-negated.js:18:16]
+ 17 │ 
+ 18 │ /\P{Line_Break=Alphabetic}/u;
+    ·                ──────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break-with-value.js:18:16]
+ 17 │ 
+ 18 │ /\p{Line_Break=Alphabetic}/u;
+    ·                ──────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode property name or value
+    ╭─[test262/test/built-ins/RegExp/property-escapes/unsupported-property-Line_Break.js:18:5]
+ 17 │ 
+ 18 │ /\p{Line_Break}/u;
+    ·     ──────────
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js:19:3]
+ 18 │ 
+ 19 │ /[(]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js:19:3]
+ 18 │ 
+ 19 │ /[)]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Unterminated character class
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-03.js:19:2]
+ 18 │ 
+ 19 │ /[[]/v;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-04.js:19:3]
+ 18 │ 
+ 19 │ /[{]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-05.js:19:3]
+ 18 │ 
+ 19 │ /[}]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-06.js:19:3]
+ 18 │ 
+ 19 │ /[/]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-07.js:19:3]
+ 18 │ 
+ 19 │ /[-]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-08.js:19:3]
+ 18 │ 
+ 19 │ /[|]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-09.js:19:3]
+ 18 │ 
+ 19 │ /[&&]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-10.js:19:3]
+ 18 │ 
+ 19 │ /[!!]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-11.js:19:3]
+ 18 │ 
+ 19 │ /[##]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-12.js:19:3]
+ 18 │ 
+ 19 │ /[$$]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-13.js:19:3]
+ 18 │ 
+ 19 │ /[%%]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-14.js:19:3]
+ 18 │ 
+ 19 │ /[**]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-15.js:19:3]
+ 18 │ 
+ 19 │ /[++]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-16.js:19:3]
+ 18 │ 
+ 19 │ /[,,]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-17.js:19:3]
+ 18 │ 
+ 19 │ /[..]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-18.js:19:3]
+ 18 │ 
+ 19 │ /[::]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-19.js:19:3]
+ 18 │ 
+ 19 │ /[;;]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-20.js:19:3]
+ 18 │ 
+ 19 │ /[<<]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-21.js:19:3]
+ 18 │ 
+ 19 │ /[==]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-22.js:19:3]
+ 18 │ 
+ 19 │ /[>>]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-23.js:19:3]
+ 18 │ 
+ 19 │ /[??]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-24.js:19:3]
+ 18 │ 
+ 19 │ /[@@]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-25.js:19:3]
+ 18 │ 
+ 19 │ /[``]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-26.js:19:3]
+ 18 │ 
+ 19 │ /[~~]/v;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Expected nonempty class set expression
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-27.js:19:4]
+ 18 │ 
+ 19 │ /[^^^]/v;
+    ·    ▲
+    ╰────
+
+  × Invalid regular expression: Unterminated character class
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-28.js:19:2]
+ 18 │ 
+ 19 │ /[_^^]/v;
+    ·  ──
+    ╰────
+
+  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+    ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:17:1]
+ 16 │ 
+ 17 │ /./uv;
+    · ─────
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -19008,6 +20352,832 @@ Negative Passed: 3925/3925 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
+  × Unterminated multiline comment
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T1.js:23:1]
+ 22 │ 
+ 23 │ /*/
+    · ────
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T2.js:26:1]
+ 25 │ 
+ 26 │ /\/
+    · ────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T3.js:27:1]
+ 26 │ ///
+ 27 │ .source;
+    · ─
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.2_T4.js:27:1]
+ 26 │ //
+ 27 │ .source;
+    · ─
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T1.js:29:1]
+ 28 │ 
+ 29 │ /
+    · ──
+ 30 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T1.js:31:1]
+ 30 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:29:1]
+ 28 │ 
+ 29 │ /
+    · ──
+ 30 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:31:1]
+ 30 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:23:1]
+ 22 │ 
+ 23 │ /\
+    · ───
+ 24 │ /
+    ╰────
+
+  × Invalid regular expression: Invalid escape
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:23:2]
+ 22 │ 
+ 23 │ /\
+    ·  ─
+ 24 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:25:1]
+ 24 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:22:1]
+ 21 │ 
+ 22 │ /\
+    · ───
+ 23 │ /
+    ╰────
+
+  × Invalid regular expression: Invalid escape
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:22:2]
+ 21 │ 
+ 22 │ /\
+    ·  ─
+ 23 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:24:1]
+ 23 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T1.js:23:1]
+ 22 │ 
+ 23 │ /a\/
+    · ─────
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.2_T2.js:23:5]
+ 22 │ 
+ 23 │ /a//.source;
+    ·     ─
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T1.js:32:1]
+ 31 │ 
+ 32 │ /a
+    · ───
+ 33 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T1.js:34:1]
+ 33 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:33:1]
+ 32 │ 
+ 33 │ /a
+    · ───
+ 34 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:35:1]
+ 34 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:28:1]
+ 27 │ 
+ 28 │ /a\
+    · ────
+ 29 │ /
+    ╰────
+
+  × Invalid regular expression: Invalid escape
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:28:3]
+ 27 │ 
+ 28 │ /a\
+    ·   ─
+ 29 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:30:1]
+ 29 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:28:1]
+ 27 │ 
+ 28 │ /a\
+    · ────
+ 29 │ /
+    ╰────
+
+  × Invalid regular expression: Invalid escape
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:28:3]
+ 27 │ 
+ 28 │ /a\
+    ·   ─
+ 29 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:30:1]
+ 29 │ /
+    ╰────
+
+  × Unexpected flag G in regular expression literal
+    ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:18:5]
+ 17 │ 
+ 18 │ /./G;
+    ·     ▲
+    ╰────
+
+  × Flag g is mentioned twice in regular expression literal
+    ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:18:7]
+ 17 │ 
+ 18 │ /./gig;
+    ·       ▲
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[test262/test/language/literals/regexp/early-err-flags-unicode-escape.js:18:4]
+ 17 │ 
+ 18 │ /./\u0067;
+    ·    ▲
+    ╰────
+  help: Try insert a semicolon here
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/early-err-pattern.js:17:2]
+ 16 │ 
+ 17 │ /?/;
+    ·  ─
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-braced-quantifier-exact.js:25:2]
+ 24 │ 
+ 25 │ /{2}/;
+    ·  ───
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-braced-quantifier-lower.js:25:2]
+ 24 │ 
+ 25 │ /{2,}/;
+    ·  ────
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-braced-quantifier-range.js:25:2]
+ 24 │ 
+ 25 │ /{2,3}/;
+    ·  ─────
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-optional-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.)?/;
+    ·         ─
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-optional-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.)?/;
+    ·         ─
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-range-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.){2,3}/;
+    ·         ─────
+    ╰────
+
+  × Invalid regular expression: Invalid braced quantifier
+    ╭─[test262/test/language/literals/regexp/invalid-range-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.){2,3}/;
+    ·         ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2-u.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>a)\k<ab>/u;
+    ·         ──────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-2.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>a)\k<ab>/;
+    ·         ──────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3-u.js:20:10]
+ 19 │ 
+ 20 │ /(?<ab>a)\k<a>/u;
+    ·          ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-3.js:20:10]
+ 19 │ 
+ 20 │ /(?<ab>a)\k<a>/;
+    ·          ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4-u.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>(?<ab>a)/u;
+    ·  ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-4.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>(?<ab>a)/;
+    ·  ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-5.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>(?<b>x)/;
+    ·  ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-u.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>.)\k<b>/u;
+    ·         ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname-without-group-u.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>/u;
+    ·  ─────
+    ╰────
+
+  × Invalid regular expression: Group specifier is empty
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-dangling-groupname.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>.)\k<b>/;
+    ·         ─────
+    ╰────
+
+  × Invalid regular expression: Duplicated group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2-u.js:19:19]
+ 18 │ 
+ 19 │ /(?<a>a)(?<b>b)(?<a>a)/u;
+    ·                   ─
+    ╰────
+
+  × Invalid regular expression: Duplicated group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2.js:19:19]
+ 18 │ 
+ 19 │ /(?<a>a)(?<b>b)(?<a>a)/;
+    ·                   ─
+    ╰────
+
+  × Invalid regular expression: Duplicated group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-u.js:19:12]
+ 18 │ 
+ 19 │ /(?<a>a)(?<a>a)/u;
+    ·            ─
+    ╰────
+
+  × Invalid regular expression: Duplicated group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-duplicate-groupspecifier.js:19:12]
+ 18 │ 
+ 19 │ /(?<a>a)(?<a>a)/;
+    ·            ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-empty-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<>a)/u;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-empty-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<>a)/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:15:2]
+ 14 │ 
+ 15 │ /(?<a>\a)/u;
+    ·  ──────
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<a/u;
+    ·           ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-2.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<a/;
+    ·           ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-3-u.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<>/u;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-3.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<>/;
+    ·           ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-4.js:15:4]
+ 14 │ 
+ 15 │ /\k<a(?<a>a)/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-5.js:15:4]
+ 14 │ 
+ 15 │ /\k<a(?<a>.)/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Invalid named reference
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-6.js:15:2]
+ 14 │ 
+ 15 │ /\k(?<a>.)/;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Invalid named reference
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-u.js:15:9]
+ 14 │ 
+ 15 │ /(?<a>.)\k/u;
+    ·         ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-2-u.js:15:4]
+ 14 │ 
+ 15 │ /\k<>/u;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Invalid named reference
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-3-u.js:15:2]
+ 14 │ 
+ 15 │ /\k/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-u.js:15:4]
+ 14 │ 
+ 15 │ /\k<a/u;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Invalid named reference
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-incomplete-groupname.js:15:9]
+ 14 │ 
+ 15 │ /(?<a>.)\k/;
+    ·         ──
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4-u.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\>.)/u;
+    ·      ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\>.)/;
+    ·      ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<$❞>a)/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<𐒤>a)/u;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Invalid surrogate pair
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2.js:15:5]
+ 14 │ 
+ 15 │ /(?<𐒤>a)/;
+    ·     ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-3.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uD83D\uDF12>.)/;
+    ·      ────────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4-u.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uD801>.)/u;
+    ·      ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uD801>.)/;
+    ·      ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5-u.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uDCA4>.)/u;
+    ·      ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uDCA4>.)/;
+    ·      ──────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-6.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\u{1F08B}>.)/;
+    ·      ─────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-7.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\u{10FFFF}>.)/;
+    ·      ──────────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8-u.js:15:5]
+ 14 │ 
+ 15 │ /(?<\>.)/u;
+    ·     ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8.js:15:5]
+ 14 │ 
+ 15 │ /(?<\>.)/;
+    ·     ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-9-u.js:15:7]
+ 14 │ 
+ 15 │ /(?<a\u{110000}>.)/u;
+    ·       ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<❤>a)/u;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<❤>a)/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-numeric-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<42a>a)/u;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-numeric-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<42a>a)/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<:a>a)/u;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<:a>a)/;
+    ·    ─
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<a:>a)/u;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<a:>a)/;
+    ·    ──
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-unterminated-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<aa)/u;
+    ·    ───
+    ╰────
+
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-unterminated-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<aa)/;
+    ·    ───
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-line-separator.js:29:1]
+ 28 │ 
+ 29 │ / /
+    · ──
+ 30 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-line-separator.js:34:1]
+ 33 │ */
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:29:1]
+ 28 │ 
+ 29 │ / /
+    · ──
+ 30 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:34:1]
+ 33 │ */
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-line-separator.js:28:1]
+ 27 │ 
+ 28 │ /a\\ /
+    · ─────
+ 29 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-line-separator.js:33:1]
+ 32 │ */
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:29:1]
+ 28 │ 
+ 29 │ /a\\  /
+    · ─────
+ 30 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:34:1]
+ 33 │ */
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/language/literals/regexp/u-invalid-class-escape.js:23:3]
+ 22 │ 
+ 23 │ /\c0/u;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/language/literals/regexp/u-invalid-extended-pattern-char.js:20:2]
+ 19 │ 
+ 20 │ /{/u;
+    ·  ▲
+    ╰────
+
+  × Invalid regular expression: Could not parse the entire pattern
+    ╭─[test262/test/language/literals/regexp/u-invalid-identity-escape.js:22:3]
+ 21 │ 
+ 22 │ /\M/u;
+    ·   ▲
+    ╰────
+
+  × Invalid regular expression: Invalid indexed reference
+    ╭─[test262/test/language/literals/regexp/u-invalid-legacy-octal-escape.js:25:2]
+ 24 │ 
+ 25 │ /\1/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-a.js:32:3]
+ 31 │ 
+ 32 │ /[\d-a]/u;
+    ·   ────
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-ab.js:32:3]
+ 31 │ 
+ 32 │ /[\s-\d]/u;
+    ·   ─────
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-b.js:32:3]
+ 31 │ 
+ 32 │ /[%-\d]/u;
+    ·   ────
+    ╰────
+
+  × Invalid regular expression: Invalid character class range
+    ╭─[test262/test/language/literals/regexp/u-invalid-non-empty-class-ranges.js:31:3]
+ 30 │ 
+ 31 │ /[--\d]/u;
+    ·   ────
+    ╰────
+
+  × Invalid regular expression: Invalid indexed reference
+    ╭─[test262/test/language/literals/regexp/u-invalid-oob-decimal-escape.js:20:2]
+ 19 │ 
+ 20 │ /\8/u;
+    ·  ──
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-optional-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?=.)?/u;
+    ·        ─
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-optional-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.)?/u;
+    ·         ─
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-optional-negative-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?!.)?/u;
+    ·        ─
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-optional-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.)?/u;
+    ·         ─
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-range-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?=.){2,3}/u;
+    ·        ─────
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-range-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.){2,3}/u;
+    ·         ─────
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-range-negative-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?!.){2,3}/u;
+    ·        ─────
+    ╰────
+
+  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+    ╭─[test262/test/language/literals/regexp/u-invalid-range-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.){2,3}/u;
+    ·         ─────
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/u-unicode-esc-bounds.js:20:3]
+ 19 │ 
+ 20 │ /\u{110000}/u;
+    ·   ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/u-unicode-esc-non-hex.js:15:3]
+ 14 │ 
+ 15 │ /\u{1,}/u;
+    ·   ─
+    ╰────
+
+  × Invalid regular expression: Invalid unicode escape sequence
+    ╭─[test262/test/language/literals/regexp/unicode-escape-nls-err.js:73:3]
+ 72 │ 
+ 73 │ /\u{1F_639}/u;
+    ·   ─
+    ╰────
+
   × Unterminated string
     ╭─[test262/test/language/literals/string/S7.8.4_A1.1_T1.js:18:3]
  17 │ //CHECK#1
@@ -19394,7 +21564,7 @@ Negative Passed: 3925/3925 (100.00%)
     ·                ╰── It cannot be redeclared here
     ╰────
 
-  × Identifier `label` has already been declared
+  × Label `label` has already been declared
     ╭─[test262/test/language/module-code/early-dup-lables.js:16:1]
  15 │ 
  16 │ label: {
@@ -28132,7 +30302,7 @@ Negative Passed: 3925/3925 (100.00%)
  31 │     }
     ╰────
 
-  × Identifier `x` has already been declared
+  × Label `x` has already been declared
     ╭─[test262/test/language/statements/class/static-init-invalid-label-dup.js:21:5]
  20 │   static {
  21 │     x: x: 0;

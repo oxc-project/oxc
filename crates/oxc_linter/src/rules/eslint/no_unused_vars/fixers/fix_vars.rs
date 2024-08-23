@@ -12,9 +12,16 @@ use crate::fixer::{RuleFix, RuleFixer};
 impl NoUnusedVars {
     /// Delete a variable declaration or rename it to match `varsIgnorePattern`.
     ///
-    /// Variable declarations will only be deleted if they have 0 references of any kind. Renaming
-    /// is only attempted if this is not the case. Only a small set of `varsIgnorePattern` values
-    /// are supported for renaming. Feel free to add support for more as needed.
+    /// - Variable declarations will only be deleted if they have 0 references of any kind.
+    /// - Renaming is only attempted if this is not the case.
+    /// - Fixing is skipped for the following cases:
+    ///   * Function expressions and arrow functions declared in the root scope
+    ///     (`const x = function () {}`)
+    ///   * Variables initialized with an `await` expression, since these often
+    ///     have side effects (`const unusedRes = await api.createUser(data)`)
+    ///
+    /// Only a small set of `varsIgnorePattern` values are supported for
+    /// renaming. Feel free to add support for more as needed.
     #[allow(clippy::cast_possible_truncation)]
     pub(in super::super) fn rename_or_remove_var_declaration<'a>(
         &self,
@@ -23,7 +30,7 @@ impl NoUnusedVars {
         decl: &VariableDeclarator<'a>,
         decl_id: AstNodeId,
     ) -> RuleFix<'a> {
-        if decl.init.as_ref().is_some_and(Expression::is_function) {
+        if decl.init.as_ref().is_some_and(|init| is_skipped_init(symbol, init)) {
             return fixer.noop();
         }
 
@@ -117,5 +124,19 @@ impl NoUnusedVars {
         }
 
         Some(new_name.into())
+    }
+}
+
+fn is_skipped_init<'a>(symbol: &Symbol<'_, 'a>, init: &Expression<'a>) -> bool {
+    match init.get_inner_expression() {
+        // Do not delete function expressions or arrow functions declared in the
+        // root scope
+        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
+            symbol.is_root()
+        }
+        // Skip await expressions, since these are often effectful (e.g.
+        // sending a POST request to an API and then not using the response)
+        Expression::AwaitExpression(_) => true,
+        _ => false,
     }
 }

@@ -51,13 +51,6 @@ fn generate_cli() -> String {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    format!(
-        "
-<!-- textlint-disable -->
 
-{markdown}
-
-<!-- textlint-enable -->
-"
-    )
+    markdown
 }

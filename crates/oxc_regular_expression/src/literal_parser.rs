@@ -72,7 +72,7 @@ fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
     let mut chars = source_text.chars().peekable();
 
     let Some('/') = chars.next() else {
-        return Err(OxcDiagnostic::error("Unexpected character"));
+        return Err(OxcDiagnostic::error("Invalid regular expression: Unexpected character"));
     };
     offset += 1; // '/'
 
@@ -112,12 +112,12 @@ fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
     }
 
     let Some('/') = chars.next() else {
-        return Err(OxcDiagnostic::error("Unexpected character"));
+        return Err(OxcDiagnostic::error("Invalid regular expression: Unexpected character"));
     };
     let body_end = offset;
 
     if body_end == body_start {
-        return Err(OxcDiagnostic::error("Empty"));
+        return Err(OxcDiagnostic::error("Invalid regular expression: Empty"));
     }
 
     Ok((body_start, body_end, body_end + 1))

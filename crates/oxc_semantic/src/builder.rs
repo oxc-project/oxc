@@ -709,12 +709,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings =
-                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
-            parent_bindings.values().for_each(|symbol_id| {
-                self.symbols.set_scope_id(*symbol_id, self.current_scope_id);
-            });
-            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+            let parent_bindings = self.scope.get_bindings_mut(parent_scope_id);
+            if !parent_bindings.is_empty() {
+                let parent_bindings = parent_bindings.drain(..).collect::<Bindings>();
+                parent_bindings.values().for_each(|&symbol_id| {
+                    self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+                });
+                *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+            }
         }
 
         self.visit_statements(&it.body);
@@ -943,11 +945,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         self.enter_node(kind);
-        let is_lexical_declaration =
-            stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
-        if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
-        }
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
         }
@@ -1005,19 +1003,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if is_lexical_declaration {
-            self.leave_scope();
-        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
         self.enter_node(kind);
-        let is_lexical_declaration = stmt.left.is_lexical_declaration();
-        if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
-        }
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
 
@@ -1069,19 +1062,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if is_lexical_declaration {
-            self.leave_scope();
-        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
         self.enter_node(kind);
-        let is_lexical_declaration = stmt.left.is_lexical_declaration();
-        if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
-        }
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
 
@@ -1132,9 +1120,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if is_lexical_declaration {
-            self.leave_scope();
-        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 

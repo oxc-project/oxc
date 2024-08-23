@@ -106,6 +106,11 @@ pub struct ParserReturn<'a> {
 /// Parse options
 #[derive(Debug, Clone, Copy)]
 pub struct ParseOptions {
+    /// Whether to parse regular expressions or not.
+    ///
+    /// Default: false
+    pub parse_regular_expression: bool,
+
     /// Allow return outside of function
     ///
     /// By default, a return statement at the top level raises an error.
@@ -124,7 +129,11 @@ pub struct ParseOptions {
 
 impl Default for ParseOptions {
     fn default() -> Self {
-        Self { allow_return_outside_function: false, preserve_parens: true }
+        Self {
+            parse_regular_expression: false,
+            allow_return_outside_function: false,
+            preserve_parens: true,
+        }
     }
 }
 
@@ -294,9 +303,9 @@ impl<'a> ParserImpl<'a> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
             Err(error) => {
-                self.error(
-                    self.flow_error().unwrap_or_else(|| self.overlong_error().unwrap_or(error)),
-                );
+                let error =
+                    self.flow_error().unwrap_or_else(|| self.overlong_error().unwrap_or(error));
+                self.error(error);
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
@@ -350,12 +359,17 @@ impl<'a> ParserImpl<'a> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&self) -> Option<OxcDiagnostic> {
+    fn flow_error(&mut self) -> Option<OxcDiagnostic> {
         if !self.source_type.is_javascript() {
             return None;
         };
         let span = self.lexer.trivia_builder.comments.first()?.span;
-        span.source_text(self.source_text).contains("@flow").then(|| diagnostics::flow(span))
+        if span.source_text(self.source_text).contains("@flow") {
+            self.errors.clear();
+            Some(diagnostics::flow(span))
+        } else {
+            None
+        }
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
@@ -438,6 +452,7 @@ mod test {
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.program.is_empty());
+            assert_eq!(ret.errors.len(), 1);
             assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
         }
     }

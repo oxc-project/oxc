@@ -8,7 +8,10 @@ use oxc::codegen::CodegenOptions;
 use oxc::diagnostics::OxcDiagnostic;
 use oxc::minifier::CompressOptions;
 use oxc::parser::{ParseOptions, ParserReturn};
-use oxc::semantic::{post_transform_checker::PostTransformChecker, SemanticBuilderReturn};
+use oxc::semantic::{
+    post_transform_checker::{check_semantic_after_transform, SemanticIds},
+    SemanticBuilderReturn,
+};
 use oxc::span::{SourceType, Span};
 use oxc::transformer::{TransformOptions, TransformerReturn};
 
@@ -29,13 +32,12 @@ pub struct Driver {
     pub panicked: bool,
     pub errors: Vec<OxcDiagnostic>,
     pub printed: String,
-    // states
-    pub checker: PostTransformChecker,
 }
 
 impl CompilerInterface for Driver {
     fn parse_options(&self) -> ParseOptions {
         ParseOptions {
+            parse_regular_expression: true,
             allow_return_outside_function: self.allow_return_outside_function,
             ..ParseOptions::default()
         }
@@ -75,7 +77,8 @@ impl CompilerInterface for Driver {
         _semantic_return: &mut SemanticBuilderReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = self.checker.before_transform(program) {
+            let mut ids = SemanticIds::default();
+            if let Some(errors) = ids.check(program) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());
             }
@@ -89,7 +92,7 @@ impl CompilerInterface for Driver {
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
-            if let Some(errors) = self.checker.after_transform(
+            if let Some(errors) = check_semantic_after_transform(
                 &transformer_return.symbols,
                 &transformer_return.scopes,
                 program,

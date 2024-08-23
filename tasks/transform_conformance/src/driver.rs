@@ -3,18 +3,17 @@ use std::{mem, ops::ControlFlow, path::Path};
 use oxc::{
     ast::ast::Program,
     diagnostics::OxcDiagnostic,
-    semantic::{post_transform_checker::PostTransformChecker, SemanticBuilderReturn},
+    semantic::post_transform_checker::check_semantic_after_transform,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
     CompilerInterface,
 };
 
 pub struct Driver {
+    filtered: bool,
     options: TransformOptions,
     printed: String,
     errors: Vec<OxcDiagnostic>,
-    check_semantic: bool,
-    checker: PostTransformChecker,
 }
 
 impl CompilerInterface for Driver {
@@ -34,32 +33,18 @@ impl CompilerInterface for Driver {
         self.printed = printed;
     }
 
-    fn after_semantic(
-        &mut self,
-        program: &mut Program<'_>,
-        _semantic_return: &mut SemanticBuilderReturn,
-    ) -> ControlFlow<()> {
-        if self.check_semantic {
-            if let Some(errors) = self.checker.before_transform(program) {
-                self.errors.extend(errors);
-                return ControlFlow::Break(());
-            }
-        }
-        ControlFlow::Continue(())
-    }
-
     fn after_transform(
         &mut self,
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        if self.check_semantic {
-            if let Some(errors) = self.checker.after_transform(
-                &transformer_return.symbols,
-                &transformer_return.scopes,
-                program,
-            ) {
-                self.errors.extend(errors);
+        if let Some(errors) = check_semantic_after_transform(
+            &transformer_return.symbols,
+            &transformer_return.scopes,
+            program,
+        ) {
+            self.errors.extend(errors);
+            if !self.filtered {
                 return ControlFlow::Break(());
             }
         }
@@ -68,27 +53,25 @@ impl CompilerInterface for Driver {
 }
 
 impl Driver {
-    pub fn new(options: TransformOptions) -> Self {
-        Self {
-            options,
-            printed: String::new(),
-            errors: vec![],
-            check_semantic: true,
-            checker: PostTransformChecker::default(),
-        }
+    pub fn new(filtered: bool, options: TransformOptions) -> Self {
+        Self { filtered, options, printed: String::new(), errors: vec![] }
+    }
+
+    pub fn errors(&mut self) -> Vec<OxcDiagnostic> {
+        mem::take(&mut self.errors)
+    }
+
+    pub fn printed(&mut self) -> String {
+        mem::take(&mut self.printed)
     }
 
     pub fn execute(
-        &mut self,
+        mut self,
         source_text: &str,
         source_type: SourceType,
         source_path: &Path,
-    ) -> Result<String, Vec<OxcDiagnostic>> {
+    ) -> Self {
         self.compile(source_text, source_type, source_path);
-        if self.errors.is_empty() {
-            Ok(mem::take(&mut self.printed))
-        } else {
-            Err(mem::take(&mut self.errors))
-        }
+        self
     }
 }

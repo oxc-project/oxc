@@ -175,6 +175,7 @@ mod jest {
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
+    pub mod no_conditional_in_test;
     pub mod no_confusing_set_timeout;
     pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
@@ -333,6 +334,7 @@ mod unicorn {
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
+    pub mod prefer_structured_clone;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
@@ -606,6 +608,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
+    jest::no_conditional_in_test,
     jest::no_confusing_set_timeout,
     jest::no_deprecated_functions,
     jest::no_disabled_tests,
@@ -725,6 +728,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,

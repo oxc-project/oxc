@@ -11,7 +11,7 @@ pub struct Label<'a> {
     pub span: Span,
     used: bool,
     /// depth is the number of nested labeled statements
-    depth: usize,
+    pub depth: usize,
     /// is accessible means that the label is accessible from the current position
     is_accessible: bool,
     /// is_inside_function_or_static_block means that the label is inside a function or static block
