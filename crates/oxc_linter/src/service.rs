@@ -23,15 +23,33 @@ use crate::{
     Fixer, Linter, Message,
 };
 
+#[derive(Debug, Clone)]
 pub struct LintServiceOptions {
     /// Current working directory
-    pub cwd: Box<Path>,
+    cwd: Box<Path>,
 
     /// All paths to lint
-    pub paths: Vec<Box<Path>>,
+    paths: Vec<Box<Path>>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
-    pub tsconfig: Option<PathBuf>,
+    tsconfig: Option<PathBuf>,
+}
+
+impl LintServiceOptions {
+    #[must_use]
+    pub fn new<T: Into<Box<Path>>, U: Into<Box<Path>>>(cwd: T, paths: Vec<U>) -> Self {
+        Self { cwd: cwd.into(), paths: paths.into_iter().map(Into::into).collect(), tsconfig: None }
+    }
+
+    #[must_use]
+    pub fn with_tsconfig<P: Into<PathBuf>>(mut self, tsconfig: P) -> Self {
+        self.tsconfig = Some(tsconfig.into());
+        self
+    }
+
+    pub fn cwd(&self) -> &Path {
+        &self.cwd
+    }
 }
 
 #[derive(Clone)]

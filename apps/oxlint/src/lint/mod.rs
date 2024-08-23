@@ -121,19 +121,19 @@ impl Runner for LintRunner {
             }
         };
 
-        let tsconfig = basic_options.tsconfig;
-        if let Some(path) = tsconfig.as_ref() {
+        let mut options = LintServiceOptions::new(cwd, paths);
+        if let Some(path) = basic_options.tsconfig {
             if !path.is_file() {
-                let path = if path.is_relative() { cwd.join(path) } else { path.clone() };
+                let path = if path.is_relative() { options.cwd().join(path) } else { path.clone() };
                 return CliRunResult::InvalidOptions {
                     message: format!(
                         "The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.",
                     ),
                 };
             }
+            options = options.with_tsconfig(path);
         }
 
-        let options = LintServiceOptions { cwd, paths, tsconfig };
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
             Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
