@@ -1826,6 +1826,8 @@ pub struct ArrowFunctionExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
+    ///
+    /// When `true`, this function implicitly returns the expression.
     pub expression: bool,
     pub r#async: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

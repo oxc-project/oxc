@@ -227,6 +227,7 @@ fn test_vars_reassignment() {
         ",
         "let i = 0; i > 0 ? 'positive' : 'negative';",
         "let i = 0; i > 0 && console.log('positive');",
+        "export function counter() { let i = 0; return () => ++i }",
     ];
 
     let fail = vec![

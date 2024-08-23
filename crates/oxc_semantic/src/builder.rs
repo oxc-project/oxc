@@ -82,6 +82,7 @@ pub struct SemanticBuilder<'a> {
     // and when we reach a value declaration we set it
     // to value like
     pub(crate) namespace_stack: Vec<SymbolId>,
+    pub(crate) is_in_return: bool,
     current_reference_flags: ReferenceFlags,
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
@@ -134,6 +135,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
+            is_in_return: false,
             nodes: AstNodes::default(),
             hoisting_variables: FxHashMap::default(),
             scope,
@@ -1229,7 +1231,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         let ret_kind = if let Some(arg) = &stmt.argument {
+            let in_return = self.is_in_return;
+            self.is_in_return = true;
             self.visit_expression(arg);
+            self.is_in_return = in_return;
             ReturnInstructionKind::NotImplicitUndefined
         } else {
             ReturnInstructionKind::ImplicitUndefined
@@ -1624,7 +1629,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
         if let Some(body) = &func.body {
+            let in_return = self.is_in_return;
+            self.is_in_return = false;
             self.visit_function_body(body);
+            self.is_in_return = in_return;
         }
 
         /* cfg */
@@ -1677,7 +1685,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_annotation(return_type);
         }
 
+        let in_return = self.is_in_return;
+        self.is_in_return = expr.expression;
         self.visit_function_body(&expr.body);
+        self.is_in_return = in_return;
 
         /* cfg */
         control_flow!(self, |cfg| {
@@ -1990,6 +2001,8 @@ impl<'a> SemanticBuilder<'a> {
     fn resolve_reference_usages(&self) -> ReferenceFlags {
         if self.current_reference_flags.is_empty() {
             ReferenceFlags::Read
+        } else if self.is_in_return {
+            self.current_reference_flags | ReferenceFlags::Read
         } else {
             self.current_reference_flags
         }

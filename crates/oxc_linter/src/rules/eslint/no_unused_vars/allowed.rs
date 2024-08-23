@@ -57,7 +57,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     let Some(AstKind::FunctionBody(body)) = self.nodes().parent_kind(parent.id()) else {
                         return false;
                     };
-                    return body.span.contains_inclusive(self.span()) && body.statements.len() == 1 && !self.get_snippet(body.span).starts_with('{')
+                    return self.is_implicit_return(body);
                 }
                 _ => {
                     parent.kind().debug_name();
@@ -102,6 +102,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
             .map(|scope_id| scopes.get_node_id(scope_id))
             .map(|node_id| nodes.get_node(node_id))
             .any(|node| matches!(node.kind(), AstKind::TSModuleDeclaration(namespace) if is_ambient_namespace(namespace)))
+    }
+
+    pub fn is_implicit_return(&self, body: &FunctionBody) -> bool {
+        body.statements.len() == 1 && !self.get_snippet(body.span).starts_with('{')
     }
 }
 

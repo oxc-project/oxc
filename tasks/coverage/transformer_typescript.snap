@@ -2,5 +2,6 @@ commit: d8086f14
 
 transformer_typescript Summary:
 AST Parsed     : 6456/6456 (100.00%)
-Positive Passed: 6455/6456 (99.98%)
+Positive Passed: 6454/6456 (99.97%)
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/inferenceLimit.ts
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx

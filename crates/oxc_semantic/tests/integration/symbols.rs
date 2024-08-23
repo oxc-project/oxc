@@ -355,3 +355,51 @@ fn test_ts_interface_heritage() {
     .has_number_of_references(1)
     .test();
 }
+
+#[test]
+fn test_arrow_implicit_return() {
+    SemanticTester::js("let i = 0; const x = () => i")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(0)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => ++i")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => { ++i }")
+        .has_root_symbol("i")
+        .has_number_of_reads(0)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => (0, ++i)")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => (++i, 0)")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+}
+
+#[test]
+fn test_arrow_explicit_return() {
+    SemanticTester::js("let i = 0; const x = () => { return i }")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(0)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => { return ++i }")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+}
