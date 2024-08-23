@@ -21,18 +21,7 @@ pub struct LintOptions {
     /// The kind represents the riskiest fix that the linter can apply.
     pub fix: FixKind,
 
-    pub react_plugin: bool,
-    pub unicorn_plugin: bool,
-    pub typescript_plugin: bool,
-    pub oxc_plugin: bool,
-    pub import_plugin: bool,
-    pub jsdoc_plugin: bool,
-    pub jest_plugin: bool,
-    pub vitest_plugin: bool,
-    pub jsx_a11y_plugin: bool,
-    pub nextjs_plugin: bool,
-    pub react_perf_plugin: bool,
-    pub promise_plugin: bool,
+    pub plugins: LintPluginOptions,
 
     pub framework_hints: FrameworkFlags,
 }
@@ -43,19 +32,7 @@ impl Default for LintOptions {
             filter: vec![(AllowWarnDeny::Warn, String::from("correctness"))],
             config_path: None,
             fix: FixKind::None,
-            react_plugin: true,
-            unicorn_plugin: true,
-            typescript_plugin: true,
-            oxc_plugin: true,
-            import_plugin: false,
-            jsdoc_plugin: false,
-            jest_plugin: false,
-            vitest_plugin: false,
-            jsx_a11y_plugin: false,
-            nextjs_plugin: false,
-            react_perf_plugin: false,
-            promise_plugin: false,
-
+            plugins: LintPluginOptions::default(),
             framework_hints: FrameworkFlags::default(),
         }
     }
@@ -94,74 +71,148 @@ impl LintOptions {
 
     #[must_use]
     pub fn with_react_plugin(mut self, yes: bool) -> Self {
-        self.react_plugin = yes;
+        self.plugins.react = yes;
         self
     }
 
     #[must_use]
     pub fn with_unicorn_plugin(mut self, yes: bool) -> Self {
-        self.unicorn_plugin = yes;
+        self.plugins.unicorn = yes;
         self
     }
 
     #[must_use]
     pub fn with_typescript_plugin(mut self, yes: bool) -> Self {
-        self.typescript_plugin = yes;
+        self.plugins.typescript = yes;
         self
     }
 
     #[must_use]
     pub fn with_oxc_plugin(mut self, yes: bool) -> Self {
-        self.oxc_plugin = yes;
+        self.plugins.oxc = yes;
         self
     }
 
     #[must_use]
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
-        self.import_plugin = yes;
+        self.plugins.import = yes;
         self
     }
 
     #[must_use]
     pub fn with_jsdoc_plugin(mut self, yes: bool) -> Self {
-        self.jsdoc_plugin = yes;
+        self.plugins.jsdoc = yes;
         self
     }
 
     #[must_use]
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
-        self.jest_plugin = yes;
+        self.plugins.jest = yes;
         self
     }
 
     #[must_use]
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
-        self.vitest_plugin = yes;
+        self.plugins.vitest = yes;
         self
     }
 
     #[must_use]
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.jsx_a11y_plugin = yes;
+        self.plugins.jsx_a11y = yes;
         self
     }
 
     #[must_use]
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.nextjs_plugin = yes;
+        self.plugins.nextjs = yes;
         self
     }
 
     #[must_use]
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.react_perf_plugin = yes;
+        self.plugins.react_perf = yes;
         self
     }
 
     #[must_use]
     pub fn with_promise_plugin(mut self, yes: bool) -> Self {
-        self.promise_plugin = yes;
+        self.plugins.promise = yes;
         self
+    }
+}
+
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct LintPluginOptions {
+    pub react: bool,
+    pub unicorn: bool,
+    pub typescript: bool,
+    pub oxc: bool,
+    pub import: bool,
+    pub jsdoc: bool,
+    pub jest: bool,
+    pub vitest: bool,
+    pub jsx_a11y: bool,
+    pub nextjs: bool,
+    pub react_perf: bool,
+    pub promise: bool,
+}
+
+impl Default for LintPluginOptions {
+    fn default() -> Self {
+        Self {
+            react: true,
+            unicorn: true,
+            typescript: true,
+            oxc: true,
+            import: false,
+            jsdoc: false,
+            jest: false,
+            vitest: false,
+            jsx_a11y: false,
+            nextjs: false,
+            react_perf: false,
+            promise: false,
+        }
+    }
+}
+
+impl LintPluginOptions {
+    /// Create a new instance with all plugins disabled.
+    pub fn none() -> Self {
+        Self {
+            react: false,
+            unicorn: false,
+            typescript: false,
+            oxc: false,
+            import: false,
+            jsdoc: false,
+            jest: false,
+            vitest: false,
+            jsx_a11y: false,
+            nextjs: false,
+            react_perf: false,
+            promise: false,
+        }
+    }
+
+    /// Create a new instance with all plugins enabled.
+    pub fn all() -> Self {
+        Self {
+            react: true,
+            unicorn: true,
+            typescript: true,
+            oxc: true,
+            import: true,
+            jsdoc: true,
+            jest: true,
+            vitest: true,
+            jsx_a11y: true,
+            nextjs: true,
+            react_perf: true,
+            promise: true,
+        }
     }
 }
 
@@ -348,27 +399,27 @@ impl LintOptions {
         RULES
             .iter()
             .filter(|rule| match rule.plugin_name() {
-                "react" => self.react_plugin,
-                "unicorn" => self.unicorn_plugin,
-                "typescript" => self.typescript_plugin,
-                "import" => self.import_plugin,
-                "jsdoc" => self.jsdoc_plugin,
+                "react" => self.plugins.react,
+                "unicorn" => self.plugins.unicorn,
+                "typescript" => self.plugins.typescript,
+                "import" => self.plugins.import,
+                "jsdoc" => self.plugins.jsdoc,
                 "jest" => {
-                    if self.jest_plugin {
+                    if self.plugins.jest {
                         return true;
                     }
-                    if self.vitest_plugin && is_jest_rule_adapted_to_vitest(rule.name()) {
+                    if self.plugins.vitest && is_jest_rule_adapted_to_vitest(rule.name()) {
                         return true;
                     }
                     false
                 }
-                "vitest" => self.vitest_plugin,
-                "jsx_a11y" => self.jsx_a11y_plugin,
-                "nextjs" => self.nextjs_plugin,
-                "react_perf" => self.react_perf_plugin,
-                "oxc" => self.oxc_plugin,
+                "vitest" => self.plugins.vitest,
+                "jsx_a11y" => self.plugins.jsx_a11y,
+                "nextjs" => self.plugins.nextjs,
+                "react_perf" => self.plugins.react_perf,
+                "oxc" => self.plugins.oxc,
                 "eslint" | "tree_shaking" => true,
-                "promise" => self.promise_plugin,
+                "promise" => self.plugins.promise,
                 name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()

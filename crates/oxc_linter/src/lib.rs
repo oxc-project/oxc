@@ -157,12 +157,12 @@ impl Linter {
             .with_frameworks(self.options.framework_hints);
 
         // set file-specific jest/vitest flags
-        if self.options.jest_plugin || self.options.vitest_plugin {
+        if self.options.plugins.jest || self.options.plugins.vitest {
             let mut test_flags = FrameworkFlags::empty();
 
             if frameworks::is_jestlike_file(path) {
-                test_flags.set(FrameworkFlags::Jest, self.options.jest_plugin);
-                test_flags.set(FrameworkFlags::Vitest, self.options.vitest_plugin);
+                test_flags.set(FrameworkFlags::Jest, self.options.plugins.jest);
+                test_flags.set(FrameworkFlags::Vitest, self.options.plugins.vitest);
             } else if frameworks::has_vitest_imports(ctx.module_record()) {
                 test_flags.set(FrameworkFlags::Vitest, true);
             }
@@ -186,7 +186,7 @@ impl Linter {
     }
 
     fn map_jest(&self, plugin_name: &'static str, rule_name: &str) -> &'static str {
-        if self.options.vitest_plugin
+        if self.options.plugins.vitest
             && plugin_name == "jest"
             && utils::is_jest_rule_adapted_to_vitest(rule_name)
         {
