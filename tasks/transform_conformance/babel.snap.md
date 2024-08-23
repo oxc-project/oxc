@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 385/953
+Passed: 381/953
 
 # All Passed:
 * babel-preset-react
@@ -1285,6 +1285,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1),
   | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(4): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(6): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(8): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
+
 
 * logical-assignment/arrow-functions-transform/input.js
   x Symbol reference IDs mismatch:
@@ -1293,6 +1305,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | ReferenceId(6), ReferenceId(7), ReferenceId(8)]
   | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1),
   | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(4): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(6): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(8): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 
 * logical-assignment/general-semantics/input.js
@@ -1316,6 +1340,118 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | ReferenceId(136)]
   | rebuilt        : SymbolId(14): [ReferenceId(123), ReferenceId(127)]
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(98): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(27): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(97): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(29): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(100): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(33): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(99): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(35): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(102): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(39): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(101): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(41): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(104): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(45): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(103): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(47): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(107): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(52): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(105): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(55): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(110): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(61): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(108): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(64): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(113): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(70): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(111): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(73): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(116): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(79): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(114): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(82): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(118): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(87): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(120): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(89): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(119): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(92): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(123): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(99): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(125): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(101): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(124): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(104): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(128): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(111): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(130): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(113): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(129): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(116): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(133): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(123): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(135): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(125): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(134): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(128): ReferenceFlags(Read)
+
 
 * logical-assignment/named-functions-transform/input.js
   x Symbol reference IDs mismatch:
@@ -1324,6 +1460,18 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | ReferenceId(6), ReferenceId(7), ReferenceId(8)]
   | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1),
   | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(4): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(6): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(8): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 
 * logical-assignment/null-coalescing/input.js
@@ -1336,6 +1484,94 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: SymbolId(20): [ReferenceId(94), ReferenceId(95),
   | ReferenceId(98)]
   | rebuilt        : SymbolId(14): [ReferenceId(88), ReferenceId(94)]
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(58): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(62): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(14): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(67): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(26): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(65): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(27): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(64): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(31): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(72): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(35): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(70): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(36): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(69): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(40): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(78): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(46): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(76): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(48): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(74): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(53): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(84): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(58): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(82): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(60): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(80): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(65): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(92): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(72): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(87): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(73): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(89): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(75): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(88): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(80): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(100): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(87): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(95): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(88): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(97): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(90): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(96): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(95): ReferenceFlags(Read)
 
 
 * logical-assignment/null-coalescing-without-other/input.js
@@ -1350,19 +1586,55 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(1),
   | ReferenceId(3), ReferenceId(6)]
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(4): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(6): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(5): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(4): ReferenceFlags(Read)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(8): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(10): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(7): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(9): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(9): ReferenceFlags(Read)
 
 
-# babel-plugin-transform-nullish-coalescing-operator (5/12)
+
+# babel-plugin-transform-nullish-coalescing-operator (2/12)
 * assumption-noDocumentAll/transform/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-destructuring/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-param/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(3): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-function/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-static-refs-in-default/input.js
@@ -1371,7 +1643,28 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 * assumption-noDocumentAll/transform-static-refs-in-function/input.js
 
 
+* nullish-coalescing/transform-in-default-destructuring/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+
+* nullish-coalescing/transform-in-default-param/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(3): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+
+* nullish-coalescing/transform-in-function/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+
 * nullish-coalescing/transform-loose/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 
@@ -1439,15 +1732,29 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-exponentiation-operator (2/4)
+# babel-plugin-transform-exponentiation-operator (1/4)
 * exponentiation-operator/assignment/input.js
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
   | ReferenceId(2)]
   | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(1): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(2): ReferenceFlags(Read)
+
 
 * regression/4349/input.js
+
+
+* regression/4403/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(3): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 
@@ -2070,17 +2377,33 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ReferenceId(0): Some("x")
   | rebuilt        : ReferenceId(0): None
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(0): ReferenceFlags(Read)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Type)
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(2): Some("E")
   | rebuilt        : ReferenceId(1): None
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Read)
+  | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Type)
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(8): Some("x")
   | rebuilt        : ReferenceId(2): None
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(8): ReferenceFlags(Read)
+  | rebuilt        : ReferenceId(2): ReferenceFlags(Read | Type)
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("E")
   | rebuilt        : ReferenceId(3): None
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(11): ReferenceFlags(Read)
+  | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Type)
 
 
 * exports/default-function/input.ts

@@ -2,7 +2,7 @@ commit: d8086f14
 
 semantic_typescript Summary:
 AST Parsed     : 6456/6456 (100.00%)
-Positive Passed: 3375/6456 (52.28%)
+Positive Passed: 3374/6456 (52.26%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -2208,6 +2208,11 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
+
+tasks/coverage/typescript/tests/cases/compiler/commentOnParenthesizedExpressionOpenParen1.ts
+semantic error: Reference flags mismatch:
+after transform: ReferenceId(0): ReferenceFlags(Read | Write)
+rebuilt        : ReferenceId(0): ReferenceFlags(Write)
 
 tasks/coverage/typescript/tests/cases/compiler/commentOnSignature1.ts
 semantic error: Scope children mismatch:
@@ -9697,6 +9702,9 @@ rebuilt        : ScopeId(0): ["A", "B"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+Reference flags mismatch:
+after transform: ReferenceId(12): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/compiler/indexedAccessNormalization.ts
 semantic error: Bindings mismatch:
@@ -10873,6 +10881,15 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), Sc
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+Reference flags mismatch:
+after transform: ReferenceId(1): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
+Reference flags mismatch:
+after transform: ReferenceId(2): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
+Reference flags mismatch:
+after transform: ReferenceId(3): ReferenceFlags(Type)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation5.ts
 semantic error: Bindings mismatch:
@@ -21047,6 +21064,9 @@ rebuilt        : ScopeId(19): ["key", "obj"]
 Bindings mismatch:
 after transform: ScopeId(26): ["T", "a"]
 rebuilt        : ScopeId(21): ["a"]
+Reference flags mismatch:
+after transform: ReferenceId(7): ReferenceFlags(Type)
+rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/compiler/typedArrays.ts
 semantic error: Bindings mismatch:
@@ -23184,6 +23204,12 @@ rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(4): [ReferenceId(12)]
 rebuilt        : SymbolId(3): []
+Reference flags mismatch:
+after transform: ReferenceId(1): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
+Reference flags mismatch:
+after transform: ReferenceId(3): ReferenceFlags(Type)
+rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpression.ts
 semantic error: Semantic Collector failed after transform
@@ -23462,6 +23488,9 @@ rebuilt        : SymbolId(0): Span { start: 62, end: 63 }
 Symbol redeclarations mismatch:
 after transform: SymbolId(1): [Span { start: 62, end: 63 }]
 rebuilt        : SymbolId(0): []
+Reference flags mismatch:
+after transform: ReferenceId(1): ReferenceFlags(Type)
+rebuilt        : ReferenceId(0): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty8.ts
 semantic error: Bindings mismatch:

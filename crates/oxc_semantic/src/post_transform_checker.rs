@@ -522,6 +522,14 @@ impl<'s> PostTransformChecker<'s> {
                 });
                 self.errors.push_mismatch("Reference symbol mismatch", reference_ids, symbol_names);
             }
+
+            // Check flags match
+            let flags = self.get_pair(reference_ids, |data, reference_id| {
+                data.symbols.references[reference_id].flags()
+            });
+            if flags.is_mismatch() {
+                self.errors.push_mismatch("Reference flags mismatch", reference_ids, flags);
+            }
         }
     }
 

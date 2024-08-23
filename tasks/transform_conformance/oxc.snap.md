@@ -266,6 +266,10 @@ Passed: 8/35
   | after transform: ReferenceId(41): Some("_s6")
   | rebuilt        : ReferenceId(5): None
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(18): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(31): ReferenceFlags(Read | Write)
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(45): None
@@ -413,6 +417,22 @@ Passed: 8/35
   | after transform: ReferenceId(32): Some("_s2")
   | rebuilt        : ReferenceId(1): None
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(18): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(17): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(7): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(22): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(19): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(21): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(22): ReferenceFlags(Read | Write)
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(38): Some("_s3")
   | rebuilt        : ReferenceId(32): None
@@ -550,6 +570,10 @@ Passed: 8/35
   | after transform: SymbolId(6): [ReferenceId(11), ReferenceId(20),
   | ReferenceId(21)]
   | rebuilt        : SymbolId(7): [ReferenceId(12), ReferenceId(21)]
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(8): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(14): Some("_c")
@@ -763,6 +787,30 @@ Passed: 8/35
   | ReferenceId(33)]
   | rebuilt        : SymbolId(12): [ReferenceId(12), ReferenceId(33)]
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(5): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(9): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(8): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(8): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(14): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(12): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(13): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(14): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(12): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(16): ReferenceFlags(Read | Write)
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(18): Some("_c")
   | rebuilt        : ReferenceId(18): None
@@ -812,6 +860,18 @@ Passed: 8/35
   | ReferenceId(11)]
   | rebuilt        : SymbolId(5): [ReferenceId(0), ReferenceId(11)]
 
+  x Reference flags mismatch:
+  | after transform: ReferenceId(4): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(3): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
+
   x Reference symbol mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
@@ -840,6 +900,18 @@ Passed: 8/35
   | after transform: SymbolId(5): [ReferenceId(4), ReferenceId(10),
   | ReferenceId(11)]
   | rebuilt        : SymbolId(6): [ReferenceId(0), ReferenceId(11)]
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(4): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(3): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
+
+  x Reference flags mismatch:
+  | after transform: ReferenceId(2): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(6): Some("_c")
