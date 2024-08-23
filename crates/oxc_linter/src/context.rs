@@ -10,11 +10,11 @@ use oxc_syntax::module_record::ModuleRecord;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    config::OxlintRules,
+    config::LintConfig,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, FrameworkFlags, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+    AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 #[derive(Clone)]
@@ -38,7 +38,7 @@ pub struct LintContext<'a> {
 
     file_path: Rc<Path>,
 
-    eslint_config: Arc<OxlintConfig>,
+    config: Arc<LintConfig>,
 
     // states
     current_plugin_name: &'static str,
@@ -82,7 +82,7 @@ impl<'a> LintContext<'a> {
             disable_directives: Rc::new(disable_directives),
             fix: FixKind::None,
             file_path: file_path.into(),
-            eslint_config: Arc::new(OxlintConfig::default()),
+            config: Arc::new(LintConfig::default()),
             current_plugin_name: "eslint",
             current_plugin_prefix: "eslint",
             current_rule_name: "",
@@ -99,8 +99,8 @@ impl<'a> LintContext<'a> {
         self
     }
 
-    pub fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
-        self.eslint_config = Arc::clone(eslint_config);
+    pub(crate) fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
+        self.config = Arc::clone(config);
         self
     }
 
@@ -175,22 +175,18 @@ impl<'a> LintContext<'a> {
 
     /// Plugin settings
     pub fn settings(&self) -> &OxlintSettings {
-        &self.eslint_config.settings
+        &self.config.settings
     }
 
     pub fn globals(&self) -> &OxlintGlobals {
-        &self.eslint_config.globals
+        &self.config.globals
     }
 
     /// Runtime environments turned on/off by the user.
     ///
     /// Examples of environments are `builtin`, `browser`, `node`, etc.
     pub fn env(&self) -> &OxlintEnv {
-        &self.eslint_config.env
-    }
-
-    pub fn rules(&self) -> &OxlintRules {
-        &self.eslint_config.rules
+        &self.config.env
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {
