@@ -536,6 +536,11 @@ impl ChildScopeCollector {
 
 impl<'a> Visit<'a> for ChildScopeCollector {
     #[inline]
+    fn visit_program(&mut self, program: &Program<'a>) {
+        self.add_scope(&program.scope_id);
+    }
+
+    #[inline]
     fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
         self.add_scope(&stmt.scope_id);
     }
@@ -612,6 +617,24 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    #[inline]
+    fn visit_ts_type_alias_declaration(&mut self, it: &TSTypeAliasDeclaration<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    #[inline]
+    fn visit_ts_method_signature(&mut self, it: &TSMethodSignature<'a>) {
+        self.add_scope(&it.scope_id);
+    }
+
+    #[inline]
+    fn visit_ts_construct_signature_declaration(
+        &mut self,
+        it: &TSConstructSignatureDeclaration<'a>,
+    ) {
         self.add_scope(&it.scope_id);
     }
 }
