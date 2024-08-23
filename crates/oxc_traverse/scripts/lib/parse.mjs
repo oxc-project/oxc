@@ -187,8 +187,10 @@ function parseScopeArgs(lines, scopeArgs) {
     return parseScopeArgsStr(scopeArgsStr, scopeArgs, position);
 }
 
+const SCOPE_ARGS_KEYS = {flags: 'flags', strict_if: 'strictIf'};
+
 function parseScopeArgsStr(argsStr, args, position) {
-    if (!args) args = {flags: 'ScopeFlags::empty()', if: null, strictIf: null};
+    if (!args) args = {flags: 'ScopeFlags::empty()', strictIf: null, enterScopeBefore: null};
 
     if (!argsStr) return args;
 
@@ -201,9 +203,9 @@ function parseScopeArgsStr(argsStr, args, position) {
 
     try {
         while (true) {
-            let [key] = matchAndConsume(/^([a-z_]+)\(/);
-            key = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
-            position.assert(Object.hasOwn(args, key), `Unexpected scope macro arg: ${key}`);
+            const [keyRaw] = matchAndConsume(/^([a-z_]+)\(/);
+            const key = SCOPE_ARGS_KEYS[keyRaw];
+            position.assert(key, `Unexpected scope macro arg: ${key}`);
 
             let bracketCount = 1,
                 index = 0;

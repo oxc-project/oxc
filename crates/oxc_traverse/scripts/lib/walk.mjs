@@ -74,32 +74,15 @@ function generateWalkForStruct(type, types) {
         }
 
         // TODO: Maybe this isn't quite right. `scope_id` fields are `Cell<Option<ScopeId>>`,
-        // so visitor is able to alter the `scope_id` of a node higher up the tree,
+        // so visitor is able to alter the `scope_id` of a node from higher up the tree,
         // but we don't take that into account.
         // Visitor should not do that though, so maybe it's OK.
         // In final version, we should not make `scope_id` fields `Cell`s to prevent this.
-        if (scopeArgs.if) {
-            enterScopeCode = `
-                let mut previous_scope_id = None;
-                if let Some(scope_id) = (*(${makeFieldCode(scopeIdField)})).get() {
-                    previous_scope_id = Some(ctx.current_scope_id());
-                    ctx.set_current_scope_id(scope_id);
-                }
-            `;
-
-            exitScopeCode = `
-                if let Some(previous_scope_id) = previous_scope_id {
-                    ctx.set_current_scope_id(previous_scope_id);
-                }
-            `;
-        } else {
-            enterScopeCode = `
-                let previous_scope_id = ctx.current_scope_id();
-                ctx.set_current_scope_id((*(${makeFieldCode(scopeIdField)})).get().unwrap());
-            `;
-
-            exitScopeCode = `ctx.set_current_scope_id(previous_scope_id);`;
-        }
+        enterScopeCode = `
+            let previous_scope_id = ctx.current_scope_id();
+            ctx.set_current_scope_id((*(${makeFieldCode(scopeIdField)})).get().unwrap());
+        `;
+        exitScopeCode = `ctx.set_current_scope_id(previous_scope_id);`;
     }
 
     const fieldsCodes = visitedFields.map((field, index) => {
