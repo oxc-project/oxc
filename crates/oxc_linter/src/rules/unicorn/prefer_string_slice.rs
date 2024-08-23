@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// ```
     PreferStringSlice,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for PreferStringSlice {
@@ -57,7 +57,9 @@ impl Rule for PreferStringSlice {
             _ => return,
         };
 
-        ctx.diagnostic(prefer_string_slice_diagnostic(span, name.as_str()));
+        ctx.diagnostic_with_fix(prefer_string_slice_diagnostic(span, name.as_str()), |fixer| {
+            fixer.replace(span, "slice")
+        });
     }
 }
 
@@ -130,5 +132,17 @@ fn test() {
         r"foo.substring((10, bar))",
     ];
 
-    Tester::new(PreferStringSlice::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("foo.substr()", "foo.slice()"),
+        ("foo?.substr()", "foo?.slice()"),
+        ("foo.bar?.substring()", "foo.bar?.slice()"),
+        ("foo?.[0]?.substring()", "foo?.[0]?.slice()"),
+        ("foo.bar.substr?.()", "foo.bar.slice?.()"),
+        ("foo.bar?.substring?.()", "foo.bar?.slice?.()"),
+        ("foo.bar?.baz?.substr()", "foo.bar?.baz?.slice()"),
+        ("foo.bar?.baz.substring()", "foo.bar?.baz.slice()"),
+        ("foo.bar.baz?.substr()", "foo.bar.baz?.slice()"),
+    ];
+
+    Tester::new(PreferStringSlice::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
