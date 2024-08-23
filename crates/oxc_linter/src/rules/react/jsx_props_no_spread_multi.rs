@@ -7,7 +7,13 @@ use oxc_span::{Atom, Span};
 
 use itertools::Itertools;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_member_expression, AstNode};
+use crate::{
+    context::LintContext,
+    fixer::{Fix, RuleFix},
+    rule::Rule,
+    utils::is_same_member_expression,
+    AstNode,
+};
 
 fn jsx_props_no_spread_multiple_identifiers_diagnostic(
     spans: Vec<Span>,
@@ -20,6 +26,7 @@ fn jsx_props_no_spread_multiple_identifiers_diagnostic(
 
 fn jsx_props_no_spread_multiple_member_expressions_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow JSX prop spreading the same member expression multiple times.")
+        .with_help("Remove the first spread.")
         .with_labels(spans)
 }
 
@@ -45,7 +52,7 @@ declare_oxc_lint!(
     /// ```
     JsxPropsNoSpreadMulti,
     correctness,
-    pending // TODO: add auto-fix to remove the first spread. Removing the second one would change program behavior.
+    fix
 );
 
 impl Rule for JsxPropsNoSpreadMulti {
@@ -82,18 +89,32 @@ impl Rule for JsxPropsNoSpreadMulti {
             }
 
             for (identifier_name, spans) in duplicate_spreads {
-                ctx.diagnostic(jsx_props_no_spread_multiple_identifiers_diagnostic(
-                    spans,
-                    identifier_name,
-                ));
+                ctx.diagnostic_with_fix(
+                    jsx_props_no_spread_multiple_identifiers_diagnostic(
+                        spans.clone(),
+                        identifier_name,
+                    ),
+                    |_fixer| {
+                        spans
+                            .iter()
+                            .rev()
+                            .skip(1)
+                            .map(|span| Fix::delete(*span))
+                            .collect::<RuleFix<'a>>()
+                    },
+                );
             }
 
             member_expressions.iter().tuple_combinations().for_each(
                 |((left, left_span), (right, right_span))| {
                     if is_same_member_expression(left, right, ctx) {
-                        ctx.diagnostic(jsx_props_no_spread_multiple_member_expressions_diagnostic(
-                            vec![*left_span, *right_span],
-                        ));
+                        ctx.diagnostic_with_fix(
+                            jsx_props_no_spread_multiple_member_expressions_diagnostic(vec![
+                                *left_span,
+                                *right_span,
+                            ]),
+                            |fixer| fixer.delete_range(*left_span),
+                        );
                     }
                 },
             );
@@ -147,6 +168,13 @@ fn test() {
           <div {...props} {...props} {...props} />
         ",
     ];
+    let fix = vec![
+        ("<App {...props} {...props} />", "<App  {...props} />"),
+        ("<App {...props.foo} {...props.foo} />", "<App  {...props.foo} />"),
+        ("<App {...(props.foo.baz)} {...(props.foo.baz)} />", "<App  {...(props.foo.baz)} />"),
+        (r#"<div {...props} a="a" {...props} />"#, r#"<div  a="a" {...props} />"#),
+        ("<div {...props} {...props} {...props} />", "<div   {...props} />"),
+    ];
 
-    Tester::new(JsxPropsNoSpreadMulti::NAME, pass, fail).test_and_snapshot();
+    Tester::new(JsxPropsNoSpreadMulti::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
