@@ -40,7 +40,7 @@ declare_oxc_lint!(
     /// ```
     PreferRegexpTest,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for PreferRegexpTest {
@@ -147,7 +147,9 @@ impl Rule for PreferRegexpTest {
             _ => unreachable!("match or test {:?}", name),
         }
 
-        ctx.diagnostic(prefer_regexp_test_diagnostic(span));
+        ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
+            fixer.replace(span, "test")
+        });
     }
 }
 
@@ -236,5 +238,36 @@ fn test() {
         r"!/a/v.exec(foo)",
     ];
 
-    Tester::new(PreferRegexpTest::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("const re = /a/; const bar = !foo.match(re)", "const re = /a/; const bar = !foo.test(re)"),
+        (
+            "const re = /a/; const bar = Boolean(foo.match(re))",
+            "const re = /a/; const bar = Boolean(foo.test(re))",
+        ),
+        ("const re = /a/; if (foo.match(re)) {}", "const re = /a/; if (foo.test(re)) {}"),
+        (
+            "const re = /a/; const bar = foo.match(re) ? 1 : 2",
+            "const re = /a/; const bar = foo.test(re) ? 1 : 2",
+        ),
+        (
+            "const re = /a/; while (foo.match(re)) foo = foo.slice(1);",
+            "const re = /a/; while (foo.test(re)) foo = foo.slice(1);",
+        ),
+        (
+            "const re = /a/; do {foo = foo.slice(1)} while (foo.match(re));",
+            "const re = /a/; do {foo = foo.slice(1)} while (foo.test(re));",
+        ),
+        (
+            "const re = /a/; for (; foo.match(re); ) foo = foo.slice(1);",
+            "const re = /a/; for (; foo.test(re); ) foo = foo.slice(1);",
+        ),
+        ("const re = /a/; const bar = !re.exec(foo)", "const re = /a/; const bar = !re.test(foo)"),
+        (
+            "const re = /a/; const bar = Boolean(re.exec(foo))",
+            "const re = /a/; const bar = Boolean(re.test(foo))",
+        ),
+        ("const re = /a/; if (re.exec(foo)) {}", "const re = /a/; if (re.test(foo)) {}"),
+    ];
+
+    Tester::new(PreferRegexpTest::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
