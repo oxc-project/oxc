@@ -53,6 +53,12 @@ watch command:
 example tool *args='':
   just watch 'run -p oxc_{{tool}} --example {{tool}} -- {{args}}'
 
+# Generate AST related boilerplate code.
+# Run this when AST definition is changed.
+ast:
+  cargo run -p oxc_ast_tools
+  just check
+
 # Format all files
 fmt:
   cargo fmt
@@ -174,8 +180,3 @@ website path:
   cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
-
-# sync ast changes
-ast:
-  cargo run -p oxc_ast_tools
-  just check

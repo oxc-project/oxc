@@ -1,8 +1,9 @@
 commit: 12619ffe
 
-Passed: 338/953
+Passed: 340/953
 
 # All Passed:
+* babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-source
 
@@ -1664,46 +1665,6 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-
-
-
-# babel-plugin-transform-optional-catch-binding (2/4)
-* optional-catch-bindings/try-catch-block-no-binding/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(0): ["_unused"]
-  | rebuilt        : ScopeId(0): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(3): []
-  | rebuilt        : ScopeId(3): ["_unused"]
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
-  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
-  | CatchVariable)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(0): ScopeId(0)
-  | rebuilt        : SymbolId(0): ScopeId(3)
-
-
-* optional-catch-bindings/try-catch-finally-no-binding/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(0): ["_unused"]
-  | rebuilt        : ScopeId(0): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(3): []
-  | rebuilt        : ScopeId(3): ["_unused"]
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
-  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
-  | CatchVariable)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(0): ScopeId(0)
-  | rebuilt        : SymbolId(0): ScopeId(3)
 
 
 
