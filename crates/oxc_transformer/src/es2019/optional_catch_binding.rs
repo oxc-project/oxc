@@ -58,8 +58,13 @@ impl<'a> Traverse<'a> for OptionalCatchBinding<'a> {
         if clause.param.is_some() {
             return;
         }
-        let symbol_id =
-            ctx.generate_uid("unused", ctx.scoping.current_scope_id(), SymbolFlags::CatchVariable);
+
+        let block_scope_id = clause.body.scope_id.get().unwrap();
+        let symbol_id = ctx.generate_uid(
+            "unused",
+            block_scope_id,
+            SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
+        );
         let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
         let binding_identifier =
             BindingIdentifier { span: SPAN, symbol_id: Cell::new(Some(symbol_id)), name };

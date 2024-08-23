@@ -1,30 +1,9 @@
 commit: 12619ffe
 
-Passed: 8/35
+Passed: 9/35
 
 # All Passed:
-
-
-
-# babel-plugin-transform-optional-catch-binding (0/1)
-* try-catch-shadow/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(0): ["_unused", "_unused2"]
-  | rebuilt        : ScopeId(0): ["_unused"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(3): []
-  | rebuilt        : ScopeId(3): ["_unused2"]
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(CatchVariable)
-  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable |
-  | CatchVariable)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(1): ScopeId(0)
-  | rebuilt        : SymbolId(1): ScopeId(3)
-
+* babel-plugin-transform-optional-catch-binding
 
 
 # babel-plugin-transform-typescript (2/7)
