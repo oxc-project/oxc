@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 381/953
+Passed: 383/953
 
 # All Passed:
 * babel-preset-react
@@ -1864,29 +1864,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-typescript (49/151)
-* class/accessor-allowDeclareFields-false/input.ts
-  x TS(18010): An accessibility modifier cannot be used with a private
-  | identifier.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
- 7 |   abstract accessor prop6: number;
- 8 |   private accessor #p: any;
-   :   ^^^^^^^
- 9 | 
-   `----
-
-
-* class/accessor-allowDeclareFields-true/input.ts
-  x TS(18010): An accessibility modifier cannot be used with a private
-  | identifier.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]
- 7 |   abstract accessor prop6: number;
- 8 |   private accessor #p: any;
-   :   ^^^^^^^
- 9 | 
-   `----
-
-
+# babel-plugin-transform-typescript (51/151)
 * class/head/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["T"]
