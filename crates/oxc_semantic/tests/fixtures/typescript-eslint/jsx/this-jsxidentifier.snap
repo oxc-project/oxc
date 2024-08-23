@@ -9,38 +9,38 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/this-jsxide
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function | Arrow)",
+            "flags": "ScopeFlags(StrictMode | Function | Arrow)",
             "id": 2,
             "node": "ArrowFunctionExpression",
             "symbols": []
           },
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function)",
+            "flags": "ScopeFlags(StrictMode | Function)",
             "id": 3,
             "node": "Function(<anonymous>)",
             "symbols": []
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "Class(Foo)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "React",
         "node": "VariableDeclarator(React)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 1,
         "name": "Foo",
         "node": "Class(Foo)",

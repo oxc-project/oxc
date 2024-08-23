@@ -36,7 +36,7 @@ impl Serialize for ReferenceId {
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type ReferenceId = number;
-export type ReferenceFlag = {
+export type ReferenceFlags = {
     None: 0,
     Read: 0b1,
     Write: 0b10,
@@ -73,12 +73,12 @@ bitflags! {
     /// type definitions and signatures. Types can never be re-assigned, so
     /// there is no read/write distinction for type references.
     ///
-    /// [`Read`]: ReferenceFlag::Read
-    /// [`Write`]: ReferenceFlag::Write
-    /// [`TSTypeQuery`]: ReferenceFlag::TSTypeQuery
+    /// [`Read`]: ReferenceFlags::Read
+    /// [`Write`]: ReferenceFlags::Write
+    /// [`TSTypeQuery`]: ReferenceFlags::TSTypeQuery
     #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, CloneIn)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
-    pub struct ReferenceFlag: u8 {
+    pub struct ReferenceFlags: u8 {
         const None = 0;
         /// A symbol is being read as a Value
         const Read = 1 << 0;
@@ -93,12 +93,12 @@ bitflags! {
         /// Note that this does not necessarily indicate the reference is used
         /// in a value context, since type queries are also flagged as [`Read`]
         ///
-        /// [`Read`]: ReferenceFlag::Read
+        /// [`Read`]: ReferenceFlags::Read
         const Value = Self::Read.bits() | Self::Write.bits();
     }
 }
 
-impl ReferenceFlag {
+impl ReferenceFlags {
     #[inline]
     pub const fn read() -> Self {
         Self::Read

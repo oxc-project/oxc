@@ -358,7 +358,7 @@ lazy_static! {
         Cell<Option<SymbolId>>: { _ => Layout::known(4, 4, 0), },
         Cell<Option<ReferenceId>>: { _ => Layout::known(4, 4, 0), },
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
-        ReferenceFlag: { _ => Layout::known(1, 1, 0), },
+        ReferenceFlags: { _ => Layout::known(1, 1, 0), },
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
         RegExpFlags: { _ => Layout::known(1, 1, 0), },
     };

@@ -154,7 +154,7 @@ impl Renderer {
         }
         if let Some(subschemas) = &schema.subschemas {
             let key = parent_key.unwrap_or("");
-            return self.render_sub_schema(depth, key, subschemas);
+            self.render_sub_schema(depth, key, subschemas);
         }
         vec![]
     }
@@ -171,7 +171,9 @@ impl Renderer {
                 .map(|schema| {
                     let schema = Self::get_schema_object(schema);
                     let schema = self.get_referenced_schema(schema);
-                    self.render_schema(depth + 1, key, schema)
+                    let mut section = self.render_schema(depth + 1, key, schema);
+                    section.sanitize();
+                    section
                 })
                 .collect::<Vec<Section>>();
         }
@@ -200,6 +202,12 @@ impl Renderer {
 impl Root {
     fn sanitize(&mut self) {
         sanitize(&mut self.title);
+    }
+}
+
+impl Section {
+    fn sanitize(&mut self) {
+        sanitize(&mut self.description);
     }
 }
 

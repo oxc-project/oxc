@@ -23,15 +23,15 @@ unexpected_cfgs                        = { level = "warn", check-cfg = ['cfg(cov
 
 [workspace.lints.clippy]
 all        = { level = "warn", priority = -1 }
-empty_docs = { level = "allow", priority = 1 } # from `Tsify`
+empty_docs = { level = "allow", priority = 1 } # From `Tsify`
 # restriction
 dbg_macro     = "warn"
 todo          = "warn"
 unimplemented = "warn"
-print_stdout  = "warn" # must be opt-in
-print_stderr  = "warn" # must be opt-in
+print_stdout  = "warn" # Must be opt-in
+print_stderr  = "warn" # Must be opt-in
 # I like the explicitness of this rule as it removes confusion around `clone`.
-# This increases readability, avoids `clone` mindlessly and heap allocating on accident.
+# This increases readability, avoids `clone` mindlessly and heap allocating by accident.
 clone_on_ref_ptr = "warn"
 # These two are mutually exclusive, I like `mod.rs` files for better fuzzy searches on module entries.
 self_named_module_files         = "warn" # "-Wclippy::mod_module_files"
@@ -57,15 +57,15 @@ module_name_repetitions = "allow"
 # All triggers are mostly ignored in our codebase, so this is ignored globally.
 struct_excessive_bools = "allow"
 too_many_lines         = "allow"
-# #[must_use] is creating too much noise for this codebase, it does not add much value except nagging
-# the programmer to add a #[must_use] after clippy has been run.
-# Having #[must_use] every where also hinders readability.
+# `#[must_use]` is creating too much noise for this codebase, it does not add much value
+# except nagging the programmer to add a `#[must_use]` after clippy has been run.
+# Having `#[must_use]` everywhere also hinders readability.
 must_use_candidate = "allow"
 # used_underscore_binding= "allow"
 doc_markdown = "allow"
 # nursery
 # `const` functions do not make sense for our project because this is not a `const` library.
-# This rule also confuses new comers and forces them to add `const` blindlessly without any reason.
+# This rule also confuses newcomers and forces them to add `const` blindlessly without any reason.
 missing_const_for_fn = "allow"
 # cargo
 cargo                   = { level = "warn", priority = -1 }
@@ -75,26 +75,27 @@ doc_lazy_continuation   = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc                       = { version = "0.24.2", path = "crates/oxc" }
-oxc_allocator             = { version = "0.24.2", path = "crates/oxc_allocator" }
-oxc_ast                   = { version = "0.24.2", path = "crates/oxc_ast" }
-oxc_codegen               = { version = "0.24.2", path = "crates/oxc_codegen" }
-oxc_diagnostics           = { version = "0.24.2", path = "crates/oxc_diagnostics" }
-oxc_index                 = { version = "0.24.2", path = "crates/oxc_index" }
-oxc_minifier              = { version = "0.24.2", path = "crates/oxc_minifier" }
-oxc_mangler               = { version = "0.24.2", path = "crates/oxc_mangler" }
-oxc_parser                = { version = "0.24.2", path = "crates/oxc_parser" }
-oxc_semantic              = { version = "0.24.2", path = "crates/oxc_semantic" }
-oxc_span                  = { version = "0.24.2", path = "crates/oxc_span" }
-oxc_syntax                = { version = "0.24.2", path = "crates/oxc_syntax" }
-oxc_transformer           = { version = "0.24.2", path = "crates/oxc_transformer" }
-oxc_sourcemap             = { version = "0.24.2", path = "crates/oxc_sourcemap" }
-oxc_ast_macros            = { version = "0.24.2", path = "crates/oxc_ast_macros" }
-oxc_traverse              = { version = "0.24.2", path = "crates/oxc_traverse" }
-oxc_module_lexer          = { version = "0.24.2", path = "crates/oxc_module_lexer" }
-oxc_cfg                   = { version = "0.24.2", path = "crates/oxc_cfg" }
-oxc_isolated_declarations = { version = "0.24.2", path = "crates/oxc_isolated_declarations" }
-oxc_transform_napi        = { version = "0.24.2", path = "napi/transform" }
+oxc                       = { version = "0.25.0", path = "crates/oxc" }
+oxc_allocator             = { version = "0.25.0", path = "crates/oxc_allocator" }
+oxc_ast                   = { version = "0.25.0", path = "crates/oxc_ast" }
+oxc_codegen               = { version = "0.25.0", path = "crates/oxc_codegen" }
+oxc_diagnostics           = { version = "0.25.0", path = "crates/oxc_diagnostics" }
+oxc_index                 = { version = "0.25.0", path = "crates/oxc_index" }
+oxc_minifier              = { version = "0.25.0", path = "crates/oxc_minifier" }
+oxc_mangler               = { version = "0.25.0", path = "crates/oxc_mangler" }
+oxc_parser                = { version = "0.25.0", path = "crates/oxc_parser" }
+oxc_semantic              = { version = "0.25.0", path = "crates/oxc_semantic" }
+oxc_span                  = { version = "0.25.0", path = "crates/oxc_span" }
+oxc_syntax                = { version = "0.25.0", path = "crates/oxc_syntax" }
+oxc_transformer           = { version = "0.25.0", path = "crates/oxc_transformer" }
+oxc_sourcemap             = { version = "0.25.0", path = "crates/oxc_sourcemap" }
+oxc_ast_macros            = { version = "0.25.0", path = "crates/oxc_ast_macros" }
+oxc_traverse              = { version = "0.25.0", path = "crates/oxc_traverse" }
+oxc_module_lexer          = { version = "0.25.0", path = "crates/oxc_module_lexer" }
+oxc_cfg                   = { version = "0.25.0", path = "crates/oxc_cfg" }
+oxc_isolated_declarations = { version = "0.25.0", path = "crates/oxc_isolated_declarations" }
+oxc_regular_expression    = { version = "0.25.0", path = "crates/oxc_regular_expression" }
+oxc_transform_napi        = { version = "0.25.0", path = "napi/transform" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
@@ -210,12 +211,12 @@ opt-level = 'z'
 opt-level     = 3
 lto           = "fat"
 codegen-units = 1
-strip         = "symbols" # set to `false` for debug information
-debug         = false # set to `true` for debug information
-panic         = "abort" # Let it crash and force ourselves to write safe Rust.
+strip         = "symbols" # Set to `false` for debug information
+debug         = false # Set to `true` for debug information
+panic         = "abort" # Let it crash and force ourselves to write safe Rust
 
 # Profile for `cargo coverage`
 [profile.coverage]
 inherits         = "release"
-lto              = "thin" # Faster compile time with thin lto
+lto              = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass

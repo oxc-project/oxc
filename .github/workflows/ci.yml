@@ -105,7 +105,7 @@ jobs:
       RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
       CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
       # Insta is not able to run on wasmtime, omit the packages that depend on it
-      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_js_regex -p oxc_module_lexer -- --nocapture"
+      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_regular_expression -p oxc_module_lexer -- --nocapture"
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
@@ -189,7 +189,7 @@ jobs:
         with:
           restore-cache: false
         if: steps.filter.outputs.src == 'true'
-      - uses: cargo-bins/cargo-binstall@v1.10.0
+      - uses: cargo-bins/cargo-binstall@v1.10.2
         if: steps.filter.outputs.src == 'true'
       - run: cargo binstall --no-confirm cargo-shear@1
         if: steps.filter.outputs.src == 'true'

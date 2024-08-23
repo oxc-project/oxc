@@ -47,8 +47,8 @@ impl Rule for NoDuplicateHead {
             return;
         }
 
-        let flag = symbols.get_flag(symbol_id);
-        if !flag.is_import() {
+        let flags = symbols.get_flags(symbol_id);
+        if !flags.is_import() {
             return;
         }
 

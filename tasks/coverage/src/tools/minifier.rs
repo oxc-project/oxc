@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
+use oxc::span::SourceType;
 
 use crate::{
     babel::BabelCase,

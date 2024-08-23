@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
-use oxc_transformer::{
+use oxc::span::SourceType;
+use oxc::transformer::{
     ES2015Options, ReactJsxRuntime, ReactOptions, TransformOptions, TypeScriptOptions,
 };
 

@@ -10,7 +10,7 @@ use std::{
 use dashmap::DashMap;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -134,7 +134,7 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().import_plugin.then(|| {
+        let resolver = linter.options().plugins.import.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
@@ -254,7 +254,10 @@ impl Runtime {
         tx_error: &DiagnosticSender,
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
-            .allow_return_outside_function(true)
+            .with_options(ParseOptions {
+                allow_return_outside_function: true,
+                ..ParseOptions::default()
+            })
             .parse();
 
         if !ret.errors.is_empty() {
@@ -275,7 +278,7 @@ impl Runtime {
             .build_module_record(path.to_path_buf(), program);
         let module_record = semantic_builder.module_record();
 
-        if self.linter.options().import_plugin {
+        if self.linter.options().plugins.import {
             self.module_map.insert(
                 path.to_path_buf().into_boxed_path(),
                 ModuleState::Resolved(Arc::clone(&module_record)),
@@ -357,7 +360,7 @@ impl Runtime {
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {
-        if !self.linter.options().import_plugin {
+        if !self.linter.options().plugins.import {
             return false;
         }
 
@@ -412,7 +415,7 @@ impl Runtime {
     }
 
     fn ignore_path(&self, path: &Path) {
-        if self.linter.options().import_plugin {
+        if self.linter.options().plugins.import {
             self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
             self.update_cache_state(path);
         }

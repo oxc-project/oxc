@@ -4,11 +4,7 @@ use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
-use oxc_syntax::{
-    operator::UnaryOperator,
-    reference::{ReferenceFlag, ReferenceId},
-    scope::ScopeFlags,
-};
+use oxc_syntax::{operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -330,16 +326,11 @@ impl<'a> Hash for IdentifierReference<'a> {
 
 impl<'a> IdentifierReference<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
+        Self { span, name, reference_id: Cell::default() }
     }
 
     pub fn new_read(span: Span, name: Atom<'a>, reference_id: Option<ReferenceId>) -> Self {
-        Self {
-            span,
-            name,
-            reference_id: Cell::new(reference_id),
-            reference_flag: ReferenceFlag::Read,
-        }
+        Self { span, name, reference_id: Cell::new(reference_id) }
     }
 
     #[inline]
@@ -625,6 +616,10 @@ impl<'a> AssignmentTarget<'a> {
 
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
     }
 }
 

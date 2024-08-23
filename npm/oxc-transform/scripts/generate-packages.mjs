@@ -47,7 +47,7 @@ function generateNativePackage(target) {
   const triple = target.split("-");
   const platform = triple[0];
   const arch = triple[1];
-  const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] }
+  const libc = triple[2] && LIBC_MAPPING[triple[2]] && { libc: [LIBC_MAPPING[triple[2]]] }
   const manifest = {
     name: package_name(target),
     version,

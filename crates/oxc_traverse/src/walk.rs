@@ -604,16 +604,7 @@ pub(crate) unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_call_expression(&mut *node, ctx);
-    ctx.push_stack(Ancestor::CallExpressionArguments(ancestor::CallExpressionWithoutArguments(
-        node,
-    )));
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_ARGUMENTS)
-        as *mut Vec<Argument>))
-        .iter_mut()
-    {
-        walk_argument(traverser, item as *mut _, ctx);
-    }
-    ctx.retag_stack(AncestorType::CallExpressionCallee);
+    ctx.push_stack(Ancestor::CallExpressionCallee(ancestor::CallExpressionWithoutCallee(node)));
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_CALLEE) as *mut Expression,
@@ -625,6 +616,13 @@ pub(crate) unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
     {
         ctx.retag_stack(AncestorType::CallExpressionTypeParameters);
         walk_ts_type_parameter_instantiation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::CallExpressionArguments);
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_ARGUMENTS)
+        as *mut Vec<Argument>))
+        .iter_mut()
+    {
+        walk_argument(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
     traverser.exit_call_expression(&mut *node, ctx);
@@ -1619,14 +1617,13 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_statement(&mut *node, ctx);
-    let mut previous_scope_id = None;
-    if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-    {
-        previous_scope_id = Some(ctx.current_scope_id());
-        ctx.set_current_scope_id(scope_id);
-    }
+    let previous_scope_id = ctx.current_scope_id();
+    ctx.set_current_scope_id(
+        (*((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap(),
+    );
     ctx.push_stack(Ancestor::ForStatementInit(ancestor::ForStatementWithoutInit(node)));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_INIT)
         as *mut Option<ForStatementInit>)
@@ -1652,9 +1649,7 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    if let Some(previous_scope_id) = previous_scope_id {
-        ctx.set_current_scope_id(previous_scope_id);
-    }
+    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_for_statement(&mut *node, ctx);
 }
 
@@ -1725,14 +1720,13 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_in_statement(&mut *node, ctx);
-    let mut previous_scope_id = None;
-    if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-    {
-        previous_scope_id = Some(ctx.current_scope_id());
-        ctx.set_current_scope_id(scope_id);
-    }
+    let previous_scope_id = ctx.current_scope_id();
+    ctx.set_current_scope_id(
+        (*((node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap(),
+    );
     ctx.push_stack(Ancestor::ForInStatementLeft(ancestor::ForInStatementWithoutLeft(node)));
     walk_for_statement_left(
         traverser,
@@ -1752,9 +1746,7 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    if let Some(previous_scope_id) = previous_scope_id {
-        ctx.set_current_scope_id(previous_scope_id);
-    }
+    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_for_in_statement(&mut *node, ctx);
 }
 
@@ -1794,14 +1786,13 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_for_of_statement(&mut *node, ctx);
-    let mut previous_scope_id = None;
-    if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-    {
-        previous_scope_id = Some(ctx.current_scope_id());
-        ctx.set_current_scope_id(scope_id);
-    }
+    let previous_scope_id = ctx.current_scope_id();
+    ctx.set_current_scope_id(
+        (*((node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap(),
+    );
     ctx.push_stack(Ancestor::ForOfStatementLeft(ancestor::ForOfStatementWithoutLeft(node)));
     walk_for_statement_left(
         traverser,
@@ -1821,9 +1812,7 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    if let Some(previous_scope_id) = previous_scope_id {
-        ctx.set_current_scope_id(previous_scope_id);
-    }
+    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_for_of_statement(&mut *node, ctx);
 }
 
@@ -2027,14 +2016,13 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_catch_clause(&mut *node, ctx);
-    let mut previous_scope_id = None;
-    if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-    {
-        previous_scope_id = Some(ctx.current_scope_id());
-        ctx.set_current_scope_id(scope_id);
-    }
+    let previous_scope_id = ctx.current_scope_id();
+    ctx.set_current_scope_id(
+        (*((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_SCOPE_ID)
+            as *mut Cell<Option<ScopeId>>))
+            .get()
+            .unwrap(),
+    );
     ctx.push_stack(Ancestor::CatchClauseParam(ancestor::CatchClauseWithoutParam(node)));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_PARAM)
         as *mut Option<CatchParameter>)
@@ -2049,9 +2037,7 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    if let Some(previous_scope_id) = previous_scope_id {
-        ctx.set_current_scope_id(previous_scope_id);
-    }
+    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_catch_clause(&mut *node, ctx);
 }
 

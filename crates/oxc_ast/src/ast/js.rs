@@ -14,7 +14,7 @@ use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
-    reference::{ReferenceFlag, ReferenceId},
+    reference::ReferenceId,
     scope::ScopeId,
     symbol::SymbolId,
 };
@@ -239,13 +239,6 @@ pub struct IdentifierReference<'a> {
     #[serde(skip)]
     #[clone_in(default)]
     pub reference_id: Cell<Option<ReferenceId>>,
-    /// Flags indicating how the reference is used.
-    ///
-    /// This gets set in the bind step of semantic analysis, and will always be
-    /// [`ReferenceFlag::None`] immediately after parsing.
-    #[serde(skip)]
-    #[clone_in(default)]
-    pub reference_flag: ReferenceFlag,
 }
 
 /// `x` in `const x = 0;`
@@ -606,9 +599,9 @@ pub struct PrivateFieldExpression<'a> {
 pub struct CallExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub arguments: Vec<'a, Argument<'a>>,
     pub callee: Expression<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
 }
 
@@ -1352,7 +1345,7 @@ pub struct WhileStatement<'a> {
 
 /// For Statement
 #[ast(visit)]
-#[scope(if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration)))]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1390,7 +1383,7 @@ pub enum ForStatementInit<'a> {
 
 /// For-In Statement
 #[ast(visit)]
-#[scope(if(self.left.is_lexical_declaration()))]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1426,7 +1419,7 @@ pub enum ForStatementLeft<'a> {
 }
 /// For-Of Statement
 #[ast(visit)]
-#[scope(if(self.left.is_lexical_declaration()))]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1563,7 +1556,7 @@ pub struct TryStatement<'a> {
 }
 
 #[ast(visit)]
-#[scope(flags(ScopeFlags::CatchClause), if(self.param.is_some()))]
+#[scope(flags(ScopeFlags::CatchClause))]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

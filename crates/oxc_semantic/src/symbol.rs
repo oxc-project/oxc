@@ -1,6 +1,5 @@
 #![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 
-use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::{
@@ -98,7 +97,7 @@ impl SymbolTable {
     }
 
     #[inline]
-    pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
+    pub fn get_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
         self.flags[symbol_id]
     }
 
@@ -144,13 +143,13 @@ impl SymbolTable {
         &mut self,
         span: Span,
         name: CompactStr,
-        flag: SymbolFlags,
+        flags: SymbolFlags,
         scope_id: ScopeId,
         node_id: AstNodeId,
     ) -> SymbolId {
         self.spans.push(span);
         self.names.push(name);
-        self.flags.push(flag);
+        self.flags.push(flags);
         self.scope_ids.push(scope_id);
         self.declarations.push(node_id);
         self.resolved_references.push(vec![]);
@@ -202,31 +201,6 @@ impl SymbolTable {
         self.resolved_references[symbol_id]
             .iter()
             .map(|reference_id| &self.references[*reference_id])
-    }
-
-    /// Determine whether evaluating the specific input `node` is a consequenceless reference. ie.
-    /// evaluating it won't result in potentially arbitrary code from being ran. The following are
-    /// allowed and determined not to cause side effects:
-    ///
-    ///  - `this` expressions
-    ///  - `super` expressions
-    ///  - Bound identifiers
-    ///
-    /// Reference:
-    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L557>
-    pub fn is_static(&self, expr: &Expression) -> bool {
-        match expr {
-            Expression::ThisExpression(_) | Expression::Super(_) => true,
-            Expression::Identifier(ident) => {
-                ident.reference_id.get().map_or(false, |reference_id| {
-                    self.get_reference(reference_id).symbol_id().map_or_else(
-                        || self.has_binding(reference_id),
-                        |symbol_id| self.get_resolved_references(symbol_id).all(|r| !r.is_write()),
-                    )
-                })
-            }
-            _ => false,
-        }
     }
 
     pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {

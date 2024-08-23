@@ -16,14 +16,19 @@ export namespace foo {
   export let baz = 100;
 }
 
-// namespace must be exported
-namespace foo {
-  export let bar = 42;
-}
-
 foo.bar = 42;
 foo.baz = 100;
 
 // unexported
 const zoo = (): void => {}
 zoo.toString = () => {}
+
+function qux(): void {}
+
+namespace qux {
+  export let woo = 42;
+}
+
+qux.woo = 42;
+
+export default qux;

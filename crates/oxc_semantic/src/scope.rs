@@ -3,7 +3,7 @@ use std::hash::BuildHasherDefault;
 use indexmap::IndexMap;
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
-use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
+use oxc_syntax::reference::ReferenceId;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
@@ -12,8 +12,7 @@ use crate::{symbol::SymbolId, AstNodeId};
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
-pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
-pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
+pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 
 /// Scope Tree
 ///
@@ -96,24 +95,16 @@ impl ScopeTree {
         list.into_iter()
     }
 
-    /// Get the child scopes of a scope.
-    ///
-    /// Will return [`None`] if no scope exists, which should never happen if
-    /// you obtained `scope_id` through valid means. Scopes with no children
-    /// return [`Some`] empty [`Vec`].
+    /// Get the child scopes of a scope
     #[inline]
-    pub fn get_child_ids(&self, scope_id: ScopeId) -> Option<&Vec<ScopeId>> {
-        self.child_ids.get(scope_id)
+    pub fn get_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
+        &self.child_ids[scope_id]
     }
 
-    /// Get a mutable reference to a scope's children.
-    ///
-    /// Will return [`None`] if no scope exists, which should never happen if
-    /// you obtained `scope_id` through valid means. Scopes with no children
-    /// return [`Some`] empty [`Vec`].
+    /// Get a mutable reference to a scope's children
     #[inline]
-    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> Option<&mut Vec<ScopeId>> {
-        self.child_ids.get_mut(scope_id)
+    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> &mut Vec<ScopeId> {
+        &mut self.child_ids[scope_id]
     }
 
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
@@ -144,7 +135,7 @@ impl ScopeTree {
     pub fn root_unresolved_references_ids(
         &self,
     ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
-        self.root_unresolved_references.values().map(|v| v.iter().map(|(id, _)| *id))
+        self.root_unresolved_references.values().map(|v| v.iter().copied())
     }
 
     #[inline]
@@ -193,12 +184,8 @@ impl ScopeTree {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(
-        &mut self,
-        name: CompactStr,
-        reference: UnresolvedReference,
-    ) {
-        self.root_unresolved_references.entry(name).or_default().push(reference);
+    pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId) {
+        self.root_unresolved_references.entry(name).or_default().push(reference_id);
     }
 
     /// Check if a symbol is declared in a certain scope.

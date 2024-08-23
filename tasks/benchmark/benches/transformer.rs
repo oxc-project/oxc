@@ -3,6 +3,7 @@ use std::path::Path;
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::{Parser, ParserReturn};
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 use oxc_transformer::{TransformOptions, Transformer};
@@ -23,6 +24,10 @@ fn bench_transformer(criterion: &mut Criterion) {
                     Parser::new(&allocator, source_text, source_type).parse();
                 let transform_options = TransformOptions::default();
                 let program = allocator.alloc(program);
+                let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
+                    .build(program)
+                    .semantic
+                    .into_symbol_table_and_scope_tree();
                 Transformer::new(
                     &allocator,
                     Path::new(&file.file_name),
@@ -31,7 +36,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                     trivias,
                     transform_options,
                 )
-                .build(program);
+                .build_with_symbols_and_scopes(symbols, scopes, program);
                 allocator
             });
         });

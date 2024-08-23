@@ -43,8 +43,8 @@ use crate::{
 
 /// # Panics
 /// Invalid Project Root
-pub fn project_root() -> PathBuf {
-    project_root::get_project_root().unwrap()
+pub fn workspace_root() -> PathBuf {
+    project_root::get_project_root().unwrap().join("tasks").join("coverage")
 }
 
 #[derive(Debug, Default)]
@@ -118,8 +118,8 @@ impl AppArgs {
         let mut runtime_process = Command::new("node")
             .args([
                 "--experimental-vm-modules",
-                project_root()
-                    .join("tasks/coverage/src/runtime/runtime.js")
+                workspace_root()
+                    .join("src/runtime/runtime.js")
                     .to_string_lossy()
                     .as_str()
                     .unwrap_or_default(),
@@ -154,7 +154,7 @@ impl AppArgs {
         );
         tests.sort_unstable();
 
-        fs::write(project_root().join(V8_TEST_262_FAILED_TESTS_PATH), tests.join("\n"))
+        fs::write(workspace_root().join(V8_TEST_262_FAILED_TESTS_PATH), tests.join("\n"))
             .expect("Write v8 test262 status failed");
     }
 

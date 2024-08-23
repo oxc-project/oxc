@@ -10,7 +10,7 @@ fn codegen(source_text: &str) -> String {
     let source_type = SourceType::default().with_typescript(true).with_module(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(&ret.program)
         .source_text
 }

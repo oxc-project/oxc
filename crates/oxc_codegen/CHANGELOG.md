@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.25.0] - 2024-08-23
+
+- ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)
+
+### Features
+
+
+### Bug Fixes
+- b7db235 Comments gen regression (#5003) (IWANABETHATGUY)
+
+### Refactor
+
+- cd9cf5e oxc: Remove `remove_whitespace` (Boshen)
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- d49fb16 oxc_codegen: Support generate range leading comments (#4898) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- bbf9ec0 codegen: Add missing `declare` to `PropertyDefinition` (#4937) (Boshen)
+- f210cf7 codegen: Print `TSSatisfiesExpression` and `TSInstantiationExpression` (#4936) (Boshen)
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- e8de4bd codegen: Fix whitespace issue when minifying `x in new Error()` (#4886) (Boshen)
+- a226962 codegen: Print `TSNonNullExpression` (#4869) (Boshen)
+- 3da33d3 codegen: Missing parenthesis for `PrivateInExpression` (#4865) (Boshen)
+- 1808529 codegen: Dedupe pure annotation comments (#4862) (IWANABETHATGUY)
+- 508644a linter/tree-shaking: Correct the calculation of `>>`, `<<` and `>>>` (#4932) (mysteryven)
+
 ## [0.24.0] - 2024-08-08
 
 ### Bug Fixes

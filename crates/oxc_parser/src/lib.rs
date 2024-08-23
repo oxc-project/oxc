@@ -103,10 +103,20 @@ pub struct ParserReturn<'a> {
     pub panicked: bool,
 }
 
-/// Parser options
-#[derive(Clone, Copy)]
-struct ParserOptions {
+/// Parse options
+#[derive(Debug, Clone, Copy)]
+pub struct ParseOptions {
+    /// Whether to parse regular expressions or not.
+    ///
+    /// Default: false
+    pub parse_regular_expression: bool,
+
+    /// Allow return outside of function
+    ///
+    /// By default, a return statement at the top level raises an error.
+    /// Set this to true to accept such code.
     pub allow_return_outside_function: bool,
+
     /// Emit `ParenthesizedExpression` in AST.
     ///
     /// If this option is true, parenthesized expressions are represented by
@@ -117,9 +127,13 @@ struct ParserOptions {
     pub preserve_parens: bool,
 }
 
-impl Default for ParserOptions {
+impl Default for ParseOptions {
     fn default() -> Self {
-        Self { allow_return_outside_function: false, preserve_parens: true }
+        Self {
+            parse_regular_expression: false,
+            allow_return_outside_function: false,
+            preserve_parens: true,
+        }
     }
 }
 
@@ -130,33 +144,19 @@ pub struct Parser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     source_type: SourceType,
-    options: ParserOptions,
+    options: ParseOptions,
 }
 
 impl<'a> Parser<'a> {
     /// Create a new parser
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
-        let options = ParserOptions::default();
+        let options = ParseOptions::default();
         Self { allocator, source_text, source_type, options }
     }
 
-    /// Allow return outside of function
-    ///
-    /// By default, a return statement at the top level raises an error.
-    /// Set this to true to accept such code.
     #[must_use]
-    pub fn allow_return_outside_function(mut self, allow: bool) -> Self {
-        self.options.allow_return_outside_function = allow;
-        self
-    }
-
-    /// Emit `ParenthesizedExpression` in AST.
-    ///
-    /// If this option is true, parenthesized expressions are represented by (non-standard)
-    /// `ParenthesizedExpression` nodes that have a single expression property containing the expression inside parentheses.
-    #[must_use]
-    pub fn preserve_parens(mut self, allow: bool) -> Self {
-        self.options.preserve_parens = allow;
+    pub fn with_options(mut self, options: ParseOptions) -> Self {
+        self.options = options;
         self
     }
 }
@@ -237,6 +237,8 @@ use parser_parse::UniquePromise;
 /// Implementation of parser.
 /// `Parser` is just a public wrapper, the guts of the implementation is in this type.
 struct ParserImpl<'a> {
+    options: ParseOptions,
+
     lexer: Lexer<'a>,
 
     /// SourceType: JavaScript or TypeScript, Script or Module, jsx support?
@@ -263,10 +265,6 @@ struct ParserImpl<'a> {
 
     /// Ast builder for creating AST spans
     ast: AstBuilder<'a>,
-
-    /// Emit `ParenthesizedExpression` in AST.
-    /// Default: `true`
-    preserve_parens: bool,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -279,10 +277,11 @@ impl<'a> ParserImpl<'a> {
         allocator: &'a Allocator,
         source_text: &'a str,
         source_type: SourceType,
-        options: ParserOptions,
+        options: ParseOptions,
         unique: UniquePromise,
     ) -> Self {
         Self {
+            options,
             lexer: Lexer::new(allocator, source_text, source_type, unique),
             source_type,
             source_text,
@@ -292,7 +291,6 @@ impl<'a> ParserImpl<'a> {
             state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
-            preserve_parens: options.preserve_parens,
         }
     }
 
@@ -305,9 +303,9 @@ impl<'a> ParserImpl<'a> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
             Err(error) => {
-                self.error(
-                    self.flow_error().unwrap_or_else(|| self.overlong_error().unwrap_or(error)),
-                );
+                let error =
+                    self.flow_error().unwrap_or_else(|| self.overlong_error().unwrap_or(error));
+                self.error(error);
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
@@ -347,7 +345,7 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.program(span, self.source_type, hashbang, directives, statements))
     }
 
-    fn default_context(source_type: SourceType, options: ParserOptions) -> Context {
+    fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
         if source_type.module_kind() == ModuleKind::Module {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
@@ -361,12 +359,17 @@ impl<'a> ParserImpl<'a> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&self) -> Option<OxcDiagnostic> {
+    fn flow_error(&mut self) -> Option<OxcDiagnostic> {
         if !self.source_type.is_javascript() {
             return None;
         };
         let span = self.lexer.trivia_builder.comments.first()?.span;
-        span.source_text(self.source_text).contains("@flow").then(|| diagnostics::flow(span))
+        if span.source_text(self.source_text).contains("@flow") {
+            self.errors.clear();
+            Some(diagnostics::flow(span))
+        } else {
+            None
+        }
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
@@ -449,6 +452,7 @@ mod test {
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(ret.program.is_empty());
+            assert_eq!(ret.errors.len(), 1);
             assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
         }
     }

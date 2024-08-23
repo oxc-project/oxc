@@ -22,7 +22,7 @@ pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariab
         .into_symbol_table_and_scope_tree();
     InjectGlobalVariables::new(&allocator, config).build(&mut symbols, &mut scopes, program);
     let result = CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
         .source_text;
     let expected = run(expected, source_type, None);

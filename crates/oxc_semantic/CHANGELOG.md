@@ -4,6 +4,86 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.25.0] - 2024-08-23
+
+- f2b8d82 semantic: [**BREAKING**] `ScopeTree::get_child_ids` + `get_child_ids_mut` return value not `Option` (#5058) (overlookmotel)
+
+- 5f4c9ab semantic: [**BREAKING**] Rename `SymbolTable::get_flag` to `get_flags` (#5030) (overlookmotel)
+
+- 58bf215 semantic: [**BREAKING**] Rename `Reference::flag` and `flag_mut` methods to plural (#5025) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- c30e2e9 semantic: [**BREAKING**] `Reference::flag` method return `ReferenceFlag` (#5019) (overlookmotel)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Bug Fixes
+
+- 1bd9365 coverage: Correctly check semantic data after transform (#5035) (Boshen)
+- ad2be97 semantic: Incorrect semantic check for label has same name (#5041) (heygsc)
+- d5de97d semantic: Transform checker check reference flags (#5092) (overlookmotel)
+- 90c74ee semantic: Transform checker check reference symbol IDs (#5090) (overlookmotel)
+- a8005b9 semantic: Transform checker check symbol redeclarations (#5089) (overlookmotel)
+- 205bff7 semantic: Transform checker check symbol references (#5088) (overlookmotel)
+- 4a57086 semantic: Transform checker check symbol IDs (#5078) (overlookmotel)
+- ea7d216 semantic: Transform checker check symbol spans (#5076) (overlookmotel)
+- 1b6b27a semantic: Transform checker check symbol flags (#5074) (overlookmotel)
+- 6d87b0f semantic: Fix error message for duplicated label (#5071) (Boshen)
+- 05fff16 semantic: Transform checker compare binding symbol IDs (#5057) (overlookmotel)
+- f187b71 semantic: Transform checker compare scope children (#5056) (overlookmotel)
+- b52c6a4 semantic: Transform checker compare scope parents (#5055) (overlookmotel)
+- da64014 semantic: Transform checker catch more scope flags mismatches (#5054) (overlookmotel)
+- 67d1a96 semantic: Transform checker compare scope flags (#5052) (overlookmotel)
+- 863b9cb semantic: Transform checker handle conditional scopes (#5040) (overlookmotel)
+- 47029c4 semantic: Transform checker output symbol names in errors (#5038) (overlookmotel)
+
+### Refactor
+
+- ca70cc7 linter, mangler, parser, semantic, transformer, traverse, wasm: Rename various `flag` vars to `flags` (#5028) (overlookmotel)
+- 9da6a21 semantic: Rename transform checker output for reference symbol mismatches (#5091) (overlookmotel)
+- fb46eaf semantic: Add remap functions to transform checker (#5082) (overlookmotel)
+- a00bf18 semantic: Add `IdMapping` to transform checker (#5079) (overlookmotel)
+- b14a302 semantic: Transform checker: change symbol name mismatch error (#5075) (overlookmotel)
+- b8c6ce5 semantic: Rename vars in transform checker (#5072) (overlookmotel)
+- 7156fd2 semantic: Transform checker `Pair` structure (#5053) (overlookmotel)
+- 0ba6f50 semantic: Simplify raising errors in transform checker (#5051) (overlookmotel)
+- ee7ac8b semantic: Store all data in `PostTransformChecker` in transform checker (#5050) (overlookmotel)
+- 4e1f4ab semantic: Add `SemanticIds` to transformer checker (#5048) (overlookmotel)
+- c1da574 semantic: Add comments to transformer checker (#5045) (overlookmotel)
+- 8cded08 semantic: Rename error labels in transformer checker snapshots (#5044) (overlookmotel)
+- 602244f semantic: Rename vars in transformer checker (#5043) (overlookmotel)
+- ae94b9a semantic: Remove unused function params in transformer checker (#5042) (overlookmotel)
+- 586e15c semantic: Reformat transform checker errors (#5039) (overlookmotel)
+- d69e34e semantic: Fix indentation (#5037) (overlookmotel)
+- 4336a32 semantic: Rename fields in snapshots from `flag` to `flags` (#5032) (overlookmotel)
+- 83dfb14 semantic: Rename vars from `flag` to `flags` (#5031) (overlookmotel)
+- 3b7de18 semantic: Rename `SemanticBuilder::current_reference_flags` field (#5027) (overlookmotel)
+- 0bacdd8 semantic: Rename `Reference::flag` field to `flags` (#5026) (overlookmotel)
+- 896b92f semantic: Correct typo in doc comment (#5009) (overlookmotel)
+- d677b8e semantic: Do not reserve space in `resolved_references` (#4962) (overlookmotel)
+- a7ef30d semantic: `UnresolvedReferencesStack` contain only `ReferenceId` (#4960) (overlookmotel)
+- 59d15c7 semantic: `root_unresolved_references` contain only `ReferenceId` (#4959) (overlookmotel)
+
+### Testing
+
+- 0df1a94 semantic: Add more symbol and reference checks to `PostTransformChecker` (Boshen)
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- 80d0d1f semantic: Check for invalid interface heritage clauses (#4928) (DonIsaac)
+- 48821c0 semantic,syntax: Add SymbolFlags::ArrowFunction (#4946) (DonIsaac)
+
+### Documentation
+
+- 0a01a47 semantic: Improve documentation (#4850) (DonIsaac)
+
+### Refactor
+
+- ea1e64a semantic: Make SemanticBuilder opaque (#4851) (DonIsaac)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

@@ -5,7 +5,7 @@ use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
-    reference::ReferenceFlag,
+    reference::ReferenceFlags,
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
@@ -690,9 +690,9 @@ impl<'a> ReactJsx<'a> {
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
         self.ast().expression_call(
             e.span(),
-            arguments,
             callee,
             Option::<TSTypeParameterInstantiation>::None,
+            arguments,
             false,
         )
     }
@@ -1018,7 +1018,7 @@ fn get_read_identifier_reference<'a>(
     ctx: &mut TraverseCtx<'a>,
 ) -> IdentifierReference<'a> {
     let reference_id =
-        ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlag::Read);
+        ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlags::Read);
     IdentifierReference::new_read(span, name, Some(reference_id))
 }
 
