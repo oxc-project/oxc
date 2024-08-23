@@ -2,10 +2,7 @@ use std::{cell::Cell, str};
 
 use compact_str::{format_compact, CompactString};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{
-    ast::*,
-    visit::{walk, Visit},
-};
+use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
@@ -567,11 +564,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     fn visit_class(&mut self, class: &Class<'a>) {
-        if let Some(scope_id) = class.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_class(self, class);
-        }
+        self.scope_ids.push(class.scope_id.get().unwrap());
     }
 
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
