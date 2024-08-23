@@ -528,70 +528,90 @@ impl ChildScopeCollector {
     fn new() -> Self {
         Self { scope_ids: vec![] }
     }
+
+    fn add_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
+        self.scope_ids.push(scope_id.get().unwrap());
+    }
 }
 
 impl<'a> Visit<'a> for ChildScopeCollector {
+    #[inline]
     fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
+        self.add_scope(&stmt.scope_id);
     }
 
+    #[inline]
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
+        self.add_scope(&stmt.scope_id);
     }
 
+    #[inline]
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
+        self.add_scope(&stmt.scope_id);
     }
 
+    #[inline]
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
+        self.add_scope(&stmt.scope_id);
     }
 
+    #[inline]
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
+        self.add_scope(&stmt.scope_id);
     }
 
+    #[inline]
     fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
-        self.scope_ids.push(clause.scope_id.get().unwrap());
+        self.add_scope(&clause.scope_id);
     }
 
-    fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
-        self.scope_ids.push(clause.scope_id.get().unwrap());
+    #[inline]
+    fn visit_finally_clause(&mut self, block: &BlockStatement<'a>) {
+        self.add_scope(&block.scope_id);
     }
 
+    #[inline]
     fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
-        self.scope_ids.push(func.scope_id.get().unwrap());
+        self.add_scope(&func.scope_id);
     }
 
+    #[inline]
     fn visit_class(&mut self, class: &Class<'a>) {
-        self.scope_ids.push(class.scope_id.get().unwrap());
+        self.add_scope(&class.scope_id);
     }
 
+    #[inline]
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
-        self.scope_ids.push(block.scope_id.get().unwrap());
+        self.add_scope(&block.scope_id);
     }
 
+    #[inline]
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        self.scope_ids.push(expr.scope_id.get().unwrap());
+        self.add_scope(&expr.scope_id);
     }
 
+    #[inline]
     fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
-        self.scope_ids.push(decl.scope_id.get().unwrap());
+        self.add_scope(&decl.scope_id);
     }
 
+    #[inline]
     fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
-        self.scope_ids.push(decl.scope_id.get().unwrap());
+        self.add_scope(&decl.scope_id);
     }
 
+    #[inline]
     fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
+        self.add_scope(&it.scope_id);
     }
 
+    #[inline]
     fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
+        self.add_scope(&it.scope_id);
     }
 
+    #[inline]
     fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
+        self.add_scope(&it.scope_id);
     }
 }
