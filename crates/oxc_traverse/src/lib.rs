@@ -64,14 +64,18 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_semantic::{ScopeTree, SymbolTable};
 
-pub mod ancestor;
-pub use ancestor::Ancestor;
 mod context;
 pub use context::{TraverseAncestry, TraverseCtx, TraverseScoping};
-#[allow(clippy::module_inception)]
-mod traverse;
-pub use traverse::Traverse;
-mod walk;
+
+mod generated {
+    pub mod ancestor;
+    pub mod traverse;
+    pub(super) mod walk;
+}
+pub use generated::ancestor;
+pub use generated::ancestor::Ancestor;
+pub use generated::traverse::Traverse;
+use generated::walk;
 
 mod compile_fail_tests;
 
