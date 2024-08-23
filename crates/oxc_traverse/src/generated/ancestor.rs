@@ -17,13 +17,7 @@ use memoffset::offset_of;
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::{
-    operator::{
-        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-    },
-    scope::ScopeId,
-};
+use oxc_syntax::scope::ScopeId;
 
 /// Type of [`Ancestor`].
 /// Used in [`crate::TraverseCtx::retag_stack`].
