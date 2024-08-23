@@ -85,10 +85,16 @@ impl Rule for NoHexEscape {
                 });
             }
             AstKind::RegExpLiteral(regex) => {
-                let text = regex.span.source_text(ctx.source_text());
-                if let Some(fixed) = check_escape(&text[1..text.len() - 1]) {
+                if let Some(fixed) = check_escape(&regex.regex.pattern) {
+                    #[allow(clippy::cast_possible_truncation)]
                     ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), |fixer| {
-                        fixer.replace(regex.span, format!("/{fixed}/"))
+                        fixer.replace(
+                            Span::new(
+                                regex.span.start,
+                                regex.span.end - regex.regex.flags.iter().count() as u32,
+                            ),
+                            format!("/{fixed}/"),
+                        )
                     });
                 }
             }
@@ -170,6 +176,16 @@ fn test() {
         (r"const foo = `42\x1242\x34`", r"const foo = `42\u001242\u0034`", None),
         (r"const foo = `42\\\x1242\\\x34`", r"const foo = `42\\\u001242\\\u0034`", None),
         (r"const foo = `\xb1${foo}\xb1${foo}`", r"const foo = `\u00b1${foo}\u00b1${foo}`", None),
+        (
+            r#"const unicodeMatch = "".toString().match(/[^\x00-\xFF]+/g);"#,
+            r#"const unicodeMatch = "".toString().match(/[^\u0000-\u00FF]+/g);"#,
+            None,
+        ),
+        (
+            r#"const unicodeMatch = "".toString().match(/[^\x00-\xFF]+/gim);"#,
+            r#"const unicodeMatch = "".toString().match(/[^\u0000-\u00FF]+/gim);"#,
+            None,
+        ),
     ];
 
     Tester::new(NoHexEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
