@@ -1,3 +1,67 @@
+use bitflags::bitflags;
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Hash)]
+    pub(crate) struct LintPlugins: u32 {
+        const REACT = 1 << 0;
+        const UNICORN = 1 << 1;
+        const TYPESCRIPT = 1 << 2;
+        const OXC = 1 << 3;
+        const IMPORT = 1 << 4;
+        const JSDOC = 1 << 5;
+        const JEST = 1 << 6;
+        const VITEST = 1 << 7;
+        const JSX_A11Y = 1 << 8;
+        const NEXTJS = 1 << 9;
+        const REACT_PERF = 1 << 10;
+        const PROMISE = 1 << 11;
+    }
+}
+impl Default for LintPlugins {
+    #[inline]
+    fn default() -> Self {
+        LintPlugins::REACT | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
+    }
+}
+
+impl From<LintPluginOptions> for LintPlugins {
+    fn from(options: LintPluginOptions) -> Self {
+        let mut plugins = LintPlugins::empty();
+        plugins.set(LintPlugins::REACT, options.react);
+        plugins.set(LintPlugins::UNICORN, options.unicorn);
+        plugins.set(LintPlugins::TYPESCRIPT, options.typescript);
+        plugins.set(LintPlugins::OXC, options.oxc);
+        plugins.set(LintPlugins::IMPORT, options.import);
+        plugins.set(LintPlugins::JSDOC, options.jsdoc);
+        plugins.set(LintPlugins::JEST, options.jest);
+        plugins.set(LintPlugins::VITEST, options.vitest);
+        plugins.set(LintPlugins::JSX_A11Y, options.jsx_a11y);
+        plugins.set(LintPlugins::NEXTJS, options.nextjs);
+        plugins.set(LintPlugins::REACT_PERF, options.react_perf);
+        plugins.set(LintPlugins::PROMISE, options.promise);
+        plugins
+    }
+}
+
+impl LintPlugins {
+    /// Returns `true` if the Vitest plugin is enabled.
+    #[inline]
+    pub fn has_vitest(self) -> bool {
+        self.contains(LintPlugins::VITEST)
+    }
+
+    /// Returns `true` if Jest or Vitest plugins are enabled.
+    #[inline]
+    pub fn has_test(self) -> bool {
+        self.intersects(LintPlugins::JEST.union(LintPlugins::VITEST))
+    }
+
+    /// Returns `true` if the import plugin is enabled.
+    #[inline]
+    pub fn has_import(self) -> bool {
+        self.contains(LintPlugins::IMPORT)
+    }
+}
+
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 #[non_exhaustive]
@@ -116,6 +180,13 @@ impl<'s> FromIterator<&'s str> for LintPluginOptions {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_default_conversion() {
+        let plugins = LintPlugins::default();
+        let options = LintPluginOptions::default();
+        assert_eq!(LintPlugins::from(options), plugins);
+    }
 
     #[test]
     fn test_collect_empty() {
