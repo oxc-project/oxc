@@ -539,27 +539,15 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_statement(self, stmt);
-        }
+        self.scope_ids.push(stmt.scope_id.get().unwrap());
     }
 
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_in_statement(self, stmt);
-        }
+        self.scope_ids.push(stmt.scope_id.get().unwrap());
     }
 
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_of_statement(self, stmt);
-        }
+        self.scope_ids.push(stmt.scope_id.get().unwrap());
     }
 
     fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {

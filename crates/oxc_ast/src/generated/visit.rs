@@ -3504,16 +3504,11 @@ pub mod walk {
     pub fn walk_for_in_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(visitor.alloc(it));
         visitor.enter_node(kind);
-        let scope_events_cond = it.left.is_lexical_declaration();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_for_statement_left(&it.left);
         visitor.visit_expression(&it.right);
         visitor.visit_statement(&it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3575,16 +3570,11 @@ pub mod walk {
     pub fn walk_for_of_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(visitor.alloc(it));
         visitor.enter_node(kind);
-        let scope_events_cond = it.left.is_lexical_declaration();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_for_statement_left(&it.left);
         visitor.visit_expression(&it.right);
         visitor.visit_statement(&it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3592,11 +3582,7 @@ pub mod walk {
     pub fn walk_for_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(visitor.alloc(it));
         visitor.enter_node(kind);
-        let scope_events_cond =
-            it.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(init) = &it.init {
             visitor.visit_for_statement_init(init);
         }
@@ -3607,9 +3593,7 @@ pub mod walk {
             visitor.visit_expression(update);
         }
         visitor.visit_statement(&it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

@@ -1345,7 +1345,7 @@ pub struct WhileStatement<'a> {
 
 /// For Statement
 #[ast(visit)]
-#[scope(if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration)))]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1383,7 +1383,7 @@ pub enum ForStatementInit<'a> {
 
 /// For-In Statement
 #[ast(visit)]
-#[scope(if(self.left.is_lexical_declaration()))]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1419,7 +1419,7 @@ pub enum ForStatementLeft<'a> {
 }
 /// For-Of Statement
 #[ast(visit)]
-#[scope(if(self.left.is_lexical_declaration()))]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

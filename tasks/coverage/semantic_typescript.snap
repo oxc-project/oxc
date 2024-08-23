@@ -5076,8 +5076,8 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/downlevelLetConst17.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(17), ScopeId(19)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(16), ScopeId(18)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(20), ScopeId(22)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(19), ScopeId(21)]
 
 tasks/coverage/typescript/tests/cases/compiler/dtsEmitTripleSlashAvoidUnnecessaryResolutionMode.ts
 semantic error: Unresolved references mismatch:
@@ -8449,8 +8449,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["A", "AB", "B", "C", "CD", "D", "x", "y"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): []
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
 Reference symbol mismatch:
 after transform: ReferenceId(8): Some("y")
 rebuilt        : ReferenceId(0): None
@@ -9596,20 +9596,20 @@ Bindings mismatch:
 after transform: ScopeId(3): ["A", "f", "i", "list"]
 rebuilt        : ScopeId(3): ["f", "i", "list"]
 Bindings mismatch:
-after transform: ScopeId(5): ["A", "ar", "f", "ret"]
-rebuilt        : ScopeId(5): ["ar", "f", "ret"]
+after transform: ScopeId(6): ["A", "ar", "f", "ret"]
+rebuilt        : ScopeId(6): ["ar", "f", "ret"]
 Bindings mismatch:
-after transform: ScopeId(8): ["A", "ar"]
-rebuilt        : ScopeId(8): ["ar"]
+after transform: ScopeId(9): ["A", "ar"]
+rebuilt        : ScopeId(9): ["ar"]
 Bindings mismatch:
-after transform: ScopeId(9): ["A", "B", "C", "f"]
-rebuilt        : ScopeId(9): ["f"]
+after transform: ScopeId(10): ["A", "B", "C", "f"]
+rebuilt        : ScopeId(10): ["f"]
 Bindings mismatch:
-after transform: ScopeId(12): ["A", "pred"]
-rebuilt        : ScopeId(12): ["pred"]
+after transform: ScopeId(13): ["A", "pred"]
+rebuilt        : ScopeId(13): ["pred"]
 Bindings mismatch:
-after transform: ScopeId(13): ["A", "pred", "where"]
-rebuilt        : ScopeId(13): ["pred", "where"]
+after transform: ScopeId(14): ["A", "pred", "where"]
+rebuilt        : ScopeId(14): ["pred", "where"]
 
 tasks/coverage/typescript/tests/cases/compiler/genericTypeWithCallableMembers.ts
 semantic error: Bindings mismatch:
@@ -19030,8 +19030,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiSkilledRobot", "Robot", "console", "getMultiRobot", "getRobot", "i", "multiRobotA", "multiRobotAInfo", "multiRobotB", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "secondarySkillA", "skillA2"]
 rebuilt        : ScopeId(0): ["getMultiRobot", "getRobot", "i", "multiRobotA", "multiRobotAInfo", "multiRobotB", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "secondarySkillA", "skillA2"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49)]
 Reference symbol mismatch:
 after transform: ReferenceId(10): Some("console")
 rebuilt        : ReferenceId(7): None
@@ -19187,8 +19187,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiSkilledRobot", "Robot", "console", "getMultiRobot", "getRobot", "i", "multiRobotA", "multiRobotAInfo", "multiRobotB", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "secondarySkillA", "skillA2"]
 rebuilt        : ScopeId(0): ["getMultiRobot", "getRobot", "i", "multiRobotA", "multiRobotAInfo", "multiRobotB", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "secondarySkillA", "skillA2"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43)]
 Reference symbol mismatch:
 after transform: ReferenceId(10): Some("console")
 rebuilt        : ReferenceId(7): None
@@ -19308,8 +19308,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiRobot", "Robot", "console", "getMultiRobot", "getRobot", "i", "multiRobot", "name", "nameA", "primary", "primaryA", "robot", "secondary", "secondaryA", "skill", "skillA"]
 rebuilt        : ScopeId(0): ["getMultiRobot", "getRobot", "i", "multiRobot", "name", "nameA", "primary", "primaryA", "robot", "secondary", "secondaryA", "skill", "skillA"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49)]
 Reference symbol mismatch:
 after transform: ReferenceId(9): Some("console")
 rebuilt        : ReferenceId(7): None
@@ -19438,8 +19438,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiRobot", "Robot", "console", "getMultiRobot", "getRobot", "i", "multiRobot", "name", "nameA", "primary", "primaryA", "robot", "secondary", "secondaryA", "skill", "skillA"]
 rebuilt        : ScopeId(0): ["getMultiRobot", "getRobot", "i", "multiRobot", "name", "nameA", "primary", "primaryA", "robot", "secondary", "secondaryA", "skill", "skillA"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49)]
 Reference symbol mismatch:
 after transform: ReferenceId(9): Some("console")
 rebuilt        : ReferenceId(7): None
@@ -19604,8 +19604,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiSkilledRobot", "Robot", "console", "getMultiRobots", "getRobots", "multiRobotA", "multiRobotAInfo", "multiRobotB", "multiRobots", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "robotB", "robots", "secondarySkillA", "skillA2"]
 rebuilt        : ScopeId(0): ["getMultiRobots", "getRobots", "multiRobotA", "multiRobotAInfo", "multiRobotB", "multiRobots", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "robotB", "robots", "secondarySkillA", "skillA2"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49)]
 Reference symbol mismatch:
 after transform: ReferenceId(12): Some("console")
 rebuilt        : ReferenceId(8): None
@@ -19761,8 +19761,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiSkilledRobot", "Robot", "console", "getMultiRobots", "getRobots", "multiRobotA", "multiRobotAInfo", "multiRobotB", "multiRobots", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "robotB", "robots", "secondarySkillA", "skillA2"]
 rebuilt        : ScopeId(0): ["getMultiRobots", "getRobots", "multiRobotA", "multiRobotAInfo", "multiRobotB", "multiRobots", "nameA", "nameA2", "nameB", "nameMA", "numberA2", "numberA3", "numberB", "primarySkillA", "robotA", "robotAInfo", "robotB", "robots", "secondarySkillA", "skillA2"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43)]
 Reference symbol mismatch:
 after transform: ReferenceId(12): Some("console")
 rebuilt        : ReferenceId(8): None
@@ -19882,8 +19882,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiRobot", "Robot", "console", "getMultiRobots", "getRobots", "i", "multiRobots", "name", "nameA", "primary", "primaryA", "robots", "secondary", "secondaryA", "skill", "skillA"]
 rebuilt        : ScopeId(0): ["getMultiRobots", "getRobots", "i", "multiRobots", "name", "nameA", "primary", "primaryA", "robots", "secondary", "secondaryA", "skill", "skillA"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49)]
 Reference symbol mismatch:
 after transform: ReferenceId(6): Some("console")
 rebuilt        : ReferenceId(4): None
@@ -20012,8 +20012,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["MultiRobot", "Robot", "console", "getMultiRobots", "getRobots", "i", "multiRobots", "name", "nameA", "primary", "primaryA", "robots", "secondary", "secondaryA", "skill", "skillA"]
 rebuilt        : ScopeId(0): ["getMultiRobots", "getRobots", "i", "multiRobots", "name", "nameA", "primary", "primaryA", "robots", "secondary", "secondaryA", "skill", "skillA"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27), ScopeId(28), ScopeId(29)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(26), ScopeId(28), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48), ScopeId(50), ScopeId(52)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(9), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(27), ScopeId(29), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49)]
 Reference symbol mismatch:
 after transform: ReferenceId(6): Some("console")
 rebuilt        : ReferenceId(4): None
@@ -26960,14 +26960,14 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["E", "I", "a", "entries", "entries1", "entries2", "entries3", "entries4", "entries5", "entries6", "i", "o", "values", "values1", "values2", "values3", "values4", "values5", "values6", "x"]
 rebuilt        : ScopeId(0): ["E", "a", "entries", "entries1", "entries2", "entries3", "entries4", "entries5", "entries6", "i", "o", "values", "values1", "values2", "values3", "values4", "values5", "values6", "x"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
 Bindings mismatch:
-after transform: ScopeId(2): ["A", "B", "E"]
-rebuilt        : ScopeId(2): ["E"]
+after transform: ScopeId(3): ["A", "B", "E"]
+rebuilt        : ScopeId(3): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(14): SymbolFlags(FunctionScopedVariable)
@@ -29582,7 +29582,7 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["AOrArrA", "a", "arr", "x"]
 rebuilt        : ScopeId(0): ["a", "arr", "x"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["RegExp"]
@@ -30412,8 +30412,8 @@ rebuilt        : ScopeId(3): ["r1", "r2", "r3", "r4", "t", "u"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorOtherValidOperation.ts
 semantic error: Bindings mismatch:
-after transform: ScopeId(3): ["T1", "T2", "resultIsT1", "x", "y"]
-rebuilt        : ScopeId(3): ["resultIsT1", "x", "y"]
+after transform: ScopeId(4): ["T1", "T2", "resultIsT1", "x", "y"]
+rebuilt        : ScopeId(4): ["resultIsT1", "x", "y"]
 
 tasks/coverage/typescript/tests/cases/conformance/expressions/commaOperator/commaOperatorWithSecondOperandAnyType.ts
 semantic error: Unresolved references mismatch:
@@ -35463,8 +35463,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Point", "a", "declSpace", "fn", "p", "x"]
 rebuilt        : ScopeId(0): ["a", "declSpace", "fn", "p", "x"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(4): [ReferenceId(6)]
 rebuilt        : SymbolId(3): []
@@ -35544,8 +35544,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Point", "a", "declSpace", "fn", "p", "x"]
 rebuilt        : ScopeId(0): ["a", "declSpace", "fn", "p", "x"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26), ScopeId(27)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18), ScopeId(19), ScopeId(20), ScopeId(21), ScopeId(22), ScopeId(23), ScopeId(24), ScopeId(25), ScopeId(26)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(10), ScopeId(11), ScopeId(13), ScopeId(15), ScopeId(17), ScopeId(19), ScopeId(21), ScopeId(23), ScopeId(25), ScopeId(28), ScopeId(31), ScopeId(33), ScopeId(35), ScopeId(37), ScopeId(39), ScopeId(41), ScopeId(43), ScopeId(45), ScopeId(47), ScopeId(49)]
+rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(10), ScopeId(12), ScopeId(14), ScopeId(16), ScopeId(18), ScopeId(20), ScopeId(22), ScopeId(24), ScopeId(27), ScopeId(30), ScopeId(32), ScopeId(34), ScopeId(36), ScopeId(38), ScopeId(40), ScopeId(42), ScopeId(44), ScopeId(46), ScopeId(48)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(4): [ReferenceId(6)]
 rebuilt        : SymbolId(3): []
@@ -35642,8 +35642,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(2): ["T", "x"]
 rebuilt        : ScopeId(2): ["x"]
 Bindings mismatch:
-after transform: ScopeId(9): ["T"]
-rebuilt        : ScopeId(9): []
+after transform: ScopeId(11): ["T"]
+rebuilt        : ScopeId(11): []
 
 tasks/coverage/typescript/tests/cases/conformance/statements/throwStatements/throwStatements.ts
 semantic error: Semantic Collector failed after transform
@@ -37701,7 +37701,7 @@ rebuilt        : ["tuple"]
 
 tasks/coverage/typescript/tests/cases/conformance/types/tuple/typeInferenceWithTupleType.ts
 semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(5), ScopeId(6)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(6), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Bindings mismatch:
 after transform: ScopeId(1): ["T", "U", "x", "y"]
