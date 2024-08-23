@@ -12,21 +12,9 @@ Passed: 8/35
   | after transform: ScopeId(0): ["_unused", "_unused2"]
   | rebuilt        : ScopeId(0): ["_unused"]
 
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-
   x Bindings mismatch:
-  | after transform: No scope
-  | rebuilt        : ScopeId(2): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(2): []
+  | after transform: ScopeId(3): []
   | rebuilt        : ScopeId(3): ["_unused2"]
-
-  x Scope parent mismatch:
-  | after transform: ScopeId(2): Some(ScopeId(0))
-  | rebuilt        : ScopeId(3): Some(ScopeId(2))
 
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(CatchVariable)

@@ -3711,17 +3711,12 @@ pub mod walk {
     pub fn walk_catch_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &CatchClause<'a>) {
         let kind = AstKind::CatchClause(visitor.alloc(it));
         visitor.enter_node(kind);
-        let scope_events_cond = it.param.is_some();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
         if let Some(param) = &it.param {
             visitor.visit_catch_parameter(param);
         }
         visitor.visit_block_statement(&it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

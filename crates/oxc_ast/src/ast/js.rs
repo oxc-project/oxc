@@ -1556,7 +1556,7 @@ pub struct TryStatement<'a> {
 }
 
 #[ast(visit)]
-#[scope(flags(ScopeFlags::CatchClause), if(self.param.is_some()))]
+#[scope(flags(ScopeFlags::CatchClause))]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

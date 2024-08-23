@@ -709,12 +709,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings =
-                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
-            parent_bindings.values().for_each(|symbol_id| {
-                self.symbols.set_scope_id(*symbol_id, self.current_scope_id);
-            });
-            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+            let parent_bindings = self.scope.get_bindings_mut(parent_scope_id);
+            if !parent_bindings.is_empty() {
+                let parent_bindings = parent_bindings.drain(..).collect::<Bindings>();
+                parent_bindings.values().for_each(|&symbol_id| {
+                    self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+                });
+                *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+            }
         }
 
         self.visit_statements(&it.body);
