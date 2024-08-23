@@ -3,8 +3,19 @@ pub struct Reader<'a> {
     unicode_mode: bool,
     /// Current index for `u8_units`(unicode mode) or `u16_units`(non-unicode mode).
     index: usize,
+    // NOTE: Distinguish these 2 units looks cleaner, but it may not be necessary.
+    //
+    // If I understand correctly (and there are no unexpected factors),
+    // AST `Character[kind=Symbol]` only needs to be aware of this for surrogate pairs.
+    //
+    // Therefore, performance might be improved by:
+    // - using only `u8_units`, and
+    // - checking if each unit (char) is non-BMP, and if so, converting it into a surrogate pair and emitting 2 units.
+    // However, I'm not certain this approach is faster than current one using `encode_utf16()` all at once.
+    /// Iteration units for unicode mode.
     /// Even in non-unicode mode, used for `Span` offset calculation.
     u8_units: Vec<(usize, char)>,
+    /// Iteration units for non-unicode mode.
     u16_units: Vec<u16>,
     /// Last offset caches for non-unicode mode.
     last_offset_indices: (usize, usize),
@@ -12,10 +23,9 @@ pub struct Reader<'a> {
 
 impl<'a> Reader<'a> {
     pub fn new(source: &'a str, unicode_mode: bool) -> Self {
-        // NOTE: Distinguish these 2 units looks cleaner, but it may not be necessary.
-        // As as a parser, AST `Character[kind=Symbol]` only needs to be aware of this for surrogate pairs.
         // NOTE: Collecting `Vec` may not be efficient if the source is too large.
         // Implements lookahead cache with `VecDeque` is better...?
+        // But when I tried once, there are no notable improvements.
         let u8_units = source.char_indices().collect::<Vec<_>>();
         let u16_units = if unicode_mode { "" } else { source }.encode_utf16().collect::<Vec<_>>();
 
@@ -26,6 +36,8 @@ impl<'a> Reader<'a> {
         if self.unicode_mode {
             self.u8_units.get(self.index).map_or(self.source.len(), |(idx, _)| *idx)
         } else {
+            // NOTE: This does not return valid `Span` offset for surrogate pairs.
+            // In the first place, there is no such thing as string slice corresponding to them...
             let (mut u16_idx, mut u8_idx) = self.last_offset_indices;
             for (idx, ch) in &self.u8_units[u8_idx..] {
                 if self.index <= u16_idx {
