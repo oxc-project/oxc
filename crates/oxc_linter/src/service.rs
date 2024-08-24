@@ -310,6 +310,7 @@ impl Runtime {
                     module_record
                         .loaded_modules
                         .insert(specifier.clone(), Arc::clone(target_module_record));
+                    target_module_record.dependent_modules.insert(Arc::clone(&module_record));
                 });
 
             // The thread is blocked here until all dependent modules are resolved.

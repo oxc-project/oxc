@@ -1,6 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -43,13 +44,35 @@ impl Rule for NoUnusedModules {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
-        dbg!(&module_record);
-        if self.missing_exports && module_record.local_export_entries.is_empty() {
-            ctx.diagnostic(no_exports_found(Span::new(0, 0)));
+        // if self.missing_exports && module_record.local_export_entries.is_empty() {
+        // ctx.diagnostic(no_exports_found(Span::new(0, 0)));
+        // }
+        // if self.unused_exports {
+        // // TODO: implement unused exports
+        // }
+
+        // dbg!("--------");
+        // dbg!(&module_record.resolved_absolute_path);
+        let mut exports = module_record.exported_bindings.clone();
+        // dbg!(&exports);
+        // dbg!(&module_record.dependent_modules.len());
+
+        for module in module_record.dependent_modules.iter() {
+            for import_entry in &module.import_entries {
+                let Some(m) = module.loaded_modules.get(import_entry.module_request.name()) else {
+                    continue;
+                };
+
+                match &import_entry.import_name {
+                    ImportImportName::Name(name_span) => {
+                        exports.remove(name_span.name());
+                    }
+                    _ => {}
+                }
+                // dbg!(&module_record.resolved_absolute_path, m.value());
+            }
         }
-        if self.unused_exports {
-            // TODO: implement unused exports
-        }
+        dbg!(exports);
     }
 }
 

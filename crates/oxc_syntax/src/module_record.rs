@@ -1,8 +1,13 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
-use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
+use std::{
+    fmt,
+    hash::{BuildHasherDefault, Hash, Hasher},
+    path::PathBuf,
+    sync::Arc,
+};
 
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use oxc_span::{CompactStr, Span};
 use rustc_hash::{FxHashMap, FxHasher};
 
@@ -37,6 +42,8 @@ pub struct ModuleRecord {
     /// A map from the specifier strings used by the module represented by this record to request the importation of a module to the resolved Module Record.
     /// The list does not contain two different Records with the same `[[Specifier]]`.
     pub loaded_modules: DashMap<CompactStr, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
+
+    pub dependent_modules: DashSet<Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
 
     /// `[[ImportEntries]]`
     ///
@@ -87,6 +94,20 @@ impl ModuleRecord {
     }
 }
 
+impl Hash for ModuleRecord {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.resolved_absolute_path.hash(state);
+    }
+}
+
+impl PartialEq for ModuleRecord {
+    fn eq(&self, other: &Self) -> bool {
+        self.resolved_absolute_path == other.resolved_absolute_path
+    }
+}
+
+impl Eq for ModuleRecord {}
+
 impl fmt::Debug for ModuleRecord {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
         // recursively formatting loaded modules can crash when the module graph is cyclic
@@ -96,12 +117,18 @@ impl fmt::Debug for ModuleRecord {
             .map(|entry| (entry.key().to_string()))
             .reduce(|acc, key| format!("{acc}, {key}"))
             .unwrap_or_default();
+        let dependent_modules = self
+            .dependent_modules
+            .iter()
+            .map(|entry| entry.resolved_absolute_path.to_string_lossy().to_string())
+            .collect::<Vec<_>>();
         let loaded_modules = format!("{{ {loaded_modules} }}");
         f.debug_struct("ModuleRecord")
             .field("not_esm", &self.not_esm)
             .field("resolved_absolute_path", &self.resolved_absolute_path)
             .field("requested_modules", &self.requested_modules)
             .field("loaded_modules", &loaded_modules)
+            .field("dependent_modules", &dependent_modules)
             .field("import_entries", &self.import_entries)
             .field("local_export_entries", &self.local_export_entries)
             .field("indirect_export_entries", &self.indirect_export_entries)
