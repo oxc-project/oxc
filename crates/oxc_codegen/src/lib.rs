@@ -519,6 +519,10 @@ impl<'a> Codegen<'a> {
 
 // Comment related
 impl<'a> Codegen<'a> {
+    fn preserve_annotate_comments(&self) -> bool {
+        self.comment_options.preserve_annotate_comments && !self.options.minify
+    }
+
     /// Avoid issue related to rustc borrow checker .
     /// Since if you want to print a range of source code, you need to borrow the source code
     /// as immutable first, and call the [Self::print_str] which is a mutable borrow.
