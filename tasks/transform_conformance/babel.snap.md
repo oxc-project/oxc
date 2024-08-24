@@ -1916,6 +1916,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * logical-assignment/null-coalescing/input.js
+  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(17): [ReferenceId(86), ReferenceId(87),
   | ReferenceId(90)]
@@ -2055,24 +2056,28 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 # babel-plugin-transform-nullish-coalescing-operator (2/12)
 * assumption-noDocumentAll/transform/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-destructuring/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-param/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(3): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-function/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
@@ -2103,6 +2108,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * nullish-coalescing/transform-loose/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
@@ -2137,6 +2143,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 # babel-plugin-transform-arrow-functions (0/6)
 * assumption-newableArrowFunctions-false/basic/input.js
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(1): ["f"]
   | rebuilt        : ScopeId(1): ["_this2", "f"]
@@ -2168,6 +2175,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * assumption-newableArrowFunctions-false/naming/input.js
+  x Output mismatch
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
   | ConstVariable | ArrowFunction)
@@ -2176,6 +2184,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * assumption-newableArrowFunctions-false/self-referential/input.js
+  x Output mismatch
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable |
   | ArrowFunction)
@@ -2183,6 +2192,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * spec/newableArrowFunction-default/input.js
+  x Output mismatch
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
   | ArrowFunction)
@@ -2190,6 +2200,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * spec/newableArrowFunction-vs-spec-false/input.js
+  x Output mismatch
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
   | ArrowFunction)
@@ -2230,6 +2241,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * opts/optimizeConstEnums/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(1): ["A", "x"]
   | rebuilt        : ScopeId(1): ["A"]
@@ -2513,6 +2525,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * enum/mix-references/input.ts
+  x Output mismatch
   x Semantic Collector failed after transform
 
   x Missing ReferenceId: Foo
@@ -2676,6 +2689,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * enum/ts5.0-const-foldable/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(1): ["First", "Second", "Third", "Values"]
   | rebuilt        : ScopeId(1): ["Values"]
@@ -2745,6 +2759,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * exports/declared-types/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E",
   | "I", "II2", "II3", "M", "N", "T", "foo", "m", "x"]
@@ -2891,6 +2906,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * exports/interface/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A", "I"]
   | rebuilt        : ScopeId(0): []
@@ -3143,6 +3159,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/only-remove-type-imports/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2",
   | "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
@@ -3163,6 +3180,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/type-only-export-specifier-2/input.ts
+  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(0)]
   | rebuilt        : SymbolId(0): []
@@ -5855,6 +5873,7 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
 transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
 
 * regression/15768/input.ts
+  x Output mismatch
   x Semantic Collector failed after transform
 
   x Missing ReferenceId: Infinity
@@ -6370,6 +6389,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 * cross-platform/within-ts-module-block/input.ts
+  x Output mismatch
   x Semantic Collector failed after transform
 
   x Missing SymbolId: Namespaced

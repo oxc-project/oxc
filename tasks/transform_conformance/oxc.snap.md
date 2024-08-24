@@ -153,6 +153,7 @@ Passed: 9/35
 
 # babel-plugin-transform-react-jsx (6/27)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
+  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(9): [ReferenceId(23), ReferenceId(24),
   | ReferenceId(25)]
@@ -595,6 +596,7 @@ Passed: 9/35
 
 
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
+  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(5), ReferenceId(7),
   | ReferenceId(8), ReferenceId(9), ReferenceId(19), ReferenceId(21),
@@ -697,6 +699,7 @@ Passed: 9/35
 
 
 * refresh/registers-identifiers-used-in-react-create-element-at-definition-site/input.jsx
+  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(13): [ReferenceId(33), ReferenceId(45),
   | ReferenceId(46)]
@@ -1114,6 +1117,7 @@ Passed: 9/35
 
 
 * refresh/supports-typescript-namespace-syntax/input.tsx
+  x Output mismatch
   x Semantic Collector failed after transform
 
   x Missing SymbolId: Foo

@@ -299,7 +299,14 @@ impl TestCase for ConformanceTestCase {
                 },
             );
 
-            actual_errors.is_empty() && transformed_code == output
+            if transformed_code == output {
+                actual_errors.is_empty()
+            } else {
+                if !actual_errors.is_empty() && !transformed_code.is_empty() {
+                    actual_errors.insert_str(0, "  x Output mismatch\n");
+                }
+                false
+            }
         };
 
         if filtered {
