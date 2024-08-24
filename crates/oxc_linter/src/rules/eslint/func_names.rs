@@ -438,7 +438,12 @@ impl Rule for FuncNames {
             let func_name_complete = get_function_name_with_kind(func, parent_node);
 
             let report_span = Span::new(func.span.start, func.params.span.start);
-            let replace_span = Span::sized(func.span.start, 8);
+            let replace_span = Span::new(
+                func.span.start,
+                func.type_parameters
+                    .as_ref()
+                    .map_or_else(|| func.params.span.start, |tp| tp.span.start),
+            );
             if func_name.is_some() {
                 ctx.diagnostic_with_suggestion(
                     named_diagnostic(&func_name_complete, report_span),
@@ -735,8 +740,35 @@ fn test() {
         ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never.clone()),
         (
             "const restoreGracefully = function <T>(entries: T[]) { }",
-            "const restoreGracefully = function restoreGracefully <T>(entries: T[]) { }",
+            "const restoreGracefully = function  restoreGracefully<T>(entries: T[]) { }",
             None,
+        ),
+        ("const foo = async function() {}", "const foo = async function foo() {}", always.clone()),
+        (
+            "const foo = async function            () {}",
+            "const foo = async function             foo() {}",
+            always.clone(),
+        ),
+        (
+            "const foo =      async          function      <T>      ()           {}",
+            "const foo =      async          function       foo<T>      ()           {}",
+            always.clone(),
+        ),
+        (
+            "const foo =      async          function      <T           >      ()           {}",
+            "const foo =      async          function       foo<T           >      ()           {}",
+            always.clone(),
+        ),
+        ("const foo = function* () {}", "const foo = function*  foo() {}", always.clone()),
+        (
+            "const foo = async function* (){}",
+            "const foo = async function*  foo(){}",
+            always.clone(),
+        ),
+        (
+            "const foo = async function* <T extends foo>(){}",
+            "const foo = async function*  foo<T extends foo>(){}",
+            always.clone(),
         ),
     ];
 
