@@ -236,6 +236,13 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `null` with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:1:18]
+ 1 │ foo.insertBefore(null as any)
+   ·                  ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:23]
  1 │ foo.insertBefore(foo, null, bar)
    ·                       ────
