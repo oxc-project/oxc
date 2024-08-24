@@ -246,6 +246,7 @@ fn test() {
         ("if (null === foo) {}", Some(check_strict_equality(false))),
         ("if (foo !== null) {}", Some(check_strict_equality(false))),
         ("if (null !== foo) {}", Some(check_strict_equality(false))),
+        ("if (foo === null || foo === undefined) {}", None),
     ];
 
     let fail = vec![
@@ -255,6 +256,7 @@ fn test() {
         ("if (foo != null) {}", None),
         ("if (null == foo) {}", None),
         ("if (null != foo) {}", None),
+        ("let curr;\nwhile (curr != null) { curr = stack.pop() }", None),
         // Suggestion `ReturnStatement`
         (
             "function foo() {
@@ -303,5 +305,45 @@ fn test() {
         ("Object.create(bar, null)", None),
     ];
 
-    Tester::new(NoNull::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("let x = null;", "let x;", None),
+        ("let x = null as any;", "let x = undefined as any;", None),
+        ("if (foo == null) {}", "if (foo == undefined) {}", None),
+        ("if (foo != null) {}", "if (foo != undefined) {}", None),
+        ("if (foo == null) {}", "if (foo == undefined) {}", Some(check_strict_equality(true))),
+        // FIXME
+        (
+            "if (foo === null || foo === undefined) {}",
+            "if (foo === undefined || foo === undefined) {}",
+            Some(check_strict_equality(true)),
+        ),
+        (
+            "
+            let isNullish;
+            switch (foo) {
+                case null:
+                case undefined:
+                    isNullish = true;
+                    break;
+                default:
+                    isNullish = false;
+                    break;
+            }
+            ",
+            "
+            let isNullish;
+            switch (foo) {
+                case undefined:
+                case undefined:
+                    isNullish = true;
+                    break;
+                default:
+                    isNullish = false;
+                    break;
+            }
+            ",
+            None,
+        ),
+    ];
+    Tester::new(NoNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

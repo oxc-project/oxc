@@ -44,6 +44,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `null` with `undefined`.
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
+   ╭─[no_null.tsx:2:16]
+ 1 │ let curr;
+ 2 │ while (curr != null) { curr = stack.pop() }
+   ·                ────
+   ╰────
+  help: Replace `null` with `undefined`.
+
+  ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:2:20]
  1 │ function foo() {
  2 │             return null;
