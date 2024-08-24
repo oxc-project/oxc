@@ -24,7 +24,7 @@ use crate::{
     counter::Counter,
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
-    label::LabelBuilder,
+    label::UnusedLabels,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -94,8 +94,7 @@ pub struct SemanticBuilder<'a> {
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
-    pub(crate) label_builder: LabelBuilder<'a>,
-
+    unused_labels: UnusedLabels<'a>,
     build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
 
@@ -141,7 +140,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: SymbolTable::default(),
             unresolved_references: UnresolvedReferencesStack::new(),
             module_record: Arc::new(ModuleRecord::default()),
-            label_builder: LabelBuilder::default(),
+            unused_labels: UnusedLabels::default(),
             build_jsdoc: false,
             jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
@@ -271,7 +270,7 @@ impl<'a> SemanticBuilder<'a> {
             classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
             jsdoc,
-            unused_labels: self.label_builder.unused_node_ids,
+            unused_labels: self.unused_labels.labels,
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
@@ -1755,13 +1754,11 @@ impl<'a> SemanticBuilder<'a> {
                 decl.bind(self);
                 self.make_all_namespaces_valuelike();
             }
-            AstKind::StaticBlock(_) => self.label_builder.enter_function_or_static_block(),
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 if func.is_declaration() {
                     func.bind(self);
                 }
-                self.label_builder.enter_function_or_static_block();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowFunctionExpression(_) => {
@@ -1894,12 +1891,12 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flags |= ReferenceFlags::Write;
             }
             AstKind::LabeledStatement(stmt) => {
-                self.label_builder.enter(stmt, self.current_node_id);
+                self.unused_labels.add(stmt.label.name.as_str());
             }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
                 if let Some(label) = &label {
-                    self.label_builder.mark_as_used(label);
+                    self.unused_labels.reference(&label.name);
                 }
             }
             AstKind::YieldExpression(_) => {
@@ -1927,15 +1924,7 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flags = ReferenceFlags::empty();
                 }
             }
-            AstKind::LabeledStatement(_) => self.label_builder.leave(),
-            AstKind::StaticBlock(_) => {
-                self.label_builder.leave_function_or_static_block();
-            }
-            AstKind::Function(_) => {
-                self.label_builder.leave_function_or_static_block();
-                self.function_stack.pop();
-            }
-            AstKind::ArrowFunctionExpression(_) => {
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
             AstKind::FormalParameters(parameters) => {
@@ -1975,6 +1964,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flags = ReferenceFlags::empty();
             }
             AstKind::AssignmentTarget(_) => self.current_reference_flags -= ReferenceFlags::Write,
+            AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
     }

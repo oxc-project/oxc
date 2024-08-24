@@ -16,7 +16,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
 
     match kind {
         AstKind::Program(_) => {
-            js::check_labeled_statement(ctx);
+            // js::check_labeled_statement(ctx);
             js::check_duplicate_class_elements(ctx);
         }
         AstKind::BindingIdentifier(ident) => {
@@ -47,6 +47,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::BreakStatement(stmt) => js::check_break_statement(stmt, node, ctx),
         AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, node, ctx),
         AstKind::LabeledStatement(stmt) => {
+            js::check_labeled_statement(stmt, node, ctx);
             js::check_function_declaration(&stmt.body, true, ctx);
         }
         AstKind::ForInStatement(stmt) => {
