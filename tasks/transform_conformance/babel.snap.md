@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 190/953
+Passed: 280/953
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -8,7 +8,7 @@ Passed: 190/953
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (10/579)
+# babel-preset-env (100/579)
 * .plugins-overlapping/chrome-49/input.js
 
 
@@ -19,73 +19,61 @@ Passed: 190/953
 
 
 * bugfixes/_esmodules/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * bugfixes/_esmodules-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * bugfixes/edge-default-params-chrome-40/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes/edge-default-params-chrome-70/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes/edge-default-params-edge-14/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-default-params-edge-15/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-default-params-edge-17/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-default-params-edge-17-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes/edge-default-params-edge-18/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes/edge-function-name-edge-14/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-function-name-edge-14-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-function-name-edge-15/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-block-scoping-safari-10/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-block-scoping-safari-10-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes/safari-block-scoping-safari-11/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes/safari-block-scoping-safari-9/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/v8-spread-parameters-in-optional-chaining-chrome-89/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/v8-spread-parameters-in-optional-chaining-chrome-89-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes-always-enabled/class-in-computed-field-chrome-100/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes-always-enabled/class-in-computed-field-firefox-50/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes-always-enabled/class-in-computed-field-firefox-90/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes-always-enabled/static-class-fields-chrome-70/input.js
 
@@ -100,1312 +88,1131 @@ preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 
 * corejs2-babel-7/entry-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-48/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-49/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-66/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chromeandroid/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-core-js-main/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-core-js-main-require/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-ie-9/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-node/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-node-10.13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-node-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-node-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-require/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-shippedProposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/exclude/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/exclude-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/exclude-include/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/exclude-regenerator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/include-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-browserslist-config-ignore/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * corejs2-babel-7/usage-destructuring-assignment/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-catch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-for-x/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-params/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-variable-declaration/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-evaluated-class-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-evaluated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-evaluated-not-confident/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-for-of/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-for-of-destructure-with/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-for-of-destructure-without/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-instance-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-modules-namespaced/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-modules-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-no-builtins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs2-babel-7/usage-no-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-number-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-promise-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-promise-finally/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-promise-race/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-regenerator-used-async/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-regenerator-used-async-and-promise-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs2-babel-7/usage-regenerator-used-async-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-regenerator-used-generator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-regenerator-used-generator-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-remove-babel-polyfill-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-shippedProposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-source-type-script/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-source-type-script-query/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-symbol-iterator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-symbol-iterator-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-timers/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-typed-array/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-typed-array-edge-13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-typed-array-static/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-yield-non-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-yield-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-all-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/entry-babel-polyfill/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/entry-chrome-48/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chrome-49/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chrome-66/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chromeandroid/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-es-proposals-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-es-proposals-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-features/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-features-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-missed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-mixed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-mixed-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-modules/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-modules-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-web-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-ie-9/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node-10.13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-normalization/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-require/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-require-all/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/entry-require-babel-polyfill/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/entry-require-es-chrome-71/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-require-es-proposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-specified-imports/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["fromEntries", "reflect"]
+  | rebuilt        : ScopeId(0): ["reflect"]
+
 
 * corejs3/entry-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-stable-samsung-8.2/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/exclude/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/exclude-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/exclude-include/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/include-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-all-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-all-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-browserslist-config-ignore/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
-* corejs3/usage-built-in-from-global-object/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-assignment/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-catch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-for-x/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-iife/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-params/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-variable-declaration/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * corejs3/usage-determanated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-dynamic-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-dynamic-import-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-evaluated-class-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-evaluated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-fetch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-fetch-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-for-of/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-for-of-destructure-with/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-for-of-destructure-without/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-instance-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-modules-namespaced/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-modules-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-no-builtins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-no-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-number-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-object-destructuring/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-object-destructuring-with-rest/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-object-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-promise-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-promise-finally/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-promise-race/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-regenerator-used-async/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-regenerator-used-async-and-promise-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-regenerator-used-async-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-regenerator-used-generator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-regenerator-used-generator-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-shippedProposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-source-type-script/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-source-type-script-query/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-static-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-static-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-symbol-iterator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-symbol-iterator-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-timers/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-typed-array/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-typed-array-edge-13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-typed-array-static/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-yield-non-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-yield-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-all-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/entry-babel-polyfill/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/entry-chrome-48/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chrome-49/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chrome-66/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chromeandroid/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-es-proposals-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-es-proposals-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-features/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-features-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-missed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-mixed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-mixed-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-modules/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-modules-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-web-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-ie-9/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node-10.13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-normalization/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-require/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-require-all/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/entry-require-babel-polyfill/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/entry-require-es-chrome-71/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-require-es-proposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-specified-imports/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["fromEntries", "reflect"]
+  | rebuilt        : ScopeId(0): ["reflect"]
+
 
 * corejs3-babel-7/entry-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-stable-samsung-8.2/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude-include/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude-regenerator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/include-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-all-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-all-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-browserslist-config-ignore/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * corejs3-babel-7/usage-built-in-from-global-object/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-assignment/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-catch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-for-x/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-iife/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-params/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-variable-declaration/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-determanated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-dynamic-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-dynamic-import-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-evaluated-class-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-evaluated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-fetch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-fetch-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-for-of/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-for-of-destructure-with/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-for-of-destructure-without/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-instance-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3-babel-7/usage-modules-namespaced/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-modules-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3-babel-7/usage-no-builtins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3-babel-7/usage-no-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-number-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-object-destructuring/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-object-destructuring-with-rest/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-object-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-promise-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-promise-finally/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-promise-race/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-regenerator-used-async/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-regenerator-used-async-and-promise-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-regenerator-used-async-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-regenerator-used-generator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-regenerator-used-generator-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-shippedProposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-source-type-script/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-source-type-script-query/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-static-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-static-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-symbol-iterator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-symbol-iterator-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-timers/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-typed-array/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-typed-array-edge-13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-typed-array-static/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-yield-non-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-yield-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/browserslist-env/input.mjs
 
 
 * debug/browserslists-android-3/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/browserslists-defaults/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/browserslists-defaults-not-ie/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/browserslists-last-2-versions-not-ie/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/corejs-without-usebuiltins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-all-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-android/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-babel-polyfill/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-es/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-es-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-es-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-es-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-no-import/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-runtime-only/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-runtime-only-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-specific-entries/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-specific-entries-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-specific-targets/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-stable-samsung-8.2/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-versions-decimals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-versions-strings/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-versions-strings-minor-3.0/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-versions-strings-minor-3.1/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-web-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-no-corejs/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/entry-no-corejs-no-import/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/plugins-only/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/shippedProposals-chrome-80/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/shippedProposals-chrome-84/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/top-level-targets/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/top-level-targets-shadowed/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-chrome-71-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-chrome-71-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-none-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-none-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-proposals-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-proposals-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-proposals-chrome-71-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-proposals-chrome-71-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-shippedProposals-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-shippedProposals-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-versions-strings-minor-3.0-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-versions-strings-minor-3.0-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-versions-strings-minor-3.1-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-versions-strings-minor-3.1-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-corejs3-with-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/usage-no-corejs/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/usage-no-corejs-none/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/browserslists-android-3/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/browserslists-defaults/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/browserslists-defaults-not-ie/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/browserslists-last-2-versions-not-ie/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/corejs-without-usebuiltins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-android/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-no-import/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-shippedProposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-shippedProposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-specific-targets/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-versions-decimals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs2-versions-strings/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-all-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-android/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-babel-polyfill/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-es/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-es-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-es-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-es-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-no-import/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-runtime-only/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-runtime-only-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-specific-entries/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-specific-entries-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-specific-targets/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-stable-samsung-8.2/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-versions-decimals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-versions-strings/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-versions-strings-minor-3.0/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-versions-strings-minor-3.1/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-corejs3-web-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-no-corejs/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-no-corejs-no-import/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/entry-no-corejs-shippedProposals/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/plugins-only/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/shippedProposals-chrome-80/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/shippedProposals-chrome-84/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/top-level-targets/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/top-level-targets-shadowed/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-chrome-71-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-chrome-71-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-none-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-none-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-proposals-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-proposals-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-proposals-chrome-71-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-proposals-chrome-71-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-shippedProposals-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-shippedProposals-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs2-with-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-chrome-71-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-chrome-71-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-none-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-none-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-proposals-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-proposals-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-proposals-chrome-71-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-proposals-chrome-71-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-shippedProposals-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-shippedProposals-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-versions-strings-minor-3.0-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-versions-strings-minor-3.0-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-versions-strings-minor-3.1-1/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-versions-strings-minor-3.1-2/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-corejs3-with-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-no-corejs-1/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-no-corejs-2/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-no-corejs-none-1/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug-babel-7/usage-no-corejs-none-2/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 
 
 * dynamic-import/modules-amd/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import/modules-cjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* dynamic-import/modules-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * dynamic-import/modules-systemjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import/modules-umd/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import-babel-7/auto-esm-unsupported-import-unsupported/input.mjs
 
 
 * dynamic-import-babel-7/modules-amd/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import-babel-7/modules-cjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* dynamic-import-babel-7/modules-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * dynamic-import-babel-7/modules-systemjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import-babel-7/modules-umd/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * export-namespace-from/auto-esm-not-supported/input.mjs
 
@@ -1414,13 +1221,10 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * export-namespace-from/false-export-namespace-not-supported/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * export-namespace-from/false-export-namespace-not-supported-caller-supported/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* export-namespace-from/false-export-namespace-supported/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * modules/auto-cjs/input.mjs
 
@@ -1429,28 +1233,48 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * modules/modules-cjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-commonjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-systemjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-umd/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * plugins-integration/block-scoping-inside-generator/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/class-arrow-super-tagged-expr/input.js
 
 
 * plugins-integration/class-features-node-12/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/for-of-array-block-scoping/input.js
 
@@ -1459,7 +1283,7 @@ preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 
 * plugins-integration/issue-10662/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/issue-11278/input.mjs
 
@@ -1471,7 +1295,7 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * plugins-integration/issue-16155/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/issue-7527/input.mjs
 
@@ -1485,17 +1309,11 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 * plugins-integration/spread-super-firefox-40/input.js
 
 
-* preset-options/browserslist-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options/browserslist-config-ignore-config-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+
 
 * preset-options/browserslist-config-ignore-package-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
-* preset-options/browserslist-default-via-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
 * preset-options/browserslist-defaults/input.mjs
 
@@ -1503,68 +1321,53 @@ preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 * preset-options/browserslist-defaults-not-ie/input.mjs
 Targets: node `current` is not supported
 
-* preset-options/browserslist-package/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
-* preset-options/browserslist-package-ignore-with-targets/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options/deno-1_0/input.mjs
 
 
 * preset-options/destructuring-edge/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options/empty-options/input.mjs
 
 
 * preset-options/esmodules-async-functions/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * preset-options/include/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options/include-scoped/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
 
-* preset-options/ios-10/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options/ios-10_3/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options/ios-11/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options/ios-6/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
 
 * preset-options/no-options/input.mjs
 
 
 * preset-options/removed-loose/input.js
-preset-env: unknown field `loose`, expected `targets` or `bugfixes`
+
 
 * preset-options/removed-spec/input.js
-preset-env: unknown field `spec`, expected `targets` or `bugfixes`
+
 
 * preset-options/reserved-keys-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options/reserved-keys-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options/reserved-names-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options/reserved-names-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options/rhino-1_7_13/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options/safari-10_3-block-scoped/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * preset-options/safari-tagged-template-literals/input.js
 
@@ -1572,32 +1375,17 @@ preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 * preset-options/safari-tp/input.js
 failed to resolve query: failed to parse the rest of input: ...''
 
-* preset-options/targets-as-object/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options/targets-as-string/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
 * preset-options/unicode-property-regex-chrome-49/input.js
 
 
 * preset-options/unicode-sets-regex-chrome-111/input.js
 
 
-* preset-options/useBuiltIns-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options-babel-7/browserslist-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options-babel-7/browserslist-config-ignore-config-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/browserslist-config-ignore-package-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/browserslist-default-via-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/browserslist-defaults/input.mjs
 
@@ -1605,68 +1393,59 @@ preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 * preset-options-babel-7/browserslist-defaults-not-ie/input.mjs
 Targets: node `current` is not supported
 
-* preset-options-babel-7/browserslist-package/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
-* preset-options-babel-7/browserslist-package-ignore-with-targets/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options-babel-7/deno-1_0/input.mjs
 
 
 * preset-options-babel-7/destructuring-edge/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/empty-options/input.mjs
 
 
 * preset-options-babel-7/esmodules-async-functions/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * preset-options-babel-7/include/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/include-scoped/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/ios-10/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/ios-10_3/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/ios-11/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/ios-6/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | ArrowFunction)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
 
 * preset-options-babel-7/loose-typeof-symbol/input.mjs
-preset-env: unknown field `loose`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/loose-with-typeof-symbol-includes/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/no-options/input.mjs
 
 
 * preset-options-babel-7/reserved-keys-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/reserved-keys-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/reserved-names-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/reserved-names-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/rhino-1_7_13/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/safari-10_3-block-scoped/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/safari-tagged-template-literals/input.js
 
@@ -1678,13 +1457,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * preset-options-babel-7/spec/input.js
-preset-env: unknown field `spec`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/targets-as-object/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options-babel-7/targets-as-string/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/unicode-property-regex-chrome-49/input.js
 
@@ -1693,28 +1466,29 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * preset-options-babel-7/useBuiltIns-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * sanity/block-scoping-for-of/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * sanity/regex-dot-all/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * sanity/transform-duplicate-keys/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * shipped-proposals/import-assertions/input.mjs
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["packageJson"]
+  | rebuilt        : ScopeId(0): []
+
 
 * shipped-proposals/new-class-features-chrome-90/input.js
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
-* shipped-proposals/new-class-features-chrome-94/input.js
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 * shipped-proposals/new-class-features-firefox-70/input.js
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
+
 
 
 # babel-plugin-transform-logical-assignment-operators (0/6)
@@ -5840,37 +5614,208 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * optimize-const-enums/custom-values/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "w", "x", "y", "z"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * optimize-const-enums/custom-values-exported/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "w", "x", "y", "z"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
 
 * optimize-const-enums/declare/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["A"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(0): Some("A")
+  | rebuilt        : ReferenceId(0): None
+
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["A"]
+
 
 * optimize-const-enums/export-const-enum/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
 
 * optimize-const-enums/export-const-enum-type-and-value/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["WhitespaceFlag", "after", "before"]
+  | rebuilt        : ScopeId(1): ["WhitespaceFlag"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(8)]
+  | rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6),
+  | ReferenceId(7)]
+
 
 * optimize-const-enums/export-const-enum-type-no-deopt/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["WhitespaceFlag", "after", "before"]
+  | rebuilt        : ScopeId(1): ["WhitespaceFlag"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(8)]
+  | rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6)]
+
 
 * optimize-const-enums/exported/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
+
 
 * optimize-const-enums/local/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * optimize-const-enums/local-shadowed/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * optimize-const-enums/merged/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(2): ["A", "z"]
+  | rebuilt        : ScopeId(2): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 36, end: 37 }]
+  | rebuilt        : SymbolId(0): []
+
 
 * optimize-const-enums/merged-exported/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(2): ["A", "z"]
+  | rebuilt        : ScopeId(2): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 50, end: 51 }]
+  | rebuilt        : SymbolId(0): []
+
 
 * regression/15768/input.ts
   x Output mismatch

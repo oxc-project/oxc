@@ -1,5 +1,6 @@
 use oxc_diagnostics::Error;
 use serde::Deserialize;
+use serde_json::Value;
 
 use super::targets::{query::Targets, Versions};
 
@@ -15,6 +16,42 @@ pub struct EnvOptions {
 
     #[serde(default = "default_as_true")]
     pub bugfixes: bool,
+
+    /// Unused.
+    pub spec: bool,
+
+    /// Unused.
+    pub loose: bool,
+
+    /// Unused.
+    pub modules: Option<Value>,
+
+    /// Unused.
+    pub debug: bool,
+
+    /// Unused.
+    pub include: Option<Value>,
+
+    /// Unused.
+    pub exclude: Option<Value>,
+
+    /// Unused.
+    pub use_built_ins: Option<Value>,
+
+    /// Unused.
+    pub corejs: Option<Value>,
+
+    /// Unused.
+    pub force_all_transforms: bool,
+
+    /// Unused.
+    pub config_path: Option<String>,
+
+    /// Unused.
+    pub ignore_browserslist_config: bool,
+
+    /// Unused.
+    pub shipped_proposals: bool,
 }
 
 impl EnvOptions {
