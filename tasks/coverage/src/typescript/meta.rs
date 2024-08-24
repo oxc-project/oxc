@@ -141,8 +141,11 @@ impl TestCaseContent {
         let test_unit_data = test_unit_data
             .into_iter()
             .filter_map(|mut unit| {
-                let source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
-                unit.source_type = source_type.with_module(is_module);
+                let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
+                if is_module {
+                    source_type = source_type.with_module(true);
+                }
+                unit.source_type = source_type;
                 Some(unit)
             })
             .collect::<Vec<_>>();

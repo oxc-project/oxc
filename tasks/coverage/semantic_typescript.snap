@@ -550,7 +550,9 @@ after transform: ScopeId(1): ["T", "arr", "depth"]
 rebuilt        : ScopeId(1): ["arr", "depth"]
 
 tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
-semantic error: Expected `(` but found `await`
+semantic error: Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | Export | Function)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Function)
 
 tasks/coverage/typescript/tests/cases/compiler/arrayLiteralContextualType.ts
 semantic error: Bindings mismatch:
@@ -26990,8 +26992,12 @@ semantic error: The only valid meta property for import is import.meta
 The only valid meta property for import is import.meta
 
 tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts
-semantic error: Unexpected import.meta expression
-Unexpected import.meta expression
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["global"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
 
 tasks/coverage/typescript/tests/cases/conformance/es2020/bigintMissingES2019.ts
 semantic error: Scope children mismatch:
@@ -31967,14 +31973,14 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E1", "value1"]
 rebuilt        : ScopeId(1): ["E1"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E2", "value1"]
 rebuilt        : ScopeId(2): ["E2"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
@@ -32032,14 +32038,14 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["E1", "value1"]
 rebuilt        : ScopeId(1): ["E1"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E2", "value1"]
 rebuilt        : ScopeId(2): ["E2"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(0x0)
-rebuilt        : ScopeId(2): ScopeFlags(Function)
+after transform: ScopeId(2): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
@@ -32202,8 +32208,8 @@ after transform: ["f"]
 rebuilt        : ["dec", "f"]
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts
-semantic error: Semantic Collector failed after transform
-Missing SymbolId: await
+semantic error: Cannot use `await` as an identifier in an async context
+The keyword 'await' is reserved
 
 tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModule.ts
 semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
@@ -32399,8 +32405,8 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(0x0)
-rebuilt        : ScopeId(1): ScopeFlags(Function)
+after transform: ScopeId(1): ScopeFlags(StrictMode)
+rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
