@@ -1,8 +1,8 @@
 commit: 12619ffe
 
 semantic_babel Summary:
-AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1736/2101 (82.63%)
+AST Parsed     : 2100/2100 (100.00%)
+Positive Passed: 1735/2100 (82.62%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
