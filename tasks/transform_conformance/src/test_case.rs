@@ -158,7 +158,7 @@ pub trait TestCase {
         false
     }
 
-    fn transform(&self, path: &Path, filtered: bool) -> Result<Driver, OxcDiagnostic> {
+    fn transform(&self, path: &Path) -> Result<Driver, OxcDiagnostic> {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
@@ -178,11 +178,8 @@ pub trait TestCase {
             source_type = source_type.with_typescript(true);
         }
 
-        let driver = Driver::new(filtered, transform_options.clone()).execute(
-            &source_text,
-            source_type,
-            path,
-        );
+        let driver =
+            Driver::new(transform_options.clone()).execute(&source_text, source_type, path);
         Ok(driver)
     }
 }
@@ -263,7 +260,7 @@ impl TestCase for ConformanceTestCase {
             Ok(options) => {
                 transform_options.replace(options.clone());
                 let mut driver =
-                    Driver::new(filtered, options.clone()).execute(&input, source_type, &self.path);
+                    Driver::new(options.clone()).execute(&input, source_type, &self.path);
                 transformed_code = driver.printed();
                 let errors = driver.errors();
                 if !errors.is_empty() {
@@ -287,23 +284,23 @@ impl TestCase for ConformanceTestCase {
 
         let babel_options = self.options();
 
-        // Get output.js by using our code gen so code comparison can match.
-        let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
-            || {
-                if let Some(throws) = &babel_options.throws {
-                    return throws.to_string().replace(" (1:6)", "");
-                }
-                String::default()
-            },
-            |output| {
-                // Get expected code by parsing the source text, so we can get the same code generated result.
-                let ret = Parser::new(&allocator, &output, source_type).parse();
-                CodeGenerator::new().build(&ret.program).source_text
-            },
-        );
+        let output;
+        let passed = if let Some(throws) = &babel_options.throws {
+            output = throws.to_string().replace(" (1:6)", "");
+            !output.is_empty() && actual_errors.contains(&output)
+        } else {
+            // Get output.js by using our code gen so code comparison can match.
+            output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
+                String::default,
+                |output| {
+                    // Get expected code by parsing the source text, so we can get the same code generated result.
+                    let ret = Parser::new(&allocator, &output, source_type).parse();
+                    CodeGenerator::new().build(&ret.program).source_text
+                },
+            );
 
-        let passed =
-            transformed_code == output || (!output.is_empty() && actual_errors.contains(&output));
+            actual_errors.is_empty() && transformed_code == output
+        };
 
         if filtered {
             println!("Options:");
@@ -405,7 +402,7 @@ impl TestCase for ExecTestCase {
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
         }
 
-        let result = match self.transform(&self.path, filtered) {
+        let result = match self.transform(&self.path) {
             Ok(mut driver) => driver.printed(),
             Err(error) => {
                 if filtered {
