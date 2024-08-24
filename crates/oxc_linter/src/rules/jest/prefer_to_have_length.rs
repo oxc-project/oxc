@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     ast::{match_member_expression, CallExpression, Expression, MemberExpression},
     AstKind,
@@ -8,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::RuleFixer,
+    fixer::{CompositeFix, Fix},
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
@@ -83,46 +85,24 @@ impl PreferToHaveLength {
                 let Expression::CallExpression(expr_call_expr) = mem_expr.object() else {
                     return;
                 };
-                match mem_expr {
-                    MemberExpression::ComputedMemberExpression(_) => Self::check_and_fix(
-                        call_expr,
-                        expr_call_expr,
-                        &parsed_expect_call,
-                        Some("ComputedMember"),
-                        mem_expr.static_property_name(),
-                        ctx,
-                    ),
-                    MemberExpression::StaticMemberExpression(_) => Self::check_and_fix(
-                        call_expr,
-                        expr_call_expr,
-                        &parsed_expect_call,
-                        Some("StaticMember"),
-                        mem_expr.static_property_name(),
-                        ctx,
-                    ),
-                    MemberExpression::PrivateFieldExpression(_) => (),
-                };
+                if matches!(
+                    mem_expr,
+                    MemberExpression::StaticMemberExpression(_)
+                        | MemberExpression::ComputedMemberExpression(_)
+                ) {
+                    Self::check_and_fix(expr_call_expr, &parsed_expect_call, ctx);
+                }
             }
             Expression::CallExpression(expr_call_expr) => {
-                Self::check_and_fix(
-                    call_expr,
-                    expr_call_expr,
-                    &parsed_expect_call,
-                    None,
-                    None,
-                    ctx,
-                );
+                Self::check_and_fix(expr_call_expr, &parsed_expect_call, ctx);
             }
             _ => (),
         }
     }
 
     fn check_and_fix<'a>(
-        call_expr: &CallExpression<'a>,
         expr_call_expr: &CallExpression<'a>,
         parsed_expect_call: &ParsedExpectFnCall<'a>,
-        kind: Option<&str>,
-        property_name: Option<&str>,
         ctx: &LintContext<'a>,
     ) {
         let Some(argument) = expr_call_expr.arguments.first() else {
@@ -138,52 +118,30 @@ impl PreferToHaveLength {
         let Some(matcher) = parsed_expect_call.matcher() else {
             return;
         };
-
         if expect_property_name != "length" || !is_equality_matcher(matcher) {
             return;
         }
 
         ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
-            let code = Self::build_code(fixer, static_mem_expr, kind, property_name);
-            let end = if call_expr.arguments.len() > 0 {
-                call_expr.arguments.first().unwrap().span().start
-            } else {
-                matcher.span.end
+            let matcher_span = match fixer.source_range(matcher.span).chars().next().unwrap() {
+                '\'' | '"' | '`' => Span::new(matcher.span.start + 1, matcher.span.end - 1),
+                _ => matcher.span,
             };
-            fixer.replace(Span::new(call_expr.span.start, end - 1), code)
+
+            fixer.new_fix(
+                CompositeFix::Multiple(vec![
+                    Fix::delete(Span::new(
+                        static_mem_expr.object().span().end,
+                        static_mem_expr.span().end,
+                    )),
+                    Fix::new("toHaveLength", matcher_span),
+                ]),
+                Some(Cow::Owned(format!(
+                    "Use `toHaveLength` instead of `{}`.",
+                    matcher.name().unwrap()
+                ))),
+            )
         });
-    }
-
-    fn build_code<'a>(
-        fixer: RuleFixer<'_, 'a>,
-        mem_expr: &MemberExpression<'a>,
-        kind: Option<&str>,
-        property_name: Option<&str>,
-    ) -> String {
-        let mut formatter = fixer.codegen();
-        let Expression::Identifier(prop_ident) = mem_expr.object() else {
-            return formatter.into_source_text();
-        };
-
-        formatter.print_str("expect(");
-        formatter.print_str(prop_ident.name.as_str());
-        formatter.print_str(")");
-
-        if let Some(kind_val) = kind {
-            if kind_val == "ComputedMember" {
-                let property = property_name.unwrap();
-                formatter.print_str("[\"");
-                formatter.print_str(property);
-                formatter.print_str("\"]");
-            } else if kind_val == "StaticMember" {
-                formatter.print_str(".");
-                let property = property_name.unwrap();
-                formatter.print_str(property);
-            }
-        }
-
-        formatter.print_str(".toHaveLength");
-        formatter.into_source_text()
     }
 }
 
@@ -215,6 +173,12 @@ fn tests() {
         ("expect(files.length).toEqual(1);", None),
         ("expect(files.length).toStrictEqual(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", None),
+        (
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe(
+  (originalMeta.get('pages') as YArray<unknown>).length
+);",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -229,17 +193,30 @@ fn tests() {
             "expect(files)[\"not\"].toHaveLength(1);",
             None,
         ),
-        ("expect(files[\"length\"])[\"toBe\"](1);", "expect(files).toHaveLength(1);", None),
-        ("expect(files[\"length\"]).not[\"toBe\"](1);", "expect(files).not.toHaveLength(1);", None),
+        ("expect(files[\"length\"])[\"toBe\"](1);", "expect(files)[\"toHaveLength\"](1);", None),
+        (
+            "expect(files[\"length\"]).not[\"toBe\"](1);",
+            "expect(files).not[\"toHaveLength\"](1);",
+            None,
+        ),
         (
             "expect(files[\"length\"])[\"not\"][\"toBe\"](1);",
-            "expect(files)[\"not\"].toHaveLength(1);",
+            "expect(files)[\"not\"][\"toHaveLength\"](1);",
             None,
         ),
         ("expect(files.length).toBe(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).toEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).toStrictEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", "expect(files).not.toHaveLength(1);", None),
+        (
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe(
+  (originalMeta.get('pages') as YArray<unknown>).length
+);",
+            "expect((meta.get('pages') as YArray<unknown>)).toHaveLength(
+  (originalMeta.get('pages') as YArray<unknown>).length
+);",
+            None,
+        ),
     ];
 
     Tester::new(PreferToHaveLength::NAME, pass, fail)

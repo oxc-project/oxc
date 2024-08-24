@@ -55,7 +55,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     // NOTE(@DonIsaac): Internal methods shouldn't use `T: Into<Foo>` generics to optimize binary
     // size. Only use such generics in public APIs.
-    fn new_fix(&self, fix: CompositeFix<'a>, message: Option<Cow<'a, str>>) -> RuleFix<'a> {
+    pub fn new_fix(&self, fix: CompositeFix<'a>, message: Option<Cow<'a, str>>) -> RuleFix<'a> {
         RuleFix::new(self.kind, message, fix)
     }
 
