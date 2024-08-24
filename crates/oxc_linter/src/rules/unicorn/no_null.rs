@@ -8,6 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
+use serde_json::Value;
 
 use crate::{
     ast_util::is_method_call,
@@ -23,7 +24,7 @@ fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNull {
-    check_strict_equality: Option<bool>,
+    check_strict_equality: bool,
 }
 
 declare_oxc_lint!(
@@ -61,35 +62,36 @@ fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool 
     })
 }
 
-fn diagnose_binary_expression(
-    no_null: &NoNull,
-    ctx: &LintContext,
-    null_literal: &NullLiteral,
-    binary_expr: &BinaryExpression,
-) {
-    // checkStrictEquality=false && `if (foo !== null) {}`
-    if !no_null.check_strict_equality.is_some_and(|val| val)
-        && matches!(
-            binary_expr.operator,
-            BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
-        )
-    {
-        return;
+impl NoNull {
+    fn diagnose_binary_expression(
+        &self,
+        ctx: &LintContext,
+        null_literal: &NullLiteral,
+        binary_expr: &BinaryExpression,
+    ) {
+        match binary_expr.operator {
+            // `if (foo != null) {}`
+            BinaryOperator::Equality | BinaryOperator::Inequality => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    fix_null(fixer, null_literal)
+                });
+            }
+
+            // `if (foo !== null) {}`
+            BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
+                if self.check_strict_equality {
+                    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                        fix_null(fixer, null_literal)
+                    });
+                }
+            }
+            _ => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    fix_null(fixer, null_literal)
+                });
+            }
+        }
     }
-
-    // `if (foo != null) {}`
-    if matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
-        ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
-            fix_null(fixer, null_literal)
-        });
-
-        return;
-    }
-
-    // checkStrictEquality=true && `if (foo !== null) {}`
-    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
-        fix_null(fixer, null_literal)
-    });
 }
 
 fn diagnose_variable_declarator(
@@ -156,12 +158,13 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
 }
 
 impl Rule for NoNull {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: Value) -> Self {
         Self {
             check_strict_equality: value
                 .get(0)
                 .and_then(|v| v.get("checkStrictEquality"))
-                .and_then(serde_json::Value::as_bool),
+                .and_then(Value::as_bool)
+                .unwrap_or_default(),
         }
     }
 
@@ -182,7 +185,7 @@ impl Rule for NoNull {
             }
 
             if let AstKind::BinaryExpression(binary_expr) = parent_node.kind() {
-                diagnose_binary_expression(self, ctx, null_literal, binary_expr);
+                self.diagnose_binary_expression(ctx, null_literal, binary_expr);
                 return;
             }
 
