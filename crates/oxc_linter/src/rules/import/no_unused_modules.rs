@@ -1,11 +1,11 @@
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
 fn no_exports_found(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("No exports found")
-        .with_label(span0)
+    OxcDiagnostic::warn("No exports found").with_label(span0)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-unused-modules.md>
@@ -24,7 +24,7 @@ declare_oxc_lint!(
     /// * dynamic imports are supported if argument is a literal string
     ///
     NoUnusedModules,
-    nursery
+    correctness
 );
 
 impl Rule for NoUnusedModules {
@@ -43,6 +43,7 @@ impl Rule for NoUnusedModules {
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+        dbg!(&module_record);
         if self.missing_exports && module_record.local_export_entries.is_empty() {
             ctx.diagnostic(no_exports_found(Span::new(0, 0)));
         }

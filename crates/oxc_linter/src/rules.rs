@@ -20,7 +20,7 @@ mod import {
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
-    // pub mod no_unused_modules;
+    pub mod no_unused_modules;
     pub mod no_webpack_loader_syntax;
 }
 
@@ -776,7 +776,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default,
     import::no_named_as_default_member,
     import::no_self_import,
-    // import::no_unused_modules,
+    import::no_unused_modules,
     import::no_duplicates,
     import::no_default_export,
     import::no_webpack_loader_syntax,
