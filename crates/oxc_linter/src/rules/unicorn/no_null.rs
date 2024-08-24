@@ -1,6 +1,7 @@
 use oxc_ast::{
     ast::{
-        Argument, BinaryExpression, CallExpression, Expression, NullLiteral, VariableDeclarator,
+        Argument, BinaryExpression, CallExpression, Expression, NullLiteral, SwitchStatement,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -201,6 +202,11 @@ impl Rule for NoNull {
                     fixer.delete(null_literal)
                 });
             }
+            (AstKind::SwitchCase(_), Some(AstKind::SwitchStatement(switch))) => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    try_fix_case(fixer, null_literal, switch)
+                });
+            }
             _ => {
                 ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fix_null(fixer, null_literal)
@@ -212,6 +218,23 @@ impl Rule for NoNull {
 
 fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
     fixer.replace(null.span, "undefined")
+}
+
+fn try_fix_case<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    null: &NullLiteral,
+    switch: &SwitchStatement<'a>,
+) -> RuleFix<'a> {
+    let also_has_undefined = switch
+        .cases
+        .iter()
+        .filter_map(|case| case.test.as_ref())
+        .any(|test| test.get_inner_expression().is_undefined());
+    if also_has_undefined {
+        fixer.noop()
+    } else {
+        fixer.replace(null.span, "undefined")
+    }
 }
 
 #[test]
@@ -313,12 +336,6 @@ fn test() {
         ("if (foo == null) {}", "if (foo == undefined) {}", None),
         ("if (foo != null) {}", "if (foo != undefined) {}", None),
         ("if (foo == null) {}", "if (foo == undefined) {}", Some(check_strict_equality(true))),
-        // FIXME
-        (
-            "if (foo === null || foo === undefined) {}",
-            "if (foo === undefined || foo === undefined) {}",
-            Some(check_strict_equality(true)),
-        ),
         (
             "
             let isNullish;
@@ -335,7 +352,7 @@ fn test() {
             "
             let isNullish;
             switch (foo) {
-                case undefined:
+                case null:
                 case undefined:
                     isNullish = true;
                     break;
@@ -345,6 +362,12 @@ fn test() {
             }
             ",
             None,
+        ),
+        // FIXME
+        (
+            "if (foo === null || foo === undefined) {}",
+            "if (foo === undefined || foo === undefined) {}",
+            Some(check_strict_equality(true)),
         ),
     ];
     Tester::new(NoNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
