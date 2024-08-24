@@ -138,7 +138,6 @@ impl PreferToHaveLength {
         let Some(matcher) = parsed_expect_call.matcher() else {
             return;
         };
-
         if expect_property_name != "length" || !is_equality_matcher(matcher) {
             return;
         }
@@ -161,12 +160,11 @@ impl PreferToHaveLength {
         property_name: Option<&str>,
     ) -> String {
         let mut formatter = fixer.codegen();
-        let Expression::Identifier(prop_ident) = mem_expr.object() else {
-            return formatter.into_source_text();
-        };
 
         formatter.print_str("expect(");
-        formatter.print_str(prop_ident.name.as_str());
+        formatter.print_str(
+            fixer.source_range(Span::new(mem_expr.span().start, mem_expr.object().span().end)),
+        );
         formatter.print_str(")");
 
         if let Some(kind_val) = kind {
@@ -215,6 +213,10 @@ fn tests() {
         ("expect(files.length).toEqual(1);", None),
         ("expect(files.length).toStrictEqual(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", None),
+        (
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);", 
+            None
+        ),
     ];
 
     let fix = vec![
@@ -240,6 +242,11 @@ fn tests() {
         ("expect(files.length).toEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).toStrictEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", "expect(files).not.toHaveLength(1);", None),
+        (
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);", 
+            "expect((meta.get('pages') as YArray<unknown>)).toHaveLength((originalMeta.get('pages') as YArray<unknown>).length);", 
+            None
+        ),
     ];
 
     Tester::new(PreferToHaveLength::NAME, pass, fail)
