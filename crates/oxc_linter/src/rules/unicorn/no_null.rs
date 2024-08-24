@@ -17,16 +17,8 @@ use crate::{
     AstNode,
 };
 
-fn replace_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of the `null` literal")
-        .with_help("Replace the `null` literal with `undefined`.")
-        .with_label(span0)
-}
-
-fn remove_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of the `null` literal")
-        .with_help("Remove the `null` literal.")
-        .with_label(span0)
+fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use `null` literals").with_label(null)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -56,7 +48,7 @@ declare_oxc_lint!(
     /// ```
     NoNull,
     style,
-    fix
+    conditional_fix
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
@@ -87,7 +79,7 @@ fn diagnose_binary_expression(
 
     // `if (foo != null) {}`
     if matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
-        ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+        ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
             fix_null(fixer, null_literal)
         });
 
@@ -95,7 +87,7 @@ fn diagnose_binary_expression(
     }
 
     // checkStrictEquality=true && `if (foo !== null) {}`
-    ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
         fix_null(fixer, null_literal)
     });
 }
@@ -110,7 +102,7 @@ fn diagnose_variable_declarator(
     if matches!(&variable_declarator.init, Some(Expression::NullLiteral(expr)) if expr.span == null_literal.span)
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
-        ctx.diagnostic_with_fix(remove_null_diagnostic(null_literal.span), |fixer| {
+        ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
             fixer.delete_range(Span::new(variable_declarator.id.span().end, null_literal.span.end))
         });
 
@@ -118,7 +110,7 @@ fn diagnose_variable_declarator(
     }
 
     // `const foo = null`
-    ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
         fix_null(fixer, null_literal)
     });
 }
@@ -207,7 +199,7 @@ impl Rule for NoNull {
 
             // `function foo() { return null; }`,
             if matches!(parent_node.kind(), AstKind::ReturnStatement(_)) {
-                ctx.diagnostic_with_fix(remove_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fixer.delete_range(null_literal.span)
                 });
 
@@ -215,7 +207,7 @@ impl Rule for NoNull {
             }
         }
 
-        ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+        ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
             fix_null(fixer, null_literal)
         });
     }
