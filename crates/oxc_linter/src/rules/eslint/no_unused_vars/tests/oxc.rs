@@ -459,9 +459,15 @@ fn test_functions() {
                 };
             });
         ",
+        "const foo = () => function bar() { }\nfoo()",
+        "module.exports.foo = () => function bar() { }"
     ];
 
-    let fail = vec!["function foo() {}", "function foo() { foo() }"];
+    let fail = vec![
+        "function foo() {}",
+        "function foo() { foo() }",
+        "const foo = () => { function bar() { } }\nfoo()",
+    ];
 
     let fix = vec![
         // function declarations are never removed
