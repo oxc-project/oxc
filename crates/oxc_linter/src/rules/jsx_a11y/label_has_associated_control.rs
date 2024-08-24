@@ -16,7 +16,7 @@ use crate::{
 
 fn label_has_associated_control_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("A form label must be associated with a control.")
-        .with_help("Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.")
+        .with_help("Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.")
         .with_label(span0)
 }
 

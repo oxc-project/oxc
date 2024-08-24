@@ -6,91 +6,91 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <label htmlFor="js_id"><span><span><span>A label</span></span></span></label>
    · ───────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label htmlFor="js_id" aria-label="A label" />
    · ──────────────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label htmlFor="js_id" aria-labelledby="A label" />
    · ───────────────────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel htmlFor="js_id" aria-label="A label" />
    · ────────────────────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel htmlFor="js_id" label="A label" />
    · ───────────────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel htmlFor="js_id" aria-label="A label" />
    · ────────────────────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label htmlFor="js_id" label="A label" />
    · ─────────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label>A label<input /></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label>A label<textarea /></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><img alt="A label" /><input /></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><img aria-label="A label" /><input /></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><span>A label<input /></span></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><span><span>A label<input /></span></span></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   × Unterminated string
    ╭─[label_has_associated_control.tsx:1:71]
@@ -110,56 +110,56 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <label><span><span><span><span>A label</span><input /></span></span></span></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><span><span><span><span aria-label="A label" /><input /></span></span></span></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><span><span><span><input aria-label="A label" /></span></span></span></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><span>A label<CustomInput /></span></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel><span>A label<CustomInput /></span></CustomLabel>
    · ─────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel><span label="A label"><CustomInput /></span></CustomLabel>
    · ─────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label><span>A label<CustomInput /></span></label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel><span>A label<CustomInput /></span></CustomLabel>
    · ─────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
    ╭─[label_has_associated_control.tsx:1:1]
@@ -194,7 +194,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <label>A label</label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
    ╭─[label_has_associated_control.tsx:1:6]
@@ -208,147 +208,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div><label>A label</label><input /></div>
    ·      ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel aria-label="A label" />
    · ────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel label="A label" />
    · ───────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel aria-label="A label" />
    · ────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label label="A label" />
    · ─────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label><span><CustomInput /></span></label>
-   · ───────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <CustomLabel><span><CustomInput /></span></CustomLabel>
-   · ─────────────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <CustomLabel><span><CustomInput /></span></CustomLabel>
-   · ─────────────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label><span><CustomInput /></span></label>
-   · ───────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <CustomLabel><span><CustomInput /></span></CustomLabel>
-   · ─────────────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label htmlFor="js_id" />
-   · ─────────────────────────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label htmlFor="js_id"><input /></label>
-   · ───────────────────────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label htmlFor="js_id"><textarea /></label>
-   · ───────────────────────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label></label>
-   · ───────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label>A label</label>
-   · ───────
-   ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
-   ╭─[label_has_associated_control.tsx:1:6]
- 1 │ <div><label /><input /></div>
-   ·      ─────────
-   ╰────
-  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
-   ╭─[label_has_associated_control.tsx:1:6]
- 1 │ <div><label>A label</label><input /></div>
-   ·      ───────
-   ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <CustomLabel aria-label="A label" />
-   · ────────────────────────────────────
-   ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <CustomLabel label="A label" />
-   · ───────────────────────────────
-   ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <CustomLabel aria-label="A label" />
-   · ────────────────────────────────────
-   ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
-
-  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
-   ╭─[label_has_associated_control.tsx:1:1]
- 1 │ <label label="A label" />
-   · ─────────────────────────
-   ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
    ╭─[label_has_associated_control.tsx:1:1]
@@ -418,7 +306,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <label>A label</label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
    ╭─[label_has_associated_control.tsx:1:6]
@@ -432,35 +320,35 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div><label>A label</label><input /></div>
    ·      ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel aria-label="A label" />
    · ────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel label="A label" />
    · ───────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel aria-label="A label" />
    · ────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label label="A label" />
    · ─────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
    ╭─[label_has_associated_control.tsx:1:1]
@@ -530,7 +418,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <label>A label</label>
    · ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
    ╭─[label_has_associated_control.tsx:1:6]
@@ -544,35 +432,147 @@ source: crates/oxc_linter/src/tester.rs
  1 │ <div><label>A label</label><input /></div>
    ·      ───────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel aria-label="A label" />
    · ────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel label="A label" />
    · ───────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <CustomLabel aria-label="A label" />
    · ────────────────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
    ╭─[label_has_associated_control.tsx:1:1]
  1 │ <label label="A label" />
    · ─────────────────────────
    ╰────
-  help: Either give the label a `htmlFor` atrribute with the id of the associated control, or wrap the label around the control.
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label><span><CustomInput /></span></label>
+   · ───────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <CustomLabel><span><CustomInput /></span></CustomLabel>
+   · ─────────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <CustomLabel><span><CustomInput /></span></CustomLabel>
+   · ─────────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label><span><CustomInput /></span></label>
+   · ───────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <CustomLabel><span><CustomInput /></span></CustomLabel>
+   · ─────────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label htmlFor="js_id" />
+   · ─────────────────────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label htmlFor="js_id"><input /></label>
+   · ───────────────────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label htmlFor="js_id"><textarea /></label>
+   · ───────────────────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label></label>
+   · ───────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label>A label</label>
+   · ───────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
+   ╭─[label_has_associated_control.tsx:1:6]
+ 1 │ <div><label /><input /></div>
+   ·      ─────────
+   ╰────
+  help: Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:6]
+ 1 │ <div><label>A label</label><input /></div>
+   ·      ───────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <CustomLabel aria-label="A label" />
+   · ────────────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <CustomLabel label="A label" />
+   · ───────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <CustomLabel aria-label="A label" />
+   · ────────────────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
+
+  ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must be associated with a control.
+   ╭─[label_has_associated_control.tsx:1:1]
+ 1 │ <label label="A label" />
+   · ─────────────────────────
+   ╰────
+  help: Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.
 
   ⚠ eslint-plugin-jsx-a11y(label-has-associated-control): A form label must have accessible text.
    ╭─[label_has_associated_control.tsx:1:1]
