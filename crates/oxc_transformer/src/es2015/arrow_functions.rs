@@ -1,3 +1,64 @@
+//! ES2015 Arrow Functions
+//!
+//! This plugin transforms arrow functions (`() => {}`) to function expressions (`function () {}`).
+//!
+//! > This plugin is included in `preset-env`, in ES2015
+//!
+//! ## Example
+//!
+//! Input:
+//! ```js
+//! var a = () => {};
+//! var a = b => b;
+//!
+//! const double = [1, 2, 3].map(num => num * 2);
+//! console.log(double); // [2,4,6]
+//!
+//! var bob = {
+//!   _name: "Bob",
+//!   _friends: ["Sally", "Tom"],
+//!   printFriends() {
+//!     this._friends.forEach(f => console.log(this._name + " knows " + f));
+//!   },
+//! };
+//! console.log(bob.printFriends());
+//! ```
+//!
+//! Output:
+//! ```js
+//! var a = function() {};
+//! var a = function(b) {
+//!   return b;
+//! };
+//!
+//! const double = [1, 2, 3].map(function(num) {
+//!   return num * 2;
+//! });
+//! console.log(double); // [2,4,6]
+//!
+//! var bob = {
+//!   _name: "Bob",
+//!   _friends: ["Sally", "Tom"],
+//!   printFriends() {
+//!     var _this = this;
+//!
+//!     this._friends.forEach(function(f) {
+//!       return console.log(_this._name + " knows " + f);
+//!     });
+//!   },
+//! };
+//! console.log(bob.printFriends());
+//! ```
+//!
+//! ## Implementation
+//!
+//! Implementation based on [@babel/plugin-transform-exponentiation-operator](https://babel.dev/docs/babel-plugin-transform-arrow-functions).
+//!
+//! ## References:
+//!
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-arrow-functions>
+//! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
+
 use std::cell::Cell;
 
 use oxc_allocator::Vec;
@@ -19,47 +80,6 @@ pub struct ArrowFunctionsOptions {
     pub spec: bool,
 }
 
-/// [plugin-transform-arrow-functions](https://babel.dev/docs/babel-plugin-transform-arrow-functions)
-///
-/// This plugin transforms arrow functions to function expressions.
-///
-/// This plugin is included in `preset-env`
-///
-/// References:
-///
-/// * <https://babeljs.io/docs/babel-plugin-transform-arrow-functions>
-/// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-arrow-functions>
-//
-// TODO: The `spec` option is not currently supported. Add support for it.
-//
-// TODO: We create `var _this = this;` in parent block, whereas we should create it in
-// parent vars block like Babel:
-// ```js
-// // Input
-// function foo() {
-//   { let f = () => this; }
-//   { let f2 = () => this; }
-// }
-//
-// // Babel output
-// function foo() {
-//   var _this = this;
-//   { let f = function () { return _this; } }
-//   { let f2 = function () { return _this; } }
-// }
-//
-// // Our output
-// function foo() {
-//   {
-//     var _this = this;
-//     let f = function () { return _this; }
-//   }
-//   {
-//     var _this2 = this;
-//     let f2 = function () { return _this2; }
-//   }
-// }
-// ```
 pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
