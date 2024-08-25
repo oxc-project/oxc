@@ -3,7 +3,7 @@ commit: 12619ffe
 parser_babel Summary:
 AST Parsed     : 2092/2100 (99.62%)
 Positive Passed: 2082/2100 (99.14%)
-Negative Passed: 1379/1492 (92.43%)
+Negative Passed: 1380/1492 (92.49%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -53,7 +53,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override-errors/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/property-optional-definite-assignment-not-allowed/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-class/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-function/input.ts
@@ -10263,6 +10262,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  3 │ }
    ╰────
+
+  × A property cannot be both optional and definite.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/property-optional-definite-assignment-not-allowed/input.ts:2:4]
+ 1 │ class C {
+ 2 │   x?!: number;
+   ·    ──
+ 3 │ }
+   ╰────
+  help: Remove either the `?` or the `!`
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/invalid-initializer-ambient-context/input.ts:2:35]

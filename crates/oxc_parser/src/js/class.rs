@@ -272,6 +272,10 @@ impl<'a> ParserImpl<'a> {
         };
         let definite = self.eat(Kind::Bang);
 
+        if optional && definite {
+            self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
+        }
+
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             // `private #foo`, etc. is illegal
             if self.ts_enabled() {
