@@ -144,12 +144,11 @@ impl PreferToHaveLength {
 
         ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
             let code = Self::build_code(fixer, static_mem_expr, kind, property_name);
-            let end = if call_expr.arguments.len() > 0 {
-                call_expr.arguments.first().unwrap().span().start
-            } else {
-                matcher.span.end
-            };
-            fixer.replace(Span::new(call_expr.span.start, end - 1), code)
+            let offset = fixer
+                .source_range(Span::new(matcher.span.end, call_expr.span().end))
+                .find('(')
+                .unwrap() as u32;
+            fixer.replace(Span::new(call_expr.span.start, matcher.span.end + offset), code)
         });
     }
 
