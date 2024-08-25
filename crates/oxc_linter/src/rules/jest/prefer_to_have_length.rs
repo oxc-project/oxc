@@ -217,6 +217,10 @@ fn tests() {
             "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);", 
             None
         ),
+        (
+            "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+          0,
+        );", None)
     ];
 
     let fix = vec![
@@ -247,6 +251,15 @@ fn tests() {
             "expect((meta.get('pages') as YArray<unknown>)).toHaveLength((originalMeta.get('pages') as YArray<unknown>).length);", 
             None
         ),
+        (
+            "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+          0,
+        );", 
+            "expect(assetTypeContainer.getElementsByTagName('time')).toHaveLength(
+          0,
+        );", 
+            None
+        )
     ];
 
     Tester::new(PreferToHaveLength::NAME, pass, fail)
