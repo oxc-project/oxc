@@ -171,10 +171,35 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
             se: expr.span.end,
             d: ImportType::DynamicImport(expr.span.start + 6),
             a: expr.arguments.first().map(|e| e.span().start),
-            // TODO
             t: false,
         });
         walk_import_expression(self, expr);
+    }
+
+    fn visit_ts_import_type(&mut self, impt: &TSImportType<'a>) {
+        let (source, source_span_start, source_span_end) =
+            if let TSType::TSLiteralType(literal) = &impt.parameter {
+                if let TSLiteral::StringLiteral(s) = &literal.literal {
+                    (Some(s.value.clone()), s.span.start, s.span.end)
+                } else {
+                    let span = literal.span();
+                    (None, span.start, span.end)
+                }
+            } else {
+                let span = impt.parameter.span();
+                (None, span.start, span.end)
+            };
+
+        self.imports.push(ImportSpecifier {
+            n: source,
+            s: source_span_start,
+            e: source_span_end,
+            ss: impt.span.start,
+            se: impt.span.end,
+            d: ImportType::DynamicImport(impt.span.start + 6),
+            a: None,
+            t: true,
+        });
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {

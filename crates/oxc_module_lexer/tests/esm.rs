@@ -6,32 +6,34 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 #[derive(Debug, Clone)]
-struct ImportSpecifier {
-    n: Option<String>,
-    s: u32,
-    e: u32,
-    ss: u32,
-    se: u32,
-    d: ImportType,
-    a: Option<u32>,
+pub struct ImportSpecifier {
+    pub n: Option<String>,
+    pub s: u32,
+    pub e: u32,
+    pub ss: u32,
+    pub se: u32,
+    pub d: ImportType,
+    pub a: Option<u32>,
+    pub t: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct ExportSpecifier {
-    n: String,
-    ln: Option<String>,
-    s: u32,
-    e: u32,
-    ls: Option<u32>,
-    le: Option<u32>,
+    pub n: String,
+    pub ln: Option<String>,
+    pub s: u32,
+    pub e: u32,
+    pub ls: Option<u32>,
+    pub le: Option<u32>,
+    pub t: bool,
 }
 
 #[non_exhaustive]
-struct ModuleLexer {
-    imports: Vec<ImportSpecifier>,
-    exports: Vec<ExportSpecifier>,
-    has_module_syntax: bool,
-    facade: bool,
+pub struct ModuleLexer {
+    pub imports: Vec<ImportSpecifier>,
+    pub exports: Vec<ExportSpecifier>,
+    pub has_module_syntax: bool,
+    pub facade: bool,
 }
 
 fn parse(source: &str) -> ModuleLexer {
@@ -53,6 +55,7 @@ fn parse(source: &str) -> ModuleLexer {
                 se: i.se,
                 d: i.d,
                 a: i.a,
+                t: i.t,
             })
             .collect(),
         exports: module_lexer
@@ -65,6 +68,7 @@ fn parse(source: &str) -> ModuleLexer {
                 e: e.e,
                 ls: e.ls,
                 le: e.le,
+                t: e.t,
             })
             .collect(),
         has_module_syntax: module_lexer.has_module_syntax,
