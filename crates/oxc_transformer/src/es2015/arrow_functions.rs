@@ -65,7 +65,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 use serde::Deserialize;
 
 use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
@@ -94,23 +94,14 @@ impl<'a> ArrowFunctions<'a> {
     pub fn new(options: ArrowFunctionsOptions, ctx: Ctx<'a>) -> Self {
         Self { ctx, _options: options, this_var: None, stacks: vec![], this_statements: vec![] }
     }
+}
 
-    fn is_inside_arrow_function(&self) -> bool {
-        self.stacks.last().copied().unwrap_or(false)
-    }
-
-    fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
-        if self.this_var.is_none() {
-            self.this_var = Some(BoundIdentifier::new_uid_in_current_scope(
-                "this",
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            ));
-        }
-        self.this_var.as_ref().unwrap().clone()
-    }
-
-    pub fn transform_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>) {
+impl<'a> Traverse<'a> for ArrowFunctions<'a> {
+    fn enter_statements(
+        &mut self,
+        _stmts: &mut Vec<'a, Statement<'a>>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         self.this_statements.push(None);
     }
 
@@ -125,7 +116,7 @@ impl<'a> ArrowFunctions<'a> {
     /// }
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         // Insert the var _this = this;
         if let Some(Some(stmt)) = self.this_statements.pop() {
             stmts.insert(0, stmt);
@@ -171,11 +162,7 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     /// Change <this></this> to <_this></_this>, and mark it as found
-    pub fn transform_jsx_element_name(
-        &mut self,
-        name: &mut JSXElementName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn enter_jsx_element_name(&mut self, name: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
         if !self.is_inside_arrow_function() {
             return;
         }
@@ -197,6 +184,75 @@ impl<'a> ArrowFunctions<'a> {
             let new_ident = self.get_this_name(ctx).create_read_reference(ctx);
             ident.name = new_ident.name;
         }
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
+        match expr {
+            Expression::ArrowFunctionExpression(_) => {
+                self.stacks.push(true);
+            }
+            Expression::FunctionExpression(_) => self.stacks.push(false),
+            _ => {}
+        }
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        match expr {
+            Expression::ThisExpression(this_expr) => {
+                if !self.is_inside_arrow_function() {
+                    return;
+                }
+
+                let ident =
+                    self.get_this_name(ctx).create_spanned_read_reference(this_expr.span, ctx);
+                *expr = self.ctx.ast.expression_from_identifier_reference(ident);
+            }
+            Expression::ArrowFunctionExpression(arrow_function_expr) => {
+                *expr = self.transform_arrow_function_expression(arrow_function_expr, ctx);
+                self.stacks.pop();
+            }
+            Expression::FunctionExpression(_) => {
+                self.stacks.pop();
+            }
+            _ => {}
+        }
+    }
+
+    fn enter_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if let Declaration::FunctionDeclaration(_) = decl {
+            self.stacks.push(false);
+        }
+    }
+
+    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if let Declaration::FunctionDeclaration(_) = decl {
+            self.stacks.pop();
+        }
+    }
+
+    fn enter_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.stacks.push(false);
+    }
+
+    fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.stacks.pop();
+    }
+}
+
+impl<'a> ArrowFunctions<'a> {
+    fn is_inside_arrow_function(&self) -> bool {
+        self.stacks.last().copied().unwrap_or(false)
+    }
+
+    fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+        if self.this_var.is_none() {
+            self.this_var = Some(BoundIdentifier::new_uid_in_current_scope(
+                "this",
+                SymbolFlags::FunctionScopedVariable,
+                ctx,
+            ));
+        }
+        self.this_var.as_ref().unwrap().clone()
     }
 
     fn transform_arrow_function_expression(
@@ -258,61 +314,5 @@ impl<'a> ArrowFunctions<'a> {
         // Avoid creating a function declaration.
         // `() => {};` => `(function () {});`
         self.ctx.ast.expression_parenthesized(SPAN, expr)
-    }
-
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
-            Expression::ArrowFunctionExpression(_) => {
-                self.stacks.push(true);
-            }
-            Expression::FunctionExpression(_) => self.stacks.push(false),
-            _ => {}
-        }
-    }
-
-    pub fn transform_expression_on_exit(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        match expr {
-            Expression::ThisExpression(this_expr) => {
-                if !self.is_inside_arrow_function() {
-                    return;
-                }
-
-                let ident =
-                    self.get_this_name(ctx).create_spanned_read_reference(this_expr.span, ctx);
-                *expr = self.ctx.ast.expression_from_identifier_reference(ident);
-            }
-            Expression::ArrowFunctionExpression(arrow_function_expr) => {
-                *expr = self.transform_arrow_function_expression(arrow_function_expr, ctx);
-                self.stacks.pop();
-            }
-            Expression::FunctionExpression(_) => {
-                self.stacks.pop();
-            }
-            _ => {}
-        }
-    }
-
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.push(false);
-        }
-    }
-
-    pub fn transform_declaration_on_exit(&mut self, decl: &mut Declaration<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.pop();
-        }
-    }
-
-    pub fn transform_class(&mut self, _class: &mut Class<'a>) {
-        self.stacks.push(false);
-    }
-
-    pub fn transform_class_on_exit(&mut self, _class: &mut Class<'a>) {
-        self.stacks.pop();
     }
 }
