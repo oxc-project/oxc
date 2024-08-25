@@ -83,26 +83,33 @@ pub struct ArrowFunctionsOptions {
 pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
-    this_var: Option<BoundIdentifier<'a>>,
+    this_vars: std::vec::Vec<Option<BoundIdentifier<'a>>>,
     /// Stack to keep track of whether we are inside an arrow function or not.
     stacks: std::vec::Vec<bool>,
-    // var _this = this;
-    this_statements: std::vec::Vec<Option<Statement<'a>>>,
 }
 
 impl<'a> ArrowFunctions<'a> {
     pub fn new(options: ArrowFunctionsOptions, ctx: Ctx<'a>) -> Self {
-        Self { ctx, _options: options, this_var: None, stacks: vec![], this_statements: vec![] }
+        Self {
+            ctx,
+            _options: options,
+            // Reserve for the global scope
+            this_vars: vec![None],
+            stacks: vec![],
+        }
     }
 }
 
 impl<'a> Traverse<'a> for ArrowFunctions<'a> {
-    fn enter_statements(
-        &mut self,
-        _stmts: &mut Vec<'a, Statement<'a>>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.this_statements.push(None);
+    /// Insert `var _this = this;` for the global scope.
+    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.insert_this_var_statement_at_the_top_of_statements(&mut program.body);
+    }
+
+    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if func.body.is_some() {
+            self.this_vars.push(None);
+        }
     }
 
     /// ```ts
@@ -116,49 +123,12 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     /// }
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
-        // Insert the var _this = this;
-        if let Some(Some(stmt)) = self.this_statements.pop() {
-            stmts.insert(0, stmt);
-        }
+    fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+        let Some(body) = func.body.as_mut() else {
+            return;
+        };
 
-        if let Some(id) = &self.this_var {
-            let binding_pattern = self.ctx.ast.binding_pattern(
-                self.ctx
-                    .ast
-                    .binding_pattern_kind_from_binding_identifier(id.create_binding_identifier()),
-                Option::<TSTypeAnnotation>::None,
-                false,
-            );
-
-            let variable_declarator = self.ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                binding_pattern,
-                Some(self.ctx.ast.expression_this(SPAN)),
-                false,
-            );
-
-            let stmt = self.ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                self.ctx.ast.vec1(variable_declarator),
-                false,
-            );
-
-            let stmt = Statement::VariableDeclaration(stmt);
-            // store it, insert it in last statements
-            self.this_statements.last_mut().unwrap().replace(stmt);
-
-            // TODO: This isn't quite right. In this case, output is invalid:
-            // ```js
-            // function foo() {
-            //   let f = () => this;
-            //   let f2 = () => this;
-            // }
-            // ```
-            self.this_var = None;
-        }
+        self.insert_this_var_statement_at_the_top_of_statements(&mut body.statements);
     }
 
     /// Change <this></this> to <_this></_this>, and mark it as found
@@ -245,14 +215,15 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
-        if self.this_var.is_none() {
-            self.this_var = Some(BoundIdentifier::new_uid_in_current_scope(
+        let this_var = self.this_vars.last_mut().unwrap();
+        if this_var.is_none() {
+            this_var.replace(BoundIdentifier::new_uid_in_current_scope(
                 "this",
                 SymbolFlags::FunctionScopedVariable,
                 ctx,
             ));
         }
-        self.this_var.as_ref().unwrap().clone()
+        this_var.as_ref().unwrap().clone()
     }
 
     fn transform_arrow_function_expression(
@@ -314,5 +285,40 @@ impl<'a> ArrowFunctions<'a> {
         // Avoid creating a function declaration.
         // `() => {};` => `(function () {});`
         self.ctx.ast.expression_parenthesized(SPAN, expr)
+    }
+
+    /// Insert `var _this = this;` at the top of the statements.
+    fn insert_this_var_statement_at_the_top_of_statements(
+        &mut self,
+        statements: &mut Vec<'a, Statement<'a>>,
+    ) {
+        if let Some(id) = &self.this_vars.pop().unwrap() {
+            let binding_pattern = self.ctx.ast.binding_pattern(
+                self.ctx
+                    .ast
+                    .binding_pattern_kind_from_binding_identifier(id.create_binding_identifier()),
+                Option::<TSTypeAnnotation>::None,
+                false,
+            );
+
+            let variable_declarator = self.ctx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Var,
+                binding_pattern,
+                Some(self.ctx.ast.expression_this(SPAN)),
+                false,
+            );
+
+            let stmt = self.ctx.ast.alloc_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Var,
+                self.ctx.ast.vec1(variable_declarator),
+                false,
+            );
+
+            let stmt = Statement::VariableDeclaration(stmt);
+
+            statements.insert(0, stmt);
+        }
     }
 }

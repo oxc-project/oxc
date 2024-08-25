@@ -5,7 +5,6 @@ use std::rc::Rc;
 
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
-use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
@@ -34,15 +33,21 @@ impl<'a> ES2015<'a> {
 }
 
 impl<'a> Traverse<'a> for ES2015<'a> {
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.enter_statements(stmts, ctx);
+            self.arrow_functions.exit_program(program, ctx);
         }
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.exit_statements(stmts, ctx);
+            self.arrow_functions.enter_function(func, ctx);
+        }
+    }
+
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.exit_function(func, ctx);
         }
     }
 

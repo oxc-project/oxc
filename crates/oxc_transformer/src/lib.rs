@@ -123,6 +123,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_react.transform_program_on_exit(program, ctx);
         self.x0_typescript.transform_program_on_exit(program, ctx);
+        self.x3_es2015.exit_program(program, ctx);
     }
 
     // ALPHASORT
@@ -202,8 +203,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_formal_parameter(param);
     }
 
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_function(func);
+        self.x3_es2015.enter_function(func, ctx);
+    }
+
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_function(func);
+        self.x3_es2015.exit_function(func, ctx);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -261,7 +268,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x2_es2021.enter_statements(stmts, ctx);
         self.x2_es2020.enter_statements(stmts, ctx);
         self.x2_es2016.enter_statements(stmts, ctx);
-        self.x3_es2015.enter_statements(stmts, ctx);
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
@@ -270,7 +276,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x2_es2021.exit_statements(stmts, ctx);
         self.x2_es2020.exit_statements(stmts, ctx);
         self.x2_es2016.exit_statements(stmts, ctx);
-        self.x3_es2015.exit_statements(stmts, ctx);
     }
 
     fn enter_tagged_template_expression(
