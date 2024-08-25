@@ -1,23 +1,10 @@
 commit: 12619ffe
 
-Passed: 9/36
+Passed: 10/36
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
-
-
-# babel-plugin-transform-arrow-functions (0/1)
-* use-this-inside-blocks/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(2): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-
+* babel-plugin-transform-arrow-functions
 
 
 # babel-plugin-transform-typescript (2/7)

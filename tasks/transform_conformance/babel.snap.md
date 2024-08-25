@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 281/953
+Passed: 282/953
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -1341,12 +1341,6 @@ Targets: The `esmodules` is not supported
 
 
 * preset-options/ios-6/input.mjs
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable)
 
 
 * preset-options/no-options/input.mjs
@@ -1419,12 +1413,6 @@ Targets: The `esmodules` is not supported
 
 
 * preset-options-babel-7/ios-6/input.mjs
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable)
 
 
 * preset-options-babel-7/loose-typeof-symbol/input.mjs
@@ -1916,53 +1904,20 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-arrow-functions (0/6)
+# babel-plugin-transform-arrow-functions (1/6)
 * assumption-newableArrowFunctions-false/basic/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
 
 
 * assumption-newableArrowFunctions-false/naming/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
-  | ConstVariable | ArrowFunction)
-  | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable |
-  | ConstVariable)
 
 
 * assumption-newableArrowFunctions-false/self-referential/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * spec/newableArrowFunction-default/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 * spec/newableArrowFunction-vs-spec-false/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-
-* spec/newableArrowFunction-vs-spec-true/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 
