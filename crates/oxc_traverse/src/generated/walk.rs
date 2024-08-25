@@ -2682,6 +2682,13 @@ pub(crate) unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::AccessorPropertyValue);
         walk_expression(traverser, field as *mut _, ctx);
     }
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
+        as *mut Option<Box<TSTypeAnnotation>>)
+    {
+        ctx.retag_stack(AncestorType::AccessorPropertyTypeAnnotation);
+        walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
     ctx.pop_stack();
     traverser.exit_accessor_property(&mut *node, ctx);
 }

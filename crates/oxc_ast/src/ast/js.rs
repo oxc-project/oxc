@@ -2277,8 +2277,14 @@ pub struct AccessorProperty<'a> {
     pub key: PropertyKey<'a>,
     /// Initialized value in the declaration, if present.
     pub value: Option<Expression<'a>>,
+    /// Property was declared with a computed key
     pub computed: bool,
+    /// Property was declared with a `static` modifier
     pub r#static: bool,
+    /// Type annotation on the property.
+    ///
+    /// Will only ever be [`Some`] for TypeScript files.
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 #[ast(visit)]

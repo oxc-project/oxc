@@ -281,7 +281,6 @@ impl<'a> ParserImpl<'a> {
         }
 
         if accessor {
-            self.parse_ts_type_annotation()?;
             self.parse_class_accessor_property(span, key, computed, r#static, r#abstract).map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             // LAngle for start of type parameters `foo<T>`
@@ -479,6 +478,8 @@ impl<'a> ParserImpl<'a> {
         r#static: bool,
         r#abstract: bool,
     ) -> Result<ClassElement<'a>> {
+        let type_annotation =
+            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
         let r#type = if r#abstract {
@@ -496,6 +497,7 @@ impl<'a> ParserImpl<'a> {
             value,
             computed,
             r#static,
+            type_annotation,
         ))
     }
 }

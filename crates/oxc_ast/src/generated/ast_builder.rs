@@ -6494,10 +6494,11 @@ impl<'a> AstBuilder<'a> {
     /// - decorators: Decorators applied to the accessor property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
-    /// - computed
-    /// - r#static
+    /// - computed: Property was declared with a computed key
+    /// - r#static: Property was declared with a `static` modifier
+    /// - type_annotation: Type annotation on the property.
     #[inline]
-    pub fn class_element_accessor_property(
+    pub fn class_element_accessor_property<T1>(
         self,
         r#type: AccessorPropertyType,
         span: Span,
@@ -6506,10 +6507,21 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
-    ) -> ClassElement<'a> {
-        ClassElement::AccessorProperty(self.alloc(
-            self.accessor_property(r#type, span, decorators, key, value, computed, r#static),
-        ))
+        type_annotation: T1,
+    ) -> ClassElement<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        ClassElement::AccessorProperty(self.alloc(self.accessor_property(
+            r#type,
+            span,
+            decorators,
+            key,
+            value,
+            computed,
+            r#static,
+            type_annotation,
+        )))
     }
 
     /// Convert a [`AccessorProperty`] into a [`ClassElement::AccessorProperty`]
@@ -7057,10 +7069,11 @@ impl<'a> AstBuilder<'a> {
     /// - decorators: Decorators applied to the accessor property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
-    /// - computed
-    /// - r#static
+    /// - computed: Property was declared with a computed key
+    /// - r#static: Property was declared with a `static` modifier
+    /// - type_annotation: Type annotation on the property.
     #[inline]
-    pub fn accessor_property(
+    pub fn accessor_property<T1>(
         self,
         r#type: AccessorPropertyType,
         span: Span,
@@ -7069,8 +7082,21 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
-    ) -> AccessorProperty<'a> {
-        AccessorProperty { r#type, span, decorators, key, value, computed, r#static }
+        type_annotation: T1,
+    ) -> AccessorProperty<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
+        AccessorProperty {
+            r#type,
+            span,
+            decorators,
+            key,
+            value,
+            computed,
+            r#static,
+            type_annotation: type_annotation.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`AccessorProperty`] and stores it in the memory arena.
@@ -7083,10 +7109,11 @@ impl<'a> AstBuilder<'a> {
     /// - decorators: Decorators applied to the accessor property.
     /// - key: The expression used to declare the property.
     /// - value: Initialized value in the declaration, if present.
-    /// - computed
-    /// - r#static
+    /// - computed: Property was declared with a computed key
+    /// - r#static: Property was declared with a `static` modifier
+    /// - type_annotation: Type annotation on the property.
     #[inline]
-    pub fn alloc_accessor_property(
+    pub fn alloc_accessor_property<T1>(
         self,
         r#type: AccessorPropertyType,
         span: Span,
@@ -7095,9 +7122,22 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
-    ) -> Box<'a, AccessorProperty<'a>> {
+        type_annotation: T1,
+    ) -> Box<'a, AccessorProperty<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+    {
         Box::new_in(
-            self.accessor_property(r#type, span, decorators, key, value, computed, r#static),
+            self.accessor_property(
+                r#type,
+                span,
+                decorators,
+                key,
+                value,
+                computed,
+                r#static,
+                type_annotation,
+            ),
             self.allocator,
         )
     }

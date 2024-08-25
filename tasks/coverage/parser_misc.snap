@@ -1,7 +1,8 @@
 parser_misc Summary:
-AST Parsed     : 26/26 (100.00%)
-Positive Passed: 26/26 (100.00%)
-Negative Passed: 15/15 (100.00%)
+AST Parsed     : 27/27 (100.00%)
+Positive Passed: 27/27 (100.00%)
+Negative Passed: 15/16 (93.75%)
+Expect Syntax Error: tasks/coverage/misc/fail/oxc-5177.ts
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
