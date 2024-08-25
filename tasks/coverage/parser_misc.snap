@@ -1,8 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 27/27 (100.00%)
 Positive Passed: 27/27 (100.00%)
-Negative Passed: 15/16 (93.75%)
-Expect Syntax Error: tasks/coverage/misc/fail/oxc-5177.ts
+Negative Passed: 16/16 (100.00%)
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -229,6 +228,14 @@ Expect Syntax Error: tasks/coverage/misc/fail/oxc-5177.ts
    ·     ──┬─
    ·       ╰── It can not be redeclared here
  3 │ }
+   ╰────
+
+  × TS(1276): An 'accessor' property cannot be declared optional.
+   ╭─[misc/fail/oxc-5177.ts:4:15]
+ 3 │ export class Bang {
+ 4 │     accessor x?: Foo
+   ·               ─
+ 5 │ }
    ╰────
 
   × The keyword 'let' is reserved

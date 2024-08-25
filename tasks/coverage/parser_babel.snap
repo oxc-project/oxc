@@ -10067,6 +10067,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ 
    ╰────
 
+  × TS(1276): An 'accessor' property cannot be declared optional.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:7:14]
+ 6 │   abstract accessor #s;
+ 7 │   accessor #d?;
+   ·              ─
+ 8 │   abstract accessor f = 1;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-new-line-abstract/input.ts:1:8]
  1 │ declare abstract

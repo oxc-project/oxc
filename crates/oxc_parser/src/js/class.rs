@@ -263,7 +263,13 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) =
             if let Some(result) = key_name { result } else { self.parse_class_element_name()? };
 
-        let optional = self.eat(Kind::Question);
+        let (optional, optional_span) = if self.at(Kind::Question) {
+            let span = self.start_span();
+            self.bump_any();
+            (true, self.end_span(span))
+        } else {
+            (false, oxc_span::SPAN)
+        };
         let definite = self.eat(Kind::Bang);
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
@@ -281,6 +287,9 @@ impl<'a> ParserImpl<'a> {
         }
 
         if accessor {
+            if optional {
+                self.error(diagnostics::optional_accessor_property(optional_span));
+            }
             self.parse_class_accessor_property(span, key, computed, r#static, r#abstract).map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             // LAngle for start of type parameters `foo<T>`

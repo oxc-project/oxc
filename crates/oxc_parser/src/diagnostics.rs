@@ -250,6 +250,11 @@ pub fn constructor_async(span0: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn optional_accessor_property(span: Span) -> OxcDiagnostic {
+    ts_error("1276", "An 'accessor' property cannot be declared optional.").with_label(span)
+}
+
+#[cold]
 pub fn identifier_async(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use `{x0}` as an identifier in an async context"))
         .with_label(span1)
