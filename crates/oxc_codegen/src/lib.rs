@@ -222,6 +222,11 @@ impl<'a> Codegen<'a> {
     pub fn print_str(&mut self, s: &str) {
         self.code.extend(s.as_bytes());
     }
+
+    #[inline]
+    pub fn print_expression(&mut self, expr: &Expression<'_>) {
+        expr.gen_expr(self, Precedence::Lowest, Context::empty());
+    }
 }
 
 // Private APIs
@@ -242,7 +247,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    pub fn print_hard_space(&mut self) {
+    fn print_hard_space(&mut self) {
         self.print_char(b' ');
     }
 
@@ -329,7 +334,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    pub fn print_colon(&mut self) {
+    fn print_colon(&mut self) {
         self.print_char(b':');
     }
 
@@ -414,11 +419,6 @@ impl<'a> Codegen<'a> {
             }
             item.gen(self, ctx);
         }
-    }
-
-    #[inline]
-    pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::Lowest, Context::empty());
     }
 
     fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {

@@ -137,7 +137,7 @@ impl PreferExpectResolves {
         );
 
         formatter.print_str("await");
-        formatter.print_hard_space();
+        formatter.print_char(b' ');
         formatter.print_str(&jest_expect_fn_call.local);
         formatter.print_char(b'(');
         formatter.print_str(fixer.source_range(arg_span));

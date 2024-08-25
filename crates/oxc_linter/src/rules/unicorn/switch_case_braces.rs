@@ -86,8 +86,8 @@ impl Rule for SwitchCaseBraces {
                                         formatter.print_str("default");
                                     }
 
-                                    formatter.print_colon();
-                                    formatter.print_hard_space();
+                                    formatter.print_char(b':');
+                                    formatter.print_char(b' ');
                                     formatter.print_char(b'{');
                                     case.consequent
                                         .iter()
