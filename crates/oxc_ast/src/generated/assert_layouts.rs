@@ -696,6 +696,7 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, value) == 64usize);
     assert!(offset_of!(AccessorProperty, computed) == 80usize);
     assert!(offset_of!(AccessorProperty, r#static) == 81usize);
+    assert!(offset_of!(AccessorProperty, definite) == 82usize);
     assert!(offset_of!(AccessorProperty, type_annotation) == 88usize);
 
     assert!(size_of::<ImportExpression>() == 56usize);
@@ -2101,6 +2102,7 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, value) == 36usize);
     assert!(offset_of!(AccessorProperty, computed) == 44usize);
     assert!(offset_of!(AccessorProperty, r#static) == 45usize);
+    assert!(offset_of!(AccessorProperty, definite) == 46usize);
     assert!(offset_of!(AccessorProperty, type_annotation) == 48usize);
 
     assert!(size_of::<ImportExpression>() == 32usize);

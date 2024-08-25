@@ -6496,6 +6496,7 @@ impl<'a> AstBuilder<'a> {
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
     /// - r#static: Property was declared with a `static` modifier
+    /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
     #[inline]
     pub fn class_element_accessor_property<T1>(
@@ -6507,6 +6508,7 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        definite: bool,
         type_annotation: T1,
     ) -> ClassElement<'a>
     where
@@ -6520,6 +6522,7 @@ impl<'a> AstBuilder<'a> {
             value,
             computed,
             r#static,
+            definite,
             type_annotation,
         )))
     }
@@ -7071,6 +7074,7 @@ impl<'a> AstBuilder<'a> {
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
     /// - r#static: Property was declared with a `static` modifier
+    /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
     #[inline]
     pub fn accessor_property<T1>(
@@ -7082,6 +7086,7 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        definite: bool,
         type_annotation: T1,
     ) -> AccessorProperty<'a>
     where
@@ -7095,6 +7100,7 @@ impl<'a> AstBuilder<'a> {
             value,
             computed,
             r#static,
+            definite,
             type_annotation: type_annotation.into_in(self.allocator),
         }
     }
@@ -7111,6 +7117,7 @@ impl<'a> AstBuilder<'a> {
     /// - value: Initialized value in the declaration, if present.
     /// - computed: Property was declared with a computed key
     /// - r#static: Property was declared with a `static` modifier
+    /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
     #[inline]
     pub fn alloc_accessor_property<T1>(
@@ -7122,6 +7129,7 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        definite: bool,
         type_annotation: T1,
     ) -> Box<'a, AccessorProperty<'a>>
     where
@@ -7136,6 +7144,7 @@ impl<'a> AstBuilder<'a> {
                 value,
                 computed,
                 r#static,
+                definite,
                 type_annotation,
             ),
             self.allocator,

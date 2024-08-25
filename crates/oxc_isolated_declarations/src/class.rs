@@ -469,6 +469,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         None,
                         property.computed,
                         property.r#static,
+                        property.definite,
                         // SAFETY: `ast.copy` is unsound! We need to fix.
                         unsafe { self.ast.copy(&property.type_annotation) },
                     );

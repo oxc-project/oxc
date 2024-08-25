@@ -294,7 +294,8 @@ impl<'a> ParserImpl<'a> {
             if optional {
                 self.error(diagnostics::optional_accessor_property(optional_span));
             }
-            self.parse_class_accessor_property(span, key, computed, r#static, r#abstract).map(Some)
+            self.parse_class_accessor_property(span, key, computed, r#static, r#abstract, definite)
+                .map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             // LAngle for start of type parameters `foo<T>`
             //                                         ^
@@ -483,6 +484,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// <https://github.com/tc39/proposal-decorators>
+    #[allow(clippy::fn_params_excessive_bools)]
     fn parse_class_accessor_property(
         &mut self,
         span: Span,
@@ -490,6 +492,7 @@ impl<'a> ParserImpl<'a> {
         computed: bool,
         r#static: bool,
         r#abstract: bool,
+        definite: bool,
     ) -> Result<ClassElement<'a>> {
         let type_annotation =
             if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
@@ -510,6 +513,7 @@ impl<'a> ParserImpl<'a> {
             value,
             computed,
             r#static,
+            definite,
             type_annotation,
         ))
     }

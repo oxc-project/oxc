@@ -2281,6 +2281,8 @@ pub struct AccessorProperty<'a> {
     pub computed: bool,
     /// Property was declared with a `static` modifier
     pub r#static: bool,
+    /// Property has a `!` after its key.
+    pub definite: bool,
     /// Type annotation on the property.
     ///
     /// Will only ever be [`Some`] for TypeScript files.

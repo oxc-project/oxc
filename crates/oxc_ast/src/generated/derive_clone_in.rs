@@ -1954,6 +1954,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for AccessorProperty<'old_alloc
             value: self.value.clone_in(allocator),
             computed: self.computed.clone_in(allocator),
             r#static: self.r#static.clone_in(allocator),
+            definite: self.definite.clone_in(allocator),
             type_annotation: self.type_annotation.clone_in(allocator),
         }
     }
