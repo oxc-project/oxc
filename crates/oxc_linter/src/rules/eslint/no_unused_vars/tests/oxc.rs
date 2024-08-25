@@ -904,6 +904,13 @@ fn test_type_references() {
         
         export const API_PERMISSIONS = {} as const;
         ",
+        "
+        type Foo = 'foo' | 'bar';
+        export class Bar {
+            accessor x: Foo
+            accessor y!: Foo
+        }
+        ",
     ];
 
     let fail = vec![
