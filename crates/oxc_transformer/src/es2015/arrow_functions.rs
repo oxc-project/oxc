@@ -217,8 +217,16 @@ impl<'a> ArrowFunctions<'a> {
     fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
         let this_var = self.this_vars.last_mut().unwrap();
         if this_var.is_none() {
-            this_var.replace(BoundIdentifier::new_uid_in_current_scope(
+            let target_scope_id =
+                ctx.scopes().ancestors(ctx.current_scope_id()).skip(1).find(|scope_id| {
+                    let scope_flags = ctx.scopes().get_flags(*scope_id);
+                    scope_flags.intersects(ScopeFlags::Function | ScopeFlags::Top)
+                        && !scope_flags.contains(ScopeFlags::Arrow)
+                });
+
+            this_var.replace(BoundIdentifier::new_uid(
                 "this",
+                target_scope_id.unwrap(),
                 SymbolFlags::FunctionScopedVariable,
                 ctx,
             ));

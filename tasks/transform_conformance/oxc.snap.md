@@ -8,18 +8,6 @@ Passed: 9/36
 
 # babel-plugin-transform-arrow-functions (0/1)
 * use-this-inside-blocks/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(1): []
-  | rebuilt        : ScopeId(1): ["_this"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(3): ["_this"]
-  | rebuilt        : ScopeId(3): []
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(3): ScopeId(3)
-  | rebuilt        : SymbolId(1): ScopeId(1)
-
   x Symbol flags mismatch:
   | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
   | ArrowFunction)
