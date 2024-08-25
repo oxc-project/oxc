@@ -1,5 +1,5 @@
 mod esm;
-use esm::{ExportSpecifier, ImportSpecifier, ModuleLexer};
+use esm::ModuleLexer;
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -11,33 +11,8 @@ fn parse(source: &str) -> ModuleLexer {
     assert!(ret.errors.is_empty(), "{source} should not produce errors.\n{:?}", ret.errors);
     let module_lexer = oxc_module_lexer::ModuleLexer::new().build(&ret.program);
     ModuleLexer {
-        imports: module_lexer
-            .imports
-            .into_iter()
-            .map(|i| ImportSpecifier {
-                n: i.n.map(|n| n.to_string()),
-                s: i.s,
-                e: i.e,
-                ss: i.ss,
-                se: i.se,
-                d: i.d,
-                a: i.a,
-                t: i.t,
-            })
-            .collect(),
-        exports: module_lexer
-            .exports
-            .into_iter()
-            .map(|e| ExportSpecifier {
-                n: e.n.to_string(),
-                ln: e.ln.map(|ln| ln.to_string()),
-                s: e.s,
-                e: e.e,
-                ls: e.ls,
-                le: e.le,
-                t: e.t,
-            })
-            .collect(),
+        imports: module_lexer.imports.into_iter().map(|i| i.into()).collect(),
+        exports: module_lexer.exports.into_iter().map(|e| e.into()).collect(),
         has_module_syntax: module_lexer.has_module_syntax,
         facade: module_lexer.facade,
     }
