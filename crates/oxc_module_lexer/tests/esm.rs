@@ -73,8 +73,8 @@ fn parse(source: &str) -> ModuleLexer {
     let module_lexer = oxc_module_lexer::ModuleLexer::new().build(&ret.program);
     // Copy data over because `ModuleLexer<'a>` can't be returned
     ModuleLexer {
-        imports: module_lexer.imports.into_iter().map(|i| i.into()).collect(),
-        exports: module_lexer.exports.into_iter().map(|e| e.into()).collect(),
+        imports: module_lexer.imports.into_iter().map(Into::into).collect(),
+        exports: module_lexer.exports.into_iter().map(Into::into).collect(),
         has_module_syntax: module_lexer.has_module_syntax,
         facade: module_lexer.facade,
     }
