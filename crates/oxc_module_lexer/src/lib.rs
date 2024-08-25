@@ -177,23 +177,18 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
     }
 
     fn visit_ts_import_type(&mut self, impt: &TSImportType<'a>) {
-        let (source, source_span_start, source_span_end) =
-            if let TSType::TSLiteralType(literal) = &impt.parameter {
-                if let TSLiteral::StringLiteral(s) = &literal.literal {
-                    (Some(s.value.clone()), s.span.start, s.span.end)
-                } else {
-                    let span = literal.span();
-                    (None, span.start, span.end)
-                }
-            } else {
-                let span = impt.parameter.span();
-                (None, span.start, span.end)
-            };
+        let (source, span) = match &impt.parameter {
+            TSType::TSLiteralType(literal_type) => match &literal_type.literal {
+                TSLiteral::StringLiteral(s) => (Some(s.value.clone()), s.span()),
+                _ => (None, literal_type.span()),
+            },
+            _ => (None, impt.parameter.span()),
+        };
 
         self.imports.push(ImportSpecifier {
             n: source,
-            s: source_span_start,
-            e: source_span_end,
+            s: span.start,
+            e: span.end,
             ss: impt.span.start,
             se: impt.span.end,
             d: ImportType::DynamicImport(impt.span.start + 6),
