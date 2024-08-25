@@ -177,7 +177,7 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
     }
 
     fn visit_ts_import_type(&mut self, impt: &TSImportType<'a>) {
-        let (source, span) = match &impt.parameter {
+        let (source, source_span) = match &impt.parameter {
             TSType::TSLiteralType(literal_type) => match &literal_type.literal {
                 TSLiteral::StringLiteral(s) => (Some(s.value.clone()), s.span()),
                 _ => (None, literal_type.span()),
@@ -187,8 +187,8 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
 
         self.imports.push(ImportSpecifier {
             n: source,
-            s: span.start,
-            e: span.end,
+            s: source_span.start,
+            e: source_span.end,
             ss: impt.span.start,
             se: impt.span.end,
             d: ImportType::DynamicImport(impt.span.start + 6),
