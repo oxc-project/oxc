@@ -133,7 +133,7 @@ impl Oxc {
     #[wasm_bindgen]
     pub fn run(
         &mut self,
-        source_text: String,
+        source_text: &str,
         options: OxcOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
@@ -172,11 +172,11 @@ impl Oxc {
             ..ParseOptions::default()
         };
 
-        let ret = Parser::new(&allocator, &source_text, source_type)
+        let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(oxc_parser_options)
             .parse();
 
-        self.comments = self.map_comments(&source_text, &ret.trivias);
+        self.comments = Oxc::map_comments(source_text, &ret.trivias);
 
         self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
@@ -184,7 +184,7 @@ impl Oxc {
 
         let program = allocator.alloc(ret.program);
 
-        let semantic_ret = SemanticBuilder::new(&source_text, source_type)
+        let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_cfg(true)
             .with_trivias(ret.trivias.clone())
             .with_check_syntax_error(true)
@@ -207,22 +207,22 @@ impl Oxc {
         self.ast = program.serialize(&self.serializer)?;
 
         if run_options.prettier_format.unwrap_or_default() {
-            let ret = Parser::new(&allocator, &source_text, source_type)
+            let ret = Parser::new(&allocator, source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
             let printed =
-                Prettier::new(&allocator, &source_text, ret.trivias, PrettierOptions::default())
+                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
                     .build(&ret.program);
             self.prettier_formatted_text = printed;
         }
 
         if run_options.prettier_ir.unwrap_or_default() {
-            let ret = Parser::new(&allocator, &source_text, source_type)
+            let ret = Parser::new(&allocator, source_text, source_type)
                 .with_options(oxc_parser_options)
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
-                &source_text,
+                source_text,
                 ret.trivias.clone(),
                 PrettierOptions::default(),
             )
@@ -236,7 +236,7 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            let (symbols, scopes) = SemanticBuilder::new(&source_text, source_type)
+            let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
                 .build(program)
                 .semantic
                 .into_symbol_table_and_scope_tree();
@@ -245,7 +245,7 @@ impl Oxc {
                 &allocator,
                 &path,
                 source_type,
-                &source_text,
+                source_text,
                 ret.trivias.clone(),
                 options,
             )
@@ -257,7 +257,7 @@ impl Oxc {
         }
 
         if run_options.scope.unwrap_or_default() || run_options.symbol.unwrap_or_default() {
-            let semantic = SemanticBuilder::new(&source_text, source_type)
+            let semantic = SemanticBuilder::new(source_text, source_type)
                 .build_module_record(PathBuf::new(), program)
                 .build(program)
                 .semantic;
@@ -347,7 +347,7 @@ impl Oxc {
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 
-    fn map_comments(&self, source_text: &String, trivias: &Trivias) -> Vec<Comment> {
+    fn map_comments(source_text: &str, trivias: &Trivias) -> Vec<Comment> {
         trivias
             .comments()
             .map(|comment| Comment {
@@ -355,7 +355,7 @@ impl Oxc {
                     CommentKind::SingleLine => CommentType::Line,
                     CommentKind::MultiLine => CommentType::Block,
                 },
-                value: comment.span.source_text(&source_text).to_string(),
+                value: comment.span.source_text(source_text).to_string(),
                 start: comment.span.start,
                 end: comment.span.end,
             })
