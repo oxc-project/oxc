@@ -20839,11 +20839,11 @@ Negative Passed: 4220/4220 (100.00%)
     ·    ─
     ╰────
 
-  × Invalid regular expression: Invalid surrogate pair
-    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2.js:15:5]
+  × Invalid regular expression: Unterminated capturing group name
+    ╭─[test262/test/language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2.js:15:4]
  14 │ 
  15 │ /(?<𐒤>a)/;
-    ·     ─
+    ·    ─
     ╰────
 
   × Invalid regular expression: Invalid unicode escape sequence
