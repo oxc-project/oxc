@@ -166,11 +166,15 @@ impl Oxc {
             _ => source_type,
         };
 
+        let default_parser_options = ParseOptions::default();
         let oxc_parser_options = ParseOptions {
             allow_return_outside_function: parser_options
                 .allow_return_outside_function
-                .unwrap_or_default(),
-            ..ParseOptions::default()
+                .unwrap_or(default_parser_options.allow_return_outside_function),
+            preserve_parens: parser_options
+                .preserve_parens
+                .unwrap_or(default_parser_options.preserve_parens),
+            ..default_parser_options
         };
 
         let ret = Parser::new(&allocator, source_text, source_type)
