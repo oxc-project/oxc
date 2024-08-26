@@ -411,13 +411,25 @@ impl<'a> Codegen<'a> {
         self.needs_semicolon = false;
     }
 
+    // We tried optimizing this to move the `index != 0` check out of the loop:
+    // ```
+    // let mut iter = items.iter();
+    // let Some(item) = iter.next() else { return };
+    // item.gen(self, ctx);
+    // for item in iter {
+    //     self.print_comma();
+    //     self.print_soft_space();
+    //     item.gen(self, ctx);
+    // }
+    // ```
+    // But it turned out this was actually a bit slower.
+    // <https://github.com/oxc-project/oxc/pull/5221>
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
-        let mut iter = items.iter();
-        let Some(item) = iter.next() else { return };
-        item.gen(self, ctx);
-        for item in iter {
-            self.print_comma();
-            self.print_soft_space();
+        for (index, item) in items.iter().enumerate() {
+            if index != 0 {
+                self.print_comma();
+                self.print_soft_space();
+            }
             item.gen(self, ctx);
         }
     }
