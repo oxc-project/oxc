@@ -1,7 +1,9 @@
+use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Tsify)]
+#[serde(rename_all = "camelCase")]
 pub struct OxcRunOptions {
     syntax: bool,
     lint: bool,
@@ -51,22 +53,22 @@ impl OxcRunOptions {
         self.format = yes;
     }
 
-    #[wasm_bindgen(getter)]
+    #[wasm_bindgen(getter = "prettierFormat")]
     pub fn prettier_format(&self) -> bool {
         self.prettier_format
     }
 
-    #[wasm_bindgen(setter)]
+    #[wasm_bindgen(setter = "prettierFormat")]
     pub fn set_prettier_format(&mut self, yes: bool) {
         self.prettier_format = yes;
     }
 
-    #[wasm_bindgen(getter)]
+    #[wasm_bindgen(getter = "prettierIr")]
     pub fn prettier_ir(&self) -> bool {
         self.prettier_ir
     }
 
-    #[wasm_bindgen(setter)]
+    #[wasm_bindgen(setter = "prettierIr")]
     pub fn set_prettier_ir(&mut self, yes: bool) {
         self.prettier_ir = yes;
     }
@@ -81,12 +83,12 @@ impl OxcRunOptions {
         self.transform = yes;
     }
 
-    #[wasm_bindgen(getter)]
+    #[wasm_bindgen(getter = "typeCheck")]
     pub fn type_check(&self) -> bool {
         self.type_check
     }
 
-    #[wasm_bindgen(setter)]
+    #[wasm_bindgen(setter = "typeCheck")]
     pub fn set_type_check(&mut self, yes: bool) {
         self.type_check = yes;
     }
