@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{
     context::LintContext,
@@ -35,8 +35,8 @@ pub struct LabelHasAssociatedControl(Box<LabelHasAssociatedControlConfig>);
 pub struct LabelHasAssociatedControlConfig {
     depth: u8,
     assert: Assert,
-    label_components: Vec<String>,
-    label_attributes: Vec<String>,
+    label_components: Vec<CompactStr>,
+    label_attributes: Vec<CompactStr>,
     control_components: GlobSet,
 }
 
@@ -61,12 +61,8 @@ impl Default for LabelHasAssociatedControlConfig {
         Self {
             depth: 2,
             assert: Assert::Either,
-            label_components: vec!["label".to_string()],
-            label_attributes: vec![
-                "alt".to_string(),
-                "aria-label".to_string(),
-                "aria-labelledby".to_string(),
-            ],
+            label_components: vec!["label".into()],
+            label_attributes: vec!["alt".into(), "aria-label".into(), "aria-labelledby".into()],
             control_components: GlobSet::empty(),
         }
     }
@@ -147,8 +143,8 @@ impl Rule for LabelHasAssociatedControl {
             if let Some(mut components) = label_components
                 .iter()
                 .map(serde_json::Value::as_str)
-                .map(|component| component.map(std::string::ToString::to_string))
-                .collect::<Option<Vec<String>>>()
+                .map(|component| component.map(CompactStr::from))
+                .collect::<Option<Vec<CompactStr>>>()
             {
                 config.label_components.append(&mut components);
             }
@@ -160,8 +156,8 @@ impl Rule for LabelHasAssociatedControl {
             if let Some(mut attributes) = label_attributes
                 .iter()
                 .map(serde_json::Value::as_str)
-                .map(|attribute| attribute.map(std::string::ToString::to_string))
-                .collect::<Option<Vec<String>>>()
+                .map(|attribute| attribute.map(CompactStr::from))
+                .collect::<Option<Vec<CompactStr>>>()
             {
                 config.label_attributes.append(&mut attributes);
             }
@@ -196,6 +192,12 @@ impl Rule for LabelHasAssociatedControl {
             control_builder.build().unwrap()
         };
 
+        config.label_components.sort_unstable();
+        config.label_components.dedup();
+
+        config.label_attributes.sort_unstable();
+        config.label_attributes.dedup();
+
         Self(Box::new(config))
     }
 
@@ -205,7 +207,7 @@ impl Rule for LabelHasAssociatedControl {
         };
 
         if let Some(element_type) = get_element_type(ctx, &element.opening_element) {
-            if !self.label_components.contains(&element_type.to_string()) {
+            if self.label_components.binary_search(&element_type.into()).is_err() {
                 return;
             }
         }
@@ -252,7 +254,7 @@ impl LabelHasAssociatedControl {
         if root.opening_element.attributes.iter().any(|attribute| match attribute {
             JSXAttributeItem::Attribute(attr) => {
                 let attr_name = get_jsx_attribute_name(&attr.name);
-                self.label_attributes.contains(&attr_name.to_string())
+                self.label_attributes.binary_search(&attr_name.into()).is_ok()
             }
             JSXAttributeItem::SpreadAttribute(_) => true,
         }) {
@@ -900,6 +902,16 @@ fn test() {
             "<label><CustomText /><input /></label>",
             Some(serde_json::json!([{
                 "assert": "either",
+            }])),
+            None,
+        ),
+        // ensure `labelAttributes` is sorted for binary search
+        (
+            r#"<CustomLabel htmlFor="js_id" label="A label" />"#,
+            Some(serde_json::json!([{
+                "labelComponents": ["CustomLabel"],
+                "labelAttributes": ["zzzlabel", "nnnlabel", "label"],
+                "assert": "htmlFor"
             }])),
             None,
         ),
@@ -1563,6 +1575,15 @@ fn test() {
                 "assert": "either",
             }])),
             Some(component_settings()),
+        ),
+        // ensure `labelComponents` is sorted for binary search
+        (
+            r#"<CustomLabel aria-label="A label" />"#,
+            Some(serde_json::json!([{
+                "assert": "either",
+                "labelComponents": ["ZZZLabelCustom", "LabelCustom", "CustomLabel"]
+            }])),
+            None,
         ),
     ];
 
