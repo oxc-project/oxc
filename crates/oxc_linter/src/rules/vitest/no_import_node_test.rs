@@ -4,10 +4,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_import_node_test(span0: Span) -> OxcDiagnostic {
+fn no_import_node_test(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("disallow importing `node:test`".to_string())
         .with_help("Import from `vitest` instead of `node:test`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

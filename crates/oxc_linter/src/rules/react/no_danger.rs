@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_danger_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_danger_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `dangerouslySetInnerHTML` prop")
         .with_help("`dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

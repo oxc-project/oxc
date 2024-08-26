@@ -3,8 +3,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-fn prefer_wait_to_then_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()").with_label(span0)
+fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer await to then()/catch()/finally()").with_label(span)
 }
 
 use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};

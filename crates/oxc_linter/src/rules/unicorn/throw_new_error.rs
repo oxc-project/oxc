@@ -15,10 +15,10 @@ use crate::{
     AstNode,
 };
 
-fn throw_new_error_diagnostic(span0: Span) -> OxcDiagnostic {
+fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require `new` when throwing an error.")
         .with_help("While it's possible to create a new error without using the `new` keyword, it's better to be explicit.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

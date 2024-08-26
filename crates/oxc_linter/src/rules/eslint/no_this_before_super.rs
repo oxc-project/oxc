@@ -15,10 +15,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_this_before_super_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_this_before_super_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected to always call super() before this/super property access.")
         .with_help("Call super() before this/super property access.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

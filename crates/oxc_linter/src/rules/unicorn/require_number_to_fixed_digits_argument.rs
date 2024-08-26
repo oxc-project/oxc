@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn require_number_to_fixed_digits_argument_diagnostic(span0: Span) -> OxcDiagnostic {
+fn require_number_to_fixed_digits_argument_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Number method .toFixed() should have an argument")
         .with_help("It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

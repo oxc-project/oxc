@@ -16,22 +16,22 @@ use crate::{
     AstNode,
 };
 
-fn missing_href_attribute(span0: Span) -> OxcDiagnostic {
+fn missing_href_attribute(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")
         .with_help("Provide an href for the `a` element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn incorrect_href(span0: Span) -> OxcDiagnostic {
+fn incorrect_href(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use an incorrect href for the 'a' element.")
         .with_help("Provide a correct href for the `a` element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn cant_be_anchor(span0: Span) -> OxcDiagnostic {
+fn cant_be_anchor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(" The a element has `href` and `onClick`.")
         .with_help("Use a `button` element instead of an `a` element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

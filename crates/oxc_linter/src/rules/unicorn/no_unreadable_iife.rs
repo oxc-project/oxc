@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_unreadable_iife_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_unreadable_iife_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("IIFE with parenthesized arrow function body is considered unreadable.")
         .with_help("Rewrite the IIFE to avoid having a parenthesized arrow function body.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

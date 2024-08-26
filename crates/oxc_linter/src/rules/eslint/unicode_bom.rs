@@ -4,16 +4,16 @@ use oxc_span::{Span, SPAN};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn unexpected_unicode_bom_diagnostic(span0: Span) -> OxcDiagnostic {
+fn unexpected_unicode_bom_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected Unicode BOM (Byte Order Mark)")
         .with_help("File must not begin with the Unicode BOM")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn expected_unicode_bom_diagnostic(span0: Span) -> OxcDiagnostic {
+fn expected_unicode_bom_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected Unicode BOM (Byte Order Mark)")
         .with_help("File must begin with the Unicode BOM")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

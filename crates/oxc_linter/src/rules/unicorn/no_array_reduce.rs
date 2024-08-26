@@ -11,12 +11,12 @@ use crate::{
     AstNode,
 };
 
-fn no_array_reduce_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_array_reduce_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.",
     )
     .with_help("Refactor your code to use `for` loops instead.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Clone)]

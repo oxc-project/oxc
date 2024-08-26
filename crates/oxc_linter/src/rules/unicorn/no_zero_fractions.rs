@@ -5,16 +5,16 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
+fn zero_fraction(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't use a zero fraction in the number.")
         .with_help(format!("Replace the number literal with `{x1}`"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn dangling_dot(span0: Span, x1: &str) -> OxcDiagnostic {
+fn dangling_dot(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't use a dangling dot in the number.")
         .with_help(format!("Replace the number literal with `{x1}`"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -12,22 +12,22 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn object(span0: Span) -> OxcDiagnostic {
+fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not add `then` to an object.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn export(span0: Span) -> OxcDiagnostic {
+fn export(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not export `then`.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn class(span0: Span) -> OxcDiagnostic {
+fn class(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not add `then` to a class.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

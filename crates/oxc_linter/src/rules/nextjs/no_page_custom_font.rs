@@ -8,16 +8,16 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn not_added_in_document(span0: Span) -> OxcDiagnostic {
+fn not_added_in_document(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged.")
         .with_help("See: https://nextjs.org/docs/messages/no-page-custom-font")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn link_outside_of_head(span0: Span) -> OxcDiagnostic {
+fn link_outside_of_head(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using `<link />` outside of `<Head>` will disable automatic font optimization. This is discouraged.")
         .with_help("See: 'https://nextjs.org/docs/messages/no-page-custom-font")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

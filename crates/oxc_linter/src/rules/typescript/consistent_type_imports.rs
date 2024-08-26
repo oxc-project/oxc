@@ -32,8 +32,8 @@ fn type_over_value_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn some_imports_are_only_types_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Imports {x1} are only used as type.")).with_label(span0)
+fn some_imports_are_only_types_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Imports {x1} are only used as type.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -16,8 +16,8 @@ use crate::{
     },
 };
 
-fn use_to_have_length(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span0)
+fn use_to_have_length(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

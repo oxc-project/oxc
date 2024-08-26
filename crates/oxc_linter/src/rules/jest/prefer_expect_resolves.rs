@@ -16,10 +16,10 @@ use crate::{
     },
 };
 
-fn expect_resolves(span0: Span) -> OxcDiagnostic {
+fn expect_resolves(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")
         .with_help("Use `await expect(...).resolves` instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

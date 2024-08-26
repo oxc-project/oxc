@@ -7,10 +7,10 @@ use crate::{
     context::LintContext, partial_loader::LINT_PARTIAL_LOADER_EXT, rule::Rule, utils::is_empty_stmt,
 };
 
-fn no_empty_file_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_empty_file_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty files are not allowed.")
         .with_help("Delete this file or add some code to it.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

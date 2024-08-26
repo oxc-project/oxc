@@ -6,8 +6,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_multi_str_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected multi string.").with_label(span0)
+fn no_multi_str_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected multi string.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

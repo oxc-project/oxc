@@ -9,10 +9,10 @@ use phf::{phf_set, Set};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn use_jest_mocked(span0: Span) -> OxcDiagnostic {
+fn use_jest_mocked(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `jest.mocked()` over `fn as jest.Mock`.")
         .with_help("Prefer `jest.mocked()`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

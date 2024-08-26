@@ -12,10 +12,10 @@ use crate::{
     },
 };
 
-fn no_focused_tests_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_focused_tests_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected focused test.")
         .with_help("Remove focus from test.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

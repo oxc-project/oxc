@@ -11,10 +11,10 @@ use crate::{
     AstNode,
 };
 
-fn scope_diagnostic(span0: Span) -> OxcDiagnostic {
+fn scope_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The scope prop can only be used on <th> elements")
         .with_help("Must use scope prop only on <th> elements")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

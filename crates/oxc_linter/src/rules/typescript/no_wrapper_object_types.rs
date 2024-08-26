@@ -8,8 +8,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_wrapper_object_types(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use wrapper object types.").with_label(span0)
+fn no_wrapper_object_types(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use wrapper object types.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -66,6 +66,7 @@ impl<'a> BoundIdentifier<'a> {
     }
 
     /// Create `BoundIdentifier` for new binding in current scope
+    #[allow(unused)]
     pub fn new_uid_in_current_scope(
         name: &str,
         flags: SymbolFlags,
@@ -99,11 +100,13 @@ impl<'a> BoundIdentifier<'a> {
     }
 
     /// Create `IdentifierReference` referencing this binding, which is written to, with dummy `Span`
+    #[allow(unused)]
     pub fn create_write_reference(&self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         self.create_spanned_write_reference(SPAN, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding, which is written to, with specified `Span`
+    #[allow(unused)]
     pub fn create_spanned_write_reference(
         &self,
         span: Span,
@@ -114,6 +117,7 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
     /// with dummy `Span`
+    #[allow(unused)]
     pub fn create_read_write_reference(
         &self,
         ctx: &mut TraverseCtx<'a>,
@@ -123,6 +127,7 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
     /// with specified `Span`
+    #[allow(unused)]
     pub fn create_spanned_read_write_reference(
         &self,
         span: Span,
