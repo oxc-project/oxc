@@ -412,11 +412,12 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
-        for (index, item) in items.iter().enumerate() {
-            if index != 0 {
-                self.print_comma();
-                self.print_soft_space();
-            }
+        let mut iter = items.iter();
+        let Some(item) = iter.next() else { return };
+        item.gen(self, ctx);
+        for item in iter {
+            self.print_comma();
+            self.print_soft_space();
             item.gen(self, ctx);
         }
     }
