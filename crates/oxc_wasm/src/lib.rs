@@ -28,7 +28,6 @@ use wasm_bindgen::prelude::*;
 #[derive(Default, Tsify)]
 #[serde(rename_all = "camelCase")]
 pub struct Oxc {
-    // source_text: String,
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Program")]
     pub ast: JsValue,
