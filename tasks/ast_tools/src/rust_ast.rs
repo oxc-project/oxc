@@ -137,6 +137,7 @@ impl AstType {
         }
     }
 
+    #[allow(unused)]
     pub fn visitable(&self) -> bool {
         match self {
             AstType::Enum(it) => it.meta.visitable,
