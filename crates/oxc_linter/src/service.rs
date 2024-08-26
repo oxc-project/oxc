@@ -256,6 +256,7 @@ impl Runtime {
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
+                parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })
