@@ -5,6 +5,7 @@ mod options;
 
 use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
+use options::OxcOptions;
 use oxc::{
     allocator::Allocator,
     ast::{CommentKind, Trivias},
@@ -23,16 +24,11 @@ use serde::Serialize;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
-use crate::options::{
-    OxcCodegenOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
-};
-
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Default, Tsify)]
 #[serde(rename_all = "camelCase")]
 pub struct Oxc {
-    source_text: String,
-
+    // source_text: String,
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "Program")]
     pub ast: JsValue,
@@ -98,17 +94,6 @@ impl Oxc {
         Self { serializer: serde_wasm_bindgen::Serializer::json_compatible(), ..Self::default() }
     }
 
-    #[wasm_bindgen(getter = sourceText)]
-    pub fn source_text(&self) -> String {
-        self.source_text.clone()
-    }
-
-    #[wasm_bindgen(setter = sourceText)]
-    pub fn set_source_text(&mut self, source_text: String) {
-        self.diagnostics = RefCell::default();
-        self.source_text = source_text;
-    }
-
     /// Returns Array of String
     /// # Errors
     /// # Panics
@@ -148,21 +133,28 @@ impl Oxc {
     #[wasm_bindgen]
     pub fn run(
         &mut self,
-        run_options: Option<OxcRunOptions>,
-        parser_options: Option<OxcParserOptions>,
-        linter_options: Option<OxcLinterOptions>,
-        codegen_options: Option<OxcCodegenOptions>,
-        minifier_options: Option<OxcMinifierOptions>,
+        source_text: String,
+        options: OxcOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
+
+        let OxcOptions {
+            run: run_options,
+            parser: parser_options,
+            linter: linter_options,
+            codegen: codegen_options,
+            minifier: minifier_options,
+            type_checking: type_checking_options,
+        } = options;
         let run_options = run_options.unwrap_or_default();
         let parser_options = parser_options.unwrap_or_default();
         let _linter_options = linter_options.unwrap_or_default();
         let _codegen_options = codegen_options.unwrap_or_default();
         let minifier_options = minifier_options.unwrap_or_default();
+        let _type_checking_options = type_checking_options.unwrap_or_default();
 
         let allocator = Allocator::default();
-        let source_text = &self.source_text;
+        // let source_text = &self.source_text;
         let path = PathBuf::from(
             parser_options.source_filename.clone().unwrap_or_else(|| "test.tsx".to_string()),
         );
@@ -173,7 +165,7 @@ impl Oxc {
             _ => source_type,
         };
 
-        let ret = Parser::new(&allocator, source_text, source_type)
+        let ret = Parser::new(&allocator, &source_text, source_type)
             .with_options(ParseOptions {
                 allow_return_outside_function: parser_options
                     .allow_return_outside_function
@@ -182,7 +174,7 @@ impl Oxc {
             })
             .parse();
 
-        self.comments = self.map_comments(&ret.trivias);
+        self.comments = self.map_comments(&source_text, &ret.trivias);
 
         self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
@@ -190,7 +182,7 @@ impl Oxc {
 
         let program = allocator.alloc(ret.program);
 
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+        let semantic_ret = SemanticBuilder::new(&source_text, source_type)
             .with_cfg(true)
             .with_trivias(ret.trivias.clone())
             .with_check_syntax_error(true)
@@ -213,7 +205,7 @@ impl Oxc {
         self.ast = program.serialize(&self.serializer)?;
 
         if run_options.prettier_format.unwrap_or_default() {
-            let ret = Parser::new(&allocator, source_text, source_type)
+            let ret = Parser::new(&allocator, &source_text, source_type)
                 .with_options(ParseOptions {
                     allow_return_outside_function: parser_options
                         .allow_return_outside_function
@@ -222,13 +214,13 @@ impl Oxc {
                 })
                 .parse();
             let printed =
-                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
+                Prettier::new(&allocator, &source_text, ret.trivias, PrettierOptions::default())
                     .build(&ret.program);
             self.prettier_formatted_text = printed;
         }
 
         if run_options.prettier_ir.unwrap_or_default() {
-            let ret = Parser::new(&allocator, source_text, source_type)
+            let ret = Parser::new(&allocator, &source_text, source_type)
                 .with_options(ParseOptions {
                     allow_return_outside_function: parser_options
                         .allow_return_outside_function
@@ -238,7 +230,7 @@ impl Oxc {
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
-                source_text,
+                &source_text,
                 ret.trivias.clone(),
                 PrettierOptions::default(),
             )
@@ -252,7 +244,7 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
+            let (symbols, scopes) = SemanticBuilder::new(&source_text, source_type)
                 .build(program)
                 .semantic
                 .into_symbol_table_and_scope_tree();
@@ -261,7 +253,7 @@ impl Oxc {
                 &allocator,
                 &path,
                 source_type,
-                source_text,
+                &source_text,
                 ret.trivias.clone(),
                 options,
             )
@@ -273,7 +265,7 @@ impl Oxc {
         }
 
         if run_options.scope.unwrap_or_default() || run_options.symbol.unwrap_or_default() {
-            let semantic = SemanticBuilder::new(source_text, source_type)
+            let semantic = SemanticBuilder::new(&source_text, source_type)
                 .build_module_record(PathBuf::new(), program)
                 .build(program)
                 .semantic;
@@ -363,7 +355,7 @@ impl Oxc {
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 
-    fn map_comments(&self, trivias: &Trivias) -> Vec<Comment> {
+    fn map_comments(&self, source_text: &String, trivias: &Trivias) -> Vec<Comment> {
         trivias
             .comments()
             .map(|comment| Comment {
@@ -371,7 +363,7 @@ impl Oxc {
                     CommentKind::SingleLine => CommentType::Line,
                     CommentKind::MultiLine => CommentType::Block,
                 },
-                value: comment.span.source_text(&self.source_text).to_string(),
+                value: comment.span.source_text(&source_text).to_string(),
                 start: comment.span.start,
                 end: comment.span.end,
             })
