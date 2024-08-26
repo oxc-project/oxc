@@ -8,8 +8,8 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn missing_key_prop_for_element_in_array(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span0)
+fn missing_key_prop_for_element_in_array(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span)
 }
 
 fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiagnostic {
@@ -21,10 +21,10 @@ fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiag
         ])
 }
 
-fn key_prop_must_be_placed_before_spread(span0: Span) -> OxcDiagnostic {
+fn key_prop_must_be_placed_before_spread(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#""key" prop must be placed before any `{...spread}`"#)
         .with_help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

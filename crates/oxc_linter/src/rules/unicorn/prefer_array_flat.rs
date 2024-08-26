@@ -19,10 +19,10 @@ use crate::{
     AstNode,
 };
 
-fn prefer_array_flat_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_array_flat_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer Array#flat() over legacy techniques to flatten arrays.")
         .with_help(r"Call `.flat()` on the array instead.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

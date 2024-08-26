@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
-fn prefer_regexp_test_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer RegExp#test() over String#match() and RegExp#exec()")
         .with_help("RegExp#test() exclusively returns a boolean and therefore is more efficient")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

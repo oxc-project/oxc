@@ -10,11 +10,11 @@ use crate::{
     ast_util::get_declaration_of_variable, context::LintContext, fixer::Fix, rule::Rule, AstNode,
 };
 
-fn prefer_set_size_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_set_size_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Use `Set#size` instead of converting a `Set` to an array and using its `length` property.",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

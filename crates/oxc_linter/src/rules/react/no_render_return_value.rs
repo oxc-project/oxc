@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_render_return_value_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_render_return_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not depend on the return value from ReactDOM.render.")
         .with_help("Using the return value is a legacy feature.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

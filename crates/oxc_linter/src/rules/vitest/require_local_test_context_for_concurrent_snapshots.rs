@@ -39,10 +39,10 @@ fn is_test_or_describe_node(member_expr: &MemberExpression) -> bool {
     false
 }
 
-fn require_local_test_context_for_concurrent_snapshots_diagnostic(span0: Span) -> OxcDiagnostic {
+fn require_local_test_context_for_concurrent_snapshots_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require local Test Context for concurrent snapshot tests")
         .with_help("Use local Test Context instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

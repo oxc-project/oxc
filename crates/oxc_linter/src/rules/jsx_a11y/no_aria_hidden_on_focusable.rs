@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_aria_hidden_on_focusable_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_aria_hidden_on_focusable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`aria-hidden` must not be true on focusable elements.")
         .with_help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

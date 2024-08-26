@@ -17,10 +17,10 @@ use crate::{
     utils::{get_node_name, parse_general_jest_fn_call, PossibleJestNode},
 };
 
-fn use_jest_spy_on(span0: Span) -> OxcDiagnostic {
+fn use_jest_spy_on(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using `jest.spyOn()`.")
         .with_help("Use jest.spyOn() instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

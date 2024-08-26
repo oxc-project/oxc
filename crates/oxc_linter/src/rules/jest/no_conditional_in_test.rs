@@ -9,10 +9,10 @@ use crate::{
     utils::{is_type_of_jest_fn_call, JestFnKind, PossibleJestNode},
 };
 
-fn no_conditional_in_test(span0: Span) -> OxcDiagnostic {
+fn no_conditional_in_test(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow conditional logic in tests")
         .with_help("Avoid having conditionals in tests.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

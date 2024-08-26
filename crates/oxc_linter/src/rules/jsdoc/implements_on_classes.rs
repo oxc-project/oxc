@@ -11,10 +11,10 @@ use crate::{
     AstNode,
 };
 
-fn implements_on_classes_diagnostic(span0: Span) -> OxcDiagnostic {
+fn implements_on_classes_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`@implements` used on a non-constructor function")
         .with_help("Add `@class` tag or use ES6 class syntax.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -16,22 +16,22 @@ use crate::{
     AstNode,
 };
 
-fn missing_yields(span0: Span) -> OxcDiagnostic {
+fn missing_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@yields` declaration for generator function.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn duplicate_yields(span0: Span) -> OxcDiagnostic {
+fn duplicate_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@yields` tags.")
         .with_help("Remove redundunt `@yields` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn missing_yields_with_generator(span0: Span) -> OxcDiagnostic {
+fn missing_yields_with_generator(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`@yields` tag is required when using `@generator` tag.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

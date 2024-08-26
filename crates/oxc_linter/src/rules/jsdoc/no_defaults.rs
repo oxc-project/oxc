@@ -11,8 +11,8 @@ use crate::{
     AstNode,
 };
 
-fn no_defaults_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Defaults are not permitted.").with_help(x1.to_string()).with_label(span0)
+fn no_defaults_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Defaults are not permitted.").with_help(x1.to_string()).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -16,16 +16,16 @@ use crate::{
     AstNode,
 };
 
-fn this_refs_deprecated(span0: Span) -> OxcDiagnostic {
+fn this_refs_deprecated(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using this.refs is deprecated.")
         .with_help("Using this.xxx instead of this.refs.xxx")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn string_in_ref_deprecated(span0: Span) -> OxcDiagnostic {
+fn string_in_ref_deprecated(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using string literals in ref attributes is deprecated.")
         .with_help("Using reference callback instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

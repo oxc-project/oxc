@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_static_only_class_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_static_only_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow classes that only have static members.")
         .with_help("A class with only static members could just be an object instead.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

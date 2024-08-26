@@ -10,12 +10,12 @@ use crate::{
     AstNode,
 };
 
-fn unexpected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use createClass instead of ES6 class.").with_label(span0)
+fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Components should use createClass instead of ES6 class.").with_label(span)
 }
 
-fn expected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use es6 class instead of createClass.").with_label(span0)
+fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Components should use es6 class instead of createClass.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

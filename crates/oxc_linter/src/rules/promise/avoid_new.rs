@@ -5,8 +5,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn avoid_new_promise_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Avoid creating new promises").with_label(span0)
+fn avoid_new_promise_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Avoid creating new promises").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

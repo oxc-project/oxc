@@ -6,10 +6,10 @@ use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_commented_out_tests_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_commented_out_tests_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Some tests seem to be commented")
         .with_help("Remove or uncomment this comment")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

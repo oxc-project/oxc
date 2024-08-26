@@ -9,22 +9,22 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_date_now(span0: Span) -> OxcDiagnostic {
+fn prefer_date_now(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Date.now()` over `new Date()`")
         .with_help("Change to `Date.now()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
+fn prefer_date_now_over_methods(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer `Date.now()` over `new Date().{x1}()`"))
         .with_help("Change to `Date.now()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn prefer_date_now_over_number_date_object(span0: Span) -> OxcDiagnostic {
+fn prefer_date_now_over_number_date_object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Date.now()` over `Number(new Date())`")
         .with_help("Change to `Date.now()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

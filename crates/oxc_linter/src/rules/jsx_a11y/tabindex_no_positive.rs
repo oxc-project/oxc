@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn tabindex_no_positive_diagnostic(span0: Span) -> OxcDiagnostic {
+fn tabindex_no_positive_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid positive integer values for tabIndex.")
         .with_help("Change the tabIndex prop to a non-negative value")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

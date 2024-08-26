@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_event_target_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `EventTarget` over `EventEmitter`")
         .with_help("Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
