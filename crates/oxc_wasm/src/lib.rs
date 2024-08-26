@@ -154,6 +154,8 @@ impl Oxc {
         codegen_options: Option<OxcCodegenOptions>,
         minifier_options: Option<OxcMinifierOptions>,
     ) -> Result<(), serde_wasm_bindgen::Error> {
+        console_error_panic_hook::set_once();
+
         self.diagnostics = RefCell::default();
         let run_options = run_options.unwrap_or_default();
         let parser_options = parser_options.unwrap_or_default();
