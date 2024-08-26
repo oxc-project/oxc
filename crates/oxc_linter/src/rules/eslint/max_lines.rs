@@ -78,6 +78,7 @@ impl Rule for MaxLines {
         }
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn run_once(&self, ctx: &LintContext) {
         let comment_lines = if self.skip_comments {
             let mut comment_lines: usize = 0;
@@ -125,7 +126,9 @@ impl Rule for MaxLines {
         };
 
         if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
-            ctx.diagnostic(max_lines_diagnostic(lines_in_file, self.max, Span::new(0, 0)));
+            // Point to end of the file for `eslint-disable max-lines` to work.
+            let end = ctx.source_text().len().saturating_sub(1) as u32;
+            ctx.diagnostic(max_lines_diagnostic(lines_in_file, self.max, Span::new(end, end)));
         }
     }
 }
@@ -191,6 +194,13 @@ fn test() {
 			 really really
 			 long comment*/",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
+        ),
+        (
+            "/* eslint-disable max-lines */
+
+            ;
+            ",
+            Some(serde_json::json!([{ "max": 1 }])),
         ),
     ];
 

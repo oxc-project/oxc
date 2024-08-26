@@ -45,6 +45,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "v8intrinsic",
             "async-do-expression",
             "export-ns-from",
+            "annex-b/disabled",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));

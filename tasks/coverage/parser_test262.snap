@@ -23861,7 +23861,7 @@ Negative Passed: 4220/4220 (100.00%)
  24 │     var y=2;
     ╰────
 
-  × Use of undefined label
+  × Jump target cannot cross function boundary.
     ╭─[test262/test/language/statements/break/S12.8_A5_T1.js:23:15]
  22 │             return;
  23 │         break LABEL_ANOTHER_LOOP;
@@ -23869,7 +23869,7 @@ Negative Passed: 4220/4220 (100.00%)
  24 │         LABEL_IN_2 : y++;
     ╰────
 
-  × Use of undefined label
+  × Jump target cannot cross function boundary.
     ╭─[test262/test/language/statements/break/S12.8_A5_T2.js:25:15]
  24 │             return;
  25 │         break IN_DO_FUNC;
@@ -23877,7 +23877,7 @@ Negative Passed: 4220/4220 (100.00%)
  26 │         LABEL_IN_2 : y++;
     ╰────
 
-  × Use of undefined label
+  × Jump target cannot cross function boundary.
     ╭─[test262/test/language/statements/break/S12.8_A5_T3.js:25:15]
  24 │             return;
  25 │         break LABEL_IN;
@@ -30352,7 +30352,7 @@ Negative Passed: 4220/4220 (100.00%)
  21 │   }
     ╰────
 
-  × Use of undefined label
+  × Jump target cannot cross function boundary.
     ╭─[test262/test/language/statements/class/static-init-invalid-undefined-break-target.js:22:13]
  21 │     x: while (false) {
  22 │       break y;
@@ -30360,7 +30360,7 @@ Negative Passed: 4220/4220 (100.00%)
  23 │     }
     ╰────
 
-  × Use of undefined label
+  × Jump target cannot cross function boundary.
     ╭─[test262/test/language/statements/class/static-init-invalid-undefined-continue-target.js:22:16]
  21 │     x: while (false) {
  22 │       continue y;

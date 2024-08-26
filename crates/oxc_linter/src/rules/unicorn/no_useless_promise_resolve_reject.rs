@@ -72,17 +72,31 @@ impl Rule for NoUselessPromiseResolveReject {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+        let Some(parent) = outermost_paren_parent(node, ctx) else {
             return;
         };
 
         let mut is_yield = false;
 
-        if let AstKind::YieldExpression(yield_expr) = parent.kind() {
-            is_yield = true;
-            if yield_expr.delegate {
-                return;
+        match parent.kind() {
+            AstKind::ArrowFunctionExpression(_) | AstKind::ReturnStatement(_) => {}
+            AstKind::ExpressionStatement(_) => {
+                let Some(grand_parent) = outermost_paren_parent(parent, ctx) else {
+                    return;
+                };
+                let AstKind::FunctionBody(function_body) = grand_parent.kind() else { return };
+
+                if function_body.statements.len() != 1 {
+                    return;
+                }
             }
+            AstKind::YieldExpression(yield_expr) => {
+                is_yield = true;
+                if yield_expr.delegate {
+                    return;
+                }
+            }
+            _ => return,
         }
 
         let Some((is_async, function_node, is_in_try_statement)) =
@@ -445,6 +459,10 @@ fn test() {
         r"promise.catch(x, () => Promise.resolve(foo))",
         r"promise.finally(x, () => Promise.resolve(foo))",
         r"promise[then](() => Promise.resolve(foo))",
+        // additional cases:
+        r"(async () => { Promise.resolve().then(() => console.log('foo')); })();",
+        // TODO: enhance to report this case?
+        r#"fs.promises.readFile("foo", 'utf8').then(undefined, err => err.code === 'ENOENT' ? Promise.resolve('{}') : Promise.reject(err))"#,
     ];
 
     let fail = vec![

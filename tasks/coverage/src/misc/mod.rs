@@ -39,6 +39,9 @@ impl<T: Case> Suite<T> for MiscSuite<T> {
 
     fn save_test_cases(&mut self, cases: Vec<T>) {
         self.test_cases = cases;
+    }
+
+    fn save_extra_test_cases(&mut self) {
         self.test_cases.extend(Self::extra_cases());
     }
 

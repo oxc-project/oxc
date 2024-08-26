@@ -146,14 +146,14 @@ impl PreferSpyOn {
             MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
                 formatter.print_expression(&cmp_mem_expr.object);
                 formatter.print_char(b',');
-                formatter.print_hard_space();
+                formatter.print_char(b' ');
                 formatter.print_expression(&cmp_mem_expr.expression);
             }
             MemberExpression::StaticMemberExpression(static_mem_expr) => {
                 let name = &static_mem_expr.property.name;
                 formatter.print_expression(&static_mem_expr.object);
                 formatter.print_char(b',');
-                formatter.print_hard_space();
+                formatter.print_char(b' ');
                 formatter.print_str(format!("\'{name}\'").as_str());
             }
             MemberExpression::PrivateFieldExpression(_) => (),

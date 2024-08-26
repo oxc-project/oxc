@@ -371,6 +371,16 @@ fn test_vars_catch() {
 }
 
 #[test]
+fn test_vars_using() {
+    let pass = vec![("using a = 1; console.log(a)", None)];
+
+    let fail = vec![("using a = 1;", None)];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-vars-using")
+        .test_and_snapshot();
+}
+#[test]
 fn test_functions() {
     let pass = vec![
         "function foo() {}\nfoo()",
@@ -459,9 +469,15 @@ fn test_functions() {
                 };
             });
         ",
+        "const foo = () => function bar() { }\nfoo()",
+        "module.exports.foo = () => function bar() { }"
     ];
 
-    let fail = vec!["function foo() {}", "function foo() { foo() }"];
+    let fail = vec![
+        "function foo() {}",
+        "function foo() { foo() }",
+        "const foo = () => { function bar() { } }\nfoo()",
+    ];
 
     let fix = vec![
         // function declarations are never removed
@@ -897,6 +913,13 @@ fn test_type_references() {
         export type ApiPermission = PermissionValues<typeof API_PERMISSIONS>;
         
         export const API_PERMISSIONS = {} as const;
+        ",
+        "
+        type Foo = 'foo' | 'bar';
+        export class Bar {
+            accessor x: Foo
+            accessor y!: Foo
+        }
         ",
     ];
 

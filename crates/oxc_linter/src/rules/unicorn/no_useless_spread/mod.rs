@@ -274,7 +274,7 @@ fn diagnose_array_in_array_spread<'a>(
                     codegen.print_expression(el.to_expression());
                     if i < n - 1 {
                         codegen.print_char(b',');
-                        codegen.print_hard_space();
+                        codegen.print_char(b' ');
                     }
                 }
                 codegen.print_char(b']');

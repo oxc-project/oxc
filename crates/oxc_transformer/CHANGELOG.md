@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.25.0] - 2024-08-23
+
+- 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)
+
+- 5f4c9ab semantic: [**BREAKING**] Rename `SymbolTable::get_flag` to `get_flags` (#5030) (overlookmotel)
+
+- 58bf215 semantic: [**BREAKING**] Rename `Reference::flag` and `flag_mut` methods to plural (#5025) (overlookmotel)
+
+- c4c08a7 ast: [**BREAKING**] Rename `IdentifierReference::reference_flags` field (#5024) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- c30e2e9 semantic: [**BREAKING**] `Reference::flag` method return `ReferenceFlag` (#5019) (overlookmotel)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 4b49cf8 transformer: Always pass in symbols and scopes (#5087) (Boshen)
+- f51d3f9 transformer/nullish-coalescing-operator: Handles nullish coalescing expression in the FormalParamter (#4975) (Dunqing)
+- f794870 transformer/nullish-coalescing-operator: Generate the correct binding name (#4974) (Dunqing)
+- 72ff2c6 transformer/nullish-coalescing-operator: Add comments in top of file (#4972) (Dunqing)
+
+### Bug Fixes
+
+- 6ffbd78 transformer: Remove an `AstBuilder::copy` call from TS namespace transform (#4987) (overlookmotel)
+- a8dfdda transformer: Remove an `AstBuilder::copy` call from TS module transform (#4986) (overlookmotel)
+- 1467eb3 transformer: Remove an `AstBuilder::copy` call from TS enum transform (#4985) (overlookmotel)
+- 1365feb transformer: Remove an `AstBuilder::copy` call for TS `AssignmentTarget` transform (#4984) (overlookmotel)
+- edacf93 transformer: Remove an `AstBuilder::copy` call (#4983) (overlookmotel)
+- 3b35332 transformer/logical-assignment-operators: Fix semantic errors (#5047) (Dunqing)
+
+### Documentation
+
+- 178d1bd transformer: Add documentation for exponentiation-operator plugin (#5084) (Dunqing)
+- d50eb72 transformer: Add documentation for `optional-catch-binding` plugin (#5064) (Dunqing)
+- 4425b17 transformer: Add documentation for `logical-assignment-operators` plugin (#5012) (Dunqing)
+- 1bd5853 transformer: Updated README re: order of methods (#4993) (overlookmotel)
+
+### Refactor
+
+- cca7440 ast: Replace `AstBuilder::move_statement_vec` with `move_vec` (#4988) (overlookmotel)
+- 96422b6 ast: Make AstBuilder non-exhaustive (#4925) (DonIsaac)
+- ca70cc7 linter, mangler, parser, semantic, transformer, traverse, wasm: Rename various `flag` vars to `flags` (#5028) (overlookmotel)
+- 8d15e65 transformer: Use `into_member_expression` (#5006) (overlookmotel)
+- 4796ece transformer: TS annotations transform use `move_expression` (#4982) (overlookmotel)
+- a9fcf29 transformer/es2016: Move all entry points to implementation of Traverse trait (#5085) (Dunqing)
+- deda6ac transformer/es2019: Move all entry points to implementation of Traverse trait (#5065) (Dunqing)
+- 9df2f80 transformer/es2020: Move all entry points to implementation of Traverse trait (#4973) (Dunqing)
+- 3f9433c transformer/es2021: Move all entry points to implementation of Traverse trait (#5013) (Dunqing)
+- c60a50d transformer/exponentiation-operator: Use built-in `ctx.clone_identifier_reference` (#5086) (Dunqing)
+- bcc8da9 transformer/logical-assignment-operator: Use `ctx.clone_identifier_reference` (#5014) (Dunqing)
+- 38d4434 transformer/nullish-coalescing-operator: Move internal methods to bottom of the file (#4996) (Dunqing)
+
 ## [0.24.3] - 2024-08-18
 
 ### Features

@@ -26,11 +26,6 @@ The progress of all rule implementations is tracked [here](https://github.com/ox
 - Total number of rules: {total}
 - Rules turned on by default: {turned_on_by_default_count}
 
-<!-- textlint-disable terminology -->
-
 {body}
-
-<!-- textlint-enable -->
-
 ")
 }

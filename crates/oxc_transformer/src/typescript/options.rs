@@ -42,6 +42,9 @@ pub struct TypeScriptOptions {
     // When enabled, type-only class fields are only removed if they are prefixed with the declare modifier:
     #[serde(default = "default_as_true")]
     pub allow_declare_fields: bool,
+
+    /// Unused.
+    pub optimize_const_enums: bool,
 }
 
 impl TypeScriptOptions {
@@ -89,6 +92,7 @@ impl Default for TypeScriptOptions {
             only_remove_type_imports: false,
             allow_namespaces: default_as_true(),
             allow_declare_fields: default_as_true(),
+            optimize_const_enums: false,
         }
     }
 }

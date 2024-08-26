@@ -222,6 +222,11 @@ impl<'a> Codegen<'a> {
     pub fn print_str(&mut self, s: &str) {
         self.code.extend(s.as_bytes());
     }
+
+    #[inline]
+    pub fn print_expression(&mut self, expr: &Expression<'_>) {
+        expr.gen_expr(self, Precedence::Lowest, Context::empty());
+    }
 }
 
 // Private APIs
@@ -242,7 +247,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    pub fn print_hard_space(&mut self) {
+    fn print_hard_space(&mut self) {
         self.print_char(b' ');
     }
 
@@ -329,7 +334,7 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    pub fn print_colon(&mut self) {
+    fn print_colon(&mut self) {
         self.print_char(b':');
     }
 
@@ -407,18 +412,14 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
-        for (index, item) in items.iter().enumerate() {
-            if index != 0 {
-                self.print_comma();
-                self.print_soft_space();
-            }
+        let mut iter = items.iter();
+        let Some(item) = iter.next() else { return };
+        item.gen(self, ctx);
+        for item in iter {
+            self.print_comma();
+            self.print_soft_space();
             item.gen(self, ctx);
         }
-    }
-
-    #[inline]
-    pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::Lowest, Context::empty());
     }
 
     fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
@@ -519,6 +520,10 @@ impl<'a> Codegen<'a> {
 
 // Comment related
 impl<'a> Codegen<'a> {
+    fn preserve_annotate_comments(&self) -> bool {
+        self.comment_options.preserve_annotate_comments && !self.options.minify
+    }
+
     /// Avoid issue related to rustc borrow checker .
     /// Since if you want to print a range of source code, you need to borrow the source code
     /// as immutable first, and call the [Self::print_str] which is a mutable borrow.

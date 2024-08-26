@@ -50,7 +50,7 @@ impl<'a> Codegen<'a> {
         &mut self,
         node_start: u32,
     ) -> Vec<AnnotationComment> {
-        if !self.comment_options.preserve_annotate_comments {
+        if !self.preserve_annotate_comments() {
             return vec![];
         }
         let mut latest_comment_start = node_start;
@@ -127,7 +127,7 @@ impl<'a> Codegen<'a> {
     }
 
     pub(crate) fn gen_comments(&mut self, node_start: u32) {
-        if !self.comment_options.preserve_annotate_comments {
+        if !self.preserve_annotate_comments() {
             return;
         }
         let mut annotation_kind_set = AnnotationKind::empty();

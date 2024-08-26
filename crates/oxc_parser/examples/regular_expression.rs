@@ -2,23 +2,24 @@
 use std::{env, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast, AstKind};
+use oxc_ast::{ast, AstKind, Visit};
 use oxc_parser::Parser;
 use oxc_regular_expression::{FlagsParser, ParserOptions, PatternParser};
-use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+
+// `cargo run -p oxc_parser --example regular_expression`
 
 fn main() {
     // 1. Get the file content and parse
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
 
-    let source_text = Arc::new(fs::read_to_string(path).unwrap());
+    let source_text: Arc<str> = Arc::from(fs::read_to_string(path).unwrap());
     let source_type = SourceType::from_path(path).unwrap();
 
     let allocator = Allocator::default();
 
-    let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let parser_ret = Parser::new(&allocator, source_text.as_ref(), source_type).parse();
     if !parser_ret.errors.is_empty() {
         println!("Parsing failed:");
         for error in parser_ret.errors {
@@ -28,18 +29,23 @@ fn main() {
         return;
     }
 
-    // 2. Build the semantic to iteralate over the nodes
-    let program = allocator.alloc(parser_ret.program);
-    let semantic_ret = SemanticBuilder::new(&source_text, source_type).build(program);
-    let semantic = semantic_ret.semantic;
-
-    // 3. Parse regular expressions
+    // Parse regular expressions
     // - RegExpLiteral
     // - new RegExp() with string or template literal if static
-    for node in semantic.nodes().iter() {
-        match node.kind() {
+    RegularExpressionVisitor { source_text: Arc::clone(&source_text) }
+        .visit_program(&parser_ret.program);
+}
+
+struct RegularExpressionVisitor {
+    source_text: Arc<str>,
+}
+
+impl<'a> Visit<'a> for RegularExpressionVisitor {
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        let allocator = Allocator::default();
+        match kind {
             AstKind::RegExpLiteral(re) => {
-                println!("🍀 {}", re.span.source_text(&source_text));
+                println!("🍀 {}", re.span.source_text(self.source_text.as_ref()));
 
                 let parsed = PatternParser::new(
                     &allocator,
@@ -54,7 +60,7 @@ fn main() {
                 .parse();
 
                 if let Err(error) = parsed {
-                    let error = error.with_source_code(Arc::clone(&source_text));
+                    let error = error.with_source_code(Arc::clone(&self.source_text));
                     println!("{error:?}");
                     return;
                 }
@@ -68,7 +74,7 @@ fn main() {
                     .filter(|ident| ident.name == "RegExp")
                     .is_some() =>
             {
-                println!("🍀 {}", new_expr.span.source_text(&source_text));
+                println!("🍀 {}", new_expr.span.source_text(&self.source_text));
 
                 let pattern = match new_expr.arguments.first() {
                     Some(ast::Argument::StringLiteral(sl)) => &sl.value,
@@ -77,9 +83,7 @@ fn main() {
                     {
                         &tl.quasi().unwrap()
                     }
-                    _ => {
-                        continue;
-                    }
+                    _ => return,
                 };
 
                 let flags = match new_expr.arguments.get(1) {
@@ -106,7 +110,7 @@ fn main() {
                 .parse();
 
                 if let Err(error) = parsed {
-                    let error = error.with_source_code(Arc::clone(&source_text));
+                    let error = error.with_source_code(Arc::clone(&self.source_text));
                     println!("{error:?}");
                     return;
                 }
@@ -116,5 +120,4 @@ fn main() {
             _ => {}
         }
     }
-    println!("✨ All parsed!");
 }

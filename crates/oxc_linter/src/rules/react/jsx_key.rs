@@ -269,6 +269,9 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
 
 fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
+        if is_within_children_to_array(node, ctx) {
+            return;
+        }
         ctx.diagnostic(gen_diagnostic(fragment.opening_fragment.span, &outer));
     }
 }
@@ -487,6 +490,14 @@ fn test() {
         React.Children.toArray([1, 2 ,3].map(x => <App />));
         "#,
         r"React.Children.toArray([1, 2 ,3].map(x => <App />));",
+        r"{React.Children.toArray(items.map((item) => {
+           return (
+             <>
+              {item}
+             </>
+            );
+           }))}
+        ",
     ];
 
     let fail = vec![

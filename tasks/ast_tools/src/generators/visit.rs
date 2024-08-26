@@ -438,21 +438,6 @@ impl<'a> VisitBuilder<'a> {
         let ident = visit_as.unwrap_or_else(|| struct_.ident());
         let scope_events =
             struct_.markers.scope.as_ref().map_or_else(Default::default, |markers| {
-                let cond = markers.r#if.as_ref().map(|cond| {
-                    let cond = cond.to_token_stream().replace_ident("self", &format_ident!("it"));
-                    quote!(let scope_events_cond = #cond;)
-                });
-                let maybe_conditional = |tk: TokenStream| {
-                    if cond.is_some() {
-                        quote! {
-                            if scope_events_cond {
-                                #tk
-                            }
-                        }
-                    } else {
-                        tk
-                    }
-                };
                 let flags = markers
                     .flags
                     .as_ref()
@@ -470,9 +455,8 @@ impl<'a> VisitBuilder<'a> {
                 } else {
                     flags
                 };
-                let mut enter = cond.as_ref().into_token_stream();
-                enter.extend(maybe_conditional(quote!(visitor.enter_scope(#flags, &it.scope_id);)));
-                let leave = maybe_conditional(quote!(visitor.leave_scope();));
+                let enter = quote!(visitor.enter_scope(#flags, &it.scope_id););
+                let leave = quote!(visitor.leave_scope(););
                 (enter, leave)
             });
 

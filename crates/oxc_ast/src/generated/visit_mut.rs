@@ -3253,6 +3253,9 @@ pub mod walk_mut {
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
         }
+        if let Some(type_annotation) = &mut it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     #[inline]
@@ -3692,16 +3695,11 @@ pub mod walk_mut {
     ) {
         let kind = AstType::ForInStatement;
         visitor.enter_node(kind);
-        let scope_events_cond = it.left.is_lexical_declaration();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_for_statement_left(&mut it.left);
         visitor.visit_expression(&mut it.right);
         visitor.visit_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3772,16 +3770,11 @@ pub mod walk_mut {
     ) {
         let kind = AstType::ForOfStatement;
         visitor.enter_node(kind);
-        let scope_events_cond = it.left.is_lexical_declaration();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_for_statement_left(&mut it.left);
         visitor.visit_expression(&mut it.right);
         visitor.visit_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3789,11 +3782,7 @@ pub mod walk_mut {
     pub fn walk_for_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ForStatement<'a>) {
         let kind = AstType::ForStatement;
         visitor.enter_node(kind);
-        let scope_events_cond =
-            it.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(init) = &mut it.init {
             visitor.visit_for_statement_init(init);
         }
@@ -3804,9 +3793,7 @@ pub mod walk_mut {
             visitor.visit_expression(update);
         }
         visitor.visit_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3923,17 +3910,12 @@ pub mod walk_mut {
     pub fn walk_catch_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CatchClause<'a>) {
         let kind = AstType::CatchClause;
         visitor.enter_node(kind);
-        let scope_events_cond = it.param.is_some();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
         if let Some(param) = &mut it.param {
             visitor.visit_catch_parameter(param);
         }
         visitor.visit_block_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 

@@ -5,9 +5,8 @@ use std::rc::Rc;
 
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
-use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -31,66 +30,76 @@ impl<'a> ES2015<'a> {
             options,
         }
     }
+}
 
-    pub fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+impl<'a> Traverse<'a> for ES2015<'a> {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_statements(stmts);
+            self.arrow_functions.exit_program(program, ctx);
         }
     }
 
-    pub fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_statements_on_exit(stmts);
+            self.arrow_functions.enter_function(func, ctx);
         }
     }
 
-    pub fn transform_jsx_element_name(
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.exit_function(func, ctx);
+        }
+    }
+
+    fn enter_jsx_element_name(&mut self, elem: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.enter_jsx_element_name(elem, ctx);
+        }
+    }
+
+    fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.enter_declaration(decl, ctx);
+        }
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.enter_expression(expr, ctx);
+        }
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.exit_expression(expr, ctx);
+        }
+    }
+
+    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.exit_declaration(decl, ctx);
+        }
+    }
+
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.enter_class(class, ctx);
+        }
+    }
+
+    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.exit_class(class, ctx);
+        }
+    }
+
+    fn enter_variable_declarator(
         &mut self,
-        elem: &mut JSXElementName<'a>,
+        node: &mut VariableDeclarator<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_jsx_element_name(elem, ctx);
-        }
-    }
-
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_declaration(decl);
-        }
-    }
-
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_expression(expr);
-        }
-    }
-
-    pub fn transform_expression_on_exit(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_expression_on_exit(expr, ctx);
-        }
-    }
-
-    pub fn transform_declaration_on_exit(&mut self, decl: &mut Declaration<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_declaration_on_exit(decl);
-        }
-    }
-
-    pub fn transform_class(&mut self, class: &mut Class<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_class(class);
-        }
-    }
-
-    pub fn transform_class_on_exit(&mut self, class: &mut Class<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_class_on_exit(class);
+            self.arrow_functions.enter_variable_declarator(node, ctx);
         }
     }
 }

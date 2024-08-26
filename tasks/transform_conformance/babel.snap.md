@@ -1,14 +1,15 @@
 commit: 12619ffe
 
-Passed: 383/953
+Passed: 282/953
 
 # All Passed:
-* babel-preset-react
+* babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
+* babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (157/579)
+# babel-preset-env (100/579)
 * .plugins-overlapping/chrome-49/input.js
 
 
@@ -19,73 +20,61 @@ Passed: 383/953
 
 
 * bugfixes/_esmodules/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * bugfixes/_esmodules-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * bugfixes/edge-default-params-chrome-40/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes/edge-default-params-chrome-70/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes/edge-default-params-edge-14/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-default-params-edge-15/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-default-params-edge-17/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-default-params-edge-17-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes/edge-default-params-edge-18/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes/edge-function-name-edge-14/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-function-name-edge-14-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/edge-function-name-edge-15/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-block-scoping-safari-10/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-block-scoping-safari-10-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes/safari-block-scoping-safari-11/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes/safari-block-scoping-safari-9/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/v8-spread-parameters-in-optional-chaining-chrome-89/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes/v8-spread-parameters-in-optional-chaining-chrome-89-no-bugfixes/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
-* bugfixes-always-enabled/class-in-computed-field-chrome-100/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 * bugfixes-always-enabled/class-in-computed-field-firefox-50/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes-always-enabled/class-in-computed-field-firefox-90/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * bugfixes-always-enabled/static-class-fields-chrome-70/input.js
 
@@ -100,871 +89,1131 @@ preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 
 * corejs2-babel-7/entry-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-48/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-49/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-66/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-chromeandroid/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-core-js-main/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-core-js-main-require/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-ie-9/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-node/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-node-10.13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
+
+* corejs2-babel-7/entry-node-11/input.mjs
+
 
 * corejs2-babel-7/entry-node-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-require/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/entry-shippedProposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/exclude/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/exclude-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/exclude-include/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/exclude-regenerator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/include-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-browserslist-config-ignore/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * corejs2-babel-7/usage-destructuring-assignment/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-catch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-for-x/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-params/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-destructuring-variable-declaration/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-evaluated-class-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-evaluated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-evaluated-not-confident/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-for-of/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-for-of-destructure-with/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-for-of-destructure-without/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-instance-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-modules-namespaced/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-modules-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-no-builtins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs2-babel-7/usage-no-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-number-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-promise-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-promise-finally/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-promise-race/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-regenerator-used-async/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-regenerator-used-async-and-promise-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs2-babel-7/usage-regenerator-used-async-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-regenerator-used-generator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-regenerator-used-generator-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-remove-babel-polyfill-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-shippedProposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-source-type-script/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-source-type-script-query/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-symbol-iterator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-symbol-iterator-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-timers/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs2-babel-7/usage-typed-array/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-typed-array-edge-13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-typed-array-static/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs2-babel-7/usage-yield-non-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs2-babel-7/usage-yield-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-all-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/entry-babel-polyfill/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/entry-chrome-48/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chrome-49/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chrome-66/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-chromeandroid/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-es-proposals-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-es-proposals-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-features/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-features-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-missed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-mixed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-mixed-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
+
+* corejs3/entry-entries-modules/input.mjs
+
 
 * corejs3/entry-entries-modules-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
+
+* corejs3/entry-entries-stable/input.mjs
+
 
 * corejs3/entry-entries-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-entries-web-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-ie-9/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node-10.13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-node-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-normalization/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-require/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-require-all/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/entry-require-babel-polyfill/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/entry-require-es-chrome-71/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-require-es-proposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-specified-imports/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["fromEntries", "reflect"]
+  | rebuilt        : ScopeId(0): ["reflect"]
+
 
 * corejs3/entry-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/entry-stable-samsung-8.2/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/exclude/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/exclude-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/exclude-include/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/include-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-all-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-all-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-browserslist-config-ignore/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
-* corejs3/usage-built-in-from-global-object/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-assignment/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-catch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-for-x/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-iife/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-params/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-destructuring-variable-declaration/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * corejs3/usage-determanated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-dynamic-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-dynamic-import-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-evaluated-class-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-evaluated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-fetch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-fetch-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-for-of/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-for-of-destructure-with/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-for-of-destructure-without/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-instance-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-modules-namespaced/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-modules-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-no-builtins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-no-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-number-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-object-destructuring/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-object-destructuring-with-rest/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-object-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-promise-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-promise-finally/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-promise-race/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-regenerator-used-async/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-regenerator-used-async-and-promise-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-regenerator-used-async-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-regenerator-used-generator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-regenerator-used-generator-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-shippedProposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-source-type-script/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-source-type-script-query/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-static-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-static-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-symbol-iterator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3/usage-symbol-iterator-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-timers/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-typed-array/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-typed-array-edge-13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3/usage-typed-array-static/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3/usage-yield-non-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3/usage-yield-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-all-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/entry-babel-polyfill/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/entry-chrome-48/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chrome-49/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chrome-66/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-chromeandroid/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-electron/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-es-proposals-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-es-proposals-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-features/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-features-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-missed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-mixed/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-mixed-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-modules/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-modules-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stage/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-stage-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-entries-web-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-ie-9/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node-10.13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-node-web/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-normalization/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-require/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-require-all/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/entry-require-babel-polyfill/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/entry-require-es-chrome-71/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-require-es-proposals/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-specified-imports/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["fromEntries", "reflect"]
+  | rebuilt        : ScopeId(0): ["reflect"]
+
 
 * corejs3-babel-7/entry-stable/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-stable-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/entry-stable-samsung-8.2/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude-include/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/exclude-regenerator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/force-all-transforms/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/include-built-ins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-all-proposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-all-proposals-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-browserslist-config-ignore/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * corejs3-babel-7/usage-built-in-from-global-object/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-assignment/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-catch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-for-x/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-iife/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-params/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-destructuring-variable-declaration/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-determanated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-dynamic-import/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-dynamic-import-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-evaluated-class-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-evaluated-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-fetch/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-fetch-chrome-71/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-for-of/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-for-of-destructure-with/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-for-of-destructure-without/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-instance-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-instance-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3-babel-7/usage-modules-namespaced/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-modules-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3-babel-7/usage-no-builtins/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
-
-* corejs3-babel-7/usage-no-transform/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-number-ie-11/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-object-destructuring/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-object-destructuring-with-rest/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-object-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-promise-all/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-promise-finally/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-promise-race/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-regenerator-used-async/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-regenerator-used-async-and-promise-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-regenerator-used-async-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-regenerator-used-generator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-regenerator-used-generator-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-shippedProposals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-source-type-script/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-source-type-script-query/input.js
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-spread/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-static-methods/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-static-methods-native-support/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-symbol-iterator/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-symbol-iterator-in/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-timers/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-typed-array/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-typed-array-edge-13/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * corejs3-babel-7/usage-typed-array-static/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
-* corejs3-babel-7/usage-yield-non-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
 
 * corejs3-babel-7/usage-yield-star/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/browserslist-env/input.mjs
 
 
+* debug/browserslists-android-3/input.mjs
+
+
+* debug/browserslists-defaults/input.mjs
+
+
+* debug/browserslists-defaults-not-ie/input.mjs
+
+
+* debug/browserslists-last-2-versions-not-ie/input.mjs
+
+
+* debug/corejs-without-usebuiltins/input.mjs
+
+
+* debug/entry-corejs3/input.mjs
+
+
+* debug/entry-corejs3-all/input.mjs
+
+
+* debug/entry-corejs3-all-chrome-71/input.mjs
+
+
+* debug/entry-corejs3-android/input.mjs
+
+
+* debug/entry-corejs3-babel-polyfill/input.mjs
+
+
+* debug/entry-corejs3-electron/input.mjs
+
+
+* debug/entry-corejs3-es/input.mjs
+
+
+* debug/entry-corejs3-es-chrome-71/input.mjs
+
+
+* debug/entry-corejs3-es-proposals/input.mjs
+
+
+* debug/entry-corejs3-es-proposals-chrome-71/input.mjs
+
+
+* debug/entry-corejs3-force-all-transforms/input.mjs
+
+
+* debug/entry-corejs3-no-import/input.js
+
+
+* debug/entry-corejs3-proposals/input.mjs
+
+
+* debug/entry-corejs3-proposals-chrome-71/input.mjs
+
+
+* debug/entry-corejs3-runtime-only/input.mjs
+
+
+* debug/entry-corejs3-runtime-only-chrome-71/input.mjs
+
+
+* debug/entry-corejs3-specific-entries/input.mjs
+
+
+* debug/entry-corejs3-specific-entries-chrome-71/input.mjs
+
+
+* debug/entry-corejs3-specific-targets/input.mjs
+
+
+* debug/entry-corejs3-stable/input.mjs
+
+
+* debug/entry-corejs3-stable-chrome-71/input.mjs
+
+
+* debug/entry-corejs3-stable-samsung-8.2/input.mjs
+
+
+* debug/entry-corejs3-stage/input.mjs
+
+
+* debug/entry-corejs3-stage-chrome-71/input.mjs
+
+
 * debug/entry-corejs3-versions-decimals/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
 
 * debug/entry-corejs3-versions-strings/input.mjs
-preset-env: unknown field `corejs`, expected `targets` or `bugfixes`
+
+
+* debug/entry-corejs3-versions-strings-minor-3.0/input.mjs
+
+
+* debug/entry-corejs3-versions-strings-minor-3.1/input.mjs
+
+
+* debug/entry-corejs3-web/input.mjs
+
+
+* debug/entry-corejs3-web-chrome-71/input.mjs
+
 
 * debug/entry-no-corejs/input.mjs
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/entry-no-corejs-no-import/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
+
+* debug/plugins-only/input.mjs
+
+
+* debug/shippedProposals-chrome-80/input.mjs
+
+
+* debug/shippedProposals-chrome-84/input.mjs
+
+
+* debug/top-level-targets/input.mjs
+
+
+* debug/top-level-targets-shadowed/input.mjs
+
+
+* debug/usage-corejs3-1/input.js
+
+
+* debug/usage-corejs3-2/input.js
+
+
+* debug/usage-corejs3-chrome-71-1/input.js
+
+
+* debug/usage-corejs3-chrome-71-2/input.js
+
+
+* debug/usage-corejs3-none-1/input.js
+
+
+* debug/usage-corejs3-none-2/input.js
+
+
+* debug/usage-corejs3-proposals-1/input.js
+
+
+* debug/usage-corejs3-proposals-2/input.js
+
+
+* debug/usage-corejs3-proposals-chrome-71-1/input.js
+
+
+* debug/usage-corejs3-proposals-chrome-71-2/input.js
+
+
+* debug/usage-corejs3-shippedProposals-1/input.js
+
+
+* debug/usage-corejs3-shippedProposals-2/input.js
+
+
+* debug/usage-corejs3-versions-strings-minor-3.0-1/input.js
+
+
+* debug/usage-corejs3-versions-strings-minor-3.0-2/input.js
+
+
+* debug/usage-corejs3-versions-strings-minor-3.1-1/input.js
+
+
+* debug/usage-corejs3-versions-strings-minor-3.1-2/input.js
+
+
+* debug/usage-corejs3-with-import/input.mjs
+
 
 * debug/usage-no-corejs/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * debug/usage-no-corejs-none/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
+
+* debug-babel-7/browserslists-android-3/input.mjs
+
+
+* debug-babel-7/browserslists-defaults/input.mjs
+
+
+* debug-babel-7/browserslists-defaults-not-ie/input.mjs
+
+
+* debug-babel-7/browserslists-last-2-versions-not-ie/input.mjs
+
+
+* debug-babel-7/corejs-without-usebuiltins/input.mjs
+
+
+* debug-babel-7/entry-corejs2/input.mjs
+
+
+* debug-babel-7/entry-corejs2-android/input.mjs
+
+
+* debug-babel-7/entry-corejs2-electron/input.mjs
+
+
+* debug-babel-7/entry-corejs2-force-all-transforms/input.mjs
+
+
+* debug-babel-7/entry-corejs2-no-import/input.js
+
+
+* debug-babel-7/entry-corejs2-proposals/input.mjs
+
+
+* debug-babel-7/entry-corejs2-proposals-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs2-shippedProposals/input.mjs
+
+
+* debug-babel-7/entry-corejs2-shippedProposals-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs2-specific-targets/input.mjs
+
+
+* debug-babel-7/entry-corejs2-versions-decimals/input.mjs
+
+
+* debug-babel-7/entry-corejs2-versions-strings/input.mjs
+
+
+* debug-babel-7/entry-corejs3/input.mjs
+
+
+* debug-babel-7/entry-corejs3-all/input.mjs
+
+
+* debug-babel-7/entry-corejs3-all-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-android/input.mjs
+
+
+* debug-babel-7/entry-corejs3-babel-polyfill/input.mjs
+
+
+* debug-babel-7/entry-corejs3-electron/input.mjs
+
+
+* debug-babel-7/entry-corejs3-es/input.mjs
+
+
+* debug-babel-7/entry-corejs3-es-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-es-proposals/input.mjs
+
+
+* debug-babel-7/entry-corejs3-es-proposals-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-force-all-transforms/input.mjs
+
+
+* debug-babel-7/entry-corejs3-no-import/input.js
+
+
+* debug-babel-7/entry-corejs3-proposals/input.mjs
+
+
+* debug-babel-7/entry-corejs3-proposals-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-runtime-only/input.mjs
+
+
+* debug-babel-7/entry-corejs3-runtime-only-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-specific-entries/input.mjs
+
+
+* debug-babel-7/entry-corejs3-specific-entries-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-specific-targets/input.mjs
+
+
+* debug-babel-7/entry-corejs3-stable/input.mjs
+
+
+* debug-babel-7/entry-corejs3-stable-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-stable-samsung-8.2/input.mjs
+
+
+* debug-babel-7/entry-corejs3-stage/input.mjs
+
+
+* debug-babel-7/entry-corejs3-stage-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-corejs3-versions-decimals/input.mjs
+
+
+* debug-babel-7/entry-corejs3-versions-strings/input.mjs
+
+
+* debug-babel-7/entry-corejs3-versions-strings-minor-3.0/input.mjs
+
+
+* debug-babel-7/entry-corejs3-versions-strings-minor-3.1/input.mjs
+
+
+* debug-babel-7/entry-corejs3-web/input.mjs
+
+
+* debug-babel-7/entry-corejs3-web-chrome-71/input.mjs
+
+
+* debug-babel-7/entry-no-corejs/input.mjs
+
+
+* debug-babel-7/entry-no-corejs-no-import/input.js
+
+
+* debug-babel-7/entry-no-corejs-shippedProposals/input.mjs
+
+
+* debug-babel-7/plugins-only/input.mjs
+
+
+* debug-babel-7/shippedProposals-chrome-80/input.mjs
+
+
+* debug-babel-7/shippedProposals-chrome-84/input.mjs
+
+
+* debug-babel-7/top-level-targets/input.mjs
+
+
+* debug-babel-7/top-level-targets-shadowed/input.mjs
+
+
+* debug-babel-7/usage-corejs2-1/input.js
+
+
+* debug-babel-7/usage-corejs2-2/input.js
+
+
+* debug-babel-7/usage-corejs2-chrome-71-1/input.js
+
+
+* debug-babel-7/usage-corejs2-chrome-71-2/input.js
+
+
+* debug-babel-7/usage-corejs2-none-1/input.js
+
+
+* debug-babel-7/usage-corejs2-none-2/input.js
+
+
+* debug-babel-7/usage-corejs2-proposals-1/input.js
+
+
+* debug-babel-7/usage-corejs2-proposals-2/input.js
+
+
+* debug-babel-7/usage-corejs2-proposals-chrome-71-1/input.js
+
+
+* debug-babel-7/usage-corejs2-proposals-chrome-71-2/input.js
+
+
+* debug-babel-7/usage-corejs2-shippedProposals-1/input.js
+
+
+* debug-babel-7/usage-corejs2-shippedProposals-2/input.js
+
+
+* debug-babel-7/usage-corejs2-with-import/input.mjs
+
+
+* debug-babel-7/usage-corejs3-1/input.js
+
+
+* debug-babel-7/usage-corejs3-2/input.js
+
+
+* debug-babel-7/usage-corejs3-chrome-71-1/input.js
+
+
+* debug-babel-7/usage-corejs3-chrome-71-2/input.js
+
+
+* debug-babel-7/usage-corejs3-none-1/input.js
+
+
+* debug-babel-7/usage-corejs3-none-2/input.js
+
+
+* debug-babel-7/usage-corejs3-proposals-1/input.js
+
+
+* debug-babel-7/usage-corejs3-proposals-2/input.js
+
+
+* debug-babel-7/usage-corejs3-proposals-chrome-71-1/input.js
+
+
+* debug-babel-7/usage-corejs3-proposals-chrome-71-2/input.js
+
+
+* debug-babel-7/usage-corejs3-shippedProposals-1/input.js
+
+
+* debug-babel-7/usage-corejs3-shippedProposals-2/input.js
+
+
+* debug-babel-7/usage-corejs3-versions-strings-minor-3.0-1/input.js
+
+
+* debug-babel-7/usage-corejs3-versions-strings-minor-3.0-2/input.js
+
+
+* debug-babel-7/usage-corejs3-versions-strings-minor-3.1-1/input.js
+
+
+* debug-babel-7/usage-corejs3-versions-strings-minor-3.1-2/input.js
+
+
+* debug-babel-7/usage-corejs3-with-import/input.mjs
+
+
+* debug-babel-7/usage-no-corejs-1/input.js
+
+
+* debug-babel-7/usage-no-corejs-2/input.js
+
+
+* debug-babel-7/usage-no-corejs-none-1/input.js
+
+
+* debug-babel-7/usage-no-corejs-none-2/input.js
+
 
 * dynamic-import/auto-esm-unsupported-import-unsupported/input.mjs
 
 
 * dynamic-import/modules-amd/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import/modules-cjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* dynamic-import/modules-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * dynamic-import/modules-systemjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import/modules-umd/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import-babel-7/auto-esm-unsupported-import-unsupported/input.mjs
 
 
 * dynamic-import-babel-7/modules-amd/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import-babel-7/modules-cjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* dynamic-import-babel-7/modules-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * dynamic-import-babel-7/modules-systemjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * dynamic-import-babel-7/modules-umd/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * export-namespace-from/auto-esm-not-supported/input.mjs
 
@@ -973,13 +1222,10 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * export-namespace-from/false-export-namespace-not-supported/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * export-namespace-from/false-export-namespace-not-supported-caller-supported/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* export-namespace-from/false-export-namespace-supported/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * modules/auto-cjs/input.mjs
 
@@ -988,28 +1234,48 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * modules/modules-cjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-commonjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-systemjs/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * modules/modules-umd/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["a"]
+  | rebuilt        : ScopeId(0): []
+
 
 * plugins-integration/block-scoping-inside-generator/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/class-arrow-super-tagged-expr/input.js
 
 
 * plugins-integration/class-features-node-12/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/for-of-array-block-scoping/input.js
 
@@ -1018,7 +1284,7 @@ preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 
 
 * plugins-integration/issue-10662/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/issue-11278/input.mjs
 
@@ -1030,7 +1296,7 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * plugins-integration/issue-16155/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * plugins-integration/issue-7527/input.mjs
 
@@ -1044,17 +1310,11 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 * plugins-integration/spread-super-firefox-40/input.js
 
 
-* preset-options/browserslist-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options/browserslist-config-ignore-config-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+
 
 * preset-options/browserslist-config-ignore-package-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
-* preset-options/browserslist-default-via-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
 * preset-options/browserslist-defaults/input.mjs
 
@@ -1062,68 +1322,47 @@ preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 * preset-options/browserslist-defaults-not-ie/input.mjs
 Targets: node `current` is not supported
 
-* preset-options/browserslist-package/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
-* preset-options/browserslist-package-ignore-with-targets/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options/deno-1_0/input.mjs
 
 
 * preset-options/destructuring-edge/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options/empty-options/input.mjs
 
 
 * preset-options/esmodules-async-functions/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * preset-options/include/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options/include-scoped/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
 
-* preset-options/ios-10/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options/ios-10_3/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options/ios-11/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options/ios-6/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options/no-options/input.mjs
 
 
 * preset-options/removed-loose/input.js
-preset-env: unknown field `loose`, expected `targets` or `bugfixes`
+
 
 * preset-options/removed-spec/input.js
-preset-env: unknown field `spec`, expected `targets` or `bugfixes`
+
 
 * preset-options/reserved-keys-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options/reserved-keys-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options/reserved-names-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options/reserved-names-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options/rhino-1_7_13/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options/safari-10_3-block-scoped/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * preset-options/safari-tagged-template-literals/input.js
 
@@ -1131,32 +1370,17 @@ preset-env: unknown field `debug`, expected `targets` or `bugfixes`
 * preset-options/safari-tp/input.js
 failed to resolve query: failed to parse the rest of input: ...''
 
-* preset-options/targets-as-object/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options/targets-as-string/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
 * preset-options/unicode-property-regex-chrome-49/input.js
 
 
 * preset-options/unicode-sets-regex-chrome-111/input.js
 
 
-* preset-options/useBuiltIns-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options-babel-7/browserslist-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options-babel-7/browserslist-config-ignore-config-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/browserslist-config-ignore-package-with-false/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/browserslist-default-via-config/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/browserslist-defaults/input.mjs
 
@@ -1164,68 +1388,53 @@ preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
 * preset-options-babel-7/browserslist-defaults-not-ie/input.mjs
 Targets: node `current` is not supported
 
-* preset-options-babel-7/browserslist-package/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
-* preset-options-babel-7/browserslist-package-ignore-with-targets/input.mjs
-preset-env: unknown field `configPath`, expected `targets` or `bugfixes`
-
 * preset-options-babel-7/deno-1_0/input.mjs
 
 
 * preset-options-babel-7/destructuring-edge/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/empty-options/input.mjs
 
 
 * preset-options-babel-7/esmodules-async-functions/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+Targets: The `esmodules` is not supported
 
 * preset-options-babel-7/include/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/include-scoped/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/ios-10/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/ios-10_3/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/ios-11/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/ios-6/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/loose-typeof-symbol/input.mjs
-preset-env: unknown field `loose`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/loose-with-typeof-symbol-includes/input.mjs
-preset-env: unknown field `include`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/no-options/input.mjs
 
 
 * preset-options-babel-7/reserved-keys-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/reserved-keys-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/reserved-names-ie8/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/reserved-names-ie9/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/rhino-1_7_13/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/safari-10_3-block-scoped/input.js
-preset-env: unknown field `debug`, expected `targets` or `bugfixes`
+
 
 * preset-options-babel-7/safari-tagged-template-literals/input.js
 
@@ -1237,13 +1446,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * preset-options-babel-7/spec/input.js
-preset-env: unknown field `spec`, expected `targets` or `bugfixes`
 
-* preset-options-babel-7/targets-as-object/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
-
-* preset-options-babel-7/targets-as-string/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 * preset-options-babel-7/unicode-property-regex-chrome-49/input.js
 
@@ -1252,28 +1455,29 @@ preset-env: unknown field `modules`, expected `targets` or `bugfixes`
 
 
 * preset-options-babel-7/useBuiltIns-false/input.mjs
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * sanity/block-scoping-for-of/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * sanity/regex-dot-all/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * sanity/transform-duplicate-keys/input.js
-preset-env: unknown field `modules`, expected `targets` or `bugfixes`
+
 
 * shipped-proposals/import-assertions/input.mjs
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["packageJson"]
+  | rebuilt        : ScopeId(0): []
+
 
 * shipped-proposals/new-class-features-chrome-90/input.js
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
-* shipped-proposals/new-class-features-chrome-94/input.js
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 * shipped-proposals/new-class-features-firefox-70/input.js
-preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
+
 
 
 # babel-plugin-transform-logical-assignment-operators (0/6)
@@ -1475,6 +1679,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * logical-assignment/null-coalescing/input.js
+  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(17): [ReferenceId(86), ReferenceId(87),
   | ReferenceId(90)]
@@ -1614,24 +1819,28 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 # babel-plugin-transform-nullish-coalescing-operator (2/12)
 * assumption-noDocumentAll/transform/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-destructuring/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-param/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(3): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-function/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
@@ -1662,73 +1871,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * nullish-coalescing/transform-loose/input.js
+  x Output mismatch
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-
-
-
-# babel-plugin-transform-optional-catch-binding (2/4)
-* optional-catch-bindings/try-catch-block-no-binding/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(0): ["_unused"]
-  | rebuilt        : ScopeId(0): []
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-
-  x Bindings mismatch:
-  | after transform: No scope
-  | rebuilt        : ScopeId(2): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(2): []
-  | rebuilt        : ScopeId(3): ["_unused"]
-
-  x Scope parent mismatch:
-  | after transform: ScopeId(2): Some(ScopeId(0))
-  | rebuilt        : ScopeId(3): Some(ScopeId(2))
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
-  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
-  | CatchVariable)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(0): ScopeId(0)
-  | rebuilt        : SymbolId(0): ScopeId(3)
-
-
-* optional-catch-bindings/try-catch-finally-no-binding/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(0): ["_unused"]
-  | rebuilt        : ScopeId(0): []
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
-
-  x Bindings mismatch:
-  | after transform: No scope
-  | rebuilt        : ScopeId(2): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(2): []
-  | rebuilt        : ScopeId(3): ["_unused"]
-
-  x Scope parent mismatch:
-  | after transform: ScopeId(2): Some(ScopeId(0))
-  | rebuilt        : ScopeId(3): Some(ScopeId(2))
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(CatchVariable)
-  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable |
-  | CatchVariable)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(0): ScopeId(0)
-  | rebuilt        : SymbolId(0): ScopeId(3)
 
 
 
@@ -1758,76 +1904,24 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-arrow-functions (0/6)
+# babel-plugin-transform-arrow-functions (1/6)
 * assumption-newableArrowFunctions-false/basic/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(1): ["f"]
-  | rebuilt        : ScopeId(1): ["_this2", "f"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(4): []
-  | rebuilt        : ScopeId(4): ["_this"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(5): ["_this"]
-  | rebuilt        : ScopeId(5): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(6): ["_this2"]
-  | rebuilt        : ScopeId(6): []
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(6): ScopeId(6)
-  | rebuilt        : SymbolId(1): ScopeId(1)
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(5): ScopeId(5)
-  | rebuilt        : SymbolId(6): ScopeId(4)
 
 
 * assumption-newableArrowFunctions-false/naming/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
-  | ConstVariable | ArrowFunction)
-  | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable |
-  | ConstVariable)
 
 
 * assumption-newableArrowFunctions-false/self-referential/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * spec/newableArrowFunction-default/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 * spec/newableArrowFunction-vs-spec-false/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-
-* spec/newableArrowFunction-vs-spec-true/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 
-# babel-preset-typescript (5/10)
+# babel-preset-typescript (4/10)
 * jsx-compat/ts-invalid/input.ts
   x Expected `>` but found `/`
    ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
@@ -1840,6 +1934,12 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 * node-extensions/import-in-cts/input.cts
 
 
+* node-extensions/type-assertion-in-ts/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "x"]
+  | rebuilt        : ["x"]
+
+
 * node-extensions/type-param-arrow-in-ts/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["T"]
@@ -1847,6 +1947,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * opts/optimizeConstEnums/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(1): ["A", "x"]
   | rebuilt        : ScopeId(1): ["A"]
@@ -1864,11 +1965,49 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 
-# babel-plugin-transform-typescript (51/151)
+# babel-plugin-transform-typescript (40/151)
+* cast/as-expression/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "x"]
+  | rebuilt        : ["x"]
+
+
+* cast/type-assertion/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "x"]
+  | rebuilt        : ["x"]
+
+
+* class/accessor-allowDeclareFields-false/input.ts
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
+ 7 |   abstract accessor prop6: number;
+ 8 |   private accessor #p: any;
+   :   ^^^^^^^
+ 9 | 
+   `----
+
+
+* class/accessor-allowDeclareFields-true/input.ts
+  x TS(18010): An accessibility modifier cannot be used with a private
+  | identifier.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]
+ 7 |   abstract accessor prop6: number;
+ 8 |   private accessor #p: any;
+   :   ^^^^^^^
+ 9 | 
+   `----
+
+
 * class/head/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(1): ["T"]
   | rebuilt        : ScopeId(1): []
+
+  x Unresolved references mismatch:
+  | after transform: ["D", "I"]
+  | rebuilt        : ["D"]
 
 
 * class/methods/input.ts
@@ -1882,6 +2021,16 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope children mismatch:
   | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
   | rebuilt        : ScopeId(1): [ScopeId(2)]
+
+
+* declarations/const-enum/input.ts
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["E"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
 
 
 * declarations/erased/input.ts
@@ -1978,6 +2127,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Symbol redeclarations mismatch:
   | after transform: SymbolId(0): [Span { start: 41, end: 48 }]
   | rebuilt        : SymbolId(0): []
+
+  x Unresolved references mismatch:
+  | after transform: ["Cat", "Dog"]
+  | rebuilt        : []
 
 
 * enum/enum-merging-inner-references-shadow/input.ts
@@ -2078,6 +2231,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * enum/mix-references/input.ts
+  x Output mismatch
   x Semantic Collector failed after transform
 
   x Missing ReferenceId: Foo
@@ -2241,6 +2395,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * enum/ts5.0-const-foldable/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(1): ["First", "Second", "Third", "Values"]
   | rebuilt        : ScopeId(1): ["Values"]
@@ -2304,8 +2459,13 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | ScopeId(4)]
   | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
+  x Unresolved references mismatch:
+  | after transform: ["Signal", "Signal2"]
+  | rebuilt        : []
+
 
 * exports/declared-types/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E",
   | "I", "II2", "II3", "M", "N", "T", "foo", "m", "x"]
@@ -2383,6 +2543,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ReferenceId(11): ReferenceFlags(Read)
   | rebuilt        : ReferenceId(3): ReferenceFlags(Read | Type)
 
+  x Unresolved references mismatch:
+  | after transform: ["Bar", "C", "M", "N", "f"]
+  | rebuilt        : ["Bar", "E", "x"]
+
 
 * exports/default-function/input.ts
   x Scope children mismatch:
@@ -2448,6 +2612,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * exports/interface/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A", "I"]
   | rebuilt        : ScopeId(0): []
@@ -2466,6 +2631,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
 
+  x Unresolved references mismatch:
+  | after transform: ["PromiseLike"]
+  | rebuilt        : []
+
 
 * exports/issue-9916-2/input.ts
   x Bindings mismatch:
@@ -2476,6 +2645,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
 
+  x Unresolved references mismatch:
+  | after transform: ["PromiseLike"]
+  | rebuilt        : []
+
 
 * exports/issue-9916-3/input.ts
   x Bindings mismatch:
@@ -2485,6 +2658,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   x Scope children mismatch:
   | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
+
+  x Unresolved references mismatch:
+  | after transform: ["PromiseLike"]
+  | rebuilt        : []
 
 
 * exports/type-only-export-specifier-1/input.ts
@@ -2688,6 +2865,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/only-remove-type-imports/input.ts
+  x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["H", "I", "I2", "J", "K1", "K2", "L1", "L2",
   | "L3", "a", "b", "c2", "d", "d2", "e", "e4"]
@@ -2708,6 +2886,7 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * imports/type-only-export-specifier-2/input.ts
+  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(0)]
   | rebuilt        : SymbolId(0): []
@@ -4241,6 +4420,10 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
   | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
+  x Unresolved references mismatch:
+  | after transform: ["Platform"]
+  | rebuilt        : []
+
 
 * namespace/module-nested/input.ts
   x Semantic Collector failed after transform
@@ -5363,39 +5546,211 @@ preset-env: unknown field `shippedProposals`, expected `targets` or `bugfixes`
 
 
 * optimize-const-enums/custom-values/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "w", "x", "y", "z"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * optimize-const-enums/custom-values-exported/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "w", "x", "y", "z"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
 
 * optimize-const-enums/declare/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["A"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(0): Some("A")
+  | rebuilt        : ReferenceId(0): None
+
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["A"]
+
 
 * optimize-const-enums/export-const-enum/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
 
 * optimize-const-enums/export-const-enum-type-and-value/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["WhitespaceFlag", "after", "before"]
+  | rebuilt        : ScopeId(1): ["WhitespaceFlag"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(8)]
+  | rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6),
+  | ReferenceId(7)]
+
 
 * optimize-const-enums/export-const-enum-type-no-deopt/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["WhitespaceFlag", "after", "before"]
+  | rebuilt        : ScopeId(1): ["WhitespaceFlag"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(8)]
+  | rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6)]
+
 
 * optimize-const-enums/exported/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
+
 
 * optimize-const-enums/local/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * optimize-const-enums/local-shadowed/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 
 * optimize-const-enums/merged/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(2): ["A", "z"]
+  | rebuilt        : ScopeId(2): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 36, end: 37 }]
+  | rebuilt        : SymbolId(0): []
+
 
 * optimize-const-enums/merged-exported/input.ts
-transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPragma`, `jsxPragmaFrag`, `onlyRemoveTypeImports`, `allowNamespaces`, `allowDeclareFields`
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "x", "y"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(2): ["A", "z"]
+  | rebuilt        : ScopeId(2): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | ConstEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | Export)
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 50, end: 51 }]
+  | rebuilt        : SymbolId(0): []
+
 
 * regression/15768/input.ts
+  x Output mismatch
   x Semantic Collector failed after transform
 
   x Missing ReferenceId: Infinity
@@ -5448,32 +5803,149 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
    `----
 
 
+* type-arguments/call/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "f"]
+  | rebuilt        : ["f"]
 
-# babel-plugin-transform-react-jsx (130/142)
+
+* type-arguments/expr/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "f"]
+  | rebuilt        : ["f"]
+
+
+* type-arguments/new/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["C", "T"]
+  | rebuilt        : ["C"]
+
+
+* type-arguments/optional-call/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["Q", "T", "f", "x"]
+  | rebuilt        : ["f", "x"]
+
+
+* type-arguments/tagged-template/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["T", "f"]
+  | rebuilt        : ["f"]
+
+
+* type-arguments/tsx/input.ts
+  x Unresolved reference IDs mismatch for "C":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+
+
+
+# babel-preset-react (4/9)
+* preset-options/development/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* preset-options/development-runtime-automatic/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* preset-options/empty-options/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* preset-options/runtime-automatic/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* preset-options/runtime-classic/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+
+# babel-plugin-transform-react-jsx (100/142)
+* react/adds-appropriate-newlines-when-using-spread-attribute/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
 * react/arrow-functions/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(1): []
-  | rebuilt        : ScopeId(1): ["_this"]
+  x Unresolved references mismatch:
+  | after transform: ["React", "this"]
+  | rebuilt        : ["React"]
 
-  x Bindings mismatch:
-  | after transform: ScopeId(2): ["_this"]
-  | rebuilt        : ScopeId(2): []
 
-  x Bindings mismatch:
-  | after transform: ScopeId(3): []
-  | rebuilt        : ScopeId(3): ["_this2"]
+* react/assignment/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
 
-  x Bindings mismatch:
-  | after transform: ScopeId(4): ["_this2"]
-  | rebuilt        : ScopeId(4): []
 
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(2): ScopeId(2)
-  | rebuilt        : SymbolId(1): ScopeId(1)
+* react/dont-coerce-expression-containers/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
 
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(3): ScopeId(4)
-  | rebuilt        : SymbolId(3): ScopeId(3)
+
+* react/honor-custom-jsx-comment/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/honor-custom-jsx-pragma-option/input.js
+  x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-constructor-as-prop/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-deeper-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+  x Unresolved reference IDs mismatch for "Composite":
+  | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(12), ReferenceId(14)]
+  | rebuilt        : [ReferenceId(6), ReferenceId(9)]
+
+  x Unresolved reference IDs mismatch for "Composite2":
+  | after transform: [ReferenceId(7), ReferenceId(15)]
+  | rebuilt        : [ReferenceId(11)]
+
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(8)]
+  | rebuilt        : [ReferenceId(2)]
 
 
 * react/should-disallow-valueless-key/input.js
@@ -5502,6 +5974,18 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
   | rebuilt        : SymbolId(0): [ReferenceId(4)]
 
 
+* react/should-have-correct-comma-in-nested-children/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(6)]
+  | rebuilt        : [ReferenceId(4)]
+
+
+* react/should-not-add-quotes-to-identifier-names/input.js
+  x Unresolved reference IDs mismatch for "F":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
 * react/should-throw-error-namespaces-if-not-flag/input.js
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
@@ -5512,40 +5996,101 @@ transform-typescript: unknown field `optimizeConstEnums`, expected one of `jsxPr
    `----
 
 
+* react/this-tag-name/input.js
+  x Unresolved references mismatch:
+  | after transform: ["React", "this"]
+  | rebuilt        : ["React"]
+
+
+* react/weird-symbols/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+  | rebuilt        : [ReferenceId(2)]
+
+
+* react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
 * react-automatic/arrow-functions/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(1): []
-  | rebuilt        : ScopeId(1): ["_this"]
+  x Unresolved references mismatch:
+  | after transform: ["this"]
+  | rebuilt        : []
 
-  x Bindings mismatch:
-  | after transform: ScopeId(2): ["_this"]
-  | rebuilt        : ScopeId(2): []
 
-  x Bindings mismatch:
-  | after transform: ScopeId(3): []
-  | rebuilt        : ScopeId(3): ["_this2"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(4): ["_this2"]
-  | rebuilt        : ScopeId(4): []
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(3): ScopeId(2)
-  | rebuilt        : SymbolId(2): ScopeId(1)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(4): ScopeId(4)
-  | rebuilt        : SymbolId(4): ScopeId(3)
+* react-automatic/assignment/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+* react-automatic/dont-coerce-expression-containers/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
 
 * react-automatic/handle-fragments-with-key/input.js
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
   | ReferenceId(2)]
   | rebuilt        : SymbolId(0): [ReferenceId(1)]
+
+
+* react-automatic/should-allow-constructor-as-prop/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/should-allow-deeper-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/should-allow-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+  x Unresolved reference IDs mismatch for "Composite":
+  | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(12), ReferenceId(16)]
+  | rebuilt        : [ReferenceId(6), ReferenceId(9)]
+
+  x Unresolved reference IDs mismatch for "Composite2":
+  | after transform: [ReferenceId(7), ReferenceId(14)]
+  | rebuilt        : [ReferenceId(11)]
+
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(8)]
+  | rebuilt        : [ReferenceId(2)]
 
 
 * react-automatic/should-disallow-valueless-key/input.js
@@ -5574,6 +6119,18 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
   | rebuilt        : SymbolId(2): [ReferenceId(4)]
 
 
+* react-automatic/should-have-correct-comma-in-nested-children/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(7)]
+  | rebuilt        : [ReferenceId(4)]
+
+
+* react-automatic/should-not-add-quotes-to-identifier-names/input.js
+  x Unresolved reference IDs mismatch for "F":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
@@ -5584,36 +6141,32 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    `----
 
 
+* react-automatic/this-tag-name/input.js
+  x Unresolved references mismatch:
+  | after transform: ["this"]
+  | rebuilt        : []
 
-# babel-plugin-transform-react-jsx-self (2/3)
-* react-source/arrow-function/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(0): ["fn"]
-  | rebuilt        : ScopeId(0): ["_this", "fn"]
 
-  x Bindings mismatch:
-  | after transform: ScopeId(1): ["_this"]
-  | rebuilt        : ScopeId(1): []
+* react-automatic/weird-symbols/input.js
+  x Unresolved reference IDs mismatch for "Text":
+  | after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+  | rebuilt        : [ReferenceId(2)]
 
-  x Bindings mismatch:
-  | after transform: ScopeId(2): []
-  | rebuilt        : ScopeId(2): ["_this2"]
 
-  x Bindings mismatch:
-  | after transform: ScopeId(3): ["_this2"]
-  | rebuilt        : ScopeId(3): []
+* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
 
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(1): ScopeId(1)
-  | rebuilt        : SymbolId(0): ScopeId(0)
 
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(2): ScopeId(3)
-  | rebuilt        : SymbolId(2): ScopeId(2)
+* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
 
 
 
-# babel-plugin-transform-react-jsx-development (7/10)
+# babel-plugin-transform-react-jsx-development (6/10)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
@@ -5630,7 +6183,14 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    `----
 
 
+* cross-platform/handle-fragments-with-key/input.js
+  x Unresolved reference IDs mismatch for "React":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(2)]
+
+
 * cross-platform/within-ts-module-block/input.ts
+  x Output mismatch
   x Semantic Collector failed after transform
 
   x Missing SymbolId: Namespaced

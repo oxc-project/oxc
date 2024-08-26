@@ -36,7 +36,6 @@ pub use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
-use rustc_hash::FxHashSet;
 
 pub use crate::{
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -83,7 +82,7 @@ pub struct Semantic<'a> {
     /// Parsed JSDoc comments.
     jsdoc: JSDocFinder<'a>,
 
-    unused_labels: FxHashSet<AstNodeId>,
+    unused_labels: Vec<AstNodeId>,
 
     /// Control flow graph. Only present if [`Semantic`] is built with cfg
     /// creation enabled using [`SemanticBuilder::with_cfg`].
@@ -150,7 +149,7 @@ impl<'a> Semantic<'a> {
         &self.symbols
     }
 
-    pub fn unused_labels(&self) -> &FxHashSet<AstNodeId> {
+    pub fn unused_labels(&self) -> &Vec<AstNodeId> {
         &self.unused_labels
     }
 

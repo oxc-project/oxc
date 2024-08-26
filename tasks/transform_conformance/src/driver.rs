@@ -10,7 +10,6 @@ use oxc::{
 };
 
 pub struct Driver {
-    filtered: bool,
     options: TransformOptions,
     printed: String,
     errors: Vec<OxcDiagnostic>,
@@ -44,17 +43,14 @@ impl CompilerInterface for Driver {
             program,
         ) {
             self.errors.extend(errors);
-            if !self.filtered {
-                return ControlFlow::Break(());
-            }
         }
         ControlFlow::Continue(())
     }
 }
 
 impl Driver {
-    pub fn new(filtered: bool, options: TransformOptions) -> Self {
-        Self { filtered, options, printed: String::new(), errors: vec![] }
+    pub fn new(options: TransformOptions) -> Self {
+        Self { options, printed: String::new(), errors: vec![] }
     }
 
     pub fn errors(&mut self) -> Vec<OxcDiagnostic> {

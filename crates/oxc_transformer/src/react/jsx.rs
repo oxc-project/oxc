@@ -1019,7 +1019,7 @@ fn get_read_identifier_reference<'a>(
 ) -> IdentifierReference<'a> {
     let reference_id =
         ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlags::Read);
-    IdentifierReference::new_read(span, name, Some(reference_id))
+    IdentifierReference::new_with_reference_id(span, name, Some(reference_id))
 }
 
 fn create_static_member_expression<'a>(

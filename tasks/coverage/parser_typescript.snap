@@ -1,9 +1,9 @@
 commit: d8086f14
 
 parser_typescript Summary:
-AST Parsed     : 6446/6456 (99.85%)
-Positive Passed: 6423/6456 (99.49%)
-Negative Passed: 1179/5639 (20.91%)
+AST Parsed     : 6447/6456 (99.86%)
+Positive Passed: 6424/6456 (99.50%)
+Negative Passed: 1184/5639 (21.00%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -3180,13 +3180,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathMustResolve.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.6.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModuleMissing.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelModuleDeclarationAndFile.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/allowsImportingTsExtension.ts
@@ -3962,6 +3956,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/con
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctionsStrict.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/enumMergeWithExpando.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/expandoOnAlias.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/exportDefaultInJsFile02.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/exportNestedNamespaces2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/exportPropertyAssignmentNameResolution.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/globalMergeWithCommonJSAssignmentDeclaration.ts
@@ -4464,16 +4459,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/t
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestion2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun2.ts
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
-
-  × Expected `(` but found `await`
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:22:5]
- 21 │ const arr : number[] = [];
- 22 │ for await (const v of asyncGen(4)) {
-    ·     ──┬──
-    ·       ╰── `(` expected
- 23 │   arr.push(v);
-    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/bom-utf16be.ts
 
   × Invalid Character `￾`
@@ -4701,25 +4686,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/import
  3 │ export let z = import.import.import.malkovich;
    ·                ─────────────
    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts
-
-  × Unexpected import.meta expression
-   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts:3:5]
- 2 │ 
- 3 │ if (import.meta.foo) {
-   ·     ───────────
- 4 │   import.meta.foo();
-   ╰────
-  help: import.meta is only allowed in module code
-
-  × Unexpected import.meta expression
-   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts:4:3]
- 3 │ if (import.meta.foo) {
- 4 │   import.meta.foo();
-   ·   ───────────
- 5 │ }
-   ╰────
-  help: import.meta is only allowed in module code
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts
 
   × Expected `,` but found `string`
@@ -4749,6 +4715,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/
  14 │ 
     ╰────
   help: Try insert a semicolon here
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts:4:8]
+ 3 │ // await allowed in import=namespace when not a module
+ 4 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts:4:8]
+ 3 │ // await allowed in import=namespace when not a module
+ 4 │ import await = foo.await;
+   ·        ─────
+   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/constructorTagOnClassConstructor.ts
 
   × Cannot use export statement outside a module
@@ -8108,15 +8089,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │ interface interface{ }
    ╰────
   help: Try insert a semicolon here
-
-  × Illegal continue statement: no surrounding iteration statement
-   ╭─[typescript/tests/cases/compiler/invalidContinueInDownlevelAsync.ts:3:9]
- 2 │     if (true) {
- 3 │         continue;
-   ·         ─────────
- 4 │     }
-   ╰────
-  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
   × Illegal continue statement: no surrounding iteration statement
    ╭─[typescript/tests/cases/compiler/invalidContinueInDownlevelAsync.ts:3:9]
@@ -18155,6 +18127,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·                      ─
    ╰────
 
+  × Expected `)` but found `,`
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:9]
+ 3 │ // reparse call as invalid await should error
+ 4 │ await (1,);
+   ·         ┬
+   ·         ╰── `)` expected
+ 5 │ await <number, string>(1);
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.10.ts:2:19]
  1 │ // await disallowed in alias of named import
@@ -18174,6 +18155,87 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │ declare var require: any;
  3 │ import await = require("./other");
    ·        ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
+ 4 │ // await disallowed in import=namespace when in a module
+ 5 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
+ 4 │ // await disallowed in import=namespace when in a module
+ 5 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
+ 3 │ // reparse variable name as await should fail
+ 4 │ var await = 1;
+   ·     ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
+ 3 │ // reparse variable name as await should fail
+ 4 │ var await = 1;
+   ·     ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var [await] = [1];
+   ·      ─────
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var [await] = [1];
+   ·      ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
+ 1 │ // await in exported class name should fail
+ 2 │ export class await {
+   ·              ─────
+ 3 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
+ 1 │ // await in exported class name should fail
+ 2 │ export class await {
+   ·              ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.6.ts:2:17]
+ 1 │ // await in exported function name should fail
+ 2 │ export function await() {
+   ·                 ─────
+ 3 │ }
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.6.ts:2:17]
+ 1 │ // await in exported function name should fail
+ 2 │ export function await() {
+   ·                 ─────
+ 3 │ }
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -18209,22 +18271,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  1 │ // await disallowed in un-alised named import
  2 │ import { await } from "./other";
    ·          ─────
-   ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:1:1]
- 1 │ await x;
-   · ─────
- 2 │ 
-   ╰────
-
-  × Expected `(` but found `await`
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:5:5]
- 4 │ 
- 5 │ for await (const item of arr) {
-   ·     ──┬──
-   ·       ╰── `(` expected
- 6 │   item;
    ╰────
 
   × Expected `=` but found `;`
@@ -21345,12 +21391,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    · ──────
    ╰────
 
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/exportDefaultInJsFile02.ts:1:1]
- 1 │ export default "hello";
-   · ──────
-   ╰────
-
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:6:11]
  5 │ async function f() {
@@ -21438,7 +21478,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  28 │             return toFixed()
     ╰────
 
-  × Use of undefined label
+  × Jump target cannot cross function boundary.
     ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:34:19]
  33 │             label: var x = 1
  34 │             break label
@@ -21709,14 +21749,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │ declare await using y: null;
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
- 1 │ {
- 2 │     await using [a] = null;
-   ·     ─────
- 3 │ }
-   ╰────
-
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
  1 │ {
@@ -21731,14 +21763,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │                 [b] = null,
    ·                 ───
  4 │                 c = null;
-   ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:5]
- 1 │ {
- 2 │     await using {a} = null;
-   ·     ─────
- 3 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -21766,12 +21790,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │ }
    ╰────
 
-  × Expected `(` but found `await`
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
+  × Expected `;` but found `Identifier`
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:27]
  4 │ 
  5 │ for await (await using of x);
-   ·     ──┬──
-   ·       ╰── `(` expected
+   ·                           ┬
+   ·                           ╰── `;` expected
  6 │ 
    ╰────
 
