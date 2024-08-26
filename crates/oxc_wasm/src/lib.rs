@@ -38,8 +38,7 @@ pub struct Oxc {
     pub ast: JsValue,
 
     #[wasm_bindgen(readonly, skip_typescript)]
-    #[tsify(type = "Statement[]")]
-    pub ir: JsValue,
+    pub ir: String,
 
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "SymbolTable")]
