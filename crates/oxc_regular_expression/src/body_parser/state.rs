@@ -53,7 +53,7 @@ fn parse_capturing_groups(source_text: &str) -> (u32, FxHashSet<&str>, Vec<(usiz
     let mut capturing_group_names = FxHashSet::default();
     let mut duplicated_named_capturing_groups = vec![];
 
-    let mut reader = Reader::new(source_text, true);
+    let mut reader = Reader::new(source_text);
 
     let mut in_escape = false;
     let mut in_character_class = false;

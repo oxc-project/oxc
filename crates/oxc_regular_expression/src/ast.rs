@@ -108,14 +108,12 @@ pub struct Quantifier<'a> {
 /// Single character.
 #[derive(Debug, Copy, Clone)]
 pub struct Character {
-    /// This will be invalid position when `UnicodeMode` is disabled and `value` is a surrogate pair.
     pub span: Span,
     pub kind: CharacterKind,
-    /// Unicode code point or UTF-16 code unit.
     pub value: u32,
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum CharacterKind {
     ControlLetter,
     HexadecimalEscape,
@@ -124,6 +122,8 @@ pub enum CharacterKind {
     Octal,
     SingleEscape,
     Symbol,
+    /// In non `UnicodeMode`, some `Symbol` is marked as `SurrogatePairs`.
+    SurrogatePairs,
     UnicodeEscape,
 }
 

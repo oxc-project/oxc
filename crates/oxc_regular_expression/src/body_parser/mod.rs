@@ -8,7 +8,7 @@ pub use parser::PatternParser;
 
 #[cfg(test)]
 mod test {
-    use crate::{ParserOptions, PatternParser};
+    use crate::{ast, ParserOptions, PatternParser};
     use oxc_allocator::Allocator;
 
     #[test]
@@ -243,17 +243,57 @@ mod test {
     }
 
     #[test]
-    fn should_handle_unicode() {
+    fn should_handle_surrogate_pairs() {
         let allocator = Allocator::default();
-        let source_text = "このEmoji🥹の数が変わる";
 
+        let source_text = "🚀, 𐍈, 𝄞, and so on...";
         for (options, expected) in &[
-            (ParserOptions::default(), 15),
-            (ParserOptions::default().with_unicode_mode(), 14),
-            (ParserOptions::default().with_unicode_sets_mode(), 14),
+            (ParserOptions::default(), 3),
+            (ParserOptions::default().with_unicode_mode(), 0),
+            (ParserOptions::default().with_unicode_sets_mode(), 0),
         ] {
             let pattern = PatternParser::new(&allocator, source_text, *options).parse().unwrap();
-            assert_eq!(pattern.body.body[0].body.len(), *expected);
+
+            let alternative = &pattern.body.body[0];
+            assert_eq!(
+                alternative
+                    .body
+                    .iter()
+                    .filter(|term| {
+                        if let ast::Term::Character(ch) = term {
+                            return ch.kind == ast::CharacterKind::SurrogatePairs;
+                        }
+                        false
+                    })
+                    .count(),
+                *expected
+            );
+        }
+
+        let source_text = "[🥹🚀𝄞]";
+        for (options, expected) in &[
+            (ParserOptions::default(), 3),
+            (ParserOptions::default().with_unicode_mode(), 0),
+            (ParserOptions::default().with_unicode_sets_mode(), 0),
+        ] {
+            let pattern = PatternParser::new(&allocator, source_text, *options).parse().unwrap();
+
+            let ast::Term::CharacterClass(character_class) = &pattern.body.body[0].body[0] else {
+                panic!("Expected character class");
+            };
+            assert_eq!(
+                character_class
+                    .body
+                    .iter()
+                    .filter(|ccc| {
+                        if let ast::CharacterClassContents::Character(ch) = ccc {
+                            return ch.kind == ast::CharacterKind::SurrogatePairs;
+                        }
+                        false
+                    })
+                    .count(),
+                *expected
+            );
         }
     }
 }

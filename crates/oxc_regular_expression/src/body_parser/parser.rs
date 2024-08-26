@@ -28,7 +28,7 @@ impl<'a> PatternParser<'a> {
             allocator,
             source_text,
             span_factory: SpanFactory::new(options.span_offset),
-            reader: Reader::new(source_text, options.unicode_mode),
+            reader: Reader::new(source_text),
             state: State::new(options.unicode_mode, options.unicode_sets_mode),
         }
     }
@@ -316,7 +316,11 @@ impl<'a> PatternParser<'a> {
 
             return Ok(Some(ast::Term::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
-                kind: ast::CharacterKind::Symbol,
+                kind: if self.state.unicode_mode || unicode::is_bmp(cp) {
+                    ast::CharacterKind::Symbol
+                } else {
+                    ast::CharacterKind::SurrogatePairs
+                },
                 value: cp,
             })));
         }
@@ -438,7 +442,11 @@ impl<'a> PatternParser<'a> {
         if let Some(cp) = self.consume_extended_pattern_character() {
             return Ok(Some(ast::Term::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
-                kind: ast::CharacterKind::Symbol,
+                kind: if self.state.unicode_mode || unicode::is_bmp(cp) {
+                    ast::CharacterKind::Symbol
+                } else {
+                    ast::CharacterKind::SurrogatePairs
+                },
                 value: cp,
             })));
         }
@@ -926,7 +934,11 @@ impl<'a> PatternParser<'a> {
 
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
-                kind: ast::CharacterKind::Symbol,
+                kind: if self.state.unicode_mode || unicode::is_bmp(cp) {
+                    ast::CharacterKind::Symbol
+                } else {
+                    ast::CharacterKind::SurrogatePairs
+                },
                 value: cp,
             })));
         }

@@ -126,6 +126,10 @@ pub fn combine_surrogate_pair(lead: u32, trail: u32) -> u32 {
     (lead - 0xd800) * 0x400 + trail - 0xdc00 + 0x10000
 }
 
+pub fn is_bmp(cp: u32) -> bool {
+    cp <= 0xffff
+}
+
 pub fn map_control_escape(cp: u32) -> Option<u32> {
     match char::from_u32(cp) {
         Some('f') => Some(0x0c),
