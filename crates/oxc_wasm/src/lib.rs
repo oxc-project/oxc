@@ -149,13 +149,18 @@ impl Oxc {
     #[wasm_bindgen]
     pub fn run(
         &mut self,
-        run_options: &OxcRunOptions,
-        parser_options: &OxcParserOptions,
-        _linter_options: &OxcLinterOptions,
-        _codegen_options: &OxcCodegenOptions,
-        minifier_options: &OxcMinifierOptions,
+        run_options: Option<OxcRunOptions>,
+        parser_options: Option<OxcParserOptions>,
+        _linter_options: Option<OxcLinterOptions>,
+        _codegen_options: Option<OxcCodegenOptions>,
+        minifier_options: Option<OxcMinifierOptions>,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
+        let run_options = run_options.unwrap_or_default();
+        let parser_options = parser_options.unwrap_or_default();
+        let _linter_options = _linter_options.unwrap_or_default();
+        let _codegen_options = _codegen_options.unwrap_or_default();
+        let minifier_options = minifier_options.unwrap_or_default();
 
         let allocator = Allocator::default();
         let source_text = &self.source_text;
@@ -163,10 +168,17 @@ impl Oxc {
             parser_options.source_filename.clone().unwrap_or_else(|| "test.tsx".to_string()),
         );
         let source_type = SourceType::from_path(&path).unwrap_or_default();
+        let source_type = match parser_options.source_type.as_deref() {
+            Some("script") => source_type.with_script(true),
+            Some("module") => source_type.with_module(true),
+            _ => source_type,
+        };
 
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(ParseOptions {
-                allow_return_outside_function: parser_options.allow_return_outside_function,
+                allow_return_outside_function: parser_options
+                    .allow_return_outside_function
+                    .unwrap_or_default(),
                 ..ParseOptions::default()
             })
             .parse();
@@ -185,7 +197,7 @@ impl Oxc {
             .with_check_syntax_error(true)
             .build(program);
 
-        if run_options.syntax() {
+        if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(
                 semantic_ret.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
             );
@@ -193,7 +205,7 @@ impl Oxc {
 
         let semantic = Rc::new(semantic_ret.semantic);
         // Only lint if there are not syntax errors
-        if run_options.lint() && self.diagnostics.borrow().is_empty() {
+        if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
             let linter_ret = Linter::default().run(&path, Rc::clone(&semantic));
             let diagnostics = linter_ret.into_iter().map(|e| Error::from(e.error)).collect();
             self.save_diagnostics(diagnostics);
@@ -201,10 +213,12 @@ impl Oxc {
 
         self.ast = program.serialize(&self.serializer)?;
 
-        if run_options.prettier_format() {
+        if run_options.prettier_format.unwrap_or_default() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .with_options(ParseOptions {
-                    allow_return_outside_function: parser_options.allow_return_outside_function,
+                    allow_return_outside_function: parser_options
+                        .allow_return_outside_function
+                        .unwrap_or_default(),
                     ..ParseOptions::default()
                 })
                 .parse();
@@ -214,10 +228,12 @@ impl Oxc {
             self.prettier_formatted_text = printed;
         }
 
-        if run_options.prettier_ir() {
+        if run_options.prettier_ir.unwrap_or_default() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .with_options(ParseOptions {
-                    allow_return_outside_function: parser_options.allow_return_outside_function,
+                    allow_return_outside_function: parser_options
+                        .allow_return_outside_function
+                        .unwrap_or_default(),
                     ..ParseOptions::default()
                 })
                 .parse();
@@ -236,7 +252,7 @@ impl Oxc {
             };
         }
 
-        if run_options.transform() {
+        if run_options.transform.unwrap_or_default() {
             let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
                 .build(program)
                 .semantic
@@ -257,33 +273,35 @@ impl Oxc {
             }
         }
 
-        if run_options.scope() || run_options.symbol() {
+        if run_options.scope.unwrap_or_default() || run_options.symbol.unwrap_or_default() {
             let semantic = SemanticBuilder::new(source_text, source_type)
                 .build_module_record(PathBuf::new(), program)
                 .build(program)
                 .semantic;
-            if run_options.scope() {
+            if run_options.scope.unwrap_or_default() {
                 self.scope_text = Self::get_scope_text(&semantic);
-            } else if run_options.symbol() {
+            } else if run_options.symbol.unwrap_or_default() {
                 self.symbols = semantic.symbols().serialize(&self.serializer)?;
             }
         }
 
         let program = allocator.alloc(program);
 
-        if minifier_options.compress() || minifier_options.mangle() {
-            let compress_options = minifier_options.compress_options();
+        if minifier_options.compress.unwrap_or_default()
+            || minifier_options.mangle.unwrap_or_default()
+        {
+            let compress_options = minifier_options.compress_options.unwrap_or_default();
             let options = MinifierOptions {
-                mangle: minifier_options.mangle(),
-                compress: if minifier_options.compress() {
+                mangle: minifier_options.mangle.unwrap_or_default(),
+                compress: if minifier_options.compress.unwrap_or_default() {
                     CompressOptions {
-                        booleans: compress_options.booleans(),
-                        drop_console: compress_options.drop_console(),
-                        drop_debugger: compress_options.drop_debugger(),
-                        evaluate: compress_options.evaluate(),
-                        join_vars: compress_options.join_vars(),
-                        loops: compress_options.loops(),
-                        typeofs: compress_options.typeofs(),
+                        booleans: compress_options.booleans,
+                        drop_console: compress_options.drop_console,
+                        drop_debugger: compress_options.drop_debugger,
+                        evaluate: compress_options.evaluate,
+                        join_vars: compress_options.join_vars,
+                        loops: compress_options.loops,
+                        typeofs: compress_options.typeofs,
                         ..CompressOptions::default()
                     }
                 } else {
@@ -295,7 +313,7 @@ impl Oxc {
 
         self.codegen_text = CodeGenerator::new()
             .with_options(CodegenOptions {
-                minify: minifier_options.whitespace(),
+                minify: minifier_options.whitespace.unwrap_or_default(),
                 ..CodegenOptions::default()
             })
             .build(program)
