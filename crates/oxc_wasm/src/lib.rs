@@ -38,8 +38,7 @@ pub struct Oxc {
     pub ast: JsValue,
 
     #[wasm_bindgen(readonly, skip_typescript)]
-    #[tsify(type = "Statement[]")]
-    pub ir: JsValue,
+    pub ir: String,
 
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "SymbolTable")]
@@ -187,7 +186,7 @@ impl Oxc {
 
         self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
-        self.ir = format!("{:#?}", ret.program.body).into();
+        self.ir = format!("{:#?}", ret.program.body);
 
         let program = allocator.alloc(ret.program);
 
