@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement},
@@ -30,7 +32,7 @@ fn label_has_associated_control_diagnostic_no_label(span0: Span) -> OxcDiagnosti
 pub struct LabelHasAssociatedControl(Box<LabelHasAssociatedControlConfig>);
 
 #[derive(Debug, Clone)]
-struct LabelHasAssociatedControlConfig {
+pub struct LabelHasAssociatedControlConfig {
     depth: u8,
     assert: Assert,
     label_components: Vec<String>,
@@ -44,6 +46,14 @@ enum Assert {
     Nesting,
     Both,
     Either,
+}
+
+impl Deref for LabelHasAssociatedControl {
+    type Target = LabelHasAssociatedControlConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl Default for LabelHasAssociatedControlConfig {
@@ -195,7 +205,7 @@ impl Rule for LabelHasAssociatedControl {
         };
 
         if let Some(element_type) = get_element_type(ctx, &element.opening_element) {
-            if !self.0.label_components.contains(&element_type.to_string()) {
+            if !self.label_components.contains(&element_type.to_string()) {
                 return;
             }
         }
@@ -210,7 +220,7 @@ impl Rule for LabelHasAssociatedControl {
             return;
         }
 
-        match self.0.assert {
+        match self.assert {
             Assert::HtmlFor => {
                 if has_html_for {
                     return;
@@ -242,7 +252,7 @@ impl LabelHasAssociatedControl {
         if root.opening_element.attributes.iter().any(|attribute| match attribute {
             JSXAttributeItem::Attribute(attr) => {
                 let attr_name = get_jsx_attribute_name(&attr.name);
-                self.0.label_attributes.contains(&attr_name.to_string())
+                self.label_attributes.contains(&attr_name.to_string())
             }
             JSXAttributeItem::SpreadAttribute(_) => true,
         }) {
@@ -274,7 +284,7 @@ impl LabelHasAssociatedControl {
         depth: u8,
         ctx: &LintContext<'a>,
     ) -> bool {
-        if depth > self.0.depth {
+        if depth > self.depth {
             return false;
         }
 
@@ -282,7 +292,7 @@ impl LabelHasAssociatedControl {
             JSXChild::ExpressionContainer(_) => true,
             JSXChild::Element(element) => {
                 if let Some(element_type) = get_element_type(ctx, &element.opening_element) {
-                    if self.0.control_components.is_match(element_type.to_string()) {
+                    if self.control_components.is_match(element_type.to_string()) {
                         return true;
                     }
                 }
@@ -314,7 +324,7 @@ impl LabelHasAssociatedControl {
         depth: u8,
         ctx: &LintContext<'a>,
     ) -> bool {
-        if depth > self.0.depth {
+        if depth > self.depth {
             return false;
         }
 
@@ -325,7 +335,7 @@ impl LabelHasAssociatedControl {
                 let has_labelling_prop =
                     element.opening_element.attributes.iter().any(|attr| match attr {
                         JSXAttributeItem::Attribute(attribute) => {
-                            self.0.label_attributes.iter().any(|labelling_prop| {
+                            self.label_attributes.iter().any(|labelling_prop| {
                                 attribute.is_identifier(labelling_prop)
                                     && attribute.value.as_ref().is_some_and(|attribute_value| {
                                         match attribute_value {
@@ -347,7 +357,7 @@ impl LabelHasAssociatedControl {
                 if element.children.is_empty() {
                     if let Some(name) = get_element_type(ctx, &element.opening_element) {
                         if is_react_component_name(&name)
-                            && !self.0.control_components.is_match(name.to_string())
+                            && !self.control_components.is_match(name.to_string())
                         {
                             return true;
                         }
