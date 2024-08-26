@@ -10378,90 +10378,90 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ╰────
 
   × Unexpected flag a in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:12]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:11]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·               ▲
+   ·              ─
  4 │     // Pattern modifiers
    ╰────
 
   × Unexpected flag l in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:13]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:12]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                ▲
+   ·               ─
  4 │     // Pattern modifiers
    ╰────
 
   × Flag s is mentioned twice in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:14]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:13]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                 ▲
+   ·                ─
  4 │     // Pattern modifiers
    ╰────
 
   × Unexpected flag t in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:15]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:14]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                  ▲
+   ·                 ─
  4 │     // Pattern modifiers
    ╰────
 
   × Flag u is mentioned twice in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:16]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:15]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                   ▲
+   ·                  ─
  4 │     // Pattern modifiers
    ╰────
 
   × Flag i is mentioned twice in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:18]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:17]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                     ▲
+   ·                    ─
  4 │     // Pattern modifiers
    ╰────
 
   × Unexpected flag o in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:19]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:18]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                      ▲
+   ·                     ─
  4 │     // Pattern modifiers
    ╰────
 
   × Unexpected flag c in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:20]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:19]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                       ▲
+   ·                      ─
  4 │     // Pattern modifiers
    ╰────
 
   × Unexpected flag o in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:21]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:20]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                        ▲
+   ·                       ─
  4 │     // Pattern modifiers
    ╰────
 
   × Flag d is mentioned twice in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:22]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:21]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                         ▲
+   ·                        ─
  4 │     // Pattern modifiers
    ╰────
 
   × Unexpected flag e in regular expression literal
-   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:23]
+   ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:22]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
-   ·                          ▲
+   ·                         ─
  4 │     // Pattern modifiers
    ╰────
 
@@ -20391,9 +20391,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
   help: Try insert a semicolon here
 
   × Unexpected flag a in regular expression literal
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:17]
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:16]
  1 │ if (1) /regexp/a.foo();
-   ·                 ▲
+   ·                ─
    ╰────
 
   × Unterminated regular expression

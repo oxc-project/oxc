@@ -20531,17 +20531,17 @@ Negative Passed: 4220/4220 (100.00%)
     ╰────
 
   × Unexpected flag G in regular expression literal
-    ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:18:5]
+    ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:18:4]
  17 │ 
  18 │ /./G;
-    ·     ▲
+    ·    ─
     ╰────
 
   × Flag g is mentioned twice in regular expression literal
-    ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:18:7]
+    ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:18:6]
  17 │ 
  18 │ /./gig;
-    ·       ▲
+    ·      ─
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
