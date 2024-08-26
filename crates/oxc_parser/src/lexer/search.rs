@@ -326,7 +326,7 @@ pub(crate) use safe_byte_match_table;
 ///           // NB: We don't need to check if `pos` is at EOF here, as 0xE2 is always 1st byte
 ///           // of a 3-byte Unicode char, but if matching an ASCII char, would need to make sure
 ///           // don't read out of bounds.
-///           unsafe { pos.add(1).read() != 0x80 || pos.add(2).read() != 0xA8 }
+///           unsafe { pos.add(1).read2() != [0x80, 0xA8] }
 ///         } else {
 ///           // End search for all other possibilities
 ///           false
