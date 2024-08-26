@@ -165,13 +165,15 @@ impl Oxc {
             _ => source_type,
         };
 
+        let oxc_parser_options = ParseOptions {
+            allow_return_outside_function: parser_options
+                .allow_return_outside_function
+                .unwrap_or_default(),
+            ..ParseOptions::default()
+        };
+
         let ret = Parser::new(&allocator, &source_text, source_type)
-            .with_options(ParseOptions {
-                allow_return_outside_function: parser_options
-                    .allow_return_outside_function
-                    .unwrap_or_default(),
-                ..ParseOptions::default()
-            })
+            .with_options(oxc_parser_options)
             .parse();
 
         self.comments = self.map_comments(&source_text, &ret.trivias);
@@ -206,12 +208,7 @@ impl Oxc {
 
         if run_options.prettier_format.unwrap_or_default() {
             let ret = Parser::new(&allocator, &source_text, source_type)
-                .with_options(ParseOptions {
-                    allow_return_outside_function: parser_options
-                        .allow_return_outside_function
-                        .unwrap_or_default(),
-                    ..ParseOptions::default()
-                })
+                .with_options(oxc_parser_options)
                 .parse();
             let printed =
                 Prettier::new(&allocator, &source_text, ret.trivias, PrettierOptions::default())
@@ -221,12 +218,7 @@ impl Oxc {
 
         if run_options.prettier_ir.unwrap_or_default() {
             let ret = Parser::new(&allocator, &source_text, source_type)
-                .with_options(ParseOptions {
-                    allow_return_outside_function: parser_options
-                        .allow_return_outside_function
-                        .unwrap_or_default(),
-                    ..ParseOptions::default()
-                })
+                .with_options(oxc_parser_options)
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
