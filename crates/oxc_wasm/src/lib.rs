@@ -176,7 +176,7 @@ impl Oxc {
             .with_options(oxc_parser_options)
             .parse();
 
-        self.comments = Oxc::map_comments(source_text, &ret.trivias);
+        self.comments = Self::map_comments(source_text, &ret.trivias);
 
         self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
