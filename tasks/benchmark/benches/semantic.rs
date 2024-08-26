@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use oxc_allocator::Allocator;
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_benchmark::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -17,13 +17,14 @@ fn bench_semantic(criterion: &mut Criterion) {
             |b, source_text| {
                 let allocator = Allocator::default();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let program = allocator.alloc(ret.program);
-                b.iter_with_large_drop(|| {
-                    SemanticBuilder::new(source_text, source_type)
+                let program = allocator.alloc(black_box(ret.program));
+                b.iter(|| {
+                    let ret = SemanticBuilder::new(source_text, source_type)
                         .with_trivias(ret.trivias.clone())
                         .with_build_jsdoc(true)
                         .build_module_record(PathBuf::new(), program)
-                        .build(program)
+                        .build(program);
+                    black_box(ret);
                 });
             },
         );
