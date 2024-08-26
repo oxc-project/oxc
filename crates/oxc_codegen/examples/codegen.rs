@@ -20,15 +20,19 @@ fn main() -> std::io::Result<()> {
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
-    let allocator = Allocator::default();
+    let mut allocator = Allocator::default();
 
-    let Some(ret) = parse(&allocator, &source_text, source_type) else { return Ok(()) };
-
+    let printed = {
+        let Some(ret) = parse(&allocator, &source_text, source_type) else { return Ok(()) };
+        codegen(&source_text, &ret, minify)
+    };
     println!("First time:");
-    let printed = codegen(&source_text, &ret, minify);
     println!("{printed}");
 
     if twice {
+        // Reset the allocator as we don't need the first AST any more
+        allocator.reset();
+
         let Some(ret) = parse(&allocator, &printed, source_type) else { return Ok(()) };
         println!("Second time:");
         let printed = codegen(&printed, &ret, minify);

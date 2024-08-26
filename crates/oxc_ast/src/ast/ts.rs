@@ -358,7 +358,7 @@ pub struct TSIntersectionType<'a> {
 #[derive(Debug, Hash)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSParenthesizedType<'a> {
     #[serde(flatten)]
     pub span: Span,
