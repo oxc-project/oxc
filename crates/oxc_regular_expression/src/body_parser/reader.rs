@@ -4,7 +4,7 @@ pub struct Reader<'a> {
     index: usize,
     /// Iteration units.
     /// We use `char` and its index regardless of the unicode mode or non-unicode mode.
-    /// However, in non-unicode mode, the parser may split the surrogate pairs, which may become the AST.
+    /// However, in non-unicode mode, the parser may mark it as the surrogate pairs.
     units: Vec<(usize, char)>,
 }
 
@@ -35,6 +35,8 @@ impl<'a> Reader<'a> {
         self.index += 1;
     }
 
+    // We can iterate over `char` and parse the pattern.
+    // But we need a code point, not a char, for AST results.
     fn peek_nth(&self, n: usize) -> Option<u32> {
         let nth = self.index + n;
         self.units.get(nth).map(|&(_, ch)| ch as u32)
