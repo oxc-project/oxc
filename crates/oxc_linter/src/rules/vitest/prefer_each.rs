@@ -10,27 +10,24 @@ use crate::{
     utils::{parse_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
-fn use_prefer_each(span0: Span, fn_name: &str) -> OxcDiagnostic {
+fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce using `each` rather than manual loops")
         .with_help(format!("Prefer using `{fn_name}.each` rather than a manual loop."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[inline]
 fn is_in_test(ctx: &LintContext<'_>, id: AstNodeId) -> bool {
     ctx.nodes().iter_parents(id).any(|node| {
-        if let AstKind::CallExpression(ancestor_call_expr) = node.kind() {
-            if let Some(ancestor_member_expr) = ancestor_call_expr.callee.as_member_expression() {
-                if let Some(id) = ancestor_member_expr.object().get_identifier_reference() {
-                    return matches!(
-                        JestFnKind::from(id.name.as_str()),
-                        JestFnKind::General(JestGeneralFnKind::Test)
-                    );
-                }
-                return false;
-            }
-        }
-        false
+        let AstKind::CallExpression(ancestor_call_expr) = node.kind() else { return false };
+        let Some(ancestor_member_expr) = ancestor_call_expr.callee.as_member_expression() else {
+            return false;
+        };
+        let Some(id) = ancestor_member_expr.object().get_identifier_reference() else {
+            return false;
+        };
+
+        matches!(JestFnKind::from(id.name.as_str()), JestFnKind::General(JestGeneralFnKind::Test))
     })
 }
 
@@ -66,45 +63,47 @@ impl Rule for PreferEach {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
 
-        if let AstKind::CallExpression(call_expr) = kind {
-            let Some(vitest_fn_call) =
-                parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-            else {
-                return;
-            };
+        let AstKind::CallExpression(call_expr) = kind else { return };
 
-            if matches!(
-                vitest_fn_call.kind(),
-                JestFnKind::General(
-                    JestGeneralFnKind::Describe | JestGeneralFnKind::Hook | JestGeneralFnKind::Test
-                )
-            ) {
-                for parent_node in ctx.nodes().iter_parents(node.id()).skip(1) {
-                    match parent_node.kind() {
-                        AstKind::CallExpression(_) => {
-                            return;
-                        }
-                        AstKind::ForStatement(_)
-                        | AstKind::ForInStatement(_)
-                        | AstKind::ForOfStatement(_) => {
-                            if !is_in_test(ctx, parent_node.id()) {
-                                let fn_name = if matches!(
-                                    vitest_fn_call.kind(),
-                                    JestFnKind::General(JestGeneralFnKind::Test)
-                                ) {
-                                    "it"
-                                } else {
-                                    "describe"
-                                };
+        let Some(vitest_fn_call) =
+            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+        else {
+            return;
+        };
 
-                                ctx.diagnostic(use_prefer_each(parent_node.span(), fn_name));
-                            }
+        if !matches!(
+            vitest_fn_call.kind(),
+            JestFnKind::General(
+                JestGeneralFnKind::Describe | JestGeneralFnKind::Hook | JestGeneralFnKind::Test
+            )
+        ) {
+            return;
+        }
 
-                            break;
-                        }
-                        _ => (),
-                    }
+        for parent_node in ctx.nodes().iter_parents(node.id()).skip(1) {
+            match parent_node.kind() {
+                AstKind::CallExpression(_) => {
+                    return;
                 }
+                AstKind::ForStatement(_)
+                | AstKind::ForInStatement(_)
+                | AstKind::ForOfStatement(_) => {
+                    if !is_in_test(ctx, parent_node.id()) {
+                        let fn_name = if matches!(
+                            vitest_fn_call.kind(),
+                            JestFnKind::General(JestGeneralFnKind::Test)
+                        ) {
+                            "it"
+                        } else {
+                            "describe"
+                        };
+
+                        ctx.diagnostic(use_prefer_each(call_expr.callee.span(), fn_name));
+                    }
+
+                    break;
+                }
+                _ => {}
             }
         }
     }
