@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,7 +62,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferEach {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let mut skip = HashSet::<AstNodeId>::new();
+        ctx.nodes().iter().for_each(|node| {
+            Self::run(node, ctx, &mut skip);
+        });
+    }
+}
+
+impl PreferEach {
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut HashSet<AstNodeId>) {
         let kind = node.kind();
 
         let AstKind::CallExpression(call_expr) = kind else { return };
@@ -88,18 +99,34 @@ impl Rule for PreferEach {
                 AstKind::ForStatement(_)
                 | AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_) => {
-                    if !is_in_test(ctx, parent_node.id()) {
-                        let fn_name = if matches!(
-                            vitest_fn_call.kind(),
-                            JestFnKind::General(JestGeneralFnKind::Test)
-                        ) {
-                            "it"
-                        } else {
-                            "describe"
-                        };
-
-                        ctx.diagnostic(use_prefer_each(call_expr.callee.span(), fn_name));
+                    if skip.contains(&parent_node.id()) || is_in_test(ctx, parent_node.id()) {
+                        return;
                     }
+
+                    let fn_name = if matches!(
+                        vitest_fn_call.kind(),
+                        JestFnKind::General(JestGeneralFnKind::Test)
+                    ) {
+                        "it"
+                    } else {
+                        "describe"
+                    };
+
+                    let span = match parent_node.kind() {
+                        AstKind::ForStatement(statement) => {
+                            Span::new(statement.span.start, statement.body.span().start)
+                        }
+                        AstKind::ForInStatement(statement) => {
+                            Span::new(statement.span.start, statement.body.span().start)
+                        }
+                        AstKind::ForOfStatement(statement) => {
+                            Span::new(statement.span.start, statement.body.span().start)
+                        }
+                        _ => unreachable!(),
+                    };
+
+                    skip.insert(parent_node.id());
+                    ctx.diagnostic(use_prefer_each(span, fn_name));
 
                     break;
                 }
