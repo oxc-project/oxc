@@ -109,10 +109,10 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn explicit_function_return_type_diagnostic(span0: Span) -> OxcDiagnostic {
+fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing return type on function.")
         .with_help("Require explicit return types on functions and class methods.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for ExplicitFunctionReturnType {

@@ -13,8 +13,8 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Default, Clone)]
 pub struct RequireAwait;
 
-fn require_await_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Async function has no 'await' expression.").with_label(span0)
+fn require_await_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Async function has no 'await' expression.").with_label(span)
 }
 
 declare_oxc_lint!(

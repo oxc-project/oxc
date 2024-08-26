@@ -7,7 +7,7 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_negation_in_equality_check_diagnostic(
-    span0: Span,
+    span: Span,
     current_operator: BinaryOperator,
     suggested_operator: BinaryOperator,
 ) -> OxcDiagnostic {
@@ -17,7 +17,7 @@ fn no_negation_in_equality_check_diagnostic(
             suggested_operator.as_str(),
             current_operator.as_str()
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

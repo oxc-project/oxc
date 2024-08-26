@@ -62,16 +62,16 @@ fn constant_binary_operand(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         .with_label(span2)
 }
 
-fn constant_always_new(span0: Span) -> OxcDiagnostic {
+fn constant_always_new(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected comparison to newly constructed object")
         .with_help("These two values can never be equal")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn constant_both_always_new(span0: Span) -> OxcDiagnostic {
+fn constant_both_always_new(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected comparison of two newly constructed objects")
         .with_help("These two values can never be equal")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for NoConstantBinaryExpression {

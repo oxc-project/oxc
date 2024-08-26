@@ -9,12 +9,12 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_type_error_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_type_error_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement",
     )
     .with_help("Change to `throw new TypeError(...)`")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

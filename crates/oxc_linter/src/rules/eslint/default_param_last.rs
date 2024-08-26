@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn default_param_last_diagnostic(span0: Span) -> OxcDiagnostic {
+fn default_param_last_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Default parameters should be last")
         .with_help("Enforce default parameters to be last.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

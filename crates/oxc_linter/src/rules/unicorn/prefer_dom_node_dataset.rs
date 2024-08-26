@@ -5,30 +5,30 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn set(span0: Span, x1: &str) -> OxcDiagnostic {
+fn set(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `setAttribute`.")
         .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1} = ...;`"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn get(span0: Span, x1: &str) -> OxcDiagnostic {
+fn get(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `getAttribute`.")
         .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1}`"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn has(span0: Span, x1: &str) -> OxcDiagnostic {
+fn has(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `hasAttribute`.")
         .with_help(format!(
             "Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{x1}')"
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn remove(span0: Span, x1: &str) -> OxcDiagnostic {
+fn remove(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `removeAttribute`.")
         .with_help(format!("Access the `.dataset` object directly: `delete element.dataset.{x1};"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

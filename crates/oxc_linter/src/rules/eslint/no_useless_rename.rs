@@ -8,12 +8,12 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_useless_rename_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Disallow renaming import, export, and destructured assignments to the same name",
     )
     .with_help("Either remove the renaming or rename the variable.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

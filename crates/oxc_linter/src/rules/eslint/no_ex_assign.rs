@@ -5,8 +5,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_ex_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not assign to the exception parameter.").with_help("If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.").with_label(span0)
+fn no_ex_assign_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not assign to the exception parameter.").with_help("If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

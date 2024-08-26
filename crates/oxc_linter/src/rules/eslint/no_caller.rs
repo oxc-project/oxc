@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_caller_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_caller_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow the use of arguments.caller or arguments.callee")
         .with_help("'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

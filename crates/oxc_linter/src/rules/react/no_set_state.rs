@@ -10,8 +10,8 @@ use crate::{
     AstNode,
 };
 
-fn no_set_state_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use setState").with_label(span0)
+fn no_set_state_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use setState").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

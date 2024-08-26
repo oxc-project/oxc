@@ -6,8 +6,8 @@ use phf::{phf_map, Map};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_unescaped_entities_diagnostic(span0: Span, x1: char, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("`{x1}` can be escaped with {x2}")).with_label(span0)
+fn no_unescaped_entities_diagnostic(span: Span, x1: char, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{x1}` can be escaped with {x2}")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

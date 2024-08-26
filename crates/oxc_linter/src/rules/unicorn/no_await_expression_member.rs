@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_await_expression_member_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_await_expression_member_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow member access from await expression")
         .with_help("When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

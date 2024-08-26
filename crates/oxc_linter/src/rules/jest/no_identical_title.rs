@@ -19,16 +19,16 @@ use crate::{
     AstNode,
 };
 
-fn describe_repeat(span0: Span) -> OxcDiagnostic {
+fn describe_repeat(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Describe block title is used multiple times in the same describe block.")
         .with_help("Change the title of describe block.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn test_repeat(span0: Span) -> OxcDiagnostic {
+fn test_repeat(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Test title is used multiple times in the same describe block.")
         .with_help("Change the title of test.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

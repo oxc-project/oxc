@@ -16,21 +16,21 @@ use crate::{
     AstNode,
 };
 
-fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
+fn none_zero(span: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
     let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is not zero."))
-        .with_label(span0);
+        .with_label(span);
     if let Some(x) = x3 {
         d = d.with_help(x);
     }
     d
 }
 
-fn zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
+fn zero(span: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
     let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is zero."));
     if let Some(x) = x3 {
         d = d.with_help(x);
     }
-    d.with_label(span0)
+    d.with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

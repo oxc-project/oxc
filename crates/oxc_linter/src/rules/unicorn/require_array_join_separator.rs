@@ -8,10 +8,10 @@ use crate::{
     AstNode,
 };
 
-fn require_array_join_separator_diagnostic(span0: Span) -> OxcDiagnostic {
+fn require_array_join_separator_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce using the separator argument with Array#join()")
         .with_help("Missing the separator argument.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

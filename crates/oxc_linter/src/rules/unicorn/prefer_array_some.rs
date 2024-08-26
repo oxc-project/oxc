@@ -15,13 +15,13 @@ use crate::{
     AstNode,
 };
 
-fn over_method(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.").with_label(span0)
+fn over_method(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.").with_label(span)
 }
 
-fn non_zero_filter(span0: Span) -> OxcDiagnostic {
+fn non_zero_filter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `.some(…)` over non-zero length check from `.filter(…)`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
