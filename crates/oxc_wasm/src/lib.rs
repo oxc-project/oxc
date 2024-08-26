@@ -151,15 +151,15 @@ impl Oxc {
         &mut self,
         run_options: Option<OxcRunOptions>,
         parser_options: Option<OxcParserOptions>,
-        _linter_options: Option<OxcLinterOptions>,
-        _codegen_options: Option<OxcCodegenOptions>,
+        linter_options: Option<OxcLinterOptions>,
+        codegen_options: Option<OxcCodegenOptions>,
         minifier_options: Option<OxcMinifierOptions>,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
         let run_options = run_options.unwrap_or_default();
         let parser_options = parser_options.unwrap_or_default();
-        let _linter_options = _linter_options.unwrap_or_default();
-        let _codegen_options = _codegen_options.unwrap_or_default();
+        let _linter_options = linter_options.unwrap_or_default();
+        let _codegen_options = codegen_options.unwrap_or_default();
         let minifier_options = minifier_options.unwrap_or_default();
 
         let allocator = Allocator::default();
