@@ -186,7 +186,7 @@ impl Oxc {
 
         self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
-        self.ir = format!("{:#?}", ret.program.body).into();
+        self.ir = format!("{:#?}", ret.program.body);
 
         let program = allocator.alloc(ret.program);
 
