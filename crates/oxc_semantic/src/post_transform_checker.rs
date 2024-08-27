@@ -622,25 +622,25 @@ impl SemanticIds {
     }
 }
 
-struct SemanticIdsCollector<'c> {
+struct SemanticIdsCollector<'a, 'c> {
     ids: &'c mut SemanticIds,
     errors: Vec<OxcDiagnostic>,
-    spans: Vec<Span>,
+    kinds: Vec<AstKind<'a>>,
 }
 
-impl<'c> SemanticIdsCollector<'c> {
+impl<'a, 'c> SemanticIdsCollector<'a, 'c> {
     fn new(ids: &'c mut SemanticIds) -> Self {
-        Self { ids, errors: vec![], spans: vec![] }
+        Self { ids, errors: vec![], kinds: vec![] }
     }
 }
 
-impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'c> {
+impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'a, 'c> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
-        self.spans.push(kind.span());
+        self.kinds.push(kind);
     }
 
     fn leave_node(&mut self, _kind: AstKind<'a>) {
-        self.spans.pop();
+        self.kinds.pop();
     }
 
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
@@ -648,7 +648,8 @@ impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'c> {
             self.ids.scope_ids.push(scope_id);
         } else {
             let message = "Missing ScopeId".to_string();
-            self.errors.push(OxcDiagnostic::error(message).with_label(*self.spans.last().unwrap()));
+            self.errors
+                .push(OxcDiagnostic::error(message).with_label(self.kinds.last().unwrap().span()));
         }
     }
 
