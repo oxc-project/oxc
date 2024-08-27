@@ -228,11 +228,11 @@ impl Oxc {
             );
 
             if run_options.prettier_format.unwrap_or_default() {
-                self.prettier_formatted_text = prettier.build(program);
+                self.prettier_formatted_text = prettier.build(&ret.program);
             }
 
             if run_options.prettier_ir.unwrap_or_default() {
-                let prettier_doc = prettier.doc(program).to_string();
+                let prettier_doc = prettier.doc(&ret.program).to_string();
                 self.prettier_ir_text = {
                     let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
                     Prettier::new(
