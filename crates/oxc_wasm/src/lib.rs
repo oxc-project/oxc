@@ -335,7 +335,7 @@ impl Oxc {
                     .collect::<Vec<_>>();
 
                 scope_text
-                    .push_str(&format!("{space}Scope{:?} ({flags:?}) {{\n", scope_id.index() + 1));
+                    .push_str(&format!("{space}Scope{:?} ({flags:?}) {{\n", scope_id.index()));
                 let bindings = scope_tree.get_bindings(*scope_id);
                 let binding_space = " ".repeat((depth + 1) * 2);
                 if !bindings.is_empty() {
