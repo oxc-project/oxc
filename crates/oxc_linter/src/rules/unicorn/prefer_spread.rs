@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util, context::LintContext, rule::Rule, AstNode};
 
 fn prefer_spread_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {x1}"))
@@ -83,7 +83,7 @@ impl Rule for PreferSpread {
             }
             // `array.concat()`
             "concat" => {
-                if is_not_array(member_expr.object().without_parenthesized()) {
+                if is_not_array(member_expr.object().without_parenthesized(), ctx) {
                     return;
                 }
 
@@ -181,7 +181,7 @@ const IGNORED_SLICE_CALLEE: phf::Set<&'static str> = phf_set! {
     "this",
 };
 
-fn is_not_array(expr: &Expression) -> bool {
+fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
     if matches!(
         expr.without_parenthesized(),
         Expression::TemplateLiteral(_) | Expression::BinaryExpression(_)
@@ -203,7 +203,20 @@ fn is_not_array(expr: &Expression) -> bool {
     }
 
     let ident = match expr.without_parenthesized() {
-        Expression::Identifier(ident) => ident.name.as_str(),
+        Expression::Identifier(ident) => {
+            if let Some(symbol_id) = ast_util::get_symbol_id_of_variable(ident, ctx) {
+                let symbol_table = ctx.semantic().symbols();
+                let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+
+                if let AstKind::VariableDeclarator(variable_declarator) = node.kind() {
+                    if let Some(ref_expr) = &variable_declarator.init {
+                        return is_not_array(&ref_expr, ctx);
+                    }
+                }
+            }
+
+            ident.name.as_str()
+        }
         expr @ match_member_expression!(Expression) => {
             if let Some(v) = expr.to_member_expression().static_property_name() {
                 v
@@ -324,6 +337,8 @@ fn test() {
         r#""".split(string)"#,
         r"string.split()",
         r#"string.notSplit("")"#,
+        r#"const x = "foo"; x.concat(x);"#,
+        r#"const y = "foo"; const x = y; x.concat(x);"#,
     ];
 
     let fail = vec![
