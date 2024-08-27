@@ -90,6 +90,7 @@ pub struct OxcDiagnostic {
 impl Oxc {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
+        console_error_panic_hook::set_once();
         Self { serializer: serde_wasm_bindgen::Serializer::json_compatible(), ..Self::default() }
     }
 
@@ -135,8 +136,6 @@ impl Oxc {
         source_text: &str,
         options: OxcOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
-        console_error_panic_hook::set_once();
-
         self.diagnostics = RefCell::default();
 
         let OxcOptions {
@@ -176,7 +175,6 @@ impl Oxc {
                 .unwrap_or(default_parser_options.preserve_parens),
             ..default_parser_options
         };
-
         let ret = Parser::new(&allocator, source_text, source_type)
             .with_options(oxc_parser_options)
             .parse();
@@ -211,33 +209,37 @@ impl Oxc {
 
         self.ast = program.serialize(&self.serializer)?;
 
-        if run_options.prettier_format.unwrap_or_default() {
+        if run_options.prettier_format.unwrap_or_default()
+            || run_options.prettier_ir.unwrap_or_default()
+        {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .with_options(ParseOptions { preserve_parens: false, ..oxc_parser_options })
                 .parse();
-            let printed =
-                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
-                    .build(&ret.program);
-            self.prettier_formatted_text = printed;
-        }
 
-        if run_options.prettier_ir.unwrap_or_default() {
-            let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(ParseOptions { preserve_parens: false, ..oxc_parser_options })
-                .parse();
-            let prettier_doc = Prettier::new(
+            let mut prettier = Prettier::new(
                 &allocator,
                 source_text,
                 ret.trivias.clone(),
                 PrettierOptions::default(),
-            )
-            .doc(&ret.program)
-            .to_string();
-            self.prettier_ir_text = {
-                let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
-                Prettier::new(&allocator, &prettier_doc, ret.trivias, PrettierOptions::default())
+            );
+
+            if run_options.prettier_format.unwrap_or_default() {
+                self.prettier_formatted_text = prettier.build(program);
+            }
+
+            if run_options.prettier_ir.unwrap_or_default() {
+                let prettier_doc = prettier.doc(program).to_string();
+                self.prettier_ir_text = {
+                    let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
+                    Prettier::new(
+                        &allocator,
+                        &prettier_doc,
+                        ret.trivias,
+                        PrettierOptions::default(),
+                    )
                     .build(&ret.program)
-            };
+                };
+            }
         }
 
         if run_options.transform.unwrap_or_default() {
