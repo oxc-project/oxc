@@ -119,10 +119,6 @@ impl TraverseScoping {
     }
 
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
-        // Remove these scopes from parent's children
-        let current_child_scope_ids = self.scopes.get_child_ids_mut(self.current_scope_id);
-        current_child_scope_ids.retain(|scope_id| !child_scope_ids.contains(scope_id));
-
         // Create new scope as child of parent
         let new_scope_id = self.create_child_scope_of_current(flags);
 

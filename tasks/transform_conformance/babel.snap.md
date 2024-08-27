@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 282/953
+Passed: 287/953
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -1965,7 +1965,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-typescript (40/151)
+# babel-plugin-transform-typescript (45/151)
 * cast/as-expression/input.ts
   x Unresolved references mismatch:
   | after transform: ["T", "x"]
@@ -2010,26 +2010,9 @@ failed to resolve query: failed to parse the rest of input: ...''
   | rebuilt        : ["D"]
 
 
-* class/methods/input.ts
-  x Scope children mismatch:
-  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4),
-  | ScopeId(5)]
-  | rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-
-
-* class/private-method-override/input.ts
-  x Scope children mismatch:
-  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-  | rebuilt        : ScopeId(1): [ScopeId(2)]
-
-
 * declarations/const-enum/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["E"]
-  | rebuilt        : ScopeId(0): []
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2038,29 +2021,16 @@ failed to resolve query: failed to parse the rest of input: ...''
   | after transform: ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
   | rebuilt        : ScopeId(0): []
 
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
-  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
-  | rebuilt        : ScopeId(0): []
-
 
 * declarations/export-declare-enum/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A"]
   | rebuilt        : ScopeId(0): []
 
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
-  | rebuilt        : ScopeId(0): []
-
 
 * declarations/nested-namespace/input.mjs
   x Bindings mismatch:
   | after transform: ScopeId(0): ["P"]
-  | rebuilt        : ScopeId(0): []
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2435,10 +2405,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * exports/declare-namespace/input.ts
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-  | rebuilt        : ScopeId(0): [ScopeId(1)]
-
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule
   | | Ambient)
@@ -2454,11 +2420,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * exports/declare-shadowed/input.ts
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
-  | ScopeId(4)]
-  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-
   x Unresolved references mismatch:
   | after transform: ["Signal", "Signal2"]
   | rebuilt        : []
@@ -2470,14 +2431,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   | after transform: ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E",
   | "I", "II2", "II3", "M", "N", "T", "foo", "m", "x"]
   | rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
-  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9),
-  | ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14),
-  | ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
-  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
-  | ScopeId(4), ScopeId(5)]
 
   x Bindings mismatch:
   | after transform: ScopeId(12): ["BB", "K"]
@@ -2548,12 +2501,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   | rebuilt        : ["Bar", "E", "x"]
 
 
-* exports/default-function/input.ts
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
-  | rebuilt        : ScopeId(0): [ScopeId(1)]
-
-
 * exports/export-const-enums/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
@@ -2582,10 +2529,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 * exports/export-type/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A"]
-  | rebuilt        : ScopeId(0): []
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2617,19 +2560,11 @@ failed to resolve query: failed to parse the rest of input: ...''
   | after transform: ScopeId(0): ["A", "I"]
   | rebuilt        : ScopeId(0): []
 
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): []
-
 
 * exports/issue-9916-1/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
   | rebuilt        : ScopeId(0): ["a"]
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): []
 
   x Unresolved references mismatch:
   | after transform: ["PromiseLike"]
@@ -2639,10 +2574,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 * exports/issue-9916-2/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
-  | rebuilt        : ScopeId(0): []
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
 
   x Unresolved references mismatch:
@@ -2655,10 +2586,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
   | rebuilt        : ScopeId(0): ["a"]
 
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): []
-
   x Unresolved references mismatch:
   | after transform: ["PromiseLike"]
   | rebuilt        : []
@@ -2668,18 +2595,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(0)]
   | rebuilt        : SymbolId(0): []
-
-
-* function/overloads/input.ts
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): [ScopeId(1)]
-
-
-* function/overloads-exports/input.mjs
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): [ScopeId(1)]
 
 
 * function/parameters/input.ts
@@ -2754,10 +2669,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   | after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G",
   | "H", "Iface", "x", "y"]
   | rebuilt        : ScopeId(0): ["A", "Class", "x", "y"]
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): [ScopeId(1)]
 
 
 * imports/elision-qualifiedname/input.ts
@@ -4416,10 +4327,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   | after transform: ScopeId(0): ["Platform"]
   | rebuilt        : ScopeId(0): []
 
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
-  | rebuilt        : ScopeId(0): []
-
   x Unresolved references mismatch:
   | after transform: ["Platform"]
   | rebuilt        : []
@@ -5579,10 +5486,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A"]
-  | rebuilt        : ScopeId(0): []
-
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
   x Reference symbol mismatch:

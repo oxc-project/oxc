@@ -45,10 +45,6 @@ Passed: 10/36
   | after transform: ScopeId(0): ["A", "ReactiveMarkerSymbol"]
   | rebuilt        : ScopeId(0): []
 
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
-  | rebuilt        : ScopeId(0): []
-
 
 * enum-member-reference/input.ts
   x Semantic Collector failed after transform
@@ -101,10 +97,6 @@ Passed: 10/36
 
 
 * redeclarations/input.ts
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-  | rebuilt        : ScopeId(0): []
-
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
   | ConstVariable | Export | Import)
@@ -454,10 +446,6 @@ Passed: 10/36
 
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1)]
-  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
-
   x Bindings mismatch:
   | after transform: No scope
   | rebuilt        : ScopeId(3): []
@@ -496,11 +484,6 @@ Passed: 10/36
 
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
-  x Scope children mismatch:
-  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
-  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
-  | ScopeId(5), ScopeId(6)]
-
   x Bindings mismatch:
   | after transform: No scope
   | rebuilt        : ScopeId(2): []

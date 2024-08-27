@@ -316,13 +316,21 @@ impl Oxc {
         ) {
             let space = " ".repeat(depth * 2);
 
+            let scope_tree = semantic.scopes();
             for scope_id in scope_ids {
-                let flags = semantic.scopes().get_flags(*scope_id);
-                let next_scope_ids = semantic.scopes().get_child_ids(*scope_id);
+                let flags = scope_tree.get_flags(*scope_id);
+                let child_scope_ids = scope_tree
+                    .descendants_from_root()
+                    .filter(|id| {
+                        scope_tree
+                            .get_parent_id(*id)
+                            .is_some_and(|parent_id| parent_id == *scope_id)
+                    })
+                    .collect::<Vec<_>>();
 
                 scope_text
                     .push_str(&format!("{space}Scope{:?} ({flags:?}) {{\n", scope_id.index() + 1));
-                let bindings = semantic.scopes().get_bindings(*scope_id);
+                let bindings = scope_tree.get_bindings(*scope_id);
                 let binding_space = " ".repeat((depth + 1) * 2);
                 if !bindings.is_empty() {
                     scope_text.push_str(&format!("{binding_space}Bindings: {{"));
@@ -335,7 +343,7 @@ impl Oxc {
                     scope_text.push_str(&format!("\n{binding_space}}}\n"));
                 }
 
-                write_scope_text(semantic, scope_text, depth + 1, next_scope_ids);
+                write_scope_text(semantic, scope_text, depth + 1, &child_scope_ids);
                 scope_text.push_str(&format!("{space}}}\n"));
             }
         }
