@@ -3,17 +3,21 @@
 
 mod options;
 
-use std::{cell::RefCell, path::PathBuf, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    rc::Rc,
+};
 
 use options::OxcOptions;
 use oxc::{
     allocator::Allocator,
-    ast::{CommentKind, Trivias},
+    ast::{ast::Program, CommentKind, Trivias, Visit},
     codegen::{CodeGenerator, CodegenOptions},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser},
-    semantic::{ScopeId, Semantic, SemanticBuilder},
+    semantic::{ScopeFlags, ScopeId, Semantic, SemanticBuilder},
     span::SourceType,
     transformer::{TransformOptions, Transformer},
 };
@@ -269,7 +273,7 @@ impl Oxc {
                 .build(program)
                 .semantic;
             if run_options.scope.unwrap_or_default() {
-                self.scope_text = Self::get_scope_text(&semantic);
+                self.scope_text = Self::get_scope_text(program, &semantic);
             }
             if run_options.symbol.unwrap_or_default() {
                 self.symbols = semantic.symbols().serialize(&self.serializer)?;
@@ -313,50 +317,63 @@ impl Oxc {
         Ok(())
     }
 
-    fn get_scope_text(semantic: &Semantic) -> String {
-        fn write_scope_text(
-            semantic: &Semantic,
-            scope_text: &mut String,
-            depth: usize,
-            scope_ids: &[ScopeId],
-        ) {
-            let space = " ".repeat(depth * 2);
+    fn get_scope_text<'a>(program: &Program<'a>, semantic: &Semantic<'a>) -> String {
+        struct ScopesTextWriter<'a, 's> {
+            semantic: &'s Semantic<'a>,
+            scope_text: String,
+            indent: usize,
+            space: String,
+        }
 
-            let scope_tree = semantic.scopes();
-            for scope_id in scope_ids {
-                let flags = scope_tree.get_flags(*scope_id);
-                let child_scope_ids = scope_tree
-                    .descendants_from_root()
-                    .filter(|id| {
-                        scope_tree
-                            .get_parent_id(*id)
-                            .is_some_and(|parent_id| parent_id == *scope_id)
-                    })
-                    .collect::<Vec<_>>();
+        impl<'a, 's> ScopesTextWriter<'a, 's> {
+            fn new(semantic: &'s Semantic<'a>) -> Self {
+                Self { semantic, scope_text: String::new(), indent: 0, space: String::new() }
+            }
 
-                scope_text
-                    .push_str(&format!("{space}Scope{:?} ({flags:?}) {{\n", scope_id.index()));
-                let bindings = scope_tree.get_bindings(*scope_id);
-                let binding_space = " ".repeat((depth + 1) * 2);
-                if !bindings.is_empty() {
-                    scope_text.push_str(&format!("{binding_space}Bindings: {{"));
+            fn write_line<S: AsRef<str>>(&mut self, line: S) {
+                self.scope_text.push_str(&self.space[0..self.indent]);
+                self.scope_text.push_str(line.as_ref());
+                self.scope_text.push('\n');
+            }
+
+            fn indent_in(&mut self) {
+                self.indent += 2;
+                if self.space.len() < self.indent {
+                    self.space.push_str("  ");
                 }
-                bindings.iter().for_each(|(name, symbol_id)| {
-                    let symbol_flags = semantic.symbols().get_flags(*symbol_id);
-                    scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flags:?})",));
-                });
-                if !bindings.is_empty() {
-                    scope_text.push_str(&format!("\n{binding_space}}}\n"));
-                }
+            }
 
-                write_scope_text(semantic, scope_text, depth + 1, &child_scope_ids);
-                scope_text.push_str(&format!("{space}}}\n"));
+            fn indent_out(&mut self) {
+                self.indent -= 2;
             }
         }
 
-        let mut scope_text = String::default();
-        write_scope_text(semantic, &mut scope_text, 0, &[semantic.scopes().root_scope_id()]);
-        scope_text
+        impl<'a, 's> Visit<'a> for ScopesTextWriter<'a, 's> {
+            fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+                let scope_id = scope_id.get().unwrap();
+                self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
+                self.indent_in();
+
+                let bindings = self.semantic.scopes().get_bindings(scope_id);
+                if !bindings.is_empty() {
+                    self.write_line("Bindings: {");
+                    bindings.iter().for_each(|(name, &symbol_id)| {
+                        let symbol_flags = self.semantic.symbols().get_flags(symbol_id);
+                        self.write_line(format!("  {name} ({symbol_flags:?})",));
+                    });
+                    self.write_line("}");
+                }
+            }
+
+            fn leave_scope(&mut self) {
+                self.indent_out();
+                self.write_line("}");
+            }
+        }
+
+        let mut writer = ScopesTextWriter::new(semantic);
+        writer.visit_program(program);
+        writer.scope_text
     }
 
     fn save_diagnostics(&self, diagnostics: Vec<Error>) {
