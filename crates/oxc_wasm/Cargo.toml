@@ -29,3 +29,4 @@ serde        = { workspace = true }
 wasm-bindgen       = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 tsify              = { workspace = true }
+console_error_panic_hook = "0.1.7"

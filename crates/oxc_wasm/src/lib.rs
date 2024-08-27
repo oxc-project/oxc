@@ -135,6 +135,8 @@ impl Oxc {
         source_text: &str,
         options: OxcOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
+        console_error_panic_hook::set_once();
+
         self.diagnostics = RefCell::default();
 
         let OxcOptions {
