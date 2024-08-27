@@ -653,7 +653,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let node_id = self.current_node_id;
         /* cfg */
 
-        if let Some(ref break_target) = stmt.label {
+        if let Some(break_target) = &stmt.label {
             self.visit_label_identifier(break_target);
         }
 
@@ -1715,10 +1715,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ExportDefaultDeclaration(decl) => {
                 // Only if the declaration has an ID, we mark it as an export
                 if match &decl.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(ref func) => {
-                        func.id.is_some()
-                    }
-                    ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
+                    ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.is_some(),
+                    ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.is_some(),
                     ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
                     _ => false,
                 } {
