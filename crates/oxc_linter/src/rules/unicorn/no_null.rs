@@ -199,7 +199,17 @@ impl Rule for NoNull {
             }
             (AstKind::ReturnStatement(_), _) => {
                 ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
-                    fixer.delete(null_literal)
+                    let mut null_span = null_literal.span;
+                    // Find the last parent that is a TSAsExpression (`null as any`) or TSNonNullExpression (`null!`)
+                    for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
+                        if matches!(
+                            parent.kind(),
+                            AstKind::TSAsExpression(_) | AstKind::TSNonNullExpression(_)
+                        ) {
+                            null_span = parent.kind().span();
+                        }
+                    }
+                    fixer.delete(&null_span)
                 });
             }
             (AstKind::SwitchCase(_), Some(AstKind::SwitchStatement(switch))) => {
@@ -369,6 +379,8 @@ fn test() {
             "if (foo === undefined || foo === undefined) {}",
             Some(check_strict_equality(true)),
         ),
+        ("() => { return null! }", "() => { return  }", None),
+        ("() => { return null as any as typeof Array }", "() => { return  }", None),
     ];
     Tester::new(NoNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
