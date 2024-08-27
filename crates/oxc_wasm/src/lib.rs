@@ -359,7 +359,7 @@ impl Oxc {
                     self.write_line("Bindings: {");
                     bindings.iter().for_each(|(name, &symbol_id)| {
                         let symbol_flags = self.semantic.symbols().get_flags(symbol_id);
-                        self.write_line(format!("  {name} ({symbol_flags:?})",));
+                        self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
                     });
                     self.write_line("}");
                 }
