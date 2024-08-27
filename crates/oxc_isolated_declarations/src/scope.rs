@@ -158,7 +158,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_declaration(&mut self, declaration: &Declaration<'a>) {
         match declaration {
-            Declaration::VariableDeclaration(_) | Declaration::UsingDeclaration(_) => {
+            Declaration::VariableDeclaration(_) => {
                 // add binding in BindingPattern
             }
             Declaration::FunctionDeclaration(decl) => {

@@ -226,8 +226,6 @@ impl<'a> AstKind<'a> {
             )
             .into(),
 
-            Self::UsingDeclaration(_) => "UsingDeclaration".into(),
-
             Self::IdentifierName(x) => format!("IdentifierName({})", x.name).into(),
             Self::IdentifierReference(x) => format!("IdentifierReference({})", x.name).into(),
             Self::BindingIdentifier(x) => format!("BindingIdentifier({})", x.name).into(),

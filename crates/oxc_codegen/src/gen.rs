@@ -126,11 +126,6 @@ impl<'a> Gen for Statement<'a> {
                 decl.gen(p, ctx);
                 p.print_soft_newline();
             }
-            Self::UsingDeclaration(decl) => {
-                p.print_indent();
-                decl.gen(p, ctx);
-                p.print_semicolon_after_statement();
-            }
             Self::TSModuleDeclaration(decl) => {
                 p.print_indent();
                 decl.gen(p, ctx);
@@ -335,7 +330,6 @@ impl<'a> Gen for ForOfStatement<'a> {
 impl<'a> Gen for ForStatementInit<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::UsingDeclaration(decl) => decl.gen(p, ctx),
             match_expression!(ForStatementInit) => {
                 self.to_expression().gen_expr(p, Precedence::Lowest, ctx);
             }
@@ -347,7 +341,6 @@ impl<'a> Gen for ForStatementInit<'a> {
 impl<'a> Gen for ForStatementLeft<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            ForStatementLeft::UsingDeclaration(var) => var.gen(p, ctx),
             ForStatementLeft::VariableDeclaration(var) => var.gen(p, ctx),
             ForStatementLeft::AssignmentTargetIdentifier(identifier) => {
                 let wrap = identifier.name == "async";
@@ -572,16 +565,6 @@ impl Gen for DebuggerStatement {
     }
 }
 
-impl<'a> Gen for UsingDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
-        if self.is_await {
-            p.print_str("await ");
-        }
-        p.print_str("using ");
-        p.print_list(&self.declarations, ctx);
-    }
-}
-
 impl<'a> Gen for VariableDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
@@ -606,6 +589,8 @@ impl<'a> Gen for VariableDeclaration<'a> {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
             VariableDeclarationKind::Var => "var",
+            VariableDeclarationKind::Using => "using",
+            VariableDeclarationKind::AwaitUsing => "await using",
         });
         if !self.declarations.is_empty() {
             p.print_hard_space();
@@ -895,7 +880,6 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
                     Declaration::VariableDeclaration(decl) => decl.gen(p, ctx),
                     Declaration::FunctionDeclaration(decl) => decl.gen(p, ctx),
                     Declaration::ClassDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::UsingDeclaration(declaration) => declaration.gen(p, ctx),
                     Declaration::TSModuleDeclaration(decl) => decl.gen(p, ctx),
                     Declaration::TSTypeAliasDeclaration(decl) => decl.gen(p, ctx),
                     Declaration::TSInterfaceDeclaration(decl) => decl.gen(p, ctx),
@@ -905,7 +889,6 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
                 if matches!(
                     decl,
                     Declaration::VariableDeclaration(_)
-                        | Declaration::UsingDeclaration(_)
                         | Declaration::TSTypeAliasDeclaration(_)
                         | Declaration::TSImportEqualsDeclaration(_)
                 ) {

@@ -1367,7 +1367,6 @@ pub(crate) unsafe fn walk_statement<'a, Tr: Traverse<'a>>(
         Statement::VariableDeclaration(_)
         | Statement::FunctionDeclaration(_)
         | Statement::ClassDeclaration(_)
-        | Statement::UsingDeclaration(_)
         | Statement::TSTypeAliasDeclaration(_)
         | Statement::TSInterfaceDeclaration(_)
         | Statement::TSEnumDeclaration(_)
@@ -1454,9 +1453,6 @@ pub(crate) unsafe fn walk_declaration<'a, Tr: Traverse<'a>>(
             walk_function(traverser, (&mut **node) as *mut _, ctx)
         }
         Declaration::ClassDeclaration(node) => walk_class(traverser, (&mut **node) as *mut _, ctx),
-        Declaration::UsingDeclaration(node) => {
-            walk_using_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
         Declaration::TSTypeAliasDeclaration(node) => {
             walk_ts_type_alias_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -1517,25 +1513,6 @@ pub(crate) unsafe fn walk_variable_declarator<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack(pop_token);
     traverser.exit_variable_declarator(&mut *node, ctx);
-}
-
-pub(crate) unsafe fn walk_using_declaration<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut UsingDeclaration<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_using_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::UsingDeclarationDeclarations(
-        ancestor::UsingDeclarationWithoutDeclarations(node, PhantomData),
-    ));
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_USING_DECLARATION_DECLARATIONS)
-        as *mut Vec<VariableDeclarator>))
-        .iter_mut()
-    {
-        walk_variable_declarator(traverser, item as *mut _, ctx);
-    }
-    ctx.pop_stack(pop_token);
-    traverser.exit_using_declaration(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_empty_statement<'a, Tr: Traverse<'a>>(
@@ -1697,9 +1674,6 @@ pub(crate) unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         ForStatementInit::VariableDeclaration(node) => {
             walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        ForStatementInit::UsingDeclaration(node) => {
-            walk_using_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
         ForStatementInit::BooleanLiteral(_)
         | ForStatementInit::NullLiteral(_)
         | ForStatementInit::NumericLiteral(_)
@@ -1795,9 +1769,6 @@ pub(crate) unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
     match &mut *node {
         ForStatementLeft::VariableDeclaration(node) => {
             walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
-        ForStatementLeft::UsingDeclaration(node) => {
-            walk_using_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
         ForStatementLeft::AssignmentTargetIdentifier(_)
         | ForStatementLeft::TSAsExpression(_)
