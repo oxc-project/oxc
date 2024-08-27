@@ -13,7 +13,7 @@
     clippy::cast_ptr_alignment
 )]
 
-use std::{cell::Cell, marker::PhantomData};
+use std::cell::Cell;
 
 use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
@@ -22,7 +22,7 @@ use oxc_syntax::scope::ScopeId;
 
 use crate::{
     ancestor::{self, AncestorType},
-    Ancestor, Traverse, TraverseCtx,
+    Traverse, TraverseCtx,
 };
 
 pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
@@ -37,8 +37,7 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx
-        .push_stack(Ancestor::ProgramHashbang(ancestor::ProgramWithoutHashbang(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::ProgramHashbang, node as *const _);
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_HASHBANG) as *mut Option<Hashbang>)
     {
@@ -236,9 +235,7 @@ pub(crate) unsafe fn walk_array_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_array_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ArrayExpressionElements(
-        ancestor::ArrayExpressionWithoutElements(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ArrayExpressionElements, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_ARRAY_EXPRESSION_ELEMENTS)
         as *mut Vec<ArrayExpressionElement>))
         .iter_mut()
@@ -323,9 +320,7 @@ pub(crate) unsafe fn walk_object_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ObjectExpressionProperties(
-        ancestor::ObjectExpressionWithoutProperties(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ObjectExpressionProperties, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_OBJECT_EXPRESSION_PROPERTIES)
         as *mut Vec<ObjectPropertyKind>))
         .iter_mut()
@@ -359,9 +354,7 @@ pub(crate) unsafe fn walk_object_property<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ObjectPropertyKey(
-        ancestor::ObjectPropertyWithoutKey(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ObjectPropertyKey, node as *const _);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_OBJECT_PROPERTY_KEY) as *mut PropertyKey,
@@ -448,9 +441,7 @@ pub(crate) unsafe fn walk_template_literal<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_template_literal(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TemplateLiteralQuasis(
-        ancestor::TemplateLiteralWithoutQuasis(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TemplateLiteralQuasis, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TEMPLATE_LITERAL_QUASIS)
         as *mut Vec<TemplateElement>))
         .iter_mut()
@@ -474,9 +465,7 @@ pub(crate) unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_tagged_template_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TaggedTemplateExpressionTag(
-        ancestor::TaggedTemplateExpressionWithoutTag(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TaggedTemplateExpressionTag, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_TAG) as *mut Expression,
@@ -535,9 +524,7 @@ pub(crate) unsafe fn walk_computed_member_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_computed_member_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ComputedMemberExpressionObject(
-        ancestor::ComputedMemberExpressionWithoutObject(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ComputedMemberExpressionObject, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_COMPUTED_MEMBER_EXPRESSION_OBJECT)
@@ -561,9 +548,7 @@ pub(crate) unsafe fn walk_static_member_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_static_member_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::StaticMemberExpressionObject(
-        ancestor::StaticMemberExpressionWithoutObject(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::StaticMemberExpressionObject, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_STATIC_MEMBER_EXPRESSION_OBJECT) as *mut Expression,
@@ -586,9 +571,7 @@ pub(crate) unsafe fn walk_private_field_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_private_field_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::PrivateFieldExpressionObject(
-        ancestor::PrivateFieldExpressionWithoutObject(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::PrivateFieldExpressionObject, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_PRIVATE_FIELD_EXPRESSION_OBJECT) as *mut Expression,
@@ -611,9 +594,7 @@ pub(crate) unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_call_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::CallExpressionCallee(
-        ancestor::CallExpressionWithoutCallee(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::CallExpressionCallee, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_CALL_EXPRESSION_CALLEE) as *mut Expression,
@@ -643,9 +624,7 @@ pub(crate) unsafe fn walk_new_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_new_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::NewExpressionCallee(
-        ancestor::NewExpressionWithoutCallee(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::NewExpressionCallee, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_NEW_EXPRESSION_CALLEE) as *mut Expression,
@@ -675,10 +654,7 @@ pub(crate) unsafe fn walk_meta_property<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_meta_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::MetaPropertyMeta(ancestor::MetaPropertyWithoutMeta(
-        node,
-        PhantomData,
-    )));
+    let pop_token = ctx.push_stack(AncestorType::MetaPropertyMeta, node as *const _);
     walk_identifier_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_META_PROPERTY_META) as *mut IdentifierName,
@@ -700,9 +676,7 @@ pub(crate) unsafe fn walk_spread_element<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_spread_element(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::SpreadElementArgument(
-        ancestor::SpreadElementWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::SpreadElementArgument, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_SPREAD_ELEMENT_ARGUMENT) as *mut Expression,
@@ -774,9 +748,7 @@ pub(crate) unsafe fn walk_update_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_update_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::UpdateExpressionArgument(
-        ancestor::UpdateExpressionWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::UpdateExpressionArgument, node as *const _);
     walk_simple_assignment_target(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_UPDATE_EXPRESSION_ARGUMENT)
@@ -793,9 +765,7 @@ pub(crate) unsafe fn walk_unary_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_unary_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::UnaryExpressionArgument(
-        ancestor::UnaryExpressionWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::UnaryExpressionArgument, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_UNARY_EXPRESSION_ARGUMENT) as *mut Expression,
@@ -811,9 +781,7 @@ pub(crate) unsafe fn walk_binary_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binary_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::BinaryExpressionLeft(
-        ancestor::BinaryExpressionWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::BinaryExpressionLeft, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_BINARY_EXPRESSION_LEFT) as *mut Expression,
@@ -835,9 +803,7 @@ pub(crate) unsafe fn walk_private_in_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_private_in_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::PrivateInExpressionLeft(
-        ancestor::PrivateInExpressionWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::PrivateInExpressionLeft, node as *const _);
     walk_private_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_PRIVATE_IN_EXPRESSION_LEFT)
@@ -860,9 +826,7 @@ pub(crate) unsafe fn walk_logical_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_logical_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::LogicalExpressionLeft(
-        ancestor::LogicalExpressionWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::LogicalExpressionLeft, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_LOGICAL_EXPRESSION_LEFT) as *mut Expression,
@@ -884,9 +848,7 @@ pub(crate) unsafe fn walk_conditional_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_conditional_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ConditionalExpressionTest(
-        ancestor::ConditionalExpressionWithoutTest(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ConditionalExpressionTest, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_CONDITIONAL_EXPRESSION_TEST) as *mut Expression,
@@ -915,9 +877,7 @@ pub(crate) unsafe fn walk_assignment_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AssignmentExpressionLeft(
-        ancestor::AssignmentExpressionWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::AssignmentExpressionLeft, node as *const _);
     walk_assignment_target(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_EXPRESSION_LEFT) as *mut AssignmentTarget,
@@ -1016,9 +976,7 @@ pub(crate) unsafe fn walk_array_assignment_target<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_array_assignment_target(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ArrayAssignmentTargetElements(
-        ancestor::ArrayAssignmentTargetWithoutElements(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ArrayAssignmentTargetElements, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_ARRAY_ASSIGNMENT_TARGET_ELEMENTS)
         as *mut Vec<Option<AssignmentTargetMaybeDefault>>))
         .iter_mut()
@@ -1042,9 +1000,8 @@ pub(crate) unsafe fn walk_object_assignment_target<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_assignment_target(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ObjectAssignmentTargetProperties(
-        ancestor::ObjectAssignmentTargetWithoutProperties(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::ObjectAssignmentTargetProperties, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_OBJECT_ASSIGNMENT_TARGET_PROPERTIES)
         as *mut Vec<AssignmentTargetProperty>))
         .iter_mut()
@@ -1068,9 +1025,7 @@ pub(crate) unsafe fn walk_assignment_target_rest<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_rest(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetRestTarget(
-        ancestor::AssignmentTargetRestWithoutTarget(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::AssignmentTargetRestTarget, node as *const _);
     walk_assignment_target(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_REST_TARGET)
@@ -1114,9 +1069,8 @@ pub(crate) unsafe fn walk_assignment_target_with_default<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_with_default(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetWithDefaultBinding(
-        ancestor::AssignmentTargetWithDefaultWithoutBinding(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::AssignmentTargetWithDefaultBinding, node as *const _);
     walk_assignment_target(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_WITH_DEFAULT_BINDING)
@@ -1157,9 +1111,8 @@ pub(crate) unsafe fn walk_assignment_target_property_identifier<'a, Tr: Traverse
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_property_identifier(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetPropertyIdentifierBinding(
-        ancestor::AssignmentTargetPropertyIdentifierWithoutBinding(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::AssignmentTargetPropertyIdentifierBinding, node as *const _);
     walk_identifier_reference(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_PROPERTY_IDENTIFIER_BINDING)
@@ -1183,9 +1136,8 @@ pub(crate) unsafe fn walk_assignment_target_property_property<'a, Tr: Traverse<'
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_target_property_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AssignmentTargetPropertyPropertyName(
-        ancestor::AssignmentTargetPropertyPropertyWithoutName(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::AssignmentTargetPropertyPropertyName, node as *const _);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_TARGET_PROPERTY_PROPERTY_NAME)
@@ -1209,9 +1161,7 @@ pub(crate) unsafe fn walk_sequence_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_sequence_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::SequenceExpressionExpressions(
-        ancestor::SequenceExpressionWithoutExpressions(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::SequenceExpressionExpressions, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_SEQUENCE_EXPRESSION_EXPRESSIONS)
         as *mut Vec<Expression>))
         .iter_mut()
@@ -1237,9 +1187,7 @@ pub(crate) unsafe fn walk_await_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_await_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AwaitExpressionArgument(
-        ancestor::AwaitExpressionWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::AwaitExpressionArgument, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_AWAIT_EXPRESSION_ARGUMENT) as *mut Expression,
@@ -1255,9 +1203,7 @@ pub(crate) unsafe fn walk_chain_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_chain_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ChainExpressionExpression(
-        ancestor::ChainExpressionWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ChainExpressionExpression, node as *const _);
     walk_chain_element(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_CHAIN_EXPRESSION_EXPRESSION) as *mut ChainElement,
@@ -1292,9 +1238,8 @@ pub(crate) unsafe fn walk_parenthesized_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_parenthesized_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ParenthesizedExpressionExpression(
-        ancestor::ParenthesizedExpressionWithoutExpression(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::ParenthesizedExpressionExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_PARENTHESIZED_EXPRESSION_EXPRESSION)
@@ -1392,9 +1337,7 @@ pub(crate) unsafe fn walk_directive<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_directive(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::DirectiveExpression(
-        ancestor::DirectiveWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::DirectiveExpression, node as *const _);
     walk_string_literal(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_DIRECTIVE_EXPRESSION) as *mut StringLiteral,
@@ -1426,9 +1369,7 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::BlockStatementBody(
-        ancestor::BlockStatementWithoutBody(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::BlockStatementBody, node as *const _);
     walk_statements(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_BODY) as *mut Vec<Statement>,
@@ -1478,9 +1419,7 @@ pub(crate) unsafe fn walk_variable_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_variable_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::VariableDeclarationDeclarations(
-        ancestor::VariableDeclarationWithoutDeclarations(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::VariableDeclarationDeclarations, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATION_DECLARATIONS)
         as *mut Vec<VariableDeclarator>))
         .iter_mut()
@@ -1497,9 +1436,7 @@ pub(crate) unsafe fn walk_variable_declarator<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_variable_declarator(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::VariableDeclaratorId(
-        ancestor::VariableDeclaratorWithoutId(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::VariableDeclaratorId, node as *const _);
     walk_binding_pattern(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_VARIABLE_DECLARATOR_ID) as *mut BindingPattern,
@@ -1530,9 +1467,7 @@ pub(crate) unsafe fn walk_expression_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_expression_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExpressionStatementExpression(
-        ancestor::ExpressionStatementWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ExpressionStatementExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_EXPRESSION_STATEMENT_EXPRESSION) as *mut Expression,
@@ -1548,8 +1483,7 @@ pub(crate) unsafe fn walk_if_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_if_statement(&mut *node, ctx);
-    let pop_token = ctx
-        .push_stack(Ancestor::IfStatementTest(ancestor::IfStatementWithoutTest(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::IfStatementTest, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_IF_STATEMENT_TEST) as *mut Expression,
@@ -1577,9 +1511,7 @@ pub(crate) unsafe fn walk_do_while_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_do_while_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::DoWhileStatementBody(
-        ancestor::DoWhileStatementWithoutBody(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::DoWhileStatementBody, node as *const _);
     walk_statement(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_DO_WHILE_STATEMENT_BODY) as *mut Statement,
@@ -1601,9 +1533,7 @@ pub(crate) unsafe fn walk_while_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_while_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::WhileStatementTest(
-        ancestor::WhileStatementWithoutTest(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::WhileStatementTest, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_WHILE_STATEMENT_TEST) as *mut Expression,
@@ -1632,10 +1562,7 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::ForStatementInit(ancestor::ForStatementWithoutInit(
-        node,
-        PhantomData,
-    )));
+    let pop_token = ctx.push_stack(AncestorType::ForStatementInit, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_INIT)
         as *mut Option<ForStatementInit>)
     {
@@ -1735,9 +1662,7 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::ForInStatementLeft(
-        ancestor::ForInStatementWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ForInStatementLeft, node as *const _);
     walk_for_statement_left(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_LEFT) as *mut ForStatementLeft,
@@ -1800,9 +1725,7 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::ForOfStatementLeft(
-        ancestor::ForOfStatementWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ForOfStatementLeft, node as *const _);
     walk_for_statement_left(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_LEFT) as *mut ForStatementLeft,
@@ -1831,9 +1754,7 @@ pub(crate) unsafe fn walk_continue_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_continue_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ContinueStatementLabel(
-        ancestor::ContinueStatementWithoutLabel(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ContinueStatementLabel, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CONTINUE_STATEMENT_LABEL)
         as *mut Option<LabelIdentifier>)
     {
@@ -1849,9 +1770,7 @@ pub(crate) unsafe fn walk_break_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_break_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::BreakStatementLabel(
-        ancestor::BreakStatementWithoutLabel(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::BreakStatementLabel, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_BREAK_STATEMENT_LABEL)
         as *mut Option<LabelIdentifier>)
     {
@@ -1867,9 +1786,7 @@ pub(crate) unsafe fn walk_return_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_return_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ReturnStatementArgument(
-        ancestor::ReturnStatementWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ReturnStatementArgument, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_RETURN_STATEMENT_ARGUMENT)
         as *mut Option<Expression>)
     {
@@ -1885,9 +1802,7 @@ pub(crate) unsafe fn walk_with_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_with_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::WithStatementObject(
-        ancestor::WithStatementWithoutObject(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::WithStatementObject, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_WITH_STATEMENT_OBJECT) as *mut Expression,
@@ -1909,9 +1824,7 @@ pub(crate) unsafe fn walk_switch_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_switch_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::SwitchStatementDiscriminant(
-        ancestor::SwitchStatementWithoutDiscriminant(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::SwitchStatementDiscriminant, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_SWITCH_STATEMENT_DISCRIMINANT) as *mut Expression,
@@ -1942,8 +1855,7 @@ pub(crate) unsafe fn walk_switch_case<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_switch_case(&mut *node, ctx);
-    let pop_token = ctx
-        .push_stack(Ancestor::SwitchCaseTest(ancestor::SwitchCaseWithoutTest(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::SwitchCaseTest, node as *const _);
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_SWITCH_CASE_TEST) as *mut Option<Expression>)
     {
@@ -1965,9 +1877,7 @@ pub(crate) unsafe fn walk_labeled_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_labeled_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::LabeledStatementLabel(
-        ancestor::LabeledStatementWithoutLabel(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::LabeledStatementLabel, node as *const _);
     walk_label_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_LABELED_STATEMENT_LABEL) as *mut LabelIdentifier,
@@ -1989,9 +1899,7 @@ pub(crate) unsafe fn walk_throw_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_throw_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ThrowStatementArgument(
-        ancestor::ThrowStatementWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ThrowStatementArgument, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_THROW_STATEMENT_ARGUMENT) as *mut Expression,
@@ -2007,9 +1915,7 @@ pub(crate) unsafe fn walk_try_statement<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_try_statement(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TryStatementBlock(
-        ancestor::TryStatementWithoutBlock(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TryStatementBlock, node as *const _);
     walk_block_statement(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TRY_STATEMENT_BLOCK)
@@ -2045,10 +1951,7 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::CatchClauseParam(ancestor::CatchClauseWithoutParam(
-        node,
-        PhantomData,
-    )));
+    let pop_token = ctx.push_stack(AncestorType::CatchClauseParam, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_PARAM)
         as *mut Option<CatchParameter>)
     {
@@ -2072,9 +1975,7 @@ pub(crate) unsafe fn walk_catch_parameter<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_catch_parameter(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::CatchParameterPattern(
-        ancestor::CatchParameterWithoutPattern(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::CatchParameterPattern, node as *const _);
     walk_binding_pattern(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_CATCH_PARAMETER_PATTERN) as *mut BindingPattern,
@@ -2099,9 +2000,7 @@ pub(crate) unsafe fn walk_binding_pattern<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binding_pattern(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::BindingPatternKind(
-        ancestor::BindingPatternWithoutKind(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::BindingPatternKind, node as *const _);
     walk_binding_pattern_kind(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_BINDING_PATTERN_KIND) as *mut BindingPatternKind,
@@ -2147,9 +2046,7 @@ pub(crate) unsafe fn walk_assignment_pattern<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_assignment_pattern(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AssignmentPatternLeft(
-        ancestor::AssignmentPatternWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::AssignmentPatternLeft, node as *const _);
     walk_binding_pattern(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ASSIGNMENT_PATTERN_LEFT) as *mut BindingPattern,
@@ -2171,9 +2068,7 @@ pub(crate) unsafe fn walk_object_pattern<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_object_pattern(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ObjectPatternProperties(
-        ancestor::ObjectPatternWithoutProperties(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ObjectPatternProperties, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_OBJECT_PATTERN_PROPERTIES)
         as *mut Vec<BindingProperty>))
         .iter_mut()
@@ -2196,9 +2091,7 @@ pub(crate) unsafe fn walk_binding_property<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binding_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::BindingPropertyKey(
-        ancestor::BindingPropertyWithoutKey(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::BindingPropertyKey, node as *const _);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_BINDING_PROPERTY_KEY) as *mut PropertyKey,
@@ -2220,9 +2113,7 @@ pub(crate) unsafe fn walk_array_pattern<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_array_pattern(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ArrayPatternElements(
-        ancestor::ArrayPatternWithoutElements(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ArrayPatternElements, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_ARRAY_PATTERN_ELEMENTS)
         as *mut Vec<Option<BindingPattern>>))
         .iter_mut()
@@ -2246,9 +2137,7 @@ pub(crate) unsafe fn walk_binding_rest_element<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_binding_rest_element(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::BindingRestElementArgument(
-        ancestor::BindingRestElementWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::BindingRestElementArgument, node as *const _);
     walk_binding_pattern(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_BINDING_REST_ELEMENT_ARGUMENT)
@@ -2272,8 +2161,7 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token =
-        ctx.push_stack(Ancestor::FunctionId(ancestor::FunctionWithoutId(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::FunctionId, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_ID)
         as *mut Option<BindingIdentifier>)
     {
@@ -2321,9 +2209,7 @@ pub(crate) unsafe fn walk_formal_parameters<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_formal_parameters(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::FormalParametersItems(
-        ancestor::FormalParametersWithoutItems(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::FormalParametersItems, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETERS_ITEMS)
         as *mut Vec<FormalParameter>))
         .iter_mut()
@@ -2346,9 +2232,7 @@ pub(crate) unsafe fn walk_formal_parameter<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_formal_parameter(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::FormalParameterDecorators(
-        ancestor::FormalParameterWithoutDecorators(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::FormalParameterDecorators, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_DECORATORS)
         as *mut Vec<Decorator>))
         .iter_mut()
@@ -2371,9 +2255,7 @@ pub(crate) unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_function_body(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::FunctionBodyDirectives(
-        ancestor::FunctionBodyWithoutDirectives(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::FunctionBodyDirectives, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY_DIRECTIVES)
         as *mut Vec<Directive>))
         .iter_mut()
@@ -2403,9 +2285,8 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::ArrowFunctionExpressionTypeParameters(
-        ancestor::ArrowFunctionExpressionWithoutTypeParameters(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::ArrowFunctionExpressionTypeParameters, node as *const _);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
         as *mut Option<Box<TSTypeParameterDeclaration>>)
@@ -2444,9 +2325,7 @@ pub(crate) unsafe fn walk_yield_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_yield_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::YieldExpressionArgument(
-        ancestor::YieldExpressionWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::YieldExpressionArgument, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_YIELD_EXPRESSION_ARGUMENT)
         as *mut Option<Expression>)
     {
@@ -2462,8 +2341,7 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_class(&mut *node, ctx);
-    let pop_token = ctx
-        .push_stack(Ancestor::ClassDecorators(ancestor::ClassWithoutDecorators(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::ClassDecorators, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_CLASS_DECORATORS) as *mut Vec<Decorator>))
         .iter_mut()
     {
@@ -2525,8 +2403,7 @@ pub(crate) unsafe fn walk_class_body<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_class_body(&mut *node, ctx);
-    let pop_token =
-        ctx.push_stack(Ancestor::ClassBodyBody(ancestor::ClassBodyWithoutBody(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::ClassBodyBody, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY_BODY)
         as *mut Vec<ClassElement>))
         .iter_mut()
@@ -2569,9 +2446,7 @@ pub(crate) unsafe fn walk_method_definition<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_method_definition(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::MethodDefinitionDecorators(
-        ancestor::MethodDefinitionWithoutDecorators(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::MethodDefinitionDecorators, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_METHOD_DEFINITION_DECORATORS)
         as *mut Vec<Decorator>))
         .iter_mut()
@@ -2601,9 +2476,7 @@ pub(crate) unsafe fn walk_property_definition<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_property_definition(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::PropertyDefinitionDecorators(
-        ancestor::PropertyDefinitionWithoutDecorators(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::PropertyDefinitionDecorators, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_PROPERTY_DEFINITION_DECORATORS)
         as *mut Vec<Decorator>))
         .iter_mut()
@@ -2655,8 +2528,7 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx
-        .push_stack(Ancestor::StaticBlockBody(ancestor::StaticBlockWithoutBody(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::StaticBlockBody, node as *const _);
     walk_statements(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_BODY) as *mut Vec<Statement>,
@@ -2702,9 +2574,7 @@ pub(crate) unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_accessor_property(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::AccessorPropertyDecorators(
-        ancestor::AccessorPropertyWithoutDecorators(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::AccessorPropertyDecorators, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_DECORATORS)
         as *mut Vec<Decorator>))
         .iter_mut()
@@ -2740,9 +2610,7 @@ pub(crate) unsafe fn walk_import_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ImportExpressionSource(
-        ancestor::ImportExpressionWithoutSource(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ImportExpressionSource, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_EXPRESSION_SOURCE) as *mut Expression,
@@ -2765,9 +2633,7 @@ pub(crate) unsafe fn walk_import_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ImportDeclarationSpecifiers(
-        ancestor::ImportDeclarationWithoutSpecifiers(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ImportDeclarationSpecifiers, node as *const _);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_IMPORT_DECLARATION_SPECIFIERS)
         as *mut Option<Vec<ImportDeclarationSpecifier>>)
@@ -2819,9 +2685,7 @@ pub(crate) unsafe fn walk_import_specifier<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_specifier(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ImportSpecifierImported(
-        ancestor::ImportSpecifierWithoutImported(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ImportSpecifierImported, node as *const _);
     walk_module_export_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_SPECIFIER_IMPORTED) as *mut ModuleExportName,
@@ -2843,9 +2707,7 @@ pub(crate) unsafe fn walk_import_default_specifier<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_default_specifier(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ImportDefaultSpecifierLocal(
-        ancestor::ImportDefaultSpecifierWithoutLocal(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ImportDefaultSpecifierLocal, node as *const _);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_DEFAULT_SPECIFIER_LOCAL)
@@ -2862,9 +2724,7 @@ pub(crate) unsafe fn walk_import_namespace_specifier<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_namespace_specifier(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ImportNamespaceSpecifierLocal(
-        ancestor::ImportNamespaceSpecifierWithoutLocal(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ImportNamespaceSpecifierLocal, node as *const _);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_NAMESPACE_SPECIFIER_LOCAL)
@@ -2881,9 +2741,7 @@ pub(crate) unsafe fn walk_with_clause<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_with_clause(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::WithClauseAttributesKeyword(
-        ancestor::WithClauseWithoutAttributesKeyword(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::WithClauseAttributesKeyword, node as *const _);
     walk_identifier_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_WITH_CLAUSE_ATTRIBUTES_KEYWORD)
@@ -2907,9 +2765,7 @@ pub(crate) unsafe fn walk_import_attribute<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_import_attribute(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ImportAttributeKey(
-        ancestor::ImportAttributeWithoutKey(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ImportAttributeKey, node as *const _);
     walk_import_attribute_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_IMPORT_ATTRIBUTE_KEY) as *mut ImportAttributeKey,
@@ -2948,9 +2804,8 @@ pub(crate) unsafe fn walk_export_named_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_named_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportNamedDeclarationDeclaration(
-        ancestor::ExportNamedDeclarationWithoutDeclaration(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::ExportNamedDeclarationDeclaration, node as *const _);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_DECLARATION)
         as *mut Option<Declaration>)
@@ -2988,9 +2843,8 @@ pub(crate) unsafe fn walk_export_default_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_default_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportDefaultDeclarationDeclaration(
-        ancestor::ExportDefaultDeclarationWithoutDeclaration(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::ExportDefaultDeclarationDeclaration, node as *const _);
     walk_export_default_declaration_kind(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_EXPORT_DEFAULT_DECLARATION_DECLARATION)
@@ -3014,9 +2868,7 @@ pub(crate) unsafe fn walk_export_all_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_all_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportAllDeclarationExported(
-        ancestor::ExportAllDeclarationWithoutExported(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ExportAllDeclarationExported, node as *const _);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_ALL_DECLARATION_EXPORTED)
         as *mut Option<ModuleExportName>)
@@ -3046,9 +2898,7 @@ pub(crate) unsafe fn walk_export_specifier<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_export_specifier(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::ExportSpecifierLocal(
-        ancestor::ExportSpecifierWithoutLocal(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::ExportSpecifierLocal, node as *const _);
     walk_module_export_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_EXPORT_SPECIFIER_LOCAL) as *mut ModuleExportName,
@@ -3154,9 +3004,7 @@ pub(crate) unsafe fn walk_jsx_element<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_element(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXElementOpeningElement(
-        ancestor::JSXElementWithoutOpeningElement(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXElementOpeningElement, node as *const _);
     walk_jsx_opening_element(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_JSX_ELEMENT_OPENING_ELEMENT)
@@ -3186,9 +3034,7 @@ pub(crate) unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_opening_element(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXOpeningElementName(
-        ancestor::JSXOpeningElementWithoutName(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXOpeningElementName, node as *const _);
     walk_jsx_element_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_OPENING_ELEMENT_NAME) as *mut JSXElementName,
@@ -3218,9 +3064,7 @@ pub(crate) unsafe fn walk_jsx_closing_element<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_closing_element(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXClosingElementName(
-        ancestor::JSXClosingElementWithoutName(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXClosingElementName, node as *const _);
     walk_jsx_element_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_CLOSING_ELEMENT_NAME) as *mut JSXElementName,
@@ -3236,9 +3080,7 @@ pub(crate) unsafe fn walk_jsx_fragment<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_fragment(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXFragmentChildren(
-        ancestor::JSXFragmentWithoutChildren(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXFragmentChildren, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_JSX_FRAGMENT_CHILDREN)
         as *mut Vec<JSXChild>))
         .iter_mut()
@@ -3281,9 +3123,7 @@ pub(crate) unsafe fn walk_jsx_namespaced_name<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_namespaced_name(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXNamespacedNameNamespace(
-        ancestor::JSXNamespacedNameWithoutNamespace(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXNamespacedNameNamespace, node as *const _);
     walk_jsx_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_NAMESPACED_NAME_NAMESPACE) as *mut JSXIdentifier,
@@ -3305,9 +3145,7 @@ pub(crate) unsafe fn walk_jsx_member_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_member_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXMemberExpressionObject(
-        ancestor::JSXMemberExpressionWithoutObject(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXMemberExpressionObject, node as *const _);
     walk_jsx_member_expression_object(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_MEMBER_EXPRESSION_OBJECT)
@@ -3351,9 +3189,8 @@ pub(crate) unsafe fn walk_jsx_expression_container<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_expression_container(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXExpressionContainerExpression(
-        ancestor::JSXExpressionContainerWithoutExpression(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::JSXExpressionContainerExpression, node as *const _);
     walk_jsx_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_EXPRESSION_CONTAINER_EXPRESSION)
@@ -3454,10 +3291,7 @@ pub(crate) unsafe fn walk_jsx_attribute<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_attribute(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXAttributeName(ancestor::JSXAttributeWithoutName(
-        node,
-        PhantomData,
-    )));
+    let pop_token = ctx.push_stack(AncestorType::JSXAttributeName, node as *const _);
     walk_jsx_attribute_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_ATTRIBUTE_NAME) as *mut JSXAttributeName,
@@ -3479,9 +3313,7 @@ pub(crate) unsafe fn walk_jsx_spread_attribute<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_spread_attribute(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXSpreadAttributeArgument(
-        ancestor::JSXSpreadAttributeWithoutArgument(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXSpreadAttributeArgument, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_SPREAD_ATTRIBUTE_ARGUMENT) as *mut Expression,
@@ -3564,9 +3396,7 @@ pub(crate) unsafe fn walk_jsx_spread_child<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_jsx_spread_child(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSXSpreadChildExpression(
-        ancestor::JSXSpreadChildWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSXSpreadChildExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JSX_SPREAD_CHILD_EXPRESSION) as *mut Expression,
@@ -3645,9 +3475,7 @@ pub(crate) unsafe fn walk_ts_this_parameter<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_this_parameter(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSThisParameterTypeAnnotation(
-        ancestor::TSThisParameterWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSThisParameterTypeAnnotation, node as *const _);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION)
         as *mut Option<Box<TSTypeAnnotation>>)
@@ -3664,9 +3492,7 @@ pub(crate) unsafe fn walk_ts_enum_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSEnumDeclarationId(
-        ancestor::TSEnumDeclarationWithoutId(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSEnumDeclarationId, node as *const _);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_ID) as *mut BindingIdentifier,
@@ -3697,8 +3523,7 @@ pub(crate) unsafe fn walk_ts_enum_member<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_enum_member(&mut *node, ctx);
-    let pop_token = ctx
-        .push_stack(Ancestor::TSEnumMemberId(ancestor::TSEnumMemberWithoutId(node, PhantomData)));
+    let pop_token = ctx.push_stack(AncestorType::TSEnumMemberId, node as *const _);
     walk_ts_enum_member_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_MEMBER_ID) as *mut TSEnumMemberName,
@@ -3787,9 +3612,7 @@ pub(crate) unsafe fn walk_ts_type_annotation<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_annotation(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAnnotationTypeAnnotation(
-        ancestor::TSTypeAnnotationWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeAnnotationTypeAnnotation, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ANNOTATION_TYPE_ANNOTATION) as *mut TSType,
@@ -3805,9 +3628,7 @@ pub(crate) unsafe fn walk_ts_literal_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_literal_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSLiteralTypeLiteral(
-        ancestor::TSLiteralTypeWithoutLiteral(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSLiteralTypeLiteral, node as *const _);
     walk_ts_literal(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_LITERAL_TYPE_LITERAL) as *mut TSLiteral,
@@ -3970,9 +3791,7 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::TSConditionalTypeCheckType(
-        ancestor::TSConditionalTypeWithoutCheckType(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSConditionalTypeCheckType, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE) as *mut TSType,
@@ -4007,10 +3826,7 @@ pub(crate) unsafe fn walk_ts_union_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_union_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSUnionTypeTypes(ancestor::TSUnionTypeWithoutTypes(
-        node,
-        PhantomData,
-    )));
+    let pop_token = ctx.push_stack(AncestorType::TSUnionTypeTypes, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_UNION_TYPE_TYPES) as *mut Vec<TSType>))
         .iter_mut()
     {
@@ -4026,9 +3842,7 @@ pub(crate) unsafe fn walk_ts_intersection_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_intersection_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIntersectionTypeTypes(
-        ancestor::TSIntersectionTypeWithoutTypes(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSIntersectionTypeTypes, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_INTERSECTION_TYPE_TYPES)
         as *mut Vec<TSType>))
         .iter_mut()
@@ -4045,9 +3859,8 @@ pub(crate) unsafe fn walk_ts_parenthesized_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_parenthesized_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSParenthesizedTypeTypeAnnotation(
-        ancestor::TSParenthesizedTypeWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSParenthesizedTypeTypeAnnotation, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION)
@@ -4064,9 +3877,7 @@ pub(crate) unsafe fn walk_ts_type_operator<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_operator(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeOperatorTypeAnnotation(
-        ancestor::TSTypeOperatorWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeOperatorTypeAnnotation, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_OPERATOR_TYPE_ANNOTATION) as *mut TSType,
@@ -4082,9 +3893,7 @@ pub(crate) unsafe fn walk_ts_array_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_array_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSArrayTypeElementType(
-        ancestor::TSArrayTypeWithoutElementType(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSArrayTypeElementType, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_ARRAY_TYPE_ELEMENT_TYPE) as *mut TSType,
@@ -4100,9 +3909,7 @@ pub(crate) unsafe fn walk_ts_indexed_access_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_indexed_access_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIndexedAccessTypeObjectType(
-        ancestor::TSIndexedAccessTypeWithoutObjectType(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSIndexedAccessTypeObjectType, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_INDEXED_ACCESS_TYPE_OBJECT_TYPE) as *mut TSType,
@@ -4124,9 +3931,7 @@ pub(crate) unsafe fn walk_ts_tuple_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_tuple_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTupleTypeElementTypes(
-        ancestor::TSTupleTypeWithoutElementTypes(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTupleTypeElementTypes, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_TUPLE_TYPE_ELEMENT_TYPES)
         as *mut Vec<TSTupleElement>))
         .iter_mut()
@@ -4143,9 +3948,7 @@ pub(crate) unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_named_tuple_member(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSNamedTupleMemberElementType(
-        ancestor::TSNamedTupleMemberWithoutElementType(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSNamedTupleMemberElementType, node as *const _);
     walk_ts_tuple_element(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
@@ -4168,9 +3971,7 @@ pub(crate) unsafe fn walk_ts_optional_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_optional_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSOptionalTypeTypeAnnotation(
-        ancestor::TSOptionalTypeWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSOptionalTypeTypeAnnotation, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_OPTIONAL_TYPE_TYPE_ANNOTATION) as *mut TSType,
@@ -4186,9 +3987,7 @@ pub(crate) unsafe fn walk_ts_rest_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_rest_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSRestTypeTypeAnnotation(
-        ancestor::TSRestTypeWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSRestTypeTypeAnnotation, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_REST_TYPE_TYPE_ANNOTATION) as *mut TSType,
@@ -4385,9 +4184,7 @@ pub(crate) unsafe fn walk_ts_type_reference<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_reference(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeReferenceTypeName(
-        ancestor::TSTypeReferenceWithoutTypeName(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeReferenceTypeName, node as *const _);
     walk_ts_type_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_REFERENCE_TYPE_NAME) as *mut TSTypeName,
@@ -4427,9 +4224,7 @@ pub(crate) unsafe fn walk_ts_qualified_name<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_qualified_name(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSQualifiedNameLeft(
-        ancestor::TSQualifiedNameWithoutLeft(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSQualifiedNameLeft, node as *const _);
     walk_ts_type_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_QUALIFIED_NAME_LEFT) as *mut TSTypeName,
@@ -4451,9 +4246,8 @@ pub(crate) unsafe fn walk_ts_type_parameter_instantiation<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_parameter_instantiation(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeParameterInstantiationParams(
-        ancestor::TSTypeParameterInstantiationWithoutParams(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSTypeParameterInstantiationParams, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_INSTANTIATION_PARAMS)
         as *mut Vec<TSType>))
         .iter_mut()
@@ -4470,9 +4264,7 @@ pub(crate) unsafe fn walk_ts_type_parameter<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_parameter(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeParameterName(
-        ancestor::TSTypeParameterWithoutName(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeParameterName, node as *const _);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_NAME) as *mut BindingIdentifier,
@@ -4500,9 +4292,8 @@ pub(crate) unsafe fn walk_ts_type_parameter_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_parameter_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeParameterDeclarationParams(
-        ancestor::TSTypeParameterDeclarationWithoutParams(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSTypeParameterDeclarationParams, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PARAMETER_DECLARATION_PARAMS)
         as *mut Vec<TSTypeParameter>))
         .iter_mut()
@@ -4519,9 +4310,7 @@ pub(crate) unsafe fn walk_ts_type_alias_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_alias_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAliasDeclarationId(
-        ancestor::TSTypeAliasDeclarationWithoutId(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeAliasDeclarationId, node as *const _);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
@@ -4560,9 +4349,7 @@ pub(crate) unsafe fn walk_ts_class_implements<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_class_implements(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSClassImplementsExpression(
-        ancestor::TSClassImplementsWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSClassImplementsExpression, node as *const _);
     walk_ts_type_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_CLASS_IMPLEMENTS_EXPRESSION) as *mut TSTypeName,
@@ -4585,9 +4372,7 @@ pub(crate) unsafe fn walk_ts_interface_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInterfaceDeclarationId(
-        ancestor::TSInterfaceDeclarationWithoutId(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSInterfaceDeclarationId, node as *const _);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_DECLARATION_ID)
@@ -4635,9 +4420,7 @@ pub(crate) unsafe fn walk_ts_interface_body<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_body(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInterfaceBodyBody(
-        ancestor::TSInterfaceBodyWithoutBody(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSInterfaceBodyBody, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_BODY_BODY)
         as *mut Vec<TSSignature>))
         .iter_mut()
@@ -4654,9 +4437,7 @@ pub(crate) unsafe fn walk_ts_property_signature<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_property_signature(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSPropertySignatureKey(
-        ancestor::TSPropertySignatureWithoutKey(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSPropertySignatureKey, node as *const _);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_PROPERTY_SIGNATURE_KEY) as *mut PropertyKey,
@@ -4705,9 +4486,7 @@ pub(crate) unsafe fn walk_ts_index_signature<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_index_signature(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureParameters(
-        ancestor::TSIndexSignatureWithoutParameters(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSIndexSignatureParameters, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_PARAMETERS)
         as *mut Vec<TSIndexSignatureName>))
         .iter_mut()
@@ -4731,9 +4510,8 @@ pub(crate) unsafe fn walk_ts_call_signature_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_call_signature_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSCallSignatureDeclarationThisParam(
-        ancestor::TSCallSignatureDeclarationWithoutThisParam(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSCallSignatureDeclarationThisParam, node as *const _);
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_CALL_SIGNATURE_DECLARATION_THIS_PARAM)
         as *mut Option<TSThisParameter>)
@@ -4778,9 +4556,7 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::TSMethodSignatureKey(
-        ancestor::TSMethodSignatureWithoutKey(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSMethodSignatureKey, node as *const _);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_KEY) as *mut PropertyKey,
@@ -4832,9 +4608,8 @@ pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::TSConstructSignatureDeclarationParams(
-        ancestor::TSConstructSignatureDeclarationWithoutParams(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSConstructSignatureDeclarationParams, node as *const _);
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_PARAMS)
@@ -4866,9 +4641,8 @@ pub(crate) unsafe fn walk_ts_index_signature_name<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_index_signature_name(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSIndexSignatureNameTypeAnnotation(
-        ancestor::TSIndexSignatureNameWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSIndexSignatureNameTypeAnnotation, node as *const _);
     walk_ts_type_annotation(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INDEX_SIGNATURE_NAME_TYPE_ANNOTATION)
@@ -4885,9 +4659,7 @@ pub(crate) unsafe fn walk_ts_interface_heritage<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_interface_heritage(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInterfaceHeritageExpression(
-        ancestor::TSInterfaceHeritageWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSInterfaceHeritageExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_INTERFACE_HERITAGE_EXPRESSION) as *mut Expression,
@@ -4910,9 +4682,7 @@ pub(crate) unsafe fn walk_ts_type_predicate<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_predicate(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypePredicateParameterName(
-        ancestor::TSTypePredicateWithoutParameterName(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypePredicateParameterName, node as *const _);
     walk_ts_type_predicate_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_PREDICATE_PARAMETER_NAME)
@@ -4951,9 +4721,7 @@ pub(crate) unsafe fn walk_ts_module_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSModuleDeclarationId(
-        ancestor::TSModuleDeclarationWithoutId(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSModuleDeclarationId, node as *const _);
     walk_ts_module_declaration_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_DECLARATION_ID)
@@ -5018,9 +4786,7 @@ pub(crate) unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_block(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSModuleBlockDirectives(
-        ancestor::TSModuleBlockWithoutDirectives(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSModuleBlockDirectives, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
         as *mut Vec<Directive>))
         .iter_mut()
@@ -5043,9 +4809,7 @@ pub(crate) unsafe fn walk_ts_type_literal<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_literal(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeLiteralMembers(
-        ancestor::TSTypeLiteralWithoutMembers(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeLiteralMembers, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_TYPE_LITERAL_MEMBERS)
         as *mut Vec<TSSignature>))
         .iter_mut()
@@ -5062,9 +4826,7 @@ pub(crate) unsafe fn walk_ts_infer_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_infer_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInferTypeTypeParameter(
-        ancestor::TSInferTypeWithoutTypeParameter(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSInferTypeTypeParameter, node as *const _);
     walk_ts_type_parameter(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_INFER_TYPE_TYPE_PARAMETER)
@@ -5081,9 +4843,7 @@ pub(crate) unsafe fn walk_ts_type_query<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_query(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeQueryExprName(
-        ancestor::TSTypeQueryWithoutExprName(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeQueryExprName, node as *const _);
     walk_ts_type_query_expr_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_QUERY_EXPR_NAME) as *mut TSTypeQueryExprName,
@@ -5123,9 +4883,7 @@ pub(crate) unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportTypeParameter(
-        ancestor::TSImportTypeWithoutParameter(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSImportTypeParameter, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_PARAMETER) as *mut TSType,
@@ -5160,9 +4918,8 @@ pub(crate) unsafe fn walk_ts_import_attributes<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_attributes(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportAttributesAttributesKeyword(
-        ancestor::TSImportAttributesWithoutAttributesKeyword(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSImportAttributesAttributesKeyword, node as *const _);
     walk_identifier_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD)
@@ -5186,9 +4943,7 @@ pub(crate) unsafe fn walk_ts_import_attribute<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_attribute(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportAttributeName(
-        ancestor::TSImportAttributeWithoutName(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSImportAttributeName, node as *const _);
     walk_ts_import_attribute_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTE_NAME)
@@ -5228,9 +4983,7 @@ pub(crate) unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_function_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSFunctionTypeThisParam(
-        ancestor::TSFunctionTypeWithoutThisParam(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSFunctionTypeThisParam, node as *const _);
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
         as *mut Option<Box<TSThisParameter>>)
     {
@@ -5267,9 +5020,7 @@ pub(crate) unsafe fn walk_ts_constructor_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_constructor_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSConstructorTypeParams(
-        ancestor::TSConstructorTypeWithoutParams(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSConstructorTypeParams, node as *const _);
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_CONSTRUCTOR_TYPE_PARAMS)
@@ -5307,9 +5058,7 @@ pub(crate) unsafe fn walk_ts_mapped_type<'a, Tr: Traverse<'a>>(
             .get()
             .unwrap(),
     );
-    let pop_token = ctx.push_stack(Ancestor::TSMappedTypeTypeParameter(
-        ancestor::TSMappedTypeWithoutTypeParameter(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSMappedTypeTypeParameter, node as *const _);
     walk_ts_type_parameter(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER)
@@ -5340,9 +5089,7 @@ pub(crate) unsafe fn walk_ts_template_literal_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_template_literal_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTemplateLiteralTypeQuasis(
-        ancestor::TSTemplateLiteralTypeWithoutQuasis(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTemplateLiteralTypeQuasis, node as *const _);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_TEMPLATE_LITERAL_TYPE_QUASIS)
         as *mut Vec<TemplateElement>))
         .iter_mut()
@@ -5366,9 +5113,7 @@ pub(crate) unsafe fn walk_ts_as_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_as_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSAsExpressionExpression(
-        ancestor::TSAsExpressionWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSAsExpressionExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_AS_EXPRESSION_EXPRESSION) as *mut Expression,
@@ -5390,9 +5135,7 @@ pub(crate) unsafe fn walk_ts_satisfies_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_satisfies_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSSatisfiesExpressionExpression(
-        ancestor::TSSatisfiesExpressionWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSSatisfiesExpressionExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_SATISFIES_EXPRESSION_EXPRESSION)
@@ -5416,9 +5159,7 @@ pub(crate) unsafe fn walk_ts_type_assertion<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_type_assertion(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSTypeAssertionExpression(
-        ancestor::TSTypeAssertionWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSTypeAssertionExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_TYPE_ASSERTION_EXPRESSION) as *mut Expression,
@@ -5440,9 +5181,7 @@ pub(crate) unsafe fn walk_ts_import_equals_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_equals_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportEqualsDeclarationId(
-        ancestor::TSImportEqualsDeclarationWithoutId(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSImportEqualsDeclarationId, node as *const _);
     walk_binding_identifier(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_EQUALS_DECLARATION_ID)
@@ -5483,9 +5222,8 @@ pub(crate) unsafe fn walk_ts_external_module_reference<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_external_module_reference(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSExternalModuleReferenceExpression(
-        ancestor::TSExternalModuleReferenceWithoutExpression(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSExternalModuleReferenceExpression, node as *const _);
     walk_string_literal(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_EXTERNAL_MODULE_REFERENCE_EXPRESSION)
@@ -5502,9 +5240,7 @@ pub(crate) unsafe fn walk_ts_non_null_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_non_null_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSNonNullExpressionExpression(
-        ancestor::TSNonNullExpressionWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSNonNullExpressionExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_NON_NULL_EXPRESSION_EXPRESSION)
@@ -5521,9 +5257,7 @@ pub(crate) unsafe fn walk_decorator<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_decorator(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::DecoratorExpression(
-        ancestor::DecoratorWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::DecoratorExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_DECORATOR_EXPRESSION) as *mut Expression,
@@ -5539,9 +5273,7 @@ pub(crate) unsafe fn walk_ts_export_assignment<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_export_assignment(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSExportAssignmentExpression(
-        ancestor::TSExportAssignmentWithoutExpression(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSExportAssignmentExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_EXPORT_ASSIGNMENT_EXPRESSION) as *mut Expression,
@@ -5557,9 +5289,7 @@ pub(crate) unsafe fn walk_ts_namespace_export_declaration<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_namespace_export_declaration(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSNamespaceExportDeclarationId(
-        ancestor::TSNamespaceExportDeclarationWithoutId(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::TSNamespaceExportDeclarationId, node as *const _);
     walk_identifier_name(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_NAMESPACE_EXPORT_DECLARATION_ID)
@@ -5576,9 +5306,8 @@ pub(crate) unsafe fn walk_ts_instantiation_expression<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_instantiation_expression(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSInstantiationExpressionExpression(
-        ancestor::TSInstantiationExpressionWithoutExpression(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::TSInstantiationExpressionExpression, node as *const _);
     walk_expression(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_INSTANTIATION_EXPRESSION_EXPRESSION)
@@ -5602,9 +5331,7 @@ pub(crate) unsafe fn walk_js_doc_nullable_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_js_doc_nullable_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSDocNullableTypeTypeAnnotation(
-        ancestor::JSDocNullableTypeWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token = ctx.push_stack(AncestorType::JSDocNullableTypeTypeAnnotation, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JS_DOC_NULLABLE_TYPE_TYPE_ANNOTATION) as *mut TSType,
@@ -5620,9 +5347,8 @@ pub(crate) unsafe fn walk_js_doc_non_nullable_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_js_doc_non_nullable_type(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::JSDocNonNullableTypeTypeAnnotation(
-        ancestor::JSDocNonNullableTypeWithoutTypeAnnotation(node, PhantomData),
-    ));
+    let pop_token =
+        ctx.push_stack(AncestorType::JSDocNonNullableTypeTypeAnnotation, node as *const _);
     walk_ts_type(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_JS_DOC_NON_NULLABLE_TYPE_TYPE_ANNOTATION)

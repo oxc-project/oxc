@@ -23,14 +23,14 @@ export default function generateWalkFunctionsCode(types) {
             clippy::cast_ptr_alignment
         )]
 
-        use std::{cell::Cell, marker::PhantomData};
+        use std::cell::Cell;
 
         use oxc_allocator::Vec;
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;
         use oxc_syntax::scope::ScopeId;
 
-        use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
+        use crate::{ancestor::{self, AncestorType}, Traverse, TraverseCtx};
 
         ${walkMethods}
 
@@ -94,9 +94,8 @@ function generateWalkForStruct(type, types) {
         if (index === 0) {
             tagCode = `
                 let pop_token = ctx.push_stack(
-                    Ancestor::${type.name}${fieldCamelName}(
-                        ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
-                    )
+                    AncestorType::${type.name}${fieldCamelName},
+                    node as *const _,
                 );
             `;
         } else {

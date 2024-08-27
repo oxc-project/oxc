@@ -15,8 +15,8 @@ use crate::ancestor::{Ancestor, AncestorType};
 mod ancestry;
 mod ast_operations;
 use ancestry::PopToken;
-pub use ancestry::TraverseAncestry;
 mod identifier;
+pub use ancestry::{Ancestors, TraverseAncestry};
 mod scoping;
 pub use scoping::TraverseScoping;
 
@@ -158,7 +158,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.ancestry.ancestors`.
     #[inline]
-    pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
+    pub fn ancestors<'t>(&'t self) -> Ancestors<'a, 't> {
         self.ancestry.ancestors()
     }
 
@@ -464,8 +464,8 @@ impl<'a> TraverseCtx<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) -> PopToken {
-        self.ancestry.push_stack(ancestor)
+    pub(crate) fn push_stack(&mut self, ty: AncestorType, ptr: *const ()) -> PopToken {
+        self.ancestry.push_stack(ty, ptr)
     }
 
     /// Shortcut for `self.ancestry.pop_stack`, to make `walk_*` methods less verbose.
