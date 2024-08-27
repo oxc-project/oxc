@@ -213,7 +213,7 @@ impl Oxc {
 
         if run_options.prettier_format.unwrap_or_default() {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(oxc_parser_options)
+                .with_options(ParseOptions { preserve_parens: false, ..oxc_parser_options })
                 .parse();
             let printed =
                 Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
@@ -223,7 +223,7 @@ impl Oxc {
 
         if run_options.prettier_ir.unwrap_or_default() {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(oxc_parser_options)
+                .with_options(ParseOptions { preserve_parens: false, ..oxc_parser_options })
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
