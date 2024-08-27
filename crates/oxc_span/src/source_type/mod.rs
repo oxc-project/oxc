@@ -1,11 +1,10 @@
-use std::path::Path;
-
+mod error;
 mod types;
-use oxc_allocator::{Allocator, CloneIn};
-pub use types::*;
 
-#[derive(Debug)]
-pub struct UnknownExtension(pub String);
+pub use error::UnknownExtension;
+use oxc_allocator::{Allocator, CloneIn};
+use std::path::Path;
+pub use types::*;
 
 impl Default for SourceType {
     fn default() -> Self {
@@ -160,7 +159,7 @@ impl SourceType {
             .as_ref()
             .file_name()
             .and_then(std::ffi::OsStr::to_str)
-            .ok_or_else(|| UnknownExtension("Please provide a valid file name.".to_string()))?;
+            .ok_or_else(|| UnknownExtension::new("Please provide a valid file name."))?;
 
         let extension = path
             .as_ref()
@@ -169,7 +168,7 @@ impl SourceType {
             .filter(|s| VALID_EXTENSIONS.contains(s))
             .ok_or_else(|| {
                 let path = path.as_ref().to_string_lossy();
-                UnknownExtension(
+                UnknownExtension::new(
                     format!("Please provide a valid file extension for {path}: .js, .mjs, .jsx or .cjs for JavaScript, or .ts, .d.ts, .mts, .cts or .tsx for TypeScript"),
                 )
             })?;
@@ -192,7 +191,7 @@ impl SourceType {
                 #[cfg(debug_assertions)]
                 unreachable!();
                 #[cfg(not(debug_assertions))]
-                return Err(UnknownExtension(format!("Unknown extension: {}", extension)));
+                return Err(UnknownExtension(format!("Unknown extension: {}", extension).into()));
             }
         };
 
