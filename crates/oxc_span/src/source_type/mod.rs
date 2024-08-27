@@ -7,13 +7,9 @@ use std::path::Path;
 pub use types::*;
 
 impl Default for SourceType {
+    #[inline]
     fn default() -> Self {
-        Self {
-            language: Language::JavaScript,
-            module_kind: ModuleKind::Script,
-            variant: LanguageVariant::Standard,
-            always_strict: false,
-        }
+        Self::js()
     }
 }
 
@@ -29,6 +25,117 @@ impl<'a> CloneIn<'a> for SourceType {
 pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 impl SourceType {
+    /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.
+    ///
+    /// The resulting source type is not a [`module`], nor does it support [`JSX`].
+    /// Use [`SourceType::jsx`] for [`JSX`] sources.
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let js = SourceType::js();
+    /// assert!(js.is_javascript());
+    /// assert!(js.is_script()); // not a module
+    /// assert!(!js.is_jsx());
+    /// ```
+    ///
+    /// [`JavaScript`]: Language::JavaScript
+    /// [`module`]: ModuleKind::Module
+    /// [`JSX`]: LanguageVariant::Jsx
+    pub const fn js() -> Self {
+        Self {
+            language: Language::JavaScript,
+            module_kind: ModuleKind::Script,
+            variant: LanguageVariant::Standard,
+            always_strict: false,
+        }
+    }
+
+    /// Creates a [`SourceType`] representing a [`JavaScript`]` file with JSX.
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let jsx = SourceType::jsx();
+    /// assert!(jsx.is_javascript());
+    /// assert!(jsx.is_jsx());
+    /// ```
+    ///
+    /// [`JavaScript`]: Language::JavaScript
+    pub const fn jsx() -> Self {
+        Self::js().with_jsx(true)
+    }
+
+    /// Creates a [`SourceType`] representing a [`TypeScript`] file.
+    ///
+    /// Unlike [`SourceType::js`], this method creates [`modules`]. Use
+    /// [`SourceType::tsx`] for TypeScript files with [`JSX`] support.
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let ts = SourceType::ts();
+    /// assert!(ts.is_typescript());
+    /// assert!(!ts.is_typescript_definition());
+    /// assert!(ts.is_module());
+    /// assert!(!ts.is_jsx());
+    /// ```
+    ///
+    /// [`TypeScript`]: Language::TypeScript
+    /// [`modules`]: ModuleKind::Module
+    /// [`JSX`]: LanguageVariant::Jsx
+    pub const fn ts() -> Self {
+        Self {
+            language: Language::TypeScript,
+            module_kind: ModuleKind::Module,
+            variant: LanguageVariant::Standard,
+            always_strict: false,
+        }
+    }
+
+    /// Creates a [`SourceType`] representing a [`TypeScript`] file with [`JSX`].
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let tsx = SourceType::tsx();
+    /// assert!(tsx.is_typescript());
+    /// assert!(!tsx.is_typescript_definition());
+    /// assert!(tsx.is_module());
+    /// assert!(tsx.is_jsx());
+    /// ```
+    ///
+    /// [`TypeScript`]: Language::TypeScript
+    /// [`JSX`]: LanguageVariant::Jsx
+    pub const fn tsx() -> Self {
+        Self::ts().with_jsx(true)
+    }
+
+    /// Creates a [`SourceType`] representing a [`TypeScript definition`] file.
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let dts = SourceType::d_ts();
+    /// assert!(dts.is_typescript());
+    /// assert!(dts.is_typescript_definition());
+    /// assert!(dts.is_module());
+    /// assert!(!dts.is_jsx());
+    /// ```
+    pub const fn d_ts() -> Self {
+        Self {
+            language: Language::TypeScriptDefinition,
+            module_kind: ModuleKind::Module,
+            variant: LanguageVariant::Standard,
+            always_strict: false,
+        }
+    }
+
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script
     }
@@ -139,6 +246,9 @@ impl SourceType {
     /// babel) also do not make a distinction between `.js` and `.jsx`. However,
     /// for TypeScript files, only `.tsx` files are treated as JSX.
     ///
+    /// Note that this behavior deviates from [`SourceType::js`], which produces
+    /// [`scripts`].
+    ///
     /// ### Modules vs. Scripts.
     /// Oxc has partial support for Node's
     /// [CommonJS](https://nodejs.org/api/modules.html#enabling) detection
@@ -153,6 +263,7 @@ impl SourceType {
     ///     extensions.
     ///
     /// [`script`]: ModuleKind::Script
+    /// [`scripts`]: ModuleKind::Script
     /// [`modules`]: ModuleKind::Module
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, UnknownExtension> {
         let file_name = path
@@ -210,7 +321,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::similar_names)]
-    fn test_ts() {
+    fn test_ts_from_path() {
         let ts = SourceType::from_path("foo.ts")
             .expect("foo.ts should be a valid TypeScript file path.");
         let mts = SourceType::from_path("foo.mts")
@@ -225,6 +336,8 @@ mod tests {
             assert!(!ty.is_typescript_definition());
             assert!(!ty.is_javascript());
         }
+
+        assert_eq!(SourceType::ts(), ts);
 
         assert!(ts.is_module());
         assert!(mts.is_module());
@@ -249,7 +362,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::similar_names)]
-    fn test_d_ts() {
+    fn test_d_ts_from_path() {
         let dts = SourceType::from_path("foo.d.ts")
             .expect("foo.d.ts should be a valid TypeScript definition file path.");
         let dmts = SourceType::from_path("foo.d.mts")
@@ -262,6 +375,8 @@ mod tests {
             assert!(ty.is_typescript_definition());
             assert!(!ty.is_javascript());
         }
+
+        assert_eq!(SourceType::d_ts(), dts);
 
         assert!(dts.is_module());
         assert!(dmts.is_module());
@@ -282,7 +397,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::similar_names)]
-    fn test_js() {
+    fn test_js_from_path() {
         let js = SourceType::from_path("foo.js")
             .expect("foo.js should be a valid JavaScript file path.");
         let mjs = SourceType::from_path("foo.mjs")
@@ -296,6 +411,9 @@ mod tests {
             assert!(ty.is_javascript(), "{ty:?}");
             assert!(!ty.is_typescript(), "{ty:?}");
         }
+
+        assert_eq!(SourceType::js().with_jsx(true).with_module(true), js);
+        assert_eq!(SourceType::jsx().with_module(true), jsx);
 
         assert!(js.is_module());
         assert!(mjs.is_module());
