@@ -364,6 +364,8 @@ impl Tester {
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
+        } else if self.plugins.jest {
+            self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()
         };
