@@ -585,6 +585,7 @@ impl<'s> PostTransformChecker<'s> {
         Pair::new(self.scope_ids_map.get(scope_ids.after_transform), Some(scope_ids.rebuilt))
     }
 
+    /// Remap pair of arrays of `SymbolId`s.
     /// Map `after_transform` IDs to `rebuilt` IDs.
     /// Sort both sets.
     fn remap_symbol_ids_sets<V: AsRef<Vec<SymbolId>>>(
