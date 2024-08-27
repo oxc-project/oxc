@@ -15,24 +15,24 @@ use crate::{
     },
 };
 
-fn too_many_describes(max: usize, repeat: &str, span0: Span) -> OxcDiagnostic {
+fn too_many_describes(max: usize, repeat: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
         .with_help(format!(
             "There should not be more than {max:?} describe{repeat} at the top level."
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn unexpected_test_case(span0: Span) -> OxcDiagnostic {
+fn unexpected_test_case(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
         .with_help("All test cases must be wrapped in a describe block.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn unexpected_hook(span0: Span) -> OxcDiagnostic {
+fn unexpected_hook(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
         .with_help("All hooks must be wrapped in a describe block.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Clone)]

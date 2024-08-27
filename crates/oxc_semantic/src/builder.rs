@@ -24,7 +24,7 @@ use crate::{
     counter::Counter,
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
-    label::LabelBuilder,
+    label::UnusedLabels,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -94,8 +94,7 @@ pub struct SemanticBuilder<'a> {
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
-    pub(crate) label_builder: LabelBuilder<'a>,
-
+    unused_labels: UnusedLabels<'a>,
     build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
 
@@ -141,7 +140,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: SymbolTable::default(),
             unresolved_references: UnresolvedReferencesStack::new(),
             module_record: Arc::new(ModuleRecord::default()),
-            label_builder: LabelBuilder::default(),
+            unused_labels: UnusedLabels::default(),
             build_jsdoc: false,
             jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
@@ -210,7 +209,7 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scope.add_root_scope(AstNodeId::DUMMY, ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
             // Count the number of nodes, scopes, symbols, and references.
@@ -271,7 +270,7 @@ impl<'a> SemanticBuilder<'a> {
             classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
             jsdoc,
-            unused_labels: self.label_builder.unused_node_ids,
+            unused_labels: self.unused_labels.labels,
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
@@ -549,7 +548,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let parent_scope_id = self.current_scope_id;
         let flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
-        self.current_scope_id = self.scope.add_scope(parent_scope_id, self.current_node_id, flags);
+        self.current_scope_id =
+            self.scope.add_scope(Some(parent_scope_id), self.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
         self.unresolved_references.increment_scope_depth();
@@ -618,7 +618,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if program.is_strict() {
             flags |= ScopeFlags::StrictMode;
         }
-        self.current_scope_id = self.scope.add_root_scope(self.current_node_id, flags);
+        self.current_scope_id = self.scope.add_scope(None, self.current_node_id, flags);
         program.scope_id.set(Some(self.current_scope_id));
         // NB: Don't call `self.unresolved_references.increment_scope_depth()`
         // as scope depth is initialized as 1 already (the scope depth for `Program`).
@@ -654,7 +654,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let node_id = self.current_node_id;
         /* cfg */
 
-        if let Some(ref break_target) = stmt.label {
+        if let Some(break_target) = &stmt.label {
             self.visit_label_identifier(break_target);
         }
 
@@ -709,12 +709,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Move all bindings from catch clause param scope to catch clause body scope
         // to make it easier to resolve references and check redeclare errors
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            let parent_bindings =
-                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
-            parent_bindings.values().for_each(|symbol_id| {
-                self.symbols.set_scope_id(*symbol_id, self.current_scope_id);
-            });
-            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+            let parent_bindings = self.scope.get_bindings_mut(parent_scope_id);
+            if !parent_bindings.is_empty() {
+                let parent_bindings = parent_bindings.drain(..).collect::<Bindings>();
+                parent_bindings.values().for_each(|&symbol_id| {
+                    self.symbols.set_scope_id(symbol_id, self.current_scope_id);
+                });
+                *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+            }
         }
 
         self.visit_statements(&it.body);
@@ -943,11 +945,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
         self.enter_node(kind);
-        let is_lexical_declaration =
-            stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
-        if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
-        }
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
         }
@@ -1005,19 +1003,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if is_lexical_declaration {
-            self.leave_scope();
-        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
         self.enter_node(kind);
-        let is_lexical_declaration = stmt.left.is_lexical_declaration();
-        if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
-        }
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
 
@@ -1069,19 +1062,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if is_lexical_declaration {
-            self.leave_scope();
-        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
         self.enter_node(kind);
-        let is_lexical_declaration = stmt.left.is_lexical_declaration();
-        if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
-        }
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         self.visit_for_statement_left(&stmt.left);
 
@@ -1132,9 +1120,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if is_lexical_declaration {
-            self.leave_scope();
-        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -1730,10 +1716,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ExportDefaultDeclaration(decl) => {
                 // Only if the declaration has an ID, we mark it as an export
                 if match &decl.declaration {
-                    ExportDefaultDeclarationKind::FunctionDeclaration(ref func) => {
-                        func.id.is_some()
-                    }
-                    ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
+                    ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.is_some(),
+                    ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.is_some(),
                     ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
                     _ => false,
                 } {
@@ -1769,13 +1753,11 @@ impl<'a> SemanticBuilder<'a> {
                 decl.bind(self);
                 self.make_all_namespaces_valuelike();
             }
-            AstKind::StaticBlock(_) => self.label_builder.enter_function_or_static_block(),
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 if func.is_declaration() {
                     func.bind(self);
                 }
-                self.label_builder.enter_function_or_static_block();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowFunctionExpression(_) => {
@@ -1908,12 +1890,12 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flags |= ReferenceFlags::Write;
             }
             AstKind::LabeledStatement(stmt) => {
-                self.label_builder.enter(stmt, self.current_node_id);
+                self.unused_labels.add(stmt.label.name.as_str());
             }
             AstKind::ContinueStatement(ContinueStatement { label, .. })
             | AstKind::BreakStatement(BreakStatement { label, .. }) => {
                 if let Some(label) = &label {
-                    self.label_builder.mark_as_used(label);
+                    self.unused_labels.reference(&label.name);
                 }
             }
             AstKind::YieldExpression(_) => {
@@ -1941,15 +1923,7 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flags = ReferenceFlags::empty();
                 }
             }
-            AstKind::LabeledStatement(_) => self.label_builder.leave(),
-            AstKind::StaticBlock(_) => {
-                self.label_builder.leave_function_or_static_block();
-            }
-            AstKind::Function(_) => {
-                self.label_builder.leave_function_or_static_block();
-                self.function_stack.pop();
-            }
-            AstKind::ArrowFunctionExpression(_) => {
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
             AstKind::FormalParameters(parameters) => {
@@ -1989,6 +1963,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flags = ReferenceFlags::empty();
             }
             AstKind::AssignmentTarget(_) => self.current_reference_flags -= ReferenceFlags::Write,
+            AstKind::LabeledStatement(_) => self.unused_labels.mark_unused(self.current_node_id),
             _ => {}
         }
     }
@@ -2037,7 +2012,19 @@ impl<'a> SemanticBuilder<'a> {
         for node in self.nodes.iter_parents(self.current_node_id).skip(1) {
             return match node.kind() {
                 AstKind::ParenthesizedExpression(_) => continue,
-                AstKind::ExpressionStatement(_) => false,
+                AstKind::ExpressionStatement(_) => {
+                    if self.current_scope_flags().is_arrow() {
+                        if let Some(node) = self.nodes.iter_parents(node.id()).nth(2) {
+                            // (x) => x++
+                            //        ^^^ implicit return, we need to treat `x` as a read reference
+                            if matches!(node.kind(), AstKind::ArrowFunctionExpression(arrow) if arrow.expression)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    false
+                }
                 _ => true,
             };
         }

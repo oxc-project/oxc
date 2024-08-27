@@ -12,10 +12,10 @@ use crate::{
     },
 };
 
-fn no_conditional_tests(span0: Span) -> OxcDiagnostic {
+fn no_conditional_tests(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid having conditionals in tests")
         .with_help("Remove the surrounding if statement.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

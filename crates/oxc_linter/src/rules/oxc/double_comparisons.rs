@@ -6,12 +6,12 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-fn double_comparisons_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn double_comparisons_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected double comparisons.")
         .with_help(format!(
             "This logical expression can be simplified. Try using the `{x1}` operator instead."
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/double_comparisons>

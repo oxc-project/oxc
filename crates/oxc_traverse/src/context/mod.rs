@@ -417,6 +417,21 @@ impl<'a> TraverseCtx<'a> {
     ) -> IdentifierReference<'a> {
         self.scoping.clone_identifier_reference(ident, flags)
     }
+
+    /// Determine whether evaluating the specific input `node` is a consequenceless reference.
+    ///
+    /// I.E evaluating it won't result in potentially arbitrary code from being ran. The following are
+    /// allowed and determined not to cause side effects:
+    ///
+    /// - `this` expressions
+    /// - `super` expressions
+    /// - Bound identifiers
+    ///
+    /// This is a shortcut for `ctx.scoping.is_static`.
+    #[inline]
+    pub fn is_static(&self, expr: &Expression) -> bool {
+        self.scoping.is_static(expr)
+    }
 }
 
 // Methods used internally within crate

@@ -63,11 +63,17 @@ impl<'a> Lexer<'a> {
         {
             self.consume_char();
             let Ok(flag) = RegExpFlags::try_from(b) else {
-                self.error(diagnostics::reg_exp_flag(b as char, self.current_offset()));
+                self.error(diagnostics::reg_exp_flag(
+                    b as char,
+                    self.current_offset().expand_left(1),
+                ));
                 continue;
             };
             if flags.contains(flag) {
-                self.error(diagnostics::reg_exp_flag_twice(b as char, self.current_offset()));
+                self.error(diagnostics::reg_exp_flag_twice(
+                    b as char,
+                    self.current_offset().expand_left(1),
+                ));
                 continue;
             }
             flags |= flag;

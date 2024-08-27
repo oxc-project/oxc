@@ -2,10 +2,7 @@ use std::{cell::Cell, str};
 
 use compact_str::{format_compact, CompactString};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{
-    ast::*,
-    visit::{walk, Visit},
-};
+use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
@@ -15,6 +12,7 @@ use oxc_syntax::{
 };
 
 use super::ast_operations::GatherNodeParts;
+use crate::scopes_collector::ChildScopeCollector;
 
 /// Traverse scope context.
 ///
@@ -80,7 +78,7 @@ impl TraverseScoping {
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
         let flags = self.scopes.get_new_scope_flags(flags, parent_id);
-        self.scopes.add_scope(parent_id, AstNodeId::DUMMY, flags)
+        self.scopes.add_scope(Some(parent_id), AstNodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
@@ -121,10 +119,6 @@ impl TraverseScoping {
     }
 
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
-        // Remove these scopes from parent's children
-        let current_child_scope_ids = self.scopes.get_child_ids_mut(self.current_scope_id);
-        current_child_scope_ids.retain(|scope_id| !child_scope_ids.contains(scope_id));
-
         // Create new scope as child of parent
         let new_scope_id = self.create_child_scope_of_current(flags);
 
@@ -372,6 +366,35 @@ impl TraverseScoping {
         let symbol_id = reference.symbol_id();
         self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
     }
+
+    /// Determine whether evaluating the specific input `node` is a consequenceless reference.
+    ///
+    /// I.E evaluating it won't result in potentially arbitrary code from being ran. The following are
+    /// allowed and determined not to cause side effects:
+    ///
+    /// - `this` expressions
+    /// - `super` expressions
+    /// - Bound identifiers
+    ///
+    /// Based on Babel's `scope.isStatic` logic.
+    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L557>
+    ///
+    /// # Panics
+    /// Can only panic if [`IdentifierReference`] does not have a reference_id, which it always should.
+    #[inline]
+    pub fn is_static(&self, expr: &Expression) -> bool {
+        match expr {
+            Expression::ThisExpression(_) | Expression::Super(_) => true,
+            Expression::Identifier(ident) => self
+                .symbols
+                .get_reference(ident.reference_id.get().unwrap())
+                .symbol_id()
+                .is_some_and(|symbol_id| {
+                    self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
+                }),
+            _ => false,
+        }
+    }
 }
 
 // Methods used internally within crate
@@ -489,99 +512,4 @@ fn create_uid_name_base(name: &str) -> CompactString {
     str.push('_');
     str.push_str(name);
     str
-}
-
-/// Visitor that locates all child scopes.
-/// NB: Child scopes only, not grandchild scopes.
-/// Does not do full traversal - stops each time it hits a node with a scope.
-struct ChildScopeCollector {
-    scope_ids: Vec<ScopeId>,
-}
-
-impl ChildScopeCollector {
-    fn new() -> Self {
-        Self { scope_ids: vec![] }
-    }
-}
-
-impl<'a> Visit<'a> for ChildScopeCollector {
-    fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
-    }
-
-    fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_statement(self, stmt);
-        }
-    }
-
-    fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_in_statement(self, stmt);
-        }
-    }
-
-    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_of_statement(self, stmt);
-        }
-    }
-
-    fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
-    }
-
-    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
-        self.scope_ids.push(clause.scope_id.get().unwrap());
-    }
-
-    fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
-        self.scope_ids.push(clause.scope_id.get().unwrap());
-    }
-
-    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
-        self.scope_ids.push(func.scope_id.get().unwrap());
-    }
-
-    fn visit_class(&mut self, class: &Class<'a>) {
-        if let Some(scope_id) = class.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_class(self, class);
-        }
-    }
-
-    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
-        self.scope_ids.push(block.scope_id.get().unwrap());
-    }
-
-    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        self.scope_ids.push(expr.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
-        self.scope_ids.push(decl.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
-        self.scope_ids.push(decl.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
-    }
 }

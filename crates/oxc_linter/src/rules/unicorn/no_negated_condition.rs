@@ -9,10 +9,10 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_negated_condition_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected negated condition.")
         .with_help("Remove the negation operator and switch the consequent and alternate branches.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

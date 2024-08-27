@@ -150,8 +150,9 @@ impl DiagnosticService {
                 }
 
                 if let Some(mut err_str) = self.reporter.render_error(diagnostic) {
-                    // Skip large output and print only once
-                    if err_str.lines().any(|line| line.len() >= 400) {
+                    // Skip large output and print only once.
+                    // Setting to 1200 because graphical output may contain ansi escape codes and other decorations.
+                    if err_str.lines().any(|line| line.len() >= 1200) {
                         let minified_diagnostic = Error::new(
                             OxcDiagnostic::warn("File is too long to fit on the screen")
                                 .with_help(format!("{path:?} seems like a minified file")),

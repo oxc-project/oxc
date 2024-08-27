@@ -1,7 +1,8 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.24.3",
+  "version": "0.25.0",
   "description": "Wasm target for the oxc parser.",
+  "packageManager": "pnpm@9.8.0",
   "keywords": [
     "JavaScript",
     "TypeScript",

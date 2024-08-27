@@ -26,7 +26,7 @@ static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
 /// This behavior is consistent and predictable, and therefore stabilizes benchmark results.
 pub struct NeverGrowInPlaceAllocator;
 
-/// SAFETY: Methods simply delegate to `System` allocator
+// SAFETY: Methods simply delegate to `System` allocator
 #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
 unsafe impl GlobalAlloc for NeverGrowInPlaceAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {

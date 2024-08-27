@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_string_literal_prop_value, AstNode};
 
-fn no_css_tags_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_css_tags_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not include stylesheets manually.")
         .with_help("See https://nextjs.org/docs/messages/no-css-tags")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

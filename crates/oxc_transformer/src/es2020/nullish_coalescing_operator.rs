@@ -89,7 +89,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
         };
 
         // skip creating extra reference when `left` is static
-        if ctx.symbols().is_static(&logical_expr.left) {
+        if ctx.is_static(&logical_expr.left) {
             *expr = Self::create_conditional_expression(
                 Self::clone_expression(&logical_expr.left, ctx),
                 logical_expr.left,

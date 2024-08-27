@@ -10,14 +10,14 @@ use crate::{
     ast_util::get_function_like_declaration, context::LintContext, fixer::Fix, rule::Rule, AstNode,
 };
 
-fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn only_used_in_recursion_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Parameter `{x1}` is only used in recursive calls"
     ))
     .with_help(
         "Remove the argument and its usage. Alternatively, use the argument in the function body.",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

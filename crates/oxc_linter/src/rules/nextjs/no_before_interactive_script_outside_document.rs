@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_before_interactive_script_outside_document_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_before_interactive_script_outside_document_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`")
         .with_help("See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

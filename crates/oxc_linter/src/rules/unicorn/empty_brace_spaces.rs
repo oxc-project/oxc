@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn empty_brace_spaces_diagnostic(span0: Span) -> OxcDiagnostic {
+fn empty_brace_spaces_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No spaces inside empty pair of braces allowed")
         .with_help("There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -333,12 +333,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
             match node.kind() {
                 // references used in declaration of another variable are definitely
                 // used by others
-                AstKind::VariableDeclarator(v) => {
-                    // let a = a; is a static semantic error, even if `a` is shadowed.
-                    debug_assert!(
-                        v.id.kind.get_identifier().map_or_else(|| true, |id| id != name),
-                        "While traversing {name}'s reference's parent nodes, found {name}'s declaration. This algorithm assumes that variable declarations do not appear in references."
-                    );
+                AstKind::VariableDeclarator(_)
+                | AstKind::JSXExpressionContainer(_)
+                | AstKind::Argument(_) => {
                     // definitely used, short-circuit
                     return false;
                 }
@@ -381,9 +378,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 | AstKind::ForOfStatement(_)
                 | AstKind::WhileStatement(_) => {
                     break;
-                }
-                AstKind::JSXExpressionContainer(_) | AstKind::Argument(_) => {
-                    return false;
                 }
                 // this is needed to handle `return () => foo++`
                 AstKind::ExpressionStatement(_) => {

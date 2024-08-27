@@ -10,6 +10,7 @@ enum DisabledRule<'a> {
 }
 
 /// A comment which disables one or more specific rules
+#[derive(Debug)]
 pub struct DisableRuleComment<'a> {
     /// Span of the comment
     pub span: Span,

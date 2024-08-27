@@ -8,8 +8,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_await_in_loop_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span0)
+fn no_await_in_loop_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

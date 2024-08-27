@@ -21,6 +21,7 @@ pub struct SourceType {
     pub(super) variant: LanguageVariant,
 
     /// Mark strict mode as always strict
+    ///
     /// See <https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode>
     pub(super) always_strict: bool,
 }
@@ -43,7 +44,9 @@ pub enum Language {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
+    /// Regular JS script or CommonJS file
     Script = 0,
+    /// ES6 Module
     Module = 1,
 }
 

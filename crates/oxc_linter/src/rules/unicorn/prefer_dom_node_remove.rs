@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn prefer_dom_node_remove_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_dom_node_remove_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.")
         .with_help("Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

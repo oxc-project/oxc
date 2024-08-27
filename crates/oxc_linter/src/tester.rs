@@ -9,8 +9,8 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, rules::RULES, AllowWarnDeny, Fixer, LintOptions, LintService,
-    LintServiceOptions, Linter, OxlintConfig, RuleEnum, RuleWithSeverity,
+    fixer::FixKind, options::LintPluginOptions, rules::RULES, AllowWarnDeny, Fixer, LintOptions,
+    LintService, LintServiceOptions, Linter, OxlintConfig, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -170,12 +170,13 @@ pub struct Tester {
     /// See: [insta::Settings::set_snapshot_suffix]
     snapshot_suffix: Option<&'static str>,
     current_working_directory: Box<Path>,
-    import_plugin: bool,
-    jest_plugin: bool,
-    vitest_plugin: bool,
-    jsx_a11y_plugin: bool,
-    nextjs_plugin: bool,
-    react_perf_plugin: bool,
+    // import_plugin: bool,
+    // jest_plugin: bool,
+    // vitest_plugin: bool,
+    // jsx_a11y_plugin: bool,
+    // nextjs_plugin: bool,
+    // react_perf_plugin: bool,
+    plugins: LintPluginOptions,
 }
 
 impl Tester {
@@ -198,12 +199,7 @@ impl Tester {
             snapshot: String::new(),
             snapshot_suffix: None,
             current_working_directory,
-            import_plugin: false,
-            jest_plugin: false,
-            jsx_a11y_plugin: false,
-            nextjs_plugin: false,
-            react_perf_plugin: false,
-            vitest_plugin: false,
+            plugins: LintPluginOptions::none(),
         }
     }
 
@@ -225,32 +221,32 @@ impl Tester {
     }
 
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
-        self.import_plugin = yes;
+        self.plugins.import = yes;
         self
     }
 
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
-        self.jest_plugin = yes;
+        self.plugins.jest = yes;
         self
     }
 
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
-        self.vitest_plugin = yes;
+        self.plugins.vitest = yes;
         self
     }
 
     pub fn with_jsx_a11y_plugin(mut self, yes: bool) -> Self {
-        self.jsx_a11y_plugin = yes;
+        self.plugins.jsx_a11y = yes;
         self
     }
 
     pub fn with_nextjs_plugin(mut self, yes: bool) -> Self {
-        self.nextjs_plugin = yes;
+        self.plugins.nextjs = yes;
         self
     }
 
     pub fn with_react_perf_plugin(mut self, yes: bool) -> Self {
-        self.react_perf_plugin = yes;
+        self.plugins.react_perf = yes;
         self
     }
 
@@ -350,12 +346,12 @@ impl Tester {
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let options = LintOptions::default()
             .with_fix(fix.into())
-            .with_import_plugin(self.import_plugin)
-            .with_jest_plugin(self.jest_plugin)
-            .with_vitest_plugin(self.vitest_plugin)
-            .with_jsx_a11y_plugin(self.jsx_a11y_plugin)
-            .with_nextjs_plugin(self.nextjs_plugin)
-            .with_react_perf_plugin(self.react_perf_plugin);
+            .with_import_plugin(self.plugins.import)
+            .with_jest_plugin(self.plugins.jest)
+            .with_vitest_plugin(self.plugins.vitest)
+            .with_jsx_a11y_plugin(self.plugins.jsx_a11y)
+            .with_nextjs_plugin(self.plugins.nextjs)
+            .with_react_perf_plugin(self.plugins.react_perf);
         let eslint_config = eslint_config
             .as_ref()
             .map_or_else(OxlintConfig::default, |v| OxlintConfig::deserialize(v).unwrap());
@@ -363,7 +359,7 @@ impl Tester {
             .unwrap()
             .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])
             .with_eslint_config(eslint_config);
-        let path_to_lint = if self.import_plugin {
+        let path_to_lint = if self.plugins.import {
             assert!(path.is_none(), "import plugin does not support path");
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
@@ -391,7 +387,7 @@ impl Tester {
             return TestResult::Fixed(fix_result.fixed_code.to_string());
         }
 
-        let diagnostic_path = if self.import_plugin {
+        let diagnostic_path = if self.plugins.import {
             self.rule_path.strip_prefix(&self.current_working_directory).unwrap()
         } else {
             &self.rule_path

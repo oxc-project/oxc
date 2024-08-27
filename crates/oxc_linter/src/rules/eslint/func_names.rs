@@ -8,7 +8,7 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 use phf::phf_set;
 
@@ -437,19 +437,51 @@ impl Rule for FuncNames {
             let func_name = get_function_name(func);
             let func_name_complete = get_function_name_with_kind(func, parent_node);
 
-            let span = Span::new(func.span.start, func.params.span.start);
+            let report_span = Span::new(func.span.start, func.params.span.start);
+            let replace_span = Span::new(
+                func.span.start,
+                func.type_parameters
+                    .as_ref()
+                    .map_or_else(|| func.params.span.start, |tp| tp.span.start),
+            );
             if func_name.is_some() {
                 ctx.diagnostic_with_suggestion(
-                    named_diagnostic(&func_name_complete, span),
+                    named_diagnostic(&func_name_complete, report_span),
                     |fixer| func.id.as_ref().map_or(fixer.noop(), |id| fixer.delete(id)),
                 );
             } else {
-                ctx.diagnostic_with_fix(unnamed_diagnostic(&func_name_complete, span), |fixer| {
-                    guess_function_name(ctx, parent_node.id()).map_or_else(
-                        || fixer.noop(),
-                        |name| fixer.insert_text_after(&span, format!(" {name}")),
-                    )
-                });
+                ctx.diagnostic_with_fix(
+                    unnamed_diagnostic(&func_name_complete, report_span),
+                    |fixer| {
+                        guess_function_name(ctx, parent_node.id()).map_or_else(
+                            || fixer.noop(),
+                            |name| {
+                                // if this name shadows a variable in the outer scope **and** that name is referenced
+                                // inside the function body, it is unsafe to add a name to this function
+                                if ctx
+                                    .scopes()
+                                    .find_binding(func.scope_id.get().unwrap(), &name)
+                                    .map_or(false, |shadowed_var| {
+                                        ctx.semantic().symbol_references(shadowed_var).any(
+                                            |reference| {
+                                                func.span.contains_inclusive(
+                                                    ctx.nodes()
+                                                        .get_node(reference.node_id())
+                                                        .kind()
+                                                        .span(),
+                                                )
+                                            },
+                                        )
+                                    })
+                                {
+                                    return fixer.noop();
+                                }
+
+                                fixer.insert_text_after(&replace_span, format!(" {name}"))
+                            },
+                        )
+                    },
+                );
             }
         }
     }
@@ -657,7 +689,8 @@ fn test() {
         ("class C { foo = function bar() {} }", never.clone()), // { "ecmaVersion": 2022 }
     ];
 
-    let fix = vec![
+    let fix =
+        vec![
         // lb
         ("const foo = function() {}", "const foo = function foo() {}", always.clone()),
         (
@@ -729,6 +762,48 @@ fn test() {
             never.clone(),
         ),
         ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never.clone()),
+        (
+            "const restoreGracefully = function <T>(entries: T[]) { }",
+            "const restoreGracefully = function  restoreGracefully<T>(entries: T[]) { }",
+            None,
+        ),
+        ("const foo = async function() {}", "const foo = async function foo() {}", always.clone()),
+        (
+            "const foo = async function            () {}",
+            "const foo = async function             foo() {}",
+            always.clone(),
+        ),
+        (
+            "const foo =      async          function      <T>      ()           {}",
+            "const foo =      async          function       foo<T>      ()           {}",
+            always.clone(),
+        ),
+        (
+            "const foo =      async          function      <T           >      ()           {}",
+            "const foo =      async          function       foo<T           >      ()           {}",
+            always.clone(),
+        ),
+        ("const foo = function* () {}", "const foo = function*  foo() {}", always.clone()),
+        (
+            "const foo = async function* (){}",
+            "const foo = async function*  foo(){}",
+            always.clone(),
+        ),
+        (
+            "const foo = async function* <T extends foo>(){}",
+            "const foo = async function*  foo<T extends foo>(){}",
+            always.clone(),
+        ),
+        // we can't fix this case because adding a name would cause the 
+        ("const setState = Component.prototype.setState;
+             Component.prototype.setState = function (update, callback) {
+	             return setState.call(this, update, callback);
+            };",
+        "const setState = Component.prototype.setState;
+             Component.prototype.setState = function (update, callback) {
+	             return setState.call(this, update, callback);
+            };",
+            always.clone(),),
     ];
 
     Tester::new(FuncNames::NAME, pass, fail).expect_fix(fix).test_and_snapshot();

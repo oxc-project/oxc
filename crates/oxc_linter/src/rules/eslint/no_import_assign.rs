@@ -8,10 +8,10 @@ use phf::phf_set;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_import_assign_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_import_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("do not assign to imported bindings")
         .with_help("imported bindings are readonly")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

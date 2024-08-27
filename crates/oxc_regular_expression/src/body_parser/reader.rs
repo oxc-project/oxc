@@ -1,10 +1,29 @@
+// NOTE: The current implementation switches iteration units depending on the mode.
+//
+// This is all for surrogate pairs in non-unicode mode, but it is required only in limited cases:
+// - Group names for named `CapturingGroup`: `(?<name>.)`
+// - Group names for `NamedReference`: `\k<name>`
+// Even if we skip that distinction, it seems the current test262 cases pass due to other errors.
+//
+// Therefore, it is possible to change the implementation to iterate on `char` units always,
+// assuming that change some output of AST for `Character[kind=Symbol]` to `Character[kind=SurrogatePairs]`.
+//
+// However, for the following reasons, we keep the current implementation:
+// - We want to keep the behavior closer to the specification
+//   - and also, to prevent any oversight
+// - Changing does not have a significant impact on performance
+//
+// See also: https://github.com/oxc-project/oxc/pull/5210
 pub struct Reader<'a> {
     source: &'a str,
     unicode_mode: bool,
     /// Current index for `u8_units`(unicode mode) or `u16_units`(non-unicode mode).
     index: usize,
+    /// Iteration units for unicode mode.
     /// Even in non-unicode mode, used for `Span` offset calculation.
     u8_units: Vec<(usize, char)>,
+    /// Iteration units for non-unicode mode.
+    /// To iterate on surrogate pairs, this is needed.
     u16_units: Vec<u16>,
     /// Last offset caches for non-unicode mode.
     last_offset_indices: (usize, usize),
@@ -12,10 +31,9 @@ pub struct Reader<'a> {
 
 impl<'a> Reader<'a> {
     pub fn new(source: &'a str, unicode_mode: bool) -> Self {
-        // NOTE: Distinguish these 2 units looks cleaner, but it may not be necessary.
-        // As as a parser, AST `Character[kind=Symbol]` only needs to be aware of this for surrogate pairs.
         // NOTE: Collecting `Vec` may not be efficient if the source is too large.
         // Implements lookahead cache with `VecDeque` is better...?
+        // But when I tried once, there are no notable improvements.
         let u8_units = source.char_indices().collect::<Vec<_>>();
         let u16_units = if unicode_mode { "" } else { source }.encode_utf16().collect::<Vec<_>>();
 
@@ -26,6 +44,8 @@ impl<'a> Reader<'a> {
         if self.unicode_mode {
             self.u8_units.get(self.index).map_or(self.source.len(), |(idx, _)| *idx)
         } else {
+            // NOTE: This does not return valid `Span` offset for surrogate pairs.
+            // In the first place, there is no such thing as string slice corresponding to them...
             let (mut u16_idx, mut u8_idx) = self.last_offset_indices;
             for (idx, ch) in &self.u8_units[u8_idx..] {
                 if self.index <= u16_idx {
@@ -55,6 +75,7 @@ impl<'a> Reader<'a> {
         self.index += 1;
     }
 
+    // We need a code point, not a char.
     fn peek_nth(&self, n: usize) -> Option<u32> {
         let nth = self.index + n;
 

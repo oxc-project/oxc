@@ -8,21 +8,21 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn missing_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing parameters.").with_label(span0)
+fn missing_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing parameters.").with_label(span)
 }
 
-fn missing_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing radix parameter.").with_label(span0)
+fn missing_radix(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing radix parameter.").with_label(span)
 }
 
-fn redundant_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Redundant radix parameter.").with_label(span0)
+fn redundant_radix(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Redundant radix parameter.").with_label(span)
 }
 
-fn invalid_radix(span0: Span) -> OxcDiagnostic {
+fn invalid_radix(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid radix parameter, must be an integer between 2 and 36.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

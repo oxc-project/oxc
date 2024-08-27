@@ -10,13 +10,13 @@ use oxc_span::GetSpan;
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
-fn string_literal(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("This pattern can be replaced with `{x1}`.")).with_label(span0)
+fn string_literal(span: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("This pattern can be replaced with `{x1}`.")).with_label(span)
 }
 
-fn use_replace_all(span0: Span) -> OxcDiagnostic {
+fn use_replace_all(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
