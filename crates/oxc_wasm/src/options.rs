@@ -5,6 +5,24 @@ use wasm_bindgen::prelude::*;
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
+pub struct OxcOptions {
+    #[tsify(optional)]
+    pub run: Option<OxcRunOptions>,
+    #[tsify(optional)]
+    pub parser: Option<OxcParserOptions>,
+    #[tsify(optional)]
+    pub linter: Option<OxcLinterOptions>,
+    #[tsify(optional)]
+    pub codegen: Option<OxcCodegenOptions>,
+    #[tsify(optional)]
+    pub minifier: Option<OxcMinifierOptions>,
+    #[tsify(optional)]
+    pub type_checking: Option<OxcTypeCheckingOptions>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Tsify)]
+#[tsify(from_wasm_abi)]
+#[serde(rename_all = "camelCase")]
 pub struct OxcRunOptions {
     #[tsify(optional)]
     pub syntax: Option<bool>,
@@ -99,4 +117,6 @@ impl Default for OxcCompressOptions {
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
-pub struct OxcTypeCheckingOptions;
+// allow empty object for future compatibility
+#[allow(clippy::empty_structs_with_brackets)]
+pub struct OxcTypeCheckingOptions {}

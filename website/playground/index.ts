@@ -140,6 +140,7 @@ class Playground {
   linterConf: Compartment;
   urlParams: URLParams;
   viewerIsEditableConf: Compartment;
+  sourceText: string = ''
 
   constructor() {
     this.languageConf = new Compartment();
@@ -171,10 +172,10 @@ class Playground {
     return linter(() => this.updateDiagnostics(), { delay: 0 })
   }
 
-  runOxc(text: string | undefined) {
+  runOxc(text: string) {
     const sourceText = text;
     this.urlParams.updateCode(sourceText);
-    this.oxc.sourceText = sourceText;
+    this.sourceText = sourceText;
     this.sourceTextUtf8 = new TextEncoder().encode(sourceText);
     this.updateView();
   }
@@ -335,13 +336,13 @@ class Playground {
 
   run() {
     const start = new Date();
-    this.oxc.run(
-      this.runOptions,
-      this.parserOptions,
-      this.linterOptions,
-      this.codegenOptions,
-      this.minifierOptions,
-    );
+    this.oxc.run(this.sourceText, {
+      run: this.runOptions,
+      parser: this.parserOptions,
+      linter: this.linterOptions,
+      codegen: this.codegenOptions,
+      minifier: this.minifierOptions,
+    })
     const elapsed = new Date() - start;
     document.getElementById("duration")!.innerText = `${elapsed}ms`;
   }
@@ -702,7 +703,7 @@ async function main() {
   document.getElementById("file-type-select").onchange = function (e) {
     playground.parserOptions.sourceFilename= `test.${e.target.value}`;
     // Need to repaint the editor to clear the rendered linter diagnostics
-    const sourceText = playground.oxc.sourceText;
+    const sourceText = playground.sourceText;
     playground.updateEditorText(playground.editor, "");
     playground.updateView();
     playground.updateEditorText(playground.editor, sourceText);
@@ -712,7 +713,7 @@ async function main() {
     const checked = document.getElementById("syntax-checkbox").checked;
     playground.runOptions.syntax = checked;
     // Need to repaint the editor to clear the rendered linter diagnostics
-    const sourceText = playground.oxc.sourceText;
+    const sourceText = playground.sourceText;
     playground.updateEditorText(playground.editor, "");
     playground.updateView();
     playground.updateEditorText(playground.editor, sourceText);
@@ -722,7 +723,7 @@ async function main() {
     const checked = document.getElementById("lint-checkbox").checked;
     playground.runOptions.lint = checked;
     // Need to repaint the editor to clear the rendered linter diagnostics
-    const sourceText = playground.oxc.sourceText;
+    const sourceText = playground.sourceText;
     playground.updateEditorText(playground.editor, "");
     playground.updateView();
     playground.updateEditorText(playground.editor, sourceText);
