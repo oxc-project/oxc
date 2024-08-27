@@ -10,32 +10,12 @@ Passed: 10/36
 # babel-plugin-transform-typescript (2/7)
 * computed-constant-value/input.ts
   x Missing ReferenceId: Infinity
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/computed-constant-value/input.ts:1:1]
- 1 | enum A {
-   : ^
- 2 |   a = Infinity,
-   `----
 
   x Missing ReferenceId: Infinity
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/computed-constant-value/input.ts:1:1]
- 1 | enum A {
-   : ^
- 2 |   a = Infinity,
-   `----
 
   x Missing ReferenceId: Infinity
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/computed-constant-value/input.ts:1:1]
- 1 | enum A {
-   : ^
- 2 |   a = Infinity,
-   `----
 
   x Missing ReferenceId: Infinity
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/computed-constant-value/input.ts:1:1]
- 1 | enum A {
-   : ^
- 2 |   a = Infinity,
-   `----
 
   x Bindings mismatch:
   | after transform: ScopeId(1): ["A", "a", "b", "c", "d", "e"]
@@ -104,11 +84,6 @@ Passed: 10/36
 
 * enum-member-reference/input.ts
   x Missing ReferenceId: Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/enum-member-reference/input.ts:1:1]
- 1 | var x = 10;
-   : ^
- 2 | 
-   `----
 
   x Bindings mismatch:
   | after transform: ScopeId(1): ["Foo", "a", "b", "c"]
@@ -133,39 +108,14 @@ Passed: 10/36
 
 * export-elimination/input.ts
   x Missing SymbolId: Name
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:1:1]
- 1 | import Im, {Ok} from 'a';
-   : ^
- 2 | class Foo {}
-   `----
 
   x Missing SymbolId: _Name
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:1:1]
- 1 | import Im, {Ok} from 'a';
-   : ^
- 2 | class Foo {}
-   `----
 
   x Missing ReferenceId: _Name
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:1:1]
- 1 | import Im, {Ok} from 'a';
-   : ^
- 2 | class Foo {}
-   `----
 
   x Missing ReferenceId: Name
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:1:1]
- 1 | import Im, {Ok} from 'a';
-   : ^
- 2 | class Foo {}
-   `----
 
   x Missing ReferenceId: Name
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:1:1]
- 1 | import Im, {Ok} from 'a';
-   : ^
- 2 | class Foo {}
-   `----
 
   x Bindings mismatch:
   | after transform: ScopeId(0): ["Baq", "Bar", "Baz", "Foo", "Func", "Im",
@@ -557,11 +507,6 @@ Passed: 10/36
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
   x Missing ScopeId
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx:1:1]
- 1 | import FancyHook from 'fancy';
-   : ^
- 2 | 
-   `----
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(10): [ReferenceId(17), ReferenceId(18),
@@ -598,18 +543,8 @@ Passed: 10/36
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
   x Missing ScopeId
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/includes-custom-hooks-into-the-signatures/input.jsx:1:1]
- 1 | function useFancyState() {
-   : ^
- 2 |   const [foo, setFoo] = React.useState(0);
-   `----
 
   x Missing ScopeId
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/includes-custom-hooks-into-the-signatures/input.jsx:1:1]
- 1 | function useFancyState() {
-   : ^
- 2 |   const [foo, setFoo] = React.useState(0);
-   `----
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(8): [ReferenceId(10), ReferenceId(11),
@@ -1222,144 +1157,44 @@ Passed: 10/36
 * refresh/supports-typescript-namespace-syntax/input.tsx
   x Output mismatch
   x Missing SymbolId: Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing SymbolId: _Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing SymbolId: Bar
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing SymbolId: _Bar
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: _Bar
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: _Bar
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: Bar
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: Bar
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: _Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: _Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: _Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: _Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: D
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing SymbolId: NotExported
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing SymbolId: _NotExported
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: _NotExported
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: NotExported
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: NotExported
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Missing ReferenceId: Foo
-   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
- 1 | namespace Foo {
-   : ^
- 2 |   export namespace Bar {
-   `----
 
   x Binding symbols mismatch:
   | after transform: ScopeId(0): [SymbolId(0)]

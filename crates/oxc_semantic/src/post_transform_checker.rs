@@ -96,9 +96,9 @@ use rustc_hash::FxHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, ast_kind::AstKind, visit::walk, Visit};
+use oxc_ast::{ast::*, visit::walk, Visit};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::CompactStr;
 use oxc_syntax::{
     reference::ReferenceId,
     scope::{ScopeFlags, ScopeId},
@@ -269,10 +269,6 @@ impl Errors {
     /// Add an error string
     fn push<S: AsRef<str>>(&mut self, message: S) {
         self.0.push(OxcDiagnostic::error(message.as_ref().trim().to_string()));
-    }
-
-    fn push_with_label<S: Into<String>>(&mut self, message: S, span: Span) {
-        self.0.push(OxcDiagnostic::error(message.into()).with_label(span));
     }
 
     /// Add an error for a mismatch between a pair of values, with IDs
@@ -556,24 +552,23 @@ impl<'s> PostTransformChecker<'s> {
 /// Collector of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
 ///
 /// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
-struct SemanticIdsCollector<'a, 'e> {
+struct SemanticIdsCollector<'e> {
     scope_ids: Vec<Option<ScopeId>>,
     symbol_ids: Vec<Option<SymbolId>>,
     reference_ids: Vec<Option<ReferenceId>>,
-    kinds: Vec<AstKind<'a>>,
     errors: &'e mut Errors,
 }
 
-impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
+impl<'e> SemanticIdsCollector<'e> {
     fn new(errors: &'e mut Errors) -> Self {
-        Self { scope_ids: vec![], symbol_ids: vec![], reference_ids: vec![], kinds: vec![], errors }
+        Self { scope_ids: vec![], symbol_ids: vec![], reference_ids: vec![], errors }
     }
 
     /// Collect IDs and check for errors
     #[allow(clippy::type_complexity)]
     fn collect(
         mut self,
-        program: &Program<'a>,
+        program: &Program<'_>,
     ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>) {
         if !program.source_type.is_typescript_definition() {
             self.visit_program(program);
@@ -582,20 +577,12 @@ impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
     }
 }
 
-impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'a, 'e> {
-    fn enter_node(&mut self, kind: AstKind<'a>) {
-        self.kinds.push(kind);
-    }
-
-    fn leave_node(&mut self, _kind: AstKind<'a>) {
-        self.kinds.pop();
-    }
-
+impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'e> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let scope_id = scope_id.get();
         self.scope_ids.push(scope_id);
         if scope_id.is_none() {
-            self.errors.push_with_label("Missing ScopeId", self.kinds.last().unwrap().span());
+            self.errors.push("Missing ScopeId");
         }
     }
 
@@ -603,7 +590,7 @@ impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'a, 'e> {
         let reference_id = ident.reference_id.get();
         self.reference_ids.push(reference_id);
         if reference_id.is_none() {
-            self.errors.push_with_label(format!("Missing ReferenceId: {}", ident.name), ident.span);
+            self.errors.push(format!("Missing ReferenceId: {}", ident.name));
         }
     }
 
@@ -611,7 +598,7 @@ impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'a, 'e> {
         let symbol_id = ident.symbol_id.get();
         self.symbol_ids.push(symbol_id);
         if symbol_id.is_none() {
-            self.errors.push_with_label(format!("Missing SymbolId: {}", ident.name), ident.span);
+            self.errors.push(format!("Missing SymbolId: {}", ident.name));
         }
     }
 
