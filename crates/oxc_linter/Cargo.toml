@@ -52,6 +52,7 @@ once_cell           = { workspace = true }
 memchr              = { workspace = true }
 json-strip-comments = { workspace = true }
 schemars            = { workspace = true, features = ["indexmap2"] }
+globset             = { workspace = true }
 simdutf8            = { workspace = true }
 
 [dev-dependencies]

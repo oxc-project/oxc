@@ -1619,6 +1619,7 @@ dependencies = [
  "bitflags 2.6.0",
  "convert_case",
  "dashmap 6.0.1",
+ "globset",
  "insta",
  "itertools",
  "json-strip-comments",

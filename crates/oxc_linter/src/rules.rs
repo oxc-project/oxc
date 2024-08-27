@@ -357,6 +357,7 @@ mod jsx_a11y {
     pub mod html_has_lang;
     pub mod iframe_has_title;
     pub mod img_redundant_alt;
+    pub mod label_has_associated_control;
     pub mod lang;
     pub mod media_has_caption;
     pub mod mouse_events_have_key_events;
@@ -793,6 +794,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::lang,
     jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
+    jsx_a11y::label_has_associated_control,
     jsx_a11y::media_has_caption,
     jsx_a11y::mouse_events_have_key_events,
     jsx_a11y::no_access_key,
