@@ -93,9 +93,9 @@ use std::{
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, visit::walk, Visit};
+use oxc_ast::{ast::*, ast_kind::AstKind, visit::walk, Visit};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::CompactStr;
+use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::{
     reference::ReferenceId,
     scope::{ScopeFlags, ScopeId},
@@ -314,11 +314,6 @@ impl<'s> PostTransformChecker<'s> {
         for (&scope_id_after_transform, &scope_id_rebuilt) in
             self.after_transform.ids.scope_ids.iter().zip(self.rebuilt.ids.scope_ids.iter())
         {
-            let (Some(scope_id_after_transform), Some(scope_id_rebuilt)) =
-                (scope_id_after_transform, scope_id_rebuilt)
-            else {
-                continue;
-            };
             self.scope_ids_map.insert(scope_id_after_transform, scope_id_rebuilt);
         }
 
@@ -360,44 +355,17 @@ impl<'s> PostTransformChecker<'s> {
                 binding_names
             }
 
-            let scope_ids = match scope_ids.into_parts() {
-                (None, None) => continue,
-                (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
-                    let scope_ids = Pair::new(scope_id_after_transform, scope_id_rebuilt);
-                    let binding_names = self.get_pair(scope_ids, get_sorted_binding_names);
-                    if binding_names.is_mismatch() {
-                        self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
-                    } else {
-                        let symbol_ids = self.get_pair(scope_ids, |data, scope_id| {
-                            data.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
-                        });
-                        if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
-                            self.errors.push_mismatch(
-                                "Binding symbols mismatch",
-                                scope_ids,
-                                symbol_ids,
-                            );
-                        }
-                    }
-                    scope_ids
+            let binding_names = self.get_pair(scope_ids, get_sorted_binding_names);
+            if binding_names.is_mismatch() {
+                self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
+            } else {
+                let symbol_ids = self.get_pair(scope_ids, |data, scope_id| {
+                    data.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
+                });
+                if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
+                    self.errors.push_mismatch("Binding symbols mismatch", scope_ids, symbol_ids);
                 }
-                (Some(scope_id), None) => {
-                    let binding_names = get_sorted_binding_names(&self.after_transform, scope_id);
-                    self.errors.push_mismatch_strs(
-                        "Bindings mismatch",
-                        Pair::new(format!("{scope_id:?}: {binding_names:?}").as_str(), "No scope"),
-                    );
-                    continue;
-                }
-                (None, Some(scope_id)) => {
-                    let binding_names = get_sorted_binding_names(&self.rebuilt, scope_id);
-                    self.errors.push_mismatch_strs(
-                        "Bindings mismatch",
-                        Pair::new("No scope", format!("{scope_id:?}: {binding_names:?}").as_str()),
-                    );
-                    continue;
-                }
-            };
+            }
 
             // Check flags match
             let flags = self.get_pair(scope_ids, |data, scope_id| data.scopes.get_flags(scope_id));
@@ -635,7 +603,7 @@ impl<'s> PostTransformChecker<'s> {
 /// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
 #[derive(Default)]
 pub struct SemanticIds {
-    scope_ids: Vec<Option<ScopeId>>,
+    scope_ids: Vec<ScopeId>,
     symbol_ids: Vec<SymbolId>,
     reference_ids: Vec<ReferenceId>,
 }
@@ -655,20 +623,35 @@ impl SemanticIds {
     }
 }
 
-struct SemanticIdsCollector<'c> {
+struct SemanticIdsCollector<'a, 'c> {
     ids: &'c mut SemanticIds,
     errors: Vec<OxcDiagnostic>,
+    kinds: Vec<AstKind<'a>>,
 }
 
-impl<'c> SemanticIdsCollector<'c> {
+impl<'a, 'c> SemanticIdsCollector<'a, 'c> {
     fn new(ids: &'c mut SemanticIds) -> Self {
-        Self { ids, errors: vec![] }
+        Self { ids, errors: vec![], kinds: vec![] }
     }
 }
 
-impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'c> {
+impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'a, 'c> {
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        self.kinds.push(kind);
+    }
+
+    fn leave_node(&mut self, _kind: AstKind<'a>) {
+        self.kinds.pop();
+    }
+
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        self.ids.scope_ids.push(scope_id.get());
+        if let Some(scope_id) = scope_id.get() {
+            self.ids.scope_ids.push(scope_id);
+        } else {
+            let message = "Missing ScopeId".to_string();
+            self.errors
+                .push(OxcDiagnostic::error(message).with_label(self.kinds.last().unwrap().span()));
+        }
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {

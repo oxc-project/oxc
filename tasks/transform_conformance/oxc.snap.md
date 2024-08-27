@@ -446,91 +446,32 @@ Passed: 10/36
 
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
-  x Bindings mismatch:
-  | after transform: No scope
-  | rebuilt        : ScopeId(3): []
+  x Semantic Collector failed after transform
 
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(10): [ReferenceId(17), ReferenceId(18),
-  | ReferenceId(20)]
-  | rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(16)]
-
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(9): [ReferenceId(12), ReferenceId(13),
-  | ReferenceId(15)]
-  | rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7)]
-
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(7): [ReferenceId(9), ReferenceId(21),
-  | ReferenceId(22)]
-  | rebuilt        : SymbolId(10): [ReferenceId(19), ReferenceId(22)]
-
-  x Reference symbol mismatch:
-  | after transform: ReferenceId(17): Some("_s2")
-  | rebuilt        : ReferenceId(0): None
-
-  x Reference symbol mismatch:
-  | after transform: ReferenceId(12): Some("_s")
-  | rebuilt        : ReferenceId(2): None
-
-  x Reference symbol mismatch:
-  | after transform: ReferenceId(21): Some("_c")
-  | rebuilt        : ReferenceId(21): None
-
-  x Unresolved references mismatch:
-  | after transform: ["React", "useFancyEffect", "useThePlatform"]
-  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React",
-  | "useFancyEffect", "useThePlatform"]
+  x Missing ScopeId
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx:1:1]
+ 1 | import FancyHook from 'fancy';
+   : ^
+ 2 | 
+   `----
 
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
-  x Bindings mismatch:
-  | after transform: No scope
-  | rebuilt        : ScopeId(2): []
+  x Semantic Collector failed after transform
 
-  x Bindings mismatch:
-  | after transform: No scope
-  | rebuilt        : ScopeId(6): []
+  x Missing ScopeId
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/includes-custom-hooks-into-the-signatures/input.jsx:1:1]
+ 1 | function useFancyState() {
+   : ^
+ 2 |   const [foo, setFoo] = React.useState(0);
+   `----
 
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(8): [ReferenceId(10), ReferenceId(11),
-  | ReferenceId(13)]
-  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(7)]
-
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(9): [ReferenceId(14), ReferenceId(15),
-  | ReferenceId(17)]
-  | rebuilt        : SymbolId(2): [ReferenceId(10), ReferenceId(12)]
-
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(10): [ReferenceId(19), ReferenceId(20),
-  | ReferenceId(22)]
-  | rebuilt        : SymbolId(3): [ReferenceId(14), ReferenceId(18)]
-
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(6): [ReferenceId(6), ReferenceId(23),
-  | ReferenceId(24)]
-  | rebuilt        : SymbolId(10): [ReferenceId(21), ReferenceId(24)]
-
-  x Reference symbol mismatch:
-  | after transform: ReferenceId(10): Some("_s")
-  | rebuilt        : ReferenceId(0): None
-
-  x Reference symbol mismatch:
-  | after transform: ReferenceId(14): Some("_s2")
-  | rebuilt        : ReferenceId(1): None
-
-  x Reference symbol mismatch:
-  | after transform: ReferenceId(19): Some("_s3")
-  | rebuilt        : ReferenceId(2): None
-
-  x Reference symbol mismatch:
-  | after transform: ReferenceId(23): Some("_c")
-  | rebuilt        : ReferenceId(23): None
-
-  x Unresolved references mismatch:
-  | after transform: ["React"]
-  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React"]
+  x Missing ScopeId
+   ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/includes-custom-hooks-into-the-signatures/input.jsx:1:1]
+ 1 | function useFancyState() {
+   : ^
+ 2 |   const [foo, setFoo] = React.useState(0);
+   `----
 
 
 * refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
