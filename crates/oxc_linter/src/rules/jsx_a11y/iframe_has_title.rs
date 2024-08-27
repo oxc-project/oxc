@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn iframe_has_title_diagnostic(span0: Span) -> OxcDiagnostic {
+fn iframe_has_title_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing `title` attribute for the `iframe` element.")
         .with_help("Provide title property for iframe element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

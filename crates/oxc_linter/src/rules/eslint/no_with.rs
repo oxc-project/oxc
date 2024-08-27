@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_with_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_with_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected use of `with` statement.")
         .with_help("Do not use the `with` statement.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -19,6 +19,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    utils::read_to_string,
     Fixer, Linter, Message,
 };
 
@@ -176,7 +177,7 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let file_result = fs::read_to_string(path).map_err(|e| {
+        let file_result = read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {path:?} with error \"{e}\""
             )))
@@ -255,6 +256,7 @@ impl Runtime {
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
+                parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })

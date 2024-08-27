@@ -14,8 +14,8 @@ use crate::{
     utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
-fn no_test_return_statement_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Jest tests should not return a value").with_label(span0)
+fn no_test_return_statement_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Jest tests should not return a value").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

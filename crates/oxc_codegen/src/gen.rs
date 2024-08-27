@@ -18,11 +18,13 @@ use crate::{
 };
 
 pub trait Gen {
-    fn gen(&self, _p: &mut Codegen, _ctx: Context) {}
+    #[allow(unused_variables)]
+    fn gen(&self, p: &mut Codegen, ctx: Context) {}
 }
 
 pub trait GenExpr {
-    fn gen_expr(&self, _p: &mut Codegen, _precedence: Precedence, _ctx: Context) {}
+    #[allow(unused_variables)]
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {}
 }
 
 impl<'a, T> Gen for Box<'a, T>

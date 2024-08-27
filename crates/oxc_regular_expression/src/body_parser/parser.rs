@@ -1565,7 +1565,8 @@ impl<'a> PatternParser<'a> {
     // ```
     /// Returns: ((min, max), greedy)
     #[allow(clippy::type_complexity)]
-    fn consume_quantifier(&mut self) -> Result<Option<((u32, Option<u32>), bool)>> {
+    fn consume_quantifier(&mut self) -> Result<Option<((u64, Option<u64>), bool)>> {
+        const MAX_QUANTIFIER: u64 = 9_007_199_254_740_991; // 2^53 - 1
         let is_greedy = |reader: &mut Reader| !reader.eat('?');
 
         if self.reader.eat('*') {
@@ -1583,11 +1584,27 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('{') {
             if let Some(min) = self.consume_decimal_digits() {
                 if self.reader.eat('}') {
+                    if MAX_QUANTIFIER < min {
+                        return Err(OxcDiagnostic::error(
+                            "Number is too large in braced quantifier",
+                        )
+                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    }
+
                     return Ok(Some(((min, Some(min)), is_greedy(&mut self.reader))));
                 }
 
                 if self.reader.eat(',') {
                     if self.reader.eat('}') {
+                        if MAX_QUANTIFIER < min {
+                            return Err(OxcDiagnostic::error(
+                                "Number is too large in braced quantifier",
+                            )
+                            .with_label(
+                                self.span_factory.create(span_start, self.reader.offset()),
+                            ));
+                        }
+
                         return Ok(Some(((min, None), is_greedy(&mut self.reader))));
                     }
 
@@ -1598,6 +1615,14 @@ impl<'a> PatternParser<'a> {
                                 // It is a Syntax Error if the MV of the first DecimalDigits is strictly greater than the MV of the second DecimalDigits.
                                 return Err(OxcDiagnostic::error(
                                     "Numbers out of order in braced quantifier",
+                                )
+                                .with_label(
+                                    self.span_factory.create(span_start, self.reader.offset()),
+                                ));
+                            }
+                            if MAX_QUANTIFIER < min || MAX_QUANTIFIER < max {
+                                return Err(OxcDiagnostic::error(
+                                    "Number is too large in braced quantifier",
                                 )
                                 .with_label(
                                     self.span_factory.create(span_start, self.reader.offset()),
@@ -1626,7 +1651,8 @@ impl<'a> PatternParser<'a> {
         if let Some(index) = self.consume_decimal_digits() {
             // \0 is CharacterEscape, not DecimalEscape
             if index != 0 {
-                return Some(index);
+                #[allow(clippy::cast_possible_truncation)]
+                return Some(index as u32);
             }
 
             self.reader.rewind(checkpoint);
@@ -1642,13 +1668,15 @@ impl<'a> PatternParser<'a> {
     //   [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
     // ```
     // ([Sep] is disabled for `QuantifierPrefix` and `DecimalEscape`, skip it)
-    fn consume_decimal_digits(&mut self) -> Option<u32> {
+    fn consume_decimal_digits(&mut self) -> Option<u64> {
         let checkpoint = self.reader.checkpoint();
 
         let mut value = 0;
         while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digit(cp)) {
             // `- '0' as u32`: convert code point to digit
-            value = (10 * value) + (cp - '0' as u32);
+            #[allow(clippy::cast_lossless)]
+            let d = (cp - '0' as u32) as u64;
+            value = (10 * value) + d;
             self.reader.advance();
         }
 

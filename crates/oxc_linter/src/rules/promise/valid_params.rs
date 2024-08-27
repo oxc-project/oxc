@@ -6,40 +6,36 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};
 
 fn zero_or_one_argument_required_diagnostic(
-    span0: Span,
+    span: Span,
     prop_name: &str,
     args_len: usize,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Promise.{prop_name}() requires 0 or 1 arguments, but received {args_len}"
     ))
-    .with_label(span0)
+    .with_label(span)
 }
 
 fn one_or_two_argument_required_diagnostic(
-    span0: Span,
+    span: Span,
     prop_name: &str,
     args_len: usize,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Promise.{prop_name}() requires 1 or 2 arguments, but received {args_len}"
     ))
-    .with_label(span0)
+    .with_label(span)
 }
 
-fn one_argument_required_diagnostic(
-    span0: Span,
-    prop_name: &str,
-    args_len: usize,
-) -> OxcDiagnostic {
+fn one_argument_required_diagnostic(span: Span, prop_name: &str, args_len: usize) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Promise.{prop_name}() requires 1 argument, but received {args_len}"
     ))
-    .with_label(span0)
+    .with_label(span)
 }
 
-fn valid_params_diagnostic(span0: Span, x0: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(x0.to_string()).with_label(span0)
+fn valid_params_diagnostic(span: Span, x0: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(x0.to_string()).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

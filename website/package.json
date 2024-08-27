@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "packageManager": "pnpm@9.8.0",
   "scripts": {
     "dev": "pnpm run wasm-dev && concurrently 'vite' 'cd .. && cargo watch --workdir website -s \"pnpm run wasm-dev\"'",
     "wasm-dev": "wasm-pack build --out-dir ../../npm/oxc-wasm --target web --dev --scope oxc ../crates/oxc_wasm",
@@ -40,6 +41,5 @@
   "engines": {
     "node": ">=20.14.0",
     "pnpm": ">=9.2.0"
-  },
-  "packageManager": "pnpm@9.7.1"
+  }
 }

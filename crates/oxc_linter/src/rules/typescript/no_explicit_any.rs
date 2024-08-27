@@ -6,10 +6,10 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_explicit_any_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_explicit_any_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected any. Specify a different type.")
         .with_help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

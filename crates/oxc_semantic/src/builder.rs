@@ -2013,7 +2013,19 @@ impl<'a> SemanticBuilder<'a> {
         for node in self.nodes.iter_parents(self.current_node_id).skip(1) {
             return match node.kind() {
                 AstKind::ParenthesizedExpression(_) => continue,
-                AstKind::ExpressionStatement(_) => false,
+                AstKind::ExpressionStatement(_) => {
+                    if self.current_scope_flags().is_arrow() {
+                        if let Some(node) = self.nodes.iter_parents(node.id()).nth(2) {
+                            // (x) => x++
+                            //        ^^^ implicit return, we need to treat `x` as a read reference
+                            if matches!(node.kind(), AstKind::ArrowFunctionExpression(arrow) if arrow.expression)
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                    false
+                }
                 _ => true,
             };
         }

@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, AstNode};
 
-fn no_constant_condition_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant condition")
         .with_help("Constant expression as a test condition is not allowed")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

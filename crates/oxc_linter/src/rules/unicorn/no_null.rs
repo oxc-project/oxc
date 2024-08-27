@@ -1,6 +1,7 @@
 use oxc_ast::{
     ast::{
-        Argument, BinaryExpression, CallExpression, Expression, NullLiteral, VariableDeclarator,
+        Argument, BinaryExpression, CallExpression, Expression, NullLiteral, SwitchStatement,
+        VariableDeclarator,
     },
     AstKind,
 };
@@ -8,30 +9,23 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
+use serde_json::Value;
 
 use crate::{
-    ast_util::is_method_call,
+    ast_util::{is_method_call, iter_outer_expressions},
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
 
-fn replace_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of the `null` literal")
-        .with_help("Replace the `null` literal with `undefined`.")
-        .with_label(span0)
-}
-
-fn remove_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of the `null` literal")
-        .with_help("Remove the `null` literal.")
-        .with_label(span0)
+fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use `null` literals").with_label(null)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNull {
-    check_strict_equality: Option<bool>,
+    check_strict_equality: bool,
 }
 
 declare_oxc_lint!(
@@ -56,48 +50,51 @@ declare_oxc_lint!(
     /// ```
     NoNull,
     style,
-    fix
+    conditional_fix
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
-    call_expr.arguments.get(index).map_or(false, |arg| {
-        if let Argument::NullLiteral(null_lit) = arg {
-            return null_lit.span == span;
-        }
-
-        false
-    })
+    match call_expr
+        .arguments
+        .get(index)
+        .and_then(Argument::as_expression)
+        .map(Expression::get_inner_expression)
+    {
+        Some(Expression::NullLiteral(null_lit)) => span.contains_inclusive(null_lit.span),
+        _ => false,
+    }
 }
 
-fn diagnose_binary_expression(
-    no_null: &NoNull,
-    ctx: &LintContext,
-    null_literal: &NullLiteral,
-    binary_expr: &BinaryExpression,
-) {
-    // checkStrictEquality=false && `if (foo !== null) {}`
-    if !no_null.check_strict_equality.is_some_and(|val| val)
-        && matches!(
-            binary_expr.operator,
-            BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
-        )
-    {
-        return;
+impl NoNull {
+    fn diagnose_binary_expression(
+        &self,
+        ctx: &LintContext,
+        null_literal: &NullLiteral,
+        binary_expr: &BinaryExpression,
+    ) {
+        match binary_expr.operator {
+            // `if (foo != null) {}`
+            BinaryOperator::Equality | BinaryOperator::Inequality => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    fix_null(fixer, null_literal)
+                });
+            }
+
+            // `if (foo !== null) {}`
+            BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
+                if self.check_strict_equality {
+                    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                        fix_null(fixer, null_literal)
+                    });
+                }
+            }
+            _ => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    fix_null(fixer, null_literal)
+                });
+            }
+        }
     }
-
-    // `if (foo != null) {}`
-    if matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
-        ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
-            fix_null(fixer, null_literal)
-        });
-
-        return;
-    }
-
-    // checkStrictEquality=true && `if (foo !== null) {}`
-    ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
-        fix_null(fixer, null_literal)
-    });
 }
 
 fn diagnose_variable_declarator(
@@ -110,7 +107,7 @@ fn diagnose_variable_declarator(
     if matches!(&variable_declarator.init, Some(Expression::NullLiteral(expr)) if expr.span == null_literal.span)
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
-        ctx.diagnostic_with_fix(remove_null_diagnostic(null_literal.span), |fixer| {
+        ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
             fixer.delete_range(Span::new(variable_declarator.id.span().end, null_literal.span.end))
         });
 
@@ -118,7 +115,7 @@ fn diagnose_variable_declarator(
     }
 
     // `const foo = null`
-    ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
         fix_null(fixer, null_literal)
     });
 }
@@ -164,12 +161,13 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
 }
 
 impl Rule for NoNull {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: Value) -> Self {
         Self {
             check_strict_equality: value
                 .get(0)
                 .and_then(|v| v.get("checkStrictEquality"))
-                .and_then(serde_json::Value::as_bool),
+                .and_then(Value::as_bool)
+                .unwrap_or_default(),
         }
     }
 
@@ -178,52 +176,67 @@ impl Rule for NoNull {
             return;
         };
 
-        if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-            let grand_parent_kind = ctx.nodes().parent_kind(parent_node.id());
+        let mut parents = iter_outer_expressions(ctx, node.id());
+        let Some(parent_kind) = parents.next().map(AstNode::kind) else {
+            ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                fix_null(fixer, null_literal)
+            });
+            return;
+        };
 
-            if matches!(parent_node.kind(), AstKind::Argument(_)) {
-                if let Some(AstKind::CallExpression(call_expr)) = grand_parent_kind {
-                    if match_call_expression_pass_case(null_literal, call_expr) {
-                        return;
-                    }
-                }
+        let grandparent_kind = parents.next().map(AstNode::kind);
+        match (parent_kind, grandparent_kind) {
+            (AstKind::Argument(_), Some(AstKind::CallExpression(call_expr)))
+                if match_call_expression_pass_case(null_literal, call_expr) =>
+            {
+                // no violation
             }
-
-            if let AstKind::BinaryExpression(binary_expr) = parent_node.kind() {
-                diagnose_binary_expression(self, ctx, null_literal, binary_expr);
-                return;
+            (AstKind::BinaryExpression(binary_expr), _) => {
+                self.diagnose_binary_expression(ctx, null_literal, binary_expr);
             }
-
-            if let AstKind::VariableDeclarator(variable_declarator) = parent_node.kind() {
-                diagnose_variable_declarator(
-                    ctx,
-                    null_literal,
-                    variable_declarator,
-                    grand_parent_kind,
-                );
-
-                return;
+            (AstKind::VariableDeclarator(decl), _) => {
+                diagnose_variable_declarator(ctx, null_literal, decl, grandparent_kind);
             }
-
-            // `function foo() { return null; }`,
-            if matches!(parent_node.kind(), AstKind::ReturnStatement(_)) {
-                ctx.diagnostic_with_fix(remove_null_diagnostic(null_literal.span), |fixer| {
-                    fixer.delete_range(null_literal.span)
+            (AstKind::ReturnStatement(_), _) => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    fixer.delete(null_literal)
                 });
-
-                return;
+            }
+            (AstKind::SwitchCase(_), Some(AstKind::SwitchStatement(switch))) => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    try_fix_case(fixer, null_literal, switch)
+                });
+            }
+            _ => {
+                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                    fix_null(fixer, null_literal)
+                });
             }
         }
-
-        ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
-            fix_null(fixer, null_literal)
-        });
     }
 }
 
 fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
     fixer.replace(null.span, "undefined")
 }
+
+fn try_fix_case<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    null: &NullLiteral,
+    switch: &SwitchStatement<'a>,
+) -> RuleFix<'a> {
+    let also_has_undefined = switch
+        .cases
+        .iter()
+        .filter_map(|case| case.test.as_ref())
+        .any(|test| test.get_inner_expression().is_undefined());
+    if also_has_undefined {
+        fixer.noop()
+    } else {
+        fixer.replace(null.span, "undefined")
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -237,6 +250,7 @@ fn test() {
     let pass = vec![
         ("let foo", None),
         ("Object.create(null)", None),
+        ("Object.create(null as any)", None),
         ("Object.create(null, {foo: {value:1}})", None),
         ("let insertedNode = parentNode.insertBefore(newNode, null)", None),
         ("const foo = \"null\";", None),
@@ -244,6 +258,8 @@ fn test() {
         ("Object.create(bar)", None),
         ("Object.create(\"null\")", None),
         ("useRef(null)", None),
+        ("useRef(((((null)))))", None),
+        ("useRef(null as unknown as HTMLElement)", None),
         ("React.useRef(null)", None),
         ("if (foo === null) {}", None),
         ("if (null === foo) {}", None),
@@ -254,6 +270,7 @@ fn test() {
         ("if (null === foo) {}", Some(check_strict_equality(false))),
         ("if (foo !== null) {}", Some(check_strict_equality(false))),
         ("if (null !== foo) {}", Some(check_strict_equality(false))),
+        ("if (foo === null || foo === undefined) {}", None),
     ];
 
     let fail = vec![
@@ -263,6 +280,7 @@ fn test() {
         ("if (foo != null) {}", None),
         ("if (null == foo) {}", None),
         ("if (null != foo) {}", None),
+        ("let curr;\nwhile (curr != null) { curr = stack.pop() }", None),
         // Suggestion `ReturnStatement`
         (
             "function foo() {
@@ -304,6 +322,7 @@ fn test() {
         ("Object.create(...[null])", None),
         ("Object.create(null, bar, extraArgument)", None),
         ("foo.insertBefore(null)", None),
+        ("foo.insertBefore(null as any)", None),
         ("foo.insertBefore(foo, null, bar)", None),
         ("foo.insertBefore(...[foo], null)", None),
         // Not in right position
@@ -311,5 +330,45 @@ fn test() {
         ("Object.create(bar, null)", None),
     ];
 
-    Tester::new(NoNull::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("let x = null;", "let x;", None),
+        ("let x = null as any;", "let x = undefined as any;", None),
+        ("if (foo == null) {}", "if (foo == undefined) {}", None),
+        ("if (foo != null) {}", "if (foo != undefined) {}", None),
+        ("if (foo == null) {}", "if (foo == undefined) {}", Some(check_strict_equality(true))),
+        (
+            "
+            let isNullish;
+            switch (foo) {
+                case null:
+                case undefined:
+                    isNullish = true;
+                    break;
+                default:
+                    isNullish = false;
+                    break;
+            }
+            ",
+            "
+            let isNullish;
+            switch (foo) {
+                case null:
+                case undefined:
+                    isNullish = true;
+                    break;
+                default:
+                    isNullish = false;
+                    break;
+            }
+            ",
+            None,
+        ),
+        // FIXME
+        (
+            "if (foo === null || foo === undefined) {}",
+            "if (foo === undefined || foo === undefined) {}",
+            Some(check_strict_equality(true)),
+        ),
+    ];
+    Tester::new(NoNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

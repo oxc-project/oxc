@@ -16,16 +16,16 @@ use crate::{
     },
 };
 
-fn consistent_method(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+fn consistent_method(x1: &str, x2: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce `test` and `it` usage conventions")
         .with_help(format!("Prefer using {x1:?} instead of {x2:?}"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn consistent_method_within_describe(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+fn consistent_method_within_describe(x1: &str, x2: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce `test` and `it` usage conventions")
         .with_help(format!("Prefer using {x1:?} instead of {x2:?} within describe"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

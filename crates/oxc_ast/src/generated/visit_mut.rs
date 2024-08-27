@@ -3253,6 +3253,9 @@ pub mod walk_mut {
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
         }
+        if let Some(type_annotation) = &mut it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     #[inline]

@@ -8,9 +8,9 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_optional_catch_binding_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_optional_catch_binding_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer omitting the catch binding parameter if it is unused")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

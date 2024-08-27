@@ -15,10 +15,10 @@ use crate::{
     },
 };
 
-fn no_hook_on_top(span0: Span) -> OxcDiagnostic {
+fn no_hook_on_top(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest having hooks before any test cases.")
         .with_help("Hooks should come before test cases")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -10,12 +10,12 @@ use crate::{
     AstNode,
 };
 
-fn heading_has_content_diagnostic(span0: Span) -> OxcDiagnostic {
+fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Headings must have content and the content must be accessible by a screen reader.",
     )
     .with_help("Provide screen reader accessible content when using heading elements.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

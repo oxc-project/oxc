@@ -8,8 +8,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_export(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No named exports found in module '{x1}'")).with_label(span0)
+fn no_named_export(span: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("No named exports found in module '{x1}'")).with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>

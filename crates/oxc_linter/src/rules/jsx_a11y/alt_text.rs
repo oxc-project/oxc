@@ -16,54 +16,54 @@ use crate::{
     AstNode,
 };
 
-fn missing_alt_prop(span0: Span) -> OxcDiagnostic {
+fn missing_alt_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing `alt` attribute.")
         .with_help("Must have `alt` prop, either with meaningful text, or an empty string for decorative images.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn missing_alt_value(span0: Span) -> OxcDiagnostic {
+fn missing_alt_value(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid `alt` value.")
         .with_help(
             "Must have meaningful value for `alt` prop. Use alt=\"\" for presentational images.",
         )
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn aria_label_value(span0: Span) -> OxcDiagnostic {
+fn aria_label_value(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing value for `aria-label` attribute.")
         .with_help("Give `aria-label` a meaningful value. Prever the `alt` attribute over `aria-label` for images.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn aria_labelled_by_value(span0: Span) -> OxcDiagnostic {
+fn aria_labelled_by_value(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing value for `aria-labelledby` attribute.")
         .with_help("Give `aria-labelledby` an ID to a label element. Prefer the `alt` attribute over `aria-labelledby` for images.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn prefer_alt(span0: Span) -> OxcDiagnostic {
+fn prefer_alt(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("ARIA used where native HTML could suffice.")
         .with_help("Prefer alt=\"\" over presentational role. Native HTML attributes should be preferred for accessibility before resorting to ARIA attributes.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn object(span0: Span) -> OxcDiagnostic {
+fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing alternative text.")
         .with_help("Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn area(span0: Span) -> OxcDiagnostic {
+fn area(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing alternative text.")
         .with_help("Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn input_type_image(span0: Span) -> OxcDiagnostic {
+fn input_type_image(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing alternative text.")
         .with_help("<input> elements with type=\"image\" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

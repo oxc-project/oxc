@@ -169,6 +169,7 @@ impl From<ES2015BindingOptions> for ES2015Options {
 ///
 /// @see {@link transform}
 #[napi(object)]
+#[derive(Default)]
 pub struct TransformOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,

@@ -13,8 +13,8 @@ use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_self_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("this expression is assigned to itself").with_label(span0)
+fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)
 }
 
 #[derive(Debug, Clone)]

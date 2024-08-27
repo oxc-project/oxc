@@ -8,13 +8,13 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn identifier(span0: Span, x1: &str) -> OxcDiagnostic {
+fn identifier(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use an object literal as default for parameter `{x1}`."))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn non_identifier(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use an object literal as default").with_label(span0)
+fn non_identifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use an object literal as default").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

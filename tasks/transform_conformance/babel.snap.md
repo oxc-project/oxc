@@ -1,10 +1,11 @@
 commit: 12619ffe
 
-Passed: 280/953
+Passed: 282/953
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-react-display-name
+* babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 
 
@@ -1340,12 +1341,6 @@ Targets: The `esmodules` is not supported
 
 
 * preset-options/ios-6/input.mjs
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable)
 
 
 * preset-options/no-options/input.mjs
@@ -1418,12 +1413,6 @@ Targets: The `esmodules` is not supported
 
 
 * preset-options-babel-7/ios-6/input.mjs
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ConstVariable)
 
 
 * preset-options-babel-7/loose-typeof-symbol/input.mjs
@@ -1915,77 +1904,20 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-arrow-functions (0/6)
+# babel-plugin-transform-arrow-functions (1/6)
 * assumption-newableArrowFunctions-false/basic/input.js
-  x Output mismatch
-  x Bindings mismatch:
-  | after transform: ScopeId(1): ["f"]
-  | rebuilt        : ScopeId(1): ["_this2", "f"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(4): []
-  | rebuilt        : ScopeId(4): ["_this"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(5): ["_this"]
-  | rebuilt        : ScopeId(5): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(6): ["_this2"]
-  | rebuilt        : ScopeId(6): []
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(6): ScopeId(6)
-  | rebuilt        : SymbolId(1): ScopeId(1)
-
-  x Symbol flags mismatch:
-  | after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(5): ScopeId(5)
-  | rebuilt        : SymbolId(6): ScopeId(4)
 
 
 * assumption-newableArrowFunctions-false/naming/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
-  | ConstVariable | ArrowFunction)
-  | rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable |
-  | ConstVariable)
 
 
 * assumption-newableArrowFunctions-false/self-referential/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * spec/newableArrowFunction-default/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 * spec/newableArrowFunction-vs-spec-false/input.js
-  x Output mismatch
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-
-
-* spec/newableArrowFunction-vs-spec-true/input.js
-  x Symbol flags mismatch:
-  | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
-  | ArrowFunction)
-  | rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 
 
@@ -5948,30 +5880,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * react/arrow-functions/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(1): []
-  | rebuilt        : ScopeId(1): ["_this"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(2): ["_this"]
-  | rebuilt        : ScopeId(2): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(3): []
-  | rebuilt        : ScopeId(3): ["_this2"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(4): ["_this2"]
-  | rebuilt        : ScopeId(4): []
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(2): ScopeId(2)
-  | rebuilt        : SymbolId(1): ScopeId(1)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(3): ScopeId(4)
-  | rebuilt        : SymbolId(3): ScopeId(3)
-
   x Unresolved references mismatch:
   | after transform: ["React", "this"]
   | rebuilt        : ["React"]
@@ -6125,30 +6033,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * react-automatic/arrow-functions/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(1): []
-  | rebuilt        : ScopeId(1): ["_this"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(2): ["_this"]
-  | rebuilt        : ScopeId(2): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(3): []
-  | rebuilt        : ScopeId(3): ["_this2"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(4): ["_this2"]
-  | rebuilt        : ScopeId(4): []
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(3): ScopeId(2)
-  | rebuilt        : SymbolId(2): ScopeId(1)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(4): ScopeId(4)
-  | rebuilt        : SymbolId(4): ScopeId(3)
-
   x Unresolved references mismatch:
   | after transform: ["this"]
   | rebuilt        : []
@@ -6279,34 +6163,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
   x Unresolved reference IDs mismatch for "Component":
   | after transform: [ReferenceId(0), ReferenceId(2)]
   | rebuilt        : [ReferenceId(1)]
-
-
-
-# babel-plugin-transform-react-jsx-self (2/3)
-* react-source/arrow-function/input.js
-  x Bindings mismatch:
-  | after transform: ScopeId(0): ["fn"]
-  | rebuilt        : ScopeId(0): ["_this", "fn"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(1): ["_this"]
-  | rebuilt        : ScopeId(1): []
-
-  x Bindings mismatch:
-  | after transform: ScopeId(2): []
-  | rebuilt        : ScopeId(2): ["_this2"]
-
-  x Bindings mismatch:
-  | after transform: ScopeId(3): ["_this2"]
-  | rebuilt        : ScopeId(3): []
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(1): ScopeId(1)
-  | rebuilt        : SymbolId(0): ScopeId(0)
-
-  x Symbol scope ID mismatch:
-  | after transform: SymbolId(2): ScopeId(3)
-  | rebuilt        : SymbolId(2): ScopeId(2)
 
 
 

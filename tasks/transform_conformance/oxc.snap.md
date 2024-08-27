@@ -1,9 +1,10 @@
 commit: 12619ffe
 
-Passed: 9/35
+Passed: 10/36
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-arrow-functions
 
 
 # babel-plugin-transform-typescript (2/7)

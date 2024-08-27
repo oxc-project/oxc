@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use oxc_ast::ast::BindingIdentifier;
 use oxc_ast::AstKind;
-use oxc_semantic::{AstNode, SymbolId};
+use oxc_semantic::{AstNode, AstNodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
@@ -250,6 +250,24 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
         .skip(1)
         .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
         .nth(n)
+}
+/// Iterate over parents of `node`, skipping nodes that are also ignored by
+/// [`Expression::get_inner_expression`].
+pub fn iter_outer_expressions<'a, 'ctx>(
+    ctx: &'ctx LintContext<'a>,
+    node_id: AstNodeId,
+) -> impl Iterator<Item = &'ctx AstNode<'a>> + 'ctx {
+    ctx.nodes().iter_parents(node_id).skip(1).filter(|parent| {
+        !matches!(
+            parent.kind(),
+            AstKind::ParenthesizedExpression(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSInstantiationExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSTypeAssertion(_)
+        )
+    })
 }
 
 pub fn get_declaration_of_variable<'a, 'b>(

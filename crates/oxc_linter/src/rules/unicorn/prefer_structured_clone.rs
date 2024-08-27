@@ -7,10 +7,10 @@ use oxc_span::Span;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-fn prefer_structured_clone_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_structured_clone_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `structuredClone(…)` to create a deep clone.")
         .with_help("Switch to `structuredClone(…)`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

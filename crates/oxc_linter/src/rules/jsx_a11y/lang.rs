@@ -14,10 +14,10 @@ use crate::{
     AstNode,
 };
 
-fn lang_diagnostic(span0: Span) -> OxcDiagnostic {
+fn lang_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Lang attribute must have a valid value.")
         .with_help("Set a valid value for lang attribute.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -12,24 +12,24 @@ use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImport
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_export(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1:?} not found in imported namespace {x2:?}.")).with_label(span0)
+fn no_export(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x1:?} not found in imported namespace {x2:?}.")).with_label(span)
 }
 
-fn no_export_in_deeply_imported_namespace(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+fn no_export_in_deeply_imported_namespace(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{x1:?} not found in deeply imported namespace {x2:?}."))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn computed_reference(span0: Span, x1: &str) -> OxcDiagnostic {
+fn computed_reference(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "Unable to validate computed reference to imported namespace {x1:?}."
     ))
-    .with_label(span0)
+    .with_label(span)
 }
 
-fn assignment(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Assignment to member of namespace {x1:?}.'")).with_label(span0)
+fn assignment(span: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Assignment to member of namespace {x1:?}.'")).with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>

@@ -5,7 +5,7 @@ use std::{
     fmt::{self, Write},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct HtmlWriter {
     inner: RefCell<String>,
 }
@@ -35,10 +35,6 @@ impl From<HtmlWriter> for String {
 }
 
 impl HtmlWriter {
-    pub fn new() -> Self {
-        Self { inner: RefCell::new(String::new()) }
-    }
-
     pub fn with_capacity(capacity: usize) -> Self {
         Self { inner: RefCell::new(String::with_capacity(capacity)) }
     }
@@ -135,7 +131,7 @@ mod test {
 
     #[test]
     fn test_div() {
-        let html = HtmlWriter::new();
+        let html = HtmlWriter::default();
         html.div("", |html| html.writeln("Hello, world!")).unwrap();
 
         assert_eq!(

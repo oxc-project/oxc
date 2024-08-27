@@ -1,21 +1,29 @@
+// NOTE: The current implementation switches iteration units depending on the mode.
+//
+// This is all for surrogate pairs in non-unicode mode, but it is required only in limited cases:
+// - Group names for named `CapturingGroup`: `(?<name>.)`
+// - Group names for `NamedReference`: `\k<name>`
+// Even if we skip that distinction, it seems the current test262 cases pass due to other errors.
+//
+// Therefore, it is possible to change the implementation to iterate on `char` units always,
+// assuming that change some output of AST for `Character[kind=Symbol]` to `Character[kind=SurrogatePairs]`.
+//
+// However, for the following reasons, we keep the current implementation:
+// - We want to keep the behavior closer to the specification
+//   - and also, to prevent any oversight
+// - Changing does not have a significant impact on performance
+//
+// See also: https://github.com/oxc-project/oxc/pull/5210
 pub struct Reader<'a> {
     source: &'a str,
     unicode_mode: bool,
     /// Current index for `u8_units`(unicode mode) or `u16_units`(non-unicode mode).
     index: usize,
-    // NOTE: Distinguish these 2 units looks cleaner, but it may not be necessary.
-    //
-    // If I understand correctly (and there are no unexpected factors),
-    // AST `Character[kind=Symbol]` only needs to be aware of this for surrogate pairs.
-    //
-    // Therefore, performance might be improved by:
-    // - using only `u8_units`, and
-    // - checking if each unit (char) is non-BMP, and if so, converting it into a surrogate pair and emitting 2 units.
-    // However, I'm not certain this approach is faster than current one using `encode_utf16()` all at once.
     /// Iteration units for unicode mode.
     /// Even in non-unicode mode, used for `Span` offset calculation.
     u8_units: Vec<(usize, char)>,
     /// Iteration units for non-unicode mode.
+    /// To iterate on surrogate pairs, this is needed.
     u16_units: Vec<u16>,
     /// Last offset caches for non-unicode mode.
     last_offset_indices: (usize, usize),
@@ -67,6 +75,7 @@ impl<'a> Reader<'a> {
         self.index += 1;
     }
 
+    // We need a code point, not a char.
     fn peek_nth(&self, n: usize) -> Option<u32> {
         let nth = self.index + n;
 

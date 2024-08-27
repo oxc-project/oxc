@@ -29,12 +29,14 @@ const GLOBAL_LZMA = LZMA || window.LZMA;
 
 import initWasm, {
   Oxc,
+} from "@oxc/oxc_wasm";
+import type {
   OxcRunOptions,
   OxcParserOptions,
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcCodegenOptions,
-} from "@oxc/oxc_wasm";
+} from "@oxc/oxc_wasm"
 import { getSymbolAndReferencesSpan, renderSymbols } from "./symbols.js";
 
 const placeholderText = `
@@ -151,11 +153,11 @@ class Playground {
 
   initOxc() {
     this.oxc = new Oxc();
-    this.runOptions = new OxcRunOptions();
-    this.parserOptions = new OxcParserOptions();
-    this.codegenOptions = new OxcCodegenOptions();
-    this.linterOptions = new OxcLinterOptions();
-    this.minifierOptions = new OxcMinifierOptions();
+    this.runOptions = {};
+    this.parserOptions = {};
+    this.codegenOptions = {};
+    this.linterOptions = {};
+    this.minifierOptions = {};
 
     this.parserOptions.sourceFilename = "test.tsx";
     this.runOptions.syntax = true;

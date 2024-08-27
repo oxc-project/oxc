@@ -16,8 +16,8 @@ use crate::{
     },
 };
 
-fn use_to_have_length(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span0)
+fn use_to_have_length(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -144,12 +144,14 @@ impl PreferToHaveLength {
 
         ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
             let code = Self::build_code(fixer, static_mem_expr, kind, property_name);
-            let end = if call_expr.arguments.len() > 0 {
-                call_expr.arguments.first().unwrap().span().start
-            } else {
-                matcher.span.end
-            };
-            fixer.replace(Span::new(call_expr.span.start, end - 1), code)
+            let offset = u32::try_from(
+                fixer
+                    .source_range(Span::new(matcher.span.end, call_expr.span().end))
+                    .find('(')
+                    .unwrap(),
+            )
+            .unwrap();
+            fixer.replace(Span::new(call_expr.span.start, matcher.span.end + offset), code)
         });
     }
 
@@ -217,6 +219,10 @@ fn tests() {
             "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);", 
             None
         ),
+        (
+            "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+          0,
+        );", None)
     ];
 
     let fix = vec![
@@ -247,6 +253,15 @@ fn tests() {
             "expect((meta.get('pages') as YArray<unknown>)).toHaveLength((originalMeta.get('pages') as YArray<unknown>).length);", 
             None
         ),
+        (
+            "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+          0,
+        );", 
+            "expect(assetTypeContainer.getElementsByTagName('time')).toHaveLength(
+          0,
+        );", 
+            None
+        )
     ];
 
     Tester::new(PreferToHaveLength::NAME, pass, fail)

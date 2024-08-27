@@ -12,8 +12,8 @@ use crate::{
     },
 };
 
-fn unexpected_hook_diagonsitc(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow setup and teardown hooks.").with_label(span0)
+fn unexpected_hook_diagonsitc(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow setup and teardown hooks.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
