@@ -279,7 +279,8 @@ impl Oxc {
                 .semantic;
             if run_options.scope.unwrap_or_default() {
                 self.scope_text = Self::get_scope_text(&semantic);
-            } else if run_options.symbol.unwrap_or_default() {
+            }
+            if run_options.symbol.unwrap_or_default() {
                 self.symbols = semantic.symbols().serialize(&self.serializer)?;
             }
         }
