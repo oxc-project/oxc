@@ -2202,8 +2202,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 * enum/mix-references/input.ts
   x Output mismatch
-  x Semantic Collector failed after transform
-
   x Missing ReferenceId: Foo
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/enum/mix-references/input.ts:1:1]
  1 | var x = 10;
@@ -2238,6 +2236,95 @@ failed to resolve query: failed to parse the rest of input: ...''
    : ^
  2 | 
    `----
+
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["Foo", "a", "b", "c"]
+  | rebuilt        : ScopeId(1): ["Foo"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(2): ["Bar", "D", "E", "F", "G"]
+  | rebuilt        : ScopeId(2): ["Bar"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(3): ["Baz", "a", "b", "x"]
+  | rebuilt        : ScopeId(3): ["Baz"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(3): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(4): ["A", "a", "b", "c"]
+  | rebuilt        : ScopeId(4): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(4): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(3), ReferenceId(7),
+  | ReferenceId(18)]
+  | rebuilt        : SymbolId(1): [ReferenceId(9), ReferenceId(20)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(19): [ReferenceId(11), ReferenceId(12),
+  | ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16),
+  | ReferenceId(17)]
+  | rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(8)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(5): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(3): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(20): [ReferenceId(19), ReferenceId(20),
+  | ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24),
+  | ReferenceId(25), ReferenceId(26), ReferenceId(27)]
+  | rebuilt        : SymbolId(4): [ReferenceId(10), ReferenceId(11),
+  | ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15),
+  | ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(21)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(10): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(21): [ReferenceId(29), ReferenceId(30),
+  | ReferenceId(31), ReferenceId(32), ReferenceId(33), ReferenceId(34),
+  | ReferenceId(35)]
+  | rebuilt        : SymbolId(6): [ReferenceId(23), ReferenceId(24),
+  | ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28),
+  | ReferenceId(29), ReferenceId(30)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(14): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(7): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(22): [ReferenceId(37), ReferenceId(38),
+  | ReferenceId(39), ReferenceId(40), ReferenceId(41), ReferenceId(42),
+  | ReferenceId(43)]
+  | rebuilt        : SymbolId(8): [ReferenceId(32), ReferenceId(33),
+  | ReferenceId(34), ReferenceId(35), ReferenceId(36), ReferenceId(37),
+  | ReferenceId(38), ReferenceId(39), ReferenceId(40)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(17): [ReferenceId(9)]
+  | rebuilt        : SymbolId(9): []
 
 
 * enum/non-foldable-constant/input.ts
@@ -2516,14 +2603,16 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * exports/export-import=/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: JGraph
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/exports/export-import=/input.ts:1:1]
  1 | import * as joint from '@joint/core';
    : ^
  2 | 
    `----
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+  | rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
 
 
 * exports/export-type/input.ts
@@ -2628,8 +2717,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * imports/elide-type-referenced-in-imports-equal-no/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: foo
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/elide-type-referenced-in-imports-equal-no/input.ts:1:1]
  1 | import nsa from "./module-a";
@@ -2643,6 +2730,12 @@ failed to resolve query: failed to parse the rest of input: ...''
    : ^
  2 | import foo = nsa.bar;
    `----
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2),
+  | SymbolId(3)]
+  | rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2),
+  | SymbolId(3)]
 
 
 * imports/elide-typeof/input.ts
@@ -2856,8 +2949,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * namespace/alias/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: b
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/alias/input.ts:1:1]
  1 | declare module LongNameModule {
@@ -2872,10 +2963,26 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   export type SomeType = number;
    `----
 
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["AliasModule", "LongNameModule", "b",
+  | "babel", "bar", "baz", "node", "some", "str"]
+  | rebuilt        : ScopeId(0): ["AliasModule", "b", "babel", "bar", "baz",
+  | "node", "some", "str"]
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(3): Some("AliasModule")
+  | rebuilt        : ReferenceId(2): Some("AliasModule")
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(4): Some("AliasModule")
+  | rebuilt        : ReferenceId(3): Some("AliasModule")
+
+  x Unresolved reference IDs mismatch for "LongNameModule":
+  | after transform: [ReferenceId(1), ReferenceId(5)]
+  | rebuilt        : [ReferenceId(1)]
+
 
 * namespace/clobber-class/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: _A
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-class/input.ts:1:1]
  1 | class A { }
@@ -2903,11 +3010,32 @@ failed to resolve query: failed to parse the rest of input: ...''
    : ^
  2 | namespace A {
    `----
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(1), SymbolId(2)]
+  | rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule |
+  | ValueModule)
+  | rebuilt        : SymbolId(0): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): []
+  | rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 22, end: 23 }]
+  | rebuilt        : SymbolId(0): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
 
 
 * namespace/clobber-enum/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: _A
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-enum/input.ts:1:1]
  1 | enum A {
@@ -2936,10 +3064,40 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   C = 2,
    `----
 
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "C"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(3)]
+  | rebuilt        : ScopeId(2): [SymbolId(2), SymbolId(3)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum | NameSpaceModule
+  | | ValueModule)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(3)]
+  | rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(5),
+  | ReferenceId(6)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 30, end: 31 }]
+  | rebuilt        : SymbolId(0): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
 
 * namespace/clobber-export/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: _N
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/clobber-export/input.ts:1:1]
  1 | export class N {}
@@ -2961,10 +3119,26 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 | export namespace N { var x; }
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(1), SymbolId(2)]
+  | rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule
+  | | ValueModule)
+  | rebuilt        : SymbolId(0): SymbolFlags(Export | Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0)]
+  | rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 35, end: 36 }]
+  | rebuilt        : SymbolId(0): []
+
 
 * namespace/contentious-names/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: N
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/contentious-names/input.ts:1:1]
  1 | namespace N {
@@ -3945,10 +4119,166 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   namespace N { var x }
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(5),
+  | SymbolId(7), SymbolId(9), SymbolId(11), SymbolId(13), SymbolId(15),
+  | SymbolId(17), SymbolId(19), SymbolId(21), SymbolId(23), SymbolId(25),
+  | SymbolId(27), SymbolId(29), SymbolId(31), SymbolId(33), SymbolId(35),
+  | SymbolId(37), SymbolId(39), SymbolId(41), SymbolId(43), SymbolId(45),
+  | SymbolId(47), SymbolId(49), SymbolId(51), SymbolId(53), SymbolId(55),
+  | SymbolId(57), SymbolId(59), SymbolId(61), SymbolId(63), SymbolId(65),
+  | SymbolId(67), SymbolId(69)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5),
+  | SymbolId(8), SymbolId(11), SymbolId(14), SymbolId(17), SymbolId(20),
+  | SymbolId(23), SymbolId(26), SymbolId(29), SymbolId(32), SymbolId(35),
+  | SymbolId(38), SymbolId(41), SymbolId(44), SymbolId(47), SymbolId(50),
+  | SymbolId(53), SymbolId(56), SymbolId(59), SymbolId(62), SymbolId(65),
+  | SymbolId(68), SymbolId(71), SymbolId(74), SymbolId(77), SymbolId(80),
+  | SymbolId(83), SymbolId(86), SymbolId(89), SymbolId(92), SymbolId(95),
+  | SymbolId(98), SymbolId(101)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(70)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(3): [SymbolId(4), SymbolId(71)]
+  | rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(4): [SymbolId(6), SymbolId(72)]
+  | rebuilt        : ScopeId(4): [SymbolId(9), SymbolId(10)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(5): [SymbolId(8), SymbolId(73)]
+  | rebuilt        : ScopeId(5): [SymbolId(12), SymbolId(13)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(6): [SymbolId(10), SymbolId(74)]
+  | rebuilt        : ScopeId(6): [SymbolId(15), SymbolId(16)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(7): [SymbolId(12), SymbolId(75)]
+  | rebuilt        : ScopeId(7): [SymbolId(18), SymbolId(19)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(8): [SymbolId(14), SymbolId(76)]
+  | rebuilt        : ScopeId(8): [SymbolId(21), SymbolId(22)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(9): [SymbolId(16), SymbolId(77)]
+  | rebuilt        : ScopeId(9): [SymbolId(24), SymbolId(25)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(10): [SymbolId(18), SymbolId(78)]
+  | rebuilt        : ScopeId(10): [SymbolId(27), SymbolId(28)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(11): [SymbolId(20), SymbolId(79)]
+  | rebuilt        : ScopeId(11): [SymbolId(30), SymbolId(31)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(12): [SymbolId(22), SymbolId(80)]
+  | rebuilt        : ScopeId(12): [SymbolId(33), SymbolId(34)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(13): [SymbolId(24), SymbolId(81)]
+  | rebuilt        : ScopeId(13): [SymbolId(36), SymbolId(37)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(14): [SymbolId(26), SymbolId(82)]
+  | rebuilt        : ScopeId(14): [SymbolId(39), SymbolId(40)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(15): [SymbolId(28), SymbolId(83)]
+  | rebuilt        : ScopeId(15): [SymbolId(42), SymbolId(43)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(16): [SymbolId(30), SymbolId(84)]
+  | rebuilt        : ScopeId(16): [SymbolId(45), SymbolId(46)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(17): [SymbolId(32), SymbolId(85)]
+  | rebuilt        : ScopeId(17): [SymbolId(48), SymbolId(49)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(18): [SymbolId(34), SymbolId(86)]
+  | rebuilt        : ScopeId(18): [SymbolId(51), SymbolId(52)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(19): [SymbolId(36), SymbolId(87)]
+  | rebuilt        : ScopeId(19): [SymbolId(54), SymbolId(55)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(20): [SymbolId(38), SymbolId(88)]
+  | rebuilt        : ScopeId(20): [SymbolId(57), SymbolId(58)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(21): [SymbolId(40), SymbolId(89)]
+  | rebuilt        : ScopeId(21): [SymbolId(60), SymbolId(61)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(22): [SymbolId(42), SymbolId(90)]
+  | rebuilt        : ScopeId(22): [SymbolId(63), SymbolId(64)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(23): [SymbolId(44), SymbolId(91)]
+  | rebuilt        : ScopeId(23): [SymbolId(66), SymbolId(67)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(24): [SymbolId(46), SymbolId(92)]
+  | rebuilt        : ScopeId(24): [SymbolId(69), SymbolId(70)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(25): [SymbolId(48), SymbolId(93)]
+  | rebuilt        : ScopeId(25): [SymbolId(72), SymbolId(73)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(26): [SymbolId(50), SymbolId(94)]
+  | rebuilt        : ScopeId(26): [SymbolId(75), SymbolId(76)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(27): [SymbolId(52), SymbolId(95)]
+  | rebuilt        : ScopeId(27): [SymbolId(78), SymbolId(79)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(28): [SymbolId(54), SymbolId(96)]
+  | rebuilt        : ScopeId(28): [SymbolId(81), SymbolId(82)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(29): [SymbolId(56), SymbolId(97)]
+  | rebuilt        : ScopeId(29): [SymbolId(84), SymbolId(85)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(30): [SymbolId(58), SymbolId(98)]
+  | rebuilt        : ScopeId(30): [SymbolId(87), SymbolId(88)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(31): [SymbolId(60), SymbolId(99)]
+  | rebuilt        : ScopeId(31): [SymbolId(90), SymbolId(91)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(32): [SymbolId(62), SymbolId(100)]
+  | rebuilt        : ScopeId(32): [SymbolId(93), SymbolId(94)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(33): [SymbolId(64), SymbolId(101)]
+  | rebuilt        : ScopeId(33): [SymbolId(96), SymbolId(97)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(34): [SymbolId(66), SymbolId(102)]
+  | rebuilt        : ScopeId(34): [SymbolId(99), SymbolId(100)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(35): [SymbolId(68), SymbolId(103)]
+  | rebuilt        : ScopeId(35): [SymbolId(102), SymbolId(103)]
+
 
 * namespace/declare/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: N
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare/input.ts:1:1]
  1 | export namespace N {
@@ -3977,10 +4307,16 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   export declare class C {
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["B", "_N", "e", "v"]
+  | rebuilt        : ScopeId(1): ["_N"]
+
 
 * namespace/declare-global-nested-namespace/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: X
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/declare-global-nested-namespace/input.ts:1:1]
  1 | declare global { namespace globalThis { var i18n: any; } }
@@ -4009,10 +4345,16 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 | 
    `----
 
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["X", "global", "i18n"]
+  | rebuilt        : ScopeId(0): ["X", "i18n"]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(3): [SymbolId(4), SymbolId(6)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+
 
 * namespace/empty-removed/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: a
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/empty-removed/input.ts:1:1]
  1 | namespace a {
@@ -4293,10 +4635,66 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   namespace b {}
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0), SymbolId(6), SymbolId(14)]
+  | rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5), SymbolId(9)]
+
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["_a", "b", "c", "d"]
+  | rebuilt        : ScopeId(1): ["_a", "c"]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(3): [SymbolId(3), SymbolId(26)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+
+  x Bindings mismatch:
+  | after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
+  | rebuilt        : ScopeId(3): ["_WithTypes", "d"]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(12): [SymbolId(33)]
+  | rebuilt        : ScopeId(4): [SymbolId(8)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(14): [SymbolId(15), SymbolId(17), SymbolId(19),
+  | SymbolId(21), SymbolId(23), SymbolId(34)]
+  | rebuilt        : ScopeId(5): [SymbolId(10), SymbolId(11), SymbolId(14),
+  | SymbolId(18), SymbolId(21), SymbolId(24)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(15): [SymbolId(16), SymbolId(35)]
+  | rebuilt        : ScopeId(6): [SymbolId(12), SymbolId(13)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(17): [SymbolId(18), SymbolId(36)]
+  | rebuilt        : ScopeId(8): [SymbolId(15), SymbolId(16)]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(18): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(19): [SymbolId(20), SymbolId(37)]
+  | rebuilt        : ScopeId(10): [SymbolId(19), SymbolId(20)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(21): [SymbolId(22), SymbolId(38)]
+  | rebuilt        : ScopeId(12): [SymbolId(22), SymbolId(23)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(22): [SymbolId(39)]
+  | rebuilt        : ScopeId(13): [SymbolId(25)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(18): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(16): SymbolFlags(BlockScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(20): SymbolFlags(BlockScopedVariable | Function)
+  | rebuilt        : SymbolId(20): SymbolFlags(FunctionScopedVariable)
+
 
 * namespace/export/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: N
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/export/input.ts:1:1]
  1 | export namespace N { var x }
@@ -4321,6 +4719,14 @@ failed to resolve query: failed to parse the rest of input: ...''
    : ^
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+
 
 * namespace/export-type-only/input.ts
   x Bindings mismatch:
@@ -4333,8 +4739,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * namespace/module-nested/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: src
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested/input.ts:1:1]
  1 | module src {
@@ -4474,11 +4878,41 @@ failed to resolve query: failed to parse the rest of input: ...''
    : ^
  2 |   export namespace ns1 {
    `----
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(5)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(6)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(4): [SymbolId(4), SymbolId(7)]
+  | rebuilt        : ScopeId(4): [SymbolId(6), SymbolId(7)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(Export | Class)
+  | rebuilt        : SymbolId(4): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): []
+  | rebuilt        : SymbolId(4): [ReferenceId(1)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(4): SymbolFlags(Export | Class)
+  | rebuilt        : SymbolId(7): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): []
+  | rebuilt        : SymbolId(7): [ReferenceId(7)]
 
 
 * namespace/module-nested-export/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: src
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/module-nested-export/input.ts:1:1]
  1 | export module src {
@@ -4619,10 +5053,40 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   export namespace ns1 {
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(5)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(6)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(4): [SymbolId(4), SymbolId(7)]
+  | rebuilt        : ScopeId(4): [SymbolId(6), SymbolId(7)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(Export | Class)
+  | rebuilt        : SymbolId(4): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): []
+  | rebuilt        : SymbolId(4): [ReferenceId(1)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(4): SymbolFlags(Export | Class)
+  | rebuilt        : SymbolId(7): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): []
+  | rebuilt        : SymbolId(7): [ReferenceId(7)]
+
 
 * namespace/multiple/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: N
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/multiple/input.ts:1:1]
  1 | namespace N { var x; }
@@ -4672,6 +5136,18 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 | namespace N { var y; }
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(3)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(4)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+
 
 * namespace/mutable-fail/input.ts
   ! Namespaces exporting non-const are not supported by Babel. Change to const
@@ -4695,8 +5171,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * namespace/nested/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: _A
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested/input.ts:1:1]
  1 | class A { }
@@ -4921,10 +5395,139 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 | namespace A {
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(1), SymbolId(4), SymbolId(6),
+  | SymbolId(12), SymbolId(14), SymbolId(16), SymbolId(18)]
+  | rebuilt        : ScopeId(2): [SymbolId(1), SymbolId(2), SymbolId(6),
+  | SymbolId(9), SymbolId(14), SymbolId(17), SymbolId(20)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(3): [SymbolId(2), SymbolId(3), SymbolId(19)]
+  | rebuilt        : ScopeId(3): [SymbolId(3), SymbolId(4), SymbolId(5)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(6): [SymbolId(5), SymbolId(20)]
+  | rebuilt        : ScopeId(6): [SymbolId(7), SymbolId(8)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(8): [SymbolId(7), SymbolId(8), SymbolId(21)]
+  | rebuilt        : ScopeId(8): [SymbolId(10), SymbolId(11), SymbolId(12)]
+
+  x Bindings mismatch:
+  | after transform: ScopeId(9): ["H", "I", "J", "K"]
+  | rebuilt        : ScopeId(9): ["H"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(9): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(9): ScopeFlags(StrictMode | Function)
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(11): [SymbolId(13), SymbolId(22)]
+  | rebuilt        : ScopeId(11): [SymbolId(15), SymbolId(16)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(12): [SymbolId(15), SymbolId(23)]
+  | rebuilt        : ScopeId(12): [SymbolId(18), SymbolId(19)]
+
+  x Bindings mismatch:
+  | after transform: ScopeId(13): ["L", "M"]
+  | rebuilt        : ScopeId(13): ["L"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(13): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(13): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(Class | NameSpaceModule |
+  | ValueModule)
+  | rebuilt        : SymbolId(0): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): []
+  | rebuilt        : SymbolId(0): [ReferenceId(33), ReferenceId(34)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(0): [Span { start: 22, end: 23 }]
+  | rebuilt        : SymbolId(0): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(Export | Class)
+  | rebuilt        : SymbolId(4): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): []
+  | rebuilt        : SymbolId(4): [ReferenceId(1)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(3): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Function |
+  | NameSpaceModule | ValueModule)
+  | rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): []
+  | rebuilt        : SymbolId(6): [ReferenceId(9), ReferenceId(10)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(4): [Span { start: 129, end: 130 }]
+  | rebuilt        : SymbolId(6): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(5): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Export |
+  | Function | NameSpaceModule | ValueModule)
+  | rebuilt        : SymbolId(9): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): []
+  | rebuilt        : SymbolId(9): [ReferenceId(12), ReferenceId(22),
+  | ReferenceId(23)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(6): [Span { start: 207, end: 208 }]
+  | rebuilt        : SymbolId(9): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(8): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(12): SymbolFlags(BlockScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): []
+  | rebuilt        : SymbolId(12): [ReferenceId(21)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(12): SymbolFlags(Class | NameSpaceModule |
+  | ValueModule)
+  | rebuilt        : SymbolId(14): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(12): []
+  | rebuilt        : SymbolId(14): [ReferenceId(26), ReferenceId(27)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(12): [Span { start: 325, end: 326 }]
+  | rebuilt        : SymbolId(14): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(16): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(20): SymbolFlags(BlockScopedVariable)
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(0): Some("C")
+  | rebuilt        : ReferenceId(8): Some("C")
+
 
 * namespace/nested-namespace/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: A
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-namespace/input.ts:1:1]
  1 | export namespace A {
@@ -4967,10 +5570,32 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   export namespace B {
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["B", "G", "_A"]
+  | rebuilt        : ScopeId(1): ["G", "_A"]
+
+  x Bindings mismatch:
+  | after transform: ScopeId(4): ["G", "H"]
+  | rebuilt        : ScopeId(2): ["G"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(4): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(3): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): []
+  | rebuilt        : SymbolId(2): [ReferenceId(4)]
+
 
 * namespace/nested-shorthand/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: X
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/nested-shorthand/input.ts:1:1]
  1 | namespace X.Y {
@@ -5209,10 +5834,48 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   export const Z = 1;
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0), SymbolId(3)]
+  | rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(5)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(8)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(9)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(3): [SymbolId(4), SymbolId(10)]
+  | rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(4): [SymbolId(5), SymbolId(11)]
+  | rebuilt        : ScopeId(4): [SymbolId(8), SymbolId(9)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(5): [SymbolId(6), SymbolId(12)]
+  | rebuilt        : ScopeId(5): [SymbolId(10), SymbolId(11)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(6): [SymbolId(7), SymbolId(13)]
+  | rebuilt        : ScopeId(6): [SymbolId(12), SymbolId(13)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(7): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(13): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
 
 * namespace/same-name/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: N
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/same-name/input.ts:1:1]
  1 | namespace N {
@@ -5423,10 +6086,61 @@ failed to resolve query: failed to parse the rest of input: ...''
  2 |   namespace _N7 { var x }
    `----
 
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(3), SymbolId(7)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(8)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(3): [SymbolId(4), SymbolId(9)]
+  | rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(5): [SymbolId(5), SymbolId(10)]
+  | rebuilt        : ScopeId(5): [SymbolId(8), SymbolId(9)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(7): [SymbolId(6), SymbolId(11)]
+  | rebuilt        : ScopeId(7): [SymbolId(10), SymbolId(11)]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(8): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(8): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(4): SymbolFlags(BlockScopedVariable | Export
+  | | Function)
+  | rebuilt        : SymbolId(7): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): []
+  | rebuilt        : SymbolId(7): [ReferenceId(3)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(5): SymbolFlags(Export | Class)
+  | rebuilt        : SymbolId(9): SymbolFlags(Class)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): []
+  | rebuilt        : SymbolId(9): [ReferenceId(9)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(6): SymbolFlags(Export | RegularEnum)
+  | rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): []
+  | rebuilt        : SymbolId(11): [ReferenceId(16)]
+
 
 * namespace/undeclared/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: N
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/namespace/undeclared/input.ts:1:1]
  1 | namespace N { var x }
@@ -5450,6 +6164,14 @@ failed to resolve query: failed to parse the rest of input: ...''
  1 | namespace N { var x }
    : ^
    `----
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
 
 
 * optimize-const-enums/custom-values/input.ts
@@ -5654,8 +6376,6 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 * regression/15768/input.ts
   x Output mismatch
-  x Semantic Collector failed after transform
-
   x Missing ReferenceId: Infinity
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/regression/15768/input.ts:1:1]
  1 | const v = 42;
@@ -5704,6 +6424,55 @@ failed to resolve query: failed to parse the rest of input: ...''
    : ^
  2 | const v2 = Infinity;
    `----
+
+  x Bindings mismatch:
+  | after transform: ScopeId(2): ["StateEnum", "ext", "ext2", "ext3", "nan",
+  | "nanReal", "neg", "negReal", "okay", "pos", "posReal"]
+  | rebuilt        : ScopeId(2): ["StateEnum"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(5)]
+  | rebuilt        : SymbolId(0): []
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(1): [ReferenceId(6)]
+  | rebuilt        : SymbolId(1): []
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(2): [ReferenceId(7)]
+  | rebuilt        : SymbolId(2): []
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(2), ReferenceId(3)]
+  | rebuilt        : SymbolId(3): [ReferenceId(6), ReferenceId(9),
+  | ReferenceId(14), ReferenceId(17)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(4): [ReferenceId(4)]
+  | rebuilt        : SymbolId(4): []
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(5): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(16): [ReferenceId(8), ReferenceId(9),
+  | ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13),
+  | ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17),
+  | ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21),
+  | ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25),
+  | ReferenceId(26), ReferenceId(27), ReferenceId(28)]
+  | rebuilt        : SymbolId(6): [ReferenceId(2), ReferenceId(3),
+  | ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(8),
+  | ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(13),
+  | ReferenceId(15), ReferenceId(16), ReferenceId(18), ReferenceId(19),
+  | ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23),
+  | ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27),
+  | ReferenceId(28), ReferenceId(29)]
 
 
 * type-arguments/call/input.ts
@@ -6094,8 +6863,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * cross-platform/within-ts-module-block/input.ts
   x Output mismatch
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: Namespaced
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/within-ts-module-block/input.ts:1:1]
  1 | export namespace Namespaced {
@@ -6130,6 +6897,20 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    : ^
  2 |     export const Component = () => (
    `----
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0), SymbolId(3), SymbolId(4)]
+  | rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(5)]
+  | rebuilt        : ScopeId(1): [SymbolId(3), SymbolId(4), SymbolId(5)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | ArrowFunction)
+  | rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
 
 
 

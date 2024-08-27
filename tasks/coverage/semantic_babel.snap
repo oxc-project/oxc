@@ -649,12 +649,20 @@ after transform: SymbolId(3): SymbolFlags(Export | RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | Export)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/nested-same-name/input.ts
-semantic error: Semantic Collector failed after transform
-Missing SymbolId: N
+semantic error: Missing SymbolId: N
 Missing SymbolId: _N
 Missing ReferenceId: _N
 Missing ReferenceId: N
 Missing ReferenceId: N
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0), SymbolId(1)]
+rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(2), SymbolId(3)]
+rebuilt        : ScopeId(1): [SymbolId(2), SymbolId(3)]
+Symbol flags mismatch:
+after transform: SymbolId(2): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/annotated/input.ts
 semantic error: Bindings mismatch:
@@ -696,12 +704,16 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/dec
 semantic error: A required parameter cannot follow an optional parameter.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals/input.ts
-semantic error: Semantic Collector failed after transform
-Missing SymbolId: A
+semantic error: Missing SymbolId: A
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-unambiguous/input.ts
-semantic error: Semantic Collector failed after transform
-Missing SymbolId: A
+semantic error: Missing SymbolId: A
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require/input.ts
 semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
@@ -712,8 +724,10 @@ semantic error: `import lib = require(...);` is only supported when compiling mo
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
-semantic error: Semantic Collector failed after transform
-Missing SymbolId: A
+semantic error: Missing SymbolId: A
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import-require/input.ts
 semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
@@ -977,11 +991,16 @@ after transform: ScopeId(0): ["Comma", "Newline", "Semi"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body/input.ts
-semantic error: Semantic Collector failed after transform
-Missing SymbolId: N
+semantic error: Missing SymbolId: N
 Missing SymbolId: _N
 Missing ReferenceId: N
 Missing ReferenceId: N
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Binding symbols mismatch:
+after transform: ScopeId(1): [SymbolId(1), SymbolId(2)]
+rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/body-declare/input.ts
 semantic error: Bindings mismatch:
@@ -1262,8 +1281,16 @@ after transform: ScopeId(0): ["Something"]
 rebuilt        : ScopeId(0): []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-equals-var/input.ts
-semantic error: Semantic Collector failed after transform
-Missing SymbolId: a
+semantic error: Missing SymbolId: a
+Bindings mismatch:
+after transform: ScopeId(0): ["M", "a"]
+rebuilt        : ScopeId(0): ["a"]
+Symbol flags mismatch:
+after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+Symbol span mismatch:
+after transform: SymbolId(1): Span { start: 20, end: 21 }
+rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-import-let/input.ts
 semantic error: Symbol flags mismatch:

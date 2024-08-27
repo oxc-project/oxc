@@ -9,8 +9,6 @@ Passed: 10/36
 
 # babel-plugin-transform-typescript (2/7)
 * computed-constant-value/input.ts
-  x Semantic Collector failed after transform
-
   x Missing ReferenceId: Infinity
    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/computed-constant-value/input.ts:1:1]
  1 | enum A {
@@ -38,6 +36,64 @@ Passed: 10/36
    : ^
  2 |   a = Infinity,
    `----
+
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "a", "b", "c", "d", "e"]
+  | rebuilt        : ScopeId(1): ["A"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(2): ["B", "a", "b", "c", "d", "e"]
+  | rebuilt        : ScopeId(2): ["B"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(2): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(3): ["C", "a", "b", "c"]
+  | rebuilt        : ScopeId(3): ["C"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(3): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+
+  x Bindings mismatch:
+  | after transform: ScopeId(4): ["D", "a", "b", "c"]
+  | rebuilt        : ScopeId(4): ["D"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(4): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(0): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(6): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(12): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(16): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
+
+  x Unresolved references mismatch:
+  | after transform: ["Infinity", "NaN"]
+  | rebuilt        : ["Infinity"]
+
+  x Unresolved reference IDs mismatch for "Infinity":
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2),
+  | ReferenceId(3)]
+  | rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8),
+  | ReferenceId(12)]
 
 
 * elimination-declare/input.ts
@@ -47,8 +103,6 @@ Passed: 10/36
 
 
 * enum-member-reference/input.ts
-  x Semantic Collector failed after transform
-
   x Missing ReferenceId: Foo
    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/enum-member-reference/input.ts:1:1]
  1 | var x = 10;
@@ -56,10 +110,28 @@ Passed: 10/36
  2 | 
    `----
 
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["Foo", "a", "b", "c"]
+  | rebuilt        : ScopeId(1): ["Foo"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(3), ReferenceId(4),
+  | ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8),
+  | ReferenceId(9)]
+  | rebuilt        : SymbolId(2): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5),
+  | ReferenceId(6), ReferenceId(8)]
+
 
 * export-elimination/input.ts
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: Name
    ,-[tasks/transform_conformance/tests/babel-plugin-transform-typescript/test/fixtures/export-elimination/input.ts:1:1]
  1 | import Im, {Ok} from 'a';
@@ -94,6 +166,44 @@ Passed: 10/36
    : ^
  2 | class Foo {}
    `----
+
+  x Bindings mismatch:
+  | after transform: ScopeId(0): ["Baq", "Bar", "Baz", "Foo", "Func", "Im",
+  | "Name", "Ok", "T"]
+  | rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok",
+  | "T"]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(5): [SymbolId(8), SymbolId(10)]
+  | rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(8): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(9): SymbolFlags(BlockScopedVariable | Export |
+  | Function | TypeAlias)
+  | rebuilt        : SymbolId(8): SymbolFlags(BlockScopedVariable | Export
+  | | Function)
+
+  x Symbol span mismatch:
+  | after transform: SymbolId(9): Span { start: 205, end: 206 }
+  | rebuilt        : SymbolId(8): Span { start: 226, end: 227 }
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(8), ReferenceId(9)]
+  | rebuilt        : SymbolId(8): [ReferenceId(9)]
+
+  x Symbol redeclarations mismatch:
+  | after transform: SymbolId(9): [Span { start: 226, end: 227 }]
+  | rebuilt        : SymbolId(8): []
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(7): Some("Name")
+  | rebuilt        : ReferenceId(8): Some("Name")
 
 
 * redeclarations/input.ts
@@ -446,8 +556,6 @@ Passed: 10/36
 
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
-  x Semantic Collector failed after transform
-
   x Missing ScopeId
    ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx:1:1]
  1 | import FancyHook from 'fancy';
@@ -455,10 +563,40 @@ Passed: 10/36
  2 | 
    `----
 
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(10): [ReferenceId(17), ReferenceId(18),
+  | ReferenceId(20)]
+  | rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(16)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(12), ReferenceId(13),
+  | ReferenceId(15)]
+  | rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(7): [ReferenceId(9), ReferenceId(21),
+  | ReferenceId(22)]
+  | rebuilt        : SymbolId(10): [ReferenceId(19), ReferenceId(22)]
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(17): Some("_s2")
+  | rebuilt        : ReferenceId(0): None
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(12): Some("_s")
+  | rebuilt        : ReferenceId(2): None
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(21): Some("_c")
+  | rebuilt        : ReferenceId(21): None
+
+  x Unresolved references mismatch:
+  | after transform: ["React", "useFancyEffect", "useThePlatform"]
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React",
+  | "useFancyEffect", "useThePlatform"]
+
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
-  x Semantic Collector failed after transform
-
   x Missing ScopeId
    ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/includes-custom-hooks-into-the-signatures/input.jsx:1:1]
  1 | function useFancyState() {
@@ -472,6 +610,46 @@ Passed: 10/36
    : ^
  2 |   const [foo, setFoo] = React.useState(0);
    `----
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(8): [ReferenceId(10), ReferenceId(11),
+  | ReferenceId(13)]
+  | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(7)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(9): [ReferenceId(14), ReferenceId(15),
+  | ReferenceId(17)]
+  | rebuilt        : SymbolId(2): [ReferenceId(10), ReferenceId(12)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(10): [ReferenceId(19), ReferenceId(20),
+  | ReferenceId(22)]
+  | rebuilt        : SymbolId(3): [ReferenceId(14), ReferenceId(18)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): [ReferenceId(6), ReferenceId(23),
+  | ReferenceId(24)]
+  | rebuilt        : SymbolId(10): [ReferenceId(21), ReferenceId(24)]
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(10): Some("_s")
+  | rebuilt        : ReferenceId(0): None
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(14): Some("_s2")
+  | rebuilt        : ReferenceId(1): None
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(19): Some("_s3")
+  | rebuilt        : ReferenceId(2): None
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(23): Some("_c")
+  | rebuilt        : ReferenceId(23): None
+
+  x Unresolved references mismatch:
+  | after transform: ["React"]
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React"]
 
 
 * refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
@@ -1043,8 +1221,6 @@ Passed: 10/36
 
 * refresh/supports-typescript-namespace-syntax/input.tsx
   x Output mismatch
-  x Semantic Collector failed after transform
-
   x Missing SymbolId: Foo
    ,-[tasks/transform_conformance/tests/babel-plugin-transform-react-jsx/test/fixtures/refresh/supports-typescript-namespace-syntax/input.tsx:1:1]
  1 | namespace Foo {
@@ -1184,6 +1360,63 @@ Passed: 10/36
    : ^
  2 |   export namespace Bar {
    `----
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(0): [SymbolId(0)]
+  | rebuilt        : ScopeId(0): [SymbolId(0)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(1): [SymbolId(1), SymbolId(5), SymbolId(6),
+  | SymbolId(7), SymbolId(9)]
+  | rebuilt        : ScopeId(1): [SymbolId(1), SymbolId(2), SymbolId(7),
+  | SymbolId(8), SymbolId(9)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(2): [SymbolId(2), SymbolId(3), SymbolId(4),
+  | SymbolId(10)]
+  | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4), SymbolId(5),
+  | SymbolId(6)]
+
+  x Binding symbols mismatch:
+  | after transform: ScopeId(7): [SymbolId(8), SymbolId(11)]
+  | rebuilt        : ScopeId(7): [SymbolId(10), SymbolId(11)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(2): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | ArrowFunction)
+  | rebuilt        : SymbolId(4): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(3): SymbolFlags(BlockScopedVariable | Function)
+  | rebuilt        : SymbolId(5): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(4): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export)
+  | rebuilt        : SymbolId(6): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(5): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | ArrowFunction)
+  | rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(6): SymbolFlags(BlockScopedVariable | Export
+  | | Function)
+  | rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(6): []
+  | rebuilt        : SymbolId(8): [ReferenceId(9)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(8): SymbolFlags(BlockScopedVariable |
+  | ConstVariable | Export | ArrowFunction)
+  | rebuilt        : SymbolId(11): SymbolFlags(BlockScopedVariable |
+  | ConstVariable)
 
 
 * refresh/uses-custom-identifiers-for-refresh-reg-and-refresh-sig/input.jsx

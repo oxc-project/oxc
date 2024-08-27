@@ -88,8 +88,11 @@
 use std::{
     cell::Cell,
     fmt::{Debug, Display},
-    hash::Hash,
+    hash::{BuildHasherDefault, Hash},
 };
+
+use indexmap::IndexMap;
+use rustc_hash::FxHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
@@ -101,9 +104,10 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-use rustc_hash::FxHashMap;
 
 use crate::{ScopeTree, SemanticBuilder, SymbolTable};
+
+type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 /// Check `ScopeTree` and `SymbolTable` are correct after transform
 pub fn check_semantic_after_transform(
@@ -111,17 +115,13 @@ pub fn check_semantic_after_transform(
     scopes_after_transform: &ScopeTree,
     program: &Program<'_>,
 ) -> Option<Vec<OxcDiagnostic>> {
+    let mut errors = Errors::default();
+
     // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
-    let mut ids_after_transform = SemanticIds::default();
-    if let Some(mut errors) = ids_after_transform.check(program) {
-        errors.insert(0, OxcDiagnostic::error("Semantic Collector failed after transform"));
-        return Some(errors);
-    }
-    let data_after_transform = SemanticData {
-        symbols: symbols_after_transform,
-        scopes: scopes_after_transform,
-        ids: ids_after_transform,
-    };
+    let data_after_transform =
+        SemanticData { symbols: symbols_after_transform, scopes: scopes_after_transform };
+    let (scope_ids_after_transform, symbol_ids_after_transform, reference_ids_after_transform) =
+        SemanticIdsCollector::new(&mut errors).collect(program);
 
     // Clone the post-transform AST, re-run semantic analysis on it, and collect `ScopeId`s,
     // `SymbolId`s and `ReferenceId`s from AST.
@@ -133,31 +133,38 @@ pub fn check_semantic_after_transform(
         .build(&program)
         .semantic
         .into_symbol_table_and_scope_tree();
+    let data_rebuilt = SemanticData { symbols: &symbols_rebuilt, scopes: &scopes_rebuilt };
 
-    let mut ids_rebuilt = SemanticIds::default();
-    if let Some(mut errors) = ids_rebuilt.check(&program) {
-        errors.insert(0, OxcDiagnostic::error("Semantic Collector failed after rebuild"));
-        return Some(errors);
-    }
-    let data_rebuilt =
-        SemanticData { symbols: &symbols_rebuilt, scopes: &scopes_rebuilt, ids: ids_rebuilt };
+    let (scope_ids_rebuilt, symbol_ids_rebuilt, reference_ids_rebuilt) =
+        SemanticIdsCollector::new(&mut errors).collect(&program);
+
+    // Create mappings from after transform IDs to rebuilt IDs
+    let scope_ids_map = IdMapping::new(scope_ids_after_transform, scope_ids_rebuilt);
+    let symbol_ids_map = IdMapping::new(symbol_ids_after_transform, symbol_ids_rebuilt);
+    let reference_ids_map = IdMapping::new(reference_ids_after_transform, reference_ids_rebuilt);
 
     // Compare post-transform semantic data to semantic data from fresh semantic analysis
     let mut checker = PostTransformChecker {
         after_transform: data_after_transform,
         rebuilt: data_rebuilt,
-        scope_ids_map: IdMapping::default(),
-        symbol_ids_map: IdMapping::default(),
-        reference_ids_map: IdMapping::default(),
-        errors: Errors::default(),
+        scope_ids_map,
+        symbol_ids_map,
+        reference_ids_map,
+        errors,
     };
-    checker.create_mappings();
     checker.check_scopes();
     checker.check_symbols();
     checker.check_references();
     checker.check_unresolved_references();
 
     checker.errors.get()
+}
+
+/// Check all AST nodes have scope, symbol and reference IDs
+pub fn check_semantic_ids(program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
+    let mut errors = Errors::default();
+    SemanticIdsCollector::new(&mut errors).collect(program);
+    errors.get()
 }
 
 struct PostTransformChecker<'s> {
@@ -173,25 +180,35 @@ struct PostTransformChecker<'s> {
 struct SemanticData<'s> {
     symbols: &'s SymbolTable,
     scopes: &'s ScopeTree,
-    ids: SemanticIds,
 }
 
 /// Mapping from "after transform" ID to "rebuilt" ID
-struct IdMapping<Id>(FxHashMap<Id, Id>);
+struct IdMapping<Id>(FxIndexMap<Id, Id>);
 
 impl<Id: Copy + Eq + Hash> IdMapping<Id> {
-    fn insert(&mut self, after_transform_id: Id, rebuilt_id: Id) {
-        self.0.insert(after_transform_id, rebuilt_id);
+    fn new(after_transform: Vec<Option<Id>>, rebuilt: Vec<Option<Id>>) -> Self {
+        let map = after_transform
+            .into_iter()
+            .zip(rebuilt)
+            .filter_map(|ids| match ids {
+                (Some(after_transform_id), Some(rebuilt_id)) => {
+                    Some((after_transform_id, rebuilt_id))
+                }
+                _ => None,
+            })
+            .collect();
+        Self(map)
     }
 
     fn get(&self, after_transform_id: Id) -> Option<Id> {
         self.0.get(&after_transform_id).copied()
     }
-}
 
-impl<Id> Default for IdMapping<Id> {
-    fn default() -> Self {
-        Self(FxHashMap::default())
+    /// Iterate over pairs of after transform ID and rebuilt ID
+    fn pairs(&self) -> impl Iterator<Item = Pair<Id>> + '_ {
+        self.0
+            .iter()
+            .map(|(&after_transform_id, &rebuilt_id)| Pair::new(after_transform_id, rebuilt_id))
     }
 }
 
@@ -204,10 +221,6 @@ struct Pair<T> {
 impl<T> Pair<T> {
     fn new(after_transform: T, rebuilt: T) -> Self {
         Self { after_transform, rebuilt }
-    }
-
-    fn from_tuple(values: (T, T)) -> Self {
-        Self::new(values.0, values.1)
     }
 
     fn parts(&self) -> (&T, &T) {
@@ -256,6 +269,10 @@ impl Errors {
     /// Add an error string
     fn push<S: AsRef<str>>(&mut self, message: S) {
         self.0.push(OxcDiagnostic::error(message.as_ref().trim().to_string()));
+    }
+
+    fn push_with_label<S: Into<String>>(&mut self, message: S, span: Span) {
+        self.0.push(OxcDiagnostic::error(message.into()).with_label(span));
     }
 
     /// Add an error for a mismatch between a pair of values, with IDs
@@ -309,44 +326,8 @@ rebuilt        : {value_rebuilt}
 }
 
 impl<'s> PostTransformChecker<'s> {
-    fn create_mappings(&mut self) {
-        // Scope IDs
-        for (&scope_id_after_transform, &scope_id_rebuilt) in
-            self.after_transform.ids.scope_ids.iter().zip(self.rebuilt.ids.scope_ids.iter())
-        {
-            self.scope_ids_map.insert(scope_id_after_transform, scope_id_rebuilt);
-        }
-
-        // Symbol IDs
-        for (&symbol_id_after_transform, &symbol_id_rebuilt) in
-            self.after_transform.ids.symbol_ids.iter().zip(self.rebuilt.ids.symbol_ids.iter())
-        {
-            self.symbol_ids_map.insert(symbol_id_after_transform, symbol_id_rebuilt);
-        }
-
-        // Reference IDs
-        for (&reference_id_after_transform, &reference_id_rebuilt) in
-            self.after_transform.ids.reference_ids.iter().zip(self.rebuilt.ids.reference_ids.iter())
-        {
-            self.reference_ids_map.insert(reference_id_after_transform, reference_id_rebuilt);
-        }
-    }
-
     fn check_scopes(&mut self) {
-        if self.get_static_pair(|data| data.ids.scope_ids.len()).is_mismatch() {
-            self.errors.push("Scopes mismatch after transform");
-            return;
-        }
-
-        for scope_ids in self
-            .after_transform
-            .ids
-            .scope_ids
-            .iter()
-            .copied()
-            .zip(self.rebuilt.ids.scope_ids.iter().copied())
-            .map(Pair::from_tuple)
-        {
+        for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
             fn get_sorted_binding_names(data: &SemanticData, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut binding_names =
@@ -393,20 +374,7 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     fn check_symbols(&mut self) {
-        if self.get_static_pair(|data| data.ids.symbol_ids.len()).is_mismatch() {
-            self.errors.push("Symbols mismatch after transform");
-            return;
-        }
-
-        for symbol_ids in self
-            .after_transform
-            .ids
-            .symbol_ids
-            .iter()
-            .copied()
-            .zip(self.rebuilt.ids.symbol_ids.iter().copied())
-            .map(Pair::from_tuple)
-        {
+        for symbol_ids in self.symbol_ids_map.pairs() {
             // Check names match
             let names =
                 self.get_pair(symbol_ids, |data, symbol_id| data.symbols.names[symbol_id].clone());
@@ -464,20 +432,7 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     fn check_references(&mut self) {
-        if self.get_static_pair(|data| data.ids.reference_ids.len()).is_mismatch() {
-            self.errors.push("References mismatch after transform");
-            return;
-        }
-
-        for reference_ids in self
-            .after_transform
-            .ids
-            .reference_ids
-            .iter()
-            .copied()
-            .zip(self.rebuilt.ids.reference_ids.iter().copied())
-            .map(Pair::from_tuple)
-        {
+        for reference_ids in self.reference_ids_map.pairs() {
             // Check symbol IDs match
             let symbol_ids = self.get_pair(reference_ids, |data, reference_id| {
                 data.symbols.references[reference_id].symbol_id()
@@ -598,44 +553,36 @@ impl<'s> PostTransformChecker<'s> {
     }
 }
 
-/// Collection of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
+/// Collector of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
 ///
 /// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
-#[derive(Default)]
-pub struct SemanticIds {
-    scope_ids: Vec<ScopeId>,
-    symbol_ids: Vec<SymbolId>,
-    reference_ids: Vec<ReferenceId>,
-}
-
-impl SemanticIds {
-    /// Collect IDs and check for errors
-    pub fn check(&mut self, program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
-        if program.source_type.is_typescript_definition() {
-            return None;
-        }
-
-        let mut collector = SemanticIdsCollector::new(self);
-        collector.visit_program(program);
-
-        let errors = collector.errors;
-        (!errors.is_empty()).then_some(errors)
-    }
-}
-
-struct SemanticIdsCollector<'a, 'c> {
-    ids: &'c mut SemanticIds,
-    errors: Vec<OxcDiagnostic>,
+struct SemanticIdsCollector<'a, 'e> {
+    scope_ids: Vec<Option<ScopeId>>,
+    symbol_ids: Vec<Option<SymbolId>>,
+    reference_ids: Vec<Option<ReferenceId>>,
     kinds: Vec<AstKind<'a>>,
+    errors: &'e mut Errors,
 }
 
-impl<'a, 'c> SemanticIdsCollector<'a, 'c> {
-    fn new(ids: &'c mut SemanticIds) -> Self {
-        Self { ids, errors: vec![], kinds: vec![] }
+impl<'a, 'e> SemanticIdsCollector<'a, 'e> {
+    fn new(errors: &'e mut Errors) -> Self {
+        Self { scope_ids: vec![], symbol_ids: vec![], reference_ids: vec![], kinds: vec![], errors }
+    }
+
+    /// Collect IDs and check for errors
+    #[allow(clippy::type_complexity)]
+    fn collect(
+        mut self,
+        program: &Program<'a>,
+    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>) {
+        if !program.source_type.is_typescript_definition() {
+            self.visit_program(program);
+        }
+        (self.scope_ids, self.symbol_ids, self.reference_ids)
     }
 }
 
-impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'a, 'c> {
+impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'a, 'e> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.kinds.push(kind);
     }
@@ -645,30 +592,26 @@ impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'a, 'c> {
     }
 
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        if let Some(scope_id) = scope_id.get() {
-            self.ids.scope_ids.push(scope_id);
-        } else {
-            let message = "Missing ScopeId".to_string();
-            self.errors
-                .push(OxcDiagnostic::error(message).with_label(self.kinds.last().unwrap().span()));
+        let scope_id = scope_id.get();
+        self.scope_ids.push(scope_id);
+        if scope_id.is_none() {
+            self.errors.push_with_label("Missing ScopeId", self.kinds.last().unwrap().span());
         }
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        if let Some(reference_id) = ident.reference_id.get() {
-            self.ids.reference_ids.push(reference_id);
-        } else {
-            let message = format!("Missing ReferenceId: {}", ident.name);
-            self.errors.push(OxcDiagnostic::error(message).with_label(ident.span));
+        let reference_id = ident.reference_id.get();
+        self.reference_ids.push(reference_id);
+        if reference_id.is_none() {
+            self.errors.push_with_label(format!("Missing ReferenceId: {}", ident.name), ident.span);
         }
     }
 
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
-        if let Some(symbol_id) = ident.symbol_id.get() {
-            self.ids.symbol_ids.push(symbol_id);
-        } else {
-            let message = format!("Missing SymbolId: {}", ident.name);
-            self.errors.push(OxcDiagnostic::error(message).with_label(ident.span));
+        let symbol_id = ident.symbol_id.get();
+        self.symbol_ids.push(symbol_id);
+        if symbol_id.is_none() {
+            self.errors.push_with_label(format!("Missing SymbolId: {}", ident.name), ident.span);
         }
     }
 
