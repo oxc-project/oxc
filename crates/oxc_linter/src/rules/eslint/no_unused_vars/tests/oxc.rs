@@ -14,9 +14,9 @@ fn test_vars_simple() {
         ("let _a = 1", Some(json!([{ "varsIgnorePattern": "^_" }]))),
         ("const { foo: _foo, baz } = obj; f(baz);", Some(json!([{ "varsIgnorePattern": "^_" }]))),
         (
-            r#"export const rendered = marked(markdown, {
-                    renderer: new (class CustomRenderer extends Renderer {})(),
-               });"#,
+            r"export const rendered = marked(markdown, {
+                  renderer: new (class CustomRenderer extends Renderer {})(),
+              });",
             None,
         ),
     ];

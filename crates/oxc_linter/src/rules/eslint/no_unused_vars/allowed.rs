@@ -42,6 +42,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 // e.g. var foo = function bar() { }
                 // we don't want to check for violations on `bar`, just `foo`
                 | AstKind::VariableDeclarator(_)
+                // new (class CustomRenderer{})
+                // new (function() {})
+                | AstKind::NewExpression(_)
                 => {
                     return true;
                 }
@@ -58,11 +61,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
                         return false;
                     };
                     return body.span.contains_inclusive(self.span()) && body.statements.len() == 1 && !self.get_snippet(body.span).starts_with('{')
-                }
-                // new (class CustomRenderer{})
-                // new (function() {})
-                AstKind::NewExpression(_) => {
-                    return true;
                 }
                 _ => {
                     parent.kind().debug_name();
