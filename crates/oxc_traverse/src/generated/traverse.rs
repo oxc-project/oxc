@@ -648,21 +648,6 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
-    fn enter_using_declaration(
-        &mut self,
-        node: &mut UsingDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-    #[inline]
-    fn exit_using_declaration(
-        &mut self,
-        node: &mut UsingDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-    }
-
-    #[inline]
     fn enter_empty_statement(&mut self, node: &mut EmptyStatement, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_empty_statement(&mut self, node: &mut EmptyStatement, ctx: &mut TraverseCtx<'a>) {}

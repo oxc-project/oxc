@@ -1,4 +1,4 @@
-ts compatibility: 48/528 (9.09%)
+ts compatibility: 50/528 (9.47%)
 
 # Failed
 
@@ -451,10 +451,6 @@ ts compatibility: 48/528 (9.09%)
 * error-recovery/generic.ts
 * error-recovery/index-signature.ts
 * error-recovery/jsdoc_only_types.ts
-
-### explicit-resource-management
-* explicit-resource-management/await-using-with-type-declaration.ts
-* explicit-resource-management/using-with-type-declaration.ts
 
 ### export
 * export/comment.ts

@@ -42,15 +42,9 @@ impl NoUnusedVars {
         };
         let (span, declarations) = match parent {
             AstKind::VariableDeclaration(decl) => (decl.span, &decl.declarations),
-            AstKind::UsingDeclaration(decl) => {
-                if decl.is_await {
-                    return fixer.noop();
-                }
-                (decl.span, &decl.declarations)
-            }
             _ => {
                 #[cfg(debug_assertions)]
-                panic!("VariableDeclarator nodes should always be direct children of VariableDeclaration or UsingDeclaration nodes");
+                panic!("VariableDeclarator nodes should always be direct children of VariableDeclaration nodes");
                 #[cfg(not(debug_assertions))]
                 return fixer.noop();
             }
