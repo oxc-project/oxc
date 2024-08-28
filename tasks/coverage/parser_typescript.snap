@@ -10251,7 +10251,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  26 │   /{2,1}??/,
     ╰────
 
-  × Numbers out of order in braced quantifier
+  × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:26:4]
  25 │   /{1,2}??/,
  26 │   /{2,1}??/,
@@ -10363,7 +10363,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  42 │   /{2,1}??/u,
     ╰────
 
-  × Numbers out of order in braced quantifier
+  × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:42:4]
  41 │   /{1,2}??/u,
  42 │   /{2,1}??/u,
@@ -10497,7 +10497,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  16 │     // Quantifiers
     ╰────
 
-  × Numbers out of order in braced quantifier
+  × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:17:31]
  16 │     // Quantifiers
  17 │     /{}{1,2}_{3}.{4,}?(foo){008}${32,16}\b{064,128}.+&*?\???\n{,256}{\\{,/,
@@ -10545,7 +10545,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:27:6]
  26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
  27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
@@ -10553,7 +10553,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:28:16]
  27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
  28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
@@ -10601,7 +10601,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
     ╰────
 
-  × Invalid character in character class set subtraction
+  × Invalid regular expression: Invalid character in character class set subtraction
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:38:8]
  37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
  38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
@@ -10609,7 +10609,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
     ╰────
 
-  × Invalid character in character class set interseciton
+  × Invalid regular expression: Invalid character in character class set interseciton
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:39:56]
  38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
  39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,

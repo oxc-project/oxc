@@ -191,14 +191,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·  ──────────────────
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-P.js:20:2]
  19 │ 
  20 │ /\P{Basic_Emoji}/v;
     ·  ───────────────
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-u.js:20:5]
  19 │ 
  20 │ /\p{Basic_Emoji}/u;
@@ -212,14 +212,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·  ────────────────────────────
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-P.js:20:2]
  19 │ 
  20 │ /\P{Emoji_Keycap_Sequence}/v;
     ·  ─────────────────────────
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-u.js:20:5]
  19 │ 
  20 │ /\p{Emoji_Keycap_Sequence}/u;
@@ -233,14 +233,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·  ────────────────
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-P.js:20:2]
  19 │ 
  20 │ /\P{RGI_Emoji}/v;
     ·  ─────────────
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-u.js:20:5]
  19 │ 
  20 │ /\p{RGI_Emoji}/u;
@@ -254,14 +254,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·  ──────────────────────────────
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-P.js:20:2]
  19 │ 
  20 │ /\P{RGI_Emoji_Flag_Sequence}/v;
     ·  ───────────────────────────
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-u.js:20:5]
  19 │ 
  20 │ /\p{RGI_Emoji_Flag_Sequence}/u;
@@ -275,14 +275,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·  ──────────────────────────────────
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-P.js:20:2]
  19 │ 
  20 │ /\P{RGI_Emoji_Modifier_Sequence}/v;
     ·  ───────────────────────────────
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-u.js:20:5]
  19 │ 
  20 │ /\p{RGI_Emoji_Modifier_Sequence}/u;
@@ -296,14 +296,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·  ─────────────────────────────
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-P.js:20:2]
  19 │ 
  20 │ /\P{RGI_Emoji_Tag_Sequence}/v;
     ·  ──────────────────────────
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-u.js:20:5]
  19 │ 
  20 │ /\p{RGI_Emoji_Tag_Sequence}/u;
@@ -317,14 +317,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·  ─────────────────────────────
     ╰────
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name(negative + property of strings)
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-P.js:20:2]
  19 │ 
  20 │ /\P{RGI_Emoji_ZWJ_Sequence}/v;
     ·  ──────────────────────────
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings
     ╭─[test262/test/built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-u.js:20:5]
  19 │ 
  20 │ /\p{RGI_Emoji_ZWJ_Sequence}/u;
