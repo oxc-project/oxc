@@ -1,13 +1,19 @@
 commit: 12619ffe
 
-Passed: 10/36
+Passed: 10/37
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-arrow-functions
 
 
-# babel-plugin-transform-typescript (2/7)
+# babel-plugin-transform-typescript (2/8)
+* class-property-definition/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["const"]
+  | rebuilt        : []
+
+
 * computed-constant-value/input.ts
   x Missing ReferenceId: Infinity
 

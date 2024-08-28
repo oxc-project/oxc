@@ -2,7 +2,7 @@ commit: d8086f14
 
 semantic_typescript Summary:
 AST Parsed     : 6456/6456 (100.00%)
-Positive Passed: 3441/6456 (53.30%)
+Positive Passed: 3444/6456 (53.35%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -26869,26 +26869,6 @@ Unresolved references mismatch:
 after transform: ["Object"]
 rebuilt        : []
 
-tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers1.ts
-semantic error: Unresolved references mismatch:
-after transform: ["B", "undefined"]
-rebuilt        : ["B"]
-
-tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers2.ts
-semantic error: Unresolved references mismatch:
-after transform: ["B", "undefined"]
-rebuilt        : ["B"]
-
-tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers3.ts
-semantic error: Unresolved references mismatch:
-after transform: ["B", "undefined"]
-rebuilt        : ["B"]
-
-tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/thisAndSuperInStaticMembers4.ts
-semantic error: Unresolved references mismatch:
-after transform: ["B", "undefined"]
-rebuilt        : ["B"]
-
 tasks/coverage/typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInInstanceMember2.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(1): ["T"]
@@ -27802,6 +27782,14 @@ tasks/coverage/typescript/tests/cases/conformance/decorators/class/property/deco
 semantic error: Unresolved references mismatch:
 after transform: ["PropertyDescriptor", "dec"]
 rebuilt        : ["dec"]
+
+tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorInAmbientContext.ts
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(2): [ReferenceId(3)]
+rebuilt        : SymbolId(0): []
+Unresolved references mismatch:
+after transform: ["Symbol", "decorator"]
+rebuilt        : ["Symbol"]
 
 tasks/coverage/typescript/tests/cases/conformance/decorators/decoratorMetadata.ts
 semantic error: Bindings mismatch:
