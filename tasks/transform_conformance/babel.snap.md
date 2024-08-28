@@ -1979,6 +1979,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * class/accessor-allowDeclareFields-false/input.ts
+  x Output mismatch
   x TS(18010): An accessibility modifier cannot be used with a private
   | identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
@@ -1990,6 +1991,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * class/accessor-allowDeclareFields-true/input.ts
+  x Output mismatch
   x TS(18010): An accessibility modifier cannot be used with a private
   | identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]

@@ -6369,6 +6369,7 @@ impl<'a> AstBuilder<'a> {
     /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
+    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn class_element_accessor_property<T1>(
         self,
@@ -6381,6 +6382,7 @@ impl<'a> AstBuilder<'a> {
         r#static: bool,
         definite: bool,
         type_annotation: T1,
+        accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
@@ -6395,6 +6397,7 @@ impl<'a> AstBuilder<'a> {
             r#static,
             definite,
             type_annotation,
+            accessibility,
         )))
     }
 
@@ -6947,6 +6950,7 @@ impl<'a> AstBuilder<'a> {
     /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
+    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn accessor_property<T1>(
         self,
@@ -6959,6 +6963,7 @@ impl<'a> AstBuilder<'a> {
         r#static: bool,
         definite: bool,
         type_annotation: T1,
+        accessibility: Option<TSAccessibility>,
     ) -> AccessorProperty<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
@@ -6973,6 +6978,7 @@ impl<'a> AstBuilder<'a> {
             r#static,
             definite,
             type_annotation: type_annotation.into_in(self.allocator),
+            accessibility,
         }
     }
 
@@ -6990,6 +6996,7 @@ impl<'a> AstBuilder<'a> {
     /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
+    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn alloc_accessor_property<T1>(
         self,
@@ -7002,6 +7009,7 @@ impl<'a> AstBuilder<'a> {
         r#static: bool,
         definite: bool,
         type_annotation: T1,
+        accessibility: Option<TSAccessibility>,
     ) -> Box<'a, AccessorProperty<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
@@ -7017,6 +7025,7 @@ impl<'a> AstBuilder<'a> {
                 r#static,
                 definite,
                 type_annotation,
+                accessibility,
             ),
             self.allocator,
         )

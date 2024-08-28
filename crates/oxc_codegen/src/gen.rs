@@ -2570,6 +2570,9 @@ impl<'a> Gen for AccessorProperty<'a> {
         if self.r#type.is_abstract() {
             p.print_str("abstract ");
         }
+        if let Some(accessibility) = &self.accessibility {
+            accessibility.gen(p, ctx);
+        }
         if self.r#static {
             p.print_str("static ");
         }

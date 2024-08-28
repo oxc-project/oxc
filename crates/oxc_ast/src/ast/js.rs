@@ -2272,6 +2272,21 @@ pub struct AccessorProperty<'a> {
     ///
     /// Will only ever be [`Some`] for TypeScript files.
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    /// Accessibility modifier.
+    ///
+    /// Only ever [`Some`] for TypeScript files.
+    ///
+    /// ## Example
+    ///
+    /// ```ts
+    /// class Foo {
+    ///   public accessor w: number     // Some(TSAccessibility::Public)
+    ///   private accessor x: string    // Some(TSAccessibility::Private)
+    ///   protected accessor y: boolean // Some(TSAccessibility::Protected)
+    ///   accessor z           // None
+    /// }
+    /// ```
+    pub accessibility: Option<TSAccessibility>,
 }
 
 #[ast(visit)]

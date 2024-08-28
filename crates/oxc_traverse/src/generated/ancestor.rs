@@ -7712,6 +7712,8 @@ pub(crate) const OFFSET_ACCESSOR_PROPERTY_STATIC: usize = offset_of!(AccessorPro
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_DEFINITE: usize = offset_of!(AccessorProperty, definite);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION: usize =
     offset_of!(AccessorProperty, type_annotation);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY: usize =
+    offset_of!(AccessorProperty, accessibility);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -7769,6 +7771,14 @@ impl<'a, 't> AccessorPropertyWithoutDecorators<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
         }
     }
 }
@@ -7832,6 +7842,14 @@ impl<'a, 't> AccessorPropertyWithoutKey<'a, 't> {
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -7890,6 +7908,14 @@ impl<'a, 't> AccessorPropertyWithoutValue<'a, 't> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE_ANNOTATION)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
         }
     }
 }
@@ -7951,6 +7977,14 @@ impl<'a, 't> AccessorPropertyWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn definite(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn accessibility(self) -> &'t Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
     }
 }
 
