@@ -218,6 +218,7 @@ impl<'a> TraverseCtx<'a> {
     /// Get iterator over scopes, starting with current scope and working up.
     ///
     /// This is a shortcut for `ctx.scoping.parent_scopes`.
+    #[inline]
     pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.scoping.ancestor_scopes()
     }
@@ -227,6 +228,7 @@ impl<'a> TraverseCtx<'a> {
     /// `flags` provided are amended to inherit from parent scope's flags.
     ///
     /// This is a shortcut for `ctx.scoping.create_child_scope`.
+    #[inline]
     pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
         self.scoping.create_child_scope(parent_id, flags)
     }
@@ -236,6 +238,7 @@ impl<'a> TraverseCtx<'a> {
     /// `flags` provided are amended to inherit from parent scope's flags.
     ///
     /// This is a shortcut for `ctx.scoping.create_child_scope_of_current`.
+    #[inline]
     pub fn create_child_scope_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
         self.scoping.create_child_scope_of_current(flags)
     }
@@ -249,6 +252,7 @@ impl<'a> TraverseCtx<'a> {
     /// `flags` provided are amended to inherit from parent scope's flags.
     ///
     /// This is a shortcut for `ctx.scoping.insert_scope_below_statement`.
+    #[inline]
     pub fn insert_scope_below_statement(&mut self, stmt: &Statement, flags: ScopeFlags) -> ScopeId {
         self.scoping.insert_scope_below_statement(stmt, flags)
     }
@@ -262,6 +266,7 @@ impl<'a> TraverseCtx<'a> {
     /// `flags` provided are amended to inherit from parent scope's flags.
     ///
     /// This is a shortcut for `ctx.scoping.insert_scope_below_expression`.
+    #[inline]
     pub fn insert_scope_below_expression(
         &mut self,
         expr: &Expression,
@@ -273,6 +278,7 @@ impl<'a> TraverseCtx<'a> {
     /// Generate UID.
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid`.
+    #[inline]
     pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
         self.scoping.generate_uid(name, scope_id, flags)
     }
@@ -280,6 +286,7 @@ impl<'a> TraverseCtx<'a> {
     /// Generate UID in current scope.
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope`.
+    #[inline]
     pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
         self.scoping.generate_uid_in_current_scope(name, flags)
     }
@@ -287,6 +294,7 @@ impl<'a> TraverseCtx<'a> {
     /// Generate UID in root scope.
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_in_root_scope`.
+    #[inline]
     pub fn generate_uid_in_root_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
         self.scoping.generate_uid_in_root_scope(name, flags)
     }
@@ -294,6 +302,7 @@ impl<'a> TraverseCtx<'a> {
     /// Generate UID based on node.
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_based_on_node`.
+    #[inline]
     pub fn generate_uid_based_on_node(
         &mut self,
         node: &Expression<'a>,
@@ -306,6 +315,7 @@ impl<'a> TraverseCtx<'a> {
     /// Generate UID in current scope based on node.
     ///
     /// This is a shortcut for `ctx.scoping.generate_uid_in_current_scope_based_on_node`.
+    #[inline]
     pub fn generate_uid_in_current_scope_based_on_node(
         &mut self,
         node: &Expression<'a>,
@@ -317,6 +327,7 @@ impl<'a> TraverseCtx<'a> {
     /// Create a reference bound to a `SymbolId`.
     ///
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
+    #[inline]
     pub fn create_bound_reference(
         &mut self,
         symbol_id: SymbolId,
@@ -328,6 +339,7 @@ impl<'a> TraverseCtx<'a> {
     /// Create an `IdentifierReference` bound to a `SymbolId`.
     ///
     /// This is a shortcut for `ctx.scoping.create_bound_reference_id`.
+    #[inline]
     pub fn create_bound_reference_id(
         &mut self,
         span: Span,
@@ -341,6 +353,7 @@ impl<'a> TraverseCtx<'a> {
     /// Create an unbound reference.
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
+    #[inline]
     pub fn create_unbound_reference(
         &mut self,
         name: CompactStr,
@@ -352,6 +365,7 @@ impl<'a> TraverseCtx<'a> {
     /// Create an unbound `IdentifierReference`.
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference_id`.
+    #[inline]
     pub fn create_unbound_reference_id(
         &mut self,
         span: Span,
@@ -367,6 +381,7 @@ impl<'a> TraverseCtx<'a> {
     /// or `TraverseCtx::create_unbound_reference`.
     ///
     /// This is a shortcut for `ctx.scoping.create_reference`.
+    #[inline]
     pub fn create_reference(
         &mut self,
         name: CompactStr,
@@ -382,6 +397,7 @@ impl<'a> TraverseCtx<'a> {
     /// or `TraverseCtx::create_unbound_reference_id`.
     ///
     /// This is a shortcut for `ctx.scoping.create_reference_id`.
+    #[inline]
     pub fn create_reference_id(
         &mut self,
         span: Span,
@@ -395,6 +411,7 @@ impl<'a> TraverseCtx<'a> {
     /// Create reference in current scope, looking up binding for `name`,
     ///
     /// This is a shortcut for `ctx.scoping.create_reference_in_current_scope`.
+    #[inline]
     pub fn create_reference_in_current_scope(
         &mut self,
         name: CompactStr,
@@ -410,6 +427,7 @@ impl<'a> TraverseCtx<'a> {
     /// and generate `IdentifierReference`s with `TraverseCtx::create_reference_id`.
     ///
     /// This is a shortcut for `ctx.scoping.clone_identifier_reference`.
+    #[inline]
     pub fn clone_identifier_reference(
         &mut self,
         ident: &IdentifierReference<'a>,
