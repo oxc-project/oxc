@@ -601,7 +601,7 @@ impl<'a> PatternParser<'a> {
                     //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
                     if negative && strings {
                         return Err(OxcDiagnostic::error(
-                            "Invalid property name(negative + property of strings)",
+                            "Invalid regular expression: Invalid property name(negative + property of strings)",
                         )
                         .with_label(self.span_factory.create(span_start, self.reader.offset())));
                     }
@@ -1120,7 +1120,7 @@ impl<'a> PatternParser<'a> {
                 let span_start = self.reader.offset();
                 if self.reader.eat('&') {
                     return Err(OxcDiagnostic::error(
-                        "Unexpected `&` inside of class interseciton", // spellchecker:disable-line
+                        "Invalid regular expression: Unexpected `&` inside of class interseciton", // spellchecker:disable-line
                     )
                     .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
@@ -1133,7 +1133,7 @@ impl<'a> PatternParser<'a> {
 
             let span_start = self.reader.offset();
             return Err(OxcDiagnostic::error(
-                "Invalid character in character class set interseciton", // spellchecker:disable-line
+                "Invalid regular expression: Invalid character in character class set interseciton", // spellchecker:disable-line
             )
             .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
@@ -1167,7 +1167,7 @@ impl<'a> PatternParser<'a> {
 
             let span_start = self.reader.offset();
             return Err(OxcDiagnostic::error(
-                "Invalid character in character class set subtraction",
+                "Invalid regular expression: Invalid character in character class set subtraction",
             )
             .with_label(self.span_factory.create(span_start, self.reader.offset())));
         }
@@ -1586,7 +1586,7 @@ impl<'a> PatternParser<'a> {
                 if self.reader.eat('}') {
                     if MAX_QUANTIFIER < min {
                         return Err(OxcDiagnostic::error(
-                            "Number is too large in braced quantifier",
+                            "Invalid regular expression: Number is too large in braced quantifier",
                         )
                         .with_label(self.span_factory.create(span_start, self.reader.offset())));
                     }
@@ -1598,7 +1598,7 @@ impl<'a> PatternParser<'a> {
                     if self.reader.eat('}') {
                         if MAX_QUANTIFIER < min {
                             return Err(OxcDiagnostic::error(
-                                "Number is too large in braced quantifier",
+                                "Invalid regular expression: Number is too large in braced quantifier",
                             )
                             .with_label(
                                 self.span_factory.create(span_start, self.reader.offset()),
@@ -1614,7 +1614,7 @@ impl<'a> PatternParser<'a> {
                                 // [SS:EE] QuantifierPrefix :: { DecimalDigits , DecimalDigits }
                                 // It is a Syntax Error if the MV of the first DecimalDigits is strictly greater than the MV of the second DecimalDigits.
                                 return Err(OxcDiagnostic::error(
-                                    "Numbers out of order in braced quantifier",
+                                    "Invalid regular expression: Numbers out of order in braced quantifier",
                                 )
                                 .with_label(
                                     self.span_factory.create(span_start, self.reader.offset()),
@@ -1622,7 +1622,7 @@ impl<'a> PatternParser<'a> {
                             }
                             if MAX_QUANTIFIER < min || MAX_QUANTIFIER < max {
                                 return Err(OxcDiagnostic::error(
-                                    "Number is too large in braced quantifier",
+                                    "Invalid regular expression: Number is too large in braced quantifier",
                                 )
                                 .with_label(
                                     self.span_factory.create(span_start, self.reader.offset()),
@@ -1683,8 +1683,10 @@ impl<'a> PatternParser<'a> {
                 value = v;
                 self.reader.advance();
             } else {
-                return Err(OxcDiagnostic::error("Number is too large in decimal digits")
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                return Err(OxcDiagnostic::error(
+                    "Invalid regular expression: Number is too large in decimal digits",
+                )
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
             }
         }
 
@@ -1745,7 +1747,7 @@ impl<'a> PatternParser<'a> {
             if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
                 if !self.state.unicode_sets_mode {
                     return Err(OxcDiagnostic::error(
-                        "`UnicodeSetsMode` is required for binary property of strings",
+                        "Invalid regular expression: `UnicodeSetsMode` is required for binary property of strings",
                     )
                     .with_label(self.span_factory.create(span_start, self.reader.offset())));
                 }
@@ -2169,8 +2171,10 @@ impl<'a> PatternParser<'a> {
                 value = v;
                 self.reader.advance();
             } else {
-                return Err(OxcDiagnostic::error("Number is too large in hex digits")
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                return Err(OxcDiagnostic::error(
+                    "Invalid regular expression: Number is too large in hex digits",
+                )
+                .with_label(self.span_factory.create(span_start, self.reader.offset())));
             }
         }
 
