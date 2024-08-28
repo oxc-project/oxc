@@ -143,9 +143,11 @@ impl<'a> TraverseCtx<'a> {
     /// `level` is number of levels above.
     /// `ancestor(1).unwrap()` is equivalent to `parent()`.
     ///
+    /// If `level` is out of bounds (above `Program`), returns `Ancestor::None`.
+    ///
     /// Shortcut for `ctx.ancestry.ancestor`.
     #[inline]
-    pub fn ancestor<'t>(&'t self, level: usize) -> Option<Ancestor<'a, 't>> {
+    pub fn ancestor<'t>(&'t self, level: usize) -> Ancestor<'a, 't> {
         self.ancestry.ancestor(level)
     }
 

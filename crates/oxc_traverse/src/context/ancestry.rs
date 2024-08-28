@@ -59,14 +59,22 @@ impl<'a> TraverseAncestry<'a> {
     ///
     /// `level` is number of levels above.
     /// `ancestor(1).unwrap()` is equivalent to `parent()`.
+    ///
+    /// If `level` is out of bounds (above `Program`), returns `Ancestor::None`.
     #[inline]
-    pub fn ancestor<'t>(&'t self, level: usize) -> Option<Ancestor<'a, 't>> {
-        self.stack.get(self.stack.len() - level).map(|&ancestor| {
+    pub fn ancestor<'t>(&'t self, level: usize) -> Ancestor<'a, 't> {
+        if level < self.stack.len() {
+            // SAFETY: We just checked that `level < self.stack.len()` so `self.stack.len() - level`
+            // cannot wrap around or be out of bounds
+            let ancestor = unsafe { *self.stack.get_unchecked(self.stack.len() - level) };
+
             // Shrink `Ancestor`'s `'t` lifetime to lifetime of `&'t self`.
             // SAFETY: The `Ancestor` is guaranteed valid for `'t`. It is not possible to obtain
             // a `&mut` ref to any AST node which this `Ancestor` gives access to during `'t`.
             unsafe { transmute::<Ancestor<'a, '_>, Ancestor<'a, 't>>(ancestor) }
-        })
+        } else {
+            Ancestor::None
+        }
     }
 
     /// Get iterator over ancestors, starting with closest ancestor
