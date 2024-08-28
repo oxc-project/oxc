@@ -23,7 +23,7 @@ export default function generateWalkFunctionsCode(types) {
             clippy::cast_ptr_alignment
         )]
 
-        use std::cell::Cell;
+        use std::{cell::Cell, marker::PhantomData};
 
         use oxc_allocator::Vec;
         #[allow(clippy::wildcard_imports)]
@@ -95,7 +95,7 @@ function generateWalkForStruct(type, types) {
             tagCode = `
                 ctx.push_stack(
                     Ancestor::${type.name}${fieldCamelName}(
-                        ancestor::${type.name}Without${fieldCamelName}(node)
+                        ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
                     )
                 );
             `;

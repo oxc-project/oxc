@@ -1,3 +1,5 @@
+use std::mem::transmute;
+
 use crate::ancestor::{Ancestor, AncestorType};
 
 const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
@@ -7,6 +9,17 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 /// Contains a stack of `Ancestor`s, and provides methods to get parent/ancestor of current node.
 ///
 /// `walk_*` methods push/pop `Ancestor`s to `stack` when entering/exiting nodes.
+///
+/// `Ancestor<'a, 't>` is an owned type.
+/// * `'a` is lifetime of AST nodes.
+/// * `'t` is lifetime of the `Ancestor` (derived from `&'t TraverseAncestry`).
+///
+/// `'t` is constrained in `parent`, `ancestor` and `ancestors` methods to only live as long as
+/// the `&'t TraverseAncestry` passed to the method.
+/// i.e. `Ancestor`s can only live as long as `enter_*` or `exit_*` method in which they're obtained,
+/// and cannot "escape" those methods.
+/// This is required for soundness. If an `Ancestor` could be retained longer, the references that
+/// can be got from it could alias a `&mut` reference to the same AST node.
 ///
 /// # SAFETY
 /// This type MUST NOT be mutable by consumer.
@@ -24,18 +37,21 @@ const INITIAL_STACK_CAPACITY: usize = 64; // 64 entries = 1 KiB
 ///    b. cannot obtain an owned `TraverseAncestry` from a `&TraverseAncestry`
 ///       - `TraverseAncestry` is not `Clone`.
 pub struct TraverseAncestry<'a> {
-    stack: Vec<Ancestor<'a>>,
+    stack: Vec<Ancestor<'a, 'static>>,
 }
 
 // Public methods
 impl<'a> TraverseAncestry<'a> {
     /// Get parent of current node.
     #[inline]
-
-    pub fn parent(&self) -> &Ancestor<'a> {
+    pub fn parent<'t>(&'t self) -> Ancestor<'a, 't> {
         // SAFETY: Stack contains 1 entry initially. Entries are pushed as traverse down the AST,
         // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
-        unsafe { self.stack.last().unwrap_unchecked() }
+        let ancestor = unsafe { *self.stack.last().unwrap_unchecked() };
+        // Shrink `Ancestor`'s `'t` lifetime to lifetime of `&'t self`.
+        // SAFETY: The `Ancestor` is guaranteed valid for `'t`. It is not possible to obtain
+        // a `&mut` ref to any AST node which this `Ancestor` gives access to during `'t`.
+        unsafe { transmute::<Ancestor<'a, '_>, Ancestor<'a, 't>>(ancestor) }
     }
 
     /// Get ancestor of current node.
@@ -43,13 +59,23 @@ impl<'a> TraverseAncestry<'a> {
     /// `level` is number of levels above.
     /// `ancestor(1).unwrap()` is equivalent to `parent()`.
     #[inline]
-    pub fn ancestor(&self, level: usize) -> Option<&Ancestor<'a>> {
-        self.stack.get(self.stack.len() - level)
+    pub fn ancestor<'t>(&'t self, level: usize) -> Option<Ancestor<'a, 't>> {
+        self.stack.get(self.stack.len() - level).map(|&ancestor| {
+            // Shrink `Ancestor`'s `'t` lifetime to lifetime of `&'t self`.
+            // SAFETY: The `Ancestor` is guaranteed valid for `'t`. It is not possible to obtain
+            // a `&mut` ref to any AST node which this `Ancestor` gives access to during `'t`.
+            unsafe { transmute::<Ancestor<'a, '_>, Ancestor<'a, 't>>(ancestor) }
+        })
     }
 
     /// Get iterator over ancestors, starting with closest ancestor
-    pub fn ancestors<'b>(&'b self) -> impl Iterator<Item = &'b Ancestor<'a>> {
-        self.stack.iter().rev()
+    pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
+        self.stack.iter().rev().map(|&ancestor| {
+            // Shrink `Ancestor`'s `'t` lifetime to lifetime of `&'t self`.
+            // SAFETY: The `Ancestor` is guaranteed valid for `'t`. It is not possible to obtain
+            // a `&mut` ref to any AST node which this `Ancestor` gives access to during `'t`.
+            unsafe { transmute::<Ancestor<'a, '_>, Ancestor<'a, 't>>(ancestor) }
+        })
     }
 
     /// Get depth in the AST.
@@ -78,7 +104,7 @@ impl<'a> TraverseAncestry<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a>) {
+    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) {
         self.stack.push(ancestor);
     }
 
@@ -90,7 +116,6 @@ impl<'a> TraverseAncestry<'a> {
     ///
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-
     pub(crate) unsafe fn pop_stack(&mut self) {
         self.stack.pop().unwrap_unchecked();
     }
