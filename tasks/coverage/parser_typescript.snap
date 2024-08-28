@@ -20402,17 +20402,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·     ────────────
    ╰────
 
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:15]
- 1 │ foo(/notregexp);
-   ·               ▲
-   ╰────
-
-  × Expected `)` but found `EOF`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:17]
- 1 │ foo(/notregexp);
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity7.ts:2:3]
  1 │ (a/8

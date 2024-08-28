@@ -19559,21 +19559,11 @@ Negative Passed: 4220/4220 (100.00%)
     · ─
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/line-terminators/invalid-regexp-cr.js:19:1]
- 18 │ /
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:17:1]
  16 │ 
  17 │ /
     · ──
- 18 │ /
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/line-terminators/invalid-regexp-lf.js:19:1]
  18 │ /
     ╰────
 
@@ -19584,21 +19574,11 @@ Negative Passed: 4220/4220 (100.00%)
     · ──
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/line-terminators/invalid-regexp-ls.js:18:1]
- 17 │ / /
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:17:1]
  16 │ 
  17 │ / /
     · ──
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/line-terminators/invalid-regexp-ps.js:18:1]
- 17 │ / /
     ╰────
 
   × Unterminated string
@@ -20388,21 +20368,11 @@ Negative Passed: 4220/4220 (100.00%)
  30 │ /
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T1.js:31:1]
- 30 │ /
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:29:1]
  28 │ 
  29 │ /
     · ──
- 30 │ /
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.3_T3.js:31:1]
  30 │ /
     ╰────
 
@@ -20414,37 +20384,11 @@ Negative Passed: 4220/4220 (100.00%)
  24 │ /
     ╰────
 
-  × Invalid regular expression: Invalid escape
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:23:2]
- 22 │ 
- 23 │ /\
-    ·  ─
- 24 │ /
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T1.js:25:1]
- 24 │ /
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:22:1]
  21 │ 
  22 │ /\
     · ───
- 23 │ /
-    ╰────
-
-  × Invalid regular expression: Invalid escape
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:22:2]
- 21 │ 
- 22 │ /\
-    ·  ─
- 23 │ /
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A1.5_T3.js:24:1]
  23 │ /
     ╰────
 
@@ -20470,21 +20414,11 @@ Negative Passed: 4220/4220 (100.00%)
  33 │ /
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T1.js:34:1]
- 33 │ /
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:33:1]
  32 │ 
  33 │ /a
     · ───
- 34 │ /
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.3_T3.js:35:1]
  34 │ /
     ╰────
 
@@ -20496,37 +20430,11 @@ Negative Passed: 4220/4220 (100.00%)
  29 │ /
     ╰────
 
-  × Invalid regular expression: Invalid escape
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:28:3]
- 27 │ 
- 28 │ /a\
-    ·   ─
- 29 │ /
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T1.js:30:1]
- 29 │ /
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:28:1]
  27 │ 
  28 │ /a\
     · ────
- 29 │ /
-    ╰────
-
-  × Invalid regular expression: Invalid escape
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:28:3]
- 27 │ 
- 28 │ /a\
-    ·   ─
- 29 │ /
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/S7.8.5_A2.5_T3.js:30:1]
  29 │ /
     ╰────
 
@@ -20994,22 +20902,12 @@ Negative Passed: 4220/4220 (100.00%)
  30 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-line-separator.js:34:1]
- 33 │ */
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:29:1]
  28 │ 
  29 │ / /
     · ──
  30 │ 
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/regexp-first-char-no-paragraph-separator.js:34:1]
- 33 │ */
     ╰────
 
   × Unterminated regular expression
@@ -21020,22 +20918,12 @@ Negative Passed: 4220/4220 (100.00%)
  29 │ 
     ╰────
 
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-line-separator.js:33:1]
- 32 │ */
-    ╰────
-
   × Unterminated regular expression
     ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:29:1]
  28 │ 
  29 │ /a\\  /
     · ─────
  30 │ 
-    ╰────
-
-  × Unexpected token
-    ╭─[test262/test/language/literals/regexp/regexp-source-char-no-paragraph-separator.js:34:1]
- 33 │ */
     ╰────
 
   × Invalid regular expression: Could not parse the entire pattern
@@ -33622,11 +33510,6 @@ Negative Passed: 4220/4220 (100.00%)
  16 │ 
  17 │ function __func(){/ ABC}
     ·                   ───────
-    ╰────
-
-  × Expected `}` but found `EOF`
-    ╭─[test262/test/language/statements/function/invalid-function-body-1.js:18:1]
- 17 │ function __func(){/ ABC}
     ╰────
 
   × Unexpected token
