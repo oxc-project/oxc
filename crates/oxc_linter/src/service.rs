@@ -236,7 +236,7 @@ impl Runtime {
 
             if !messages.is_empty() {
                 self.ignore_path(path);
-                let errors = messages.into_iter().map(|m| m.error).collect();
+                let errors = messages.into_iter().map(Into::into).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
                 let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
                 tx_error.send(Some(diagnostics)).unwrap();

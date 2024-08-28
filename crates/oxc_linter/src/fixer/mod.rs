@@ -213,9 +213,8 @@ pub struct FixResult<'a> {
 #[derive(Clone)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
-    pub start: u32,
-    pub end: u32,
     pub fix: Option<Fix<'a>>,
+    span: Span,
     fixed: bool,
 }
 
@@ -235,24 +234,21 @@ impl<'a> Message<'a> {
         } else {
             (0, 0)
         };
-        Self { error, start, end, fix, fixed: false }
+        Self { error, span: Span::new(start, end), fix, fixed: false }
     }
+}
 
+impl From<Message<'_>> for OxcDiagnostic {
     #[inline]
-    pub fn start(&self) -> u32 {
-        self.start
-    }
-
-    #[inline]
-    pub fn end(&self) -> u32 {
-        self.end
+    fn from(message: Message) -> Self {
+        message.error
     }
 }
 
 impl<'a> GetSpan for Message<'a> {
     #[inline]
     fn span(&self) -> Span {
-        Span::new(self.start(), self.end())
+        self.span
     }
 }
 
@@ -279,19 +275,29 @@ impl<'a> Fixer<'a> {
             };
         }
 
-        self.messages.sort_by_key(|m| m.fix.as_ref().unwrap_or(&Fix::default()).span);
+        self.messages.sort_unstable_by_key(|m| m.fix.as_ref().unwrap_or(&Fix::default()).span);
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: i64 = -1;
-        self.messages.iter_mut().filter(|m| m.fix.is_some()).for_each(|m| {
-            let Fix { content, span } = m.fix.as_ref().unwrap();
+
+        // only keep messages that were not fixed
+        let mut filtered_messages = Vec::with_capacity(self.messages.len());
+
+        for mut m in self.messages {
+            let Some(Fix { content, span }) = m.fix.as_ref() else {
+                filtered_messages.push(m);
+                continue;
+            };
             let start = span.start;
             let end = span.end;
+            debug_assert!(start <= end, "Negative range is invalid: {span:?}");
             if start > end {
-                return;
+                filtered_messages.push(m);
+                continue;
             }
             if i64::from(start) < last_pos {
-                return;
+                filtered_messages.push(m);
+                continue;
             }
 
             m.fixed = true;
@@ -300,14 +306,13 @@ impl<'a> Fixer<'a> {
             output.push_str(&source_text[offset..start as usize]);
             output.push_str(content);
             last_pos = i64::from(end);
-        });
+        }
 
         let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
         output.push_str(&source_text[offset..]);
 
-        let mut messages = self.messages.into_iter().filter(|m| !m.fixed).collect::<Vec<_>>();
-        messages.sort_by_key(|m| (m.start, m.end));
-        FixResult { fixed, fixed_code: Cow::Owned(output), messages }
+        filtered_messages.sort_unstable_by_key(GetSpan::span);
+        FixResult { fixed, fixed_code: Cow::Owned(output), messages: filtered_messages }
     }
 }
 
@@ -438,6 +443,7 @@ mod test {
     }
 
     #[test]
+    #[should_panic = "Negative range is invalid"]
     fn ignore_reverse_range() {
         let result = get_fix_result(vec![create_message(reverse_range(), Some(REVERSE_RANGE))]);
         assert_eq!(result.fixed_code, TEST_CODE);
