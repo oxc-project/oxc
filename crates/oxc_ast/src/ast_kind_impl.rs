@@ -1,7 +1,12 @@
+use std::{
+    mem::{align_of, size_of, MaybeUninit},
+    ptr::{self, NonNull},
+};
+
 use oxc_span::Atom;
 use oxc_syntax::scope::ScopeId;
 
-use super::{ast::*, AstKind};
+use super::{ast::*, AstKind, AstType};
 
 impl<'a> AstKind<'a> {
     #[rustfmt::skip]
@@ -410,5 +415,53 @@ impl<'a> AstKind<'a> {
             Self::TSModuleReference(_) => "TSModuleReference".into(),
             Self::TSExportAssignment(_) => "TSExportAssignment".into(),
         }
+    }
+}
+
+const _: () = {
+    assert!(size_of::<AstKind>() == size_of::<NonNull<()>>() * 2);
+    assert!(align_of::<AstKind>() == align_of::<NonNull<()>>());
+};
+
+impl<'a> AstKind<'a> {
+    /// Get `AstType` of this `AstKind`.
+    #[inline]
+    pub fn ast_type(self) -> AstType {
+        // SAFETY: `AstKind` is `#[repr(C, u8)]` and its discriminants align with `AstType`.
+        // It's permitted to read discriminant of an enum with a primitive representation:
+        // <https://doc.rust-lang.org/std/mem/fn.discriminant.html#accessing-the-numeric-value-of-the-discriminant>
+        unsafe { *ptr::addr_of!(self).cast::<AstType>().as_ref().unwrap_unchecked() }
+    }
+
+    /// Get "payload" of this `AstKind` as an unsafe pointer.
+    ///
+    /// This method is safe, but caller must ensure sound usage of the returned pointer.
+    #[inline]
+    pub fn payload(self) -> NonNull<()> {
+        // SAFETY: `AstKind` is `#[repr(C, u8)]` and all variants include a `&` ref to an AST node
+        // as their "payload". The `#[repr]` specifies the offset of the `&` ref.
+        unsafe { *ptr::addr_of!(self).cast::<NonNull<()>>().add(1).as_ref().unwrap_unchecked() }
+    }
+
+    /// Create an `AstKind` from `AstType` + payload pointer.
+    ///
+    /// SAFETY:
+    /// * Caller must provide `ty` and `payload` which match to make a valid `AstKind`.
+    ///   Usually, they'd be obtained from an existing `AstKind`.
+    /// * Lifetime of returned `AstKind<'a>` is determined by caller.
+    ///   Caller must ensure the `AstKind<'a>` is valid for `'a`.
+    #[inline]
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn from_type_and_payload(ty: AstType, payload: NonNull<()>) -> Self {
+        // Create an `AstKind` by writing the type (enum discriminant) and pointer separately.
+        // These are the only bytes which require to be initialized in an `AstKind`.
+        // 7 bytes in middle can stay uninitialized.
+        // The offset of fields is guaranteed by `AstKind` being `#[repr(C, u8)]`
+        // and the const assertions above.
+        let mut kind = MaybeUninit::<AstKind<'a>>::uninit();
+        let kind_ptr = ptr::addr_of_mut!(kind);
+        kind_ptr.cast::<AstType>().write(ty);
+        kind_ptr.cast::<NonNull<()>>().add(1).write(payload);
+        kind.assume_init()
     }
 }

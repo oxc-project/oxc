@@ -143,11 +143,16 @@ impl Generator for AstKindGenerator {
             .chain(aliased_nodes())
             .collect();
 
-        let types: Vec<Variant> =
-            have_kinds.iter().map(|(ident, _)| parse_quote!(#ident)).collect_vec();
-
-        let kinds: Vec<Variant> =
-            have_kinds.iter().map(|(ident, typ)| parse_quote!(#ident(&'a #typ))).collect_vec();
+        let (types, kinds): (Vec<Variant>, Vec<Variant>) = have_kinds
+            .iter()
+            .enumerate()
+            .map(|(index, (ident, typ))| {
+                let id = u8::try_from(index).unwrap();
+                let type_variant = parse_quote!(#ident = #id);
+                let kind_variant = parse_quote!(#ident(&'a #typ) = AstType::#ident as u8);
+                (type_variant, kind_variant)
+            })
+            .unzip();
 
         let span_matches: Vec<Arm> = have_kinds
             .iter()
@@ -168,14 +173,23 @@ impl Generator for AstKindGenerator {
                 use crate::ast::*;
 
                 ///@@line_break
+                /// AST node type
+                ///@ SAFETY: Soundness of [`AstKind::ast_type`], [`AstKind::payload`],
+                ///@ and [`AstKind::from_type_and_payload`] methods rely on this type being `#[repr(u8)]`
+                ///@ and having same discriminants as `AstKind`.
                 #[derive(Debug, Clone, Copy)]
+                #[repr(u8)]
                 pub enum AstType {
                     #(#types),*,
                 }
 
                 ///@@line_break
-                /// Untyped AST Node Kind
+                /// Untyped AST node kind
+                ///@ SAFETY: Soundness of [`AstKind::ast_type`], [`AstKind::payload`],
+                ///@ and [`AstKind::from_type_and_payload`] methods rely on this type being `#[repr(C, u8)]`
+                ///@ and having same discriminants as `AstType`.
                 #[derive(Debug, Clone, Copy)]
+                #[repr(C, u8)]
                 pub enum AstKind<'a> {
                     #(#kinds),*,
                 }

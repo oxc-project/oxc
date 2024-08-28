@@ -1,4 +1,6 @@
-use oxc_ast::AstKind;
+use std::{marker::PhantomData, ptr::NonNull};
+
+use oxc_ast::{AstKind, AstType};
 use oxc_cfg::BasicBlockId;
 use oxc_index::IndexVec;
 use oxc_span::GetSpan;
@@ -10,8 +12,13 @@ use crate::scope::ScopeId;
 #[derive(Debug, Clone, Copy)]
 pub struct AstNode<'a> {
     id: AstNodeId,
-    /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
-    kind: AstKind<'a>,
+
+    /// `AstKind` is an enum containing a pointer to the AST node, which resides in the memory arena.
+    /// Its 2 parts (type and pointer) are stored separately here to save space
+    /// (otherwise it's 16 bytes, with 7 of them being padding).
+    ty: AstType,
+    kind_ptr: NonNull<()>,
+    _marker: PhantomData<&'a ()>,
 
     /// Associated Scope (initialized by binding)
     scope_id: ScopeId,
@@ -31,7 +38,9 @@ impl<'a> AstNode<'a> {
         flags: NodeFlags,
         id: AstNodeId,
     ) -> Self {
-        Self { id, kind, scope_id, cfg_id, flags }
+        let ty = kind.ast_type();
+        let kind_ptr = kind.payload();
+        Self { id, ty, kind_ptr, _marker: PhantomData, scope_id, cfg_id, flags }
     }
 
     #[inline]
@@ -45,8 +54,16 @@ impl<'a> AstNode<'a> {
     }
 
     #[inline]
+    pub fn ast_type(self) -> AstType {
+        self.ty
+    }
+
+    #[inline]
     pub fn kind(&self) -> AstKind<'a> {
-        self.kind
+        // SAFETY: `ty` and `kind_ptr` were created from an `AstKind<'a>` originally,
+        // so safe to turn them back into one.
+        // We generate this `AstKind<'a>` with same lifetime as original.
+        unsafe { AstKind::from_type_and_payload(self.ty, self.kind_ptr) }
     }
 
     #[inline]
@@ -68,7 +85,7 @@ impl<'a> AstNode<'a> {
 impl GetSpan for AstNode<'_> {
     #[inline]
     fn span(&self) -> oxc_span::Span {
-        self.kind.span()
+        self.kind().span()
     }
 }
 
@@ -112,7 +129,7 @@ impl<'a> AstNodes<'a> {
 
     #[inline]
     pub fn kind(&self, ast_node_id: AstNodeId) -> AstKind<'a> {
-        self.nodes[ast_node_id].kind
+        self.nodes[ast_node_id].kind()
     }
 
     #[inline]
