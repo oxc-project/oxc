@@ -1,3 +1,4 @@
+mod diagnostics;
 mod parser;
 mod reader;
 mod state;

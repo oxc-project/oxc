@@ -1,10 +1,10 @@
 use oxc_allocator::{Allocator, Box, Vec};
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::Result;
 use oxc_span::Atom as SpanAtom;
 
 use crate::{
     ast,
-    body_parser::{reader::Reader, state::State, unicode, unicode_property},
+    body_parser::{diagnostics, reader::Reader, state::State, unicode, unicode_property},
     options::ParserOptions,
     span::SpanFactory,
 };
@@ -53,20 +53,17 @@ impl<'a> PatternParser<'a> {
         // If this is greater than `u32::MAX`, it is memory overflow, though.
         // But I never seen such a gigantic pattern with 4,294,967,295 parens!
         if u32::MAX == self.state.num_of_capturing_groups {
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Too many capturing groups",
-            )
-            .with_label(self.span_factory.create(0, 0)));
+            return Err(diagnostics::too_may_capturing_groups(self.span_factory.create(0, 0)));
         }
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
         if !duplicated_named_capturing_groups.is_empty() {
-            return Err(OxcDiagnostic::error("Invalid regular expression: Duplicated group name")
-                .with_labels(
-                    duplicated_named_capturing_groups
-                        .iter()
-                        .map(|(start, end)| self.span_factory.create(*start, *end)),
-                ));
+            return Err(diagnostics::duplicated_capturing_group_names(
+                duplicated_named_capturing_groups
+                    .iter()
+                    .map(|(start, end)| self.span_factory.create(*start, *end))
+                    .collect(),
+            ));
         }
 
         // Let's start parsing!
@@ -74,10 +71,9 @@ impl<'a> PatternParser<'a> {
 
         if self.reader.peek().is_some() {
             let span_start = self.reader.offset();
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Could not parse the entire pattern",
-            )
-            .with_label(self.span_factory.create(span_start, span_start)));
+            return Err(diagnostics::parse_pattern_incomplete(
+                self.span_factory.create(span_start, span_start),
+            ));
         }
 
         Ok(ast::Pattern {
@@ -163,10 +159,10 @@ impl<'a> PatternParser<'a> {
                     ))))
                 }
                 (Some(atom), None) => Ok(Some(atom)),
-                (None, Some(_)) => Err(OxcDiagnostic::error(
-                    "Invalid regular expression: Lone `Quantifier` found, expected with `Atom`",
-                )
-                .with_label(self.span_factory.create(span_start, self.reader.offset()))),
+                (None, Some(_)) => Err(diagnostics::lone_quantifier(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                    "Atom",
+                )),
                 (None, None) => Ok(None),
             };
         }
@@ -216,10 +212,10 @@ impl<'a> PatternParser<'a> {
                 ))))
             }
             (Some(extended_atom), None) => Ok(Some(extended_atom)),
-            (None, Some(_)) => Err(OxcDiagnostic::error(
-                "Invalid regular expression: Lone `Quantifier` found, expected with `ExtendedAtom`",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset()))),
+            (None, Some(_)) => Err(diagnostics::lone_quantifier(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "ExtendedAtom",
+            )),
             (None, None) => Ok(None),
         }
     }
@@ -279,10 +275,10 @@ impl<'a> PatternParser<'a> {
             let disjunction = self.parse_disjunction()?;
 
             if !self.reader.eat(')') {
-                return Err(OxcDiagnostic::error(
-                    "Invalid regular expression: Unterminated lookaround assertion",
-                )
-                .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                return Err(diagnostics::unterminated_pattern(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                    "lookaround assertion",
+                ));
             }
 
             return Ok(Some(ast::Term::LookAroundAssertion(Box::new_in(
@@ -396,8 +392,9 @@ impl<'a> PatternParser<'a> {
                 })));
             }
 
-            return Err(OxcDiagnostic::error("Invalid regular expression: Invalid escape")
-                .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::invalid_extended_atom_escape(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
         }
 
         // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
@@ -428,10 +425,9 @@ impl<'a> PatternParser<'a> {
             // [SS:EE] ExtendedAtom :: InvalidBracedQuantifier
             // It is a Syntax Error if any source text is matched by this production.
             // (Annex B)
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Invalid braced quantifier",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::invalid_braced_quantifier(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
         }
 
         // ExtendedPatternCharacter
@@ -464,10 +460,9 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
                 if self.state.num_of_capturing_groups < index {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid regular expression: Invalid indexed reference",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::invalid_indexed_reference(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 }
 
                 return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
@@ -510,10 +505,9 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
                 if !self.state.capturing_group_names.contains(name.as_str()) {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid regular expression: Group specifier is empty",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::empty_group_specifier(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 }
 
                 return Ok(Some(ast::Term::NamedReference(Box::new_in(
@@ -525,10 +519,9 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Invalid named reference",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::invalid_named_reference(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
         }
 
         Ok(None)
@@ -600,10 +593,10 @@ impl<'a> PatternParser<'a> {
                     // - if the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
                     //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
                     if negative && strings {
-                        return Err(OxcDiagnostic::error(
-                            "Invalid property name(negative + property of strings)",
-                        )
-                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                        return Err(diagnostics::invalid_unicode_property_name_negative_strings(
+                            self.span_factory.create(span_start, self.reader.offset()),
+                            name.as_str(),
+                        ));
                     }
 
                     return Ok(Some(ast::UnicodePropertyEscape {
@@ -617,10 +610,10 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        Err(OxcDiagnostic::error(
-            "Invalid regular expression: Unterminated unicode property escape",
-        )
-        .with_label(self.span_factory.create(span_start, self.reader.offset())))
+        Err(diagnostics::unterminated_pattern(
+            self.span_factory.create(span_start, self.reader.offset()),
+            "unicode property escape",
+        ))
     }
 
     // ```
@@ -745,10 +738,9 @@ impl<'a> PatternParser<'a> {
                         _ => false,
                     })
                 {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid regular expression: Invalid character class",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::invalid_character_class(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 }
 
                 return Ok(Some(ast::CharacterClass {
@@ -759,10 +751,10 @@ impl<'a> PatternParser<'a> {
                 }));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Unterminated character class",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::unterminated_pattern(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "character class",
+            ));
         }
 
         Ok(None)
@@ -847,10 +839,10 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
                 // It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
                 if to.value < from.value {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid regular expression: Character class range out of order",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::character_class_range_out_of_order(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                        "class atom",
+                    ));
                 }
 
                 body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
@@ -871,10 +863,9 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
             // (Annex B)
             if self.state.unicode_mode {
-                return Err(OxcDiagnostic::error(
-                    "Invalid regular expression: Invalid character class range",
-                )
-                .with_label(self.span_factory.create(range_span_start, self.reader.offset())));
+                return Err(diagnostics::character_class_range_invalid_atom(
+                    self.span_factory.create(range_span_start, self.reader.offset()),
+                ));
             }
 
             body.push(class_atom);
@@ -944,8 +935,9 @@ impl<'a> PatternParser<'a> {
                 return Ok(Some(class_escape));
             }
 
-            return Err(OxcDiagnostic::error("Invalid regular expression: Invalid class atom")
-                .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::invalid_class_atom(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
         }
 
         Ok(None)
@@ -1065,10 +1057,9 @@ impl<'a> PatternParser<'a> {
         }
 
         let span_start = self.reader.offset();
-        Err(OxcDiagnostic::error(
-            "Invalid regular expression: Expected nonempty class set expression",
-        )
-        .with_label(self.span_factory.create(span_start, self.reader.offset())))
+        Err(diagnostics::empty_class_set_expression(
+            self.span_factory.create(span_start, self.reader.offset()),
+        ))
     }
 
     // ```
@@ -1119,10 +1110,9 @@ impl<'a> PatternParser<'a> {
             if self.reader.eat2('&', '&') {
                 let span_start = self.reader.offset();
                 if self.reader.eat('&') {
-                    return Err(OxcDiagnostic::error(
-                        "Unexpected `&` inside of class interseciton", // spellchecker:disable-line
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::class_intersection_unexpected_ampersand(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 }
 
                 if let Some(class_set_operand) = self.parse_class_set_operand()? {
@@ -1132,10 +1122,10 @@ impl<'a> PatternParser<'a> {
             }
 
             let span_start = self.reader.offset();
-            return Err(OxcDiagnostic::error(
-                "Invalid character in character class set interseciton", // spellchecker:disable-line
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::class_set_expression_invalid_character(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "class intersection",
+            ));
         }
 
         Ok((ast::CharacterClassContentsKind::Intersection, body))
@@ -1166,10 +1156,10 @@ impl<'a> PatternParser<'a> {
             }
 
             let span_start = self.reader.offset();
-            return Err(OxcDiagnostic::error(
-                "Invalid character in character class set subtraction",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::class_set_expression_invalid_character(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "class subtraction",
+            ));
         }
 
         Ok((ast::CharacterClassContentsKind::Subtraction, body))
@@ -1188,10 +1178,10 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
                     // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
                     if class_set_character_to.value < class_set_character.value {
-                        return Err(OxcDiagnostic::error(
-                            "Invalid regular expression: Character set class range out of order",
-                        )
-                        .with_label(class_set_character.span.merge(&class_set_character_to.span)));
+                        return Err(diagnostics::character_class_range_out_of_order(
+                            class_set_character.span.merge(&class_set_character_to.span),
+                            "class set",
+                        ));
                     }
 
                     return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
@@ -1242,10 +1232,10 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Unterminated class string disjunction",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::unterminated_pattern(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "class string disjunction",
+            ));
         }
 
         if let Some(class_set_character) = self.parse_class_set_character()? {
@@ -1316,10 +1306,9 @@ impl<'a> PatternParser<'a> {
                             body.iter().next().map_or(false, may_contain_strings)
                         }
                     } {
-                        return Err(OxcDiagnostic::error(
-                            "Invalid regular expression: Invalid character class",
-                        )
-                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                        return Err(diagnostics::character_class_contents_invalid_operands(
+                            self.span_factory.create(span_start, self.reader.offset()),
+                        ));
                     }
                 }
 
@@ -1334,10 +1323,10 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Unterminated nested class",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::unterminated_pattern(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "nested class",
+            ));
         }
 
         // \ CharacterClassEscape[+UnicodeMode]
@@ -1494,10 +1483,9 @@ impl<'a> PatternParser<'a> {
             // GroupSpecifier is optional, but if it exists, `?` is also required
             if self.reader.eat('?') {
                 let Some(name) = self.consume_group_name()? else {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid regular expression: Capturing group name is missing",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::missing_capturing_group_name(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 };
                 group_name = Some(name);
             }
@@ -1511,10 +1499,10 @@ impl<'a> PatternParser<'a> {
                 }));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Unterminated capturing group",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::unterminated_pattern(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "capturing group",
+            ));
         }
 
         Ok(None)
@@ -1530,10 +1518,10 @@ impl<'a> PatternParser<'a> {
             let disjunction = self.parse_disjunction()?;
 
             if !self.reader.eat(')') {
-                return Err(OxcDiagnostic::error(
-                    "Invalid regular expression: Unterminated ignore group",
-                )
-                .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                return Err(diagnostics::unterminated_pattern(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                    "ignore group",
+                ));
             }
 
             return Ok(Some(ast::IgnoreGroup {
@@ -1585,10 +1573,9 @@ impl<'a> PatternParser<'a> {
             if let Some(min) = self.consume_decimal_digits()? {
                 if self.reader.eat('}') {
                     if MAX_QUANTIFIER < min {
-                        return Err(OxcDiagnostic::error(
-                            "Number is too large in braced quantifier",
-                        )
-                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                        return Err(diagnostics::too_large_number_in_braced_quantifier(
+                            self.span_factory.create(span_start, self.reader.offset()),
+                        ));
                     }
 
                     return Ok(Some(((min, Some(min)), is_greedy(&mut self.reader))));
@@ -1597,10 +1584,7 @@ impl<'a> PatternParser<'a> {
                 if self.reader.eat(',') {
                     if self.reader.eat('}') {
                         if MAX_QUANTIFIER < min {
-                            return Err(OxcDiagnostic::error(
-                                "Number is too large in braced quantifier",
-                            )
-                            .with_label(
+                            return Err(diagnostics::too_large_number_in_braced_quantifier(
                                 self.span_factory.create(span_start, self.reader.offset()),
                             ));
                         }
@@ -1613,18 +1597,12 @@ impl<'a> PatternParser<'a> {
                             if max < min {
                                 // [SS:EE] QuantifierPrefix :: { DecimalDigits , DecimalDigits }
                                 // It is a Syntax Error if the MV of the first DecimalDigits is strictly greater than the MV of the second DecimalDigits.
-                                return Err(OxcDiagnostic::error(
-                                    "Numbers out of order in braced quantifier",
-                                )
-                                .with_label(
+                                return Err(diagnostics::braced_quantifier_out_of_order(
                                     self.span_factory.create(span_start, self.reader.offset()),
                                 ));
                             }
                             if MAX_QUANTIFIER < min || MAX_QUANTIFIER < max {
-                                return Err(OxcDiagnostic::error(
-                                    "Number is too large in braced quantifier",
-                                )
-                                .with_label(
+                                return Err(diagnostics::too_large_number_in_braced_quantifier(
                                     self.span_factory.create(span_start, self.reader.offset()),
                                 ));
                             }
@@ -1683,10 +1661,10 @@ impl<'a> PatternParser<'a> {
                 value = v;
                 self.reader.advance();
             } else {
-                return Err(OxcDiagnostic::error(
-                    "Invalid regular expression: Number is too large in decimal digits",
-                )
-                .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                return Err(diagnostics::too_large_number_digits(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                    "decimal",
+                ));
             }
         }
 
@@ -1719,10 +1697,10 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
                     // It is a Syntax Error if the source text matched by UnicodePropertyValue is not a property value or property value alias for the Unicode property or property alias given by the source text matched by UnicodePropertyName listed in PropertyValueAliases.txt.
                     if !unicode_property::is_valid_unicode_property(&name, &value) {
-                        return Err(OxcDiagnostic::error(
-                            "Invalid regular expression: Invalid unicode property name",
-                        )
-                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                        return Err(diagnostics::invalid_unicode_property(
+                            self.span_factory.create(span_start, self.reader.offset()),
+                            "name",
+                        ));
                     }
 
                     return Ok(Some((name, Some(value), false)));
@@ -1746,19 +1724,19 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if the enclosing Pattern does not have a [UnicodeSetsMode] parameter and the source text matched by LoneUnicodePropertyNameOrValue is a binary property of strings listed in the “Property name” column of Table 67.
             if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
                 if !self.state.unicode_sets_mode {
-                    return Err(OxcDiagnostic::error(
-                        "`UnicodeSetsMode` is required for binary property of strings",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::invalid_unicode_property_of_strings(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                        name_or_value.as_str(),
+                    ));
                 }
 
                 return Ok(Some((name_or_value, None, true)));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Invalid unicode property name or value",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::invalid_unicode_property(
+                self.span_factory.create(span_start, self.reader.offset()),
+                "name and/or value",
+            ));
         }
 
         Ok(None)
@@ -1811,8 +1789,10 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        Err(OxcDiagnostic::error("Invalid regular expression: Unterminated capturing group name")
-            .with_label(self.span_factory.create(span_start, self.reader.offset())))
+        Err(diagnostics::unterminated_pattern(
+            self.span_factory.create(span_start, self.reader.offset()),
+            "capturing group name",
+        ))
     }
 
     // ```
@@ -1850,19 +1830,17 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] RegExpIdentifierStart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierStartChar lexical grammar production.
                 if !unicode::is_identifier_start_char(cp) {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid regular expression: Invalid unicode escape sequence",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::invalid_unicode_escape_sequence(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 }
 
                 return Ok(Some(cp));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Invalid unicode escape sequence",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::invalid_unicode_escape_sequence(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
         }
 
         if !self.state.unicode_mode {
@@ -1881,10 +1859,9 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] RegExpIdentifierStart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierStart is not matched by the UnicodeIDStart lexical grammar production.
                     if !unicode::is_unicode_id_start(cp) {
-                        return Err(OxcDiagnostic::error(
-                            "Invalid regular expression: Invalid surrogate pair",
-                        )
-                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                        return Err(diagnostics::invalid_surrogate_pair(
+                            self.span_factory.create(span_start, self.reader.offset()),
+                        ));
                     }
 
                     return Ok(Some(cp));
@@ -1913,19 +1890,17 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] RegExpIdentifierPart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierPartChar lexical grammar production.
                 if !unicode::is_identifier_part_char(cp) {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid regular expression: Invalid unicode escape sequence",
-                    )
-                    .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                    return Err(diagnostics::invalid_unicode_escape_sequence(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 }
 
                 return Ok(Some(cp));
             }
 
-            return Err(OxcDiagnostic::error(
-                "Invalid regular expression: Invalid unicode escape sequence",
-            )
-            .with_label(self.span_factory.create(span_start, self.reader.offset())));
+            return Err(diagnostics::invalid_unicode_escape_sequence(
+                self.span_factory.create(span_start, self.reader.offset()),
+            ));
         }
 
         if !self.state.unicode_mode {
@@ -1944,10 +1919,9 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] RegExpIdentifierPart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierPart is not matched by the UnicodeIDContinue lexical grammar production.
                     if !unicode::is_unicode_id_continue(cp) {
-                        return Err(OxcDiagnostic::error(
-                            "Invalid regular expression: Invalid surrogate pair",
-                        )
-                        .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                        return Err(diagnostics::invalid_surrogate_pair(
+                            self.span_factory.create(span_start, self.reader.offset()),
+                        ));
                     }
 
                     return Ok(Some(cp));
@@ -2035,10 +2009,9 @@ impl<'a> PatternParser<'a> {
             }
 
             if self.state.unicode_mode {
-                return Err(OxcDiagnostic::error(
-                    "Invalid regular expression: Invalid unicode escape sequence",
-                )
-                .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                return Err(diagnostics::invalid_unicode_escape_sequence(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                ));
             }
 
             self.reader.rewind(checkpoint);
@@ -2171,10 +2144,10 @@ impl<'a> PatternParser<'a> {
                 value = v;
                 self.reader.advance();
             } else {
-                return Err(OxcDiagnostic::error(
-                    "Invalid regular expression: Number is too large in hex digits",
-                )
-                .with_label(self.span_factory.create(span_start, self.reader.offset())));
+                return Err(diagnostics::too_large_number_digits(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                    "hex",
+                ));
             }
         }
 
