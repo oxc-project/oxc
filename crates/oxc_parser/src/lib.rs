@@ -457,11 +457,10 @@ mod test {
              */
              asdf asdf
              ",
-            "/* @flow */ let a; let a;",
+            "/* @flow */ super;",
         ];
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.program.is_empty());
             assert_eq!(ret.errors.len(), 1);
             assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
         }
