@@ -209,36 +209,9 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
-    /// Create a scope inside another scope.
-    ///
-    /// For the root [`Program`] scope, use [`add_root_scope`].
-    ///
-    /// [`Program`]: oxc_ast::ast::Program
-    /// [`add_root_scope`]: ScopeTree::add_root_scope
-    pub fn add_scope(
-        &mut self,
-        parent_id: ScopeId,
-        node_id: AstNodeId,
-        flags: ScopeFlags,
-    ) -> ScopeId {
-        self.add_scope_impl(Some(parent_id), node_id, flags)
-    }
-
-    /// Create the root [`Program`] scope.
-    ///
-    /// Do not use this method if a root scope already exists. Use [`add_scope`]
-    /// to create a new scope inside the root scope.
-    ///
-    /// [`Program`]: oxc_ast::ast::Program
-    /// [`add_scope`]: ScopeTree::add_scope
-    pub fn add_root_scope(&mut self, node_id: AstNodeId, flags: ScopeFlags) -> ScopeId {
-        self.add_scope_impl(None, node_id, flags)
-    }
-
-    // `#[inline]` because almost always called from `add_scope` and want to avoid
-    // overhead of a function call there.
+    /// Create a scope.
     #[inline]
-    fn add_scope_impl(
+    pub fn add_scope(
         &mut self,
         parent_id: Option<ScopeId>,
         node_id: AstNodeId,

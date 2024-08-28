@@ -209,7 +209,7 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scope.add_root_scope(AstNodeId::DUMMY, ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
             // Count the number of nodes, scopes, symbols, and references.
@@ -548,7 +548,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let parent_scope_id = self.current_scope_id;
         let flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
-        self.current_scope_id = self.scope.add_scope(parent_scope_id, self.current_node_id, flags);
+        self.current_scope_id =
+            self.scope.add_scope(Some(parent_scope_id), self.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
         self.unresolved_references.increment_scope_depth();
@@ -617,7 +618,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if program.is_strict() {
             flags |= ScopeFlags::StrictMode;
         }
-        self.current_scope_id = self.scope.add_root_scope(self.current_node_id, flags);
+        self.current_scope_id = self.scope.add_scope(None, self.current_node_id, flags);
         program.scope_id.set(Some(self.current_scope_id));
         // NB: Don't call `self.unresolved_references.increment_scope_depth()`
         // as scope depth is initialized as 1 already (the scope depth for `Program`).

@@ -78,7 +78,7 @@ impl TraverseScoping {
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
         let flags = self.scopes.get_new_scope_flags(flags, parent_id);
-        self.scopes.add_scope(parent_id, AstNodeId::DUMMY, flags)
+        self.scopes.add_scope(Some(parent_id), AstNodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
