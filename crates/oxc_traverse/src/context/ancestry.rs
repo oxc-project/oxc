@@ -45,6 +45,7 @@ impl<'a> TraverseAncestry<'a> {
     /// Get parent of current node.
     #[inline]
     pub fn parent<'t>(&'t self) -> Ancestor<'a, 't> {
+        debug_assert!(!self.stack.is_empty());
         // SAFETY: Stack contains 1 entry initially. Entries are pushed as traverse down the AST,
         // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
         let ancestor = unsafe { *self.stack.last().unwrap_unchecked() };
@@ -111,12 +112,13 @@ impl<'a> TraverseAncestry<'a> {
     /// Pop last item off ancestry stack.
     ///
     /// # SAFETY
-    /// * Stack must not be empty.
+    /// * Stack must have length of at least 2 (so length is minimum 1 after pop).
     /// * Each `pop_stack` call must correspond to a `push_stack` call for same type.
     ///
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
     pub(crate) unsafe fn pop_stack(&mut self) {
+        debug_assert!(self.stack.len() >= 2);
         self.stack.pop().unwrap_unchecked();
     }
 
@@ -136,13 +138,14 @@ impl<'a> TraverseAncestry<'a> {
     /// `retag_stack` is only a single 2-byte write operation.
     ///
     /// # SAFETY
-    /// * Stack must not be empty.
+    /// * Stack must have length of at least 2 (so we are not retagging dummy root `Ancestor`).
     /// * Last item on stack must contain pointer to type corresponding to provided `AncestorType`.
     ///
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
     #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::ref_as_ptr)]
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
+        debug_assert!(self.stack.len() >= 2);
         *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorType) = ty;
     }
 }
