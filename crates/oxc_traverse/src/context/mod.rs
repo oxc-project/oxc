@@ -141,7 +141,7 @@ impl<'a> TraverseCtx<'a> {
     /// Get ancestor of current node.
     ///
     /// `level` is number of levels above.
-    /// `ancestor(1).unwrap()` is equivalent to `parent()`.
+    /// `ancestor(1)` is equivalent to `parent()`.
     ///
     /// If `level` is out of bounds (above `Program`), returns `Ancestor::None`.
     ///
