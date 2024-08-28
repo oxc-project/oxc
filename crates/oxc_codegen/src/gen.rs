@@ -2567,6 +2567,7 @@ impl<'a> Gen for PropertyDefinition<'a> {
 impl<'a> Gen for AccessorProperty<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
+        self.decorators.gen(p, ctx);
         if self.r#type.is_abstract() {
             p.print_str("abstract ");
         }
@@ -2587,8 +2588,15 @@ impl<'a> Gen for AccessorProperty<'a> {
         if self.computed {
             p.print_char(b']');
         }
+        if let Some(type_annotation) = &self.type_annotation {
+            p.print_colon();
+            p.print_soft_space();
+            type_annotation.gen(p, ctx);
+        }
         if let Some(value) = &self.value {
+            p.print_soft_space();
             p.print_equal();
+            p.print_soft_space();
             value.gen_expr(p, Precedence::Comma, Context::empty());
         }
     }

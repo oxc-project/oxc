@@ -27,7 +27,7 @@ fn expr() {
 fn access_property() {
     test(
         "export default class Foo { @x @y accessor #aDef = 1 }",
-        "export default class Foo {\n\taccessor #aDef=1;\n}\n",
+        "export default class Foo {\n\t@x @y accessor #aDef = 1;\n}\n",
     );
 }
 
