@@ -59,6 +59,11 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     };
                     return body.span.contains_inclusive(self.span()) && body.statements.len() == 1 && !self.get_snippet(body.span).starts_with('{')
                 }
+                // new (class CustomRenderer{})
+                // new (function() {})
+                AstKind::NewExpression(_) => {
+                    return true;
+                }
                 _ => {
                     parent.kind().debug_name();
                     return false;
