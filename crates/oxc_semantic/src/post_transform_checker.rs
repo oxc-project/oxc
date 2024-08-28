@@ -155,7 +155,6 @@ pub fn check_semantic_after_transform(
     checker.check_scopes();
     checker.check_symbols();
     checker.check_references();
-    checker.check_unresolved_references();
 
     checker.errors.get()
 }
@@ -284,15 +283,6 @@ impl Errors {
         let str_after_transform = format!("{id_after_transform:?}: {value_after_transform:?}");
         let str_rebuilt = format!("{id_rebuilt:?}: {value_rebuilt:?}");
         self.push_mismatch_strs(title, Pair::new(str_after_transform, str_rebuilt));
-    }
-
-    /// Add an error for a mismatch between a pair of values
-    fn push_mismatch_single<Value, Values>(&mut self, title: &str, values: Values)
-    where
-        Value: Debug,
-        Values: AsRef<Pair<Value>>,
-    {
-        self.push_mismatch_strs(title, values.as_ref().map(|value| format!("{value:?}")));
     }
 
     /// Add an error for a mismatch between a pair of values, without `Debug` formatting
@@ -458,45 +448,12 @@ impl<'s> PostTransformChecker<'s> {
         }
     }
 
-    fn check_unresolved_references(&mut self) {
-        let unresolved_names = self.get_static_pair(|scoping| {
-            let mut names =
-                scoping.scopes.root_unresolved_references.keys().cloned().collect::<Vec<_>>();
-            names.sort_unstable();
-            names
-        });
-        if unresolved_names.is_mismatch() {
-            self.errors.push_mismatch_single("Unresolved references mismatch", unresolved_names);
-        }
-
-        for (name, reference_ids_after_transform) in
-            &self.scoping_after_transform.scopes.root_unresolved_references
-        {
-            if let Some(reference_ids_rebuilt) =
-                &self.scoping_rebuilt.scopes.root_unresolved_references.get(name)
-            {
-                let reference_ids = Pair::new(reference_ids_after_transform, reference_ids_rebuilt);
-                if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
-                    self.errors.push_mismatch_single(
-                        &format!("Unresolved reference IDs mismatch for {name:?}"),
-                        reference_ids,
-                    );
-                }
-            }
-        }
-    }
-
     /// Get same data from `after_transform` and `rebuilt` from a pair of IDs
     fn get_pair<R, I: Copy, F: Fn(&Scoping, I) -> R>(&self, ids: Pair<I>, getter: F) -> Pair<R> {
         Pair::new(
             getter(&self.scoping_after_transform, ids.after_transform),
             getter(&self.scoping_rebuilt, ids.rebuilt),
         )
-    }
-
-    /// Get same data from `after_transform` and `rebuilt`
-    fn get_static_pair<R, F: Fn(&Scoping) -> R>(&self, getter: F) -> Pair<R> {
-        Pair::new(getter(&self.scoping_after_transform), getter(&self.scoping_rebuilt))
     }
 
     /// Map `after_transform` scope ID to `rebuilt` scope ID

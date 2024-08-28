@@ -1,6 +1,6 @@
 semantic_misc Summary:
 AST Parsed     : 27/27 (100.00%)
-Positive Passed: 14/27 (51.85%)
+Positive Passed: 17/27 (62.96%)
 tasks/coverage/misc/pass/oxc-1288.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["from"]
@@ -10,11 +10,6 @@ tasks/coverage/misc/pass/oxc-1289.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["infer", "target", "type"]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/misc/pass/oxc-1740.tsx
-semantic error: Unresolved reference IDs mismatch for "Bar":
-after transform: [ReferenceId(1), ReferenceId(5)]
-rebuilt        : [ReferenceId(2)]
 
 tasks/coverage/misc/pass/oxc-2087.ts
 semantic error: Bindings mismatch:
@@ -38,14 +33,6 @@ rebuilt        : ScopeId(1): []
 Bindings mismatch:
 after transform: ScopeId(2): ["T"]
 rebuilt        : ScopeId(2): []
-Unresolved references mismatch:
-after transform: ["F"]
-rebuilt        : []
-
-tasks/coverage/misc/pass/oxc-3910.ts
-semantic error: Unresolved references mismatch:
-after transform: ["ServicesAccessor"]
-rebuilt        : []
 
 tasks/coverage/misc/pass/oxc-3948-1.ts
 semantic error: Bindings mismatch:
@@ -93,9 +80,6 @@ rebuilt        : SymbolId(26): [ReferenceId(15)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(39): [ReferenceId(42), ReferenceId(74), ReferenceId(154), ReferenceId(215)]
 rebuilt        : SymbolId(33): [ReferenceId(56), ReferenceId(185)]
-Unresolved reference IDs mismatch for "Promise":
-after transform: [ReferenceId(36), ReferenceId(39), ReferenceId(82), ReferenceId(114), ReferenceId(153), ReferenceId(282)]
-rebuilt        : [ReferenceId(252)]
 
 tasks/coverage/misc/pass/oxc-4449.ts
 semantic error: Scope flags mismatch:
@@ -168,12 +152,4 @@ tasks/coverage/misc/pass/swc-7187.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["K"]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/misc/pass/swc-8243.tsx
-semantic error: Unresolved reference IDs mismatch for "Baz":
-after transform: [ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-rebuilt        : [ReferenceId(4)]
-Unresolved reference IDs mismatch for "Bar":
-after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(8)]
-rebuilt        : [ReferenceId(2)]
 

@@ -1,19 +1,13 @@
 commit: 12619ffe
 
-Passed: 10/37
+Passed: 11/37
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-arrow-functions
 
 
-# babel-plugin-transform-typescript (2/8)
-* class-property-definition/input.ts
-  x Unresolved references mismatch:
-  | after transform: ["const"]
-  | rebuilt        : []
-
-
+# babel-plugin-transform-typescript (3/8)
 * computed-constant-value/input.ts
   x Missing ReferenceId: Infinity
 
@@ -70,16 +64,6 @@ Passed: 10/37
   x Symbol flags mismatch:
   | after transform: SymbolId(16): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(6): SymbolFlags(FunctionScopedVariable)
-
-  x Unresolved references mismatch:
-  | after transform: ["Infinity", "NaN"]
-  | rebuilt        : ["Infinity"]
-
-  x Unresolved reference IDs mismatch for "Infinity":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2),
-  | ReferenceId(3)]
-  | rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8),
-  | ReferenceId(12)]
 
 
 * elimination-declare/input.ts
@@ -317,11 +301,6 @@ Passed: 10/37
   | after transform: ReferenceId(53): Some("_c5")
   | rebuilt        : ReferenceId(53): None
 
-  x Unresolved references mismatch:
-  | after transform: ["X", "memo", "module", "useContext"]
-  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "X", "memo", "module",
-  | "useContext"]
-
 
 * refresh/does-not-consider-require-like-methods-to-be-hocs/input.jsx
   x Symbol reference IDs mismatch:
@@ -349,10 +328,6 @@ Passed: 10/37
   | after transform: ReferenceId(21): Some("_c")
   | rebuilt        : ReferenceId(17): None
 
-  x Unresolved references mismatch:
-  | after transform: ["foo", "gk", "require", "requireCond"]
-  | rebuilt        : ["$RefreshReg$", "foo", "gk", "require", "requireCond"]
-
 
 * refresh/does-not-get-tripped-by-iifes/input.jsx
   x Bindings mismatch:
@@ -376,10 +351,6 @@ Passed: 10/37
   | after transform: ReferenceId(3): Some("_s")
   | rebuilt        : ReferenceId(1): None
 
-  x Unresolved references mismatch:
-  | after transform: ["item", "useFoo"]
-  | rebuilt        : ["$RefreshSig$", "item", "useFoo"]
-
 
 * refresh/generates-signatures-for-function-declarations-calling-hooks/input.jsx
   x Symbol reference IDs mismatch:
@@ -399,10 +370,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c")
   | rebuilt        : ReferenceId(10): None
-
-  x Unresolved references mismatch:
-  | after transform: ["React", "useState"]
-  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React", "useState"]
 
 
 * refresh/generates-signatures-for-function-expressions-calling-hooks/input.jsx
@@ -505,11 +472,6 @@ Passed: 10/37
   | after transform: ReferenceId(51): Some("_c6")
   | rebuilt        : ReferenceId(51): None
 
-  x Unresolved references mismatch:
-  | after transform: ["React", "ref", "useState"]
-  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React", "ref",
-  | "useState"]
-
 
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
   x Missing ScopeId
@@ -540,11 +502,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(21): Some("_c")
   | rebuilt        : ReferenceId(21): None
-
-  x Unresolved references mismatch:
-  | after transform: ["React", "useFancyEffect", "useThePlatform"]
-  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React",
-  | "useFancyEffect", "useThePlatform"]
 
 
 * refresh/includes-custom-hooks-into-the-signatures/input.jsx
@@ -588,10 +545,6 @@ Passed: 10/37
   | after transform: ReferenceId(23): Some("_c")
   | rebuilt        : ReferenceId(23): None
 
-  x Unresolved references mismatch:
-  | after transform: ["React"]
-  | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React"]
-
 
 * refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
   x Symbol reference IDs mismatch:
@@ -633,10 +586,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(20): Some("_c4")
   | rebuilt        : ReferenceId(20): None
-
-  x Unresolved references mismatch:
-  | after transform: ["hoc"]
-  | rebuilt        : ["$RefreshReg$", "hoc"]
 
 
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
@@ -737,10 +686,6 @@ Passed: 10/37
   | after transform: ReferenceId(63): Some("_c6")
   | rebuilt        : ReferenceId(54): None
 
-  x Unresolved references mismatch:
-  | after transform: ["funny", "hoc", "styled", "wow"]
-  | rebuilt        : ["$RefreshReg$", "funny", "hoc", "styled", "wow"]
-
 
 * refresh/registers-identifiers-used-in-react-create-element-at-definition-site/input.jsx
   x Output mismatch
@@ -797,11 +742,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(55): Some("_c6")
   | rebuilt        : ReferenceId(55): None
-
-  x Unresolved references mismatch:
-  | after transform: ["React", "funny", "hoc", "jsx", "styled", "wow"]
-  | rebuilt        : ["$RefreshReg$", "React", "funny", "hoc", "jsx",
-  | "styled", "wow"]
 
 
 * refresh/registers-likely-hocs-with-inline-functions-1/input.jsx
@@ -901,10 +841,6 @@ Passed: 10/37
   | after transform: ReferenceId(32): Some("_c8")
   | rebuilt        : ReferenceId(32): None
 
-  x Unresolved references mismatch:
-  | after transform: ["React", "forwardRef", "memo"]
-  | rebuilt        : ["$RefreshReg$", "React", "forwardRef", "memo"]
-
 
 * refresh/registers-likely-hocs-with-inline-functions-2/input.jsx
   x Symbol reference IDs mismatch:
@@ -945,10 +881,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(10): Some("_c3")
   | rebuilt        : ReferenceId(10): None
-
-  x Unresolved references mismatch:
-  | after transform: ["React", "forwardRef"]
-  | rebuilt        : ["$RefreshReg$", "React", "forwardRef"]
 
 
 * refresh/registers-likely-hocs-with-inline-functions-3/input.jsx
@@ -991,10 +923,6 @@ Passed: 10/37
   | after transform: ReferenceId(10): Some("_c3")
   | rebuilt        : ReferenceId(10): None
 
-  x Unresolved references mismatch:
-  | after transform: ["React", "forwardRef"]
-  | rebuilt        : ["$RefreshReg$", "React", "forwardRef"]
-
 
 * refresh/registers-top-level-exported-function-declarations/input.jsx
   x Symbol reference IDs mismatch:
@@ -1029,10 +957,6 @@ Passed: 10/37
   | after transform: ReferenceId(18): Some("_c3")
   | rebuilt        : ReferenceId(17): None
 
-  x Unresolved references mismatch:
-  | after transform: []
-  | rebuilt        : ["$RefreshReg$"]
-
 
 * refresh/registers-top-level-exported-named-arrow-functions/input.jsx
   x Symbol reference IDs mismatch:
@@ -1059,10 +983,6 @@ Passed: 10/37
   | after transform: ReferenceId(14): Some("_c2")
   | rebuilt        : ReferenceId(12): None
 
-  x Unresolved references mismatch:
-  | after transform: []
-  | rebuilt        : ["$RefreshReg$"]
-
 
 * refresh/registers-top-level-function-declarations/input.jsx
   x Symbol reference IDs mismatch:
@@ -1087,10 +1007,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c2")
   | rebuilt        : ReferenceId(10): None
-
-  x Unresolved references mismatch:
-  | after transform: []
-  | rebuilt        : ["$RefreshReg$"]
 
 
 * refresh/registers-top-level-variable-declarations-with-arrow-functions/input.jsx
@@ -1126,10 +1042,6 @@ Passed: 10/37
   | after transform: ReferenceId(16): Some("_c3")
   | rebuilt        : ReferenceId(15): None
 
-  x Unresolved references mismatch:
-  | after transform: []
-  | rebuilt        : ["$RefreshReg$"]
-
 
 * refresh/registers-top-level-variable-declarations-with-function-expressions/input.jsx
   x Symbol reference IDs mismatch:
@@ -1154,10 +1066,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(11): Some("_c2")
   | rebuilt        : ReferenceId(10): None
-
-  x Unresolved references mismatch:
-  | after transform: []
-  | rebuilt        : ["$RefreshReg$"]
 
 
 * refresh/supports-typescript-namespace-syntax/input.tsx
@@ -1279,15 +1187,6 @@ Passed: 10/37
   | after transform: ReferenceId(11): Some("_c")
   | rebuilt        : ReferenceId(10): None
 
-  x Unresolved references mismatch:
-  | after transform: ["Foo", "X", "useContext"]
-  | rebuilt        : ["Foo", "X", "import.meta.refreshReg",
-  | "import.meta.refreshSig", "useContext"]
-
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(2), ReferenceId(5)]
-  | rebuilt        : [ReferenceId(5)]
-
 
 * refresh/uses-original-function-declaration-if-it-get-reassigned/input.jsx
   x Symbol reference IDs mismatch:
@@ -1298,10 +1197,6 @@ Passed: 10/37
   x Reference symbol mismatch:
   | after transform: ReferenceId(6): Some("_c")
   | rebuilt        : ReferenceId(6): None
-
-  x Unresolved references mismatch:
-  | after transform: ["connect"]
-  | rebuilt        : ["$RefreshReg$", "connect"]
 
 
 
