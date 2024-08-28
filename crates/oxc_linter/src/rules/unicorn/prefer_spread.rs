@@ -210,7 +210,7 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
 
                 if let AstKind::VariableDeclarator(variable_declarator) = node.kind() {
                     if let Some(ref_expr) = &variable_declarator.init {
-                        return is_not_array(&ref_expr, ctx);
+                        return is_not_array(ref_expr, ctx);
                     }
                 }
             }
