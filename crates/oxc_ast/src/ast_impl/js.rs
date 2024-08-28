@@ -763,7 +763,6 @@ impl<'a> Declaration<'a> {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
-            Self::UsingDeclaration(_) => false,
             _ => true,
         }
     }
@@ -789,7 +788,7 @@ impl<'a> Declaration<'a> {
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
-            _ => false,
+            Declaration::TSImportEqualsDeclaration(_) => false,
         }
     }
 }
@@ -817,11 +816,17 @@ impl VariableDeclarationKind {
         matches!(self, Self::Const | Self::Let)
     }
 
+    pub fn is_await(&self) -> bool {
+        matches!(self, Self::AwaitUsing)
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Var => "var",
             Self::Const => "const",
             Self::Let => "let",
+            Self::Using => "using",
+            Self::AwaitUsing => "await using",
         }
     }
 }

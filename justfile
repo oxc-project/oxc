@@ -40,7 +40,7 @@ submodules:
 
 # Install git pre-commit to format files
 install-hook:
-  echo "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
+  echo -e "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
   chmod +x .git/hooks/pre-commit
 
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore

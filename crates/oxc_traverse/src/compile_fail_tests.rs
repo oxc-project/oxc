@@ -14,7 +14,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 struct Trans<'a, 'b> {
-    ancestor: Option<&'b Ancestor<'a>>,
+    ancestor: Option<Ancestor<'a, 'b>>,
 }
 
 impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
@@ -36,7 +36,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_traverse::{ancestor::ProgramWithoutDirectives, Ancestor, Traverse, TraverseCtx};
 
 struct Trans<'a, 'b> {
-    program: Option<&'b ProgramWithoutDirectives<'a>>,
+    program: Option<ProgramWithoutDirectives<'a, 'b>>,
 }
 
 impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
@@ -86,7 +86,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 struct Trans<'a, 'b> {
-    ancestor: Option<&'b Ancestor<'a>>,
+    ancestor: Option<Ancestor<'a, 'b>>,
 }
 
 impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
@@ -108,7 +108,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_traverse::{ancestor::ProgramWithoutDirectives, Ancestor, Traverse, TraverseCtx};
 
 struct Trans<'a, 'b> {
-    program: Option<&'b ProgramWithoutDirectives<'a>>,
+    program: Option<ProgramWithoutDirectives<'a, 'b>>,
 }
 
 impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {

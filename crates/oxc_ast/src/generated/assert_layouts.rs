@@ -370,12 +370,6 @@ const _: () = {
     assert!(offset_of!(VariableDeclarator, init) == 48usize);
     assert!(offset_of!(VariableDeclarator, definite) == 64usize);
 
-    assert!(size_of::<UsingDeclaration>() == 48usize);
-    assert!(align_of::<UsingDeclaration>() == 8usize);
-    assert!(offset_of!(UsingDeclaration, span) == 0usize);
-    assert!(offset_of!(UsingDeclaration, is_await) == 8usize);
-    assert!(offset_of!(UsingDeclaration, declarations) == 16usize);
-
     assert!(size_of::<EmptyStatement>() == 8usize);
     assert!(align_of::<EmptyStatement>() == 4usize);
     assert!(offset_of!(EmptyStatement, span) == 0usize);
@@ -1775,12 +1769,6 @@ const _: () = {
     assert!(offset_of!(VariableDeclarator, id) == 12usize);
     assert!(offset_of!(VariableDeclarator, init) == 28usize);
     assert!(offset_of!(VariableDeclarator, definite) == 36usize);
-
-    assert!(size_of::<UsingDeclaration>() == 28usize);
-    assert!(align_of::<UsingDeclaration>() == 4usize);
-    assert!(offset_of!(UsingDeclaration, span) == 0usize);
-    assert!(offset_of!(UsingDeclaration, is_await) == 8usize);
-    assert!(offset_of!(UsingDeclaration, declarations) == 12usize);
 
     assert!(size_of::<EmptyStatement>() == 8usize);
     assert!(align_of::<EmptyStatement>() == 4usize);

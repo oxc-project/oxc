@@ -202,13 +202,18 @@ impl Rule for NoNull {
                     let mut null_span = null_literal.span;
                     // Find the last parent that is a TSAsExpression (`null as any`) or TSNonNullExpression (`null!`)
                     for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
+                        let parent = parent.kind();
                         if matches!(
-                            parent.kind(),
+                            parent,
                             AstKind::TSAsExpression(_) | AstKind::TSNonNullExpression(_)
                         ) {
-                            null_span = parent.kind().span();
+                            null_span = parent.span();
+                        }
+                        if matches!(parent, AstKind::ReturnStatement(_)) {
+                            break;
                         }
                     }
+
                     fixer.delete(&null_span)
                 });
             }
@@ -381,6 +386,27 @@ fn test() {
         ),
         ("() => { return null! }", "() => { return  }", None),
         ("() => { return null as any as typeof Array }", "() => { return  }", None),
+        (
+            r"const newDecorations = enabled ?
+	this._debugService.getModel().getBreakpoints().map(breakpoint => {
+		const parsed = test()
+		if (!parsed ) {
+			return null;
+		}
+		return { handle: parsed.handle};
+	}).filter(x => !!x) as INotebookDeltaDecoration[]
+	: [];",
+            r"const newDecorations = enabled ?
+	this._debugService.getModel().getBreakpoints().map(breakpoint => {
+		const parsed = test()
+		if (!parsed ) {
+			return ;
+		}
+		return { handle: parsed.handle};
+	}).filter(x => !!x) as INotebookDeltaDecoration[]
+	: [];",
+            None,
+        ),
     ];
     Tester::new(NoNull::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

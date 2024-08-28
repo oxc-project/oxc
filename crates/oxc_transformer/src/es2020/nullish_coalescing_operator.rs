@@ -102,9 +102,8 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
         // ctx.ancestor(1) is AssignmentPattern
         // ctx.ancestor(2) is BindingPattern;
         // ctx.ancestor(3) is FormalParameter
-        let is_parent_formal_parameter = ctx
-            .ancestor(3)
-            .is_some_and(|ancestor| matches!(ancestor, Ancestor::FormalParameterPattern(_)));
+        let is_parent_formal_parameter =
+            matches!(ctx.ancestor(3), Ancestor::FormalParameterPattern(_));
 
         let current_scope_id = if is_parent_formal_parameter {
             ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function)

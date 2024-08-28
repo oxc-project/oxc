@@ -10251,7 +10251,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  26 │   /{2,1}??/,
     ╰────
 
-  × Numbers out of order in braced quantifier
+  × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:26:4]
  25 │   /{1,2}??/,
  26 │   /{2,1}??/,
@@ -10339,7 +10339,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  39 │   /{1}??/u,
     ╰────
 
-  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+  × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:39:4]
  38 │   /{,1}??/u,
  39 │   /{1}??/u,
@@ -10347,7 +10347,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  40 │   /{1,}??/u,
     ╰────
 
-  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+  × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:40:4]
  39 │   /{1}??/u,
  40 │   /{1,}??/u,
@@ -10355,7 +10355,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  41 │   /{1,2}??/u,
     ╰────
 
-  × Invalid regular expression: Lone `Quantifier` found, expected with `Atom`
+  × Invalid regular expression: Lone quantifier found, expected with `Atom`
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:41:4]
  40 │   /{1,}??/u,
  41 │   /{1,2}??/u,
@@ -10363,7 +10363,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  42 │   /{2,1}??/u,
     ╰────
 
-  × Numbers out of order in braced quantifier
+  × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionAnnexB.ts:42:4]
  41 │   /{1,2}??/u,
  42 │   /{2,1}??/u,
@@ -10465,7 +10465,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  4 │     // Pattern modifiers
    ╰────
 
-  × Invalid regular expression: Capturing group name is missing
+  × Invalid regular expression: Missing capturing group name
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:5:3]
  4 │     // Pattern modifiers
  5 │     /(?med-ium:bar)/,
@@ -10481,7 +10481,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
     ╰────
 
-  × Invalid regular expression: Duplicated group name
+  × Invalid regular expression: Duplicated capturing group names
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:14:46]
  13 │     /\2()(\12)(foo)\1\0[\0\1\01\123\08\8](\3\03)\5\005\9\009/u,
  14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
@@ -10489,7 +10489,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  15 │     /(\k<bar>)\k<absent>(?<foo>foo)|(?<bar>)((?<foo>)|(bar(?<bar>bar)))/,
     ╰────
 
-  × Invalid regular expression: Duplicated group name
+  × Invalid regular expression: Duplicated capturing group names
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:15:59]
  14 │     /(?<foo>)((?<bar>bar)bar)(?<baz>baz)|(foo(?<foo>foo))(?<baz>)/,
  15 │     /(\k<bar>)\k<absent>(?<foo>foo)|(?<bar>)((?<foo>)|(bar(?<bar>bar)))/,
@@ -10497,7 +10497,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  16 │     // Quantifiers
     ╰────
 
-  × Numbers out of order in braced quantifier
+  × Invalid regular expression: Numbers out of order in braced quantifier
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:17:31]
  16 │     // Quantifiers
  17 │     /{}{1,2}_{3}.{4,}?(foo){008}${32,16}\b{064,128}.+&*?\???\n{,256}{\\{,/,
@@ -10505,7 +10505,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  18 │     // Character classes
     ╰────
 
-  × Invalid regular expression: Character class range out of order
+  × Invalid regular expression: Character class atom range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:19:13]
  18 │     // Character classes
  19 │     /[-A-Za-z-z-aZ-A\d_-\d-.-.\r-\n\w-\W]/,
@@ -10513,7 +10513,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  20 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/,
     ╰────
 
-  × Invalid regular expression: Invalid unicode property name or value
+  × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:21:28]
  20 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/,
  21 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/u,
@@ -10521,7 +10521,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  22 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/v,
     ╰────
 
-  × Invalid regular expression: Invalid unicode property name or value
+  × Invalid regular expression: Invalid unicode property name and/or value
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:22:28]
  21 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/u,
  22 │     /\p{L}\p{gc=L}\p{ASCII}\p{Invalid}[\p{L}\p{gc=L}\P{ASCII}\p{Invalid}]/v,
@@ -10545,15 +10545,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
     ╰────
 
-  × `UnicodeSetsMode` is required for binary property of strings
+  × Invalid regular expression: Invalid unicode property `RGI_Emoji`
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:27:6]
  26 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/,
  27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
     ·         ─────────
  28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
     ╰────
+  help: Enable `UnicodeSetsMode` to use this property
 
-  × Invalid property name(negative + property of strings)
+  × Invalid regular expression: Invalid property name `RGI_Emoji`(negative + property of strings)
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:28:16]
  27 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/u,
  28 │     /\p{RGI_Emoji}\P{RGI_Emoji}[^\p{RGI_Emoji}\P{RGI_Emoji}]/v,
@@ -10585,7 +10586,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  35 │     // Unicode sets notation
     ╰────
 
-  × Invalid regular expression: Character class range out of order
+  × Invalid regular expression: Character class atom range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:36:5]
  35 │     // Unicode sets notation
  36 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/,
@@ -10593,7 +10594,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
     ╰────
 
-  × Invalid regular expression: Character class range out of order
+  × Invalid regular expression: Character class atom range out of order
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:37:5]
  36 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/,
  37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
@@ -10601,7 +10602,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
     ╰────
 
-  × Invalid character in character class set subtraction
+  × Invalid regular expression: Unexpected character inside of class subtraction
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:38:8]
  37 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/u,
  38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
@@ -10609,7 +10610,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
     ╰────
 
-  × Invalid character in character class set interseciton
+  × Invalid regular expression: Unexpected character inside of class intersection
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:39:56]
  38 │     /[a--b[--][\d++[]]&&[[&0-9--]&&[\p{L}]--\P{L}-_-]]&&&\q{foo}[0---9][&&q&&&\q{bar}&&]/v,
  39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
@@ -10617,7 +10618,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
     ╰────
 
-  × Invalid regular expression: Invalid character class
+  × Invalid regular expression: Invalid character class with strings unicode property
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:40:3]
  39 │     /[[^\P{Decimal_Number}&&[0-9]]&&\p{L}&&\p{ID_Continue}--\p{ASCII}\p{CWCF}]/v,
  40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
@@ -10625,7 +10626,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
     ╰────
 
-  × Invalid regular expression: Invalid character class
+  × Invalid regular expression: Invalid character class with strings unicode property
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:41:3]
  40 │     /[^\p{Emoji}\p{RGI_Emoji}][^\p{Emoji}--\p{RGI_Emoji}][^\p{Emoji}&&\p{RGI_Emoji}]/v,
  41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
@@ -10633,7 +10634,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
     ╰────
 
-  × Invalid regular expression: Invalid character class
+  × Invalid regular expression: Invalid character class with strings unicode property
     ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:42:3]
  41 │     /[^\p{RGI_Emoji}\p{Emoji}][^\p{RGI_Emoji}--\p{Emoji}][^\p{RGI_Emoji}&&\p{Emoji}]/v,
  42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
@@ -10649,13 +10650,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  4 │     // Pattern modifiers
    ╰────
 
-  × Invalid regular expression: Invalid unicode property name or value
+  × Invalid regular expression: Invalid unicode property name and/or value
    ╭─[typescript/tests/cases/compiler/regularExpressionUnicodePropertyValueExpressionSuggestions.ts:1:19]
  1 │ const regex = /\p{ascii}\p{Sc=Unknown}\p{sc=unknownX}\p{Script_Declensions=Inherited}\p{scx=inherit}/u;
    ·                   ─────
    ╰────
 
-  × Invalid regular expression: Capturing group name is missing
+  × Invalid regular expression: Missing capturing group name
    ╭─[typescript/tests/cases/compiler/regularExpressionWithNonBMPFlags.ts:7:31]
  6 │ // See https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols
  7 │ const 𝘳𝘦𝘨𝘦𝘹 = /(?𝘴𝘪-𝘮:^𝘧𝘰𝘰.)/𝘨𝘮𝘶;
@@ -20400,17 +20401,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:5]
  1 │ foo(/notregexp);
    ·     ────────────
-   ╰────
-
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:15]
- 1 │ foo(/notregexp);
-   ·               ▲
-   ╰────
-
-  × Expected `)` but found `EOF`
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:17]
- 1 │ foo(/notregexp);
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

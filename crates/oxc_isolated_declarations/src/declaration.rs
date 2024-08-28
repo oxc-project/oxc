@@ -114,7 +114,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_using_declaration(
         &self,
-        decl: &UsingDeclaration<'a>,
+        decl: &VariableDeclaration<'a>,
         check_binding: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
         let declarations =
@@ -126,7 +126,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn transform_using_declaration_with_new_declarations(
         &self,
-        decl: &UsingDeclaration<'a>,
+        decl: &VariableDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
         self.ast.alloc_variable_declaration(
@@ -207,9 +207,6 @@ impl<'a> IsolatedDeclarations<'a> {
             Declaration::VariableDeclaration(decl) => self
                 .transform_variable_declaration(decl, check_binding)
                 .map(Declaration::VariableDeclaration),
-            Declaration::UsingDeclaration(decl) => Some(Declaration::VariableDeclaration(
-                self.transform_using_declaration(decl, check_binding),
-            )),
             Declaration::ClassDeclaration(decl) => {
                 if !check_binding
                     || decl.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
