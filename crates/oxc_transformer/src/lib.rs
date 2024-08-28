@@ -262,6 +262,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_property_definition(def);
     }
 
+    fn enter_accessor_property(
+        &mut self,
+        node: &mut AccessorProperty<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.transform_accessor_property(node);
+    }
+
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements(stmts);
         self.x1_react.transform_statements(stmts, ctx);

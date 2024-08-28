@@ -353,6 +353,12 @@ impl<'a> TypeScriptAnnotations<'a> {
         def.type_annotation = None;
     }
 
+    pub fn transform_accessor_property(&mut self, def: &mut AccessorProperty<'a>) {
+        def.accessibility = None;
+        def.definite = false;
+        def.type_annotation = None;
+    }
+
     pub fn transform_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         // Remove declare declaration
         stmts.retain(

@@ -163,9 +163,6 @@ tasks/coverage/misc/pass/oxc-5177.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Bang", "Foo"]
 rebuilt        : ScopeId(0): ["Bang"]
-Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Foo"]
 
 tasks/coverage/misc/pass/swc-7187.ts
 semantic error: Bindings mismatch:
