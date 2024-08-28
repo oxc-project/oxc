@@ -105,21 +105,27 @@ impl<'a> TraverseAncestry<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) {
+    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) -> PopToken {
         self.stack.push(ancestor);
+
+        // Return `PopToken` which can be used to pop this entry off again
+        PopToken(())
     }
 
     /// Pop last item off ancestry stack.
     ///
     /// # SAFETY
-    /// * Stack must have length of at least 2 (so length is minimum 1 after pop).
-    /// * Each `pop_stack` call must correspond to a `push_stack` call for same type.
-    ///
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    pub(crate) unsafe fn pop_stack(&mut self) {
+    #[allow(unused_variables, clippy::needless_pass_by_value)]
+    pub(crate) fn pop_stack(&mut self, token: PopToken) {
         debug_assert!(self.stack.len() >= 2);
-        self.stack.pop().unwrap_unchecked();
+        // SAFETY: `PopToken`s are only created in `push_stack`, so the fact that caller provides one
+        // guarantees that a push has happened. This method consumes the token which guarantees another
+        // pop hasn't occurred already corresponding to that push.
+        // Therefore the stack cannot by empty.
+        // The stack starts with 1 entry, so also it cannot be left empty after this pop.
+        unsafe { self.stack.pop().unwrap_unchecked() };
     }
 
     /// Retag last item on ancestry stack.
@@ -149,3 +155,10 @@ impl<'a> TraverseAncestry<'a> {
         *(self.stack.last_mut().unwrap_unchecked() as *mut _ as *mut AncestorType) = ty;
     }
 }
+
+/// Zero sized token which allows popping from stack. Used to ensure push and pop always correspond.
+/// Inner field is private to this module so can only be created by methods in this file.
+/// It is not `Clone` or `Copy`, so no way to obtain one except in this file.
+/// Only method which generates a `PopToken` is `push_stack`, and `pop_stack` consumes one,
+/// which guarantees you can't have more pops than pushes.
+pub(crate) struct PopToken(());

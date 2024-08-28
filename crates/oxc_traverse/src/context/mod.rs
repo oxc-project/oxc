@@ -14,6 +14,7 @@ use oxc_syntax::{
 use crate::ancestor::{Ancestor, AncestorType};
 mod ancestry;
 mod ast_operations;
+use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
 mod scoping;
 pub use scoping::TraverseScoping;
@@ -440,8 +441,8 @@ impl<'a> TraverseCtx<'a> {
     /// # SAFETY
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) {
-        self.ancestry.push_stack(ancestor);
+    pub(crate) fn push_stack(&mut self, ancestor: Ancestor<'a, 'static>) -> PopToken {
+        self.ancestry.push_stack(ancestor)
     }
 
     /// Shortcut for `self.ancestry.pop_stack`, to make `walk_*` methods less verbose.
@@ -450,8 +451,8 @@ impl<'a> TraverseCtx<'a> {
     /// See safety constraints of `TraverseAncestry.pop_stack`.
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    pub(crate) unsafe fn pop_stack(&mut self) {
-        self.ancestry.pop_stack();
+    pub(crate) unsafe fn pop_stack(&mut self, token: PopToken) {
+        self.ancestry.pop_stack(token);
     }
 
     /// Shortcut for `self.ancestry.retag_stack`, to make `walk_*` methods less verbose.
