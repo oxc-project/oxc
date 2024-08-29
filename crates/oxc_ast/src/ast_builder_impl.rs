@@ -146,7 +146,7 @@ impl<'a> AstBuilder<'a> {
             false,
             false,
             Option::<TSTypeParameterDeclaration>::None,
-            None,
+            None::<Box<'a, TSThisParameter<'a>>>,
             params,
             Option::<TSTypeAnnotation>::None,
             body,

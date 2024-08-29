@@ -1028,7 +1028,7 @@ impl<'a> Function<'a> {
         generator: bool,
         r#async: bool,
         declare: bool,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

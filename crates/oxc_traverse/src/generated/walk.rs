@@ -2286,10 +2286,10 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_THIS_PARAM)
-        as *mut Option<TSThisParameter>)
+        as *mut Option<Box<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::FunctionThisParam);
-        walk_ts_this_parameter(traverser, field as *mut _, ctx);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::FunctionParams);
     walk_formal_parameters(
@@ -4785,10 +4785,10 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-        as *mut Option<TSThisParameter>)
+        as *mut Option<Box<TSThisParameter>>)
     {
         ctx.retag_stack(AncestorType::TSMethodSignatureThisParam);
-        walk_ts_this_parameter(traverser, field as *mut _, ctx);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSMethodSignatureParams);
     walk_formal_parameters(
@@ -5229,9 +5229,9 @@ pub(crate) unsafe fn walk_ts_function_type<'a, Tr: Traverse<'a>>(
         ancestor::TSFunctionTypeWithoutThisParam(node, PhantomData),
     ));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-        as *mut Option<TSThisParameter>)
+        as *mut Option<Box<TSThisParameter>>)
     {
-        walk_ts_this_parameter(traverser, field as *mut _, ctx);
+        walk_ts_this_parameter(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::TSFunctionTypeParams);
     walk_formal_parameters(

@@ -1,7 +1,8 @@
+use oxc_allocator::Box;
 use oxc_ast::ast::{
     ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
-    ObjectExpression, ObjectPropertyKind, TSLiteral, TSMethodSignatureKind, TSTupleElement, TSType,
-    TSTypeOperatorOperator,
+    ObjectExpression, ObjectPropertyKind, TSLiteral, TSMethodSignatureKind, TSThisParameter,
+    TSTupleElement, TSType, TSTypeOperatorOperator,
 };
 use oxc_span::{GetSpan, Span, SPAN};
 
@@ -54,7 +55,7 @@ impl<'a> IsolatedDeclarations<'a> {
         return_type.map(|return_type| {
             self.ast.ts_type_function_type(
                 func.span,
-                None,
+                None::<Box<'a, TSThisParameter<'a>>>,
                 params,
                 return_type,
                 // SAFETY: `ast.copy` is unsound! We need to fix.

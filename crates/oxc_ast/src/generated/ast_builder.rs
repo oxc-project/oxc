@@ -842,7 +842,7 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - body
     #[inline]
-    pub fn expression_function<T1, T2, T3, T4>(
+    pub fn expression_function<T1, T2, T3, T4, T5>(
         self,
         r#type: FunctionType,
         span: Span,
@@ -851,16 +851,17 @@ impl<'a> AstBuilder<'a> {
         r#async: bool,
         declare: bool,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Expression::FunctionExpression(self.alloc(self.function(
             r#type,
@@ -4188,7 +4189,7 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - body
     #[inline]
-    pub fn declaration_function<T1, T2, T3, T4>(
+    pub fn declaration_function<T1, T2, T3, T4, T5>(
         self,
         r#type: FunctionType,
         span: Span,
@@ -4197,16 +4198,17 @@ impl<'a> AstBuilder<'a> {
         r#async: bool,
         declare: bool,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
     ) -> Declaration<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Declaration::FunctionDeclaration(self.alloc(self.function(
             r#type,
@@ -5727,7 +5729,7 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - body
     #[inline]
-    pub fn function<T1, T2, T3, T4>(
+    pub fn function<T1, T2, T3, T4, T5>(
         self,
         r#type: FunctionType,
         span: Span,
@@ -5736,16 +5738,17 @@ impl<'a> AstBuilder<'a> {
         r#async: bool,
         declare: bool,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
     ) -> Function<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Function {
             r#type,
@@ -5755,7 +5758,7 @@ impl<'a> AstBuilder<'a> {
             r#async,
             declare,
             type_parameters: type_parameters.into_in(self.allocator),
-            this_param,
+            this_param: this_param.into_in(self.allocator),
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
             body: body.into_in(self.allocator),
@@ -5780,7 +5783,7 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - body
     #[inline]
-    pub fn alloc_function<T1, T2, T3, T4>(
+    pub fn alloc_function<T1, T2, T3, T4, T5>(
         self,
         r#type: FunctionType,
         span: Span,
@@ -5789,16 +5792,17 @@ impl<'a> AstBuilder<'a> {
         r#async: bool,
         declare: bool,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
     ) -> Box<'a, Function<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Box::new_in(
             self.function(
@@ -7637,7 +7641,7 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - body
     #[inline]
-    pub fn export_default_declaration_kind_function<T1, T2, T3, T4>(
+    pub fn export_default_declaration_kind_function<T1, T2, T3, T4, T5>(
         self,
         r#type: FunctionType,
         span: Span,
@@ -7646,16 +7650,17 @@ impl<'a> AstBuilder<'a> {
         r#async: bool,
         declare: bool,
         type_parameters: T1,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T2,
-        return_type: T3,
-        body: T4,
+        this_param: T2,
+        params: T3,
+        return_type: T4,
+        body: T5,
     ) -> ExportDefaultDeclarationKind<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T3: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         ExportDefaultDeclarationKind::FunctionDeclaration(self.alloc(self.function(
             r#type,
@@ -8746,18 +8751,19 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - type_parameters
     #[inline]
-    pub fn ts_type_function_type<T1, T2, T3>(
+    pub fn ts_type_function_type<T1, T2, T3, T4>(
         self,
         span: Span,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T1,
-        return_type: T2,
-        type_parameters: T3,
+        this_param: T1,
+        params: T2,
+        return_type: T3,
+        type_parameters: T4,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSType::TSFunctionType(self.alloc(self.ts_function_type(
             span,
@@ -10806,22 +10812,23 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - type_parameters
     #[inline]
-    pub fn ts_signature_method_signature<T1, T2, T3>(
+    pub fn ts_signature_method_signature<T1, T2, T3, T4>(
         self,
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T1,
-        return_type: T2,
-        type_parameters: T3,
+        this_param: T1,
+        params: T2,
+        return_type: T3,
+        type_parameters: T4,
     ) -> TSSignature<'a>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSSignature::TSMethodSignature(self.alloc(self.ts_method_signature(
             span,
@@ -10983,22 +10990,23 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - type_parameters
     #[inline]
-    pub fn ts_method_signature<T1, T2, T3>(
+    pub fn ts_method_signature<T1, T2, T3, T4>(
         self,
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T1,
-        return_type: T2,
-        type_parameters: T3,
+        this_param: T1,
+        params: T2,
+        return_type: T3,
+        type_parameters: T4,
     ) -> TSMethodSignature<'a>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSMethodSignature {
             span,
@@ -11006,7 +11014,7 @@ impl<'a> AstBuilder<'a> {
             computed,
             optional,
             kind,
-            this_param,
+            this_param: this_param.into_in(self.allocator),
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
@@ -11029,22 +11037,23 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - type_parameters
     #[inline]
-    pub fn alloc_ts_method_signature<T1, T2, T3>(
+    pub fn alloc_ts_method_signature<T1, T2, T3, T4>(
         self,
         span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T1,
-        return_type: T2,
-        type_parameters: T3,
+        this_param: T1,
+        params: T2,
+        return_type: T3,
+        type_parameters: T4,
     ) -> Box<'a, TSMethodSignature<'a>>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         Box::new_in(
             self.ts_method_signature(
@@ -11888,22 +11897,23 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - type_parameters
     #[inline]
-    pub fn ts_function_type<T1, T2, T3>(
+    pub fn ts_function_type<T1, T2, T3, T4>(
         self,
         span: Span,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T1,
-        return_type: T2,
-        type_parameters: T3,
+        this_param: T1,
+        params: T2,
+        return_type: T3,
+        type_parameters: T4,
     ) -> TSFunctionType<'a>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSFunctionType {
             span,
-            this_param,
+            this_param: this_param.into_in(self.allocator),
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
@@ -11921,18 +11931,19 @@ impl<'a> AstBuilder<'a> {
     /// - return_type
     /// - type_parameters
     #[inline]
-    pub fn alloc_ts_function_type<T1, T2, T3>(
+    pub fn alloc_ts_function_type<T1, T2, T3, T4>(
         self,
         span: Span,
-        this_param: Option<TSThisParameter<'a>>,
-        params: T1,
-        return_type: T2,
-        type_parameters: T3,
+        this_param: T1,
+        params: T2,
+        return_type: T3,
+        type_parameters: T4,
     ) -> Box<'a, TSFunctionType<'a>>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSThisParameter<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
+        T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         Box::new_in(
             self.ts_function_type(span, this_param, params, return_type, type_parameters),
