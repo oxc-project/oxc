@@ -28,12 +28,14 @@
 
 use crate::context::Ctx;
 
+use object_rest::ObjectRest;
+use object_spread::ObjectSpread;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 use serde::Deserialize;
 use std::rc::Rc;
-
-use super::{object_rest::ObjectRest, object_spread::ObjectSpread};
+mod object_rest;
+mod object_spread;
 
 #[derive(Debug, Default, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase")]

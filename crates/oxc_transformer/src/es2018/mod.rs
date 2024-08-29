@@ -1,6 +1,4 @@
-mod object_rest;
 mod object_rest_spread;
-mod object_spread;
 mod options;
 
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
