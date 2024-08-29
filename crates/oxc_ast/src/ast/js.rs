@@ -1197,13 +1197,12 @@ pub enum Declaration<'a> {
     #[visit(args(flags = ScopeFlags::Function))]
     FunctionDeclaration(Box<'a, Function<'a>>) = 33,
     ClassDeclaration(Box<'a, Class<'a>>) = 34,
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
 
-    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
-    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
-    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 35,
+    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
+    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
+    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
+    TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 39,
 }
 
 /// Macro for matching `Declaration`'s variants.
@@ -1213,7 +1212,6 @@ macro_rules! match_declaration {
         $ty::VariableDeclaration(_)
             | $ty::FunctionDeclaration(_)
             | $ty::ClassDeclaration(_)
-            | $ty::UsingDeclaration(_)
             | $ty::TSTypeAliasDeclaration(_)
             | $ty::TSInterfaceDeclaration(_)
             | $ty::TSEnumDeclaration(_)
@@ -1248,6 +1246,9 @@ pub enum VariableDeclarationKind {
     Var = 0,
     Const = 1,
     Let = 2,
+    Using = 3,
+    #[serde(rename = "await using")]
+    AwaitUsing = 4,
 }
 
 #[ast(visit)]
@@ -1263,21 +1264,6 @@ pub struct VariableDeclarator<'a> {
     pub id: BindingPattern<'a>,
     pub init: Option<Expression<'a>>,
     pub definite: bool,
-}
-
-/// Using Declaration
-/// * <https://github.com/tc39/proposal-explicit-resource-management>
-#[ast(visit)]
-#[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(tag = "type", rename_all = "camelCase")]
-pub struct UsingDeclaration<'a> {
-    #[serde(flatten)]
-    pub span: Span,
-    pub is_await: bool,
-    #[serde(default)]
-    pub declarations: Vec<'a, VariableDeclarator<'a>>,
 }
 
 /// Empty Statement
@@ -1375,7 +1361,6 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 64,
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
@@ -1412,7 +1397,6 @@ inherit_variants! {
 #[serde(untagged)]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 16,
-    UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 17,
     // `AssignmentTarget` variants added here by `inherit_variants!` macro
     @inherit AssignmentTarget
 }
@@ -2288,6 +2272,21 @@ pub struct AccessorProperty<'a> {
     ///
     /// Will only ever be [`Some`] for TypeScript files.
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    /// Accessibility modifier.
+    ///
+    /// Only ever [`Some`] for TypeScript files.
+    ///
+    /// ## Example
+    ///
+    /// ```ts
+    /// class Foo {
+    ///   public accessor w: number     // Some(TSAccessibility::Public)
+    ///   private accessor x: string    // Some(TSAccessibility::Private)
+    ///   protected accessor y: boolean // Some(TSAccessibility::Protected)
+    ///   accessor z           // None
+    /// }
+    /// ```
+    pub accessibility: Option<TSAccessibility>,
 }
 
 #[ast(visit)]

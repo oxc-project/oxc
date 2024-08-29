@@ -6,7 +6,7 @@ use std::{
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{AllowWarnDeny, LintOptions, Linter};
+use oxc_linter::{AllowWarnDeny, FixKind, LintOptions, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -43,6 +43,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 ];
                 let lint_options = LintOptions::default()
                     .with_filter(filter)
+                    .with_fix(FixKind::All)
                     .with_import_plugin(true)
                     .with_jsdoc_plugin(true)
                     .with_jest_plugin(true)

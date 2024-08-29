@@ -106,3 +106,6 @@ c = foo<string>;
 
 d = x satisfies y;
 d = ((x) satisfies y);
+
+export @x declare abstract class C {}
+export @x declare abstract class C {}

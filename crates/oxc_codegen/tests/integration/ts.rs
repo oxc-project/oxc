@@ -50,6 +50,7 @@ fn ts() {
         "b = (x as y);",
         "c = foo<string>;",
         "d = x satisfies y;",
+        "export @x declare abstract class C {}",
     ];
 
     let snapshot = cases.into_iter().fold(String::new(), |mut w, case| {

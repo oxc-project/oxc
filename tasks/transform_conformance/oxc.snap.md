@@ -1,13 +1,19 @@
 commit: 12619ffe
 
-Passed: 10/36
+Passed: 10/37
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-arrow-functions
 
 
-# babel-plugin-transform-typescript (2/7)
+# babel-plugin-transform-typescript (2/8)
+* class-property-definition/input.ts
+  x Unresolved references mismatch:
+  | after transform: ["const"]
+  | rebuilt        : []
+
+
 * computed-constant-value/input.ts
   x Missing ReferenceId: Infinity
 
@@ -206,7 +212,6 @@ Passed: 10/36
 
 # babel-plugin-transform-react-jsx (6/27)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
-  x Output mismatch
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(9): [ReferenceId(23), ReferenceId(24),
   | ReferenceId(25)]
@@ -214,24 +219,24 @@ Passed: 10/36
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(10): [ReferenceId(26), ReferenceId(27),
-  | ReferenceId(28)]
-  | rebuilt        : SymbolId(1): [ReferenceId(18), ReferenceId(19)]
+  | ReferenceId(29)]
+  | rebuilt        : SymbolId(1): [ReferenceId(10), ReferenceId(13)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(11): [ReferenceId(29), ReferenceId(30),
-  | ReferenceId(31), ReferenceId(32)]
-  | rebuilt        : SymbolId(2): [ReferenceId(29), ReferenceId(32),
-  | ReferenceId(33)]
+  | after transform: SymbolId(11): [ReferenceId(30), ReferenceId(31),
+  | ReferenceId(32)]
+  | rebuilt        : SymbolId(2): [ReferenceId(18), ReferenceId(19)]
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(12): [ReferenceId(33), ReferenceId(34),
   | ReferenceId(36)]
-  | rebuilt        : SymbolId(3): [ReferenceId(10), ReferenceId(13)]
+  | rebuilt        : SymbolId(3): [ReferenceId(22), ReferenceId(25)]
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(13): [ReferenceId(37), ReferenceId(38),
-  | ReferenceId(40)]
-  | rebuilt        : SymbolId(4): [ReferenceId(22), ReferenceId(25)]
+  | ReferenceId(39), ReferenceId(40)]
+  | rebuilt        : SymbolId(4): [ReferenceId(29), ReferenceId(32),
+  | ReferenceId(33)]
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(14): [ReferenceId(41), ReferenceId(42),
@@ -272,7 +277,7 @@ Passed: 10/36
   | rebuilt        : ReferenceId(1): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(29): Some("_s3")
+  | after transform: ReferenceId(30): Some("_s3")
   | rebuilt        : ReferenceId(2): None
 
   x Reference symbol mismatch:
@@ -514,8 +519,8 @@ Passed: 10/36
   | rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(16)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(9): [ReferenceId(12), ReferenceId(13),
-  | ReferenceId(15)]
+  | after transform: SymbolId(8): [ReferenceId(11), ReferenceId(12),
+  | ReferenceId(14)]
   | rebuilt        : SymbolId(4): [ReferenceId(3), ReferenceId(7)]
 
   x Symbol reference IDs mismatch:
@@ -528,7 +533,7 @@ Passed: 10/36
   | rebuilt        : ReferenceId(0): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(12): Some("_s")
+  | after transform: ReferenceId(11): Some("_s")
   | rebuilt        : ReferenceId(2): None
 
   x Reference symbol mismatch:
@@ -547,13 +552,13 @@ Passed: 10/36
   x Missing ScopeId
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(8): [ReferenceId(10), ReferenceId(11),
-  | ReferenceId(13)]
+  | after transform: SymbolId(7): [ReferenceId(9), ReferenceId(10),
+  | ReferenceId(12)]
   | rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(7)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(9): [ReferenceId(14), ReferenceId(15),
-  | ReferenceId(17)]
+  | after transform: SymbolId(8): [ReferenceId(13), ReferenceId(14),
+  | ReferenceId(16)]
   | rebuilt        : SymbolId(2): [ReferenceId(10), ReferenceId(12)]
 
   x Symbol reference IDs mismatch:
@@ -567,11 +572,11 @@ Passed: 10/36
   | rebuilt        : SymbolId(10): [ReferenceId(21), ReferenceId(24)]
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(10): Some("_s")
+  | after transform: ReferenceId(9): Some("_s")
   | rebuilt        : ReferenceId(0): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(14): Some("_s2")
+  | after transform: ReferenceId(13): Some("_s2")
   | rebuilt        : ReferenceId(1): None
 
   x Reference symbol mismatch:

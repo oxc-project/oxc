@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 287/953
+Passed: 292/1015
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -9,7 +9,7 @@ Passed: 287/953
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (100/579)
+# babel-preset-env (100/580)
 * .plugins-overlapping/chrome-49/input.js
 
 
@@ -1307,6 +1307,9 @@ Targets: The `esmodules` is not supported
 * plugins-integration/regression-2892/input.mjs
 
 
+* plugins-integration/regression-4855/input.js
+
+
 * plugins-integration/spread-super-firefox-40/input.js
 
 
@@ -1875,6 +1878,170 @@ failed to resolve query: failed to parse the rest of input: ...''
   x Reference flags mismatch:
   | after transform: ReferenceId(2): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+
+
+# babel-plugin-transform-object-rest-spread (5/59)
+* assumption-ignoreFunctionLength/parameters-object-rest-used-in-default/input.js
+
+
+* assumption-objectRestNoSymbols/rest-assignment-expression/input.js
+
+
+* assumption-objectRestNoSymbols/rest-computed/input.js
+
+
+* assumption-objectRestNoSymbols/rest-nested/input.js
+
+
+* assumption-objectRestNoSymbols/rest-var-declaration/input.js
+
+
+* assumption-pureGetters/rest-remove-unused-excluded-keys/input.js
+
+
+* assumption-pureGetters/spread-single-call/input.js
+
+
+* assumption-setSpreadProperties/assignment/input.js
+
+
+* assumption-setSpreadProperties/expression/input.js
+
+
+* assumption-setSpreadProperties/targets-support-object-assign/input.js
+
+
+* assumption-setSpreadProperties-with-useBuiltIns/assignment/input.js
+
+
+* assumption-setSpreadProperties-with-useBuiltIns/expression/input.js
+
+
+* object-rest/assignment-expression/input.js
+
+
+* object-rest/catch-clause/input.js
+
+
+* object-rest/duplicate-decl-bug/input.js
+
+
+* object-rest/export/input.mjs
+
+
+* object-rest/for-x/input.js
+
+
+* object-rest/for-x-array-pattern/input.js
+
+
+* object-rest/for-x-completion-record/input.js
+
+
+* object-rest/impure-computed/input.js
+
+
+* object-rest/nested/input.js
+
+
+* object-rest/nested-2/input.js
+
+
+* object-rest/nested-array/input.js
+
+
+* object-rest/nested-array-2/input.js
+
+
+* object-rest/nested-computed-key/input.js
+
+
+* object-rest/nested-default-value/input.js
+
+
+* object-rest/nested-literal-property/input.js
+
+
+* object-rest/nested-order/input.js
+
+
+* object-rest/non-string-computed/input.js
+
+
+* object-rest/null-destructuring/input.js
+
+
+* object-rest/object-ref-computed/input.js
+
+
+* object-rest/parameters/input.js
+
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+
+
+* object-rest/remove-unused-excluded-keys-loose/input.js
+
+
+* object-rest/symbol/input.js
+
+
+* object-rest/template-literal-allLiterals-true-no-hoisting/input.js
+
+
+* object-rest/template-literal-property-allLiterals-false/input.js
+
+
+* object-rest/template-literal-property-allLiterals-true/input.js
+
+
+* object-rest/variable-destructuring/input.js
+
+
+* object-rest/with-array-rest/input.js
+
+
+* object-spread/expression/input.js
+
+
+* object-spread/side-effect/input.js
+
+
+* object-spread-loose/assignment/input.js
+
+
+* object-spread-loose/expression/input.js
+
+
+* object-spread-loose/parameters-object-rest-used-in-default/input.js
+
+
+* object-spread-loose/side-effect/input.js
+
+
+* object-spread-loose/variable-declaration/input.js
+
+
+* object-spread-loose-builtins/expression/input.js
+
+
+* object-spread-loose-builtins/side-effect/input.js
+
+
+* regression/gh-4904/input.js
+
+
+* regression/gh-5151/input.js
+
+
+* regression/gh-7304/input.mjs
+
+
+* regression/gh-7388/input.js
+
+
+* regression/gh-8323/input.js
 
 
 
@@ -4687,7 +4854,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-react-jsx (100/142)
+# babel-plugin-transform-react-jsx (100/144)
 * react/adds-appropriate-newlines-when-using-spread-attribute/input.js
   x Unresolved reference IDs mismatch for "Component":
   | after transform: [ReferenceId(0), ReferenceId(2)]
@@ -4978,6 +5145,20 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
   x Unresolved reference IDs mismatch for "Component":
   | after transform: [ReferenceId(0), ReferenceId(2)]
   | rebuilt        : [ReferenceId(1)]
+
+
+* spread-transform/transform-to-babel-extend/input.js
+  x Output mismatch
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* spread-transform/transform-to-object-assign/input.js
+  x Output mismatch
+  x Unresolved reference IDs mismatch for "Component":
+  | after transform: [ReferenceId(0), ReferenceId(2)]
+  | rebuilt        : [ReferenceId(2)]
 
 
 

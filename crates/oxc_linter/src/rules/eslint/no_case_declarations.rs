@@ -64,9 +64,9 @@ impl Rule for NoCaseDeclarations {
                     Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
                         let start = var.span.start;
                         let end = match var.kind {
-                            VariableDeclarationKind::Var => unreachable!(),
                             VariableDeclarationKind::Const => 5,
                             VariableDeclarationKind::Let => 3,
+                            _ => unreachable!(),
                         };
                         let end = start + end;
                         ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));

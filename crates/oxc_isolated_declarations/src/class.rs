@@ -472,6 +472,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.definite,
                         // SAFETY: `ast.copy` is unsound! We need to fix.
                         unsafe { self.ast.copy(&property.type_annotation) },
+                        property.accessibility,
                     );
                     elements.push(new_element);
                 }

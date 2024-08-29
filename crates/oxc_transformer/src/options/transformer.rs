@@ -8,6 +8,7 @@ use crate::{
     env::{can_enable_plugin, EnvOptions, Versions},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     es2016::ES2016Options,
+    es2018::{ES2018Options, ObjectRestSpreadOptions},
     es2019::ES2019Options,
     es2020::ES2020Options,
     es2021::ES2021Options,
@@ -40,6 +41,8 @@ pub struct TransformOptions {
     pub es2015: ES2015Options,
 
     pub es2016: ES2016Options,
+
+    pub es2018: ES2018Options,
 
     pub es2019: ES2019Options,
 
@@ -121,6 +124,16 @@ impl TransformOptions {
             enable_plugin(plugin_name, options, &env_options, &targets).is_some()
         });
 
+        let es2018 = ES2018Options::default().with_object_rest_spread({
+            let plugin_name = "transform-object-rest-spread";
+            enable_plugin(plugin_name, options, &env_options, &targets).map(|options| {
+                from_value::<ObjectRestSpreadOptions>(options).unwrap_or_else(|err| {
+                    report_error(plugin_name, &err, false, &mut errors);
+                    ObjectRestSpreadOptions::default()
+                })
+            })
+        });
+
         let es2019 = ES2019Options::default().with_optional_catch_binding({
             let plugin_name = "transform-optional-catch-binding";
             enable_plugin(plugin_name, options, &env_options, &targets).is_some()
@@ -168,6 +181,7 @@ impl TransformOptions {
             react,
             es2015,
             es2016,
+            es2018,
             es2019,
             es2020,
             es2021,

@@ -145,15 +145,6 @@ impl<'a> IsolatedDeclarations<'a> {
                             );
                             variable_transformed_indexes.push_back(FxHashSet::default());
                         }
-                        Declaration::UsingDeclaration(decl) => {
-                            variables_declarations.push_back(
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                unsafe { self.ast.copy(&decl.declarations) }
-                                    .into_iter()
-                                    .collect::<Vec<_>>(),
-                            );
-                            variable_transformed_indexes.push_back(FxHashSet::default());
-                        }
                         Declaration::TSModuleDeclaration(decl) => {
                             if decl.kind.is_global() {
                                 self.scope.visit_ts_module_declaration(decl);
@@ -236,8 +227,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 let Some(decl) = stmt.as_declaration() else { continue };
 
-                if let Declaration::VariableDeclaration(_) | Declaration::UsingDeclaration(_) = decl
-                {
+                if let Declaration::VariableDeclaration(_) = decl {
                     let Some(cur_variable_declarations) = variables_declarations_iter.next() else {
                         unreachable!()
                     };
@@ -292,28 +282,6 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variables_declaration));
-                        transformed_indexes.insert(index);
-                    }
-                }
-                Statement::UsingDeclaration(decl) => {
-                    let indexes =
-                        variable_transformed_indexes.pop_front().unwrap_or_else(|| unreachable!());
-                    let declarations =
-                        variables_declarations.pop_front().unwrap_or_else(|| unreachable!());
-
-                    if !indexes.is_empty() {
-                        let variable_declaration = self
-                            .transform_using_declaration_with_new_declarations(
-                                &decl,
-                                self.ast.vec_from_iter(
-                                    declarations
-                                        .into_iter()
-                                        .enumerate()
-                                        .filter(|(i, _)| indexes.contains(i))
-                                        .map(|(_, decl)| decl),
-                                ),
-                            );
-                        new_ast_stmts.push(Statement::VariableDeclaration(variable_declaration));
                         transformed_indexes.insert(index);
                     }
                 }
@@ -478,16 +446,6 @@ impl<'a> IsolatedDeclarations<'a> {
                             .entry(&ident.name)
                             .or_default()
                             .insert(decl.id.name.clone());
-                    }
-                    Some(Declaration::UsingDeclaration(decl)) => {
-                        for declarator in &decl.declarations {
-                            if let Some(name) = declarator.id.get_identifier() {
-                                assignable_properties_for_namespace
-                                    .entry(&ident.name)
-                                    .or_default()
-                                    .insert(name);
-                            }
-                        }
                     }
                     _ => {}
                 }

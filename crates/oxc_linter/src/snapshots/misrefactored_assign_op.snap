@@ -70,3 +70,31 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Did you mean `a *= a`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= a * (a as number);
+   · ──────────────────────
+   ╰────
+  help: Did you mean `a *= (a as number)`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= a * (a as number);
+   · ──────────────────────
+   ╰────
+  help: Did you mean `a *= a`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= (a as string) * (a as number);
+   · ──────────────────────────────────
+   ╰────
+  help: Did you mean `a *= (a as number)`?
+
+  ⚠ oxc(misrefactored-assign-op): Misrefactored assign op. Variable appears on both sides of an assignment operation
+   ╭─[misrefactored_assign_op.tsx:1:1]
+ 1 │ a *= (a as string) * (a as number);
+   · ──────────────────────────────────
+   ╰────
+  help: Did you mean `a *= (a as string)`?

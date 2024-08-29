@@ -370,12 +370,6 @@ const _: () = {
     assert!(offset_of!(VariableDeclarator, init) == 48usize);
     assert!(offset_of!(VariableDeclarator, definite) == 64usize);
 
-    assert!(size_of::<UsingDeclaration>() == 48usize);
-    assert!(align_of::<UsingDeclaration>() == 8usize);
-    assert!(offset_of!(UsingDeclaration, span) == 0usize);
-    assert!(offset_of!(UsingDeclaration, is_await) == 8usize);
-    assert!(offset_of!(UsingDeclaration, declarations) == 16usize);
-
     assert!(size_of::<EmptyStatement>() == 8usize);
     assert!(align_of::<EmptyStatement>() == 4usize);
     assert!(offset_of!(EmptyStatement, span) == 0usize);
@@ -687,7 +681,7 @@ const _: () = {
     assert!(size_of::<AccessorPropertyType>() == 1usize);
     assert!(align_of::<AccessorPropertyType>() == 1usize);
 
-    assert!(size_of::<AccessorProperty>() == 96usize);
+    assert!(size_of::<AccessorProperty>() == 104usize);
     assert!(align_of::<AccessorProperty>() == 8usize);
     assert!(offset_of!(AccessorProperty, r#type) == 0usize);
     assert!(offset_of!(AccessorProperty, span) == 4usize);
@@ -698,6 +692,7 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, r#static) == 81usize);
     assert!(offset_of!(AccessorProperty, definite) == 82usize);
     assert!(offset_of!(AccessorProperty, type_annotation) == 88usize);
+    assert!(offset_of!(AccessorProperty, accessibility) == 96usize);
 
     assert!(size_of::<ImportExpression>() == 56usize);
     assert!(align_of::<ImportExpression>() == 8usize);
@@ -1776,12 +1771,6 @@ const _: () = {
     assert!(offset_of!(VariableDeclarator, init) == 28usize);
     assert!(offset_of!(VariableDeclarator, definite) == 36usize);
 
-    assert!(size_of::<UsingDeclaration>() == 28usize);
-    assert!(align_of::<UsingDeclaration>() == 4usize);
-    assert!(offset_of!(UsingDeclaration, span) == 0usize);
-    assert!(offset_of!(UsingDeclaration, is_await) == 8usize);
-    assert!(offset_of!(UsingDeclaration, declarations) == 12usize);
-
     assert!(size_of::<EmptyStatement>() == 8usize);
     assert!(align_of::<EmptyStatement>() == 4usize);
     assert!(offset_of!(EmptyStatement, span) == 0usize);
@@ -2093,7 +2082,7 @@ const _: () = {
     assert!(size_of::<AccessorPropertyType>() == 1usize);
     assert!(align_of::<AccessorPropertyType>() == 1usize);
 
-    assert!(size_of::<AccessorProperty>() == 52usize);
+    assert!(size_of::<AccessorProperty>() == 56usize);
     assert!(align_of::<AccessorProperty>() == 4usize);
     assert!(offset_of!(AccessorProperty, r#type) == 0usize);
     assert!(offset_of!(AccessorProperty, span) == 4usize);
@@ -2104,6 +2093,7 @@ const _: () = {
     assert!(offset_of!(AccessorProperty, r#static) == 45usize);
     assert!(offset_of!(AccessorProperty, definite) == 46usize);
     assert!(offset_of!(AccessorProperty, type_annotation) == 48usize);
+    assert!(offset_of!(AccessorProperty, accessibility) == 52usize);
 
     assert!(size_of::<ImportExpression>() == 32usize);
     assert!(align_of::<ImportExpression>() == 4usize);

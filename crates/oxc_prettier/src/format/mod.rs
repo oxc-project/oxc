@@ -234,7 +234,6 @@ impl<'a> Format<'a> for ForStatementInit<'a> {
         match self {
             ForStatementInit::VariableDeclaration(v) => v.format(p),
             match_expression!(ForStatementInit) => self.to_expression().format(p),
-            ForStatementInit::UsingDeclaration(v) => v.format(p),
         }
     }
 }
@@ -280,7 +279,6 @@ impl<'a> Format<'a> for ForStatementLeft<'a> {
         match self {
             ForStatementLeft::VariableDeclaration(v) => v.format(p),
             match_assignment_target!(ForStatementLeft) => self.to_assignment_target().format(p),
-            ForStatementLeft::UsingDeclaration(v) => v.format(p),
         }
     }
 }
@@ -560,7 +558,6 @@ impl<'a> Format<'a> for Declaration<'a> {
             Self::VariableDeclaration(stmt) => stmt.format(p),
             Self::FunctionDeclaration(stmt) => stmt.format(p),
             Self::ClassDeclaration(decl) => decl.format(p),
-            Self::UsingDeclaration(decl) => decl.format(p),
             Self::TSTypeAliasDeclaration(decl) => decl.format(p),
             Self::TSInterfaceDeclaration(decl) => decl.format(p),
             Self::TSEnumDeclaration(decl) => decl.format(p),
@@ -623,12 +620,6 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
 impl<'a> Format<'a> for VariableDeclarator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         wrap!(p, self, VariableDeclarator, { assignment::print_variable_declarator(p, self) })
-    }
-}
-
-impl<'a> Format<'a> for UsingDeclaration<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
     }
 }
 

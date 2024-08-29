@@ -98,6 +98,7 @@ fn assignment_target_eq_expr<'a>(
     right_expr: &Expression<'_>,
     ctx: &LintContext<'a>,
 ) -> bool {
+    let right_expr = right_expr.get_inner_expression();
     if let Some(simple_assignment_target) = assignment_target.as_simple_assignment_target() {
         return match simple_assignment_target {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
@@ -215,6 +216,10 @@ fn test() {
         "a &= a & 1;",
         //~^ ERROR: variable appears on both sides of an assignment operation
         "a *= a * a;",
+        //~^ ERROR: variable appears on both sides of an assignment operation
+        "a *= a * (a as number);",
+        //~^ ERROR: variable appears on both sides of an assignment operation
+        "a *= (a as string) * (a as number);",
         //~^ ERROR: variable appears on both sides of an assignment operation
     ];
 
