@@ -90,9 +90,14 @@ impl<'a> TraverseAncestry<'a> {
         }
     }
 
-    /// Get iterator over ancestors, starting with closest ancestor
+    /// Get iterator over ancestors, starting with parent and working up.
+    ///
+    /// Last `Ancestor` returned will be `Program`. `Ancestor::None` is not included in iteration.
     pub fn ancestors<'t>(&'t self) -> impl Iterator<Item = Ancestor<'a, 't>> {
-        self.stack.iter().rev().map(|&ancestor| {
+        debug_assert!(!self.stack.is_empty());
+        // SAFETY: Stack always has at least 1 entry
+        let stack_without_first = unsafe { self.stack.get_unchecked(1..) };
+        stack_without_first.iter().rev().map(|&ancestor| {
             // Shrink `Ancestor`'s `'t` lifetime to lifetime of `&'t self`.
             // SAFETY: The `Ancestor` is guaranteed valid for `'t`. It is not possible to obtain
             // a `&mut` ref to any AST node which this `Ancestor` gives access to during `'t`.

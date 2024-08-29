@@ -151,7 +151,9 @@ impl<'a> TraverseCtx<'a> {
         self.ancestry.ancestor(level)
     }
 
-    /// Get iterator over ancestors, starting with closest ancestor.
+    /// Get iterator over ancestors, starting with parent and working up.
+    ///
+    /// Last `Ancestor` returned will be `Program`. `Ancestor::None` is not included in iteration.
     ///
     /// Shortcut for `ctx.ancestry.ancestors`.
     #[inline]
