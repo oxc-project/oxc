@@ -5,7 +5,8 @@ use rustc_hash::FxHashMap;
 use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
-    Deserialize,
+    ser::SerializeMap,
+    Deserialize, Serialize,
 };
 
 use crate::{
@@ -27,6 +28,14 @@ pub struct ESLintRule {
     pub rule_name: String,
     pub severity: AllowWarnDeny,
     pub config: Option<serde_json::Value>,
+}
+
+impl Deref for OxlintRules {
+    type Target = Vec<ESLintRule>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl JsonSchema for OxlintRules {
@@ -55,6 +64,32 @@ impl JsonSchema for OxlintRules {
         struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
 
         gen.subschema_for::<DummyRuleMap>()
+    }
+}
+
+impl Serialize for OxlintRules {
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut rules = s.serialize_map(Some(self.len()))?;
+
+        for rule in &self.0 {
+            let key = rule.full_name();
+            match rule.config.as_ref() {
+                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
+                Some(config) if !config.is_null() => {
+                    let value = (rule.severity.as_str(), config);
+                    rules.serialize_entry(&key, &value)?;
+                }
+                // e.g. unicorn/some-rule: "warn"
+                _ => {
+                    rules.serialize_entry(&key, rule.severity.as_str())?;
+                }
+            }
+        }
+
+        rules.end()
     }
 }
 
@@ -162,16 +197,20 @@ fn parse_rule_value(
     }
 }
 
-impl Deref for OxlintRules {
-    type Target = Vec<ESLintRule>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Failed to rule value {value:?} with error {err:?}"))
+}
+
+impl ESLintRule {
+    /// Returns `<plugin_name>/<rule_name>` for non-eslint rules. For eslint rules, returns
+    /// `<rule_name>`. This is effectively the inverse operation for [`parse_rule_key`].
+    fn full_name(&self) -> Cow<'_, str> {
+        if self.plugin_name == "eslint" {
+            Cow::Borrowed(self.rule_name.as_str())
+        } else {
+            Cow::Owned(format!("{}/{}", self.plugin_name, self.rule_name))
+        }
+    }
 }
 
 #[cfg(test)]
