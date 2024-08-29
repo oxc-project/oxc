@@ -13,11 +13,11 @@ pub struct OxcOptions {
     #[tsify(optional)]
     pub linter: Option<OxcLinterOptions>,
     #[tsify(optional)]
+    pub transformer: Option<OxcTransformerOptions>,
+    #[tsify(optional)]
     pub codegen: Option<OxcCodegenOptions>,
     #[tsify(optional)]
     pub minifier: Option<OxcMinifierOptions>,
-    #[tsify(optional)]
-    pub type_checking: Option<OxcTypeCheckingOptions>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
@@ -64,6 +64,13 @@ pub struct OxcParserOptions {
 // allow empty object for future compatibility
 #[allow(clippy::empty_structs_with_brackets)]
 pub struct OxcLinterOptions {}
+
+#[derive(Debug, Default, Clone, Deserialize, Tsify)]
+#[tsify(from_wasm_abi)]
+#[serde(rename_all = "camelCase")]
+// allow empty object for future compatibility
+#[allow(clippy::empty_structs_with_brackets)]
+pub struct OxcTransformerOptions {}
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
@@ -115,10 +122,3 @@ impl Default for OxcCompressOptions {
         }
     }
 }
-
-#[derive(Debug, Default, Clone, Deserialize, Tsify)]
-#[tsify(from_wasm_abi)]
-#[serde(rename_all = "camelCase")]
-// allow empty object for future compatibility
-#[allow(clippy::empty_structs_with_brackets)]
-pub struct OxcTypeCheckingOptions {}

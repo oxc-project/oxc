@@ -42,6 +42,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 // e.g. var foo = function bar() { }
                 // we don't want to check for violations on `bar`, just `foo`
                 | AstKind::VariableDeclarator(_)
+                // new (class CustomRenderer{})
+                // new (function() {})
+                | AstKind::NewExpression(_)
                 => {
                     return true;
                 }

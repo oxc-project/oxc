@@ -4292,37 +4292,6 @@ impl<'a> AstBuilder<'a> {
         Declaration::ClassDeclaration(inner.into_in(self.allocator))
     }
 
-    /// Build a [`Declaration::UsingDeclaration`]
-    ///
-    /// This node contains a [`UsingDeclaration`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - is_await
-    /// - declarations
-    #[inline]
-    pub fn declaration_using(
-        self,
-        span: Span,
-        is_await: bool,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
-    ) -> Declaration<'a> {
-        Declaration::UsingDeclaration(self.alloc(self.using_declaration(
-            span,
-            is_await,
-            declarations,
-        )))
-    }
-
-    /// Convert a [`UsingDeclaration`] into a [`Declaration::UsingDeclaration`]
-    #[inline]
-    pub fn declaration_from_using<T>(self, inner: T) -> Declaration<'a>
-    where
-        T: IntoIn<'a, Box<'a, UsingDeclaration<'a>>>,
-    {
-        Declaration::UsingDeclaration(inner.into_in(self.allocator))
-    }
-
     /// Build a [`Declaration::TSTypeAliasDeclaration`]
     ///
     /// This node contains a [`TSTypeAliasDeclaration`] that will be stored in the memory arena.
@@ -4591,42 +4560,6 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.variable_declarator(span, kind, id, init, definite), self.allocator)
     }
 
-    /// Builds a [`UsingDeclaration`]
-    ///
-    /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_using_declaration`] instead.
-    ///
-    /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - is_await
-    /// - declarations
-    #[inline]
-    pub fn using_declaration(
-        self,
-        span: Span,
-        is_await: bool,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
-    ) -> UsingDeclaration<'a> {
-        UsingDeclaration { span, is_await, declarations }
-    }
-
-    /// Builds a [`UsingDeclaration`] and stores it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::using_declaration`] instead.
-    ///
-    /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - is_await
-    /// - declarations
-    #[inline]
-    pub fn alloc_using_declaration(
-        self,
-        span: Span,
-        is_await: bool,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
-    ) -> Box<'a, UsingDeclaration<'a>> {
-        Box::new_in(self.using_declaration(span, is_await, declarations), self.allocator)
-    }
-
     /// Builds a [`EmptyStatement`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_empty_statement`] instead.
@@ -4871,37 +4804,6 @@ impl<'a> AstBuilder<'a> {
         ForStatementInit::VariableDeclaration(inner.into_in(self.allocator))
     }
 
-    /// Build a [`ForStatementInit::UsingDeclaration`]
-    ///
-    /// This node contains a [`UsingDeclaration`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - is_await
-    /// - declarations
-    #[inline]
-    pub fn for_statement_init_using_declaration(
-        self,
-        span: Span,
-        is_await: bool,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
-    ) -> ForStatementInit<'a> {
-        ForStatementInit::UsingDeclaration(self.alloc(self.using_declaration(
-            span,
-            is_await,
-            declarations,
-        )))
-    }
-
-    /// Convert a [`UsingDeclaration`] into a [`ForStatementInit::UsingDeclaration`]
-    #[inline]
-    pub fn for_statement_init_from_using_declaration<T>(self, inner: T) -> ForStatementInit<'a>
-    where
-        T: IntoIn<'a, Box<'a, UsingDeclaration<'a>>>,
-    {
-        ForStatementInit::UsingDeclaration(inner.into_in(self.allocator))
-    }
-
     #[inline]
     pub fn for_statement_init_expression(self, inner: Expression<'a>) -> ForStatementInit<'a> {
         ForStatementInit::from(inner)
@@ -4979,37 +4881,6 @@ impl<'a> AstBuilder<'a> {
         T: IntoIn<'a, Box<'a, VariableDeclaration<'a>>>,
     {
         ForStatementLeft::VariableDeclaration(inner.into_in(self.allocator))
-    }
-
-    /// Build a [`ForStatementLeft::UsingDeclaration`]
-    ///
-    /// This node contains a [`UsingDeclaration`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - is_await
-    /// - declarations
-    #[inline]
-    pub fn for_statement_left_using_declaration(
-        self,
-        span: Span,
-        is_await: bool,
-        declarations: Vec<'a, VariableDeclarator<'a>>,
-    ) -> ForStatementLeft<'a> {
-        ForStatementLeft::UsingDeclaration(self.alloc(self.using_declaration(
-            span,
-            is_await,
-            declarations,
-        )))
-    }
-
-    /// Convert a [`UsingDeclaration`] into a [`ForStatementLeft::UsingDeclaration`]
-    #[inline]
-    pub fn for_statement_left_from_using_declaration<T>(self, inner: T) -> ForStatementLeft<'a>
-    where
-        T: IntoIn<'a, Box<'a, UsingDeclaration<'a>>>,
-    {
-        ForStatementLeft::UsingDeclaration(inner.into_in(self.allocator))
     }
 
     #[inline]
@@ -6498,6 +6369,7 @@ impl<'a> AstBuilder<'a> {
     /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
+    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn class_element_accessor_property<T1>(
         self,
@@ -6510,6 +6382,7 @@ impl<'a> AstBuilder<'a> {
         r#static: bool,
         definite: bool,
         type_annotation: T1,
+        accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
@@ -6524,6 +6397,7 @@ impl<'a> AstBuilder<'a> {
             r#static,
             definite,
             type_annotation,
+            accessibility,
         )))
     }
 
@@ -7076,6 +6950,7 @@ impl<'a> AstBuilder<'a> {
     /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
+    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn accessor_property<T1>(
         self,
@@ -7088,6 +6963,7 @@ impl<'a> AstBuilder<'a> {
         r#static: bool,
         definite: bool,
         type_annotation: T1,
+        accessibility: Option<TSAccessibility>,
     ) -> AccessorProperty<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
@@ -7102,6 +6978,7 @@ impl<'a> AstBuilder<'a> {
             r#static,
             definite,
             type_annotation: type_annotation.into_in(self.allocator),
+            accessibility,
         }
     }
 
@@ -7119,6 +6996,7 @@ impl<'a> AstBuilder<'a> {
     /// - r#static: Property was declared with a `static` modifier
     /// - definite: Property has a `!` after its key.
     /// - type_annotation: Type annotation on the property.
+    /// - accessibility: Accessibility modifier.
     #[inline]
     pub fn alloc_accessor_property<T1>(
         self,
@@ -7131,6 +7009,7 @@ impl<'a> AstBuilder<'a> {
         r#static: bool,
         definite: bool,
         type_annotation: T1,
+        accessibility: Option<TSAccessibility>,
     ) -> Box<'a, AccessorProperty<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
@@ -7146,6 +7025,7 @@ impl<'a> AstBuilder<'a> {
                 r#static,
                 definite,
                 type_annotation,
+                accessibility,
             ),
             self.allocator,
         )

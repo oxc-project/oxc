@@ -642,7 +642,6 @@ impl<'a> GetSpanMut for Statement<'a> {
             Self::VariableDeclaration(it) => it.span_mut(),
             Self::FunctionDeclaration(it) => it.span_mut(),
             Self::ClassDeclaration(it) => it.span_mut(),
-            Self::UsingDeclaration(it) => it.span_mut(),
             Self::TSTypeAliasDeclaration(it) => it.span_mut(),
             Self::TSInterfaceDeclaration(it) => it.span_mut(),
             Self::TSEnumDeclaration(it) => it.span_mut(),
@@ -685,7 +684,6 @@ impl<'a> GetSpanMut for Declaration<'a> {
             Self::VariableDeclaration(it) => it.span_mut(),
             Self::FunctionDeclaration(it) => it.span_mut(),
             Self::ClassDeclaration(it) => it.span_mut(),
-            Self::UsingDeclaration(it) => it.span_mut(),
             Self::TSTypeAliasDeclaration(it) => it.span_mut(),
             Self::TSInterfaceDeclaration(it) => it.span_mut(),
             Self::TSEnumDeclaration(it) => it.span_mut(),
@@ -703,13 +701,6 @@ impl<'a> GetSpanMut for VariableDeclaration<'a> {
 }
 
 impl<'a> GetSpanMut for VariableDeclarator<'a> {
-    #[inline]
-    fn span_mut(&mut self) -> &mut Span {
-        &mut self.span
-    }
-}
-
-impl<'a> GetSpanMut for UsingDeclaration<'a> {
     #[inline]
     fn span_mut(&mut self) -> &mut Span {
         &mut self.span
@@ -762,7 +753,6 @@ impl<'a> GetSpanMut for ForStatementInit<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::VariableDeclaration(it) => it.span_mut(),
-            Self::UsingDeclaration(it) => it.span_mut(),
             Self::BooleanLiteral(it) => it.span_mut(),
             Self::NullLiteral(it) => it.span_mut(),
             Self::NumericLiteral(it) => it.span_mut(),
@@ -820,7 +810,6 @@ impl<'a> GetSpanMut for ForStatementLeft<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
             Self::VariableDeclaration(it) => it.span_mut(),
-            Self::UsingDeclaration(it) => it.span_mut(),
             Self::AssignmentTargetIdentifier(it) => it.span_mut(),
             Self::TSAsExpression(it) => it.span_mut(),
             Self::TSSatisfiesExpression(it) => it.span_mut(),

@@ -96,6 +96,29 @@ impl ScopeTree {
         self.root_unresolved_references.values().map(|v| v.iter().copied())
     }
 
+    /// Delete an unresolved reference.
+    ///
+    /// If the `ReferenceId` provided is only reference remaining for this unresolved reference
+    /// (i.e. this `x` was last `x` in the AST), deletes the key from `root_unresolved_references`.
+    ///
+    /// # Panics
+    /// Panics if there is no unresolved reference for provided `name` and `reference_id`.
+    #[inline]
+    pub fn delete_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
+        // It would be better to use `Entry` API to avoid 2 hash table lookups when deleting,
+        // but `map.entry` requires an owned key to be provided. Currently we use `CompactStr`s as keys
+        // which are not cheap to construct, so this is best we can do at present.
+        // TODO: Switch to `Entry` API once we use `&str`s or `Atom`s as keys.
+        let reference_ids = self.root_unresolved_references.get_mut(name).unwrap();
+        if reference_ids.len() == 1 {
+            assert!(reference_ids[0] == reference_id);
+            self.root_unresolved_references.remove(name);
+        } else {
+            let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
+            reference_ids.swap_remove(index);
+        }
+    }
+
     #[inline]
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
         self.flags[scope_id]

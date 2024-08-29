@@ -183,9 +183,6 @@ impl<'a> ListenerMap for ForStatementInit<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         match self {
             match_expression!(Self) => self.to_expression().report_effects(options),
-            Self::UsingDeclaration(decl) => {
-                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
-            }
             Self::VariableDeclaration(decl) => {
                 decl.declarations.iter().for_each(|decl| decl.report_effects(options));
             }

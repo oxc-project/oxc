@@ -439,19 +439,17 @@ macro_rules! inherit_variants {
                 FunctionDeclaration(Box<'a, Function<'a>>) = 33,
                 /// Inherited from [`Declaration`]
                 ClassDeclaration(Box<'a, Class<'a>>) = 34,
-                /// Inherited from [`Declaration`]
-                UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
 
                 /// Inherited from [`Declaration`]
-                TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 36,
+                TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>) = 35,
                 /// Inherited from [`Declaration`]
-                TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 37,
+                TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 36,
                 /// Inherited from [`Declaration`]
-                TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 38,
+                TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 37,
                 /// Inherited from [`Declaration`]
-                TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 39,
+                TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 38,
                 /// Inherited from [`Declaration`]
-                TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 40,
+                TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>) = 39,
 
                 $($rest)*
             }
@@ -470,7 +468,6 @@ macro_rules! inherit_variants {
                 VariableDeclaration,
                 FunctionDeclaration,
                 ClassDeclaration,
-                UsingDeclaration,
                 TSTypeAliasDeclaration,
                 TSInterfaceDeclaration,
                 TSEnumDeclaration,

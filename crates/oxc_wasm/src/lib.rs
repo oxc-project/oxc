@@ -5,19 +5,18 @@ mod options;
 
 use std::{
     cell::{Cell, RefCell},
-    path::PathBuf,
+    path::{Path, PathBuf},
     rc::Rc,
 };
 
-use options::OxcOptions;
 use oxc::{
     allocator::Allocator,
     ast::{ast::Program, CommentKind, Trivias, Visit},
     codegen::{CodeGenerator, CodegenOptions},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
-    parser::{ParseOptions, Parser},
-    semantic::{ScopeFlags, ScopeId, Semantic, SemanticBuilder},
+    parser::{ParseOptions, Parser, ParserReturn},
+    semantic::{ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable},
     span::SourceType,
     transformer::{TransformOptions, Transformer},
 };
@@ -27,6 +26,8 @@ use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
+
+use crate::options::{OxcOptions, OxcRunOptions};
 
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Default, Tsify)]
@@ -146,19 +147,19 @@ impl Oxc {
             run: run_options,
             parser: parser_options,
             linter: linter_options,
+            transformer: transform_options,
             codegen: codegen_options,
             minifier: minifier_options,
-            type_checking: type_checking_options,
         } = options;
         let run_options = run_options.unwrap_or_default();
         let parser_options = parser_options.unwrap_or_default();
         let _linter_options = linter_options.unwrap_or_default();
-        let _codegen_options = codegen_options.unwrap_or_default();
         let minifier_options = minifier_options.unwrap_or_default();
-        let _type_checking_options = type_checking_options.unwrap_or_default();
+        let _codegen_options = codegen_options.unwrap_or_default();
+        let _transform_options = transform_options.unwrap_or_default();
 
         let allocator = Allocator::default();
-        // let source_text = &self.source_text;
+
         let path = PathBuf::from(
             parser_options.source_filename.clone().unwrap_or_else(|| "test.tsx".to_string()),
         );
@@ -171,31 +172,30 @@ impl Oxc {
 
         let default_parser_options = ParseOptions::default();
         let oxc_parser_options = ParseOptions {
+            parse_regular_expression: true,
             allow_return_outside_function: parser_options
                 .allow_return_outside_function
                 .unwrap_or(default_parser_options.allow_return_outside_function),
             preserve_parens: parser_options
                 .preserve_parens
                 .unwrap_or(default_parser_options.preserve_parens),
-            ..default_parser_options
         };
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(oxc_parser_options)
-            .parse();
+        let ParserReturn { mut program, errors, trivias, .. } =
+            Parser::new(&allocator, source_text, source_type)
+                .with_options(oxc_parser_options)
+                .parse();
 
-        self.comments = Self::map_comments(source_text, &ret.trivias);
+        self.comments = Self::map_comments(source_text, &trivias);
+        self.ir = format!("{:#?}", program.body);
+        self.ast = program.serialize(&self.serializer)?;
 
-        self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
-
-        self.ir = format!("{:#?}", ret.program.body);
-
-        let program = allocator.alloc(ret.program);
+        self.save_diagnostics(errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_cfg(true)
-            .with_trivias(ret.trivias.clone())
+            .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
-            .build(program);
+            .build_module_record(path.clone(), &program)
+            .build(&program);
 
         if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(
@@ -203,21 +203,109 @@ impl Oxc {
             );
         }
 
-        let semantic = Rc::new(semantic_ret.semantic);
-        // Only lint if there are not syntax errors
+        self.run_linter(&run_options, source_text, source_type, &path, &trivias, &program);
+
+        self.run_prettier(&run_options, source_text, source_type);
+
+        let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
+
+        if run_options.scope.unwrap_or_default() || run_options.symbol.unwrap_or_default() {
+            if run_options.scope.unwrap_or_default() {
+                self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
+            }
+            if run_options.symbol.unwrap_or_default() {
+                self.symbols = symbols.serialize(&self.serializer)?;
+            }
+        }
+
+        if run_options.transform.unwrap_or_default() {
+            let options = TransformOptions::default();
+            let result = Transformer::new(
+                &allocator,
+                &path,
+                source_type,
+                source_text,
+                trivias.clone(),
+                options,
+            )
+            .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+            if !result.errors.is_empty() {
+                self.save_diagnostics(
+                    result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
+                );
+            }
+        }
+
+        if minifier_options.compress.unwrap_or_default()
+            || minifier_options.mangle.unwrap_or_default()
+        {
+            let compress_options = minifier_options.compress_options.unwrap_or_default();
+            let options = MinifierOptions {
+                mangle: minifier_options.mangle.unwrap_or_default(),
+                compress: if minifier_options.compress.unwrap_or_default() {
+                    CompressOptions {
+                        booleans: compress_options.booleans,
+                        drop_console: compress_options.drop_console,
+                        drop_debugger: compress_options.drop_debugger,
+                        evaluate: compress_options.evaluate,
+                        join_vars: compress_options.join_vars,
+                        loops: compress_options.loops,
+                        typeofs: compress_options.typeofs,
+                        ..CompressOptions::default()
+                    }
+                } else {
+                    CompressOptions::all_false()
+                },
+            };
+            Minifier::new(options).build(&allocator, &mut program);
+        }
+
+        self.codegen_text = CodeGenerator::new()
+            .with_options(CodegenOptions {
+                minify: minifier_options.whitespace.unwrap_or_default(),
+                ..CodegenOptions::default()
+            })
+            .build(&program)
+            .source_text;
+
+        Ok(())
+    }
+
+    fn run_linter(
+        &mut self,
+        run_options: &OxcRunOptions,
+        source_text: &str,
+        source_type: SourceType,
+        path: &Path,
+        trivias: &Trivias,
+        program: &Program,
+    ) {
+        // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-            let linter_ret = Linter::default().run(&path, Rc::clone(&semantic));
+            let semantic_ret = SemanticBuilder::new(source_text, source_type)
+                .with_cfg(true)
+                .with_trivias(trivias.clone())
+                .build_module_record(path.to_path_buf(), program)
+                .build(program);
+            let semantic = Rc::new(semantic_ret.semantic);
+            let linter_ret = Linter::default().run(path, Rc::clone(&semantic));
             let diagnostics = linter_ret.into_iter().map(|e| Error::from(e.error)).collect();
             self.save_diagnostics(diagnostics);
         }
+    }
 
-        self.ast = program.serialize(&self.serializer)?;
-
+    fn run_prettier(
+        &mut self,
+        run_options: &OxcRunOptions,
+        source_text: &str,
+        source_type: SourceType,
+    ) {
+        let allocator = Allocator::default();
         if run_options.prettier_format.unwrap_or_default()
             || run_options.prettier_ir.unwrap_or_default()
         {
             let ret = Parser::new(&allocator, source_text, source_type)
-                .with_options(ParseOptions { preserve_parens: false, ..oxc_parser_options })
+                .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
                 .parse();
 
             let mut prettier = Prettier::new(
@@ -245,89 +333,20 @@ impl Oxc {
                 };
             }
         }
-
-        if run_options.transform.unwrap_or_default() {
-            let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
-                .build(program)
-                .semantic
-                .into_symbol_table_and_scope_tree();
-            let options = TransformOptions::default();
-            let result = Transformer::new(
-                &allocator,
-                &path,
-                source_type,
-                source_text,
-                ret.trivias.clone(),
-                options,
-            )
-            .build_with_symbols_and_scopes(symbols, scopes, program);
-            if !result.errors.is_empty() {
-                let errors = result.errors.into_iter().map(Error::from).collect::<Vec<_>>();
-                self.save_diagnostics(errors);
-            }
-        }
-
-        if run_options.scope.unwrap_or_default() || run_options.symbol.unwrap_or_default() {
-            let semantic = SemanticBuilder::new(source_text, source_type)
-                .build_module_record(PathBuf::new(), program)
-                .build(program)
-                .semantic;
-            if run_options.scope.unwrap_or_default() {
-                self.scope_text = Self::get_scope_text(program, &semantic);
-            }
-            if run_options.symbol.unwrap_or_default() {
-                self.symbols = semantic.symbols().serialize(&self.serializer)?;
-            }
-        }
-
-        let program = allocator.alloc(program);
-
-        if minifier_options.compress.unwrap_or_default()
-            || minifier_options.mangle.unwrap_or_default()
-        {
-            let compress_options = minifier_options.compress_options.unwrap_or_default();
-            let options = MinifierOptions {
-                mangle: minifier_options.mangle.unwrap_or_default(),
-                compress: if minifier_options.compress.unwrap_or_default() {
-                    CompressOptions {
-                        booleans: compress_options.booleans,
-                        drop_console: compress_options.drop_console,
-                        drop_debugger: compress_options.drop_debugger,
-                        evaluate: compress_options.evaluate,
-                        join_vars: compress_options.join_vars,
-                        loops: compress_options.loops,
-                        typeofs: compress_options.typeofs,
-                        ..CompressOptions::default()
-                    }
-                } else {
-                    CompressOptions::all_false()
-                },
-            };
-            Minifier::new(options).build(&allocator, program);
-        }
-
-        self.codegen_text = CodeGenerator::new()
-            .with_options(CodegenOptions {
-                minify: minifier_options.whitespace.unwrap_or_default(),
-                ..CodegenOptions::default()
-            })
-            .build(program)
-            .source_text;
-
-        Ok(())
     }
 
-    fn get_scope_text<'a>(program: &Program<'a>, semantic: &Semantic<'a>) -> String {
-        struct ScopesTextWriter<'a, 's> {
-            semantic: &'s Semantic<'a>,
+    fn get_scope_text(program: &Program<'_>, symbols: &SymbolTable, scopes: &ScopeTree) -> String {
+        struct ScopesTextWriter<'s> {
+            symbols: &'s SymbolTable,
+            scopes: &'s ScopeTree,
             scope_text: String,
             indent: usize,
             space: String,
         }
 
-        impl<'a, 's> ScopesTextWriter<'a, 's> {
-            fn new(semantic: &'s Semantic<'a>) -> Self {
-                Self { semantic, scope_text: String::new(), indent: 0, space: String::new() }
+        impl<'s> ScopesTextWriter<'s> {
+            fn new(symbols: &'s SymbolTable, scopes: &'s ScopeTree) -> Self {
+                Self { symbols, scopes, scope_text: String::new(), indent: 0, space: String::new() }
             }
 
             fn write_line<S: AsRef<str>>(&mut self, line: S) {
@@ -348,17 +367,17 @@ impl Oxc {
             }
         }
 
-        impl<'a, 's> Visit<'a> for ScopesTextWriter<'a, 's> {
+        impl<'a, 's> Visit<'a> for ScopesTextWriter<'s> {
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
                 let scope_id = scope_id.get().unwrap();
                 self.write_line(format!("Scope {} ({flags:?}) {{", scope_id.index()));
                 self.indent_in();
 
-                let bindings = self.semantic.scopes().get_bindings(scope_id);
+                let bindings = self.scopes.get_bindings(scope_id);
                 if !bindings.is_empty() {
                     self.write_line("Bindings: {");
                     bindings.iter().for_each(|(name, &symbol_id)| {
-                        let symbol_flags = self.semantic.symbols().get_flags(symbol_id);
+                        let symbol_flags = self.symbols.get_flags(symbol_id);
                         self.write_line(format!("  {name} ({symbol_id:?} {symbol_flags:?})",));
                     });
                     self.write_line("}");
@@ -371,7 +390,7 @@ impl Oxc {
             }
         }
 
-        let mut writer = ScopesTextWriter::new(semantic);
+        let mut writer = ScopesTextWriter::new(symbols, scopes);
         writer.visit_program(program);
         writer.scope_text
     }

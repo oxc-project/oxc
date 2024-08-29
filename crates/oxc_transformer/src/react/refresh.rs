@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::{cell::Cell, iter::once};
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{
@@ -8,6 +8,7 @@ use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, TraverseCtx};
+use rustc_hash::FxHashMap;
 
 use super::options::ReactRefreshOptions;
 
@@ -31,6 +32,7 @@ pub struct ReactRefresh<'a> {
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
     last_signature: Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)>,
+    extra_statements: FxHashMap<SymbolId, oxc_allocator::Vec<'a, Statement<'a>>>,
 }
 
 impl<'a> ReactRefresh<'a> {
@@ -44,6 +46,7 @@ impl<'a> ReactRefresh<'a> {
             registrations: Vec::default(),
             ctx,
             last_signature: None,
+            extra_statements: FxHashMap::default(),
         }
     }
 
@@ -411,117 +414,6 @@ impl<'a> ReactRefresh<'a> {
 
     // --------------------------- refresh sig ---------------------------
 
-    /// Modify a function to insert a signature call,
-    /// and return a statement to insert it after current statement
-    ///
-    /// ```js
-    /// function Foo() {};
-    /// ```
-    /// to
-    /// ```js
-    /// function Foo() { _s() }; _s(Foo, ...);
-    /// ```
-    fn modify_function_for_signature(
-        &mut self,
-        func: &mut Function<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
-        let id = func.id.as_ref()?;
-        let (binding_identifier, mut arguments) =
-            self.create_signature_call_expression(func.scope_id.get()?, func.body.as_mut()?, ctx)?;
-
-        arguments.insert(
-            0,
-            Argument::from(Self::create_identifier_reference_from_binding_identifier(id, ctx)),
-        );
-
-        Some(ctx.ast.statement_expression(
-            SPAN,
-            ctx.ast.expression_call(
-                SPAN,
-                Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
-                Option::<TSTypeParameterInstantiation>::None,
-                arguments,
-                false,
-            ),
-        ))
-    }
-
-    /// Modify all variable declarations to insert a signature call,
-    /// and return a set of statements to insert it after current statement
-    ///
-    /// ```js
-    /// let Foo = () => {};
-    /// let Foo = function() {};
-    /// let Foo = styled.div``
-    /// ```
-    /// to
-    /// ```js
-    /// let Foo = () => {_s()}; _s(Foo, ...);
-    /// let Foo = function() {_s()}; _s(Foo, ...);
-    /// let Foo = styled.div``; _s(Foo, ...);
-    /// ```
-    fn modify_variable_declaration_for_signature(
-        &mut self,
-        decl: &mut VariableDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Vec<Statement<'a>> {
-        decl.declarations
-            .iter_mut()
-            .filter_map(|declarator| {
-                let id = declarator.id.get_binding_identifier()?;
-                let init = declarator.init.as_mut()?;
-
-                let (scope_id, body) = match init {
-                    Expression::FunctionExpression(func) => {
-                        (func.scope_id.get(), func.body.as_mut()?)
-                    }
-                    Expression::ArrowFunctionExpression(arrow) => {
-                        (arrow.scope_id.get(), &mut arrow.body)
-                    }
-                    _ => {
-                        return None;
-                    }
-                };
-
-                // Special case when a function would get an inferred name:
-                // let Foo = () => {}
-                // let Foo = function() {}
-                // We'll add signature it on next line so that
-                // we don't mess up the inferred 'Foo' function name.
-
-                // Result: let Foo = () => {}; __signature(Foo, ...);
-
-                let (binding_identifier, mut arguments) =
-                    self.create_signature_call_expression(scope_id.unwrap(), body, ctx)?;
-                if let Expression::ArrowFunctionExpression(arrow) = init {
-                    Self::transform_arrow_function_to_block(arrow, ctx);
-                }
-
-                arguments.insert(
-                    0,
-                    Argument::from(Self::create_identifier_reference_from_binding_identifier(
-                        id, ctx,
-                    )),
-                );
-
-                Some(ctx.ast.statement_expression(
-                    SPAN,
-                    ctx.ast.expression_call(
-                        SPAN,
-                        Self::create_identifier_reference_from_binding_identifier(
-                            &binding_identifier,
-                            ctx,
-                        ),
-                        Option::<TSTypeParameterInstantiation>::None,
-                        arguments,
-                        false,
-                    ),
-                ))
-            })
-            .collect()
-    }
-
     /// Convert arrow function expression to normal arrow function
     ///
     /// ```js
@@ -659,72 +551,24 @@ impl<'a> ReactRefresh<'a> {
 
         let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len() + 1);
 
-        for mut stmt in stmts.drain(..) {
-            match &mut stmt {
-                Statement::FunctionDeclaration(func) => {
-                    let call_signature_statement = self.modify_function_for_signature(func, ctx);
-                    new_stmts.push(stmt);
-                    new_stmts.extend(call_signature_statement);
-                    continue;
-                }
-                Statement::VariableDeclaration(decl) => {
-                    let call_signature_statements =
-                        self.modify_variable_declaration_for_signature(decl, ctx);
-                    new_stmts.push(stmt);
-                    new_stmts.extend(call_signature_statements);
-                    continue;
-                }
-                Statement::ExportNamedDeclaration(export_decl) => {
-                    if let Some(Declaration::FunctionDeclaration(func)) =
-                        &mut export_decl.declaration
-                    {
-                        let call_signature_statement =
-                            self.modify_function_for_signature(func, ctx);
-                        new_stmts.push(stmt);
-                        new_stmts.extend(call_signature_statement);
-                        continue;
-                    } else if let Some(Declaration::VariableDeclaration(decl)) =
-                        &mut export_decl.declaration
-                    {
-                        let call_signature_statements =
-                            self.modify_variable_declaration_for_signature(decl, ctx);
-                        new_stmts.push(stmt);
-                        new_stmts.extend(call_signature_statements);
-                        continue;
-                    }
-                }
-                Statement::ExportDefaultDeclaration(export_decl) => {
-                    if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
-                        &mut export_decl.declaration
-                    {
-                        if func.id.is_some() {
-                            if let Some(bind_sig_statement) =
-                                self.modify_function_for_signature(func, ctx)
-                            {
-                                new_stmts.push(stmt);
-                                new_stmts.push(bind_sig_statement);
-                                continue;
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            };
-            new_stmts.push(stmt);
-        }
-
         let declarations = self.signature_declarator_items.pop().unwrap();
         if !declarations.is_empty() {
-            new_stmts.insert(
-                0,
-                Statement::from(ctx.ast.declaration_variable(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    declarations,
-                    false,
-                )),
-            );
+            new_stmts.push(Statement::from(ctx.ast.declaration_variable(
+                SPAN,
+                VariableDeclarationKind::Var,
+                declarations,
+                false,
+            )));
         }
+        new_stmts.extend(stmts.drain(..).flat_map(move |stmt| {
+            let symbol_ids = get_symbol_id_from_function_and_declarator(&stmt);
+            let extra_stmts = symbol_ids
+                .into_iter()
+                .filter_map(|symbol_id| self.extra_statements.remove(&symbol_id))
+                .flatten()
+                .collect::<Vec<_>>();
+            once(stmt).chain(extra_stmts)
+        }));
 
         *stmts = new_stmts;
     }
@@ -746,16 +590,13 @@ impl<'a> ReactRefresh<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let is_variable_declarator = matches!(ctx.parent(), Ancestor::VariableDeclaratorInit(_));
-
         let signature = match expr {
-            Expression::FunctionExpression(func) if !is_variable_declarator => self
-                .create_signature_call_expression(
-                    func.scope_id.get().unwrap(),
-                    func.body.as_mut().unwrap(),
-                    ctx,
-                ),
-            Expression::ArrowFunctionExpression(arrow) if !is_variable_declarator => {
+            Expression::FunctionExpression(func) => self.create_signature_call_expression(
+                func.scope_id.get().unwrap(),
+                func.body.as_mut().unwrap(),
+                ctx,
+            ),
+            Expression::ArrowFunctionExpression(arrow) => {
                 let call_fn = self.create_signature_call_expression(
                     arrow.scope_id.get().unwrap(),
                     &mut arrow.body,
@@ -776,9 +617,48 @@ impl<'a> ReactRefresh<'a> {
             _ => None,
         };
 
-        let Some(signature) = signature else {
+        let Some((binding_identifier, mut arguments)) = signature else {
             return;
         };
+
+        if !matches!(expr, Expression::CallExpression(_)) {
+            if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
+                // Special case when a function would get an inferred name:
+                // let Foo = () => {}
+                // let Foo = function() {}
+                // We'll add signature it on next line so that
+                // we don't mess up the inferred 'Foo' function name.
+
+                // Result: let Foo = () => {}; __signature(Foo, ...);
+                let id = declarator.id().get_binding_identifier().unwrap();
+                let symbol_id = id.symbol_id.get().unwrap();
+                let first_argument = Argument::from(ctx.ast.expression_from_identifier_reference(
+                    ctx.create_reference_id(
+                        SPAN,
+                        id.name.clone(),
+                        Some(symbol_id),
+                        ReferenceFlags::Read,
+                    ),
+                ));
+                arguments.insert(0, first_argument);
+
+                let statement = ctx.ast.statement_expression(
+                    SPAN,
+                    ctx.ast.expression_call(
+                        SPAN,
+                        Self::create_identifier_reference_from_binding_identifier(
+                            &binding_identifier,
+                            ctx,
+                        ),
+                        Option::<TSTypeParameterInstantiation>::None,
+                        arguments,
+                        false,
+                    ),
+                );
+                self.extra_statements.entry(symbol_id).or_insert(ctx.ast.vec()).push(statement);
+                return;
+            }
+        }
 
         let mut found_call_expression = false;
         for ancestor in ctx.ancestors() {
@@ -793,10 +673,9 @@ impl<'a> ReactRefresh<'a> {
 
         if found_call_expression {
             self.last_signature =
-                Some((signature.0.clone(), signature.1.clone_in(ctx.ast.allocator)));
+                Some((binding_identifier.clone(), arguments.clone_in(ctx.ast.allocator)));
         }
 
-        let (binding_identifier, mut arguments) = signature;
         arguments.insert(0, Argument::from(ctx.ast.move_expression(expr)));
         *expr = self.ctx.ast.expression_call(
             SPAN,
@@ -804,6 +683,59 @@ impl<'a> ReactRefresh<'a> {
             Option::<TSTypeParameterInstantiation>::None,
             arguments,
             false,
+        );
+    }
+
+    /// Modify a function to insert a signature call,
+    /// and return a statement to insert it after current statement
+    ///
+    /// ```js
+    /// function Foo() {};
+    /// ```
+    /// to
+    /// ```js
+    /// function Foo() { _s() }; _s(Foo, ...);
+    /// ```
+    pub fn transform_function_on_exit(
+        &mut self,
+        func: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !func.is_function_declaration() {
+            return;
+        }
+
+        let Some((binding_identifier, mut arguments)) = self.create_signature_call_expression(
+            func.scope_id.get().unwrap(),
+            func.body.as_mut().unwrap(),
+            ctx,
+        ) else {
+            return;
+        };
+
+        let Some(id) = func.id.as_ref() else {
+            return;
+        };
+
+        arguments.insert(
+            0,
+            Argument::from(Self::create_identifier_reference_from_binding_identifier(id, ctx)),
+        );
+
+        self.extra_statements.entry(id.symbol_id.get().unwrap()).or_insert(ctx.ast.vec()).push(
+            ctx.ast.statement_expression(
+                SPAN,
+                ctx.ast.expression_call(
+                    SPAN,
+                    Self::create_identifier_reference_from_binding_identifier(
+                        &binding_identifier,
+                        ctx,
+                    ),
+                    Option::<TSTypeParameterInstantiation>::None,
+                    arguments,
+                    false,
+                ),
+            ),
         );
     }
 }
@@ -1033,4 +965,39 @@ fn is_builtin_hook(hook_name: &str) -> bool {
         "useFormStatus" | "useFormState" | "useActionState" |
         "useOptimistic"
     )
+}
+
+fn get_symbol_id_from_function_and_declarator(stmt: &Statement<'_>) -> Vec<SymbolId> {
+    let mut symbol_ids = vec![];
+    match stmt {
+        Statement::FunctionDeclaration(ref func) => {
+            symbol_ids.push(func.id.as_ref().unwrap().symbol_id.get().unwrap());
+        }
+        Statement::VariableDeclaration(ref decl) => {
+            symbol_ids.extend(decl.declarations.iter().filter_map(|decl| {
+                decl.id.get_binding_identifier().and_then(|id| id.symbol_id.get())
+            }));
+        }
+        Statement::ExportNamedDeclaration(ref export_decl) => {
+            if let Some(Declaration::FunctionDeclaration(func)) = &export_decl.declaration {
+                symbol_ids.push(func.id.as_ref().unwrap().symbol_id.get().unwrap());
+            } else if let Some(Declaration::VariableDeclaration(decl)) = &export_decl.declaration {
+                symbol_ids.extend(decl.declarations.iter().filter_map(|decl| {
+                    decl.id.get_binding_identifier().and_then(|id| id.symbol_id.get())
+                }));
+            }
+        }
+        Statement::ExportDefaultDeclaration(ref export_decl) => {
+            if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
+                &export_decl.declaration
+            {
+                if let Some(id) = func.id.as_ref() {
+                    symbol_ids.push(id.symbol_id.get().unwrap());
+                }
+            }
+        }
+        _ => {}
+    };
+
+    symbol_ids
 }

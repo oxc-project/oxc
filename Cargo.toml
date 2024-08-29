@@ -221,3 +221,4 @@ panic         = "abort" # Let it crash and force ourselves to write safe Rust
 inherits         = "release"
 lto              = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass
+overflow-checks  = true # Catch arithmetic overflow errors
