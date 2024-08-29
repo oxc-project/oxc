@@ -57,16 +57,29 @@ impl<'a> TraverseAncestry<'a> {
 
     /// Get ancestor of current node.
     ///
-    /// `level` is number of levels above.
-    /// `ancestor(1)` is equivalent to `parent()`.
+    /// `level` is number of levels above parent.
+    /// `ancestor(0)` is equivalent to `parent()` (but better to use `parent()` as it's more efficient).
     ///
     /// If `level` is out of bounds (above `Program`), returns `Ancestor::None`.
     #[inline]
     pub fn ancestor<'t>(&'t self, level: usize) -> Ancestor<'a, 't> {
-        if level < self.stack.len() {
-            // SAFETY: We just checked that `level < self.stack.len()` so `self.stack.len() - level`
-            // cannot wrap around or be out of bounds
-            let ancestor = unsafe { *self.stack.get_unchecked(self.stack.len() - level) };
+        // Behavior with different values:
+        // `len = 1, level = 0` -> return `Ancestor::None` from else branch
+        // `len = 1, level = 1` -> return `Ancestor::None` from else branch (out of bounds)
+        // `len = 3, level = 0` -> return parent (index 2)
+        // `len = 3, level = 1` -> return grandparent (index 1)
+        // `len = 3, level = 2` -> return `Ancestor::None` from else branch
+        // `len = 3, level = 3` -> return `Ancestor::None` from else branch (out of bounds)
+
+        // `self.stack.len()` is always at least 1, so `self.stack.len() - 1` cannot wrap around.
+        // `level <= last_index` would also work here, but `level < last_index` avoids a read from memory
+        // when that read would just get `Ancestor::None` anyway.
+        debug_assert!(!self.stack.is_empty());
+        let last_index = self.stack.len() - 1;
+        if level < last_index {
+            // SAFETY: We just checked that `level < last_index` so `last_index - level` cannot wrap around,
+            // and `last_index - level` must be a valid index
+            let ancestor = unsafe { *self.stack.get_unchecked(last_index - level) };
 
             // Shrink `Ancestor`'s `'t` lifetime to lifetime of `&'t self`.
             // SAFETY: The `Ancestor` is guaranteed valid for `'t`. It is not possible to obtain
