@@ -271,12 +271,24 @@ impl GraphicalReportHandler {
             opts = opts.word_splitter(word_splitter);
         }
 
-        let title = if let Some(code) = diagnostic.code() {
-            format!("{code}: {diagnostic}")
-        } else {
-            diagnostic.to_string()
+        let title = match (self.links, diagnostic.url(), diagnostic.code()) {
+            (LinkStyle::Link, Some(url), Some(code)) => {
+                // magic unicode escape sequences to make the terminal print a hyperlink
+                const CTL: &str = "\u{1b}]8;;";
+                const END: &str = "\u{1b}]8;;\u{1b}\\";
+                let code = code.style(severity_style);
+                let message = diagnostic.to_string();
+                let title = message.style(severity_style);
+                format!("{CTL}{url}\u{1b}\\{code}{END}: {title}",)
+            }
+            (_, _, Some(code)) => {
+                let title = format!("{code}: {}", diagnostic);
+                format!("{}", title.style(severity_style))
+            }
+            _ => {
+                format!("{}", diagnostic.to_string().style(severity_style))
+            }
         };
-        let title = format!("{}", title.style(severity_style));
         let title = textwrap::fill(&title, opts);
         writeln!(f, "{}", title)?;
 

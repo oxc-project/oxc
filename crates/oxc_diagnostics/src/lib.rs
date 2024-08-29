@@ -71,6 +71,7 @@ pub struct OxcDiagnosticInner {
     pub help: Option<Cow<'static, str>>,
     pub severity: Severity,
     pub code: OxcCode,
+    pub url: Option<Cow<'static, str>>,
 }
 
 impl fmt::Display for OxcDiagnostic {
@@ -101,6 +102,9 @@ impl Diagnostic for OxcDiagnostic {
     fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
     }
+    fn url<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.url.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    }
 }
 
 impl OxcDiagnostic {
@@ -112,6 +116,7 @@ impl OxcDiagnostic {
                 help: None,
                 severity: Severity::Error,
                 code: OxcCode::default(),
+                url: None,
             }),
         }
     }
@@ -124,6 +129,7 @@ impl OxcDiagnostic {
                 help: None,
                 severity: Severity::Warning,
                 code: OxcCode::default(),
+                url: None,
             }),
         }
     }
@@ -202,6 +208,11 @@ impl OxcDiagnostic {
         let mut all_labels = self.inner.labels.unwrap_or_default();
         all_labels.extend(labels.into_iter().map(Into::into));
         self.inner.labels = Some(all_labels);
+        self
+    }
+
+    pub fn with_url<S: Into<Cow<'static, str>>>(mut self, url: S) -> Self {
+        self.inner.url = Some(url.into());
         self
     }
 
