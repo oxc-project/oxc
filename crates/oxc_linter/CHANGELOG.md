@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.10.0] - 2024-08-29
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 6633972 linter: Add fixer for `no-empty` (#5276) (camc314)
+- a58e448 linter/eslint: Add fixer to `no-var` (#5144) (camc314)
+- a6e9769 linter/jsx-a11y: Add `label-has-associated-control` (#5163) (Billy Levin)
+- c8e8532 linter/unicorn: Add fixer to `throw-new-error` (#5275) (camc314)
+- 7ccde4b linter/unicorn: Add fixer to `prefer-date-now` (#5147) (camc314)
+
+### Bug Fixes
+
+- 76e86f8 linter: Eslint-plugin-unicorn prefer-spread wrong linter suggestion on variables of type string (#5265) (Arian94)
+- b39544e linter/jest: Fixer for `prefer-jest-mocked` creates invalid LHS expressions (#5243) (camc314)
+- 9953fa5 linter/no-null: Incorrect fixer for `NullLiteral` within `ReturnStatement` (#5247) (Dunqing)
+- 318479e linter/no-unused-vars: Mark the class/function in the new expression as used (#5306) (magic-akari)
+
+### Refactor
+
+- fa1d460 linter: Clean up Fixer and Message (#5308) (DonIsaac)
+
 ## [0.9.0] - 2024-08-26
 
 - 5946748 linter: [**BREAKING**] Parse and display syntax errors for regular expressions (#5214) (Boshen)
