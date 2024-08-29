@@ -215,6 +215,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_function(func);
+        self.x1_react.transform_function_on_exit(func, ctx);
         self.x3_es2015.exit_function(func, ctx);
     }
 
