@@ -203,7 +203,7 @@ impl ValidExpectInPromise {
         possible_jest_node: &PossibleJestNode<'a, '_>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
+        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return false;
@@ -328,7 +328,7 @@ impl ValidExpectInPromise {
                     }
 
                     let left_most_call = Self::get_left_most_call_expression(call_expr);
-                    let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
+                    let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
                         parse_jest_fn_call(call_expr, possible_jest_node, ctx)
                     else {
                         return false;
