@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.25.0] - 2024-08-23
+
+### Bug Fixes
+
+- 185eb20 isolated_declarations: Namespaces that are default exported should be considered for expando functions (#4935) (michaelm)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- d3bbc62 isolated-declarations: Declare modifier of PropertyDefinition should not be retained (#4941) (Dunqing)
+- 8e80f59 isolated_declarations: Class properties should still be lifted from private constructors (#4934) (michaelm)
+- b3ec9e5 isolated_declarations: Always emit module declarations that perform augmentation (#4919) (michaelm)
+- 0fb0b71 isolated_declarations: Always emit module declarations (#4911) (michaelm)
+- 4a16916 isolated_declarations: Support expando functions (#4910) (michaelm)
+
+### Refactor
+
+- 1eb59d2 ast, isolated_declarations, transformer: Mark `AstBuilder::copy` as an unsafe function (#4907) (overlookmotel)
+
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- e12bd1e ast: Allow conversion from TSAccessibility into &'static str (#4711) (DonIsaac)
+
+### Refactor
+
+- 475266d ast: Use correct lifetimes for name-related methods (#4712) (DonIsaac)
+
 ## [0.23.0] - 2024-08-01
 
 ### Bug Fixes

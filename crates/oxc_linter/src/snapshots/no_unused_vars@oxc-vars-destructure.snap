@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ const { a, ...rest } = obj
+   ·               ──┬─
+   ·                 ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:8]
+ 1 │ const [a, ...rest] = arr
+   ·        ┬
+   ·        ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ const [a, ...rest] = arr
+   ·              ──┬─
+   ·                ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ const { a: { b }, ...rest } = obj; console.log(a)
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:22]
+ 1 │ const { a: { b }, ...rest } = obj; console.log(a)
+   ·                      ──┬─
+   ·                        ╰── 'rest' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:14]
+ 1 │ const { a: { b }, ...rest } = obj; console.log(rest)
+   ·              ┬
+   ·              ╰── 'b' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'l' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:7]
+ 1 │ const l="",{e}=r
+   ·       ┬
+   ·       ╰── 'l' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'e' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ const l="",{e}=r
+   ·             ┬
+   ·             ╰── 'e' is declared here
+   ╰────
+  help: Consider removing this declaration.

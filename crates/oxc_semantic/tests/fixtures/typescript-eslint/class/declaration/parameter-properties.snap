@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
@@ -16,24 +16,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "flags": "ScopeFlags(StrictMode | Function | Constructor)",
             "id": 3,
             "node": "Function(<anonymous>)",
             "symbols": [
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 3,
                 "name": "a",
-                "node": "FormalParameter",
+                "node": "FormalParameter(a)",
                 "references": [
                   {
-                    "flag": "ReferenceFlag(Read)",
+                    "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "a",
                     "node_id": 26
                   },
                   {
-                    "flag": "ReferenceFlag(Read)",
+                    "flags": "ReferenceFlags(Read)",
                     "id": 3,
                     "name": "a",
                     "node_id": 41
@@ -41,61 +41,61 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 ]
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 4,
                 "name": "b",
-                "node": "FormalParameter",
+                "node": "FormalParameter(b)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 5,
                 "name": "c",
-                "node": "FormalParameter",
+                "node": "FormalParameter(c)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 6,
                 "name": "d",
-                "node": "FormalParameter",
+                "node": "FormalParameter(d)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 7,
                 "name": "e",
-                "node": "FormalParameter",
+                "node": "FormalParameter(e)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 8,
                 "name": "f",
-                "node": "FormalParameter",
+                "node": "FormalParameter(f)",
                 "references": []
               }
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "Class(A)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "outer",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(outer)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer",
             "node_id": 30
@@ -103,13 +103,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 1,
         "name": "Outer",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "Outer",
             "node_id": 38
@@ -117,17 +117,17 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         ]
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 2,
         "name": "A",
         "node": "Class(A)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 9,
         "name": "unresolved",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved)",
         "references": []
       }
     ]

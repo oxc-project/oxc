@@ -102,7 +102,7 @@ declare_oxc_lint!(
     /// reduces the effectiveness of TypeScript overall.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// if (false) {
     ///   // @ts-ignore: Unreachable code error
     ///   console.log('hello');
@@ -195,7 +195,7 @@ impl Rule for BanTsComment {
                             if !re.is_match(description) {
                                 ctx.diagnostic(comment_description_not_match_pattern(
                                     directive,
-                                    &re.to_string(),
+                                    re.as_str(),
                                     comm.span,
                                 ));
                             }

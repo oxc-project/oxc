@@ -11,8 +11,8 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PreferExponentiationOperator;
 
-fn prefer_exponentian_operator_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `**` over `Math.pow`.").with_label(span0)
+fn prefer_exponentian_operator_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `**` over `Math.pow`.").with_label(span)
 }
 
 declare_oxc_lint!(

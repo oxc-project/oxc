@@ -32,6 +32,7 @@ mod eslint {
     pub mod default_param_last;
     pub mod eqeqeq;
     pub mod for_direction;
+    pub mod func_names;
     pub mod getter_return;
     pub mod guard_for_in;
     pub mod max_classes_per_file;
@@ -155,6 +156,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
+    pub mod no_wrapper_object_types;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
@@ -173,6 +175,7 @@ mod jest {
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
+    pub mod no_conditional_in_test;
     pub mod no_confusing_set_timeout;
     pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
@@ -219,6 +222,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
@@ -226,6 +230,7 @@ mod react {
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
+    pub mod jsx_props_no_spread_multi;
     pub mod no_children_prop;
     pub mod no_danger;
     pub mod no_direct_mutation_state;
@@ -252,6 +257,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -329,6 +335,7 @@ mod unicorn {
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
+    pub mod prefer_structured_clone;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
@@ -351,6 +358,7 @@ mod jsx_a11y {
     pub mod html_has_lang;
     pub mod iframe_has_title;
     pub mod img_redundant_alt;
+    pub mod label_has_associated_control;
     pub mod lang;
     pub mod media_has_caption;
     pub mod mouse_events_have_key_events;
@@ -443,11 +451,19 @@ mod tree_shaking {
 mod promise {
     pub mod avoid_new;
     pub mod no_new_statics;
+    pub mod no_return_in_finally;
     pub mod param_names;
+    pub mod prefer_await_to_then;
+    pub mod valid_params;
 }
 
 mod vitest {
+    pub mod no_conditional_tests;
     pub mod no_import_node_test;
+    pub mod prefer_each;
+    pub mod prefer_to_be_falsy;
+    pub mod prefer_to_be_truthy;
+    pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -458,6 +474,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::default_param_last,
     eslint::eqeqeq,
     eslint::for_direction,
+    eslint::func_names,
     eslint::getter_return,
     eslint::guard_for_in,
     eslint::max_classes_per_file,
@@ -573,6 +590,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unsafe_declaration_merging,
     typescript::no_useless_empty_export,
     typescript::no_var_requires,
+    typescript::no_wrapper_object_types,
     typescript::prefer_as_const,
     typescript::prefer_for_of,
     typescript::prefer_function_type,
@@ -593,6 +611,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
+    jest::no_conditional_in_test,
     jest::no_confusing_set_timeout,
     jest::no_deprecated_functions,
     jest::no_disabled_tests,
@@ -635,6 +654,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_expect,
     jest::valid_title,
     unicorn::catch_error_name,
+    unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
@@ -712,6 +732,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
@@ -722,10 +743,12 @@ oxc_macros::declare_all_lint_rules! {
     react::checked_requires_onchange_or_readonly,
     react::jsx_no_target_blank,
     react::jsx_curly_brace_presence,
+    react::jsx_boolean_value,
     react::jsx_key,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
     react::jsx_no_useless_fragment,
+    react::jsx_props_no_spread_multi,
     react::jsx_no_undef,
     react::react_in_jsx_scope,
     react::no_children_prop,
@@ -773,6 +796,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::lang,
     jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
+    jsx_a11y::label_has_associated_control,
     jsx_a11y::media_has_caption,
     jsx_a11y::mouse_events_have_key_events,
     jsx_a11y::no_access_key,
@@ -851,5 +875,13 @@ oxc_macros::declare_all_lint_rules! {
     promise::avoid_new,
     promise::no_new_statics,
     promise::param_names,
+    promise::valid_params,
+    promise::no_return_in_finally,
+    promise::prefer_await_to_then,
     vitest::no_import_node_test,
+    vitest::prefer_each,
+    vitest::prefer_to_be_falsy,
+    vitest::prefer_to_be_truthy,
+    vitest::no_conditional_tests,
+    vitest::require_local_test_context_for_concurrent_snapshots,
 }

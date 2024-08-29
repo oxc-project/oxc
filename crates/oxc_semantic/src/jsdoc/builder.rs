@@ -199,8 +199,6 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::VariableDeclaration(_)
         | AstKind::VariableDeclarator(_)
 
-        | AstKind::UsingDeclaration(_)
-
         // This is slow
         // | AstKind::IdentifierName(_)
 

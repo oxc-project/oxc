@@ -3,11 +3,11 @@ commit: d8086f14
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
 Positive Passed: 17/20 (85.00%)
-Mismatch: "declarationBasicSyntax.ts"
-Mismatch: "declarationEmitPartialNodeReuse.ts"
-Mismatch: "declarationRestParameters.ts"
+Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationBasicSyntax.ts
+Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationEmitPartialNodeReuse.ts
+Mismatch: tasks/coverage/typescript/tests/cases/transpile/declarationRestParameters.ts
 
-#### "declarationComputedPropertyNames.ts" ####
+#### "typescript/tests/cases/transpile/declarationComputedPropertyNames.ts" ####
 //// [declarationComputedPropertyNames.ts] ////
 export namespace presentNs {
 	export const a = Symbol();

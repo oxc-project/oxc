@@ -1,98 +1,32 @@
-#![allow(unused)]
-// mod closure;
+mod ast_passes;
 mod mangler;
-mod oxc;
-// mod tdewolff;
-// mod terser;
+mod plugins;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn codegen(source_text: &str, source_type: SourceType) -> String {
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
-        .build(&ret.program)
-        .source_text
+pub(crate) fn test(source_text: &str, expected: &str, options: CompressOptions) {
+    let source_type = SourceType::default();
+    let result = run(source_text, source_type, Some(options));
+    let expected = run(expected, source_type, None);
+    assert_eq!(
+        result, expected,
+        "\nfor source {source_text:?}\nexpect {expected:?}\ngot    {result:?}"
+    );
 }
 
-pub(crate) fn minify(
-    source_text: &str,
-    source_type: SourceType,
-    options: MinifierOptions,
-) -> String {
+fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    Minifier::new(options).build(&allocator, program);
+    if let Some(options) = options {
+        Compressor::new(&allocator, options).build(program);
+    }
     CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
         .source_text
-}
-
-pub(crate) fn test(source_text: &str, expected: &str) {
-    let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
-    test_with_options(source_text, expected, options);
-}
-
-pub(crate) fn test_with_options(source_text: &str, expected: &str, options: MinifierOptions) {
-    let source_type = SourceType::default();
-    let minified = minify(source_text, source_type, options);
-    let expected = codegen(expected, source_type);
-    assert_eq!(expected, minified, "for source {source_text}");
-}
-
-pub(crate) fn test_same(source_text: &str) {
-    test(source_text, source_text);
-}
-
-pub(crate) fn test_reparse(source_text: &str) {
-    let source_type = SourceType::default();
-    let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
-    let minified = minify(source_text, source_type, options);
-    let minified2 = minify(&minified, source_type, options);
-    assert_eq!(minified, minified2, "for source {source_text}");
-}
-
-pub(crate) fn test_without_compress_booleans(source_text: &str, expected: &str) {
-    let source_type = SourceType::default();
-    let compress_options = CompressOptions { booleans: false, ..CompressOptions::default() };
-    let options = MinifierOptions { mangle: false, compress: compress_options };
-    let minified = minify(source_text, source_type, options);
-    assert_eq!(expected, minified, "for source {source_text}");
-}
-
-pub(crate) fn test_snapshot<S>(name: &str, sources: S)
-where
-    S: IntoIterator<Item = &'static str>,
-{
-    let source_type = SourceType::default();
-    let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
-    let snapshot: String = sources
-        .into_iter()
-        .map(|source| {
-            let minified = minify(source, source_type, options);
-            format!(
-                "==================================== SOURCE ====================================
-{source}
-
-=================================== MINIFIED ===================================
-{minified}
-
-"
-            )
-        })
-        .fold(String::new(), |mut acc, snapshot| {
-            acc.push_str(snapshot.as_str());
-            acc
-        });
-    insta::with_settings!({ prepend_module_to_snapshot => false }, {
-
-        insta::assert_snapshot!(name, snapshot);
-    });
 }

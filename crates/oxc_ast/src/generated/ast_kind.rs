@@ -1,8 +1,10 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/ast_kind.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/ast_kind.rs`
 
-use crate::ast::*;
 use oxc_span::{GetSpan, Span};
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AstType {
@@ -55,7 +57,6 @@ pub enum AstType {
     BlockStatement,
     VariableDeclaration,
     VariableDeclarator,
-    UsingDeclaration,
     EmptyStatement,
     ExpressionStatement,
     IfStatement,
@@ -229,7 +230,6 @@ pub enum AstKind<'a> {
     BlockStatement(&'a BlockStatement<'a>),
     VariableDeclaration(&'a VariableDeclaration<'a>),
     VariableDeclarator(&'a VariableDeclarator<'a>),
-    UsingDeclaration(&'a UsingDeclaration<'a>),
     EmptyStatement(&'a EmptyStatement),
     ExpressionStatement(&'a ExpressionStatement<'a>),
     IfStatement(&'a IfStatement<'a>),
@@ -404,7 +404,6 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::BlockStatement(it) => it.span(),
             Self::VariableDeclaration(it) => it.span(),
             Self::VariableDeclarator(it) => it.span(),
-            Self::UsingDeclaration(it) => it.span(),
             Self::EmptyStatement(it) => it.span(),
             Self::ExpressionStatement(it) => it.span(),
             Self::IfStatement(it) => it.span(),

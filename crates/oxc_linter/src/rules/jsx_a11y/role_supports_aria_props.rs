@@ -47,16 +47,16 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone)]
 pub struct RoleSupportsAriaProps;
 
-fn default(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+fn default(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}."))
         .with_help(format!("Try to remove invalid attribute {x1}."))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn is_implicit_diagnostic(span0: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
+fn is_implicit_diagnostic(span: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}. This role is implicit on the element {x3}."))
         .with_help(format!("Try to remove invalid attribute {x1}."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for RoleSupportsAriaProps {
@@ -65,7 +65,7 @@ impl Rule for RoleSupportsAriaProps {
             if let Some(el_type) = get_element_type(ctx, jsx_el) {
                 let role = has_jsx_prop_ignore_case(jsx_el, "role");
                 let role_value = role.map_or_else(
-                    || get_implicit_role(jsx_el, el_type.as_str()),
+                    || get_implicit_role(jsx_el, &el_type),
                     |i| get_string_literal_prop_value(i),
                 );
                 let is_implicit = role_value.is_some() && role.is_none();

@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn missing_description_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_description_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@returns` description.")
         .with_help("Add description comment to `@returns` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

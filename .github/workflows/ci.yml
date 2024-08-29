@@ -67,7 +67,12 @@ jobs:
           RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
         run: |
-          sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
+          # This `awk` command will find the value of our Minimum Supported Rust Version and store it as `MSRV`.
+          # NOTE: this will fail if there are any other items named `rust-version`. We assume there is only one in our `Cargo.toml`.
+          MSRV=$(awk -F'=' '/rust-version/ {gsub(/[" ]/, "", $2); printf "%s", ($2 + "")}' Cargo.toml)
+          # Set profile to minimal and channel to our Minimum Supported Rust Version.
+          # Running our tests on this channel ensures that our code uses APIs that are supported in our `MSRV`.
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' -e "s/channel = .*/channel = \"$MSRV\"/g" rust-toolchain.toml
           rustup set profile minimal
           rustup show
           git restore .
@@ -100,7 +105,7 @@ jobs:
       RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
       CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
       # Insta is not able to run on wasmtime, omit the packages that depend on it
-      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_js_regex -p oxc_module_lexer -- --nocapture"
+      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_regular_expression -p oxc_module_lexer -- --nocapture"
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
@@ -114,7 +119,6 @@ jobs:
 
   test-wasm32-unknown-unknown:
     name: Check wasm32-unknown-unknown
-    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -142,7 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.23.5
+      - uses: crate-ci/typos@v1.24.1
         with:
           files: .
 
@@ -185,7 +189,7 @@ jobs:
         with:
           restore-cache: false
         if: steps.filter.outputs.src == 'true'
-      - uses: cargo-bins/cargo-binstall@v1.8.0
+      - uses: cargo-bins/cargo-binstall@v1.10.3
         if: steps.filter.outputs.src == 'true'
       - run: cargo binstall --no-confirm cargo-shear@1
         if: steps.filter.outputs.src == 'true'
@@ -275,21 +279,18 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: |
-            src:
-              - 'crates/oxc_ast/src/ast/**'
-              - 'tasks/ast_codegen/src/**'
+          filters: '.github/.generated_ast_watch_list.yml'
 
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
         with:
           components: rustfmt
-          cache-key: codegen
+          cache-key: ast_changes
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Check AST Changes
         if: steps.filter.outputs.src == 'true'
         run: |
-          cargo run -p oxc_ast_codegen
-          echo 'AST changes must be commited to the repo.'
-          git diff --exit-code
+          cargo run -p oxc_ast_tools
+          git diff --exit-code ||
+          (echo 'AST changes caused the "generated" code to get outdated. Have you forgotten to run the `just ast` command and/or commit generated codes?' && exit 1)

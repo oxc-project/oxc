@@ -17,17 +17,25 @@ doctest = false
 doctest = false
 
 [dependencies]
-oxc_linter = { workspace = true }
-oxlint     = { path = "../../apps/oxlint" }
-pico-args  = { workspace = true }
-serde_json = { workspace = true }
-schemars   = { workspace = true }
-handlebars = { workspace = true }
-serde      = { workspace = true }
-bpaf       = { workspace = true, features = ["docgen"] }
+oxc_linter   = { workspace = true }
+oxlint       = { path = "../../apps/oxlint" }
+pico-args    = { workspace = true }
+serde_json   = { workspace = true }
+schemars     = { workspace = true }
+handlebars   = { workspace = true }
+serde        = { workspace = true }
+bpaf         = { workspace = true, features = ["docgen"] }
+project-root = { workspace = true }
 
 [dev-dependencies]
-insta = { workspace = true }
+oxc_allocator   = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_parser      = { workspace = true }
+oxc_span        = { workspace = true }
+
+insta    = { workspace = true }
+markdown = { version = "1.0.0-alpha.19" }
+scraper  = { version = "0.20.0" }
 
 [package.metadata.cargo-shear]
 ignored = ["bpaf"]

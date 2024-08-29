@@ -5,42 +5,42 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/member-expressi
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "x",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(x)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "x",
             "node_id": 7
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "x",
             "node_id": 14
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 2,
             "name": "x",
             "node_id": 21
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 3,
             "name": "x",
             "node_id": 28
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 4,
             "name": "x",
             "node_id": 35

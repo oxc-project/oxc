@@ -10,10 +10,10 @@ use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn numeric_separators_style_diagnostic(span0: Span) -> OxcDiagnostic {
+fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid group length in numeric value.")
         .with_help("Group digits with numeric separators (_) so longer numbers are easier to read.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

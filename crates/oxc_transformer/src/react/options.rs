@@ -104,6 +104,9 @@ pub struct ReactOptions {
     ///
     /// This value is used to skip Babel tests, and is not used in oxc.
     pub use_spread: Option<bool>,
+
+    /// Fast Refresh
+    pub refresh: Option<ReactRefreshOptions>,
 }
 
 impl Default for ReactOptions {
@@ -122,6 +125,7 @@ impl Default for ReactOptions {
             pragma_frag: None,
             use_built_ins: None,
             use_spread: None,
+            refresh: None,
         }
     }
 }
@@ -185,4 +189,39 @@ impl ReactOptions {
             }
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReactRefreshOptions {
+    /// Specify the identifier of the refresh registration variable.
+    /// Defaults to `$RefreshReg$`.
+    #[serde(default = "default_refresh_reg")]
+    pub refresh_reg: String,
+
+    /// Specify the identifier of the refresh signature variable.
+    /// Defaults to `$RefreshSig$`.
+    #[serde(default = "default_refresh_sig")]
+    pub refresh_sig: String,
+
+    #[serde(default)]
+    pub emit_full_signatures: bool,
+}
+
+impl Default for ReactRefreshOptions {
+    fn default() -> Self {
+        Self {
+            refresh_reg: default_refresh_reg(),
+            refresh_sig: default_refresh_sig(),
+            emit_full_signatures: false,
+        }
+    }
+}
+
+fn default_refresh_reg() -> String {
+    String::from("$RefreshReg$")
+}
+
+fn default_refresh_sig() -> String {
+    String::from("$RefreshSig$")
 }

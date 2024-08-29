@@ -6,18 +6,18 @@ use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_internal};
 
-fn invalid_access_level(span0: Span) -> OxcDiagnostic {
+fn invalid_access_level(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid access level is specified or missing.")
         .with_help("Valid access levels are `package`, `private`, `protected`, and `public`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn redundant_access_tags(span0: Span) -> OxcDiagnostic {
+fn redundant_access_tags(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Mixing of @access with @public, @private, @protected, or @package on the same doc block.",
     )
     .with_help("There should be only one instance of access tag in a JSDoc comment.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -64,7 +64,7 @@ impl Rule for CheckAccess {
         let resolved_access_tag_name = settings.resolve_tag_name("access");
 
         let mut access_related_tag_names = FxHashSet::default();
-        access_related_tag_names.insert(resolved_access_tag_name.to_string());
+        access_related_tag_names.insert(resolved_access_tag_name);
         for level in &ACCESS_LEVELS {
             access_related_tag_names.insert(settings.resolve_tag_name(level));
         }

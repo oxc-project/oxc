@@ -7,46 +7,46 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSInterfaceDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "U",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(U)",
             "references": []
           }
         ]
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 3,
         "node": "Class(B)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 0,
         "name": "A",
         "node": "TSInterfaceDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "A",
             "node_id": 13
@@ -54,13 +54,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 2,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "T",
             "node_id": 17
@@ -68,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         ]
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 3,
         "name": "B",
         "node": "Class(B)",

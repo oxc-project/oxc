@@ -14,7 +14,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 struct Trans<'a, 'b> {
-    ancestor: Option<&'b Ancestor<'a>>,
+    ancestor: Option<Ancestor<'a, 'b>>,
 }
 
 impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
@@ -36,7 +36,7 @@ use oxc_ast::ast::IdentifierReference;
 use oxc_traverse::{ancestor::ProgramWithoutDirectives, Ancestor, Traverse, TraverseCtx};
 
 struct Trans<'a, 'b> {
-    program: Option<&'b ProgramWithoutDirectives<'a>>,
+    program: Option<ProgramWithoutDirectives<'a, 'b>>,
 }
 
 impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
@@ -79,3 +79,77 @@ impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
 ```
 */
 const CANNOT_HOLD_ONTO_AST_NODE: () = ();
+
+/**
+```compile_fail
+use oxc_ast::ast::IdentifierReference;
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+
+struct Trans<'a, 'b> {
+    ancestor: Option<Ancestor<'a, 'b>>,
+}
+
+impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
+    fn enter_identifier_reference(
+        &mut self,
+        _node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.ancestor = ctx.ancestors().next();
+    }
+}
+```
+*/
+const CANNOT_HOLD_ONTO_ANCESTOR_FROM_ANCESTORS_ITERATOR: () = ();
+
+/**
+```compile_fail
+use oxc_ast::ast::IdentifierReference;
+use oxc_traverse::{ancestor::ProgramWithoutDirectives, Ancestor, Traverse, TraverseCtx};
+
+struct Trans<'a, 'b> {
+    program: Option<ProgramWithoutDirectives<'a, 'b>>,
+}
+
+impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
+    fn enter_identifier_reference(
+        &mut self,
+        _node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let parent = ctx.ancestors().next().unwrap();
+        if let Ancestor::ProgramDirectives(program) = parent {
+            self.program = Some(program);
+        }
+    }
+}
+```
+*/
+const CANNOT_HOLD_ONTO_ANCESTOR_NODE_FROM_ANCESTORS_ITERATOR: () = ();
+
+/**
+```compile_fail
+use oxc_ast::ast::{IdentifierReference, Statement};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+
+struct Trans<'a, 'b> {
+    stmt: Option<&'b Statement<'a>>,
+}
+
+impl<'a, 'b> Traverse<'a> for Trans<'a, 'b> {
+    fn enter_identifier_reference(
+        &mut self,
+        _node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let parent = ctx.ancestors().next().unwrap();
+        if let Ancestor::ProgramDirectives(program) = parent {
+            let body = program.body();
+            let stmt = &body[0];
+            self.stmt = Some(stmt);
+        }
+    }
+}
+```
+*/
+const CANNOT_HOLD_ONTO_AST_NODE_FROM_ANCESTORS_ITERATOR: () = ();

@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_aria_hidden_on_focusable_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_aria_hidden_on_focusable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`aria-hidden` must not be true on focusable elements.")
         .with_help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// `aria-hidden="true"` on focusable elements can lead to confusion or unexpected behavior for screen reader users.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div aria-hidden="true" tabIndex="0" />
     ///
@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// <div aria-hidden="true" />
     /// ```
     NoAriaHiddenOnFocusable,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoAriaHiddenOnFocusable {
@@ -49,7 +50,10 @@ impl Rule for NoAriaHiddenOnFocusable {
         if let Some(aria_hidden_prop) = has_jsx_prop_ignore_case(jsx_el, "aria-hidden") {
             if is_aria_hidden_true(aria_hidden_prop) && is_focusable(ctx, jsx_el) {
                 if let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop {
-                    ctx.diagnostic(no_aria_hidden_on_focusable_diagnostic(boxed_attr.span));
+                    ctx.diagnostic_with_fix(
+                        no_aria_hidden_on_focusable_diagnostic(boxed_attr.span),
+                        |fixer| fixer.delete(&boxed_attr.span),
+                    );
                 }
             }
         }
@@ -84,7 +88,7 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
 /// # Returns
 ///
 /// `true` if the element is focusable, `false` otherwise.
-fn is_focusable(ctx: &LintContext, element: &JSXOpeningElement) -> bool {
+fn is_focusable<'a>(ctx: &LintContext<'a>, element: &JSXOpeningElement<'a>) -> bool {
     let Some(tag_name) = get_element_type(ctx, element) else {
         return false;
     };
@@ -95,7 +99,7 @@ fn is_focusable(ctx: &LintContext, element: &JSXOpeningElement) -> bool {
         }
     }
 
-    match tag_name.as_str() {
+    match tag_name.as_ref() {
         "a" | "area" => has_jsx_prop_ignore_case(element, "href").is_some(),
         "button" | "input" | "select" | "textarea" => {
             has_jsx_prop_ignore_case(element, "disabled").is_none()
@@ -127,5 +131,14 @@ fn test() {
         r#"<p tabIndex="0" aria-hidden="true">text</p>;"#,
     ];
 
-    Tester::new(NoAriaHiddenOnFocusable::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#"<div aria-hidden="true" tabIndex="0" />;"#, r#"<div  tabIndex="0" />;"#),
+        (r#"<input aria-hidden="true" />;"#, "<input  />;"),
+        (r#"<a href="/" aria-hidden="true" />"#, r#"<a href="/"  />"#),
+        (r#"<button aria-hidden="true" />"#, "<button  />"),
+        (r#"<textarea aria-hidden="true" />"#, "<textarea  />"),
+        (r#"<p tabIndex="0" aria-hidden="true">text</p>;"#, r#"<p tabIndex="0" >text</p>;"#),
+    ];
+
+    Tester::new(NoAriaHiddenOnFocusable::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

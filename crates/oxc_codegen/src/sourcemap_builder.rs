@@ -1,5 +1,8 @@
 use std::sync::Arc;
 
+use nonmax::NonMaxU32;
+
+use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
 use oxc_syntax::identifier::{LS, PS};
 
@@ -9,16 +12,54 @@ const LS_OR_PS_SECOND: u8 = 0x80;
 const LS_THIRD: u8 = 0xA8;
 const PS_THIRD: u8 = 0xA9;
 
-/// Line offset table
+/// Index into vec of `ColumnOffsets`
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct ColumnOffsetsId(NonMaxU32);
+
+impl Idx for ColumnOffsetsId {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize
+    }
+}
+
+/// Line offset tables.
 ///
 /// Used for tracking lines and columns from byte offsets via binary search.
 ///
 /// Code is adapted from [esbuild](https://github.com/evanw/esbuild/blob/cc74e6042a9f573bf58e1e3f165ebda70af4ad3b/internal/js_printer/js_printer.go#L4806-L4808)
+///
+/// Most lines of source code will not contain Unicode chars, so optimize storage for this common case.
+///
+/// Each line is represented by a `Line`.
+/// Where a line is entirely ASCII, translating byte offset to UTF-16 column is simple,
+/// given the byte offset of start of line. A column lookup table isn't needed for that line.
+/// In this case, `Line::column_offsets_id` is `None`.
+/// For rare lines which do contain Unicode chars, we store column offsets in a `ColumnOffsets` which
+/// is stored in a separate `IndexVec`. `Line::column_offsets_id` contains index for that line's `ColumnOffsets`.
+/// Storing column offset info which is rarely used in a separate structure keeps `Line` as small as possible.
+#[derive(Debug, Default)]
+pub struct LineOffsetTables {
+    lines: Vec<Line>,
+    column_offsets: IndexVec<ColumnOffsetsId, ColumnOffsets>,
+}
+
 #[derive(Debug)]
-pub struct LineOffsetTable {
-    columns: Option<Vec<usize>>,
-    byte_offset_to_first: usize,
-    byte_offset_to_start_of_line: usize,
+pub struct Line {
+    byte_offset_to_start_of_line: u32,
+    column_offsets_id: Option<ColumnOffsetsId>,
+}
+
+#[derive(Debug)]
+pub struct ColumnOffsets {
+    byte_offset_to_first: u32,
+    columns: Box<[u32]>,
 }
 
 #[allow(clippy::struct_field_names)]
@@ -27,7 +68,7 @@ pub struct SourcemapBuilder {
     original_source: Arc<str>,
     last_generated_update: usize,
     last_position: Option<u32>,
-    line_offset_tables: Vec<LineOffsetTable>,
+    line_offset_tables: LineOffsetTables,
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
     generated_column: u32,
@@ -40,7 +81,7 @@ impl Default for SourcemapBuilder {
             original_source: "".into(),
             last_generated_update: 0,
             last_position: None,
-            line_offset_tables: vec![],
+            line_offset_tables: LineOffsetTables::default(),
             sourcemap_builder: oxc_sourcemap::SourceMapBuilder::default(),
             generated_line: 0,
             generated_column: 0,
@@ -97,16 +138,19 @@ impl SourcemapBuilder {
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
         let result = self
             .line_offset_tables
-            .partition_point(|table| table.byte_offset_to_start_of_line <= position as usize);
+            .lines
+            .partition_point(|table| table.byte_offset_to_start_of_line <= position);
         let original_line = if result > 0 { result - 1 } else { 0 };
-        let line = &self.line_offset_tables[original_line];
-        let mut original_column = (position as usize) - line.byte_offset_to_start_of_line;
-        if original_column >= line.byte_offset_to_first {
-            if let Some(cols) = &line.columns {
-                original_column = cols[original_column - line.byte_offset_to_first];
+        let line = &self.line_offset_tables.lines[original_line];
+        let mut original_column = position - line.byte_offset_to_start_of_line;
+        if let Some(column_offsets_id) = line.column_offsets_id {
+            let column_offsets = &self.line_offset_tables.column_offsets[column_offsets_id];
+            if original_column >= column_offsets.byte_offset_to_first {
+                original_column = column_offsets.columns
+                    [(original_column - column_offsets.byte_offset_to_first) as usize];
             }
         }
-        (original_line as u32, original_column as u32)
+        (original_line as u32, original_column)
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -169,8 +213,9 @@ impl SourcemapBuilder {
         self.last_generated_update = output.len();
     }
 
-    fn generate_line_offset_tables(content: &str) -> Vec<LineOffsetTable> {
-        let mut tables = vec![];
+    fn generate_line_offset_tables(content: &str) -> LineOffsetTables {
+        let mut lines = vec![];
+        let mut column_offsets = IndexVec::new();
 
         // Process content line-by-line.
         // For each line, start by assuming line will be entirely ASCII, and read byte-by-byte.
@@ -180,16 +225,15 @@ impl SourcemapBuilder {
         // At end of line, go back to top of outer loop, and again assume ASCII for next line.
         let mut line_byte_offset = 0;
         'lines: loop {
-            tables.push(LineOffsetTable {
-                columns: None,
-                // `usize::MAX` so `original_column >= line.byte_offset_to_first` check in
-                // `search_original_line_and_column` fails if line is all ASCII
-                byte_offset_to_first: usize::MAX,
+            lines.push(Line {
                 byte_offset_to_start_of_line: line_byte_offset,
+                column_offsets_id: None,
             });
 
-            let remaining = &content.as_bytes()[line_byte_offset..];
-            for (mut byte_offset_from_line_start, b) in remaining.iter().enumerate() {
+            let remaining = &content.as_bytes()[line_byte_offset as usize..];
+            for (byte_offset_from_line_start, b) in remaining.iter().enumerate() {
+                #[allow(clippy::cast_possible_truncation)]
+                let mut byte_offset_from_line_start = byte_offset_from_line_start as u32;
                 match b {
                     b'\n' => {
                         byte_offset_from_line_start += 1;
@@ -197,7 +241,7 @@ impl SourcemapBuilder {
                     b'\r' => {
                         byte_offset_from_line_start += 1;
                         // Handle Windows-specific "\r\n" newlines
-                        if remaining.get(byte_offset_from_line_start) == Some(&b'\n') {
+                        if remaining.get(byte_offset_from_line_start as usize) == Some(&b'\n') {
                             byte_offset_from_line_start += 1;
                         }
                     }
@@ -206,19 +250,22 @@ impl SourcemapBuilder {
                     }
                     _ => {
                         // Unicode char found.
-                        // Create `columns` Vec, and set `byte_offset_to_first`.
-                        let table = tables.iter_mut().last().unwrap();
-                        table.byte_offset_to_first = byte_offset_from_line_start;
-                        table.columns = Some(vec![]);
-                        let columns = table.columns.as_mut().unwrap();
+                        // Set `column_offsets_id` for line and create `columns` Vec.
+                        let line = lines.iter_mut().last().unwrap();
+                        line.column_offsets_id =
+                            Some(ColumnOffsetsId::from_usize(column_offsets.len()));
+
+                        let mut columns = vec![];
 
                         // Loop through rest of line char-by-char.
                         // `chunk_byte_offset` in this loop is byte offset from start of this 1st
                         // Unicode char.
                         let mut column = byte_offset_from_line_start;
                         line_byte_offset += byte_offset_from_line_start;
-                        let remaining = &content[line_byte_offset..];
-                        for (mut chunk_byte_offset, ch) in remaining.char_indices() {
+                        let remaining = &content[line_byte_offset as usize..];
+                        for (chunk_byte_offset, ch) in remaining.char_indices() {
+                            #[allow(clippy::cast_possible_truncation)]
+                            let mut chunk_byte_offset = chunk_byte_offset as u32;
                             for _ in 0..ch.len_utf8() {
                                 columns.push(column);
                             }
@@ -227,7 +274,9 @@ impl SourcemapBuilder {
                                 '\r' => {
                                     // Handle Windows-specific "\r\n" newlines
                                     chunk_byte_offset += 1;
-                                    if remaining.as_bytes().get(chunk_byte_offset) == Some(&b'\n') {
+                                    if remaining.as_bytes().get(chunk_byte_offset as usize)
+                                        == Some(&b'\n')
+                                    {
                                         chunk_byte_offset += 1;
                                         columns.push(column + 1);
                                     }
@@ -238,9 +287,10 @@ impl SourcemapBuilder {
                                 LS | PS => {
                                     chunk_byte_offset += 3;
                                 }
+                                #[allow(clippy::cast_possible_truncation)]
                                 _ => {
                                     // Mozilla's "source-map" library counts columns using UTF-16 code units
-                                    column += ch.len_utf16();
+                                    column += ch.len_utf16() as u32;
                                     continue;
                                 }
                             }
@@ -248,6 +298,13 @@ impl SourcemapBuilder {
                             // Line break found.
                             // `chunk_byte_offset` is now the offset of *end* of the line break.
                             line_byte_offset += chunk_byte_offset;
+
+                            // Record column offsets
+                            column_offsets.push(ColumnOffsets {
+                                byte_offset_to_first: byte_offset_from_line_start,
+                                columns: columns.into_boxed_slice(),
+                            });
+
                             // Revert back to outer loop for next line
                             continue 'lines;
                         }
@@ -255,6 +312,13 @@ impl SourcemapBuilder {
                         // EOF.
                         // One last column entry for EOF position.
                         columns.push(column);
+
+                        // Record column offsets
+                        column_offsets.push(ColumnOffsets {
+                            byte_offset_to_first: byte_offset_from_line_start,
+                            columns: columns.into_boxed_slice(),
+                        });
+
                         break 'lines;
                     }
                 };
@@ -269,7 +333,7 @@ impl SourcemapBuilder {
             break;
         }
 
-        tables
+        LineOffsetTables { lines, column_offsets }
     }
 }
 

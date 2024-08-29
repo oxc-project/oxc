@@ -3,7 +3,7 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-use std::{cell::Cell, hash::Hash};
+use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::Vec;
 use oxc_span::{Atom, Span};
@@ -100,6 +100,21 @@ impl<'a> TSTypeName<'a> {
     }
 }
 
+impl<'a> fmt::Display for TSTypeName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TSTypeName::IdentifierReference(ident) => ident.fmt(f),
+            TSTypeName::QualifiedName(qualified) => qualified.fmt(f),
+        }
+    }
+}
+
+impl<'a> fmt::Display for TSQualifiedName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}", self.left, self.right)
+    }
+}
+
 impl<'a> TSType<'a> {
     /// Remove nested parentheses from this type.
     pub fn without_parenthesized(&self) -> &Self {
@@ -111,8 +126,29 @@ impl<'a> TSType<'a> {
 }
 
 impl TSAccessibility {
-    pub fn is_private(&self) -> bool {
-        matches!(self, TSAccessibility::Private)
+    #[inline]
+    pub fn is_private(self) -> bool {
+        matches!(self, Self::Private)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Public => "public",
+            Self::Private => "private",
+            Self::Protected => "protected",
+        }
+    }
+}
+
+impl From<TSAccessibility> for &'static str {
+    fn from(accessibility: TSAccessibility) -> Self {
+        accessibility.as_str()
+    }
+}
+
+impl fmt::Display for TSAccessibility {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -154,6 +190,15 @@ impl<'a> TSModuleDeclarationName<'a> {
     }
 }
 
+impl<'a> fmt::Display for TSModuleDeclarationName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Identifier(id) => id.fmt(f),
+            Self::StringLiteral(lit) => lit.fmt(f),
+        }
+    }
+}
+
 impl<'a> TSModuleDeclarationBody<'a> {
     pub fn is_strict(&self) -> bool {
         matches!(self, Self::TSModuleBlock(block) if block.is_strict())
@@ -176,20 +221,20 @@ impl<'a> TSModuleReference<'a> {
 impl<'a> Decorator<'a> {
     /// Get the name of the decorator
     /// ```ts
+    /// // The name of the decorator is `decorator`
     /// @decorator
     /// @decorator.a.b
     /// @decorator(xx)
     /// @decorator.a.b(xx)
-    /// The name of the decorator is `decorator`
     /// ```
-    pub fn name(&self) -> Option<&str> {
+    pub fn name(&self) -> Option<&'a str> {
         match &self.expression {
-            Expression::Identifier(ident) => Some(&ident.name),
+            Expression::Identifier(ident) => Some(ident.name.as_str()),
             expr @ match_member_expression!(Expression) => {
                 expr.to_member_expression().static_property_name()
             }
             Expression::CallExpression(call) => {
-                call.callee.get_member_expr().map(|member| member.static_property_name())?
+                call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
             }
             _ => None,
         }

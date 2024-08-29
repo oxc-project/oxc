@@ -1,4 +1,4 @@
-use std::collections::{hash_map::HashMap, hash_set::HashSet};
+use std::{borrow::Cow, collections::hash_map::HashMap};
 
 use itertools::Itertools;
 use once_cell::sync::Lazy;
@@ -11,34 +11,35 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
+use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
 
-fn invalid_prop_on_tag(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+fn invalid_prop_on_tag(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid property found")
         .with_help(format!("Property '{x1}' is only allowed on: {x2}"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn data_lowercase_required(span0: Span, x1: &str) -> OxcDiagnostic {
+fn data_lowercase_required(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "React does not recognize data-* props with uppercase characters on a DOM element",
     )
     .with_help(format!("Use '{x1}' instead"))
-    .with_label(span0)
+    .with_label(span)
 }
 
-fn unknown_prop_with_standard_name(span0: Span, x1: &str) -> OxcDiagnostic {
+fn unknown_prop_with_standard_name(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unknown property found")
         .with_help(format!("Use '{x1}' instead"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn unknown_prop(span0: Span) -> OxcDiagnostic {
+fn unknown_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unknown property found")
         .with_help("Remove unknown property")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -48,7 +49,7 @@ pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 #[serde(rename_all = "camelCase")]
 pub struct NoUnknownPropertyConfig {
     #[serde(default)]
-    ignore: HashSet<String>,
+    ignore: FxHashSet<Cow<'static, str>>,
     #[serde(default)]
     require_data_lowercase: bool,
 }
@@ -72,6 +73,7 @@ declare_oxc_lint!(
     NoUnknownProperty,
     restriction
 );
+
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "abbr" => phf_set! {"th", "td"},
     "charset" => phf_set! {"meta"},
@@ -491,16 +493,16 @@ impl Rule for NoUnknownProperty {
                 if self.0.ignore.contains(&(actual_name)) {
                     return;
                 };
-                if is_valid_data_attr(actual_name.as_str()) {
-                    if self.0.require_data_lowercase && has_uppercase(actual_name.as_str()) {
+                if is_valid_data_attr(&actual_name) {
+                    if self.0.require_data_lowercase && has_uppercase(&actual_name) {
                         ctx.diagnostic(data_lowercase_required(span, &actual_name.to_lowercase()));
                     }
                     return;
                 };
-                if ARIA_PROPERTIES.contains(actual_name.as_str()) || !is_valid_html_tag {
+                if ARIA_PROPERTIES.contains(&actual_name) || !is_valid_html_tag {
                     return;
                 };
-                let name = normalize_attribute_case(actual_name.as_str());
+                let name = normalize_attribute_case(&actual_name);
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
                     if !tags.contains(el_type) {
                         ctx.diagnostic(invalid_prop_on_tag(

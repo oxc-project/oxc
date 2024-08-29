@@ -59,7 +59,8 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if property.accessibility.map_or(true, |a| !a.is_private()) {
             if property.type_annotation.is_some() {
-                type_annotations = self.ast.copy(&property.type_annotation);
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                type_annotations = unsafe { self.ast.copy(&property.type_annotation) };
             } else if let Some(expr) = property.value.as_ref() {
                 let ts_type = if property.readonly {
                     // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
@@ -71,7 +72,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                 .transform_template_to_string(lit)
                                 .map(Expression::StringLiteral);
                         } else {
-                            value = Some(self.ast.copy(expr));
+                            // SAFETY: `ast.copy` is unsound! We need to fix.
+                            value = Some(unsafe { self.ast.copy(expr) });
                         }
                         None
                     }
@@ -91,11 +93,12 @@ impl<'a> IsolatedDeclarations<'a> {
             property.r#type,
             property.span,
             self.ast.vec(),
-            self.ast.copy(&property.key),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&property.key) },
             value,
             property.computed,
             property.r#static,
-            property.declare,
+            false,
             property.r#override,
             property.optional,
             property.definite,
@@ -116,12 +119,15 @@ impl<'a> IsolatedDeclarations<'a> {
         let value = self.ast.alloc_function(
             FunctionType::TSEmptyBodyFunctionExpression,
             function.span,
-            self.ast.copy(&function.id),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&function.id) },
             false,
             false,
             false,
-            self.ast.copy(&function.type_parameters),
-            self.ast.copy(&function.this_param),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&function.type_parameters) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&function.this_param) },
             params,
             return_type,
             Option::<FunctionBody>::None,
@@ -131,7 +137,8 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.r#type,
             definition.span,
             self.ast.vec(),
-            self.ast.copy(&definition.key),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&definition.key) },
             value,
             definition.kind,
             definition.computed,
@@ -209,7 +216,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 };
                 self.create_class_property(
                     r#type,
-                    self.ast.copy(&method.key),
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&method.key) },
                     method.r#static,
                     method.r#override,
                     self.transform_accessibility(method.accessibility),
@@ -242,12 +250,14 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
             if param.accessibility.is_some() || param.readonly {
-                let type_annotation = if param.accessibility.is_some_and(|a| a.is_private()) {
-                    None
-                } else {
-                    // transformed params will definitely have type annotation
-                    self.ast.copy(&params.items[index].pattern.type_annotation)
-                };
+                let type_annotation =
+                    if param.accessibility.is_some_and(TSAccessibility::is_private) {
+                        None
+                    } else {
+                        // transformed params will definitely have type annotation
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        unsafe { self.ast.copy(&params.items[index].pattern.type_annotation) }
+                    };
                 if let Some(new_element) =
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 {
@@ -270,7 +280,7 @@ impl<'a> IsolatedDeclarations<'a> {
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if method.key.is_private_identifier()
-                    || method.accessibility.is_some_and(|a| a.is_private())
+                    || method.accessibility.is_some_and(TSAccessibility::is_private)
                     || (method.computed && !self.is_literal_key(&method.key))
                 {
                     continue;
@@ -288,7 +298,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     MethodDefinitionKind::Get => {
                         let return_type = self.infer_function_return_type(function);
                         if let Some(return_type) = return_type {
-                            inferred_accessor_types.insert(name, self.ast.copy(&return_type));
+                            inferred_accessor_types.insert(name, {
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&return_type) }
+                            });
                         }
                     }
                     MethodDefinitionKind::Set => {
@@ -299,7 +312,10 @@ impl<'a> IsolatedDeclarations<'a> {
                                         self.infer_type_from_formal_parameter(param)
                                             .map(|x| self.ast.alloc_ts_type_annotation(SPAN, x))
                                     },
-                                    |t| Some(self.ast.copy(t)),
+                                    |t| {
+                                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                                        unsafe { Some(self.ast.copy(t)) }
+                                    },
                                 );
                             if let Some(type_annotation) = type_annotation {
                                 inferred_accessor_types.insert(name, type_annotation);
@@ -359,10 +375,6 @@ impl<'a> IsolatedDeclarations<'a> {
                     if self.report_property_key(&method.key, method.computed) {
                         continue;
                     }
-                    if method.accessibility.is_some_and(|a| a.is_private()) {
-                        elements.push(self.transform_private_modifier_method(method));
-                        continue;
-                    }
 
                     let inferred_accessor_types = self.collect_inferred_accessor_types(decl);
                     let function = &method.value;
@@ -372,9 +384,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             |n| {
                                 self.transform_set_accessor_params(
                                     &function.params,
-                                    inferred_accessor_types
-                                        .get(&self.ast.atom(&n))
-                                        .map(|t| self.ast.copy(t)),
+                                    inferred_accessor_types.get(&self.ast.atom(&n)).map(|t| {
+                                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                                        unsafe { self.ast.copy(t) }
+                                    }),
                                 )
                             },
                         )
@@ -390,6 +403,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         );
                     }
 
+                    if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                        elements.push(self.transform_private_modifier_method(method));
+                        continue;
+                    }
+
                     let return_type = match method.kind {
                         MethodDefinitionKind::Method => {
                             let rt = self.infer_function_return_type(function);
@@ -402,9 +420,10 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         MethodDefinitionKind::Get => {
                             let rt = method.key.static_name().and_then(|name| {
-                                inferred_accessor_types
-                                    .get(&self.ast.atom(&name))
-                                    .map(|t| self.ast.copy(t))
+                                inferred_accessor_types.get(&self.ast.atom(&name)).map(|t| {
+                                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                                    unsafe { self.ast.copy(t) }
+                                })
                             });
                             if rt.is_none() {
                                 self.error(accessor_must_have_explicit_return_type(
@@ -445,14 +464,22 @@ impl<'a> IsolatedDeclarations<'a> {
                         property.r#type,
                         property.span,
                         self.ast.vec(),
-                        self.ast.copy(&property.key),
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        unsafe { self.ast.copy(&property.key) },
                         None,
                         property.computed,
                         property.r#static,
+                        property.definite,
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        unsafe { self.ast.copy(&property.type_annotation) },
+                        property.accessibility,
                     );
                     elements.push(new_element);
                 }
-                ClassElement::TSIndexSignature(_) => elements.push(self.ast.copy(element)),
+                ClassElement::TSIndexSignature(_) => elements.push({
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(element) }
+                }),
             }
         }
 
@@ -489,11 +516,16 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.r#type,
             decl.span,
             self.ast.vec(),
-            self.ast.copy(&decl.id),
-            self.ast.copy(&decl.type_parameters),
-            self.ast.copy(&decl.super_class),
-            self.ast.copy(&decl.super_type_parameters),
-            self.ast.copy(&decl.implements),
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.id) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.type_parameters) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.super_class) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.super_type_parameters) },
+            // SAFETY: `ast.copy` is unsound! We need to fix.
+            unsafe { self.ast.copy(&decl.implements) },
             body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
@@ -509,7 +541,10 @@ impl<'a> IsolatedDeclarations<'a> {
         if items.first().map_or(true, |item| item.pattern.type_annotation.is_none()) {
             let kind = items.first().map_or_else(
                 || self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
-                |item| self.ast.copy(&item.pattern.kind),
+                |item| {
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(&item.pattern.kind) }
+                },
             );
 
             self.create_formal_parameters(kind, type_annotation)

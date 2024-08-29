@@ -10,9 +10,7 @@ mod gen;
 mod operator;
 mod sourcemap_builder;
 
-use std::{borrow::Cow, ops::Range};
-
-use rustc_hash::FxHashMap;
+use std::{borrow::Cow, collections::hash_map::Entry, ops::Range};
 
 use oxc_ast::{
     ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
@@ -25,6 +23,7 @@ use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
+use rustc_hash::FxHashMap;
 
 use crate::{
     binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
@@ -35,16 +34,18 @@ pub use crate::{
     gen::{Gen, GenExpr},
 };
 
-/// Code generator without whitespace removal.
-pub type CodeGenerator<'a> = Codegen<'a, false>;
+use self::annotation_comment::AnnotationComment;
 
-/// Code generator with whitespace removal.
-pub type WhitespaceRemover<'a> = Codegen<'a, true>;
+/// Code generator without whitespace removal.
+pub type CodeGenerator<'a> = Codegen<'a>;
 
 #[derive(Default, Clone, Copy)]
 pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
     pub single_quote: bool,
+
+    /// Remove whitespace.
+    pub minify: bool,
 }
 
 #[derive(Default, Clone, Copy)]
@@ -58,7 +59,7 @@ pub struct CodegenReturn {
     pub source_map: Option<oxc_sourcemap::SourceMap>,
 }
 
-pub struct Codegen<'a, const MINIFY: bool> {
+pub struct Codegen<'a> {
     options: CodegenOptions,
     comment_options: CommentOptions,
 
@@ -96,33 +97,35 @@ pub struct Codegen<'a, const MINIFY: bool> {
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
 
+    latest_consumed_comment_end: u32,
+
     /// The key of map is the node start position,
     /// the first element of value is the start of the comment
     /// the second element of value includes the end of the comment and comment kind.
     move_comment_map: MoveCommentMap,
-    latest_consumed_comment_end: u32,
 }
+pub(crate) type MoveCommentMap = FxHashMap<u32, Vec<AnnotationComment>>;
 
-impl<'a, const MINIFY: bool> Default for Codegen<'a, MINIFY> {
+impl<'a> Default for Codegen<'a> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for String {
-    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
+impl<'a> From<Codegen<'a>> for String {
+    fn from(mut val: Codegen<'a>) -> Self {
         val.into_source_text()
     }
 }
 
-impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for Cow<'a, str> {
-    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
+impl<'a> From<Codegen<'a>> for Cow<'a, str> {
+    fn from(mut val: Codegen<'a>) -> Self {
         Cow::Owned(val.into_source_text())
     }
 }
 
 // Public APIs
-impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
+impl<'a> Codegen<'a> {
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -145,8 +148,8 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             indent: 0,
             quote: b'"',
             sourcemap_builder: None,
-            move_comment_map: MoveCommentMap::default(),
             latest_consumed_comment_end: 0,
+            move_comment_map: MoveCommentMap::default(),
         }
     }
 
@@ -154,7 +157,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     /// Minification will reduce by at least half of the original size.
     #[must_use]
     pub fn with_capacity(mut self, source_text_len: usize) -> Self {
-        let capacity = if MINIFY { source_text_len / 2 } else { source_text_len };
+        let capacity = if self.options.minify { source_text_len / 2 } else { source_text_len };
         self.code = Vec::with_capacity(capacity);
         self
     }
@@ -219,10 +222,15 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     pub fn print_str(&mut self, s: &str) {
         self.code.extend(s.as_bytes());
     }
+
+    #[inline]
+    pub fn print_expression(&mut self, expr: &Expression<'_>) {
+        expr.gen_expr(self, Precedence::Lowest, Context::empty());
+    }
 }
 
 // Private APIs
-impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
+impl<'a> Codegen<'a> {
     fn code(&self) -> &Vec<u8> {
         &self.code
     }
@@ -233,19 +241,19 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     fn print_soft_space(&mut self) {
-        if !MINIFY {
+        if !self.options.minify {
             self.print_char(b' ');
         }
     }
 
     #[inline]
-    pub fn print_hard_space(&mut self) {
+    fn print_hard_space(&mut self) {
         self.print_char(b' ');
     }
 
     #[inline]
     fn print_soft_newline(&mut self) {
-        if !MINIFY {
+        if !self.options.minify {
             self.print_char(b'\n');
         }
     }
@@ -278,21 +286,21 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     fn indent(&mut self) {
-        if !MINIFY {
+        if !self.options.minify {
             self.indent += 1;
         }
     }
 
     #[inline]
     fn dedent(&mut self) {
-        if !MINIFY {
+        if !self.options.minify {
             self.indent -= 1;
         }
     }
 
     #[inline]
     fn print_indent(&mut self) {
-        if MINIFY {
+        if self.options.minify {
             return;
         }
         if self.print_next_indent_as_space {
@@ -305,7 +313,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     fn print_semicolon_after_statement(&mut self) {
-        if MINIFY {
+        if self.options.minify {
             self.needs_semicolon = true;
         } else {
             self.print_str(";\n");
@@ -326,7 +334,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     #[inline]
-    pub fn print_colon(&mut self) {
+    fn print_colon(&mut self) {
         self.print_char(b':');
     }
 
@@ -335,7 +343,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.print_char(b'=');
     }
 
-    fn print_sequence<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
+    fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for item in items {
             item.gen(self, ctx);
             self.print_comma();
@@ -384,7 +392,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
                 self.print_soft_newline();
             }
             stmt => {
-                if need_space && MINIFY {
+                if need_space && self.options.minify {
                     self.print_hard_space();
                 }
                 self.print_next_indent_as_space = true;
@@ -403,7 +411,20 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.needs_semicolon = false;
     }
 
-    fn print_list<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
+    // We tried optimizing this to move the `index != 0` check out of the loop:
+    // ```
+    // let mut iter = items.iter();
+    // let Some(item) = iter.next() else { return };
+    // item.gen(self, ctx);
+    // for item in iter {
+    //     self.print_comma();
+    //     self.print_soft_space();
+    //     item.gen(self, ctx);
+    // }
+    // ```
+    // But it turned out this was actually a bit slower.
+    // <https://github.com/oxc-project/oxc/pull/5221>
+    fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
@@ -413,17 +434,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
-    #[inline]
-    pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::Lowest, Context::empty());
-    }
-
-    fn print_expressions<T: GenExpr<MINIFY>>(
-        &mut self,
-        items: &[T],
-        precedence: Precedence,
-        ctx: Context,
-    ) {
+    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
@@ -519,10 +530,12 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 }
 
-pub(crate) type MoveCommentMap = FxHashMap<u32, Comment>;
-
 // Comment related
-impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
+impl<'a> Codegen<'a> {
+    fn preserve_annotate_comments(&self) -> bool {
+        self.comment_options.preserve_annotate_comments && !self.options.minify
+    }
+
     /// Avoid issue related to rustc borrow checker .
     /// Since if you want to print a range of source code, you need to borrow the source code
     /// as immutable first, and call the [Self::print_str] which is a mutable borrow.
@@ -530,6 +543,13 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.code.extend_from_slice(self.source_text[range].as_bytes());
     }
 
+    fn get_leading_comments(
+        &self,
+        start: u32,
+        end: u32,
+    ) -> impl DoubleEndedIterator<Item = &'_ Comment> + '_ {
+        self.trivias.comments_range(start..end)
+    }
     /// In some scenario, we want to move the comment that should be codegened to another position.
     /// ```js
     ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
@@ -543,15 +563,18 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     ///
     ///  }, b = 10000;
     /// ```
-    fn move_comment(&mut self, position: u32, full_comment_info: Comment) {
-        self.move_comment_map.insert(position, full_comment_info);
+    fn move_comments(&mut self, position: u32, full_comment_infos: Vec<AnnotationComment>) {
+        match self.move_comment_map.entry(position) {
+            Entry::Occupied(mut occ) => {
+                occ.get_mut().extend(full_comment_infos);
+            }
+            Entry::Vacant(vac) => {
+                vac.insert(full_comment_infos);
+            }
+        }
     }
 
-    fn try_get_leading_comment(&self, start: u32) -> Option<&Comment> {
-        self.trivias.comments_range(0..start).next_back()
-    }
-
-    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Comment> {
+    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Vec<AnnotationComment>> {
         self.move_comment_map.remove(&node_start)
     }
 }

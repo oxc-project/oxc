@@ -14,7 +14,10 @@ use crate::{
 declare_oxc_lint! {
     /// ### What it does
     ///
-    /// Certain reserved DOM elements do not support ARIA roles, states and properties. This is often because they are not visible, for example `meta`, `html`, `script`, `style`. This rule enforces that these DOM elements do not contain the `role` and/or `aria-*` props.
+    /// Certain reserved DOM elements do not support ARIA roles, states and
+    /// properties. This is often because they are not visible, for example
+    /// `meta`, `html`, `script`, `style`. This rule enforces that these DOM
+    /// elements do not contain the `role` and/or `aria-*` props.
     ///
     /// ### Example
     ///
@@ -27,16 +30,17 @@ declare_oxc_lint! {
     /// ```
     ///
     AriaUnsupportedElements,
-    correctness
+    correctness,
+    fix
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaUnsupportedElements;
 
-fn aria_unsupported_elements_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn aria_unsupported_elements_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("This element does not support ARIA roles, states and properties.")
         .with_help(format!("Try removing the prop `{x1}`."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for AriaUnsupportedElements {
@@ -53,7 +57,10 @@ impl Rule for AriaUnsupportedElements {
                     };
                     let attr_name = get_jsx_attribute_name(&attr.name).to_lowercase();
                     if INVALID_ATTRIBUTES.contains(&attr_name) {
-                        ctx.diagnostic(aria_unsupported_elements_diagnostic(attr.span, &attr_name));
+                        ctx.diagnostic_with_fix(
+                            aria_unsupported_elements_diagnostic(attr.span, &attr_name),
+                            |fixer| fixer.delete(&attr.span),
+                        );
                     }
                 }
             }
@@ -413,7 +420,16 @@ fn test() {
         (r#"<track aria-hidden aria-role="none" {...props} />"#, None),
     ];
 
+    let fix = vec![
+        (r"<col role {...props} />", r"<col  {...props} />"),
+        (
+            r#"<meta aria-hidden aria-role="none" {...props} />"#,
+            r#"<meta  aria-role="none" {...props} />"#,
+        ),
+    ];
+
     Tester::new(AriaUnsupportedElements::NAME, pass, fail)
         .with_jsx_a11y_plugin(true)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

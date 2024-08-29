@@ -4,8 +4,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_default_export_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer named exports").with_label(span0)
+fn no_default_export_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer named exports").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -9,24 +9,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function)",
+            "flags": "ScopeFlags(StrictMode | Function)",
             "id": 2,
             "node": "Function(<anonymous>)",
             "symbols": [
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 1,
                 "name": "a",
-                "node": "FormalParameter",
+                "node": "FormalParameter(a)",
                 "references": [
                   {
-                    "flag": "ReferenceFlag(Read)",
+                    "flags": "ReferenceFlags(Read)",
                     "id": 0,
                     "name": "a",
                     "node_id": 26
                   },
                   {
-                    "flag": "ReferenceFlag(Read)",
+                    "flags": "ReferenceFlags(Read)",
                     "id": 1,
                     "name": "a",
                     "node_id": 31
@@ -34,72 +34,72 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
                 ]
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "b",
-                "node": "FormalParameter",
+                "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 3,
                 "name": "c",
-                "node": "FormalParameter",
+                "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 4,
                 "name": "d",
-                "node": "FormalParameter",
+                "node": "FormalParameter(d)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 5,
                 "name": "e",
-                "node": "FormalParameter",
+                "node": "FormalParameter(e)",
                 "references": []
               },
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 6,
                 "name": "f",
-                "node": "FormalParameter",
+                "node": "FormalParameter(f)",
                 "references": []
               }
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "Class(A)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 0,
         "name": "A",
         "node": "Class(A)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 7,
         "name": "unresolved1",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved1)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 8,
         "name": "unresolved2",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved2)",
         "references": []
       }
     ]

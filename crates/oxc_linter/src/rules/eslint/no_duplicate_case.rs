@@ -6,10 +6,10 @@ use rustc_hash::FxHashMap;
 
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
 
-fn no_duplicate_case_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow duplicate case labels")
+fn no_duplicate_case_diagnostic(first: Span, second: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Duplicate case label")
         .with_help("Remove the duplicated case")
-        .with_labels([span0, span1])
+        .with_labels([first.label("This label here"), second.label("is duplicated here")])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,17 +26,53 @@ declare_oxc_lint!(
     /// it is likely that a programmer copied a case clause but forgot to change the test expression.
     ///
     /// ### Example
-    /// ```javascript
-    /// var a = 1;
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
+    /// var a = 1, one = 1;
     /// switch (a) {
-    ///     case 1:
-    ///         break;
     ///     case 1:
     ///         break;
     ///     case 2:
     ///         break;
+    ///     case 1: // duplicate test expression
+    ///         break;
     ///     default:
     ///         break;
+    /// }
+    ///
+    /// switch (a) {
+    ///     case one:
+    ///         break;
+    ///     case 2:
+    ///         break;
+    ///     case one: // duplicate test expression
+    ///         break;
+    ///     default:
+    ///         break;
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// var a = 1,
+    ///     one = 1
+    /// switch (a) {
+    ///     case 1:
+    ///         break
+    ///     case 2:
+    ///         break
+    ///     default:
+    ///         break
+    /// }
+    ///
+    /// switch (a) {
+    ///     case '1':
+    ///         break
+    ///     case '2':
+    ///         break
+    ///     default:
+    ///         break
     /// }
     /// ```
     NoDuplicateCase,
@@ -45,16 +81,18 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicateCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::SwitchStatement(ss) = node.kind() {
-            let mut map = FxHashMap::default();
-            map.reserve(ss.cases.len());
-            for case in &ss.cases {
-                if let Some(test) = case.test.as_ref() {
-                    let hash = calculate_hash(test);
+        let AstKind::SwitchStatement(ss) = node.kind() else {
+            return;
+        };
 
-                    if let Some(prev_span) = map.insert(hash, test.span()) {
-                        ctx.diagnostic(no_duplicate_case_diagnostic(prev_span, test.span()));
-                    }
+        let mut map = FxHashMap::default();
+        map.reserve(ss.cases.len());
+        for case in &ss.cases {
+            if let Some(test) = case.test.as_ref() {
+                let hash = calculate_hash(test.get_inner_expression());
+
+                if let Some(prev_span) = map.insert(hash, test.span()) {
+                    ctx.diagnostic(no_duplicate_case_diagnostic(prev_span, test.span()));
                 }
             }
         }
@@ -101,6 +139,10 @@ fn test() {
     let fail = vec![
         (
             "var a = 1; switch (a) {case 1: break; case 1: break; case 2: break; default: break;}",
+            None,
+        ),
+        (
+            "var a = 1; switch (a) {case 1: break; case (1): break; case 2: break; default: break;}",
             None,
         ),
         (

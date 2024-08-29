@@ -23,7 +23,7 @@ export default function generateWalkFunctionsCode(types) {
             clippy::cast_ptr_alignment
         )]
 
-        use std::cell::Cell;
+        use std::{cell::Cell, marker::PhantomData};
 
         use oxc_allocator::Vec;
         #[allow(clippy::wildcard_imports)]
@@ -69,41 +69,41 @@ function generateWalkForStruct(type, types) {
                 `\`ast\` attr says to enter scope before field '${enterFieldName}' `
                 + `in '${type.name}', but that field is not visited`
             );
-            if (scopeEnterField === visitedFields[0]) scopeEnterField = undefined;
+        } else {
+            scopeEnterField = visitedFields[0];
         }
 
         // TODO: Maybe this isn't quite right. `scope_id` fields are `Cell<Option<ScopeId>>`,
-        // so visitor is able to alter the `scope_id` of a node higher up the tree,
+        // so visitor is able to alter the `scope_id` of a node from higher up the tree,
         // but we don't take that into account.
         // Visitor should not do that though, so maybe it's OK.
         // In final version, we should not make `scope_id` fields `Cell`s to prevent this.
         enterScopeCode = `
-            let mut previous_scope_id = None;
-            if let Some(scope_id) = (*(${makeFieldCode(scopeIdField)})).get() {
-                previous_scope_id = Some(ctx.current_scope_id());
-                ctx.set_current_scope_id(scope_id);
-            }
+            let previous_scope_id = ctx.current_scope_id();
+            ctx.set_current_scope_id((*(${makeFieldCode(scopeIdField)})).get().unwrap());
         `;
-
-        exitScopeCode = `
-            if let Some(previous_scope_id) = previous_scope_id {
-                ctx.set_current_scope_id(previous_scope_id);
-            }
-        `;
+        exitScopeCode = `ctx.set_current_scope_id(previous_scope_id);`;
     }
 
     const fieldsCodes = visitedFields.map((field, index) => {
-        const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`;
+        const fieldWalkName = `walk_${camelToSnake(field.innerTypeName)}`,
+            fieldCamelName = snakeToCamel(field.name);
+        const scopeCode = field === scopeEnterField ? enterScopeCode : '';
 
-        const retagCode = index === 0
-            ? ''
-            : `ctx.retag_stack(AncestorType::${type.name}${snakeToCamel(field.name)});`;
-        const fieldCode = makeFieldCode(field);
-        let scopeCode = '';
-        if (field === scopeEnterField) {
-            scopeCode = enterScopeCode;
-            enterScopeCode = '';
+        let tagCode = '', retagCode = '';
+        if (index === 0) {
+            tagCode = `
+                let pop_token = ctx.push_stack(
+                    Ancestor::${type.name}${fieldCamelName}(
+                        ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
+                    )
+                );
+            `;
+        } else {
+            retagCode = `ctx.retag_stack(AncestorType::${type.name}${fieldCamelName});`;
         }
+
+        const fieldCode = makeFieldCode(field);
 
         if (field.wrappers[0] === 'Option') {
             let walkCode;
@@ -127,6 +127,7 @@ function generateWalkForStruct(type, types) {
 
             return `
                 ${scopeCode}
+                ${tagCode}
                 if let Some(field) = &mut *(${fieldCode}) {
                     ${retagCode}
                     ${walkCode}
@@ -159,7 +160,7 @@ function generateWalkForStruct(type, types) {
 
             return `
                 ${scopeCode}
-                ${retagCode}
+                ${tagCode || retagCode}
                 ${walkVecCode}
             `;
         }
@@ -167,7 +168,7 @@ function generateWalkForStruct(type, types) {
         if (field.wrappers.length === 1 && field.wrappers[0] === 'Box') {
             return `
                 ${scopeCode}
-                ${retagCode}
+                ${tagCode || retagCode}
                 ${fieldWalkName}(traverser, (&mut **(${fieldCode})) as *mut _, ctx);
             `;
         }
@@ -176,23 +177,12 @@ function generateWalkForStruct(type, types) {
 
         return `
             ${scopeCode}
-            ${retagCode}
+            ${tagCode || retagCode}
             ${fieldWalkName}(traverser, ${fieldCode}, ctx);
         `;
     });
 
-    if (visitedFields.length > 0) {
-        const field = visitedFields[0],
-            fieldCamelName = snakeToCamel(field.name);
-        fieldsCodes.unshift(`
-            ctx.push_stack(
-                Ancestor::${type.name}${fieldCamelName}(
-                    ancestor::${type.name}Without${fieldCamelName}(node)
-                )
-            );
-        `);
-        fieldsCodes.push('ctx.pop_stack();');
-    }
+    if (visitedFields.length > 0) fieldsCodes.push('ctx.pop_stack(pop_token);');
 
     const typeSnakeName = camelToSnake(type.name);
     return `
@@ -201,12 +191,10 @@ function generateWalkForStruct(type, types) {
             node: *mut ${type.rawName},
             ctx: &mut TraverseCtx<'a>
         ) {
-            ${enterScopeCode}
             traverser.enter_${typeSnakeName}(&mut *node, ctx);
             ${fieldsCodes.join('\n')}
-            ${enterScopeCode ? '' : exitScopeCode}
+            ${exitScopeCode}
             traverser.exit_${typeSnakeName}(&mut *node, ctx);
-            ${enterScopeCode ? exitScopeCode : ''}
         }
     `.replace(/\n\s*\n+/g, '\n');
 }

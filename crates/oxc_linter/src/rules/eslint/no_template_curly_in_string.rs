@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_template_curly_in_string_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_template_curly_in_string_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected template string expression")
         .with_help("Disallow template literal placeholder syntax in regular strings")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

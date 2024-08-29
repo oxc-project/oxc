@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
@@ -16,18 +16,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(StrictMode)",
             "id": 3,
             "node": "TSTypeAliasDeclaration",
             "symbols": []
           }
         ],
-        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
         "id": 2,
-        "node": "TSModuleDeclaration",
+        "node": "TSModuleDeclaration(Member)",
         "symbols": [
           {
-            "flag": "SymbolFlags(Export | TypeAlias)",
+            "flags": "SymbolFlags(Export | TypeAlias)",
             "id": 2,
             "name": "unreferenced",
             "node": "TSTypeAliasDeclaration",
@@ -37,32 +37,32 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 4,
         "node": "TSInterfaceDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 0,
         "name": "unreferenced",
         "node": "TSTypeAliasDeclaration",
         "references": []
       },
       {
-        "flag": "SymbolFlags(NameSpaceModule)",
+        "flags": "SymbolFlags(NameSpaceModule)",
         "id": 1,
         "name": "Member",
-        "node": "TSModuleDeclaration",
+        "node": "TSModuleDeclaration(Member)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 3,
         "name": "Foo",
         "node": "TSInterfaceDeclaration",

@@ -4,6 +4,143 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.25.0] - 2024-08-23
+
+- 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)
+
+- c4c08a7 ast: [**BREAKING**] Rename `IdentifierReference::reference_flags` field (#5024) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 714373d ast: `inherit_variants!` macro add `into_*` methods (#5005) (overlookmotel)
+
+### Bug Fixes
+
+- 7f3129e ast: Correct code comment (#5004) (overlookmotel)
+- 1365feb transformer: Remove an `AstBuilder::copy` call for TS `AssignmentTarget` transform (#4984) (overlookmotel)- b7db235 Comments gen regression (#5003) (IWANABETHATGUY)
+
+### Refactor
+
+- cca7440 ast: Replace `AstBuilder::move_statement_vec` with `move_vec` (#4988) (overlookmotel)
+- 4012260 ast: `AstBuilder::move_identifier_reference` do not allocate empty string (#4977) (overlookmotel)
+- 96422b6 ast: Make AstBuilder non-exhaustive (#4925) (DonIsaac)
+- 4796ece transformer: TS annotations transform use `move_expression` (#4982) (overlookmotel)
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- fd34640 traverse: Support `generate_uid_based_on_node` method in `TraverseCtx` (#4940) (Dunqing)
+
+### Bug Fixes
+
+- c0b26f4 ast: Do not include `scope_id` fields in JSON AST (#4858) (overlookmotel)
+- 879a271 minifier: Do not join `require` calls for `cjs-module-lexer` (#4875) (Boshen)
+- 248a757 transformer/typescript: Typescript syntax within `SimpleAssignmentTarget` with `MemberExpressions` is not stripped (#4920) (Dunqing)
+
+### Documentation
+
+- 47c9552 ast, ast_macros, ast_tools: Better documentation for `Ast` helper attributes. (#4856) (rzvxa)
+
+### Refactor
+
+- 90d0b2b allocator, ast, span, ast_tools: Use `allocator` as var name for `Allocator` (#4900) (overlookmotel)
+- 1eb59d2 ast, isolated_declarations, transformer: Mark `AstBuilder::copy` as an unsafe function (#4907) (overlookmotel)
+- 8e8fcd0 ast_tools: Rename `oxc_ast_codegen` to `oxc_ast_tools`. (#4846) (rzvxa)
+
+## [0.24.2] - 2024-08-12
+
+### Documentation
+
+- 8827659 ast: More doc comments for JSX nodes (#4830) (DonIsaac)
+
+### Refactor
+
+- 0ea697b ast, ast_codegen: `CloneIn` implementations now initialize semantic related cells with `Default` value. (#4819) (rzvxa)
+- ecfa124 ast_codegen: Add line break to generated code (#4829) (overlookmotel)
+- 096ac7b linter: Clean up jsx-a11y/anchor-is-valid (#4831) (DonIsaac)
+
+## [0.24.1] - 2024-08-10
+
+### Bug Fixes
+
+- fff9da3 ast, ast_codegen: Use `generate_derive` instead of visitable for generating span derives. (#4747) (rzvxa)
+- f5eeebd ast_macros: Raise compile error on invalid `generate_derive` input. (#4766) (rzvxa)
+
+### Refactor
+
+- daa0b2e ast: `oxc_ast` crate re-export AST types from other crates (#4773) (overlookmotel)
+- d4a3be8 ast_codegen: Line breaks between types in layout assertions (#4781) (overlookmotel)
+- dbb5f4c ast_codegen: Remove unnecessary imports from generated files (#4774) (overlookmotel)
+- 2dea0ca ast_codegen: Consistent import order (#4761) (overlookmotel)
+
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 51c1ca0 ast: Derive `CloneIn` for AST types, using `generate_derive`. (#4732) (rzvxa)
+- e12bd1e ast: Allow conversion from TSAccessibility into &'static str (#4711) (DonIsaac)
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- ec0b4cb ast_codegen: Add `derive_clone_in` generator. (#4731) (rzvxa)
+- 82e2f6b ast_codegen: Process AST-related `syntax` types. (#4694) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+- 07607d3 ast_codegen, span: Process `Span` through ast_codegen (#4703) (overlookmotel)
+- 125c5fd ast_codegen, span: Process `SourceType` through ast_codegen. (#4696) (rzvxa)
+- eaddc8f linter: Add fixer for eslint/func_names (#4714) (DonIsaac)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- 579b797 ast: Use type identifier instead of `CloneIn::Cloned` GAT. (#4738) (rzvxa)
+- 475266d ast: Use correct lifetimes for name-related methods (#4712) (DonIsaac)
+- 83b6ca9 ast: Add explicit enum discriminants. (#4689) (rzvxa)
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+- 2218340 ast, ast_codegen: Use `generate_derive` for implementing `GetSpan` and `GetSpanMut` traits. (#4735) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
 ## [0.23.0] - 2024-08-01
 
 ### Features

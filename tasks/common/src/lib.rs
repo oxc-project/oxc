@@ -18,5 +18,5 @@ pub fn project_root() -> PathBuf {
 
 /// Normalizes the path when on Windows to using forward slash delimiters.
 pub fn normalize_path<P: AsRef<Path>>(path: P) -> String {
-    path.as_ref().display().to_string().replace('\\', "/")
+    path.as_ref().to_string_lossy().replace('\\', "/")
 }

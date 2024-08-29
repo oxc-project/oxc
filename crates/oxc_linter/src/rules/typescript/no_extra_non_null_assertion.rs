@@ -5,8 +5,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_extra_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("extra non-null assertion").with_label(span0)
+fn no_extra_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("extra non-null assertion").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,7 +21,7 @@ declare_oxc_lint!(
     /// The `!` non-null assertion operator in TypeScript is used to assert that a value's type does not include null or undefined. Using the operator any more than once on a single value does nothing.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// const foo: { bar: number } | null = null;
     /// const bar = foo!!!.bar;
     /// ```

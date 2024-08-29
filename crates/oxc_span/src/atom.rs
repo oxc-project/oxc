@@ -9,7 +9,7 @@ use compact_str::CompactString;
 use serde::{Serialize, Serializer};
 
 use crate::Span;
-use oxc_allocator::{Allocator, FromIn};
+use oxc_allocator::{Allocator, CloneIn, FromIn};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -59,33 +59,41 @@ impl<'a> Atom<'a> {
     }
 }
 
-impl<'a, 'b> FromIn<'a, &'b Atom<'a>> for Atom<'a> {
-    fn from_in(s: &'b Atom<'a>, _: &'a Allocator) -> Self {
+impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Atom<'old_alloc> {
+    type Cloned = Atom<'new_alloc>;
+
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        Atom::from_in(self.as_str(), allocator)
+    }
+}
+
+impl<'alloc> FromIn<'alloc, &Atom<'alloc>> for Atom<'alloc> {
+    fn from_in(s: &Atom<'alloc>, _: &'alloc Allocator) -> Self {
         Self::from(s.0)
     }
 }
 
-impl<'a, 'b> FromIn<'a, &'b str> for Atom<'a> {
-    fn from_in(s: &'b str, alloc: &'a Allocator) -> Self {
-        Self::from(oxc_allocator::String::from_str_in(s, alloc).into_bump_str())
+impl<'alloc> FromIn<'alloc, &str> for Atom<'alloc> {
+    fn from_in(s: &str, allocator: &'alloc Allocator) -> Self {
+        Self::from(oxc_allocator::String::from_str_in(s, allocator).into_bump_str())
     }
 }
 
-impl<'a> FromIn<'a, String> for Atom<'a> {
-    fn from_in(s: String, alloc: &'a Allocator) -> Self {
-        Self::from_in(s.as_str(), alloc)
+impl<'alloc> FromIn<'alloc, String> for Atom<'alloc> {
+    fn from_in(s: String, allocator: &'alloc Allocator) -> Self {
+        Self::from_in(s.as_str(), allocator)
     }
 }
 
-impl<'a> FromIn<'a, &String> for Atom<'a> {
-    fn from_in(s: &String, alloc: &'a Allocator) -> Self {
-        Self::from_in(s.as_str(), alloc)
+impl<'alloc> FromIn<'alloc, &String> for Atom<'alloc> {
+    fn from_in(s: &String, allocator: &'alloc Allocator) -> Self {
+        Self::from_in(s.as_str(), allocator)
     }
 }
 
-impl<'a, 'b> FromIn<'a, Cow<'b, str>> for Atom<'a> {
-    fn from_in(s: Cow<'b, str>, alloc: &'a Allocator) -> Self {
-        Self::from_in(&*s, alloc)
+impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Atom<'alloc> {
+    fn from_in(s: Cow<'_, str>, allocator: &'alloc Allocator) -> Self {
+        Self::from_in(&*s, allocator)
     }
 }
 
@@ -190,7 +198,8 @@ impl<'a> fmt::Display for Atom<'a> {
 ///
 /// Currently implemented as just a wrapper around [`compact_str::CompactString`],
 /// but will be reduced in size with a custom implementation later.
-#[derive(Clone, Eq)]
+#[derive(Clone, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serialize", derive(serde::Deserialize))]
 pub struct CompactStr(CompactString);
 
 impl CompactStr {
@@ -386,6 +395,25 @@ impl Serialize for CompactStr {
         S: Serializer,
     {
         serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for CompactStr {
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn schema_name() -> std::string::String {
+        "String".to_string()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        Cow::Borrowed("String")
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        <&str>::json_schema(gen)
     }
 }
 

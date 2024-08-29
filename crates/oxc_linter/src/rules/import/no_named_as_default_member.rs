@@ -11,15 +11,10 @@ use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_as_default_member_dignostic(
-    span0: Span,
-    x1: &str,
-    x2: &str,
-    x3: &str,
-) -> OxcDiagnostic {
+fn no_named_as_default_member_dignostic(span: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{x1:?} also has a named export {x2:?}"))
         .with_help(format!("Check if you meant to write `import {{{x2:}}} from {x3:?}`"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
@@ -86,7 +81,7 @@ impl Rule for NoNamedAsDefaultMember {
                     .and_then(|symbol_id| has_members_map.get(&symbol_id))
                     .and_then(|it| {
                         if it.0.exported_bindings.contains_key(entry_name) {
-                            Some(it.1.to_string())
+                            Some(&it.1)
                         } else {
                             None
                         }
@@ -109,7 +104,7 @@ impl Rule for NoNamedAsDefaultMember {
                     },
                     &ident.name,
                     prop_str,
-                    &module_name,
+                    module_name,
                 ));
             };
         };
@@ -136,7 +131,7 @@ impl Rule for NoNamedAsDefaultMember {
                                 decl.span,
                                 &ident.name,
                                 &name,
-                                &module_name,
+                                module_name,
                             ));
                         }
                     }

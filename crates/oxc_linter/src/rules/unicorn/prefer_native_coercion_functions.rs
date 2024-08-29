@@ -9,14 +9,14 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_first_parameter_name, AstNode};
 
-fn function(span0: Span, x1: &str) -> OxcDiagnostic {
+fn function(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("The function is equivalent to `{x1}`. Call `{x1}` directly."))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn array_callback(span0: Span) -> OxcDiagnostic {
+fn array_callback(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -46,7 +46,8 @@ declare_oxc_lint!(
     /// array.some(Boolean);
     /// ```
     PreferNativeCoercionFunctions,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferNativeCoercionFunctions {

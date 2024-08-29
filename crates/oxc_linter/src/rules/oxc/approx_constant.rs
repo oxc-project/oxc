@@ -9,10 +9,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn approx_constant_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn approx_constant_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Approximate value of `{x1}` found."))
         .with_help(format!("Use `Math.{x1}` instead"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,14 +21,21 @@ pub struct ApproxConstant;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallows the use of approximate constants, instead preferring the use of the constants in the `Math` object.
+    /// Disallows the use of approximate constants, instead preferring the use
+    /// of the constants in the `Math` object.
     ///
     /// ### Why is this bad?
     ///
     /// Approximate constants are not as accurate as the constants in the `Math` object.
     ///
     /// ### Example
+    ///
     /// ```javascript
+    /// // Bad
+    /// let log10e = 0.434294
+    ///
+    /// // Good
+    /// let log10e = Math.LOG10E
     /// ```
     ApproxConstant,
     suspicious

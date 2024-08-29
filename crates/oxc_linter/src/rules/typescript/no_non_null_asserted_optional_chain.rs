@@ -29,7 +29,7 @@ declare_oxc_lint!(
     /// Most of the time, either the object was not nullable and did not need the `?.` for its property lookup, or the `!` is incorrect and introducing a type safety hole.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// foo?.bar!;
     /// foo?.bar()!;
     /// ```

@@ -35,7 +35,9 @@ impl ScopeId {
 impl Idx for ScopeId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
-        Self(NonMaxU32::new(idx as u32).unwrap())
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
     fn index(self) -> usize {
@@ -79,6 +81,7 @@ bitflags! {
 
 impl ScopeFlags {
     #[must_use]
+    #[inline]
     pub fn with_strict_mode(self, yes: bool) -> Self {
         if yes {
             self | Self::StrictMode
@@ -87,50 +90,62 @@ impl ScopeFlags {
         }
     }
 
+    #[inline]
     pub fn is_strict_mode(&self) -> bool {
         self.contains(Self::StrictMode)
     }
 
+    #[inline]
     pub fn is_block(&self) -> bool {
         self.is_empty() || *self == Self::StrictMode
     }
 
+    #[inline]
     pub fn is_top(&self) -> bool {
         self.contains(Self::Top)
     }
 
+    #[inline]
     pub fn is_function(&self) -> bool {
         self.contains(Self::Function)
     }
 
+    #[inline]
     pub fn is_arrow(&self) -> bool {
         self.contains(Self::Arrow)
     }
 
+    #[inline]
     pub fn is_constructor(&self) -> bool {
         self.contains(Self::Constructor)
     }
 
+    #[inline]
     pub fn is_class_static_block(&self) -> bool {
         self.contains(Self::ClassStaticBlock)
     }
 
+    #[inline]
     pub fn is_ts_module_block(&self) -> bool {
         self.contains(Self::TsModuleBlock)
     }
 
+    #[inline]
     pub fn is_var(&self) -> bool {
         self.intersects(Self::Var)
     }
 
+    #[inline]
     pub fn is_set_accessor(&self) -> bool {
         self.contains(Self::SetAccessor)
     }
 
+    #[inline]
     pub fn is_set_or_get_accessor(&self) -> bool {
         self.intersects(Self::SetAccessor | Self::GetAccessor)
     }
 
+    #[inline]
     pub fn is_catch_clause(&self) -> bool {
         self.contains(Self::CatchClause)
     }

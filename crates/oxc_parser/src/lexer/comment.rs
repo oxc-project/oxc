@@ -115,10 +115,7 @@ impl<'a> Lexer<'a> {
                     cold_branch(|| {
                         // SAFETY: Next byte is `0xE2` which is always 1st byte of a 3-byte UTF-8 char.
                         // So safe to advance `pos` by 1 and read 2 bytes.
-                        let next2 = unsafe {
-                            pos = pos.add(1);
-                            pos.read2()
-                        };
+                        let next2 = unsafe { pos.add(1).read2() };
                         if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                             // Irregular line break
                             self.token.is_on_new_line = true;
@@ -127,11 +124,10 @@ impl<'a> Lexer<'a> {
                             // But irregular line breaks are rare anyway.
                         }
                         // Either way, continue searching.
-                        // Skip 3 bytes (skipped 1 byte above, macro skips 1 more, so skip 1 more here
-                        // to make 3), and continue searching.
+                        // Skip 3 bytes (macro skips 1 already, so skip 2 here), and continue searching.
                         // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                         // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
-                        pos = unsafe { pos.add(1) };
+                        pos = unsafe { pos.add(2) };
                         true
                     })
                 } else {

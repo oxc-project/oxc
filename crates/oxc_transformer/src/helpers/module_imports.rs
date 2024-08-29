@@ -3,8 +3,10 @@ use std::cell::{Cell, RefCell};
 use indexmap::IndexMap;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder};
+use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
+use oxc_traverse::TraverseCtx;
 
 pub struct NamedImport<'a> {
     imported: Atom<'a>,
@@ -72,11 +74,11 @@ impl<'a> ModuleImports<'a> {
         }
     }
 
-    pub fn get_import_statements(&self) -> Vec<'a, Statement<'a>> {
+    pub fn get_import_statements(&self, ctx: &mut TraverseCtx<'a>) -> Vec<'a, Statement<'a>> {
         self.ast.vec_from_iter(self.imports.borrow_mut().drain(..).map(|(import_type, names)| {
             match import_type.kind {
                 ImportKind::Import => self.get_named_import(import_type.source, names),
-                ImportKind::Require => self.get_require(import_type.source, names),
+                ImportKind::Require => self.get_require(import_type.source, names, ctx),
             }
         }))
     }
@@ -116,9 +118,14 @@ impl<'a> ModuleImports<'a> {
         &self,
         source: Atom<'a>,
         names: std::vec::Vec<NamedImport<'a>>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;
-        let callee = self.ast.expression_identifier_reference(SPAN, Atom::from("require"));
+        let symbol_id = ctx.scopes().get_root_binding("require");
+        let ident =
+            ctx.create_reference_id(SPAN, Atom::from("require"), symbol_id, ReferenceFlags::read());
+        let callee = self.ast.expression_from_identifier_reference(ident);
+
         let args = {
             let arg = Argument::from(self.ast.expression_string_literal(SPAN, source));
             self.ast.vec1(arg)
@@ -139,9 +146,9 @@ impl<'a> ModuleImports<'a> {
         let decl = {
             let init = self.ast.expression_call(
                 SPAN,
-                args,
                 callee,
                 Option::<TSTypeParameterInstantiation>::None,
+                args,
                 false,
             );
             let decl = self.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);

@@ -147,6 +147,10 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_property_definition(def);
     }
 
+    pub fn transform_accessor_property(&mut self, def: &mut AccessorProperty<'a>) {
+        self.annotations.transform_accessor_property(def);
+    }
+
     pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         self.annotations.transform_statements(stmts);
     }
@@ -193,6 +197,22 @@ impl<'a> TypeScript<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.annotations.transform_for_statement(stmt, ctx);
+    }
+
+    pub fn transform_for_in_statement(
+        &mut self,
+        stmt: &mut ForInStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_in_statement(stmt, ctx);
+    }
+
+    pub fn transform_for_of_statement(
+        &mut self,
+        stmt: &mut ForOfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_of_statement(stmt, ctx);
     }
 
     pub fn transform_tagged_template_expression(

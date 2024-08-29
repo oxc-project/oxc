@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_params, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
+        collect_params, default_true, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
         should_ignore_as_internal, should_ignore_as_private, ParamKind,
     },
 };
@@ -80,9 +80,6 @@ impl Default for RequireParamConfig {
 }
 fn default_exempted_by() -> Vec<String> {
     vec!["inheritdoc".to_string()]
-}
-fn default_true() -> bool {
-    true
 }
 fn default_check_types_pattern() -> String {
     "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line
@@ -158,7 +155,7 @@ impl Rule for RequireParam {
         }
 
         // Collected JSDoc `@param` tags
-        let tags_to_check = collect_tags(&jsdocs, &settings.resolve_tag_name("param"));
+        let tags_to_check = collect_tags(&jsdocs, settings.resolve_tag_name("param"));
         let shallow_tags =
             tags_to_check.iter().filter(|(name, _)| !name.contains('.')).collect::<Vec<_>>();
 

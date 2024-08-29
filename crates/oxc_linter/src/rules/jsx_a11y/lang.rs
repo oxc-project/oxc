@@ -14,10 +14,10 @@ use crate::{
     AstNode,
 };
 
-fn lang_diagnostic(span0: Span) -> OxcDiagnostic {
+fn lang_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Lang attribute must have a valid value.")
         .with_help("Set a valid value for lang attribute.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,7 +26,7 @@ pub struct Lang;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The lang prop on the <html> element must be a valid IETF's BCP 47 language tag.
+    /// The lang prop on the `<html>` element must be a valid IETF's BCP 47 language tag.
     ///
     /// ### Why is this bad?
     ///
@@ -39,13 +39,13 @@ declare_oxc_lint!(
     /// ### Example
     ///
     /// // good
-    /// ```javascript
+    /// ```jsx
     /// <html lang="en">
     /// <html lang="en-US">
     /// ```
     ///
     /// // bad
-    /// ```javascript
+    /// ```jsx
     /// <html>
     /// <html lang="foo">
     /// ````
@@ -94,8 +94,7 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             !container.expression.is_expression() || !container.expression.is_undefined()
         }
         Some(JSXAttributeValue::StringLiteral(str)) => {
-            let language_tag = LanguageTag::parse(str.value.as_str()).unwrap();
-            language_tag.is_valid()
+            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
         }
         _ => true,
     }
@@ -135,6 +134,7 @@ fn test() {
 
     let fail = vec![
         ("<html lang='foo' />", None, None, None),
+        ("<html lang='n'></html>", None, None, None),
         ("<html lang='zz-LL' />", None, None, None),
         ("<html lang={undefined} />", None, None, None),
         ("<Foo lang={undefined} />", None, Some(settings()), None),

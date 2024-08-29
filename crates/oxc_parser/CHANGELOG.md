@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.25.0] - 2024-08-23
+
+- b2ff2df parser: [**BREAKING**] Remove builder pattern from `Parser` struct (#5000) (Boshen)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 6800e69 oxc: Add `Compiler` and `CompilerInterface` (#4954) (Boshen)
+- afe728a parser: Parse regular expression with regex parser (#4998) (Boshen)
+
+### Bug Fixes
+
+- efbdced parser: Only show flow error if it's a flow file (#5069) (Boshen)
+
+### Refactor
+
+- ca70cc7 linter, mangler, parser, semantic, transformer, traverse, wasm: Rename various `flag` vars to `flags` (#5028) (overlookmotel)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- 1bdde2c parser: Detect @flow in `/** @flow */ comment (#4861) (Boshen)
+
+## [0.24.2] - 2024-08-12
+
+### Documentation
+
+- 559baa5 parser: Clean up doc regarding performance; remove conformance (Boshen)
+
+## [0.24.0] - 2024-08-08
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- d25dea7 parser: Use `ast_builder` in more places. (#4612) (rzvxa)
+
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- d25dea7 parser: Use `ast_builder` in more places. (#4612) (rzvxa)
+
 ## [0.23.0] - 2024-08-01
 
 ### Features

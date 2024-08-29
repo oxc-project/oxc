@@ -19,7 +19,7 @@ declare_oxc_lint!(
     /// Consider using a Map or Set if you’re using an object as a key-value collection.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// const container: { [i: string]: 0 } = {};
     /// delete container['aa' + 'b'];
     /// ```
@@ -27,10 +27,10 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn no_dynamic_delete_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_dynamic_delete_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not delete dynamically computed property keys.")
         .with_help("Disallow using the `delete` operator on computed key expressions")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for NoDynamicDelete {

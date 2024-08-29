@@ -24,6 +24,7 @@ pub fn parse_jest_fn_call<'a>(
     let node = possible_jest_node.node;
     let callee = &call_expr.callee;
     // If bailed out, we're not jest function
+
     let resolved = resolve_to_jest_fn(call_expr, original)?;
 
     let params = NodeChainParams {
@@ -32,7 +33,7 @@ pub fn parse_jest_fn_call<'a>(
         parent_kind: Some(KnownMemberExpressionParentKind::Call),
         grandparent_kind: None,
     };
-    let chain = get_node_chain(&params);
+    let mut chain = get_node_chain(&params);
     let all_member_expr_except_last =
         chain.iter().rev().skip(1).all(|member| {
             matches!(member.parent_kind, Some(KnownMemberExpressionParentKind::Member))
@@ -56,18 +57,16 @@ pub fn parse_jest_fn_call<'a>(
 
         let name = resolved.original.unwrap_or(resolved.local);
         let kind = JestFnKind::from(name);
-        let mut members = Vec::new();
-        let mut iter = chain.into_iter();
-        let head = iter.next()?;
-        let rest = iter;
 
         // every member node must have a member expression as their parent
         // in order to be part of the call chain we're parsing
-        for member in rest {
-            members.push(member);
-        }
+        let (head, members) = {
+            let rest = chain.split_off(1);
+            let head = chain.into_iter().next().unwrap();
+            (head, rest)
+        };
 
-        if matches!(kind, JestFnKind::Expect) {
+        if matches!(kind, JestFnKind::Expect | JestFnKind::ExpectTypeOf) {
             let options = ExpectFnCallOptions {
                 call_expr,
                 members,
@@ -77,7 +76,7 @@ pub fn parse_jest_fn_call<'a>(
                 node,
                 ctx,
             };
-            return parse_jest_expect_fn_call(options);
+            return parse_jest_expect_fn_call(options, matches!(kind, JestFnKind::ExpectTypeOf));
         }
 
         // Ensure that we're at the "top" of the function call chain otherwise when
@@ -89,7 +88,8 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest)) {
+        if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest | JestGeneralFnKind::Vitest))
+        {
             return parse_jest_jest_fn_call(members, name, resolved.local);
         }
 
@@ -104,7 +104,7 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        return Some(ParsedJestFnCall::GeneralJestFnCall(ParsedGeneralJestFnCall {
+        return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
             kind,
             members,
             name: Cow::Borrowed(name),
@@ -117,6 +117,7 @@ pub fn parse_jest_fn_call<'a>(
 
 fn parse_jest_expect_fn_call<'a>(
     options: ExpectFnCallOptions<'a, '_>,
+    is_type_of: bool,
 ) -> Option<ParsedJestFnCall<'a>> {
     let ExpectFnCallOptions { call_expr, members, name, local, head, node, ctx } = options;
     let (modifiers, matcher, mut expect_error) = match find_modifiers_and_matcher(&members) {
@@ -137,7 +138,7 @@ fn parse_jest_expect_fn_call<'a>(
         }
     }
 
-    return Some(ParsedJestFnCall::ExpectFnCall(ParsedExpectFnCall {
+    let parsed_expect_fn = ParsedExpectFnCall {
         kind: JestFnKind::Expect,
         head,
         members,
@@ -147,7 +148,13 @@ fn parse_jest_expect_fn_call<'a>(
         matcher_index: matcher,
         modifier_indices: modifiers,
         expect_error,
-    }));
+    };
+
+    return Some(if is_type_of {
+        ParsedJestFnCall::ExpectTypeOf(parsed_expect_fn)
+    } else {
+        ParsedJestFnCall::Expect(parsed_expect_fn)
+    });
 }
 
 type ModifiersAndMatcherIndex = (Vec<usize>, Option<usize>);
@@ -238,12 +245,17 @@ fn parse_jest_jest_fn_call<'a>(
     name: &'a str,
     local: &'a str,
 ) -> Option<ParsedJestFnCall<'a>> {
-    if !name.to_ascii_lowercase().eq_ignore_ascii_case("jest") {
+    let lowercase_name = name.to_ascii_lowercase();
+
+    if !(lowercase_name == "jest" || lowercase_name == "vi") {
         return None;
     }
 
-    return Some(ParsedJestFnCall::GeneralJestFnCall(ParsedGeneralJestFnCall {
-        kind: JestFnKind::General(JestGeneralFnKind::Jest),
+    let kind =
+        if lowercase_name == "jest" { JestGeneralFnKind::Jest } else { JestGeneralFnKind::Vitest };
+
+    return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
+        kind: JestFnKind::General(kind),
         members,
         name: Cow::Borrowed(name),
         local: Cow::Borrowed(local),
@@ -307,15 +319,16 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
 }
 
 pub enum ParsedJestFnCall<'a> {
-    GeneralJestFnCall(ParsedGeneralJestFnCall<'a>),
-    ExpectFnCall(ParsedExpectFnCall<'a>),
+    GeneralJest(ParsedGeneralJestFnCall<'a>),
+    Expect(ParsedExpectFnCall<'a>),
+    ExpectTypeOf(ParsedExpectFnCall<'a>),
 }
 
 impl<'a> ParsedJestFnCall<'a> {
     pub fn kind(&self) -> JestFnKind {
         match self {
-            Self::GeneralJestFnCall(call) => call.kind,
-            Self::ExpectFnCall(call) => call.kind,
+            Self::GeneralJest(call) => call.kind,
+            Self::Expect(call) | Self::ExpectTypeOf(call) => call.kind,
         }
     }
 }
@@ -328,6 +341,7 @@ pub struct ParsedGeneralJestFnCall<'a> {
     pub local: Cow<'a, str>,
 }
 
+#[derive(Debug)]
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
@@ -455,6 +469,14 @@ struct NodeChainParams<'a> {
 /// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
 fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpressionProperty<'a>> {
     let mut chain = Vec::new();
+    recurse_extend_node_chain(params, &mut chain);
+    chain
+}
+
+fn recurse_extend_node_chain<'a>(
+    params: &NodeChainParams<'a>,
+    chain: &mut Vec<KnownMemberExpressionProperty<'a>>,
+) {
     let NodeChainParams { expr, parent, parent_kind, grandparent_kind } = params;
 
     match expr {
@@ -467,7 +489,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
                 grandparent_kind: *parent_kind,
             };
 
-            chain.extend(get_node_chain(&params));
+            recurse_extend_node_chain(&params, chain);
             if let Some((span, element)) = MemberExpressionElement::from_member_expr(member_expr) {
                 chain.push(KnownMemberExpressionProperty {
                     element,
@@ -494,8 +516,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
                 parent_kind: Some(KnownMemberExpressionParentKind::Call),
                 grandparent_kind: *parent_kind,
             };
-            let sub_chain = get_node_chain(&params);
-            chain.extend(sub_chain);
+            recurse_extend_node_chain(&params, chain);
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
             let params = NodeChainParams {
@@ -504,9 +525,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
                 parent_kind: Some(KnownMemberExpressionParentKind::TaggedTemplate),
                 grandparent_kind: *parent_kind,
             };
-
-            let sub_chain = get_node_chain(&params);
-            chain.extend(sub_chain);
+            recurse_extend_node_chain(&params, chain);
         }
         Expression::StringLiteral(string_literal) => {
             chain.push(KnownMemberExpressionProperty {
@@ -528,8 +547,6 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
         }
         _ => {}
     };
-
-    chain
 }
 
 // sorted list for binary search.

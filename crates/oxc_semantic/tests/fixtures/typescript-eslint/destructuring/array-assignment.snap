@@ -5,18 +5,18 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/a
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "obj",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(obj)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "obj",
             "node_id": 18
@@ -24,13 +24,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/a
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 1,
         "name": "b",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(b)",
         "references": [
           {
-            "flag": "ReferenceFlag(Write)",
+            "flags": "ReferenceFlags(Write)",
             "id": 1,
             "name": "b",
             "node_id": 22
@@ -38,13 +38,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/a
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 2,
         "name": "c",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(c)",
         "references": [
           {
-            "flag": "ReferenceFlag(Write)",
+            "flags": "ReferenceFlags(Write)",
             "id": 2,
             "name": "c",
             "node_id": 28

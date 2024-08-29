@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(decorator)",
         "symbols": []
@@ -16,51 +16,51 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function | GetAccessor)",
+            "flags": "ScopeFlags(StrictMode | Function | GetAccessor)",
             "id": 3,
             "node": "Function(<anonymous>)",
             "symbols": []
           },
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function | SetAccessor)",
+            "flags": "ScopeFlags(StrictMode | Function | SetAccessor)",
             "id": 4,
             "node": "Function(<anonymous>)",
             "symbols": [
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "value",
-                "node": "FormalParameter",
+                "node": "FormalParameter(value)",
                 "references": []
               }
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "Class(Foo)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 0,
         "name": "decorator",
         "node": "Function(decorator)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "decorator",
             "node_id": 10
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "decorator",
             "node_id": 20
@@ -68,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
         ]
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 1,
         "name": "Foo",
         "node": "Class(Foo)",

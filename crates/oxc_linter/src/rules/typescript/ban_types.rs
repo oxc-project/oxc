@@ -10,21 +10,21 @@ fn type_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         .with_label(span2)
 }
 
-fn type_literal(span0: Span) -> OxcDiagnostic {
+fn type_literal(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer explicitly define the object shape")
         .with_help("This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn function(span0: Span) -> OxcDiagnostic {
+fn function(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't use `Function` as a type")
         .with_help("The `Function` type accepts any function-like value")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn object(span0: Span) -> OxcDiagnostic {
+fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'The `Object` type actually means \"any non-nullish value\"")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

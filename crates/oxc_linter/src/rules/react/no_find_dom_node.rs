@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_find_dom_node_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_find_dom_node_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected call to `findDOMNode`.")
         .with_help("Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -24,7 +24,7 @@ declare_oxc_lint!(
     /// [It has been deprecated in `StrictMode`.](https://legacy.reactjs.org/docs/strict-mode.html#warning-about-deprecated-finddomnode-usage)
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// class MyComponent extends Component {
     ///   componentDidMount() {
     ///     findDOMNode(this).scrollIntoView();

@@ -420,8 +420,19 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
         }
 
         BinaryOperator::ShiftRightZeroFill => match (left, right) {
+            // <https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift>
             (Value::Number(a), Value::Number(b)) => {
-                Value::Number(f64::from((a as u32) >> (b as u32)))
+                // Casting between two integers of the same size (e.g. i32 -> u32) is a no-op
+                let a = a as i32;
+                let b = b as i32;
+                // 1. Let lNum be ! ToUint32(x).
+                let l_num = a as u32;
+                // 2. Let rNum be ! ToUint32(y).
+                let r_num = b as u32;
+                // 3. Let shiftCount be ℝ(rNum) modulo 32.
+                let shift_count = r_num % 32;
+                // 4. Return the result of performing a zero-filling right shift of lNum by shiftCount bits.
+                Value::Number(f64::from(l_num >> shift_count))
             }
             _ => Value::Unknown,
         },
@@ -446,13 +457,33 @@ pub fn calculate_binary_operation(op: BinaryOperator, left: Value, right: Value)
             _ => Value::Unknown,
         },
         BinaryOperator::ShiftLeft => match (left, right) {
+            // <https://tc39.es/ecma262/#sec-numeric-types-number-leftShift>
             (Value::Number(a), Value::Number(b)) => {
-                Value::Number(f64::from((a as i32) << (b as i32)))
+                // 1. Let lNum be ! ToInt32(x).
+                let l_num = a as i32;
+                // 2. Let rNum be ! ToUint32(y).
+                let r_num = b as i32;
+                let r_num = r_num as u32;
+                // 3. Let shiftCount be ℝ(rNum) modulo 32.
+                let shift_count = r_num % 32;
+                // 4. Return the result of left shifting lNum by shiftCount bits.
+                Value::Number(f64::from(l_num << shift_count))
             }
             _ => Value::Unknown,
         },
         BinaryOperator::ShiftRight => match (left, right) {
-            (Value::Number(a), Value::Number(b)) => Value::Number(f64::from(a as i32 >> b as i32)),
+            // <https://tc39.es/ecma262/#sec-numeric-types-number-signedRightShift>
+            (Value::Number(a), Value::Number(b)) => {
+                // 1. Let lNum be ! ToInt32(x).
+                let l_num = a as i32;
+                // 2. Let rNum be ! ToUint32(y).
+                let r_num = b as i32;
+                let r_num = r_num as u32;
+                // 3. Let shiftCount be ℝ(rNum) modulo 32.
+                let shift_count = r_num % 32;
+                // 4. Return the result of performing a sign-extending right shift of lNum by shiftCount bits. The most significant bit is propagated. The mathematical value of the result is exactly representable as a 32-bit two's complement bit string.i
+                Value::Number(f64::from(l_num >> shift_count))
+            }
             _ => Value::Unknown,
         },
         BinaryOperator::In | BinaryOperator::Instanceof => Value::Unknown,
@@ -589,15 +620,33 @@ fn test_calculate_binary_operation() {
 
     // "<<",
     let op = BinaryOperator::ShiftLeft;
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(0.0),), Value::Number(1.0));
     assert_eq!(fun(op, Value::Number(1.0), Value::Number(2.0),), Value::Number(4.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(31.0),), Value::Number(-2_147_483_648.0));
+    assert_eq!(
+        fun(op, Value::Number(1.0), Value::Number(f64::MAX),),
+        Value::Number(-2_147_483_648.0)
+    );
+    assert_eq!(fun(op, Value::Number(-5.0), Value::Number(2.0),), Value::Number(-20.0));
 
     // ">>",
     let op = BinaryOperator::ShiftRight;
     assert_eq!(fun(op, Value::Number(4.0), Value::Number(2.0),), Value::Number(1.0));
+    // issue: https://github.com/oxc-project/oxc/issues/4914
+    assert_eq!(fun(op, Value::Number(4.0), Value::Number(49.0)), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(-5.0), Value::Number(2.0),), Value::Number(-2.0));
 
     // ">>>",
     let op = BinaryOperator::ShiftRightZeroFill;
+    assert_eq!(fun(op, Value::Number(0.0), Value::Number(0.0),), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(1.0), Value::Number(0.0),), Value::Number(1.0));
     assert_eq!(fun(op, Value::Number(4.0), Value::Number(2.0),), Value::Number(1.0));
+    assert_eq!(fun(op, Value::Number(2.0), Value::Number(4.0),), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(4096.0), Value::Number(4096.0)), Value::Number(4096.0));
+    assert_eq!(fun(op, Value::Number(4096.0), Value::Number(1024.0)), Value::Number(4096.0));
+    assert_eq!(fun(op, Value::Number(4096.0), Value::Number(33.0)), Value::Number(2048.0));
+    assert_eq!(fun(op, Value::Number(4.0), Value::Number(49.0)), Value::Number(0.0));
+    assert_eq!(fun(op, Value::Number(-5.0), Value::Number(2.0)), Value::Number(1_073_741_822.0));
 
     // "%",
     let op = BinaryOperator::Remainder;

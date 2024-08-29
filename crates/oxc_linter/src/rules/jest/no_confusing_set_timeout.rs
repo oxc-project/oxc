@@ -12,19 +12,19 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_jest_fn_call, PossibleJestNode},
 };
 
-fn no_global_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`jest.setTimeout` should be call in `global` scope").with_label(span0)
+fn no_global_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`jest.setTimeout` should be call in `global` scope").with_label(span)
 }
 
-fn no_multiple_set_timeouts_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_multiple_set_timeouts_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not call `jest.setTimeout` multiple times")
         .with_help("Only the last call to `jest.setTimeout` will have an effect.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn no_unorder_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_unorder_set_timeout_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

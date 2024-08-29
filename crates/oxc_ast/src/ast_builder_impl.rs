@@ -62,10 +62,10 @@ impl<'a> AstBuilder<'a> {
     /// This method is completely unsound and should not be used.
     /// We need to remove all uses of it. Please don't add any more!
     /// <https://github.com/oxc-project/oxc/issues/3483>
+    #[allow(clippy::missing_safety_doc)]
     #[inline]
-    pub fn copy<T>(self, src: &T) -> T {
+    pub unsafe fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)
-
         unsafe { std::mem::transmute_copy(src) }
     }
 
@@ -80,11 +80,6 @@ impl<'a> AstBuilder<'a> {
     pub fn move_statement(self, stmt: &mut Statement<'a>) -> Statement<'a> {
         let empty_stmt = self.empty_statement(stmt.span());
         mem::replace(stmt, Statement::EmptyStatement(self.alloc(empty_stmt)))
-    }
-
-    #[inline]
-    pub fn move_statement_vec(self, stmts: &mut Vec<'a, Statement<'a>>) -> Vec<'a, Statement<'a>> {
-        mem::replace(stmts, self.vec())
     }
 
     #[inline]
@@ -103,6 +98,11 @@ impl<'a> AstBuilder<'a> {
         );
         let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
         mem::replace(decl, empty_decl)
+    }
+
+    #[inline]
+    pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
+        mem::replace(vec, self.vec())
     }
 
     /* ---------- Constructors ---------- */

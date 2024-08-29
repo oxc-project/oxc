@@ -5,6 +5,16 @@ use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+fn codegen(source_text: &str) -> String {
+    let allocator = Allocator::default();
+    let source_type = SourceType::default().with_typescript(true).with_module(true);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    CodeGenerator::new()
+        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+        .build(&ret.program)
+        .source_text
+}
+
 #[test]
 fn ts() {
     let cases = [
@@ -36,6 +46,11 @@ fn ts() {
         "class A {constructor(public readonly a: number) {}}",
         "abstract class A {private abstract static m() {}}",
         "abstract class A {private abstract static readonly prop: string}",
+        "a = x!;",
+        "b = (x as y);",
+        "c = foo<string>;",
+        "d = x satisfies y;",
+        "export @x declare abstract class C {}",
     ];
 
     let snapshot = cases.into_iter().fold(String::new(), |mut w, case| {
@@ -46,14 +61,4 @@ fn ts() {
     insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
         insta::assert_snapshot!("ts", snapshot);
     });
-}
-
-fn codegen(source_text: &str) -> String {
-    let allocator = Allocator::default();
-    let source_type = SourceType::default().with_typescript(true).with_module(true);
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
-        .build(&ret.program)
-        .source_text
 }

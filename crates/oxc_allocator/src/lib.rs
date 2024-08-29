@@ -3,13 +3,18 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-mod arena;
-mod convert;
-
+pub use bumpalo::collections::String;
 use bumpalo::Bump;
 
-pub use arena::{Box, String, Vec};
+mod boxed;
+mod clone_in;
+mod convert;
+mod vec;
+
+pub use boxed::{Address, Box};
+pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
+pub use vec::Vec;
 
 #[derive(Default)]
 pub struct Allocator {

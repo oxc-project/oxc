@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/inherited
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "BlockStatement",
         "symbols": []
@@ -16,12 +16,12 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/inherited
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(StrictMode)",
             "id": 3,
             "node": "BlockStatement",
             "symbols": [
               {
-                "flag": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
                 "id": 1,
                 "name": "e",
                 "node": "CatchParameter",
@@ -30,24 +30,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/inherited
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode | CatchClause)",
+        "flags": "ScopeFlags(StrictMode | CatchClause)",
         "id": 2,
         "node": "CatchClause",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "a",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(a)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "a",
             "node_id": 12

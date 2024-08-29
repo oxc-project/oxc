@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn react_in_jsx_scope_diagnostic(span0: Span) -> OxcDiagnostic {
+fn react_in_jsx_scope_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'React' must be in scope when using JSX")
         .with_help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,10 +21,11 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When using JSX, `<a />` expands to `React.createElement("a")`. Therefore the `React` variable must be in scope.
+    /// When using JSX, `<a />` expands to `React.createElement("a")`. Therefore
+    /// the `React` variable must be in scope.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// var a = <a />;
     ///

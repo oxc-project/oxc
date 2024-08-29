@@ -450,25 +450,27 @@ mod test {
         }
     }
 
-    // decimal
-    static_assertions::const_assert_eq!(decimal_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(decimal_byte_to_value(b'9'), 9);
+    const _: () = {
+        // decimal
+        assert!(decimal_byte_to_value(b'0') == 0);
+        assert!(decimal_byte_to_value(b'9') == 9);
 
-    // binary
-    static_assertions::const_assert_eq!(binary_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(binary_byte_to_value(b'1'), 1);
+        // binary
+        assert!(binary_byte_to_value(b'0') == 0);
+        assert!(binary_byte_to_value(b'1') == 1);
 
-    // octal
-    static_assertions::const_assert_eq!(octal_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(octal_byte_to_value(b'7'), 7);
+        // octal
+        assert!(octal_byte_to_value(b'0') == 0);
+        assert!(octal_byte_to_value(b'7') == 7);
 
-    // hex
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'9'), 9);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'A'), 10);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'F'), 15);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'a'), 10);
-    static_assertions::const_assert_eq!(hex_byte_to_value(b'f'), 15);
+        // hex
+        assert!(hex_byte_to_value(b'0') == 0);
+        assert!(hex_byte_to_value(b'9') == 9);
+        assert!(hex_byte_to_value(b'A') == 10);
+        assert!(hex_byte_to_value(b'F') == 15);
+        assert!(hex_byte_to_value(b'a') == 10);
+        assert!(hex_byte_to_value(b'f') == 15);
+    };
 
     #[test]
     #[allow(clippy::excessive_precision, clippy::cast_precision_loss)]

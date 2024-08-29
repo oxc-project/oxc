@@ -10,18 +10,18 @@ use crate::{
     AstNode,
 };
 
-fn font_display_parameter_missing(span0: Span) -> OxcDiagnostic {
+fn font_display_parameter_missing(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "A font-display parameter is missing (adding `&display=optional` is recommended).",
     )
     .with_help("See https://nextjs.org/docs/messages/google-font-display")
-    .with_label(span0)
+    .with_label(span)
 }
 
-fn not_recommended_font_display_value(span0: Span, x1: &str) -> OxcDiagnostic {
+fn not_recommended_font_display_value(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{x1}` is not a recommended font-display value."))
         .with_help("See https://nextjs.org/docs/messages/google-font-display")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,13 +30,50 @@ pub struct GoogleFontDisplay;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Enforce font-display behavior with Google Fonts.
     ///
     /// ### Why is this bad?
     ///
+    /// Specifying display=optional minimizes the risk of invisible text or
+    /// layout shift. If swapping to the custom font after it has loaded is
+    /// important to you, then use `display=swap`` instead.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```jsx
+    /// import Head from "next/head";
+    ///
+    /// export default Test = () => {
+    ///     return (
+    ///         <Head>
+    ///             <link
+    ///                 href="https://fonts.googleapis.com/css2?family=Krona+One"
+    ///                 rel="stylesheet"
+    ///             />
+    ///         </Head>
+    ///     );
+    /// };
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```jsx
+    /// import Head from "next/head";
+    ///
+    /// export default Test = () => {
+    ///     return (
+    ///         <Head>
+    ///             <link
+    ///                 href="https://fonts.googleapis.com/css2?family=Krona+One&display=optional"
+    ///                 rel="stylesheet"
+    ///             />
+    ///         </Head>
+    ///     );
+    /// };
+    /// ```
+    ///
     GoogleFontDisplay,
     correctness
 );
@@ -155,16 +192,16 @@ fn test() {
     let fail = vec![
         r#"import Head from "next/head";
 
-			      export default Test = () => {
-			       return (
-			         <Head>
-			           <link
-			             href="https://fonts.googleapis.com/css2?family=Krona+One"
-			             rel="stylesheet"
-			           />
-			         </Head>
-			       );
-			      };
+				export default Test = () => {
+				return (
+					<Head>
+					<link
+						href="https://fonts.googleapis.com/css2?family=Krona+One"
+						rel="stylesheet"
+					/>
+					</Head>
+				);
+				};
 			     "#,
         r#"import Head from "next/head";
 

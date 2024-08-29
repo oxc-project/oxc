@@ -7,30 +7,30 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/named-al
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Import)",
+        "flags": "SymbolFlags(Import)",
         "id": 0,
         "name": "t",
-        "node": "ImportSpecifier",
+        "node": "ImportSpecifier(t)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "t",
             "node_id": 8
           },
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "t",
             "node_id": 13
@@ -38,7 +38,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/named-al
         ]
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 1,
         "name": "T",
         "node": "TSTypeAliasDeclaration",

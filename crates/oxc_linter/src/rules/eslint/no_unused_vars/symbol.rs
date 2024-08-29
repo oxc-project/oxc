@@ -1,4 +1,5 @@
-use std::fmt;
+use oxc_ast::ast::{ImportDeclarationSpecifier, VariableDeclarator};
+use std::{cell::OnceCell, fmt};
 
 use oxc_ast::{
     ast::{AssignmentTarget, BindingIdentifier, BindingPattern, IdentifierReference},
@@ -8,13 +9,14 @@ use oxc_semantic::{
     AstNode, AstNodeId, AstNodes, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
     SymbolTable,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 #[derive(Clone)]
 pub(super) struct Symbol<'s, 'a> {
     semantic: &'s Semantic<'a>,
     id: SymbolId,
     flags: SymbolFlags,
+    span: OnceCell<Span>,
 }
 
 impl PartialEq for Symbol<'_, '_> {
@@ -26,8 +28,8 @@ impl PartialEq for Symbol<'_, '_> {
 // constructor and simple getters
 impl<'s, 'a> Symbol<'s, 'a> {
     pub fn new(semantic: &'s Semantic<'a>, symbol_id: SymbolId) -> Self {
-        let flags = semantic.symbols().get_flag(symbol_id);
-        Self { semantic, id: symbol_id, flags }
+        let flags = semantic.symbols().get_flags(symbol_id);
+        Self { semantic, id: symbol_id, flags, span: OnceCell::new() }
     }
 
     #[inline]
@@ -38,12 +40,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
     #[inline]
     pub fn name(&self) -> &str {
         self.symbols().get_name(self.id)
-    }
-
-    /// [`Span`] for the node declaring the [`Symbol`].
-    #[inline]
-    pub fn span(&self) -> Span {
-        self.symbols().get_span(self.id)
     }
 
     #[inline]
@@ -59,6 +55,13 @@ impl<'s, 'a> Symbol<'s, 'a> {
     #[inline]
     pub fn declaration(&self) -> &AstNode<'a> {
         self.nodes().get_node(self.declaration_id())
+    }
+
+    /// Returns `true` if this symbol has any references of any kind. Does not
+    /// check if a references is "used" under the criteria of this rule.
+    #[inline]
+    pub fn has_references(&self) -> bool {
+        !self.symbols().get_resolved_reference_ids(self.id).is_empty()
     }
 
     #[inline]
@@ -91,8 +94,13 @@ impl<'s, 'a> Symbol<'s, 'a> {
         self.semantic.symbols()
     }
 
+    #[inline]
     pub fn iter_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
-        self.nodes().iter_parents(self.declaration_id()).skip(1)
+        self.iter_self_and_parents().skip(1)
+    }
+
+    pub fn iter_self_and_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+        self.nodes().iter_parents(self.declaration_id())
     }
 
     pub fn iter_relevant_parents(
@@ -122,6 +130,29 @@ impl<'s, 'a> Symbol<'s, 'a> {
     #[inline]
     const fn is_relevant_kind(kind: AstKind<'a>) -> bool {
         !matches!(kind, AstKind::ParenthesizedExpression(_))
+    }
+
+    /// <https://github.com/oxc-project/oxc/issues/4739>
+    fn derive_span(&self) -> Span {
+        for kind in self.iter_self_and_parents().map(AstNode::kind) {
+            match kind {
+                AstKind::BindingIdentifier(_) => continue,
+                AstKind::BindingRestElement(rest) => return rest.span,
+                AstKind::VariableDeclarator(decl) => return self.clean_binding_id(&decl.id),
+                AstKind::FormalParameter(param) => return self.clean_binding_id(&param.pattern),
+                _ => break,
+            }
+        }
+        self.symbols().get_span(self.id)
+    }
+
+    /// <https://github.com/oxc-project/oxc/issues/4739>
+    fn clean_binding_id(&self, binding: &BindingPattern) -> Span {
+        if binding.kind.is_destructuring_pattern() {
+            return self.symbols().get_span(self.id);
+        }
+        let own = binding.kind.span();
+        binding.type_annotation.as_ref().map_or(own, |ann| Span::new(own.start, ann.span.start))
     }
 }
 
@@ -176,6 +207,18 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 }
 
+impl GetSpan for Symbol<'_, '_> {
+    /// [`Span`] for the node declaring the [`Symbol`].
+    #[inline]
+    fn span(&self) -> Span {
+        // TODO: un-comment and replace when BindingIdentifier spans are fixed
+        // https://github.com/oxc-project/oxc/issues/4739
+
+        // self.symbols().get_span(self.id)
+        *self.span.get_or_init(|| self.derive_span())
+    }
+}
+
 impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
     fn eq(&self, other: &IdentifierReference<'a>) -> bool {
         // cheap: no resolved reference means its a global reference
@@ -193,6 +236,12 @@ impl<'a> PartialEq<BindingIdentifier<'a>> for Symbol<'_, 'a> {
     }
 }
 
+impl<'a> PartialEq<VariableDeclarator<'a>> for Symbol<'_, 'a> {
+    fn eq(&self, decl: &VariableDeclarator<'a>) -> bool {
+        self == &decl.id
+    }
+}
+
 impl<'a> PartialEq<BindingPattern<'a>> for Symbol<'_, 'a> {
     fn eq(&self, id: &BindingPattern<'a>) -> bool {
         id.get_binding_identifier().is_some_and(|id| self == id)
@@ -205,6 +254,21 @@ impl<'a> PartialEq<AssignmentTarget<'a>> for Symbol<'_, 'a> {
             AssignmentTarget::AssignmentTargetIdentifier(id) => self == id.as_ref(),
             _ => false,
         }
+    }
+}
+
+impl<'s, 'a> PartialEq<ImportDeclarationSpecifier<'a>> for Symbol<'s, 'a> {
+    fn eq(&self, import: &ImportDeclarationSpecifier<'a>) -> bool {
+        self == import.local()
+    }
+}
+
+impl<'s, 'a, T> PartialEq<&T> for Symbol<'s, 'a>
+where
+    Symbol<'s, 'a>: PartialEq<T>,
+{
+    fn eq(&self, other: &&T) -> bool {
+        self == *other
     }
 }
 

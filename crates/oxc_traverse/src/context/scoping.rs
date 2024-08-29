@@ -2,19 +2,17 @@ use std::{cell::Cell, str};
 
 use compact_str::{format_compact, CompactString};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{
-    ast::*,
-    visit::{walk, Visit},
-};
+use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
-    reference::{ReferenceFlag, ReferenceId},
+    reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };
 
-use super::FinderRet;
+use super::ast_operations::GatherNodeParts;
+use crate::scopes_collector::ChildScopeCollector;
 
 /// Traverse scope context.
 ///
@@ -70,58 +68,24 @@ impl TraverseScoping {
         &mut self.symbols
     }
 
-    /// Walk up trail of scopes to find a scope.
-    ///
-    /// `finder` is called with `ScopeId`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeId) -> FinderRet<O>,
-    {
-        let mut scope_id = self.current_scope_id;
-        loop {
-            match finder(scope_id) {
-                FinderRet::Found(res) => return Some(res),
-                FinderRet::Stop => return None,
-                FinderRet::Continue => {}
-            }
-
-            if let Some(parent_scope_id) = self.scopes.get_parent_id(scope_id) {
-                scope_id = parent_scope_id;
-            } else {
-                return None;
-            }
-        }
+    /// Get iterator over scopes, starting with current scope and working up
+    pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.scopes.ancestors(self.current_scope_id)
     }
 
-    /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
+    /// Create new scope as child of provided scope.
     ///
-    /// `finder` is called with `ScopeFlags`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    pub fn find_scope_by_flags<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeFlags) -> FinderRet<O>,
-    {
-        self.find_scope(|scope_id| {
-            let flags = self.scopes.get_flags(scope_id);
-            finder(flags)
-        })
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
+        let flags = self.scopes.get_new_scope_flags(flags, parent_id);
+        self.scopes.add_scope(Some(parent_id), AstNodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
-    pub fn create_scope_child_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
-        let flags = self.scopes.get_new_scope_flags(flags, self.current_scope_id);
-        self.scopes.add_scope(self.current_scope_id, AstNodeId::DUMMY, flags)
+    pub fn create_child_scope_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
+        self.create_child_scope(self.current_scope_id, flags)
     }
 
     /// Insert a scope into scope tree below a statement.
@@ -155,14 +119,8 @@ impl TraverseScoping {
     }
 
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
-        // Remove these scopes from parent's children
-        if let Some(current_child_scope_ids) = self.scopes.get_child_ids_mut(self.current_scope_id)
-        {
-            current_child_scope_ids.retain(|scope_id| !child_scope_ids.contains(scope_id));
-        }
-
         // Create new scope as child of parent
-        let new_scope_id = self.create_scope_child_of_current(flags);
+        let new_scope_id = self.create_child_scope_of_current(flags);
 
         // Set scopes as children of new scope instead
         for &child_id in child_scope_ids {
@@ -261,13 +219,51 @@ impl TraverseScoping {
         self.generate_uid(name, self.scopes.root_scope_id(), flags)
     }
 
+    /// Generate UID based on node.
+    ///
+    /// Recursively gathers the identifying names of a node, and joins them with `$`.
+    ///
+    /// Based on Babel's `scope.generateUidBasedOnNode` logic.
+    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
+    pub fn generate_uid_based_on_node<'a, T>(
+        &mut self,
+        node: &T,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId
+    where
+        T: GatherNodeParts<'a>,
+    {
+        let mut parts = String::new();
+        node.gather(&mut |part| {
+            if !parts.is_empty() {
+                parts.push('$');
+            }
+            parts.push_str(part);
+        });
+        let name = if parts.is_empty() { "ref" } else { parts.trim_start_matches('_') };
+        self.generate_uid(name, scope_id, flags)
+    }
+
+    /// Generate UID in current scope based on node.
+    pub fn generate_uid_in_current_scope_based_on_node<'a, T>(
+        &mut self,
+        node: &T,
+        flags: SymbolFlags,
+    ) -> SymbolId
+    where
+        T: GatherNodeParts<'a>,
+    {
+        self.generate_uid_based_on_node(node, self.current_scope_id, flags)
+    }
+
     /// Create a reference bound to a `SymbolId`
     pub fn create_bound_reference(
         &mut self,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flag);
+        let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.resolved_references[symbol_id].push(reference_id);
         reference_id
@@ -279,26 +275,21 @@ impl TraverseScoping {
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_bound_reference(symbol_id, flag);
-        IdentifierReference {
-            span,
-            name,
-            reference_id: Cell::new(Some(reference_id)),
-            reference_flag: flag,
-        }
+        let reference_id = self.create_bound_reference(symbol_id, flags);
+        IdentifierReference { span, name, reference_id: Cell::new(Some(reference_id)) }
     }
 
     /// Create an unbound reference
     pub fn create_unbound_reference(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
-        let reference = Reference::new(AstNodeId::DUMMY, flag);
+        let reference = Reference::new(AstNodeId::DUMMY, flags);
         let reference_id = self.symbols.create_reference(reference);
-        self.scopes.add_root_unresolved_reference(name, (reference_id, flag));
+        self.scopes.add_root_unresolved_reference(name, reference_id);
         reference_id
     }
 
@@ -307,15 +298,10 @@ impl TraverseScoping {
         &mut self,
         span: Span,
         name: Atom<'a>,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.to_compact_str(), flag);
-        IdentifierReference {
-            span,
-            name,
-            reference_id: Cell::new(Some(reference_id)),
-            reference_flag: flag,
-        }
+        let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
+        IdentifierReference { span, name, reference_id: Cell::new(Some(reference_id)) }
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -326,12 +312,12 @@ impl TraverseScoping {
         &mut self,
         name: CompactStr,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference(symbol_id, flag)
+            self.create_bound_reference(symbol_id, flags)
         } else {
-            self.create_unbound_reference(name, flag)
+            self.create_unbound_reference(name, flags)
         }
     }
 
@@ -344,12 +330,12 @@ impl TraverseScoping {
         span: Span,
         name: Atom<'a>,
         symbol_id: Option<SymbolId>,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference_id(span, name, symbol_id, flag)
+            self.create_bound_reference_id(span, name, symbol_id, flags)
         } else {
-            self.create_unbound_reference_id(span, name, flag)
+            self.create_unbound_reference_id(span, name, flags)
         }
     }
 
@@ -357,10 +343,57 @@ impl TraverseScoping {
     pub fn create_reference_in_current_scope(
         &mut self,
         name: CompactStr,
-        flag: ReferenceFlag,
+        flags: ReferenceFlags,
     ) -> ReferenceId {
         let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
-        self.create_reference(name, symbol_id, flag)
+        self.create_reference(name, symbol_id, flags)
+    }
+
+    /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
+    ///
+    /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
+    /// `IdentifierReference`s for the same binding, it is better to look up the `SymbolId` only once,
+    /// and generate `IdentifierReference`s with `TraverseScoping::create_reference_id`.
+    pub fn clone_identifier_reference<'a>(
+        &mut self,
+        ident: &IdentifierReference<'a>,
+        flags: ReferenceFlags,
+    ) -> IdentifierReference<'a> {
+        let reference =
+            self.symbols().get_reference(ident.reference_id.get().unwrap_or_else(|| {
+                unreachable!("IdentifierReference must have a reference_id");
+            }));
+        let symbol_id = reference.symbol_id();
+        self.create_reference_id(ident.span, ident.name.clone(), symbol_id, flags)
+    }
+
+    /// Determine whether evaluating the specific input `node` is a consequenceless reference.
+    ///
+    /// I.E evaluating it won't result in potentially arbitrary code from being ran. The following are
+    /// allowed and determined not to cause side effects:
+    ///
+    /// - `this` expressions
+    /// - `super` expressions
+    /// - Bound identifiers
+    ///
+    /// Based on Babel's `scope.isStatic` logic.
+    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L557>
+    ///
+    /// # Panics
+    /// Can only panic if [`IdentifierReference`] does not have a reference_id, which it always should.
+    #[inline]
+    pub fn is_static(&self, expr: &Expression) -> bool {
+        match expr {
+            Expression::ThisExpression(_) | Expression::Super(_) => true,
+            Expression::Identifier(ident) => self
+                .symbols
+                .get_reference(ident.reference_id.get().unwrap())
+                .symbol_id()
+                .is_some_and(|symbol_id| {
+                    self.symbols.get_resolved_references(symbol_id).all(|r| !r.is_write())
+                }),
+            _ => false,
+        }
     }
 }
 
@@ -479,99 +512,4 @@ fn create_uid_name_base(name: &str) -> CompactString {
     str.push('_');
     str.push_str(name);
     str
-}
-
-/// Visitor that locates all child scopes.
-/// NB: Child scopes only, not grandchild scopes.
-/// Does not do full traversal - stops each time it hits a node with a scope.
-struct ChildScopeCollector {
-    scope_ids: Vec<ScopeId>,
-}
-
-impl ChildScopeCollector {
-    fn new() -> Self {
-        Self { scope_ids: vec![] }
-    }
-}
-
-impl<'a> Visit<'a> for ChildScopeCollector {
-    fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
-    }
-
-    fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_statement(self, stmt);
-        }
-    }
-
-    fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_in_statement(self, stmt);
-        }
-    }
-
-    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
-        if let Some(scope_id) = stmt.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_for_of_statement(self, stmt);
-        }
-    }
-
-    fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
-        self.scope_ids.push(stmt.scope_id.get().unwrap());
-    }
-
-    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
-        self.scope_ids.push(clause.scope_id.get().unwrap());
-    }
-
-    fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
-        self.scope_ids.push(clause.scope_id.get().unwrap());
-    }
-
-    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
-        self.scope_ids.push(func.scope_id.get().unwrap());
-    }
-
-    fn visit_class(&mut self, class: &Class<'a>) {
-        if let Some(scope_id) = class.scope_id.get() {
-            self.scope_ids.push(scope_id);
-        } else {
-            walk::walk_class(self, class);
-        }
-    }
-
-    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
-        self.scope_ids.push(block.scope_id.get().unwrap());
-    }
-
-    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        self.scope_ids.push(expr.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
-        self.scope_ids.push(decl.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
-        self.scope_ids.push(decl.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
-    }
-
-    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
-        self.scope_ids.push(it.scope_id.get().unwrap());
-    }
 }

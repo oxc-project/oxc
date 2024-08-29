@@ -64,14 +64,20 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_semantic::{ScopeTree, SymbolTable};
 
-pub mod ancestor;
-pub use ancestor::Ancestor;
 mod context;
-pub use context::{FinderRet, TraverseAncestry, TraverseCtx, TraverseScoping};
-#[allow(clippy::module_inception)]
-mod traverse;
-pub use traverse::Traverse;
-mod walk;
+pub use context::{TraverseAncestry, TraverseCtx, TraverseScoping};
+
+mod generated {
+    pub mod ancestor;
+    pub(super) mod scopes_collector;
+    pub mod traverse;
+    pub(super) mod walk;
+}
+pub use generated::ancestor;
+pub use generated::ancestor::Ancestor;
+use generated::scopes_collector;
+pub use generated::traverse::Traverse;
+use generated::walk;
 
 mod compile_fail_tests;
 
@@ -128,7 +134,7 @@ mod compile_fail_tests;
 ///         }
 ///
 ///         // Read grandparent
-///         if let Some(Ancestor::ExpressionStatementExpression(stmt_ref)) = ctx.ancestor(2) {
+///         if let Ancestor::ExpressionStatementExpression(stmt_ref) = ctx.ancestor(2) {
 ///             // This is legal
 ///             println!("expression stmt's span: {:?}", stmt_ref.span());
 ///
@@ -147,8 +153,16 @@ pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     scopes: ScopeTree,
 ) -> (SymbolTable, ScopeTree) {
     let mut ctx = TraverseCtx::new(scopes, symbols, allocator);
-    // SAFETY: Walk functions are constructed to avoid unsoundness
-    unsafe { walk::walk_program(traverser, program as *mut Program, &mut ctx) };
+    walk_program(traverser, program, &mut ctx);
     debug_assert!(ctx.ancestors_depth() == 1);
     ctx.scoping.into_symbol_table_and_scope_tree()
+}
+
+pub fn walk_program<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    program: &mut Program<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    // SAFETY: Walk functions are constructed to avoid unsoundness
+    unsafe { walk::walk_program(traverser, program as *mut Program, ctx) };
 }

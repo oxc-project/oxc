@@ -27,13 +27,31 @@ declare_oxc_lint!(
     /// that shares a name with a variable that is in scope.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// var x = foo;
     /// function bar() {
     /// x:
     ///   for (;;) {
     ///     break x;
     ///   }
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// // The variable that has the same name as the label is not in scope.
+    ///
+    /// function foo() {
+    ///     var q = t;
+    /// }
+    ///
+    /// function bar() {
+    /// q:
+    ///     for(;;) {
+    ///         break q;
+    ///     }
     /// }
     /// ```
     NoLabelVar,

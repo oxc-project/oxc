@@ -5,15 +5,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/text.tsx
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "Foo",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(Foo)",
         "references": []
       }
     ]

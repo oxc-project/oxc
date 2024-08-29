@@ -6,12 +6,12 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_literal_enum_member_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Explicit enum value must only be a literal value (string, number, boolean, etc).",
     )
     .with_help("Require all enum members to be literal values.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -28,7 +28,7 @@ declare_oxc_lint!(
     /// However, because enums create their own scope whereby each enum member becomes a variable in that scope, developers are often surprised at the resultant values.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// const imOutside = 2;
     /// const b = 2;
     /// enum Foo {

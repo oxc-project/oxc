@@ -16,7 +16,7 @@ declare_oxc_lint!(
     /// TypeScript's ! non-null assertion operator asserts to the type system that an expression is non-nullable, as in not null or undefined. Using assertions to tell the type system new information is often a sign that code is not fully type-safe. It's generally better to structure program logic so that TypeScript understands when values may be nullable.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// x!;
     /// x!.y;
     /// x.y!;
@@ -25,10 +25,10 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn no_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Forbidden non-null assertion.")
         .with_help("Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for NoNonNullAssertion {

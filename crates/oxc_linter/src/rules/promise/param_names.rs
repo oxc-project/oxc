@@ -9,9 +9,9 @@ use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn param_names_diagnostic(span0: Span, x0: &str) -> OxcDiagnostic {
+fn param_names_diagnostic(span: Span, x0: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Promise constructor parameters must be named to match `{x0}`"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -50,8 +50,8 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// new Promise(function (reject, resolve) { ... }) // incorrect order
-    /// new Promise(function (ok, fail) { ... }) // non-standard parameter names
+    /// new Promise(function (reject, resolve) { /* ... */ }) // incorrect order
+    /// new Promise(function (ok, fail) { /* ... */ }) // non-standard parameter names
     /// ```
     ParamNames,
     style,

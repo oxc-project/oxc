@@ -7,25 +7,25 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSInterfaceDeclaration",
         "symbols": []
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 2,
         "node": "Function(Foo)",
         "symbols": [
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "flags": "SymbolFlags(FunctionScopedVariable)",
             "id": 5,
             "name": "props",
-            "node": "FormalParameter",
+            "node": "FormalParameter(props)",
             "references": [
               {
-                "flag": "ReferenceFlag(Read)",
+                "flags": "ReferenceFlags(Read)",
                 "id": 3,
                 "name": "props",
                 "node_id": 57
@@ -35,39 +35,39 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Import)",
+        "flags": "SymbolFlags(Import)",
         "id": 0,
         "name": "React",
         "node": "ImportNamespaceSpecifier",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "x",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(x)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 2,
         "name": "y",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(y)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 3,
         "name": "FooProps",
         "node": "TSInterfaceDeclaration",
         "references": [
           {
-            "flag": "ReferenceFlag(Type)",
+            "flags": "ReferenceFlags(Type)",
             "id": 2,
             "name": "FooProps",
             "node_id": 45
@@ -75,19 +75,19 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 4,
         "name": "Foo",
         "node": "Function(Foo)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Foo",
             "node_id": 12
           },
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "Foo",
             "node_id": 24

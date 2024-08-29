@@ -9,26 +9,26 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn target_blank_without_noreferrer(span0: Span) -> OxcDiagnostic {
+fn target_blank_without_noreferrer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
 .with_help("add rel=`noreferrer` to the element")
-.with_label(span0)
+.with_label(span)
 }
 
-fn target_blank_without_noopener(span0: Span) -> OxcDiagnostic {
+fn target_blank_without_noopener(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
 .with_help("add rel=`noreferrer` or rel=`noopener` to the element")
-.with_label(span0)
+.with_label(span)
 }
 
-fn explicit_props_in_spread_attributes(span0: Span) -> OxcDiagnostic {
+fn explicit_props_in_spread_attributes(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
 .with_help("add rel=`noreferrer` to the element")
-.with_label(span0)
+.with_label(span)
 }
 
 #[derive(Debug, Clone)]
@@ -102,7 +102,7 @@ declare_oxc_lint!(
     /// target='_blank' attributes with rel='noreferrer'.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// /// correct
     /// var Hello = <p target="_blank"></p>
     /// var Hello = <a target="_blank" rel="noreferrer" href="https://example.com"></a>
@@ -150,14 +150,16 @@ impl Rule for JsxNoTargetBlank {
                                         .react
                                         .get_link_component_attrs(tag_name)
                                         .map_or(false, |link_attribute| {
-                                            link_attribute.contains(&attribute_name.to_string())
+                                            link_attribute
+                                                .contains(&CompactStr::new(attribute_name))
                                         })
                                     || ctx
                                         .settings()
                                         .react
                                         .get_form_component_attrs(tag_name)
                                         .map_or(false, |form_attribute| {
-                                            form_attribute.contains(&attribute_name.to_string())
+                                            form_attribute
+                                                .contains(&CompactStr::new(attribute_name))
                                         })
                                 {
                                     if let Some(val) = attribute.value.as_ref() {

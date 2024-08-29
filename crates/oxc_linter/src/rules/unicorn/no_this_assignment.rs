@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_this_assignment_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn no_this_assignment_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not assign `this` to `{x1}`"))
         .with_help("Reference `this` directly instead of assigning it to a variable.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

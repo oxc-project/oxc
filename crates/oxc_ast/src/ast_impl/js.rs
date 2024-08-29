@@ -4,11 +4,7 @@ use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
-use oxc_syntax::{
-    operator::UnaryOperator,
-    reference::{ReferenceFlag, ReferenceId},
-    scope::ScopeFlags,
-};
+use oxc_syntax::{operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -216,6 +212,20 @@ impl<'a> Expression<'a> {
         }
     }
 
+    pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
+        match self {
+            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSInstantiationExpression(expr) => {
+                expr.expression.get_inner_expression_mut()
+            }
+            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression_mut(),
+            _ => self,
+        }
+    }
+
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
@@ -285,11 +295,26 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn is_require_call(&self) -> bool {
+        if let Self::CallExpression(call_expr) = self {
+            call_expr.is_require_call()
+        } else {
+            false
+        }
+    }
 }
 
 impl<'a> IdentifierName<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name }
+    }
+}
+
+impl<'a> fmt::Display for IdentifierName<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.name.fmt(f)
     }
 }
 
@@ -300,22 +325,29 @@ impl<'a> Hash for IdentifierReference<'a> {
 }
 
 impl<'a> IdentifierReference<'a> {
+    #[inline]
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
+        Self { span, name, reference_id: Cell::default() }
     }
 
-    pub fn new_read(span: Span, name: Atom<'a>, reference_id: Option<ReferenceId>) -> Self {
-        Self {
-            span,
-            name,
-            reference_id: Cell::new(reference_id),
-            reference_flag: ReferenceFlag::Read,
-        }
+    #[inline]
+    pub fn new_with_reference_id(
+        span: Span,
+        name: Atom<'a>,
+        reference_id: Option<ReferenceId>,
+    ) -> Self {
+        Self { span, name, reference_id: Cell::new(reference_id) }
     }
 
     #[inline]
     pub fn reference_id(&self) -> Option<ReferenceId> {
         self.reference_id.get()
+    }
+}
+
+impl<'a> fmt::Display for IdentifierReference<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
     }
 }
 
@@ -328,6 +360,13 @@ impl<'a> Hash for BindingIdentifier<'a> {
 impl<'a> BindingIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
+    }
+}
+
+impl<'a> fmt::Display for BindingIdentifier<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
     }
 }
 
@@ -432,7 +471,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_name(&self) -> Option<&str> {
+    pub fn static_property_name(&self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => {
                 expr.static_property_name().map(|name| name.as_str())
@@ -442,13 +481,13 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_info(&self) -> Option<(Span, &str)> {
+    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, &lit.value)),
+                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
                 Expression::TemplateLiteral(lit) => {
                     if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some((lit.span, &lit.quasis[0].value.raw))
+                        Some((lit.span, lit.quasis[0].value.raw.as_str()))
                     } else {
                         None
                     }
@@ -456,7 +495,7 @@ impl<'a> MemberExpression<'a> {
                 _ => None,
             },
             MemberExpression::StaticMemberExpression(expr) => {
-                Some((expr.property.span, &expr.property.name))
+                Some((expr.property.span, expr.property.name.as_str()))
             }
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -577,17 +616,21 @@ impl Argument<'_> {
 }
 
 impl<'a> AssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
-        self.as_simple_assignment_target().and_then(|it| it.get_identifier())
+    pub fn get_identifier(&self) -> Option<&'a str> {
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_identifier)
     }
 
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        self.as_simple_assignment_target().and_then(|it| it.get_expression())
+        self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
     }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
-    pub fn get_identifier(&self) -> Option<&str> {
+    pub fn get_identifier(&self) -> Option<&'a str> {
         match self {
             Self::AssignmentTargetIdentifier(ident) => Some(ident.name.as_str()),
             match_member_expression!(Self) => self.to_member_expression().static_property_name(),
@@ -601,6 +644,17 @@ impl<'a> SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
             Self::TSNonNullExpression(expr) => Some(&expr.expression),
             Self::TSTypeAssertion(expr) => Some(&expr.expression),
+            _ => None,
+        }
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        match self {
+            Self::TSAsExpression(expr) => Some(&mut expr.expression),
+            Self::TSSatisfiesExpression(expr) => Some(&mut expr.expression),
+            Self::TSNonNullExpression(expr) => Some(&mut expr.expression),
+            Self::TSTypeAssertion(expr) => Some(&mut expr.expression),
+            Self::TSInstantiationExpression(expr) => Some(&mut expr.expression),
             _ => None,
         }
     }
@@ -674,10 +728,10 @@ impl<'a> Statement<'a> {
 }
 
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
-    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+    fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
         Statement::ExpressionStatement(Box::from_in(
             ExpressionStatement { span: expression.span(), expression },
-            alloc,
+            allocator,
         ))
     }
 }
@@ -709,7 +763,6 @@ impl<'a> Declaration<'a> {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
-            Self::UsingDeclaration(_) => false,
             _ => true,
         }
     }
@@ -735,7 +788,7 @@ impl<'a> Declaration<'a> {
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
-            _ => false,
+            Declaration::TSImportEqualsDeclaration(_) => false,
         }
     }
 }
@@ -763,11 +816,17 @@ impl VariableDeclarationKind {
         matches!(self, Self::Const | Self::Let)
     }
 
+    pub fn is_await(&self) -> bool {
+        matches!(self, Self::AwaitUsing)
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Var => "var",
             Self::Const => "const",
             Self::Let => "let",
+            Self::Using => "using",
+            Self::AwaitUsing => "await using",
         }
     }
 }

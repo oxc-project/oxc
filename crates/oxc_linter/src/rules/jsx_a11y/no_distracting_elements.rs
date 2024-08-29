@@ -6,10 +6,10 @@ use oxc_span::Span;
 
 use crate::{rule::Rule, utils::get_element_type, LintContext};
 
-fn no_distracting_elements_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_distracting_elements_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.")
         .with_help("Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -22,15 +22,17 @@ declare_oxc_lint!(
     ///
     /// ### Why is this necessary?
     ///
-    /// Elements that can be visually distracting can cause accessibility issues with visually impaired users.
-    /// Such elements are most likely deprecated, and should be avoided. By default, <marquee> and <blink> elements are visually distracting.
+    /// Elements that can be visually distracting can cause accessibility issues
+    /// with visually impaired users.  Such elements are most likely deprecated,
+    /// and should be avoided. By default, `<marquee>` and `<blink>` elements
+    /// are visually distracting.
     ///
     /// ### What it checks
     ///
     /// This rule checks for marquee and blink element.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <marquee />
     /// <marquee {...props} />
@@ -60,9 +62,7 @@ impl Rule for NoDistractingElements {
             return;
         };
 
-        let name = element_type.as_str();
-
-        if let "marquee" | "blink" = name {
+        if let "marquee" | "blink" = element_type.as_ref() {
             ctx.diagnostic(no_distracting_elements_diagnostic(iden.span));
         }
     }

@@ -6,13 +6,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::get_declaration_of_variable, context::LintContext, fixer::Fix, rule::Rule, AstNode,
+};
 
-fn prefer_set_size_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_set_size_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Use `Set#size` instead of converting a `Set` to an array and using its `length` property.",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -37,7 +39,8 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferSetSize,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for PreferSetSize {
@@ -67,13 +70,22 @@ impl Rule for PreferSetSize {
             return;
         };
 
-        let maybe_set = &spread_element.argument.without_parenthesized();
+        let maybe_set = &spread_element.argument.get_inner_expression();
 
         if !is_set(maybe_set, ctx) {
             return;
         }
 
-        ctx.diagnostic(prefer_set_size_diagnostic(span));
+        ctx.diagnostic_with_fix(prefer_set_size_diagnostic(span), |_fixer| {
+            vec![
+                // remove [...
+                Fix::delete(Span::new(array_expr.span.start, spread_element.span.start + 3)),
+                // remove everything after the end of the spread element (including the `]` )
+                Fix::delete(Span::new(spread_element.span.end, array_expr.span.end)),
+                // replace .length with .size
+                Fix::new("size", span),
+            ]
+        });
     }
 }
 
@@ -156,5 +168,17 @@ fn test() {
         r"[...new /* comment */ Set(array)].length",
     ];
 
-    Tester::new(PreferSetSize::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r"[...new Set(array)].length", r"new Set(array).size"),
+        (r"[...new Set(array),].length", r"new Set(array).size"),
+        (r"[...(( new Set(array) ))].length", r"(( new Set(array) )).size"),
+        (r"[...(( new Set(array as foo) ))].length", r"(( new Set(array as foo) )).size"),
+        (r"[...(( new Set(array) as foo ))].length", r"(( new Set(array) as foo )).size"),
+        (
+            r"[...(( new Set(array) as foo )     )     ]    .length;",
+            r"(( new Set(array) as foo )     )    .size;",
+        ),
+    ];
+
+    Tester::new(PreferSetSize::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

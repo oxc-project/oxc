@@ -1,8 +1,8 @@
 //! Literals
 
-// NB: `#[span]`, `#[scope(...)]` and `#[visit(...)]` do NOT do anything to the code.
-// They are purely markers for codegen used in
-// `tasks/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// NB: `#[span]`, `#[scope(...)]`,`#[visit(...)]` and `#[generate_derive(...)]` do NOT do anything to the code.
+// They are purely markers for codegen used in `tasks/ast_tools` and `crates/oxc_traverse/scripts`. See docs in those crates.
+// Read [`macro@oxc_ast_macros::ast`] for more information.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
@@ -10,8 +10,9 @@
 use std::hash::Hash;
 
 use bitflags::bitflags;
-use oxc_ast_macros::ast;
-use oxc_span::{Atom, Span};
+use oxc_allocator::CloneIn;
+use oxc_ast_macros::{ast, CloneIn};
+use oxc_span::{Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -23,6 +24,7 @@ use tsify::Tsify;
 /// <https://tc39.es/ecma262/#prod-BooleanLiteral>
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct BooleanLiteral {
@@ -36,6 +38,7 @@ pub struct BooleanLiteral {
 /// <https://tc39.es/ecma262/#sec-null-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct NullLiteral {
@@ -48,6 +51,7 @@ pub struct NullLiteral {
 /// <https://tc39.es/ecma262/#sec-literals-numeric-literals>
 #[ast(visit)]
 #[derive(Debug, Clone)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct NumericLiteral<'a> {
@@ -64,7 +68,8 @@ pub struct NumericLiteral<'a> {
 
 /// BigInt literal
 #[ast(visit)]
-#[derive(Debug, Hash)]
+#[derive(Debug, Clone, Hash)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct BigIntLiteral<'a> {
@@ -82,6 +87,7 @@ pub struct BigIntLiteral<'a> {
 /// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct RegExpLiteral<'a> {
@@ -98,6 +104,7 @@ pub struct RegExpLiteral<'a> {
 /// <https://tc39.es/ecma262/multipage/text-processing.html#sec-regexp-regular-expression-objects>
 #[ast]
 #[derive(Debug, Clone, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
     /// The regex pattern between the slashes
@@ -108,6 +115,7 @@ pub struct RegExp<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
@@ -116,6 +124,7 @@ pub struct EmptyObject;
 /// <https://tc39.es/ecma262/#sec-literals-string-literals>
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct StringLiteral<'a> {
@@ -128,7 +137,7 @@ bitflags! {
     /// Regular expression flags.
     ///
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, CloneIn)]
     pub struct RegExpFlags: u8 {
         /// Global flag
         ///

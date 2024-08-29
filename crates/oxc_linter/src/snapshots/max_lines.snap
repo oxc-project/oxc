@@ -2,66 +2,66 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(max-lines): File has too many lines (3).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var xyz;
-   · ▲
+   ╭─[max_lines.tsx:3:8]
  2 │ var xyz;
+ 3 │ var xyz;
+   ·        ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (4).
-   ╭─[max_lines.tsx:1:1]
- 1 │ /* a multiline comment
-   · ▲
- 2 │  that goes to many lines*/
+   ╭─[max_lines.tsx:4:7]
+ 3 │ var xy;
+ 4 │ var xy;
+   ·       ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (3).
-   ╭─[max_lines.tsx:1:1]
- 1 │ //a single line comment
-   · ▲
+   ╭─[max_lines.tsx:3:7]
  2 │ var xy;
+ 3 │ var xy;
+   ·       ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (5).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var x;
-   · ▲
- 2 │ 
+   ╭─[max_lines.tsx:5:9]
+ 4 │ 
+ 5 │             var y;
+   ·                  ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (8).
-   ╭─[max_lines.tsx:1:1]
- 1 │ //a single line comment
-   · ▲
- 2 │             var xy;
+   ╭─[max_lines.tsx:8:18]
+ 7 │              really really
+ 8 │              long comment*/
+   ·                           ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (3).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var x; // inline comment
-   · ▲
+   ╭─[max_lines.tsx:3:9]
  2 │             var y;
+ 3 │             var z;
+   ·                  ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (4).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var x; /* inline comment
-   · ▲
- 2 │              spanning multiple lines */
+   ╭─[max_lines.tsx:4:9]
+ 3 │             var y;
+ 4 │             var z;
+   ·                  ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (8).
-   ╭─[max_lines.tsx:1:1]
- 1 │ //a single line comment
-   · ▲
- 2 │             var xy;
+   ╭─[max_lines.tsx:8:18]
+ 7 │              really really
+ 8 │              long comment*/
+   ·                           ▲
    ╰────
   help: Maximum allowed is 2.
 
@@ -78,10 +78,10 @@ source: crates/oxc_linter/src/tester.rs
   help: Maximum allowed is 0.
 
   ⚠ eslint(max-lines): File has too many lines (2).
-   ╭─[max_lines.tsx:1:1]
+   ╭─[max_lines.tsx:2:3]
  1 │ 
-   · ▲
  2 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 0.
 
@@ -93,147 +93,145 @@ source: crates/oxc_linter/src/tester.rs
   help: Maximum allowed is 0.
 
   ⚠ eslint(max-lines): File has too many lines (2).
-   ╭─[max_lines.tsx:1:1]
+   ╭─[max_lines.tsx:2:3]
  1 │ A
-   · ▲
  2 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 0.
 
   ⚠ eslint(max-lines): File has too many lines (2).
-   ╭─[max_lines.tsx:1:1]
+   ╭─[max_lines.tsx:2:4]
  1 │ A
-   · ▲
  2 │              
+   ·             ▲
    ╰────
   help: Maximum allowed is 0.
 
   ⚠ eslint(max-lines): File has too many lines (2).
-   ╭─[max_lines.tsx:1:1]
+   ╭─[max_lines.tsx:2:4]
  1 │ A
-   · ▲
  2 │              
+   ·             ▲
    ╰────
   help: Maximum allowed is 1.
 
   ⚠ eslint(max-lines): File has too many lines (3).
-   ╭─[max_lines.tsx:1:1]
- 1 │ A
-   · ▲
+   ╭─[max_lines.tsx:3:3]
  2 │ 
+ 3 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 1.
 
   ⚠ eslint(max-lines): File has too many lines (4).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │             var x
+   ╭─[max_lines.tsx:4:14]
+ 3 │             var c;
+ 4 │             console.log
+   ·                       ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (3).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a',
-   · ▲
+   ╭─[max_lines.tsx:3:6]
  2 │             c,
+ 3 │             x;
+   ·               ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (4).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a',
-   · ▲
- 2 │             c,
+   ╭─[max_lines.tsx:4:3]
+ 3 │             x;
+ 4 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (6).
-   ╭─[max_lines.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │ 
- 3 │             var a = 'a',
+   ╭─[max_lines.tsx:6:3]
+ 5 │             x;
+ 6 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (6).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │             var x
+   ╭─[max_lines.tsx:6:14]
+ 5 │             // some block
+ 6 │             // comments
+   ·                       ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (5).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │             var x
+   ╭─[max_lines.tsx:5:23]
+ 4 │             console.log
+ 5 │             /* block comments */
+   ·                                ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (6).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │             var x
+   ╭─[max_lines.tsx:6:3]
+ 5 │             /* block comments */
+ 6 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (7).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │             var x
+   ╭─[max_lines.tsx:7:15]
+ 6 │ 
+ 7 │              comments */
+   ·                        ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (4).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │ 
+   ╭─[max_lines.tsx:4:13]
+ 3 │ 
+ 4 │             // comment
+   ·                      ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (8).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │             var x
+   ╭─[max_lines.tsx:8:3]
+ 7 │ 
+ 8 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (8).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │ 
+   ╭─[max_lines.tsx:8:3]
+ 7 │ 
+ 8 │             
+   ·         ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (6).
-   ╭─[max_lines.tsx:1:1]
- 1 │ var a = 'a';
-   · ▲
- 2 │             //
+   ╭─[max_lines.tsx:6:5]
+ 5 │             console.log
+ 6 │             //
+   ·              ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (9).
-   ╭─[max_lines.tsx:1:1]
- 1 │ // hello world
-   · ▲
- 2 │             /*hello
+   ╭─[max_lines.tsx:9:5]
+ 8 │             e,
+ 9 │             f;
+   ·              ▲
    ╰────
   help: Maximum allowed is 2.
 
   ⚠ eslint(max-lines): File has too many lines (11).
-   ╭─[max_lines.tsx:1:1]
- 1 │ 
-   · ▲
- 2 │             var x = '';
- 3 │ 
-   ╰────
+    ╭─[max_lines.tsx:11:13]
+ 10 │ 
+ 11 │             // comment
+    ·                      ▲
+    ╰────
   help: Maximum allowed is 2.

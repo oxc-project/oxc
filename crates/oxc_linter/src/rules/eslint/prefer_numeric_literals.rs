@@ -15,8 +15,8 @@ use crate::{
     AstNode,
 };
 
-fn prefer_numeric_literals_diagnostic(span0: Span, x0: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use {x0} literals instead of parseInt().")).with_label(span0)
+fn prefer_numeric_literals_diagnostic(span: Span, x0: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use {x0} literals instead of parseInt().")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

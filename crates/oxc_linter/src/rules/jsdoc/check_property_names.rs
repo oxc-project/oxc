@@ -9,10 +9,10 @@ use crate::{
     utils::{should_ignore_as_internal, should_ignore_as_private},
 };
 
-fn no_root(span0: Span, x1: &str) -> OxcDiagnostic {
+fn no_root(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("No root defined for @property path.")
         .with_help(format!("@property path declaration `{x1}` appears before any real property."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -101,7 +101,7 @@ impl Rule for CheckPropertyNames {
                     .map(|span| {
                         LabeledSpan::at(
                             (span.start as usize)..(span.end as usize),
-                            "Duplicated property".to_string(),
+                            "Duplicated property",
                         )
                     })
                     .collect::<Vec<_>>();

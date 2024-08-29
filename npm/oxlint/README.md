@@ -27,7 +27,7 @@
 [sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
 [sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
-[playground-url]: https://oxc-project.github.io/oxc/playground
+[playground-url]: https://oxc-playground.netlify.app
 
 </div>
 

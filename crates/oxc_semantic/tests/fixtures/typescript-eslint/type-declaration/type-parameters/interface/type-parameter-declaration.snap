@@ -7,40 +7,40 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 1,
         "node": "TSInterfaceDeclaration",
         "symbols": [
           {
-            "flag": "SymbolFlags(TypeParameter)",
+            "flags": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "T",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(T)",
             "references": []
           }
         ]
       },
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "TSTypeAliasDeclaration",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Interface)",
+        "flags": "SymbolFlags(Interface)",
         "id": 0,
         "name": "Foo",
         "node": "TSInterfaceDeclaration",
         "references": []
       },
       {
-        "flag": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(TypeAlias)",
         "id": 2,
         "name": "Unresolved",
         "node": "TSTypeAliasDeclaration",

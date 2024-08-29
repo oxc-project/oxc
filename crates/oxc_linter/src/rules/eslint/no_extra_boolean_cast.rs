@@ -7,16 +7,16 @@ use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_extra_double_negation_cast_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_extra_double_negation_cast_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Redundant double negation")
         .with_help("Remove the double negation as it will already be coerced to a boolean")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn no_extra_boolean_cast_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_extra_boolean_cast_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Redundant Boolean call")
         .with_help("Remove the Boolean call as it will already be coerced to a boolean")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,7 +44,10 @@ declare_oxc_lint!(
     /// if (!!foo || bar) {}
     /// ```
     NoExtraBooleanCast,
-    correctness
+    correctness,
+    // a suggestion could be added. Note that lacking !! can mess up TS type
+    // narrowing sometimes, so it should not be an autofix
+    pending
 );
 
 impl Rule for NoExtraBooleanCast {
