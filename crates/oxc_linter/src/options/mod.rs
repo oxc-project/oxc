@@ -1,4 +1,5 @@
 mod allow_warn_deny;
+mod filter;
 mod plugins;
 
 use std::{convert::From, path::PathBuf};
@@ -16,13 +17,14 @@ use crate::{
 };
 
 pub use allow_warn_deny::AllowWarnDeny;
+pub use filter::{InvalidFilterKind, LintFilter, LintFilterKind};
 pub use plugins::LintPluginOptions;
 
 #[derive(Debug)]
 pub struct OxlintOptions {
     /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
     /// Defaults to [("deny", "correctness")]
-    pub filter: Vec<(AllowWarnDeny, String)>,
+    pub filter: Vec<LintFilter>,
     pub config_path: Option<PathBuf>,
     /// Enable automatic code fixes. Set to [`None`] to disable.
     ///
@@ -45,7 +47,7 @@ pub(crate) struct LintOptions {
 impl Default for OxlintOptions {
     fn default() -> Self {
         Self {
-            filter: vec![(AllowWarnDeny::Warn, String::from("correctness"))],
+            filter: vec![LintFilter::warn(RuleCategory::Correctness)],
             config_path: None,
             fix: FixKind::None,
             plugins: LintPluginOptions::default(),
@@ -70,7 +72,7 @@ impl From<OxlintOptions> for LintOptions {
 
 impl OxlintOptions {
     #[must_use]
-    pub fn with_filter(mut self, filter: Vec<(AllowWarnDeny, String)>) -> Self {
+    pub fn with_filter(mut self, filter: Vec<LintFilter>) -> Self {
         if !filter.is_empty() {
             self.filter = filter;
         }
@@ -185,48 +187,58 @@ impl OxlintOptions {
         let mut rules: FxHashSet<RuleWithSeverity> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();
 
-        for (severity, name_or_category) in &self.filter {
-            let maybe_category = RuleCategory::from(name_or_category.as_str());
+        for (severity, filter) in self.filter.iter().map(Into::into) {
             match severity {
-                AllowWarnDeny::Deny | AllowWarnDeny::Warn => {
-                    match maybe_category {
-                        Some(category) => rules.extend(
+                AllowWarnDeny::Deny | AllowWarnDeny::Warn => match filter {
+                    LintFilterKind::Category(category) => {
+                        rules.extend(
                             all_rules
                                 .iter()
-                                .filter(|rule| rule.category() == category)
-                                .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
-                        ),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.extend(
-                                    all_rules
-                                        .iter()
-                                        .filter(|rule| rule.category() != RuleCategory::Nursery)
-                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
-                                );
-                            } else {
-                                rules.extend(
-                                    all_rules
-                                        .iter()
-                                        .filter(|rule| rule.name() == name_or_category)
-                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
-                                );
-                            }
+                                .filter(|rule| rule.category() == *category)
+                                .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                        );
+                    }
+                    LintFilterKind::Rule(_, name) => {
+                        rules.extend(
+                            all_rules
+                                .iter()
+                                .filter(|rule| rule.name() == name)
+                                .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                        );
+                    }
+                    LintFilterKind::Generic(name_or_category) => {
+                        if name_or_category == "all" {
+                            rules.extend(
+                                all_rules
+                                    .iter()
+                                    .filter(|rule| rule.category() != RuleCategory::Nursery)
+                                    .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                            );
+                        } else {
+                            rules.extend(
+                                all_rules
+                                    .iter()
+                                    .filter(|rule| rule.name() == name_or_category)
+                                    .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                            );
                         }
-                    };
-                }
-                AllowWarnDeny::Allow => {
-                    match maybe_category {
-                        Some(category) => rules.retain(|rule| rule.category() != category),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.clear();
-                            } else {
-                                rules.retain(|rule| rule.name() != name_or_category);
-                            }
+                    }
+                },
+                AllowWarnDeny::Allow => match filter {
+                    LintFilterKind::Category(category) => {
+                        rules.retain(|rule| rule.category() != *category);
+                    }
+                    LintFilterKind::Rule(_, name) => {
+                        rules.retain(|rule| rule.name() != name);
+                    }
+                    LintFilterKind::Generic(name_or_category) => {
+                        if name_or_category == "all" {
+                            rules.clear();
+                        } else {
+                            rules.retain(|rule| rule.name() != name_or_category);
                         }
-                    };
-                }
+                    }
+                },
             }
         }
 

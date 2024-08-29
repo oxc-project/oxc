@@ -1,4 +1,4 @@
-use std::convert::From;
+use std::{convert::From, fmt};
 
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use schemars::{schema::SchemaObject, JsonSchema};
@@ -18,6 +18,14 @@ impl AllowWarnDeny {
 
     pub fn is_allow(self) -> bool {
         self == Self::Allow
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Allow => "allow",
+            Self::Warn => "warn",
+            Self::Deny => "deny",
+        }
     }
 }
 
@@ -62,6 +70,11 @@ impl TryFrom<&Number> for AllowWarnDeny {
                 r#"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value:?}"#
             ))),
         }
+    }
+}
+impl fmt::Display for AllowWarnDeny {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.as_str().fmt(f)
     }
 }
 

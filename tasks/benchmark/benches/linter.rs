@@ -6,7 +6,7 @@ use std::{
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{AllowWarnDeny, FixKind, Linter, OxlintOptions};
+use oxc_linter::{AllowWarnDeny, FixKind, LintFilter, Linter, OxlintOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -38,8 +38,8 @@ fn bench_linter(criterion: &mut Criterion) {
                     .build_module_record(PathBuf::new(), program)
                     .build(program);
                 let filter = vec![
-                    (AllowWarnDeny::Deny, "all".into()),
-                    (AllowWarnDeny::Deny, "nursery".into()),
+                    LintFilter::new(AllowWarnDeny::Deny, "all").unwrap(),
+                    LintFilter::new(AllowWarnDeny::Deny, "nursery").unwrap(),
                 ];
                 let lint_options = OxlintOptions::default()
                     .with_filter(filter)

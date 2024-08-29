@@ -1,18 +1,33 @@
 use bitflags::bitflags;
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Hash)]
-    pub(crate) struct LintPlugins: u32 {
+    pub struct LintPlugins: u32 {
+        /// ESLint is not a plugin, but is included for completeness. This is an alias for
+        /// [`LintPlugins::empty`].
+        const ESLINT = 0;
+        /// `eslint-plugin-react` and `eslint-plugin-react-hooks`
         const REACT = 1 << 0;
+        /// `eslint-plugin-unicorn`
         const UNICORN = 1 << 1;
+        /// `@typescript-eslint/eslint-plugin`
         const TYPESCRIPT = 1 << 2;
+        /// Custom Oxc rules, plus some rules ported from Deepscan.
         const OXC = 1 << 3;
+        /// `eslint-plugin-import`
         const IMPORT = 1 << 4;
+        /// `eslint-plugin-jsdoc`
         const JSDOC = 1 << 5;
+        /// `eslint-plugin-jest`
         const JEST = 1 << 6;
+        /// `eslint-plugin-vitest`
         const VITEST = 1 << 7;
+        /// `eslint-plugin-jsx-a11y`
         const JSX_A11Y = 1 << 8;
+        /// `eslint-plugin-nextjs`
         const NEXTJS = 1 << 9;
+        /// `eslint-plugin-react-perf`
         const REACT_PERF = 1 << 10;
+        /// `eslint-plugin-promise`
         const PROMISE = 1 << 11;
     }
 }
@@ -20,6 +35,26 @@ impl Default for LintPlugins {
     #[inline]
     fn default() -> Self {
         LintPlugins::REACT | LintPlugins::UNICORN | LintPlugins::TYPESCRIPT | LintPlugins::OXC
+    }
+}
+
+impl LintPlugins {
+    /// Returns `true` if the Vitest plugin is enabled.
+    #[inline]
+    pub fn has_vitest(self) -> bool {
+        self.contains(LintPlugins::VITEST)
+    }
+
+    /// Returns `true` if Jest or Vitest plugins are enabled.
+    #[inline]
+    pub fn has_test(self) -> bool {
+        self.intersects(LintPlugins::JEST.union(LintPlugins::VITEST))
+    }
+
+    /// Returns `true` if the import plugin is enabled.
+    #[inline]
+    pub fn has_import(self) -> bool {
+        self.contains(LintPlugins::IMPORT)
     }
 }
 
@@ -41,24 +76,28 @@ impl From<LintPluginOptions> for LintPlugins {
         plugins
     }
 }
-
-impl LintPlugins {
-    /// Returns `true` if the Vitest plugin is enabled.
-    #[inline]
-    pub fn has_vitest(self) -> bool {
-        self.contains(LintPlugins::VITEST)
-    }
-
-    /// Returns `true` if Jest or Vitest plugins are enabled.
-    #[inline]
-    pub fn has_test(self) -> bool {
-        self.intersects(LintPlugins::JEST.union(LintPlugins::VITEST))
-    }
-
-    /// Returns `true` if the import plugin is enabled.
-    #[inline]
-    pub fn has_import(self) -> bool {
-        self.contains(LintPlugins::IMPORT)
+impl From<&str> for LintPlugins {
+    fn from(value: &str) -> Self {
+        match value {
+            "react" | "react-hooks" | "react_hooks" => LintPlugins::REACT,
+            "unicorn" => LintPlugins::UNICORN,
+            "typescript" | "typescript-eslint" | "typescript_eslint" | "@typescript-eslint" => {
+                LintPlugins::TYPESCRIPT
+            }
+            // deepscan for backwards compatibility. Those rules have been moved into oxc
+            "oxc" | "deepscan" => LintPlugins::OXC,
+            "import" => LintPlugins::IMPORT,
+            "jsdoc" => LintPlugins::JSDOC,
+            "jest" => LintPlugins::JEST,
+            "vitest" => LintPlugins::VITEST,
+            "jsx-a11y" | "jsx_a11y" => LintPlugins::JSX_A11Y,
+            "nextjs" => LintPlugins::NEXTJS,
+            "react-perf" | "react_perf" => LintPlugins::REACT_PERF,
+            "promise" => LintPlugins::PROMISE,
+            // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
+            // making it the default value.
+            _ => LintPlugins::empty(),
+        }
     }
 }
 
@@ -147,24 +186,21 @@ impl<S: AsRef<str>> FromIterator<(S, bool)> for LintPluginOptions {
     fn from_iter<I: IntoIterator<Item = (S, bool)>>(iter: I) -> Self {
         let mut options = Self::default();
         for (s, enabled) in iter {
-            match s.as_ref() {
-                "react" | "react-hooks" => options.react = enabled,
-                "unicorn" => options.unicorn = enabled,
-                "typescript" | "typescript-eslint" | "@typescript-eslint" => {
-                    options.typescript = enabled;
-                }
-                // deepscan for backwards compatibility. Those rules have been
-                // moved into oxc
-                "oxc" | "deepscan" => options.oxc = enabled,
-                "import" => options.import = enabled,
-                "jsdoc" => options.jsdoc = enabled,
-                "jest" => options.jest = enabled,
-                "vitest" => options.vitest = enabled,
-                "jsx-a11y" => options.jsx_a11y = enabled,
-                "nextjs" => options.nextjs = enabled,
-                "react-perf" => options.react_perf = enabled,
-                "promise" => options.promise = enabled,
-                _ => { /* ignored */ }
+            let flags = LintPlugins::from(s.as_ref());
+            match flags {
+                LintPlugins::REACT => options.react = enabled,
+                LintPlugins::UNICORN => options.unicorn = enabled,
+                LintPlugins::TYPESCRIPT => options.typescript = enabled,
+                LintPlugins::OXC => options.oxc = enabled,
+                LintPlugins::IMPORT => options.import = enabled,
+                LintPlugins::JSDOC => options.jsdoc = enabled,
+                LintPlugins::JEST => options.jest = enabled,
+                LintPlugins::VITEST => options.vitest = enabled,
+                LintPlugins::JSX_A11Y => options.jsx_a11y = enabled,
+                LintPlugins::NEXTJS => options.nextjs = enabled,
+                LintPlugins::REACT_PERF => options.react_perf = enabled,
+                LintPlugins::PROMISE => options.promise = enabled,
+                _ => {} // ignored
             }
         }
         options
@@ -180,6 +216,14 @@ impl<'s> FromIterator<&'s str> for LintPluginOptions {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_eslint_as_default() {
+        let parsed = LintPlugins::from("eslint");
+        let empty = LintPlugins::from("");
+        assert_eq!(parsed, empty);
+        assert_eq!(parsed, LintPlugins::empty());
+    }
 
     #[test]
     fn test_default_conversion() {

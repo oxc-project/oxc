@@ -3,7 +3,8 @@ use std::{env, io::BufWriter, time::Instant};
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    partial_loader::LINT_PARTIAL_LOADER_EXT, LintService, LintServiceOptions, Linter, OxlintOptions,
+    partial_loader::LINT_PARTIAL_LOADER_EXT, InvalidFilterKind, LintFilter, LintService,
+    LintServiceOptions, Linter, OxlintOptions,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -35,7 +36,7 @@ impl Runner for LintRunner {
 
         let LintCommand {
             paths,
-            filter,
+            filter: filter_args,
             basic_options,
             warning_options,
             ignore_options,
@@ -45,6 +46,34 @@ impl Runner for LintRunner {
             misc_options,
             ..
         } = self.options;
+
+        let mut filters = Vec::with_capacity(filter_args.len());
+        for (severity, filter_arg) in filter_args {
+            match LintFilter::new(severity, filter_arg) {
+                Ok(filter) => {
+                    filters.push(filter);
+                }
+                Err(InvalidFilterKind::Empty) => {
+                    return CliRunResult::InvalidOptions {
+                        message: format!("Cannot {severity} an empty filter."),
+                    };
+                }
+                Err(InvalidFilterKind::PluginMissing(filter)) => {
+                    return CliRunResult::InvalidOptions {
+                        message: format!(
+                            "Failed to {severity} filter {filter}: Plugin name is missing. Expected <plugin>/<rule>"
+                        ),
+                    };
+                }
+                Err(InvalidFilterKind::RuleMissing(filter)) => {
+                    return CliRunResult::InvalidOptions {
+                        message: format!(
+                            "Failed to {severity} filter {filter}: Rule name is missing. Expected <plugin>/<rule>"
+                        ),
+                    };
+                }
+            }
+        }
 
         let mut paths = paths;
         let provided_path_count = paths.len();
@@ -93,7 +122,7 @@ impl Runner for LintRunner {
 
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
         let lint_options = OxlintOptions::default()
-            .with_filter(filter)
+            .with_filter(filters)
             .with_config_path(basic_options.config)
             .with_fix(fix_options.fix_kind())
             .with_react_plugin(enable_plugins.react_plugin)
