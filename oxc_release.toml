@@ -12,6 +12,7 @@ versioned_files = [
 
 [[releases]]
 name = "oxlint"
+scopes_for_breaking_change = ["lint"]
 versioned_files = [
   "apps/oxlint/Cargo.toml",
   "crates/oxc_linter/Cargo.toml",
