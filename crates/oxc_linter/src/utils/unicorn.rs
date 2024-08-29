@@ -237,8 +237,8 @@ pub fn is_same_member_expression(
     ) = (left, right)
     {
         if !is_same_reference(
-            left.expression.without_parenthesized(),
-            right.expression.without_parenthesized(),
+            left.expression.get_inner_expression(),
+            right.expression.get_inner_expression(),
             ctx,
         ) {
             return false;
@@ -246,8 +246,8 @@ pub fn is_same_member_expression(
     }
 
     return is_same_reference(
-        left.object().without_parenthesized(),
-        right.object().without_parenthesized(),
+        left.object().get_inner_expression(),
+        right.object().get_inner_expression(),
         ctx,
     );
 }
