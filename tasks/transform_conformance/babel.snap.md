@@ -2146,8 +2146,9 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * class/accessor-allowDeclareFields-false/input.ts
-  x TS(18010): An accessibility modifier cannot be used with a private
-  | identifier.
+TS(18010)
+
+  x An accessibility modifier cannot be used with a private identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;
@@ -2157,8 +2158,9 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * class/accessor-allowDeclareFields-true/input.ts
-  x TS(18010): An accessibility modifier cannot be used with a private
-  | identifier.
+TS(18010)
+
+  x An accessibility modifier cannot be used with a private identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;

@@ -188,7 +188,7 @@ impl GraphicalReportHandler {
         f: &mut impl fmt::Write,
         diagnostic: &(dyn Diagnostic),
     ) -> fmt::Result {
-        self.render_header(f, diagnostic)?;
+        // self.render_header(f, diagnostic)?;
         writeln!(f)?;
         self.render_causes(f, diagnostic)?;
         let src = diagnostic.source_code();
@@ -271,7 +271,12 @@ impl GraphicalReportHandler {
             opts = opts.word_splitter(word_splitter);
         }
 
-        let title = format!("{}", diagnostic.to_string().style(severity_style));
+        let title = if let Some(code) = diagnostic.code() {
+            format!("{code}: {diagnostic}")
+        } else {
+            diagnostic.to_string()
+        };
+        let title = format!("{}", title.style(severity_style));
         let title = textwrap::fill(&title, opts);
         writeln!(f, "{}", title)?;
 

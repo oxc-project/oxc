@@ -75,9 +75,6 @@ pub struct OxcDiagnosticInner {
 
 impl fmt::Display for OxcDiagnostic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.code.is_some() {
-            write!(f, "{}: ", &self.code)?;
-        }
         write!(f, "{}", &self.message)
     }
 }
@@ -102,8 +99,7 @@ impl Diagnostic for OxcDiagnostic {
     }
 
     fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
-        // self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
-        None
+        self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
     }
 }
 
