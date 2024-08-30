@@ -207,7 +207,7 @@ impl Oxc {
 
         let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
 
-        if run_options.scope.unwrap_or_default() || run_options.symbol.unwrap_or_default() {
+        if !source_type.is_typescript_definition() {
             if run_options.scope.unwrap_or_default() {
                 self.scope_text = Self::get_scope_text(&program, &symbols, &scopes);
             }
