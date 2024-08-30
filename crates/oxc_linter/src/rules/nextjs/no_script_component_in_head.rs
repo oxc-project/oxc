@@ -100,31 +100,33 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"import Script from "next/script";
-			     const Head = ({children}) => children
+        r#"
+            import Script from "next/script";
+			const Head = ({children}) => children
 
-			    export default function Index() {
-			      return (
+			export default function Index() {
+			    return (
 			        <Head>
-			          <Script></Script>
+			            <Script></Script>
 			        </Head>
-			      );
-			    }
-			    "#,
+			    );
+			}
+		"#,
     ];
 
     let fail = vec![
         r#"
-			      import Head from "next/head";
-			      import Script from "next/script";
+			import Head from "next/head";
+			import Script from "next/script";
 
-			      export default function Index() {
-			        return (
-			            <Head>
-			              <Script></Script>
-			            </Head>
-			        );
-			      }"#,
+			export default function Index() {
+			    return (
+			        <Head>
+			            <Script></Script>
+			        </Head>
+			    );
+		    }
+        "#,
     ];
 
     Tester::new(NoScriptComponentInHead::NAME, pass, fail).test_and_snapshot();
