@@ -1003,8 +1003,14 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
         let attributes_keyword = match self.cur_kind() {
-            Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
-            Kind::With => self.parse_identifier_name()?,
+            Kind::Assert if !self.cur_token().is_on_new_line => {
+                self.bump_any();
+                TSImportAttributesKeyword::Assert
+            }
+            Kind::With => {
+                self.bump_any();
+                TSImportAttributesKeyword::With
+            }
             _ => {
                 return Err(self.unexpected());
             }

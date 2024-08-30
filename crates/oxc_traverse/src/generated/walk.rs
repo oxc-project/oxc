@@ -5157,16 +5157,9 @@ pub(crate) unsafe fn walk_ts_import_attributes<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_attributes(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSImportAttributesAttributesKeyword(
-        ancestor::TSImportAttributesWithoutAttributesKeyword(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSImportAttributesElements(
+        ancestor::TSImportAttributesWithoutElements(node, PhantomData),
     ));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD)
-            as *mut IdentifierName,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::TSImportAttributesElements);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_ATTRIBUTES_ELEMENTS)
         as *mut Vec<TSImportAttribute>))
         .iter_mut()

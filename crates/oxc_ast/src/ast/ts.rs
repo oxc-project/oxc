@@ -1144,8 +1144,18 @@ pub struct TSImportType<'a> {
 pub struct TSImportAttributes<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
+    pub attributes_keyword: TSImportAttributesKeyword,
     pub elements: Vec<'a, TSImportAttribute<'a>>,
+}
+
+#[ast]
+#[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[serde(untagged)]
+pub enum TSImportAttributesKeyword {
+    With = 0,
+    Assert = 1,
 }
 
 #[ast(visit)]

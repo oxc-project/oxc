@@ -2227,7 +2227,6 @@ pub mod walk_mut {
         it: &mut TSImportAttributes<'a>,
     ) {
         // NOTE: AstType doesn't exists!
-        visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_ts_import_attribute_list(&mut it.elements);
     }
 

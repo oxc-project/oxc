@@ -1128,20 +1128,23 @@ const _: () = {
     assert!(size_of::<TSTypeQueryExprName>() == 16usize);
     assert!(align_of::<TSTypeQueryExprName>() == 8usize);
 
-    assert!(size_of::<TSImportType>() == 120usize);
+    assert!(size_of::<TSImportType>() == 104usize);
     assert!(align_of::<TSImportType>() == 8usize);
     assert!(offset_of!(TSImportType, span) == 0usize);
     assert!(offset_of!(TSImportType, is_type_of) == 8usize);
     assert!(offset_of!(TSImportType, parameter) == 16usize);
     assert!(offset_of!(TSImportType, qualifier) == 32usize);
     assert!(offset_of!(TSImportType, attributes) == 48usize);
-    assert!(offset_of!(TSImportType, type_parameters) == 112usize);
+    assert!(offset_of!(TSImportType, type_parameters) == 96usize);
 
-    assert!(size_of::<TSImportAttributes>() == 64usize);
+    assert!(size_of::<TSImportAttributes>() == 48usize);
     assert!(align_of::<TSImportAttributes>() == 8usize);
     assert!(offset_of!(TSImportAttributes, span) == 0usize);
     assert!(offset_of!(TSImportAttributes, attributes_keyword) == 8usize);
-    assert!(offset_of!(TSImportAttributes, elements) == 32usize);
+    assert!(offset_of!(TSImportAttributes, elements) == 16usize);
+
+    assert!(size_of::<TSImportAttributesKeyword>() == 1usize);
+    assert!(align_of::<TSImportAttributesKeyword>() == 1usize);
 
     assert!(size_of::<TSImportAttribute>() == 56usize);
     assert!(align_of::<TSImportAttribute>() == 8usize);
@@ -2529,20 +2532,23 @@ const _: () = {
     assert!(size_of::<TSTypeQueryExprName>() == 8usize);
     assert!(align_of::<TSTypeQueryExprName>() == 4usize);
 
-    assert!(size_of::<TSImportType>() == 72usize);
+    assert!(size_of::<TSImportType>() == 60usize);
     assert!(align_of::<TSImportType>() == 4usize);
     assert!(offset_of!(TSImportType, span) == 0usize);
     assert!(offset_of!(TSImportType, is_type_of) == 8usize);
     assert!(offset_of!(TSImportType, parameter) == 12usize);
     assert!(offset_of!(TSImportType, qualifier) == 20usize);
     assert!(offset_of!(TSImportType, attributes) == 28usize);
-    assert!(offset_of!(TSImportType, type_parameters) == 68usize);
+    assert!(offset_of!(TSImportType, type_parameters) == 56usize);
 
-    assert!(size_of::<TSImportAttributes>() == 40usize);
+    assert!(size_of::<TSImportAttributes>() == 28usize);
     assert!(align_of::<TSImportAttributes>() == 4usize);
     assert!(offset_of!(TSImportAttributes, span) == 0usize);
     assert!(offset_of!(TSImportAttributes, attributes_keyword) == 8usize);
-    assert!(offset_of!(TSImportAttributes, elements) == 24usize);
+    assert!(offset_of!(TSImportAttributes, elements) == 12usize);
+
+    assert!(size_of::<TSImportAttributesKeyword>() == 1usize);
+    assert!(align_of::<TSImportAttributesKeyword>() == 1usize);
 
     assert!(size_of::<TSImportAttribute>() == 36usize);
     assert!(align_of::<TSImportAttribute>() == 4usize);

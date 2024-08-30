@@ -288,39 +288,38 @@ pub(crate) enum AncestorType {
     TSImportTypeQualifier = 260,
     TSImportTypeAttributes = 261,
     TSImportTypeTypeParameters = 262,
-    TSImportAttributesAttributesKeyword = 263,
-    TSImportAttributesElements = 264,
-    TSImportAttributeName = 265,
-    TSImportAttributeValue = 266,
-    TSFunctionTypeThisParam = 267,
-    TSFunctionTypeParams = 268,
-    TSFunctionTypeReturnType = 269,
-    TSFunctionTypeTypeParameters = 270,
-    TSConstructorTypeParams = 271,
-    TSConstructorTypeReturnType = 272,
-    TSConstructorTypeTypeParameters = 273,
-    TSMappedTypeTypeParameter = 274,
-    TSMappedTypeNameType = 275,
-    TSMappedTypeTypeAnnotation = 276,
-    TSTemplateLiteralTypeQuasis = 277,
-    TSTemplateLiteralTypeTypes = 278,
-    TSAsExpressionExpression = 279,
-    TSAsExpressionTypeAnnotation = 280,
-    TSSatisfiesExpressionExpression = 281,
-    TSSatisfiesExpressionTypeAnnotation = 282,
-    TSTypeAssertionExpression = 283,
-    TSTypeAssertionTypeAnnotation = 284,
-    TSImportEqualsDeclarationId = 285,
-    TSImportEqualsDeclarationModuleReference = 286,
-    TSExternalModuleReferenceExpression = 287,
-    TSNonNullExpressionExpression = 288,
-    DecoratorExpression = 289,
-    TSExportAssignmentExpression = 290,
-    TSNamespaceExportDeclarationId = 291,
-    TSInstantiationExpressionExpression = 292,
-    TSInstantiationExpressionTypeParameters = 293,
-    JSDocNullableTypeTypeAnnotation = 294,
-    JSDocNonNullableTypeTypeAnnotation = 295,
+    TSImportAttributesElements = 263,
+    TSImportAttributeName = 264,
+    TSImportAttributeValue = 265,
+    TSFunctionTypeThisParam = 266,
+    TSFunctionTypeParams = 267,
+    TSFunctionTypeReturnType = 268,
+    TSFunctionTypeTypeParameters = 269,
+    TSConstructorTypeParams = 270,
+    TSConstructorTypeReturnType = 271,
+    TSConstructorTypeTypeParameters = 272,
+    TSMappedTypeTypeParameter = 273,
+    TSMappedTypeNameType = 274,
+    TSMappedTypeTypeAnnotation = 275,
+    TSTemplateLiteralTypeQuasis = 276,
+    TSTemplateLiteralTypeTypes = 277,
+    TSAsExpressionExpression = 278,
+    TSAsExpressionTypeAnnotation = 279,
+    TSSatisfiesExpressionExpression = 280,
+    TSSatisfiesExpressionTypeAnnotation = 281,
+    TSTypeAssertionExpression = 282,
+    TSTypeAssertionTypeAnnotation = 283,
+    TSImportEqualsDeclarationId = 284,
+    TSImportEqualsDeclarationModuleReference = 285,
+    TSExternalModuleReferenceExpression = 286,
+    TSNonNullExpressionExpression = 287,
+    DecoratorExpression = 288,
+    TSExportAssignmentExpression = 289,
+    TSNamespaceExportDeclarationId = 290,
+    TSInstantiationExpressionExpression = 291,
+    TSInstantiationExpressionTypeParameters = 292,
+    JSDocNullableTypeTypeAnnotation = 293,
+    JSDocNonNullableTypeTypeAnnotation = 294,
 }
 
 /// Ancestor type used in AST traversal.
@@ -827,8 +826,6 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSImportTypeAttributes as u16,
     TSImportTypeTypeParameters(TSImportTypeWithoutTypeParameters<'a, 't>) =
         AncestorType::TSImportTypeTypeParameters as u16,
-    TSImportAttributesAttributesKeyword(TSImportAttributesWithoutAttributesKeyword<'a, 't>) =
-        AncestorType::TSImportAttributesAttributesKeyword as u16,
     TSImportAttributesElements(TSImportAttributesWithoutElements<'a, 't>) =
         AncestorType::TSImportAttributesElements as u16,
     TSImportAttributeName(TSImportAttributeWithoutName<'a, 't>) =
@@ -1749,10 +1746,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_import_attributes(self) -> bool {
-        matches!(
-            self,
-            Self::TSImportAttributesAttributesKeyword(_) | Self::TSImportAttributesElements(_)
-        )
+        matches!(self, Self::TSImportAttributesElements(_))
     }
 
     #[inline]
@@ -12092,28 +12086,6 @@ pub(crate) const OFFSET_TS_IMPORT_ATTRIBUTES_ELEMENTS: usize =
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSImportAttributesWithoutAttributesKeyword<'a, 't>(
-    pub(crate) *const TSImportAttributes<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSImportAttributesWithoutAttributesKeyword<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn elements(self) -> &'t Vec<'a, TSImportAttribute<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_ELEMENTS)
-                as *const Vec<'a, TSImportAttribute<'a>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
 pub struct TSImportAttributesWithoutElements<'a, 't>(
     pub(crate) *const TSImportAttributes<'a>,
     pub(crate) PhantomData<&'t ()>,
@@ -12126,10 +12098,10 @@ impl<'a, 't> TSImportAttributesWithoutElements<'a, 't> {
     }
 
     #[inline]
-    pub fn attributes_keyword(self) -> &'t IdentifierName<'a> {
+    pub fn attributes_keyword(self) -> &'t TSImportAttributesKeyword {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_ATTRIBUTES_ATTRIBUTES_KEYWORD)
-                as *const IdentifierName<'a>)
+                as *const TSImportAttributesKeyword)
         }
     }
 }

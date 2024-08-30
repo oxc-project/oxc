@@ -3171,6 +3171,16 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSImportAttributes<'old_all
     }
 }
 
+impl<'alloc> CloneIn<'alloc> for TSImportAttributesKeyword {
+    type Cloned = TSImportAttributesKeyword;
+    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::With => TSImportAttributesKeyword::With,
+            Self::Assert => TSImportAttributesKeyword::Assert,
+        }
+    }
+}
+
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSImportAttribute<'old_alloc> {
     type Cloned = TSImportAttribute<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {

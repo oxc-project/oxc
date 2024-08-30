@@ -3339,6 +3339,15 @@ impl<'a> Gen for TSImportAttributes<'a> {
     }
 }
 
+impl Gen for TSImportAttributesKeyword {
+    fn gen(&self, p: &mut Codegen, _: Context) {
+        match self {
+            Self::With => p.print_str("with"),
+            Self::Assert => p.print_str("assert"),
+        }
+    }
+}
+
 impl<'a> Gen for TSImportAttribute<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         self.name.gen(p, ctx);

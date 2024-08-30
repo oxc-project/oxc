@@ -11768,7 +11768,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_attributes(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        attributes_keyword: TSImportAttributesKeyword,
         elements: Vec<'a, TSImportAttribute<'a>>,
     ) -> TSImportAttributes<'a> {
         TSImportAttributes { span, attributes_keyword, elements }
@@ -11786,7 +11786,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_import_attributes(
         self,
         span: Span,
-        attributes_keyword: IdentifierName<'a>,
+        attributes_keyword: TSImportAttributesKeyword,
         elements: Vec<'a, TSImportAttribute<'a>>,
     ) -> Box<'a, TSImportAttributes<'a>> {
         Box::new_in(self.ts_import_attributes(span, attributes_keyword, elements), self.allocator)
