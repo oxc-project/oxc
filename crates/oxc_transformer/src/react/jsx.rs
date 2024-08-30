@@ -706,11 +706,8 @@ impl<'a> ReactJsx<'a> {
             JSXElementName::Identifier(ident) => {
                 if ident.name == "this" {
                     self.ast().expression_this(ident.span)
-                } else if ident.name.chars().next().is_some_and(|c| c.is_ascii_lowercase()) {
-                    self.ast().expression_string_literal(ident.span, &ident.name)
                 } else {
-                    let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
-                    self.ctx.ast.expression_from_identifier_reference(ident)
+                    self.ast().expression_string_literal(ident.span, &ident.name)
                 }
             }
             JSXElementName::IdentifierReference(ident) => {
