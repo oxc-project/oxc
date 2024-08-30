@@ -82,22 +82,12 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         }
 
-        match &jsx_opening_el.name {
-            JSXElementName::Identifier(identifier) => {
-                ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(
-                    identifier.span,
-                    identifier.name.as_str(),
-                ));
-            }
-
-            JSXElementName::IdentifierReference(identifier_reference) => {
-                ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(
-                    identifier_reference.span,
-                    identifier_reference.name.as_str(),
-                ));
-            }
-            _ => {}
-        }
+        let (name, span) = match &jsx_opening_el.name {
+            JSXElementName::Identifier(id) => (id.name.as_str(), id.span),
+            JSXElementName::IdentifierReference(id) => (id.name.as_str(), id.span),
+            _ => return,
+        };
+        ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(span, name));
     }
 }
 
