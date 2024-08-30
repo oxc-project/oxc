@@ -164,17 +164,13 @@ fn is_html_element(elem_name: &JSXElementName) -> bool {
 
 fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
     match &elem.name {
-        JSXElementName::IdentifierReference(ident) => ident.name.as_str() == "Fragment",
+        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
         JSXElementName::MemberExpression(mem_expr) => {
-            if mem_expr.property.name.as_str() != "Fragment" {
-                return false;
+            if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
+                ident.name == "React" && mem_expr.property.name == "Fragment"
+            } else {
+                false
             }
-
-            let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object else {
-                return false;
-            };
-
-            return ident.name.as_str() == "React";
         }
         JSXElementName::NamespacedName(_) | JSXElementName::Identifier(_) => false,
     }
