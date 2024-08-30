@@ -41,11 +41,15 @@ fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a Identifi
     }
 }
 
-fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> Option<&'a IdentifierReference> {
-    match &expr.object {
-        JSXMemberExpressionObject::Identifier(_) => None,
-        JSXMemberExpressionObject::IdentifierReference(ident) => Some(ident),
-        JSXMemberExpressionObject::MemberExpression(next_expr) => get_member_ident(next_expr),
+fn get_member_ident<'a>(mut expr: &'a JSXMemberExpression<'a>) -> Option<&'a IdentifierReference> {
+    loop {
+        match &expr.object {
+            JSXMemberExpressionObject::Identifier(_) => return None,
+            JSXMemberExpressionObject::IdentifierReference(ident) => return Some(ident),
+            JSXMemberExpressionObject::MemberExpression(next_expr) => {
+                expr = next_expr;
+            }
+        }
     }
 }
 
