@@ -19,28 +19,6 @@ impl<'a> fmt::Display for JSXIdentifier<'a> {
     }
 }
 
-impl<'a> JSXIdentifier<'a> {
-    /// Determines whether the given current identifier is a reference.
-    ///
-    /// References begin with a capital letter, `_` or `$`.
-    /// <https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react>
-    // `name.chars().next().unwrap()` cannot panic because name is never an empty string.
-    #[allow(clippy::missing_panics_doc)]
-    pub fn is_reference(&self) -> bool {
-        // The identifier has already been checked to be valid, so when first char is ASCII, it can only
-        // be `a-z`, `A-Z`, `_` or `$`. But compiler doesn't know that, so we can help it create faster
-        // code by taking that invariant into account.
-        // `b < b'a'` matches `A-Z`, `_` and `$`.
-        // Use a fast path for common case of ASCII characters, to avoid the more expensive
-        // `char::is_uppercase` in most cases.
-        let name = self.name.as_str();
-        match name.as_bytes()[0] {
-            b if b.is_ascii() => b < b'a',
-            _ => name.chars().next().unwrap().is_uppercase(),
-        }
-    }
-}
-
 impl<'a> fmt::Display for JSXNamespacedName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.namespace.name, self.property.name)

@@ -351,12 +351,6 @@ impl<'a> fmt::Display for IdentifierReference<'a> {
     }
 }
 
-impl<'a> From<JSXIdentifier<'a>> for IdentifierReference<'a> {
-    fn from(value: JSXIdentifier<'a>) -> Self {
-        IdentifierReference { span: value.span, name: value.name, reference_id: Cell::default() }
-    }
-}
-
 impl<'a> Hash for BindingIdentifier<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);

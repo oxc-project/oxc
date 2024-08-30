@@ -154,8 +154,23 @@ impl<'a> ParserImpl<'a> {
                 .map(JSXElementName::MemberExpression);
         }
 
-        let element_name = if identifier.is_reference() {
-            JSXElementName::IdentifierReference(self.ast.alloc(identifier.into()))
+        // References begin with a capital letter, `_` or `$` e.g. `<Foo>`, `<_foo>`, `<$foo>`.
+        // https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react
+        // The identifier has already been checked to be valid, so when first char is ASCII, it can only
+        // be `a-z`, `A-Z`, `_` or `$`. But compiler doesn't know that, so we can help it create faster
+        // code by taking that invariant into account.
+        // `b < b'a'` matches `A-Z`, `_` and `$`.
+        // Use a fast path for common case of ASCII characters, to avoid the more expensive
+        // `char::is_uppercase` in most cases.
+        let name = identifier.name.as_str();
+        let is_reference = match name.as_bytes()[0] {
+            b if b.is_ascii() => b < b'a',
+            _ => name.chars().next().unwrap().is_uppercase(),
+        };
+
+        let element_name = if is_reference {
+            let identifier = self.ast.identifier_reference(identifier.span, identifier.name);
+            JSXElementName::IdentifierReference(self.ast.alloc(identifier))
         } else {
             JSXElementName::Identifier(self.ast.alloc(identifier))
         };
@@ -171,8 +186,8 @@ impl<'a> ParserImpl<'a> {
         object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut span = span;
-        let mut object =
-            JSXMemberExpressionObject::IdentifierReference(self.ast.alloc(object.into()));
+        let object = self.ast.identifier_reference(object.span, object.name);
+        let mut object = JSXMemberExpressionObject::IdentifierReference(self.ast.alloc(object));
         let mut property = None;
 
         while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
