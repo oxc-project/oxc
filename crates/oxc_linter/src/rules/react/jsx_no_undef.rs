@@ -53,19 +53,19 @@ impl Rule for JsxNoUndef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(elem) = &node.kind() {
             if let Some(ident) = get_resolvable_ident(&elem.name) {
-                let name = ident.name.as_str();
-                if name == "this" {
+                let reference = ctx.symbols().get_reference(ident.reference_id().unwrap());
+                if reference.symbol_id().is_some() {
                     return;
                 }
-                for scope_id in ctx.scopes().ancestors(node.scope_id()) {
-                    if ctx.scopes().has_binding(scope_id, name) {
-                        return;
-                    }
+                let name = ident.name.as_str();
+                // TODO: Remove this check once we have `JSXMemberExpressionObject::ThisExpression`
+                if name == "this" {
+                    return;
                 }
                 if ctx.globals().is_enabled(name) {
                     return;
                 }
-                ctx.diagnostic(jsx_no_undef_diagnostic(ident.name.as_str(), ident.span));
+                ctx.diagnostic(jsx_no_undef_diagnostic(name, ident.span));
             }
         }
     }
