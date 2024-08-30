@@ -1,4 +1,4 @@
-use oxc_ast::{visit::walk, AstKind, Visit};
+use oxc_ast::{AstKind, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ReferenceId;
@@ -260,19 +260,9 @@ impl<'a> Visit<'a> for ReferencesFinder {
         self.references.push(it.reference_id().unwrap());
     }
 
-    fn visit_jsx_element_name(&mut self, it: &oxc_ast::ast::JSXElementName<'a>) {
-        if !matches!(it, oxc_ast::ast::JSXElementName::IdentifierReference(_)) {
-            walk::walk_jsx_element_name(self, it);
-        }
-    }
-
-    fn visit_jsx_member_expression_object(
-        &mut self,
-        it: &oxc_ast::ast::JSXMemberExpressionObject<'a>,
-    ) {
-        if !matches!(it, oxc_ast::ast::JSXMemberExpressionObject::IdentifierReference(_)) {
-            walk::walk_jsx_member_expression_object(self, it);
-        }
+    fn visit_jsx_element_name(&mut self, _it: &oxc_ast::ast::JSXElementName<'a>) {
+        // Ignore references in JSX elements e.g. `Foo` in `<Foo>`.
+        // No need to walk children as only references they may contain are also JSX identifiers.
     }
 
     fn visit_this_expression(&mut self, _: &oxc_ast::ast::ThisExpression) {
