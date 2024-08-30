@@ -44,7 +44,7 @@ use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
-    env::EnvOptions,
+    env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
     react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
