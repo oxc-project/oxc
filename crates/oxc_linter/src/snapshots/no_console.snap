@@ -6,75 +6,88 @@ source: crates/oxc_linter/src/tester.rs
  1 │ console.log()
    ·         ───
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.log(foo)
    ·         ───
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.error(foo)
    ·         ─────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.info(foo)
    ·         ────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.warn(foo)
    ·         ────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.log(foo)
    ·         ───
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.error(foo)
    ·         ─────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.info(foo)
    ·         ────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.warn(foo)
    ·         ────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.log(foo)
    ·         ───
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.error(foo)
    ·         ─────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.info(foo)
    ·         ────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint(no-console): Unexpected console statement.
    ╭─[no_console.tsx:1:9]
  1 │ console.warn(foo)
    ·         ────
    ╰────
+  help: Delete this code.

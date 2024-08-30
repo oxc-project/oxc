@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// console.log('here');
     /// ```
     NoConsole,
-    restriction
+    restriction,
+    fix
 );
 
 impl Rule for NoConsole {
@@ -79,7 +80,9 @@ impl Rule for NoConsole {
                             .any(|s| mem.static_property_name().is_some_and(|f| f == s))
                     {
                         if let Some(mem) = mem.static_property_info() {
-                            ctx.diagnostic(no_console_diagnostic(mem.0));
+                            ctx.diagnostic_with_fix(no_console_diagnostic(mem.0), |fixer| {
+                                fixer.delete(call_expr)
+                            });
                         }
                     }
                 }
@@ -122,5 +125,13 @@ fn test() {
         ("console.warn(foo)", Some(serde_json::json!([{ "allow": ["info", "log"] }]))),
     ];
 
-    Tester::new(NoConsole::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("console.log()", ""),
+        ("console.log(foo)", ""),
+        ("console.error(foo)", ""),
+        ("console.info(foo)", ""),
+        ("console.warn(foo)", ""),
+    ];
+
+    Tester::new(NoConsole::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
