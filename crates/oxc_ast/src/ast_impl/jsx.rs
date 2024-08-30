@@ -20,9 +20,12 @@ impl<'a> fmt::Display for JSXIdentifier<'a> {
 }
 
 impl<'a> JSXIdentifier<'a> {
-    /// Determines whether the given current identifier is a reference
+    /// Determines whether the given current identifier is a reference.
+    ///
+    /// References begin with a capital letter, `_` or `$`.
+    /// <https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react>
     pub fn is_reference(&self) -> bool {
-        self.name.chars().next().map_or(false, char::is_uppercase)
+        self.name.chars().next().map_or(false, |c| c.is_uppercase() || c == '_' || c == '$')
     }
 }
 

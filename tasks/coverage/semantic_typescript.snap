@@ -5195,6 +5195,12 @@ tasks/coverage/typescript/tests/cases/compiler/doubleUnderscoreReactNamespace.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["__foot", "_jsxFileName", "global", "thing"]
 rebuilt        : ScopeId(0): ["_jsxFileName", "thing"]
+Reference symbol mismatch:
+after transform: ReferenceId(0): Some("__foot")
+rebuilt        : ReferenceId(1): None
+Unresolved references mismatch:
+after transform: ["React"]
+rebuilt        : ["React", "__foot"]
 
 tasks/coverage/typescript/tests/cases/compiler/downlevelLetConst13.ts
 semantic error: Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -19016,11 +19022,14 @@ Reference symbol mismatch:
 after transform: ReferenceId(5): Some("x")
 rebuilt        : ReferenceId(14): None
 Reference symbol mismatch:
-after transform: ReferenceId(6): Some("x")
+after transform: ReferenceId(6): Some("_Bar")
 rebuilt        : ReferenceId(17): None
+Reference symbol mismatch:
+after transform: ReferenceId(7): Some("x")
+rebuilt        : ReferenceId(18): None
 Unresolved references mismatch:
 after transform: ["React"]
-rebuilt        : ["Bar", "React", "x"]
+rebuilt        : ["Bar", "React", "_Bar", "x"]
 
 tasks/coverage/typescript/tests/cases/compiler/reactReadonlyHOCAssignabilityReal.tsx
 semantic error: Bindings mismatch:
