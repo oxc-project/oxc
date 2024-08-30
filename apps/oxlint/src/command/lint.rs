@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
 use bpaf::Bpaf;
-use oxc_linter::{AllowWarnDeny, FixKind};
+use oxc_linter::{AllowWarnDeny, FixKind, LintPlugins};
 
 use super::{
     expand_glob,
@@ -214,53 +214,110 @@ impl FromStr for OutputFormat {
 #[derive(Debug, Clone, Bpaf)]
 pub struct EnablePlugins {
     /// Disable react plugin, which is turned on by default
-    #[bpaf(long("disable-react-plugin"), flag(false, true), hide_usage)]
-    pub react_plugin: bool,
+    #[bpaf(long("disable-react-plugin"), flag(Enable::Disable, Enable::NotSet), hide_usage)]
+    pub react_plugin: Enable,
 
     /// Disable unicorn plugin, which is turned on by default
-    #[bpaf(long("disable-unicorn-plugin"), flag(false, true), hide_usage)]
-    pub unicorn_plugin: bool,
+    #[bpaf(long("disable-unicorn-plugin"), flag(Enable::Disable, Enable::NotSet), hide_usage)]
+    pub unicorn_plugin: Enable,
 
     /// Disable oxc unique rules, which is turned on by default
-    #[bpaf(long("disable-oxc-plugin"), flag(false, true), hide_usage)]
-    pub oxc_plugin: bool,
+    #[bpaf(long("disable-oxc-plugin"), flag(Enable::Disable, Enable::NotSet), hide_usage)]
+    pub oxc_plugin: Enable,
 
     /// Disable TypeScript plugin, which is turned on by default
-    #[bpaf(long("disable-typescript-plugin"), flag(false, true), hide_usage)]
-    pub typescript_plugin: bool,
+    #[bpaf(long("disable-typescript-plugin"), flag(Enable::Disable, Enable::NotSet), hide_usage)]
+    pub typescript_plugin: Enable,
 
     /// Enable the experimental import plugin and detect ESM problems.
     /// It is recommended to use along side with the `--tsconfig` option.
-    #[bpaf(switch, hide_usage)]
-    pub import_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub import_plugin: Enable,
 
     /// Enable the experimental jsdoc plugin and detect JSDoc problems
-    #[bpaf(switch, hide_usage)]
-    pub jsdoc_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub jsdoc_plugin: Enable,
 
     /// Enable the Jest plugin and detect test problems
-    #[bpaf(switch, hide_usage)]
-    pub jest_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub jest_plugin: Enable,
 
     /// Enable the Vitest plugin and detect test problems
-    #[bpaf(switch, hide_usage)]
-    pub vitest_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub vitest_plugin: Enable,
 
     /// Enable the JSX-a11y plugin and detect accessibility problems
-    #[bpaf(switch, hide_usage)]
-    pub jsx_a11y_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub jsx_a11y_plugin: Enable,
 
     /// Enable the Next.js plugin and detect Next.js problems
-    #[bpaf(switch, hide_usage)]
-    pub nextjs_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub nextjs_plugin: Enable,
 
     /// Enable the React performance plugin and detect rendering performance problems
-    #[bpaf(switch, hide_usage)]
-    pub react_perf_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub react_perf_plugin: Enable,
 
     /// Enable the promise plugin and detect promise usage problems
-    #[bpaf(switch, hide_usage)]
-    pub promise_plugin: bool,
+    #[bpaf(flag(Enable::Enable, Enable::NotSet), hide_usage)]
+    pub promise_plugin: Enable,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::enum_variant_names)]
+pub enum Enable {
+    Enable,
+    Disable,
+    #[default]
+    NotSet,
+}
+
+impl From<Option<bool>> for Enable {
+    fn from(value: Option<bool>) -> Self {
+        match value {
+            Some(true) => Self::Enable,
+            Some(false) => Self::Disable,
+            None => Self::NotSet,
+        }
+    }
+}
+
+impl From<Enable> for Option<bool> {
+    fn from(value: Enable) -> Self {
+        match value {
+            Enable::Enable => Some(true),
+            Enable::Disable => Some(false),
+            Enable::NotSet => None,
+        }
+    }
+}
+
+impl Enable {
+    pub fn inspect<F>(self, f: F)
+    where
+        F: FnOnce(bool),
+    {
+        if let Some(v) = self.into() {
+            f(v)
+        }
+    }
+}
+
+impl EnablePlugins {
+    pub fn apply_overrides(&self, plugins: &mut LintPlugins) {
+        self.react_plugin.inspect(|yes| plugins.set(LintPlugins::REACT, yes));
+        self.unicorn_plugin.inspect(|yes| plugins.set(LintPlugins::UNICORN, yes));
+        self.oxc_plugin.inspect(|yes| plugins.set(LintPlugins::OXC, yes));
+        self.typescript_plugin.inspect(|yes| plugins.set(LintPlugins::TYPESCRIPT, yes));
+        self.import_plugin.inspect(|yes| plugins.set(LintPlugins::IMPORT, yes));
+        self.jsdoc_plugin.inspect(|yes| plugins.set(LintPlugins::JSDOC, yes));
+        self.jest_plugin.inspect(|yes| plugins.set(LintPlugins::JEST, yes));
+        self.vitest_plugin.inspect(|yes| plugins.set(LintPlugins::VITEST, yes));
+        self.jsx_a11y_plugin.inspect(|yes| plugins.set(LintPlugins::JSX_A11Y, yes));
+        self.nextjs_plugin.inspect(|yes| plugins.set(LintPlugins::NEXTJS, yes));
+        self.react_perf_plugin.inspect(|yes| plugins.set(LintPlugins::REACT_PERF, yes));
+        self.promise_plugin.inspect(|yes| plugins.set(LintPlugins::PROMISE, yes));
+    }
 }
 
 #[cfg(test)]

@@ -165,7 +165,7 @@ rust-lapper         = "1.1.0"
 rustc-hash          = "2.*"
 ryu-js              = "1.0.1"
 saphyr              = "0.0.1"
-schemars            = "0.8.21"
+schemars            = { version = "0.8.21", features = ["impl_json_schema"] }
 seq-macro           = "0.3.5"
 serde               = "1.0.206"
 serde_json          = "1.0.124"
@@ -192,7 +192,7 @@ ignored = ["napi", "oxc_transform_napi", "prettyplease"]
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
-debug = false
+debug = true
 
 [profile.dev.package]
 # Compile macros with some optimizations to make consuming crates build faster

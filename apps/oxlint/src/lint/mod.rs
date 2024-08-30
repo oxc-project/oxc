@@ -4,7 +4,7 @@ use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
     partial_loader::LINT_PARTIAL_LOADER_EXT, InvalidFilterKind, LintFilter, LintService,
-    LintServiceOptions, Linter, OxlintOptions,
+    LintServiceOptions, Linter, LinterBuilder, Oxlintrc,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -121,34 +121,27 @@ impl Runner for LintRunner {
         let number_of_files = paths.len();
 
         let cwd = std::env::current_dir().unwrap().into_boxed_path();
-        let lint_options = OxlintOptions::default()
-            .with_filter(filters)
-            .with_config_path(basic_options.config)
-            .with_fix(fix_options.fix_kind())
-            .with_react_plugin(enable_plugins.react_plugin)
-            .with_unicorn_plugin(enable_plugins.unicorn_plugin)
-            .with_typescript_plugin(enable_plugins.typescript_plugin)
-            .with_oxc_plugin(enable_plugins.oxc_plugin)
-            .with_import_plugin(enable_plugins.import_plugin)
-            .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
-            .with_jest_plugin(enable_plugins.jest_plugin)
-            .with_vitest_plugin(enable_plugins.vitest_plugin)
-            .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
-            .with_nextjs_plugin(enable_plugins.nextjs_plugin)
-            .with_react_perf_plugin(enable_plugins.react_perf_plugin)
-            .with_promise_plugin(enable_plugins.promise_plugin);
-
-        let linter = match Linter::from_options(lint_options) {
-            Ok(lint_service) => lint_service,
-            Err(diagnostic) => {
-                let handler = GraphicalReportHandler::new();
-                let mut err = String::new();
-                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
-                return CliRunResult::InvalidOptions {
-                    message: format!("Failed to parse configuration file.\n{err}"),
-                };
+        let mut oxlintrc = if let Some(config_path) = basic_options.config.as_ref() {
+            match Oxlintrc::from_file(config_path) {
+                Ok(config) => config,
+                Err(diagnostic) => {
+                    let handler = GraphicalReportHandler::new();
+                    let mut err = String::new();
+                    handler.render_report(&mut err, &diagnostic).unwrap();
+                    return CliRunResult::InvalidOptions {
+                        message: format!("Failed to parse configuration file.\n{err}"),
+                    };
+                }
             }
+        } else {
+            Oxlintrc::default()
         };
+
+        enable_plugins.apply_overrides(&mut oxlintrc.plugins);
+        let linter = LinterBuilder::from_oxlintrc(false, oxlintrc)
+            .with_filters(filters)
+            .with_fix(fix_options.fix_kind())
+            .build();
 
         let mut options = LintServiceOptions::new(cwd, paths);
         if let Some(path) = basic_options.tsconfig {

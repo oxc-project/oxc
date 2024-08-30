@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "OxlintConfig",
+  "title": "Oxlintrc",
   "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
   "type": "object",
   "properties": {
@@ -15,6 +15,17 @@
         }
       ]
     },
+    "extends": {
+      "default": null,
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SingleOrVec_for_String"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "globals": {
       "description": "Enabled or disabled specific global variables.",
       "default": {},
@@ -23,6 +34,23 @@
           "$ref": "#/definitions/OxlintGlobals"
         }
       ]
+    },
+    "plugins": {
+      "default": [
+        "react",
+        "unicorn",
+        "typescript",
+        "oxc"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/definitions/LintPlugins"
+        }
+      ]
+    },
+    "root": {
+      "default": false,
+      "type": "boolean"
     },
     "rules": {
       "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).",
@@ -219,6 +247,12 @@
         }
       }
     },
+    "LintPlugins": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "NextPluginSettings": {
       "type": "object",
       "properties": {
@@ -335,6 +369,20 @@
           }
         }
       }
+    },
+    "SingleOrVec_for_String": {
+      "description": "A type which can be serialized as a single item, or multiple items.\n\nIn some contexts, a `Single` may be semantically distinct from a `Vec` containing only item.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "TagNamePreference": {
       "anyOf": [

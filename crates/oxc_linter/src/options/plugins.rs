@@ -1,4 +1,6 @@
 use bitflags::bitflags;
+use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Hash)]
     pub struct LintPlugins: u32 {
@@ -39,6 +41,12 @@ impl Default for LintPlugins {
 }
 
 impl LintPlugins {
+    /// Returns `true` if the Jest plugin is enabled.
+    #[inline]
+    pub fn has_jest(self) -> bool {
+        self.contains(LintPlugins::JEST)
+    }
+
     /// Returns `true` if the Vitest plugin is enabled.
     #[inline]
     pub fn has_vitest(self) -> bool {
@@ -98,6 +106,57 @@ impl From<&str> for LintPlugins {
             // making it the default value.
             _ => LintPlugins::empty(),
         }
+    }
+}
+impl From<LintPlugins> for &'static str {
+    fn from(value: LintPlugins) -> Self {
+        match value {
+            LintPlugins::REACT => "react",
+            LintPlugins::UNICORN => "unicorn",
+            LintPlugins::TYPESCRIPT => "typescript",
+            LintPlugins::OXC => "oxc",
+            LintPlugins::IMPORT => "import",
+            LintPlugins::JSDOC => "jsdoc",
+            LintPlugins::JEST => "jest",
+            LintPlugins::VITEST => "vitest",
+            LintPlugins::JSX_A11Y => "jsx-a11y",
+            LintPlugins::NEXTJS => "nextjs",
+            LintPlugins::REACT_PERF => "react-perf",
+            LintPlugins::PROMISE => "promise",
+            _ => "",
+        }
+    }
+}
+
+impl<S: AsRef<str>> FromIterator<S> for LintPlugins {
+    fn from_iter<T: IntoIterator<Item = S>>(iter: T) -> Self {
+        iter.into_iter()
+            .map(|plugin| plugin.as_ref().into())
+            .fold(LintPlugins::default(), LintPlugins::union)
+    }
+}
+
+impl<'de> Deserialize<'de> for LintPlugins {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Vec::<&str>::deserialize(deserializer).map(|vec| vec.into_iter().collect())
+    }
+}
+impl Serialize for LintPlugins {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let vec: Vec<&str> = self.iter().map(Into::into).collect();
+        vec.serialize(serializer)
+    }
+}
+
+impl JsonSchema for LintPlugins {
+    fn schema_name() -> String {
+        "LintPlugins".to_string()
+    }
+    fn schema_id() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("LintPlugins")
+    }
+    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
+        gen.subschema_for::<Vec<&str>>()
     }
 }
 

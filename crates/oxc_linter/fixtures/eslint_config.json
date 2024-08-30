@@ -1,4 +1,5 @@
 {
+    "plugins": ["jsx-a11y"],
     "rules": {
         // requires jsonc support
         "no-console": "off",

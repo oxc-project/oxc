@@ -7,7 +7,7 @@ use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
-use oxc_linter::{FixKind, Linter, OxlintOptions};
+use oxc_linter::{FixKind, LinterBuilder, Oxlintrc};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
@@ -344,12 +344,10 @@ impl Backend {
         if let Some(config_path) = config_path {
             let mut linter = self.server_linter.write().await;
             *linter = ServerLinter::new_with_linter(
-                Linter::from_options(
-                    OxlintOptions::default()
-                        .with_fix(FixKind::SafeFix)
-                        .with_config_path(Some(config_path)),
-                )
-                .expect("should have initialized linter with new options"),
+                // panics if config is invalid
+                LinterBuilder::from_oxlintrc(false, Oxlintrc::from_file(&config_path).unwrap())
+                    .with_fix(FixKind::SafeFix)
+                    .build(),
             );
         }
     }

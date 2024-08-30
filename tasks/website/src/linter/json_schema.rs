@@ -1,5 +1,5 @@
 use handlebars::Handlebars;
-use oxc_linter::OxlintConfig;
+use oxc_linter::Oxlintrc;
 use schemars::{
     schema::{RootSchema, Schema, SchemaObject, SingleOrVec, SubschemaValidation},
     schema_for,
@@ -11,7 +11,7 @@ pub fn print_schema_json() {
 }
 
 fn generate_schema_json() -> String {
-    let schema = schema_for!(OxlintConfig);
+    let schema = schema_for!(Oxlintrc);
     serde_json::to_string_pretty(&schema).unwrap()
 }
 
@@ -28,7 +28,7 @@ pub fn print_schema_markdown() {
 }
 
 fn generate_schema_markdown() -> String {
-    let root_schema = schema_for!(OxlintConfig);
+    let root_schema = schema_for!(Oxlintrc);
     Renderer::new(root_schema).render()
 }
 
