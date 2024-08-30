@@ -29,6 +29,13 @@ impl Default for Targets {
 }
 
 impl Targets {
+    /// Create a `Targets` from a browserslist query.
+    ///
+    /// The usage refer to the [browserslist](https://github.com/browserslist/browserslist?tab=readme-ov-file#queries) documentation.
+    pub fn from_query(query: &str) -> Self {
+        Targets::Query(Query::Single(query.into()))
+    }
+
     /// Parse the query and return the parsed Versions.
     ///
     /// # Errors
