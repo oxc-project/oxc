@@ -194,7 +194,7 @@ impl Oxc {
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
-            .build_module_record(path.clone(), &program)
+            .build_module_record(&path, &program)
             .build(&program);
 
         if run_options.syntax.unwrap_or_default() {
@@ -285,7 +285,7 @@ impl Oxc {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)
                 .with_cfg(true)
                 .with_trivias(trivias.clone())
-                .build_module_record(path.to_path_buf(), program)
+                .build_module_record(path, program)
                 .build(program);
             let semantic = Rc::new(semantic_ret.semantic);
             let linter_ret = Linter::default().run(path, Rc::clone(&semantic));

@@ -277,7 +277,7 @@ impl Runtime {
             .with_build_jsdoc(true)
             .with_trivias(trivias)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path.to_path_buf(), program);
+            .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
         if self.linter.options().plugins.import {

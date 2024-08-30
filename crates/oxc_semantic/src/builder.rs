@@ -2,7 +2,7 @@
 
 use std::{
     cell::{Cell, RefCell},
-    path::PathBuf,
+    path::Path,
     sync::Arc,
 };
 
@@ -195,10 +195,11 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn build_module_record(
         mut self,
-        resolved_absolute_path: PathBuf,
+        resolved_absolute_path: &Path,
         program: &Program<'a>,
     ) -> Self {
-        let mut module_record_builder = ModuleRecordBuilder::new(resolved_absolute_path);
+        let mut module_record_builder =
+            ModuleRecordBuilder::new(resolved_absolute_path.to_path_buf());
         module_record_builder.visit(program);
         self.module_record = Arc::new(module_record_builder.build());
         self
