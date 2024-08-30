@@ -154,7 +154,12 @@ impl<'a> ParserImpl<'a> {
                 .map(JSXElementName::MemberExpression);
         }
 
-        Ok(JSXElementName::Identifier(self.ast.alloc(identifier)))
+        let element_name = if identifier.is_reference() {
+            JSXElementName::IdentifierReference(self.ast.alloc(identifier.into()))
+        } else {
+            JSXElementName::Identifier(self.ast.alloc(identifier))
+        };
+        Ok(element_name)
     }
 
     /// `JSXMemberExpression` :
@@ -166,7 +171,8 @@ impl<'a> ParserImpl<'a> {
         object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
         let mut span = span;
-        let mut object = JSXMemberExpressionObject::Identifier(self.ast.alloc(object));
+        let mut object =
+            JSXMemberExpressionObject::IdentifierReference(self.ast.alloc(object.into()));
         let mut property = None;
 
         while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
@@ -398,6 +404,10 @@ impl<'a> ParserImpl<'a> {
             (JSXElementName::Identifier(lhs), JSXElementName::Identifier(rhs)) => {
                 lhs.name == rhs.name
             }
+            (
+                JSXElementName::IdentifierReference(lhs),
+                JSXElementName::IdentifierReference(rhs),
+            ) => lhs.name == rhs.name,
             (JSXElementName::NamespacedName(lhs), JSXElementName::NamespacedName(rhs)) => {
                 lhs.namespace.name == rhs.namespace.name && lhs.property.name == rhs.property.name
             }
@@ -419,6 +429,10 @@ impl<'a> ParserImpl<'a> {
             (
                 JSXMemberExpressionObject::Identifier(lhs),
                 JSXMemberExpressionObject::Identifier(rhs),
+            ) => lhs.name == rhs.name,
+            (
+                JSXMemberExpressionObject::IdentifierReference(lhs),
+                JSXMemberExpressionObject::IdentifierReference(rhs),
             ) => lhs.name == rhs.name,
             (
                 JSXMemberExpressionObject::MemberExpression(lhs),

@@ -713,6 +713,9 @@ impl<'a> ReactJsx<'a> {
                     self.ctx.ast.expression_from_identifier_reference(ident)
                 }
             }
+            JSXElementName::IdentifierReference(ident) => {
+                self.ast().expression_from_identifier_reference(ident.as_ref().clone())
+            }
             JSXElementName::MemberExpression(member_expr) => {
                 self.transform_jsx_member_expression(member_expr, ctx)
             }
@@ -789,6 +792,9 @@ impl<'a> ReactJsx<'a> {
                     let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
                     self.ast().expression_from_identifier_reference(ident)
                 }
+            }
+            JSXMemberExpressionObject::IdentifierReference(ident) => {
+                self.ast().expression_from_identifier_reference(ident.as_ref().clone())
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 self.transform_jsx_member_expression(expr, ctx)

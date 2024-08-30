@@ -1,10 +1,10 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -66,12 +66,8 @@ impl Rule for HtmlHasLang {
             return;
         }
 
-        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
-            return;
-        };
-
         has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(missing_lang_prop(identifier.span)),
+            || ctx.diagnostic(missing_lang_prop(jsx_el.name.span())),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
                     ctx.diagnostic(missing_lang_value(jsx_el.span));

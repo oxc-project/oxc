@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -118,11 +118,9 @@ fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool 
         return false;
     };
 
-    let JSXElementName::Identifier(name) = &opening_elem.name else {
-        return false;
-    };
+    let Some(tag_name) = opening_elem.name.get_identifier_name() else { return false };
 
-    if !name.name.eq_ignore_ascii_case("meta") {
+    if !tag_name.eq_ignore_ascii_case("meta") {
         return false;
     }
 

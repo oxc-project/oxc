@@ -1,11 +1,11 @@
 use language_tags::LanguageTag;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -71,12 +71,8 @@ impl Rule for Lang {
             return;
         }
 
-        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
-            return;
-        };
-
         has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(lang_diagnostic(identifier.span)),
+            || ctx.diagnostic(lang_diagnostic(jsx_el.name.span())),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
                     if let JSXAttributeItem::Attribute(attr) = lang_prop {

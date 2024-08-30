@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, Visit};
+use oxc_ast::{visit::walk, AstKind, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ReferenceId;
@@ -258,6 +258,21 @@ struct ReferencesFinder {
 impl<'a> Visit<'a> for ReferencesFinder {
     fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
         self.references.push(it.reference_id().unwrap());
+    }
+
+    fn visit_jsx_element_name(&mut self, it: &oxc_ast::ast::JSXElementName<'a>) {
+        if !matches!(it, oxc_ast::ast::JSXElementName::IdentifierReference(_)) {
+            walk::walk_jsx_element_name(self, it);
+        }
+    }
+
+    fn visit_jsx_member_expression_object(
+        &mut self,
+        it: &oxc_ast::ast::JSXMemberExpressionObject<'a>,
+    ) {
+        if !matches!(it, oxc_ast::ast::JSXMemberExpressionObject::IdentifierReference(_)) {
+            walk::walk_jsx_member_expression_object(self, it);
+        }
     }
 
     fn visit_this_expression(&mut self, _: &oxc_ast::ast::ThisExpression) {

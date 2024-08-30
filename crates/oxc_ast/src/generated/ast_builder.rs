@@ -12817,6 +12817,30 @@ impl<'a> AstBuilder<'a> {
         JSXElementName::Identifier(inner.into_in(self.allocator))
     }
 
+    /// Build a [`JSXElementName::IdentifierReference`]
+    ///
+    /// This node contains a [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - name: The name of the identifier being referenced.
+    #[inline]
+    pub fn jsx_element_name_identifier_reference<A>(self, span: Span, name: A) -> JSXElementName<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXElementName::IdentifierReference(self.alloc(self.identifier_reference(span, name)))
+    }
+
+    /// Convert a [`IdentifierReference`] into a [`JSXElementName::IdentifierReference`]
+    #[inline]
+    pub fn jsx_element_name_from_identifier_reference<T>(self, inner: T) -> JSXElementName<'a>
+    where
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
+    {
+        JSXElementName::IdentifierReference(inner.into_in(self.allocator))
+    }
+
     /// Build a [`JSXElementName::NamespacedName`]
     ///
     /// This node contains a [`JSXNamespacedName`] that will be stored in the memory arena.
@@ -12976,6 +13000,39 @@ impl<'a> AstBuilder<'a> {
         T: IntoIn<'a, Box<'a, JSXIdentifier<'a>>>,
     {
         JSXMemberExpressionObject::Identifier(inner.into_in(self.allocator))
+    }
+
+    /// Build a [`JSXMemberExpressionObject::IdentifierReference`]
+    ///
+    /// This node contains a [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - name: The name of the identifier being referenced.
+    #[inline]
+    pub fn jsx_member_expression_object_identifier_reference<A>(
+        self,
+        span: Span,
+        name: A,
+    ) -> JSXMemberExpressionObject<'a>
+    where
+        A: IntoIn<'a, Atom<'a>>,
+    {
+        JSXMemberExpressionObject::IdentifierReference(
+            self.alloc(self.identifier_reference(span, name)),
+        )
+    }
+
+    /// Convert a [`IdentifierReference`] into a [`JSXMemberExpressionObject::IdentifierReference`]
+    #[inline]
+    pub fn jsx_member_expression_object_from_identifier_reference<T>(
+        self,
+        inner: T,
+    ) -> JSXMemberExpressionObject<'a>
+    where
+        T: IntoIn<'a, Box<'a, IdentifierReference<'a>>>,
+    {
+        JSXMemberExpressionObject::IdentifierReference(inner.into_in(self.allocator))
     }
 
     /// Build a [`JSXMemberExpressionObject::MemberExpression`]

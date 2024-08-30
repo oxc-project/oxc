@@ -165,12 +165,14 @@ pub struct JSXClosingFragment {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXElementName<'a> {
-    /// `<Apple />`
+    /// `<div />`
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
+    /// `<Apple />`
+    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
     /// `<Apple:Orange />`
-    NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 1,
+    NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 2,
     /// `<Apple.Orange />`
-    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 2,
+    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 3,
 }
 
 /// JSX Namespaced Name
@@ -230,7 +232,8 @@ pub struct JSXMemberExpression<'a> {
 #[serde(untagged)]
 pub enum JSXMemberExpressionObject<'a> {
     Identifier(Box<'a, JSXIdentifier<'a>>) = 0,
-    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 1,
+    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
+    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 2,
 }
 
 /// JSX Expression Container

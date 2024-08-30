@@ -11,10 +11,18 @@ impl<'a> JSXIdentifier<'a> {
         Self { span, name }
     }
 }
+
 impl<'a> fmt::Display for JSXIdentifier<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
+    }
+}
+
+impl<'a> JSXIdentifier<'a> {
+    /// Determines whether the given current identifier is a reference
+    pub fn is_reference(&self) -> bool {
+        self.name.chars().next().map_or(false, char::is_uppercase)
     }
 }
 
@@ -25,21 +33,25 @@ impl<'a> fmt::Display for JSXNamespacedName<'a> {
 }
 
 impl<'a> JSXElementName<'a> {
-    pub fn as_identifier(&self) -> Option<&JSXIdentifier<'a>> {
+    pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::Identifier(id) => Some(id.as_ref()),
+            Self::Identifier(id) => Some(id.as_ref().name.clone()),
+            Self::IdentifierReference(id) => Some(id.as_ref().name.clone()),
             _ => None,
         }
     }
 }
 
 impl<'a> JSXMemberExpression<'a> {
-    pub fn get_object_identifier(&self) -> &JSXIdentifier {
+    pub fn get_object_identifier(&self) -> &JSXIdentifier<'a> {
         let mut member_expr = self;
         loop {
             match &member_expr.object {
                 JSXMemberExpressionObject::Identifier(ident) => {
                     break ident;
+                }
+                JSXMemberExpressionObject::IdentifierReference(_) => {
+                    unreachable!()
                 }
                 JSXMemberExpressionObject::MemberExpression(expr) => {
                     member_expr = expr;
@@ -54,6 +66,9 @@ impl<'a> JSXMemberExpression<'a> {
             match &mut member_expr.object {
                 JSXMemberExpressionObject::Identifier(ident) => {
                     break &mut *ident;
+                }
+                JSXMemberExpressionObject::IdentifierReference(_) => {
+                    unreachable!()
                 }
                 JSXMemberExpressionObject::MemberExpression(expr) => {
                     member_expr = expr;
@@ -73,6 +88,7 @@ impl<'a> fmt::Display for JSXMemberExpressionObject<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Identifier(id) => id.fmt(f),
+            Self::IdentifierReference(id) => id.fmt(f),
             Self::MemberExpression(expr) => expr.fmt(f),
         }
     }
@@ -82,6 +98,7 @@ impl<'a> fmt::Display for JSXElementName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Identifier(ident) => ident.fmt(f),
+            Self::IdentifierReference(ident) => ident.fmt(f),
             Self::NamespacedName(namespaced) => namespaced.fmt(f),
             Self::MemberExpression(member_expr) => member_expr.fmt(f),
         }

@@ -5,10 +5,7 @@
 use std::cell::Cell;
 
 use oxc_ast::{
-    ast::{
-        BindingIdentifier, IdentifierReference, JSXElementName, JSXMemberExpressionObject,
-        TSEnumMemberName, TSModuleDeclarationName,
-    },
+    ast::{BindingIdentifier, IdentifierReference, TSEnumMemberName, TSModuleDeclarationName},
     visit::walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
     AstKind, Visit,
 };
@@ -43,35 +40,6 @@ impl<'a> Visit<'a> for Counter {
     fn visit_identifier_reference(&mut self, _: &IdentifierReference<'a>) {
         self.nodes_count += 1;
         self.references_count += 1;
-    }
-
-    #[inline]
-    fn visit_jsx_member_expression_object(&mut self, it: &JSXMemberExpressionObject<'a>) {
-        self.nodes_count += 1;
-        match it {
-            JSXMemberExpressionObject::MemberExpression(expr) => {
-                self.visit_jsx_member_expression(expr);
-            }
-            JSXMemberExpressionObject::Identifier(_) => {
-                self.nodes_count += 1;
-                self.references_count += 1;
-            }
-        }
-    }
-
-    #[inline]
-    fn visit_jsx_element_name(&mut self, it: &JSXElementName<'a>) {
-        self.nodes_count += 1;
-        match it {
-            JSXElementName::Identifier(ident) => {
-                self.nodes_count += 1;
-                if ident.name.chars().next().is_some_and(char::is_uppercase) {
-                    self.references_count += 1;
-                }
-            }
-            JSXElementName::NamespacedName(name) => self.visit_jsx_namespaced_name(name),
-            JSXElementName::MemberExpression(expr) => self.visit_jsx_member_expression(expr),
-        }
     }
 
     #[inline]

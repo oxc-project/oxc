@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXElementName, JSXIdentifier, JSXMemberExpression, JSXMemberExpressionObject},
+    ast::{IdentifierReference, JSXElementName, JSXMemberExpression, JSXMemberExpressionObject},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -33,21 +33,18 @@ declare_oxc_lint!(
     correctness
 );
 
-fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a JSXIdentifier> {
+fn get_resolvable_ident<'a>(node: &'a JSXElementName<'a>) -> Option<&'a IdentifierReference> {
     match node {
-        JSXElementName::Identifier(ref ident)
-            if !(ident.name.as_str().starts_with(char::is_lowercase)) =>
-        {
-            Some(ident)
-        }
         JSXElementName::Identifier(_) | JSXElementName::NamespacedName(_) => None,
-        JSXElementName::MemberExpression(expr) => Some(get_member_ident(expr)),
+        JSXElementName::IdentifierReference(ref ident) => Some(ident),
+        JSXElementName::MemberExpression(expr) => get_member_ident(expr),
     }
 }
 
-fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> &'a JSXIdentifier {
+fn get_member_ident<'a>(expr: &'a JSXMemberExpression<'a>) -> Option<&'a IdentifierReference> {
     match &expr.object {
-        JSXMemberExpressionObject::Identifier(ident) => ident,
+        JSXMemberExpressionObject::Identifier(_) => None,
+        JSXMemberExpressionObject::IdentifierReference(ident) => Some(ident),
         JSXMemberExpressionObject::MemberExpression(next_expr) => get_member_ident(next_expr),
     }
 }

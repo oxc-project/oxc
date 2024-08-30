@@ -1598,10 +1598,7 @@ after transform: ["Generator"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/brace-is-block/input.tsx
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["D", "T"]
 rebuilt        : ["D"]
 
@@ -1724,7 +1721,7 @@ rebuilt        : ["C"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/tsx/input.ts
 semantic error: Unresolved reference IDs mismatch for "C":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(6)]
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : [ReferenceId(1), ReferenceId(4)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/whitespace/input.ts

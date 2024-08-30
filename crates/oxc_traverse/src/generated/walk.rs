@@ -3259,6 +3259,9 @@ pub(crate) unsafe fn walk_jsx_element_name<'a, Tr: Traverse<'a>>(
         JSXElementName::Identifier(node) => {
             walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
         }
+        JSXElementName::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
         JSXElementName::NamespacedName(node) => {
             walk_jsx_namespaced_name(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -3328,6 +3331,9 @@ pub(crate) unsafe fn walk_jsx_member_expression_object<'a, Tr: Traverse<'a>>(
     match &mut *node {
         JSXMemberExpressionObject::Identifier(node) => {
             walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXMemberExpressionObject::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
         }
         JSXMemberExpressionObject::MemberExpression(node) => {
             walk_jsx_member_expression(traverser, (&mut **node) as *mut _, ctx)

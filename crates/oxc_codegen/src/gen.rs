@@ -2244,6 +2244,7 @@ impl<'a> Gen for JSXMemberExpressionObject<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(ident) => ident.gen(p, ctx),
+            Self::IdentifierReference(ident) => ident.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
         }
     }
@@ -2261,6 +2262,7 @@ impl<'a> Gen for JSXElementName<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(identifier) => identifier.gen(p, ctx),
+            Self::IdentifierReference(identifier) => identifier.gen(p, ctx),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
         }
