@@ -135,7 +135,8 @@ impl Rule for AnchorIsValid {
             if name != "a" {
                 return;
             };
-            let span = jsx_el.opening_element.name.span();
+            // Don't eagerly get `span` here, to avoid that work unless rule fails
+            let get_span = || jsx_el.opening_element.name.span();
             if let Option::Some(href_attr) =
                 has_jsx_prop_ignore_case(&jsx_el.opening_element, "href")
             {
@@ -145,17 +146,17 @@ impl Rule for AnchorIsValid {
 
                 // Check if the 'a' element has a correct href attribute
                 let Some(value) = attr.value.as_ref() else {
-                    ctx.diagnostic(incorrect_href(span));
+                    ctx.diagnostic(incorrect_href(get_span()));
                     return;
                 };
 
                 let is_empty = self.check_value_is_empty(value);
                 if is_empty {
                     if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick").is_some() {
-                        ctx.diagnostic(cant_be_anchor(span));
+                        ctx.diagnostic(cant_be_anchor(get_span()));
                         return;
                     }
-                    ctx.diagnostic(incorrect_href(span));
+                    ctx.diagnostic(incorrect_href(get_span()));
                     return;
                 }
                 return;
@@ -168,7 +169,7 @@ impl Rule for AnchorIsValid {
             if has_spread_attr {
                 return;
             }
-            ctx.diagnostic(missing_href_attribute(span));
+            ctx.diagnostic(missing_href_attribute(get_span()));
         }
     }
 }
