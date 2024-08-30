@@ -189,8 +189,6 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         self.ast = program.serialize(&self.serializer)?;
 
-        self.save_diagnostics(errors.into_iter().map(Error::from).collect::<Vec<_>>());
-
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
@@ -199,7 +197,7 @@ impl Oxc {
 
         if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(
-                semantic_ret.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
+                errors.into_iter().chain(semantic_ret.errors).map(Error::from).collect::<Vec<_>>(),
             );
         }
 
@@ -236,7 +234,7 @@ impl Oxc {
             }
         }
 
-        if minifier_options.compress.unwrap_or_default()
+        let mangler = if minifier_options.compress.unwrap_or_default()
             || minifier_options.mangle.unwrap_or_default()
         {
             let compress_options = minifier_options.compress_options.unwrap_or_default();
@@ -257,10 +255,13 @@ impl Oxc {
                     CompressOptions::all_false()
                 },
             };
-            Minifier::new(options).build(&allocator, &mut program);
-        }
+            Minifier::new(options).build(&allocator, &mut program).mangler
+        } else {
+            None
+        };
 
         self.codegen_text = CodeGenerator::new()
+            .with_mangler(mangler)
             .with_options(CodegenOptions {
                 minify: minifier_options.whitespace.unwrap_or_default(),
                 ..CodegenOptions::default()
