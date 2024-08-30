@@ -29,6 +29,13 @@ impl Default for Targets {
 }
 
 impl Targets {
+    /// Parse the query and return the parsed Versions.
+    ///
+    /// # Errors
+    ///
+    /// This function returns an error if:
+    /// * The query is not supported.
+    /// * The query is invalid.
     pub fn get_targets(self) -> Result<Versions, Error> {
         match self {
             Targets::Versions(v) => Ok(v),
