@@ -118,7 +118,7 @@ impl<'a> TypeIdentResult<'a> {
 
 // TODO: remove me
 #[allow(dead_code)]
-#[derive(Debug, PartialEq, Clone, Serialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize)]
 pub enum TypeWrapper {
     None,
     Box,
@@ -140,6 +140,11 @@ pub struct TypeAnalysis {
     // pub name: String,
     #[serde(skip)]
     pub typ: Type,
+}
+impl TypeAnalysis {
+    pub fn is_optional(&self) -> bool {
+        matches!(self.wrapper, TypeWrapper::Opt | TypeWrapper::OptBox | TypeWrapper::OptVec)
+    }
 }
 
 impl TypeExt for Type {

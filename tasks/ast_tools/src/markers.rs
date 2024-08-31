@@ -74,9 +74,6 @@ pub enum SymbolMarkers {
 
 #[derive(Default, Debug, Clone)]
 pub struct SymbolBinding {
-    /// `true` if it's possible for the `BindingIdentifier` to not exist (e.g.
-    /// the field has type `Option<BindingIdentifier<'a>>`).
-    pub optional: bool,
     /// `recurse` option was set, indicating that trait implementations should
     /// call methods on the binding-marked property.
     pub recurse: bool,
@@ -278,9 +275,6 @@ impl Parse for SymbolBinding {
         let idents = input.parse_terminated(Ident::parse, Token![,])?;
         for ident in idents {
             match ident.to_string().as_str() {
-                "optional" => {
-                    symbol.optional = true;
-                }
                 "recurse" => {
                     symbol.recurse = true;
                 }

@@ -4,7 +4,9 @@ use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
-use oxc_syntax::{operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags};
+use oxc_syntax::{
+    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
+};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -360,6 +362,18 @@ impl<'a> Hash for BindingIdentifier<'a> {
 impl<'a> BindingIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
+    }
+}
+
+impl<'a> WithBindingIdentifier<'a> for BindingIdentifier<'a> {
+    #[inline]
+    fn name(&self) -> Option<Atom<'a>> {
+        Some(self.name.clone())
+    }
+
+    #[inline]
+    fn symbol_id(&self) -> Option<SymbolId> {
+        self.symbol_id.get()
     }
 }
 
@@ -793,6 +807,18 @@ impl<'a> Declaration<'a> {
     }
 }
 
+impl<'a> WithBindingIdentifier<'a> for Declaration<'a> {
+    #[inline]
+    fn symbol_id(&self) -> Option<SymbolId> {
+        self.id().and_then(BindingIdentifier::symbol_id)
+    }
+
+    #[inline]
+    fn name(&self) -> Option<Atom<'a>> {
+        self.id().and_then(BindingIdentifier::name)
+    }
+}
+
 impl<'a> VariableDeclaration<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare
@@ -1000,7 +1026,7 @@ impl<'a> BindingPatternKind<'a> {
 }
 
 impl<'a> WithBindingIdentifier<'a> for BindingPatternKind<'a> {
-    fn symbol_id(&self) -> Option<oxc_syntax::symbol::SymbolId> {
+    fn symbol_id(&self) -> Option<SymbolId> {
         match self {
             Self::BindingIdentifier(ident) => ident.symbol_id.get(),
             Self::AssignmentPattern(assign) => assign.left.kind.symbol_id(),
@@ -1527,6 +1553,18 @@ impl<'a> ImportDeclarationSpecifier<'a> {
     }
     pub fn name(&self) -> Cow<'a, str> {
         Cow::Borrowed(self.local().name.as_str())
+    }
+}
+
+impl<'a> WithBindingIdentifier<'a> for ImportDeclarationSpecifier<'a> {
+    #[inline]
+    fn symbol_id(&self) -> Option<SymbolId> {
+        self.local().symbol_id.get()
+    }
+
+    #[inline]
+    fn name(&self) -> Option<Atom<'a>> {
+        Some(self.local().name.clone())
     }
 }
 

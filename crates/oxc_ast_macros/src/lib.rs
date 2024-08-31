@@ -119,6 +119,33 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
 /// However, Instead of expanding the derive at compile-time, We do this process on PR submits via `ast_tools` code generation.
 /// These derived implementations would be output in the `crates/oxc_ast/src/generated` directory.
 ///
+/// ## `#[symbol]`
+///
+/// This attribute hints that a field stores an identifier binding or reference.
+/// It gets used to derive several useful traits for the entire node struct.
+///
+/// There are two variants of this attribute:
+/// 1. `#[symbol(binding[, ...opts])]` - hints that this field contains a
+///    `BindingIdentifier`. You may also use `#[symbol]` as a shorthand for this.
+/// 2. `#[symbol(reference[, ...opts])]` - hints that this field contains an
+///    `IdentifierReference`. **NOTE that this is not yet implemented.**
+///
+/// ### Example
+/// ```ignore
+/// // simplified Function node
+/// struct Function<'a> {
+///   #[symbol]
+///   id: Option<BindingIdentifier<'a>>,
+///   body: Option<FunctionBody<'a>>
+/// }
+/// ```
+///
+/// ### `#[symbol(binding[, ...opts])]` Options
+/// The `binding` variant contains the following options. All options are
+/// optional flags that can be combined.
+/// - `recurse`: the field is a recursive binding, i.e. this field stores a
+///   struct that itself has a field marked as `#[symbol(binding)]`.
+///
 /// # Derive Helper Attributes:
 ///
 /// These are helper attributes that are only meaningful when their respective trait is derived via `generate_derive`.
@@ -199,9 +226,3 @@ pub fn derive_clone_in(item: TokenStream) -> TokenStream {
         _ => panic!("At the moment `CloneIn` derive macro only works for types without lifetimes and/or generic params"),
     }
 }
-
-// #[proc_macro_attribute]
-// pub fn symbol(args: TokenStream, input: TokenStream, ) -> TokenStream {
-//     // TokenStream::new()
-//     input
-// }

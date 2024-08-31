@@ -1701,7 +1701,7 @@ pub struct Function<'a> {
     pub r#type: FunctionType,
     #[serde(flatten)]
     pub span: Span,
-    #[symbol(binding, optional)]
+    #[symbol]
     pub id: Option<BindingIdentifier<'a>>,
     pub generator: bool,
     pub r#async: bool,
@@ -1866,7 +1866,7 @@ pub struct Class<'a> {
     /// ```
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Class identifier, AKA the name
-    #[symbol(binding, optional)]
+    #[symbol]
     pub id: Option<BindingIdentifier<'a>>,
     #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

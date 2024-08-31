@@ -55,7 +55,9 @@ fn generate_symbol_id_impl(
 ) -> TokenStream {
     let struct_name = &def.ident();
     let field_name = field.ident().unwrap();
-    let (symbol_id_impl, name_impl) = if binding.optional {
+    let analysis = field.typ.analysis();
+    let is_optional = analysis.is_optional();
+    let (symbol_id_impl, name_impl) = if is_optional {
         if binding.recurse {
             (
                 quote! { self.#field_name.as_ref().and_then(WithBindingIdentifier::symbol_id) },
