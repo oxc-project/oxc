@@ -4,12 +4,10 @@ mod utils;
 
 use crate::commonjs::options::CommonjsOptions;
 use crate::context::Ctx;
-use oxc_ast::ast::{
-    BindingPattern, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, PropertyKey,
-    TSTypeAnnotation, TSTypeParameterInstantiation, VariableDeclarationKind,
-};
-use oxc_span::{Atom, SPAN};
+use oxc_ast::ast::{BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, PropertyKey, TSTypeAnnotation};
+use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
+use utils::import;
 
 pub struct Commonjs<'a> {
     ctx: Ctx<'a>,
@@ -29,13 +27,13 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let stmt = match &node.specifiers {
-            None => utils::create_empty_require(&node.source.value, &self.ctx.ast),
+            None => import::create_empty_require(&node.source.value, &self.ctx.ast),
             Some(specifiers) => {
                 let star_specifier = specifiers.iter().find(|specifier| {
                     matches!(specifier, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
                 });
                 if let Some(specifier) = star_specifier {
-                    utils::create_namespaced_require(
+                    import::create_namespaced_require(
                         &node.source.value,
                         match specifier {
                             ImportDeclarationSpecifier::ImportNamespaceSpecifier(ns) => {
@@ -74,7 +72,7 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
                                                 .expression_string_literal(SPAN, &literal.value),
                                         )
                                     }
-                                    _ => unreachable!(),
+                                    ModuleExportName::IdentifierReference(_) => unreachable!(),
                                 },
                                 self.ctx.ast.binding_pattern(
                                     self.ctx.ast.binding_pattern_kind_binding_identifier(
@@ -85,10 +83,12 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
                                     false,
                                 ),
                             ),
-                            _ => unreachable!(),
+                            ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                                unreachable!()
+                            }
                         })
                         .collect();
-                    utils::create_general_require(
+                    import::create_named_require(
                         &node.source.value,
                         assignees,
                         &self.ctx.ast,
@@ -97,5 +97,13 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
                 }
             }
         };
+    }
+
+    fn enter_export_default_declaration(&mut self, node: &mut ExportDefaultDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        todo!()
+    }
+
+    fn enter_export_named_declaration(&mut self, node: &mut ExportNamedDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        todo!()
     }
 }

@@ -1,10 +1,9 @@
 use oxc_ast::ast::{
-    BindingPattern, BindingRestElement, Expression, ImportDeclarationSpecifier, ModuleExportName,
-    PropertyKey, Statement, TSTypeAnnotation, TSTypeParameterInstantiation,
-    VariableDeclarationKind,
+    BindingPattern, BindingRestElement, Expression, PropertyKey, Statement, TSTypeAnnotation,
+    TSTypeParameterInstantiation, VariableDeclarationKind,
 };
 use oxc_ast::AstBuilder;
-use oxc_span::{Atom, SPAN};
+use oxc_span::SPAN;
 
 fn create_require<'a>(target: &str, builder: &'a AstBuilder) -> Expression<'a> {
     builder.expression_call(
@@ -68,7 +67,7 @@ pub fn create_namespaced_require<'a>(
     ))
 }
 
-pub fn create_general_require<'a>(
+pub fn create_named_require<'a>(
     target: &str,
     assignees: Vec<(PropertyKey<'a>, BindingPattern<'a>)>, // (property, imported)
     builder: &'a AstBuilder,
