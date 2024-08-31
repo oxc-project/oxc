@@ -16,8 +16,8 @@ use crate::{
 };
 
 fn prefer_to_be_object(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Enforce using `toBeObject()`")
-        .with_help("Prefer `toBeObject()` to test if a value is an object.")
+    OxcDiagnostic::warn("Prefer `toBeObject()` for object assertions")
+        .with_help("Consider using `toBeObject()` to test if a value is an object.")
         .with_label(span)
 }
 
@@ -38,7 +38,7 @@ pub struct PreferToBeObject;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforce using `toBeObject()` when expect typeof `Object`.
+    /// This rule enforces using `toBeObject()` to check if a value is of type `Object`.
     ///
     /// ### Why is this bad?
     ///
