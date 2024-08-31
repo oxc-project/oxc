@@ -18,7 +18,7 @@ use oxc::{
     parser::{ParseOptions, Parser, ParserReturn},
     semantic::{ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable},
     span::SourceType,
-    transformer::{TransformOptions, Transformer},
+    transformer::{EnvOptions, Targets, TransformOptions, Transformer},
 };
 use oxc_index::Idx;
 use oxc_linter::Linter;
@@ -217,20 +217,24 @@ impl Oxc {
         }
 
         if run_options.transform.unwrap_or_default() {
-            let options = TransformOptions::default();
-            let result = Transformer::new(
-                &allocator,
-                &path,
-                source_type,
-                source_text,
-                trivias.clone(),
-                options,
-            )
-            .build_with_symbols_and_scopes(symbols, scopes, &mut program);
-            if !result.errors.is_empty() {
-                self.save_diagnostics(
-                    result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
-                );
+            if let Ok(options) = TransformOptions::from_preset_env(&EnvOptions {
+                targets: Targets::from_query("chrome 51"),
+                ..EnvOptions::default()
+            }) {
+                let result = Transformer::new(
+                    &allocator,
+                    &path,
+                    source_type,
+                    source_text,
+                    trivias.clone(),
+                    options,
+                )
+                .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+                if !result.errors.is_empty() {
+                    self.save_diagnostics(
+                        result.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
+                    );
+                }
             }
         }
 
