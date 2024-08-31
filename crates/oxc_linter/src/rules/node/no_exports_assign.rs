@@ -58,11 +58,11 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
+    /// exports = {}
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// exports = {}
     /// module.exports.foo = 1
     /// exports.bar = 2
     /// module.exports = {}
