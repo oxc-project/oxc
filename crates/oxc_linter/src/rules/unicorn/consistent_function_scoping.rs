@@ -176,8 +176,15 @@ impl Rule for ConsistentFunctionScoping {
                     (
                         binding_ident.symbol_id.get().unwrap(),
                         function_body,
-                        // 8 for "function"
-                        Span::sized(function.span.start, 8),
+                        function
+                            .id
+                            .as_ref()
+                            .unwrap_or(&oxc_ast::ast::BindingIdentifier {
+                                span: Span::sized(function.span.start, 8), // 8 for "function"
+                                name: oxc_span::Atom::empty(),
+                                symbol_id: core::cell::Cell::new(None),
+                            })
+                            .span,
                     )
                 } else if let Some(function_id) = &function.id {
                     (function_id.symbol_id.get().unwrap(), function_body, function_id.span())
@@ -806,6 +813,7 @@ fn test() {
         // ("const doFoo = () => bar => bar;", None),
         ("function foo() { const bar = async () => {} }", None),
         ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
+        ("function outer() { const inner = function inner() {}; }", None),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, pass, fail).test_and_snapshot();
