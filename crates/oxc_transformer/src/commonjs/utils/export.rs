@@ -99,17 +99,26 @@ pub fn create_named_exports<'a>(
     builder: &'a AstBuilder,
     kind: VariableDeclarationKind,
 ) -> Vec<'a, Statement<'a>> {
-    let graph = match declaration {
+    match declaration {
         Declaration::VariableDeclaration(decls) => {
-            decls.declarations.iter().map(|decl| {
+            let mut result = builder.vec();
+            for &decl in decls.unbox().declarations.iter() {
                 match &decl.id.kind {
                     BindingPatternKind::BindingIdentifier(id) => {
-                        (id.name.as_str(), builder.module_export_name_identifier_name(SPAN, id.name.as_str()), decl.init.iter().clone().next().unwrap_or(&builder.void_0()))
+                        result.push(builder.statement_expression(
+                            SPAN,
+                            create_exports(
+                                builder.module_export_name_identifier_name(SPAN, id.name.as_str()),
+                                decl.init.unwrap_or(builder.void_0()),
+                                builder,
+                            ),
+                        ))
                     }
                     _ => unreachable!()
                 }
-            }).collect::<Vec<(&str, ModuleExportName<'a>, Expression<'a>)>>()
+            }
+            result
         }
         _ => todo!()
-    };
+    }
 }
