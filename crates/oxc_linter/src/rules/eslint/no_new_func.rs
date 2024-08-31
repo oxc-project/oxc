@@ -24,6 +24,10 @@ declare_oxc_lint!(
     ///
     /// The rule disallow `new` operators with the `Function` object.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Using `new Function` or `Function` can lead to code that is difficult to understand and maintain. It can introduce security risks similar to those associated with `eval` because it generates a new function from a string of code, which can be a vector for injection attacks. Additionally, it impacts performance negatively as these functions are not optimized by the JavaScript engine.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
