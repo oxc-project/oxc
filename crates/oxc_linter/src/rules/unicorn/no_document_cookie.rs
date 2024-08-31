@@ -11,10 +11,10 @@ use crate::{
     rule::Rule, AstNode,
 };
 
-fn no_document_cookie_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_document_cookie_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `document.cookie` directly")
         .with_help("Use the Cookie Store API or a cookie library instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

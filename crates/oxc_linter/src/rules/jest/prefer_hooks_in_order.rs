@@ -13,10 +13,10 @@ use crate::{
     },
 };
 
-fn reorder_hooks(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+fn reorder_hooks(x1: &str, x2: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer having hooks in a consistent order.")
         .with_help(format!("{x1:?} hooks should be before any {x2:?} hooks"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

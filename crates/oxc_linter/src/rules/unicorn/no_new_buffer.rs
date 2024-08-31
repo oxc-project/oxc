@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_new_buffer_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_new_buffer_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.")
         .with_help("`new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

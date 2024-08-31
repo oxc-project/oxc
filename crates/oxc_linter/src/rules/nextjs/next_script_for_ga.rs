@@ -16,12 +16,12 @@ use crate::{
     AstNode,
 };
 
-fn next_script_for_ga_diagnostic(span0: Span) -> OxcDiagnostic {
+fn next_script_for_ga_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Prefer `next/script` component when using the inline script for Google Analytics.",
     )
     .with_help("See https://nextjs.org/docs/messages/next-script-for-ga")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

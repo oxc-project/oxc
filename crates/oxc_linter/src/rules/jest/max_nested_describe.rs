@@ -13,10 +13,10 @@ use crate::{
     },
 };
 
-fn exceeded_max_depth(current: usize, max: usize, span0: Span) -> OxcDiagnostic {
+fn exceeded_max_depth(current: usize, max: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforces a maximum depth to nested describe calls.")
         .with_help(format!("Too many nested describe calls ({current}) - maximum allowed is {max}"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Clone)]

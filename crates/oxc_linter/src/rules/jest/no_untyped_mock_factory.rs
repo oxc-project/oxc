@@ -116,7 +116,7 @@ impl NoUntypedMockFactory {
             return;
         };
 
-        if call_expr.arguments.len() != 2 && (property_name != "mock" || property_name != "doMock")
+        if call_expr.arguments.len() != 2 || (property_name != "mock" && property_name != "doMock")
         {
             return;
         }
@@ -277,6 +277,7 @@ fn test() {
             ",
             None,
         ),
+        ("test.skip('basic', async () => {});", None),
     ];
 
     let fail = vec![

@@ -93,7 +93,6 @@ impl From<&Ident> for CloneInAttribute {
 /// A struct representing the `#[scope(...)]` attribute.
 #[derive(Debug, Default)]
 pub struct ScopeAttribute {
-    pub r#if: Option<Expr>,
     pub flags: Option<Expr>,
     pub strict_if: Option<Expr>,
 }
@@ -104,7 +103,6 @@ impl Parse for ScopeAttribute {
         Ok(parsed.into_iter().fold(Self::default(), |mut acc, CommonAttribute { ident, args }| {
             let expr = parse2(args).expect("Invalid `#[scope]` input.");
             match ident.to_string().as_str() {
-                "if" => acc.r#if = Some(expr),
                 "flags" => acc.flags = Some(expr),
                 "strict_if" => acc.strict_if = Some(expr),
                 _ => {}

@@ -7,10 +7,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_mocks_import_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_mocks_import_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Mocks should not be manually imported from a `__mocks__` directory.")
         .with_help("Instead use `jest.mock` and import from the original module path.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-mocks-import.md>

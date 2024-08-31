@@ -1,0 +1,62 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = new Function("b", "c", "return b+c");
+   ·         ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = Function("b", "c", "return b+c");
+   ·         ────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = Function.call(null, "b", "c", "return b+c");
+   ·         ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = Function.apply(null, ["b", "c", "return b+c"]);
+   ·         ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = Function.bind(null, "b", "c", "return b+c")();
+   ·         ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = Function.bind(null, "b", "c", "return b+c");
+   ·         ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = Function["call"](null, "b", "c", "return b+c");
+   ·         ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:9]
+ 1 │ var a = (Function?.call)(null, "b", "c", "return b+c");
+   ·         ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:41]
+ 1 │ const fn = () => { class Function {} }; new Function('', '')
+   ·                                         ────────────────────
+   ╰────
+
+  ⚠ eslint(no-new-func): The Function constructor is eval.
+   ╭─[no_new_func.tsx:1:50]
+ 1 │ var fn = function () { function Function() {} }; Function('', '')
+   ·                                                  ────────────────
+   ╰────

@@ -206,8 +206,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 
                                     Fix::new(
                                         format!(
-                                            "type {} = {};",
-                                            &interface_decl.id.name, &suggestion
+                                            "{} {} = {};",
+                                            if is_parent_exported { "export type" } else { "type" },
+                                            &interface_decl.id.name,
+                                            &suggestion
                                         ),
                                         Span::new(node_start, node_end),
                                     )
@@ -716,6 +718,11 @@ type X = {} & { (): void; };
             r"
 type X = {} & (() => void);
                       ",
+            None,
+        ),
+        (
+            "export interface AnyFn { (...args: any[]): any }",
+            "export type AnyFn = (...args: any[]) => any;",
             None,
         ),
     ];

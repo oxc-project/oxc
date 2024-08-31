@@ -231,6 +231,23 @@ fn test_class_with_type_parameter() {
 }
 
 #[test]
+fn test_class_with_accessor() {
+    SemanticTester::ts(
+        "
+    type T = 1;
+
+    abstract class Foo {
+        accessor prop: T;
+    }
+    ",
+    )
+    .has_some_symbol("T")
+    .has_number_of_references(1)
+    .has_number_of_references_where(1, Reference::is_type)
+    .test();
+}
+
+#[test]
 fn test_ts_mapped_type() {
     let tester = SemanticTester::ts(
         "
@@ -354,4 +371,58 @@ fn test_ts_interface_heritage() {
     .has_some_symbol("Heritage")
     .has_number_of_references(1)
     .test();
+}
+
+#[test]
+fn test_arrow_implicit_return() {
+    SemanticTester::js("let i = 0; const x = () => i")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(0)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => ++i")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => { ++i }")
+        .has_root_symbol("i")
+        .has_number_of_reads(0)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => (0, ++i)")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => (++i, 0)")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let i = 1; const foo = () => () => { i++ }")
+        .has_root_symbol("i")
+        .has_number_of_reads(0)
+        .has_number_of_writes(1)
+        .test();
+}
+
+#[test]
+fn test_arrow_explicit_return() {
+    SemanticTester::js("let i = 0; const x = () => { return i }")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(0)
+        .test();
+
+    SemanticTester::js("let i = 0; const x = () => { return ++i }")
+        .has_root_symbol("i")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
 }

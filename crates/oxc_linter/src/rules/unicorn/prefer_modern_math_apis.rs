@@ -11,16 +11,16 @@ use crate::{
     ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
 };
 
-fn prefer_math_abs(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives").with_label(span0)
+fn prefer_math_abs(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives").with_label(span)
 }
 
-fn prefer_math_hypot(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span0)
+fn prefer_math_hypot(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span)
 }
 
-fn prefer_math_log_n(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Math.{x1}(x)` over `{x2}`")).with_label(span0)
+fn prefer_math_log_n(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Math.{x1}(x)` over `{x2}`")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

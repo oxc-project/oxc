@@ -1,10 +1,10 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -13,16 +13,16 @@ use crate::{
     AstNode,
 };
 
-fn missing_lang_prop(span0: Span) -> OxcDiagnostic {
+fn missing_lang_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing lang attribute.")
         .with_help("Add a lang attribute to the html element whose value represents the primary language of document.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn missing_lang_value(span0: Span) -> OxcDiagnostic {
+fn missing_lang_value(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing value for lang attribute")
         .with_help("Must have meaningful value for `lang` prop.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -66,12 +66,8 @@ impl Rule for HtmlHasLang {
             return;
         }
 
-        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
-            return;
-        };
-
         has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(missing_lang_prop(identifier.span)),
+            || ctx.diagnostic(missing_lang_prop(jsx_el.name.span())),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
                     ctx.diagnostic(missing_lang_value(jsx_el.span));

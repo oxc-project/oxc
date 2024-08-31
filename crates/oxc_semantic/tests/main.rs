@@ -7,6 +7,7 @@ use oxc_semantic::{ScopeId, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
 
 fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>) -> String {
+    let scope_tree = semantic.scopes();
     let mut result = String::default();
 
     result.push('[');
@@ -14,9 +15,15 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         if index != 0 {
             result.push(',');
         }
-        let flags = semantic.scopes().get_flags(scope_id);
+        let flags = scope_tree.get_flags(scope_id);
         result.push('{');
-        let child_ids = semantic.scopes().get_child_ids(scope_id);
+        let child_ids = semantic
+            .scopes()
+            .descendants_from_root()
+            .filter(|id| {
+                scope_tree.get_parent_id(*id).is_some_and(|parent_id| parent_id == scope_id)
+            })
+            .collect::<Vec<_>>();
         result.push_str("\"children\":");
         result.push_str(&get_scope_snapshot(semantic, child_ids.iter().copied()));
         result.push(',');
@@ -25,12 +32,12 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
         result.push_str(
             format!(
                 "\"node\": {:?},",
-                semantic.nodes().kind(semantic.scopes().get_node_id(scope_id)).debug_name()
+                semantic.nodes().kind(scope_tree.get_node_id(scope_id)).debug_name()
             )
             .as_str(),
         );
         result.push_str("\"symbols\": ");
-        let bindings = semantic.scopes().get_bindings(scope_id);
+        let bindings = scope_tree.get_bindings(scope_id);
         result.push('[');
         bindings.iter().enumerate().for_each(|(index, (name, symbol_id))| {
             if index != 0 {
@@ -104,7 +111,7 @@ fn analyze(path: &Path, source_text: &str) -> String {
 /// cargo test --package oxc_semantic --test main
 #[test]
 fn main() {
-    insta::glob!("fixtures/**/*.{ts,tsx}", |path| {
+    insta::glob!("fixtures/**/*.{js,jsx,ts,tsx}", |path| {
         let source_text = fs::read_to_string(path).unwrap();
         let snapshot = analyze(path, &source_text);
         let name = path.file_stem().unwrap().to_str().unwrap();

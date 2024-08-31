@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn missing_type_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@param` description.")
         .with_help("Add description to `@param` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

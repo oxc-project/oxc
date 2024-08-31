@@ -353,9 +353,7 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
             (
                 node.id(),
                 match node.kind() {
-                    AstKind::Function(func) => {
-                        func.id.as_ref().map(|it| Cow::Borrowed(it.name.as_str()))
-                    }
+                    AstKind::Function(func) => func.name().map(Cow::from),
                     AstKind::ArrowFunctionExpression(_) => {
                         get_declaration_identifier(nodes, node.id())
                     }

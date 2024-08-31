@@ -87,6 +87,7 @@ pub trait Suite<T: Case> {
     }
 
     fn save_test_cases(&mut self, cases: Vec<T>);
+    fn save_extra_test_cases(&mut self) {}
 
     fn read_test_cases(&mut self, name: &str, args: &AppArgs) {
         let test_path = workspace_root();
@@ -147,6 +148,9 @@ pub trait Suite<T: Case> {
             .collect::<Vec<_>>();
 
         self.save_test_cases(cases);
+        if args.filter.is_none() {
+            self.save_extra_test_cases();
+        }
     }
 
     fn get_test_cases_mut(&mut self) -> &mut Vec<T>;

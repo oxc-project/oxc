@@ -43,7 +43,6 @@ impl CompilerInterface for Driver {
             program,
         ) {
             self.errors.extend(errors);
-            return ControlFlow::Break(());
         }
         ControlFlow::Continue(())
     }
@@ -54,17 +53,21 @@ impl Driver {
         Self { options, printed: String::new(), errors: vec![] }
     }
 
+    pub fn errors(&mut self) -> Vec<OxcDiagnostic> {
+        mem::take(&mut self.errors)
+    }
+
+    pub fn printed(&mut self) -> String {
+        mem::take(&mut self.printed)
+    }
+
     pub fn execute(
-        &mut self,
+        mut self,
         source_text: &str,
         source_type: SourceType,
         source_path: &Path,
-    ) -> Result<String, Vec<OxcDiagnostic>> {
+    ) -> Self {
         self.compile(source_text, source_type, source_path);
-        if self.errors.is_empty() {
-            Ok(mem::take(&mut self.printed))
-        } else {
-            Err(mem::take(&mut self.errors))
-        }
+        self
     }
 }

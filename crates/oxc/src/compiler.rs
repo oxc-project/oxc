@@ -186,7 +186,7 @@ pub trait CompilerInterface {
     ) -> SemanticBuilderReturn<'a> {
         SemanticBuilder::new(source_text, source_type)
             .with_check_syntax_error(self.check_semantic_error())
-            .build_module_record(source_path.to_path_buf(), program)
+            .build_module_record(source_path, program)
             .build(program)
     }
 

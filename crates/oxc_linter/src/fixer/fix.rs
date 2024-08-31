@@ -472,12 +472,11 @@ impl<'a> CompositeFix<'a> {
         if fixes.is_empty() {
             // Do nothing
             return Fix::empty();
-        }
-        if fixes.len() == 1 {
+        } else if fixes.len() == 1 {
             return fixes.pop().unwrap();
         }
 
-        fixes.sort_by(|a, b| a.span.cmp(&b.span));
+        fixes.sort_unstable_by(|a, b| a.span.cmp(&b.span));
 
         // safe, as fixes.len() > 1
         let start = fixes[0].span.start;

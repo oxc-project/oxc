@@ -6,18 +6,18 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn object_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
+fn object_comparison(span: Span, x1: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected object literal comparison.")
         .with_help(format!(
             "This comparison will always return {x1:?} as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths."
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn array_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
+fn array_comparison(span: Span, x1: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected array literal comparison.")
         .with_help(format!("This comparison will always return {x1:?} as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

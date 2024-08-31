@@ -351,7 +351,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         expr: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<IdentifierReference<'a>> {
-        if ctx.symbols().is_static(expr) {
+        if ctx.is_static(expr) {
             return None;
         }
 

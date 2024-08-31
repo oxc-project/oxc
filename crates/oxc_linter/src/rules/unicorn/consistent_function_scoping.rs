@@ -260,6 +260,11 @@ impl<'a> Visit<'a> for ReferencesFinder {
         self.references.push(it.reference_id().unwrap());
     }
 
+    fn visit_jsx_element_name(&mut self, _it: &oxc_ast::ast::JSXElementName<'a>) {
+        // Ignore references in JSX elements e.g. `Foo` in `<Foo>`.
+        // No need to walk children as only references they may contain are also JSX identifiers.
+    }
+
     fn visit_this_expression(&mut self, _: &oxc_ast::ast::ThisExpression) {
         if self.in_function == 0 {
             self.is_parent_this_referenced = true;

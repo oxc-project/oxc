@@ -13,12 +13,12 @@ use crate::{
     AstNode,
 };
 
-fn starts_with(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer String#startsWith over a regex with a caret.").with_label(span0)
+fn starts_with(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer String#startsWith over a regex with a caret.").with_label(span)
 }
 
-fn ends_with(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer String#endsWith over a regex with a dollar sign.").with_label(span0)
+fn ends_with(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer String#endsWith over a regex with a dollar sign.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

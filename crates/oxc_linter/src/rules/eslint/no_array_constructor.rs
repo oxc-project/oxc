@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_array_constructor_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_array_constructor_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow `Array` constructors")
         .with_help("Use array literal instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

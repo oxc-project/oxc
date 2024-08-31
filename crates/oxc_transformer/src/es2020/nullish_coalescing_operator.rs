@@ -89,7 +89,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
         };
 
         // skip creating extra reference when `left` is static
-        if ctx.symbols().is_static(&logical_expr.left) {
+        if ctx.is_static(&logical_expr.left) {
             *expr = Self::create_conditional_expression(
                 Self::clone_expression(&logical_expr.left, ctx),
                 logical_expr.left,
@@ -99,12 +99,11 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
             return;
         }
 
-        // ctx.ancestor(1) is AssignmentPattern
-        // ctx.ancestor(2) is BindingPattern;
-        // ctx.ancestor(3) is FormalParameter
-        let is_parent_formal_parameter = ctx
-            .ancestor(3)
-            .is_some_and(|ancestor| matches!(ancestor, Ancestor::FormalParameterPattern(_)));
+        // ctx.ancestor(0) is AssignmentPattern
+        // ctx.ancestor(1) is BindingPattern
+        // ctx.ancestor(2) is FormalParameter
+        let is_parent_formal_parameter =
+            matches!(ctx.ancestor(2), Ancestor::FormalParameterPattern(_));
 
         let current_scope_id = if is_parent_formal_parameter {
             ctx.create_child_scope_of_current(ScopeFlags::Arrow | ScopeFlags::Function)

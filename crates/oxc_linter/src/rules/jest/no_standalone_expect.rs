@@ -17,10 +17,10 @@ use crate::{
     AstNode,
 };
 
-fn no_standalone_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expect must be inside of a test block.")
         .with_help("Did you forget to wrap `expect` in a `test` or `it` block?")
-        .with_label(span0)
+        .with_label(span)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>

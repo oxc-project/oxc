@@ -17,10 +17,10 @@ use crate::{
     utils::{get_node_name, parse_general_jest_fn_call, PossibleJestNode},
 };
 
-fn use_jest_spy_on(span0: Span) -> OxcDiagnostic {
+fn use_jest_spy_on(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using `jest.spyOn()`.")
         .with_help("Use jest.spyOn() instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -146,14 +146,14 @@ impl PreferSpyOn {
             MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
                 formatter.print_expression(&cmp_mem_expr.object);
                 formatter.print_char(b',');
-                formatter.print_hard_space();
+                formatter.print_char(b' ');
                 formatter.print_expression(&cmp_mem_expr.expression);
             }
             MemberExpression::StaticMemberExpression(static_mem_expr) => {
                 let name = &static_mem_expr.property.name;
                 formatter.print_expression(&static_mem_expr.object);
                 formatter.print_char(b',');
-                formatter.print_hard_space();
+                formatter.print_char(b' ');
                 formatter.print_str(format!("\'{name}\'").as_str());
             }
             MemberExpression::PrivateFieldExpression(_) => (),

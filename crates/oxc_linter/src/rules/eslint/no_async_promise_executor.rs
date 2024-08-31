@@ -8,8 +8,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_async_promise_executor_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Promise executor functions should not be `async`.").with_label(span0)
+fn no_async_promise_executor_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Promise executor functions should not be `async`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

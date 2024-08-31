@@ -11,12 +11,12 @@ use crate::{
     AstNode,
 };
 
-fn known_method(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer using `{x1}.prototype.{x2}`.")).with_label(span0)
+fn known_method(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer using `{x1}.prototype.{x2}`.")).with_label(span)
 }
 
-fn unknown_method(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer using method from `{x1}.prototype`.")).with_label(span0)
+fn unknown_method(span: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer using method from `{x1}.prototype`.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -10,9 +10,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn escape_case_diagnostic(span0: Span) -> OxcDiagnostic {
+fn escape_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use uppercase characters for the value of the escape sequence.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
