@@ -34,7 +34,10 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
 pub mod syntax_directed_operations;
+mod traits;
 mod trivia;
+
+pub use traits::*;
 
 mod generated {
     #[cfg(debug_assertions)]
@@ -44,6 +47,7 @@ mod generated {
     pub mod derive_clone_in;
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
+    pub mod derive_symbol_traits;
     pub mod visit;
     pub mod visit_mut;
 }

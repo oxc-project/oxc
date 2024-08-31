@@ -71,6 +71,7 @@ pub struct TSThisParameter<'a> {
 pub struct TSEnumDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding)]
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
     pub members: Vec<'a, TSEnumMember<'a>>,
@@ -728,6 +729,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 pub struct TSTypeParameter<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding)]
     pub name: BindingIdentifier<'a>,
     pub constraint: Option<TSType<'a>>,
     pub default: Option<TSType<'a>>,
@@ -756,6 +758,7 @@ pub struct TSTypeParameterDeclaration<'a> {
 pub struct TSTypeAliasDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding)]
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -802,6 +805,7 @@ pub struct TSInterfaceDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
     /// The identifier (name) of the interface.
+    #[symbol(binding)]
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
@@ -1287,6 +1291,7 @@ pub struct TSTypeAssertion<'a> {
 pub struct TSImportEqualsDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding)]
     pub id: BindingIdentifier<'a>,
     pub module_reference: TSModuleReference<'a>,
     pub import_kind: ImportOrExportKind,

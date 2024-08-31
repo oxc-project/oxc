@@ -163,7 +163,10 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// The only purpose is to allow the occurrence of helper attributes used with the `tasks/ast_tools`.
 ///
 /// Read [`macro@ast`] for further details.
-#[proc_macro_derive(Ast, attributes(scope, visit, span, generate_derive, clone_in, serde, tsify))]
+#[proc_macro_derive(
+    Ast,
+    attributes(scope, symbol, visit, span, generate_derive, clone_in, serde, tsify)
+)]
 pub fn ast_derive(_item: TokenStream) -> TokenStream {
     TokenStream::new()
 }
@@ -196,3 +199,9 @@ pub fn derive_clone_in(item: TokenStream) -> TokenStream {
         _ => panic!("At the moment `CloneIn` derive macro only works for types without lifetimes and/or generic params"),
     }
 }
+
+// #[proc_macro_attribute]
+// pub fn symbol(args: TokenStream, input: TokenStream, ) -> TokenStream {
+//     // TokenStream::new()
+//     input
+// }

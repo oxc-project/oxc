@@ -1261,6 +1261,7 @@ pub struct VariableDeclarator<'a> {
     pub span: Span,
     #[serde(skip)]
     pub kind: VariableDeclarationKind,
+    #[symbol(binding, recurse)]
     pub id: BindingPattern<'a>,
     pub init: Option<Expression<'a>>,
     pub definite: bool,
@@ -1563,6 +1564,7 @@ pub struct CatchClause<'a> {
 pub struct CatchParameter<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding, recurse)]
     pub pattern: BindingPattern<'a>,
 }
 
@@ -1589,6 +1591,7 @@ pub struct BindingPattern<'a> {
     #[serde(flatten)]
     #[tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")]
     #[span]
+    #[symbol(binding, recurse)]
     pub kind: BindingPatternKind<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: bool,
@@ -1621,6 +1624,7 @@ pub enum BindingPatternKind<'a> {
 pub struct AssignmentPattern<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding, recurse)]
     pub left: BindingPattern<'a>,
     pub right: Expression<'a>,
 }
@@ -1649,6 +1653,7 @@ pub struct BindingProperty<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub key: PropertyKey<'a>,
+    #[symbol(binding, recurse)]
     pub value: BindingPattern<'a>,
     pub shorthand: bool,
     pub computed: bool,
@@ -1677,6 +1682,7 @@ pub struct ArrayPattern<'a> {
 pub struct BindingRestElement<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding, recurse)]
     pub argument: BindingPattern<'a>,
 }
 
@@ -1695,6 +1701,7 @@ pub struct Function<'a> {
     pub r#type: FunctionType,
     #[serde(flatten)]
     pub span: Span,
+    #[symbol(binding, optional)]
     pub id: Option<BindingIdentifier<'a>>,
     pub generator: bool,
     pub r#async: bool,
@@ -1762,6 +1769,7 @@ pub struct FormalParameter<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
+    #[symbol(binding, recurse)]
     pub pattern: BindingPattern<'a>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
@@ -1858,6 +1866,7 @@ pub struct Class<'a> {
     /// ```
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Class identifier, AKA the name
+    #[symbol(binding, optional)]
     pub id: Option<BindingIdentifier<'a>>,
     #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -2355,6 +2364,7 @@ pub struct ImportSpecifier<'a> {
     /// import { Foo as Bar } from 'foo';
     /// //              ^^^
     /// ```
+    #[symbol]
     pub local: BindingIdentifier<'a>,
     pub import_kind: ImportOrExportKind,
 }
@@ -2375,6 +2385,7 @@ pub struct ImportDefaultSpecifier<'a> {
     #[serde(flatten)]
     pub span: Span,
     /// The name of the imported symbol.
+    #[symbol]
     pub local: BindingIdentifier<'a>,
 }
 
@@ -2392,6 +2403,7 @@ pub struct ImportDefaultSpecifier<'a> {
 pub struct ImportNamespaceSpecifier<'a> {
     #[serde(flatten)]
     pub span: Span,
+    #[symbol]
     pub local: BindingIdentifier<'a>,
 }
 

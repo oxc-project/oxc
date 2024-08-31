@@ -1,4 +1,4 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, TokenTree};
 use serde::Serialize;
 use syn::{
     ext::IdentExt,
@@ -64,6 +64,45 @@ pub struct VisitMarkers {
 #[derive(Default, Debug)]
 pub struct ScopeMarkers {
     pub enter_before: bool,
+}
+
+#[derive(Debug)]
+pub enum SymbolMarkers {
+    Binding(SymbolBinding),
+    Reference(SymbolReference),
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct SymbolBinding {
+    /// `true` if it's possible for the `BindingIdentifier` to not exist (e.g.
+    /// the field has type `Option<BindingIdentifier<'a>>`).
+    pub optional: bool,
+    /// `recurse` option was set, indicating that trait implementations should
+    /// call methods on the binding-marked property.
+    pub recurse: bool,
+}
+
+#[derive(Default, Debug, Clone)]
+pub struct SymbolReference;
+
+impl Default for SymbolMarkers {
+    fn default() -> Self {
+        Self::Binding(SymbolBinding::default())
+    }
+}
+impl SymbolMarkers {
+    pub fn as_binding(&self) -> Option<&SymbolBinding> {
+        match self {
+            Self::Binding(binding) => Some(binding),
+            Self::Reference(_) => None,
+        }
+    }
+    pub fn as_reference(&self) -> Option<&SymbolReference> {
+        match self {
+            Self::Reference(reference) => Some(reference),
+            Self::Binding(_) => None,
+        }
+    }
 }
 
 /// A struct representing all the helper attributes that might be used with `#[generate_derive(...)]`
@@ -180,6 +219,81 @@ where
                 .normalize()
         },
     )
+}
+
+/// Parses a `#[symbol]` field attribute.
+///
+/// Valid forms are:
+/// - `#[binding]`: For mandatory bindings. Uses [`SymbolMarkers::default`].
+/// - `#[binding(optional = value)]`: explicitly specifies whether the
+///   `BindingIdentifier` stored in this field is [optional](`Option`).
+pub fn get_symbol_markers<'a, I>(attrs: I) -> crate::Result<Option<SymbolMarkers>>
+where
+    I: IntoIterator<Item = &'a Attribute>,
+{
+    let Some(symbol) = attrs.into_iter().find(|attr| attr.path().is_ident("symbol")) else {
+        return Ok(None);
+    };
+    match &symbol.meta {
+        Meta::Path(_) => Ok(Some(SymbolMarkers::default())),
+        Meta::List(list) => {
+            debug_assert!(list.path.is_ident("symbol"));
+            let options = &list.tokens;
+            if options.is_empty() {
+                return Ok(Some(SymbolMarkers::default()));
+            }
+
+            let mut toks = options.clone().into_iter();
+
+            let TokenTree::Ident(kind) = toks.next().unwrap() else {
+                return Err("Invalid `#[symbol(...)]` attribute: first option must be `binding` or `reference`.".into());
+            };
+
+            // fine if there's no token, b/c #[symbol(binding)] is valid
+            if let Some(tok) = toks.next() {
+                if !matches!(tok, TokenTree::Punct(_)) {
+                    return Err("Expected a ',' token".to_string());
+                }
+            }
+
+            match kind.to_string().as_str() {
+                "binding" => syn::parse2(toks.collect()).map(|binding| Some(SymbolMarkers::Binding(binding))).map_err(|e| format!("{e}")),
+                "reference" => Err("#[symbol(reference)] is not implemented yet.".into()),
+                _ => Err("Invalid `#[symbol(...)]` attribute: first option must be `binding` or `reference`.".into()),
+            }
+        }
+        Meta::NameValue(_) => Err(
+            "`#[symbol = ...]` is not allowed. Use `#[symbol]` or `#[symbol(...options)]` instead."
+                .into(),
+        ),
+    }
+}
+impl Parse for SymbolBinding {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        if input.is_empty() {
+            return Ok(Self::default());
+        }
+
+        let mut symbol = SymbolBinding::default();
+        let idents = input.parse_terminated(Ident::parse, Token![,])?;
+        for ident in idents {
+            match ident.to_string().as_str() {
+                "optional" => {
+                    symbol.optional = true;
+                }
+                "recurse" => {
+                    symbol.recurse = true;
+                }
+                _ => {
+                    return Err(syn::Error::new(
+                        ident.span(),
+                        "Invalid `#[symbol(binding(...))]` input: unknown option.",
+                    ));
+                }
+            }
+        }
+        Ok(symbol)
+    }
 }
 
 pub fn get_scope_markers<'a, I>(attrs: I) -> crate::Result<ScopeMarkers>

@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::{
-    markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
+    markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, SymbolMarkers, VisitMarkers},
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
@@ -16,6 +16,20 @@ pub enum TypeDef {
 }
 
 impl TypeDef {
+    pub fn as_struct(&self) -> Option<&StructDef> {
+        match self {
+            Self::Struct(it) => Some(it),
+            Self::Enum(_) => None,
+        }
+    }
+
+    pub fn as_enum(&self) -> Option<&EnumDef> {
+        match self {
+            Self::Enum(it) => Some(it),
+            Self::Struct(_) => None,
+        }
+    }
+
     pub fn id(&self) -> TypeId {
         with_either!(self, it => it.id)
     }
@@ -24,6 +38,7 @@ impl TypeDef {
         with_either!(self, it => &it.name)
     }
 
+    /// `true` for AST nodes marked with a `#[visit]` attribute.
     pub fn visitable(&self) -> bool {
         with_either!(self, it => it.visitable)
     }
@@ -223,6 +238,10 @@ pub struct OuterMarkers {
     pub scope: Option<ScopeAttribute>,
 }
 
+/// Attributes that are used on struct fields and enum variants. Struct fields
+/// are the most common case.
+///
+/// Attributes applied to the entire struct or enum are stored in [`OuterMarkers`].
 #[derive(Debug, Serialize)]
 pub struct InnerMarkers {
     /// marker that hints to fold span in here
@@ -232,4 +251,7 @@ pub struct InnerMarkers {
     pub visit: VisitMarkers,
     #[serde(skip)]
     pub scope: ScopeMarkers,
+    /// `#[binding]` attribute. Only allowed on struct fields.
+    #[serde(skip)]
+    pub binding: Option<SymbolMarkers>,
 }

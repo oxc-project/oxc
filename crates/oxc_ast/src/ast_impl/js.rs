@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, WithBindingIdentifier};
 
 use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
@@ -996,6 +996,23 @@ impl<'a> BindingPatternKind<'a> {
 
     pub fn is_assignment_pattern(&self) -> bool {
         matches!(self, Self::AssignmentPattern(_))
+    }
+}
+
+impl<'a> WithBindingIdentifier<'a> for BindingPatternKind<'a> {
+    fn symbol_id(&self) -> Option<oxc_syntax::symbol::SymbolId> {
+        match self {
+            Self::BindingIdentifier(ident) => ident.symbol_id.get(),
+            Self::AssignmentPattern(assign) => assign.left.kind.symbol_id(),
+            _ => None,
+        }
+    }
+    fn name(&self) -> Option<Atom<'a>> {
+        match self {
+            Self::BindingIdentifier(ident) => Some(ident.name.clone()),
+            Self::AssignmentPattern(assign) => assign.left.kind.name(),
+            _ => None,
+        }
     }
 }
 

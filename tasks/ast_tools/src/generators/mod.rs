@@ -9,6 +9,7 @@ mod ast_builder;
 mod ast_kind;
 mod derive_clone_in;
 mod derive_get_span;
+mod derive_symbol_traits;
 mod visit;
 
 pub use assert_layouts::AssertLayouts;
@@ -16,6 +17,7 @@ pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
 pub use derive_clone_in::DeriveCloneIn;
 pub use derive_get_span::{DeriveGetSpan, DeriveGetSpanMut};
+pub use derive_symbol_traits::DeriveSymbolTraitsGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
 /// Inserts a newline in the `TokenStream`.
@@ -103,6 +105,22 @@ impl GeneratorOutput {
     }
 }
 
+/// Define a [`Generator`] struct.
+///
+/// # Example
+/// ```ignore
+/// use ast_tools::codegen::LateCtx;
+/// use ast_tools::generators::{define_generator, Generator, GeneratorOutput};
+///
+/// define_generator! {
+///     pub struct MyGenerator;
+/// }
+/// impl Generator for MyGenerator {
+///     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
+///         // generate code here
+///     }
+/// }
+/// ```
 macro_rules! define_generator {
     ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
         $vis struct $ident $($lifetime)? $($rest)*

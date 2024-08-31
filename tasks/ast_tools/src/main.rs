@@ -18,8 +18,8 @@ mod util;
 use fmt::{cargo_fmt, pretty_print};
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, DeriveCloneIn, DeriveGetSpan,
-    DeriveGetSpanMut, GeneratedDataStream, GeneratedTokenStream, Generator, GeneratorOutput,
-    VisitGenerator, VisitMutGenerator,
+    DeriveGetSpanMut, DeriveSymbolTraitsGenerator, GeneratedDataStream, GeneratedTokenStream,
+    Generator, GeneratorOutput, VisitGenerator, VisitMutGenerator,
 };
 use passes::{CalcLayout, Linker};
 use util::{write_all_to, NormalizeError};
@@ -66,6 +66,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .gen(DeriveCloneIn)
         .gen(DeriveGetSpan)
         .gen(DeriveGetSpanMut)
+        .gen(DeriveSymbolTraitsGenerator)
         .gen(VisitGenerator)
         .gen(VisitMutGenerator)
         .generate()?;
