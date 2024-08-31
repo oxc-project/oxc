@@ -1,8 +1,8 @@
-commit: 12619ffe
+commit: 3bcfee23
 
 semantic_babel Summary:
-AST Parsed     : 2100/2100 (100.00%)
-Positive Passed: 1768/2100 (84.19%)
+AST Parsed     : 2101/2101 (100.00%)
+Positive Passed: 1769/2101 (84.20%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["spawn"]
