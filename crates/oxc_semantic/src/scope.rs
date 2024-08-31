@@ -28,8 +28,6 @@ pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 pub struct ScopeTree {
     /// Maps a scope to the parent scope it belongs in.
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
-    /// Maps a scope to direct children scopes.
-    child_ids: IndexVec<ScopeId, Vec<ScopeId>>,
     /// Maps a scope to its node id.
     node_ids: IndexVec<ScopeId, AstNodeId>,
     flags: IndexVec<ScopeId, ScopeFlags>,
@@ -67,46 +65,6 @@ impl ScopeTree {
         std::iter::successors(Some(scope_id), |scope_id| self.parent_ids[*scope_id])
     }
 
-    /// Iterate over scopes contained by a scope in breadth-first order.
-    ///
-    /// Unlike [`ancestors`], this iterator will not include the scope itself.
-    ///
-    /// [`ancestors`]: ScopeTree::ancestors
-    pub fn descendants(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        // Has to be a `fn` and pass arguments because we can't
-        // have recursive closures
-        fn add_to_list(
-            parent_id: ScopeId,
-            child_ids: &IndexVec<ScopeId, Vec<ScopeId>>,
-            items: &mut Vec<ScopeId>,
-        ) {
-            if let Some(children) = child_ids.get(parent_id) {
-                for child_id in children {
-                    items.push(*child_id);
-                    add_to_list(*child_id, child_ids, items);
-                }
-            }
-        }
-
-        let mut list = vec![];
-
-        add_to_list(scope_id, &self.child_ids, &mut list);
-
-        list.into_iter()
-    }
-
-    /// Get the child scopes of a scope
-    #[inline]
-    pub fn get_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
-        &self.child_ids[scope_id]
-    }
-
-    /// Get a mutable reference to a scope's children
-    #[inline]
-    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> &mut Vec<ScopeId> {
-        &mut self.child_ids[scope_id]
-    }
-
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }
@@ -136,6 +94,29 @@ impl ScopeTree {
         &self,
     ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
         self.root_unresolved_references.values().map(|v| v.iter().copied())
+    }
+
+    /// Delete an unresolved reference.
+    ///
+    /// If the `ReferenceId` provided is only reference remaining for this unresolved reference
+    /// (i.e. this `x` was last `x` in the AST), deletes the key from `root_unresolved_references`.
+    ///
+    /// # Panics
+    /// Panics if there is no unresolved reference for provided `name` and `reference_id`.
+    #[inline]
+    pub fn delete_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
+        // It would be better to use `Entry` API to avoid 2 hash table lookups when deleting,
+        // but `map.entry` requires an owned key to be provided. Currently we use `CompactStr`s as keys
+        // which are not cheap to construct, so this is best we can do at present.
+        // TODO: Switch to `Entry` API once we use `&str`s or `Atom`s as keys.
+        let reference_ids = self.root_unresolved_references.get_mut(name).unwrap();
+        if reference_ids.len() == 1 {
+            assert!(reference_ids[0] == reference_id);
+            self.root_unresolved_references.remove(name);
+        } else {
+            let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
+            reference_ids.swap_remove(index);
+        }
     }
 
     #[inline]
@@ -173,9 +154,6 @@ impl ScopeTree {
 
     pub fn set_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
         self.parent_ids[scope_id] = parent_id;
-        if let Some(parent_id) = parent_id {
-            self.child_ids[parent_id].push(scope_id);
-        }
     }
 
     /// Get a variable binding by name that was declared in the top-level scope
@@ -254,48 +232,15 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
-    /// Create a scope inside another scope.
-    ///
-    /// For the root [`Program`] scope, use [`add_root_scope`].
-    ///
-    /// [`Program`]: oxc_ast::ast::Program
-    /// [`add_root_scope`]: ScopeTree::add_root_scope
-    pub fn add_scope(
-        &mut self,
-        parent_id: ScopeId,
-        node_id: AstNodeId,
-        flags: ScopeFlags,
-    ) -> ScopeId {
-        let scope_id = self.add_scope_impl(Some(parent_id), node_id, flags);
-
-        // Set this scope as child of parent scope
-        self.child_ids[parent_id].push(scope_id);
-
-        scope_id
-    }
-
-    /// Create the root [`Program`] scope.
-    ///
-    /// Do not use this method if a root scope already exists. Use [`add_scope`]
-    /// to create a new scope inside the root scope.
-    ///
-    /// [`Program`]: oxc_ast::ast::Program
-    /// [`add_scope`]: ScopeTree::add_scope
-    pub fn add_root_scope(&mut self, node_id: AstNodeId, flags: ScopeFlags) -> ScopeId {
-        self.add_scope_impl(None, node_id, flags)
-    }
-
-    // `#[inline]` because almost always called from `add_scope` and want to avoid
-    // overhead of a function call there.
+    /// Create a scope.
     #[inline]
-    fn add_scope_impl(
+    pub fn add_scope(
         &mut self,
         parent_id: Option<ScopeId>,
         node_id: AstNodeId,
         flags: ScopeFlags,
     ) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);
-        self.child_ids.push(vec![]);
         self.flags.push(flags);
         self.bindings.push(Bindings::default());
         self.node_ids.push(node_id);
@@ -317,7 +262,6 @@ impl ScopeTree {
     /// Reserve memory for an `additional` number of scopes.
     pub fn reserve(&mut self, additional: usize) {
         self.parent_ids.reserve(additional);
-        self.child_ids.reserve(additional);
         self.flags.reserve(additional);
         self.bindings.reserve(additional);
         self.node_ids.reserve(additional);

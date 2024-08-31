@@ -24,7 +24,7 @@ pub(crate) const PLUGINS: &[&str] = &[
     // "babel-plugin-transform-json-strings",
     // // ES2018
     // "babel-plugin-transform-async-generator-functions",
-    // "babel-plugin-transform-object-rest-spread",
+    "babel-plugin-transform-object-rest-spread",
     // // [Regex] "babel-plugin-transform-unicode-property-regex",
     // "babel-plugin-transform-dotall-regex",
     // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
@@ -64,7 +64,6 @@ pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "transform-classes",
     "transform-destructuring",
     "transform-modules-commonjs",
-    "transform-object-rest-spread",
     "transform-optional-chaining",
     "transform-parameters",
     "transform-private-methods",

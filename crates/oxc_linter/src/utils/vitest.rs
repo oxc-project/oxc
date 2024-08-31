@@ -11,6 +11,9 @@ use super::{
     PossibleJestNode,
 };
 
+mod valid_vitest_fn;
+pub use crate::utils::vitest::valid_vitest_fn::VALID_VITEST_FN_CALL_CHAINS;
+
 pub fn parse_expect_and_typeof_vitest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,

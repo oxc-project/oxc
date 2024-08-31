@@ -4,12 +4,12 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, disable_directives::DisableRuleComment, rule::Rule};
 
-fn no_abusive_eslint_disable_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_abusive_eslint_disable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Unexpected `eslint-disable` comment that does not specify any rules to disable.",
     )
     .with_help("Specify the rules you want to disable.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

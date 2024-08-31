@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_useless_empty_export_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_useless_empty_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow empty exports that don't change anything in a module file")
         .with_help("Empty export does nothing and can be removed.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

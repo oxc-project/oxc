@@ -40,7 +40,7 @@ impl Case for MinifierTest262Case {
     }
 
     fn skip_test_case(&self) -> bool {
-        self.base.should_fail()
+        self.base.should_fail() || self.base.skip_test_case()
     }
 
     fn run(&mut self) {

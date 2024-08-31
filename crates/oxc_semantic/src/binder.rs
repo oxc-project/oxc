@@ -27,7 +27,9 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
             VariableDeclarationKind::Let => {
                 (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
             }
-            VariableDeclarationKind::Var => {
+            VariableDeclarationKind::Var
+            | VariableDeclarationKind::Using
+            | VariableDeclarationKind::AwaitUsing => {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };

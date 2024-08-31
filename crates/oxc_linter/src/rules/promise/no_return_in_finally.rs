@@ -9,10 +9,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};
 
-fn no_return_in_finally_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_return_in_finally_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't return in a finally callback")
         .with_help("Remove the return statement as nothing can consume the return value")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

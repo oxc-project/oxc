@@ -6,10 +6,10 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_void_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow `void` operators")
         .with_help("Expected 'undefined' and instead saw 'void'.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -1,6 +1,6 @@
-commit: d8086f14
+commit: a709f989
 
 transformer_typescript Summary:
-AST Parsed     : 6456/6456 (100.00%)
-Positive Passed: 6455/6456 (99.98%)
+AST Parsed     : 6479/6479 (100.00%)
+Positive Passed: 6478/6479 (99.98%)
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx

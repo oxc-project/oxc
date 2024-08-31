@@ -84,7 +84,8 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
-        let dummy = self.simple_assignment_target_identifier_reference(Span::default(), "");
+        let dummy =
+            self.simple_assignment_target_identifier_reference(Span::default(), Atom::from(""));
         mem::replace(target, dummy.into())
     }
 
@@ -146,7 +147,7 @@ impl<'a> AstBuilder<'a> {
             false,
             false,
             Option::<TSTypeParameterDeclaration>::None,
-            None,
+            None::<Box<'a, TSThisParameter<'a>>>,
             params,
             Option::<TSTypeAnnotation>::None,
             body,

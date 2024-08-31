@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_script_url_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Script URL is a form of eval")
         .with_help("Disallow `javascript:` urls")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -364,6 +364,8 @@ impl Tester {
             self.current_working_directory.join(&self.rule_path)
         } else if let Some(path) = path {
             self.current_working_directory.join(path)
+        } else if self.plugins.jest {
+            self.rule_path.with_extension("test.tsx")
         } else {
             self.rule_path.clone()
         };
@@ -392,7 +394,9 @@ impl Tester {
         }
         .to_string_lossy();
 
-        let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
+        let handler = GraphicalReportHandler::new()
+            .with_links(false)
+            .with_theme(GraphicalTheme::unicode_nocolor());
         for diagnostic in result {
             let diagnostic = diagnostic.error.with_source_code(NamedSource::new(
                 diagnostic_path.clone(),

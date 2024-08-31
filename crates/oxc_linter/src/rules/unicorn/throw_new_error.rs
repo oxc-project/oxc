@@ -15,10 +15,10 @@ use crate::{
     AstNode,
 };
 
-fn throw_new_error_diagnostic(span0: Span) -> OxcDiagnostic {
+fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require `new` when throwing an error.")
         .with_help("While it's possible to create a new error without using the `new` keyword, it's better to be explicit.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// ```
     ThrowNewError,
     style,
-    pending
+    fix
 );
 
 impl Rule for ThrowNewError {
@@ -85,7 +85,9 @@ impl Rule for ThrowNewError {
             _ => return,
         }
 
-        ctx.diagnostic(throw_new_error_diagnostic(call_expr.span));
+        ctx.diagnostic_with_fix(throw_new_error_diagnostic(call_expr.span), |fixer| {
+            fixer.insert_text_before_range(call_expr.span, "new ")
+        });
     }
 }
 
@@ -143,5 +145,10 @@ fn test() {
         ("throw (( getGlobalThis().Error ))()", None),
     ];
 
-    Tester::new(ThrowNewError::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("throw Error()", "throw new Error()"),
+        ("throw (( getGlobalThis().Error ))()", "throw new (( getGlobalThis().Error ))()"),
+    ];
+
+    Tester::new(ThrowNewError::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

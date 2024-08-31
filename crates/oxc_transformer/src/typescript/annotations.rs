@@ -199,9 +199,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                     && !method.value.is_typescript_syntax()
             }
             ClassElement::PropertyDefinition(prop) => {
-                if prop.value.as_ref().is_some_and(Expression::is_typescript_syntax)
-                    || prop.declare && prop.decorators.is_empty()
-                {
+                if prop.declare {
                     false
                 } else {
                     matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)
@@ -350,6 +348,12 @@ impl<'a> TypeScriptAnnotations<'a> {
         def.r#override = false;
         def.optional = false;
         def.readonly = false;
+        def.type_annotation = None;
+    }
+
+    pub fn transform_accessor_property(&mut self, def: &mut AccessorProperty<'a>) {
+        def.accessibility = None;
+        def.definite = false;
         def.type_annotation = None;
     }
 
@@ -595,7 +599,11 @@ impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
         let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlags::Read);
-        let id = IdentifierReference::new_read(self.span, self.name.clone(), Some(reference_id));
+        let id = IdentifierReference::new_with_reference_id(
+            self.span,
+            self.name.clone(),
+            Some(reference_id),
+        );
 
         ctx.ast.statement_expression(
             SPAN,

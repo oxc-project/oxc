@@ -8,10 +8,10 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_eq_null_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_eq_null_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use '===' to compare with null")
         .with_help("Disallow `null` comparisons without type-checking operators.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

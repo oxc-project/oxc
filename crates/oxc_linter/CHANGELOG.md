@@ -4,6 +4,80 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.1] - 2024-08-29
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 6633972 linter: Add fixer for `no-empty` (#5276) (camc314)
+- a58e448 linter/eslint: Add fixer to `no-var` (#5144) (camc314)
+- a6e9769 linter/jsx-a11y: Add `label-has-associated-control` (#5163) (Billy Levin)
+- c8e8532 linter/unicorn: Add fixer to `throw-new-error` (#5275) (camc314)
+- 7ccde4b linter/unicorn: Add fixer to `prefer-date-now` (#5147) (camc314)
+
+### Bug Fixes
+
+- 76e86f8 linter: Eslint-plugin-unicorn prefer-spread wrong linter suggestion on variables of type string (#5265) (Arian94)
+- b39544e linter/jest: Fixer for `prefer-jest-mocked` creates invalid LHS expressions (#5243) (camc314)
+- 9953fa5 linter/no-null: Incorrect fixer for `NullLiteral` within `ReturnStatement` (#5247) (Dunqing)
+- 318479e linter/no-unused-vars: Mark the class/function in the new expression as used (#5306) (magic-akari)
+
+### Refactor
+
+- fa1d460 linter: Clean up Fixer and Message (#5308) (DonIsaac)
+
+## [0.9.0] - 2024-08-26
+
+- 5946748 linter: [**BREAKING**] Parse and display syntax errors for regular expressions (#5214) (Boshen)
+
+- b894d3b linter: [**BREAKING**] Make `no-unused-vars` correctness (#5081) (DonIsaac)
+
+### Features
+
+- 1ce9630 linter/config: Implement FromIterator for LintPluginOptions (#5102) (DonIsaac)
+- 34bfaf6 linter/react: Add fixer to `jsx-props-no-spread-multi` (#5145) (camc314)
+- 982bd6e linter/unicorn: Add fixer to `require-array-join-separator` (#5152) (camc314)
+- a6704bd linter/unicorn: Add fixer to `prefer-set-size` (#5149) (camc314)
+- ac7edcc linter/unicorn: Add fixer to `prefer-array-some` (#5153) (camc314)
+- 1d01aa3 linter/unicorn: Add partial fixer for `prefer-array-flat` (#5143) (camc314)
+- 22d57f9 linter/unicorn: Add fixer to `prefer-string-slice` (#5150) (Cameron)
+- 2fe4415 linter/unicorn: Add fixer to `no-redundant-roles` (#5146) (Cameron)
+- d35c6f5 linter/unicorn: Add fixer to `prefer-regexp-test` (#5151) (Cameron)
+- 27db769 linter/unicorn: Add fixer to `text-encoding-identifier-case` (#5154) (Cameron)
+- f7958c4 linter/unicorn: Add prefer-structured-clone (#5095) (Jelle van der Waa)
+- 004ffa0 linter/vitest: Implement `prefer-each` (#5203) (dalaoshu)
+
+### Bug Fixes
+
+- aaaf26c linter: Error in fixer for prefer-to-have-length (#5197) (dalaoshu)
+- 1f5b6b6 linter: Bug in fixer for prefer-to-have-length (#5164) (dalaoshu)
+- 7eb052e linter: `no-hex-escape` fixer removing regex flags (#5137) (Cameron)
+- 76c66b4 linter/max-lines: Point span to end of file for disable directive to work (#5117) (Boshen)
+- 8ff6f2c linter/no-unused-vars: Panic on UsingDeclarations (#5206) (DonIsaac)
+- d29042e linter/no-unused-vars: Function expression in implicit arrow function return (#5155) (DonIsaac)
+- 36e4a28 linter/no-unused-vars: Panic in variable declarator usage checks (#5160) (DonIsaac)
+- ba62a71 linter/react: Fixed false positive with missing key inside React.Children.toArray() for fragments  (#5133) (Earl Chase)
+- fd1031a linter/unicorn: Breaking fixer in case statements for `no-null` (#5176) (DonIsaac)
+- 7b86ed6 linter/unicorn: Handle type casts and parens in `no-null` (#5175) (Don Isaac)
+- b629e16 linter/unicorn: Improve diagnostic message for `no-null` (#5172) (DonIsaac)
+
+### Performance
+- ce454cf Use simdutf8 to validate UTF-8 when reading files  (#5196) (dalaoshu)
+
+### Refactor
+
+- 543cad6 codegen: Remove some pub APIs (Boshen)
+- 0d3661a linter: Remove meaningless `span0` (#5209) (dalaoshu)
+- 2a91ef1 linter: `eslint/no_redeclare` rule use `run_on_symbol` not `run_once` (#5201) (overlookmotel)
+- 33599b0 linter: Split options into multiple files (#5101) (DonIsaac)
+- 7ab6152 linter/unicorn: Clean up `no-null` (#5174) (DonIsaac)
+
+### Testing
+
+- a877e5a linter/no-unused-vars: Ensure type annotations on property accessors are considered used (#5183) (DonIsaac)
+- 7886618 linter/unicorn: Add fixer tests for `no-null` (#5173) (DonIsaac)
+
 ## [0.8.0] - 2024-08-23
 
 - 5f4c9ab semantic: [**BREAKING**] Rename `SymbolTable::get_flag` to `get_flags` (#5030) (overlookmotel)

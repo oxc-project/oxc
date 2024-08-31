@@ -183,9 +183,6 @@ impl<'a> ListenerMap for ForStatementInit<'a> {
     fn report_effects(&self, options: &NodeListenerOptions) {
         match self {
             match_expression!(Self) => self.to_expression().report_effects(options),
-            Self::UsingDeclaration(decl) => {
-                decl.declarations.iter().for_each(|decl| decl.report_effects(options));
-            }
             Self::VariableDeclaration(decl) => {
                 decl.declarations.iter().for_each(|decl| decl.report_effects(options));
             }
@@ -792,6 +789,7 @@ impl<'a> ListenerMap for JSXElementName<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         match self {
             Self::Identifier(ident) => ident.report_effects_when_called(options),
+            Self::IdentifierReference(ident) => ident.report_effects_when_called(options),
             Self::NamespacedName(name) => name.property.report_effects_when_called(options),
             Self::MemberExpression(member) => {
                 member.property.report_effects_when_called(options);
@@ -1132,7 +1130,37 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
         }
 
         let ctx = options.ctx;
+
         if let Some(symbol_id) = get_symbol_id_of_variable(self, ctx) {
+            let is_used_in_jsx = matches!(
+                ctx.nodes().parent_kind(
+                    ctx.symbols().get_reference(self.reference_id.get().unwrap()).node_id()
+                ),
+                Some(AstKind::JSXElementName(_) | AstKind::JSXMemberExpressionObject(_))
+            );
+
+            if is_used_in_jsx {
+                // TODO: remove the repeat the same logic in `JSXIdentifier::report_effects_when_called` method
+                for reference in options.ctx.symbols().get_resolved_references(symbol_id) {
+                    if reference.is_write() {
+                        let node_id = reference.node_id();
+                        if let Some(expr) = get_write_expr(node_id, options.ctx) {
+                            let old_val = options.called_with_new.get();
+                            options.called_with_new.set(true);
+                            expr.report_effects_when_called(options);
+                            options.called_with_new.set(old_val);
+                        }
+                    }
+                }
+                let symbol_table = options.ctx.semantic().symbols();
+                let node = options.ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+                let old_val = options.called_with_new.get();
+                options.called_with_new.set(true);
+                node.report_effects_when_called(options);
+                options.called_with_new.set(old_val);
+                return;
+            }
+
             if options.insert_called_node(symbol_id) {
                 let symbol_table = ctx.semantic().symbols();
                 for reference in symbol_table.get_resolved_references(symbol_id) {

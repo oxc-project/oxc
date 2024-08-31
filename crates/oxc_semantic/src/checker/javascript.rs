@@ -554,31 +554,6 @@ fn invalid_label_non_iteration(x0: &str, span1: Span, span2: Span) -> OxcDiagnos
         ])
 }
 
-fn check_label(label: &LabelIdentifier, ctx: &SemanticBuilder, is_continue: bool) {
-    if ctx.label_builder.is_inside_labeled_statement() {
-        for labeled in ctx.label_builder.get_accessible_labels() {
-            if label.name == labeled.name {
-                if is_continue
-                    && matches!(ctx.nodes.kind(labeled.id), AstKind::LabeledStatement(stmt) if {
-                        let mut body = &stmt.body;
-                        while let Statement::LabeledStatement(stmt) = body {
-                            body = &stmt.body;
-                        }
-                        !body.is_iteration_statement()
-                    })
-                {
-                    ctx.error(invalid_label_non_iteration("continue", labeled.span, label.span));
-                }
-                return;
-            }
-        }
-        if ctx.label_builder.is_inside_function_or_static_block() {
-            return ctx.error(invalid_label_jump_target(label.span));
-        }
-    }
-    ctx.error(invalid_label_target(label.span));
-}
-
 fn invalid_break(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Illegal break statement")
 .with_help("A `break` statement can only be used within an enclosing iteration or switch statement.")
@@ -590,15 +565,29 @@ pub fn check_break_statement<'a>(
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(label) = &stmt.label {
-        return check_label(label, ctx, false);
-    }
-
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
-            AstKind::Program(_) | AstKind::Function(_) | AstKind::StaticBlock(_) => {
-                ctx.error(invalid_break(stmt.span));
+            AstKind::Program(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_break(stmt.span)),
+                    |label| ctx.error(invalid_label_target(label.span)),
+                );
+            }
+            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_break(stmt.span)),
+                    |label| ctx.error(invalid_label_jump_target(label.span)),
+                );
+            }
+            AstKind::LabeledStatement(labeled_statement) => {
+                if stmt
+                    .label
+                    .as_ref()
+                    .is_some_and(|label| label.name == labeled_statement.label.name)
+                {
+                    break;
+                }
             }
             kind if (kind.is_iteration_statement()
                 || matches!(kind, AstKind::SwitchStatement(_)))
@@ -622,16 +611,42 @@ pub fn check_continue_statement<'a>(
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(label) = &stmt.label {
-        return check_label(label, ctx, true);
-    }
-
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
-            AstKind::Program(_) | AstKind::Function(_) | AstKind::StaticBlock(_) => {
-                ctx.error(invalid_continue(stmt.span));
+            AstKind::Program(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_continue(stmt.span)),
+                    |label| ctx.error(invalid_label_target(label.span)),
+                );
             }
+            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.error(invalid_continue(stmt.span)),
+                    |label| ctx.error(invalid_label_jump_target(label.span)),
+                );
+            }
+            AstKind::LabeledStatement(labeled_statement) => match &stmt.label {
+                Some(label) if label.name == labeled_statement.label.name => {
+                    if matches!(
+                        labeled_statement.body,
+                        Statement::LabeledStatement(_)
+                            | Statement::DoWhileStatement(_)
+                            | Statement::WhileStatement(_)
+                            | Statement::ForStatement(_)
+                            | Statement::ForInStatement(_)
+                            | Statement::ForOfStatement(_)
+                    ) {
+                        break;
+                    }
+                    return ctx.error(invalid_label_non_iteration(
+                        "continue",
+                        labeled_statement.label.span,
+                        label.span,
+                    ));
+                }
+                _ => {}
+            },
             kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
             _ => {}
         }
@@ -645,29 +660,26 @@ fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     ])
 }
 
-#[allow(clippy::option_if_let_else)]
-pub fn check_labeled_statement(ctx: &SemanticBuilder) {
-    ctx.label_builder.labels.iter().for_each(|labels| {
-        let mut defined = FxHashMap::default();
-        //only need to care about the monotone increasing depth of the array
-        let mut increase_depth = vec![];
-        for labeled in labels {
-            increase_depth.push(labeled);
-            // have to traverse because HashMap can only delete one by one
-            while increase_depth.len() > 2
-                && increase_depth.iter().rev().nth(1).unwrap().depth
-                    >= increase_depth.iter().next_back().unwrap().depth
-            {
-                defined.remove(increase_depth[increase_depth.len() - 2].name);
-                increase_depth.remove(increase_depth.len() - 2);
+pub fn check_labeled_statement<'a>(
+    stmt: &LabeledStatement,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
+        match ctx.nodes.kind(node_id) {
+            // label cannot cross boundary on function or static block
+            AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
+            // check label name redeclaration
+            AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
+                return ctx.error(label_redeclaration(
+                    stmt.label.name.as_str(),
+                    label_stmt.label.span,
+                    stmt.label.span,
+                ));
             }
-            if let Some(span) = defined.get(labeled.name) {
-                ctx.error(label_redeclaration(labeled.name, *span, labeled.span));
-            } else {
-                defined.insert(labeled.name, labeled.span);
-            }
+            _ => {}
         }
-    });
+    }
 }
 
 fn multiple_declaration_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnostic {

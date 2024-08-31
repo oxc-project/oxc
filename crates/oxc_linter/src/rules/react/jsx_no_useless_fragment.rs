@@ -12,12 +12,12 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn needs_more_children(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span0)
+fn needs_more_children(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
 }
 
-fn child_of_html_element(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span0)
+fn child_of_html_element(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -164,19 +164,15 @@ fn is_html_element(elem_name: &JSXElementName) -> bool {
 
 fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
     match &elem.name {
-        JSXElementName::Identifier(ident) => ident.name.as_str() == "Fragment",
+        JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
         JSXElementName::MemberExpression(mem_expr) => {
-            if mem_expr.property.name.as_str() != "Fragment" {
-                return false;
+            if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {
+                ident.name == "React" && mem_expr.property.name == "Fragment"
+            } else {
+                false
             }
-
-            let JSXMemberExpressionObject::Identifier(ident) = &mem_expr.object else {
-                return false;
-            };
-
-            return ident.name.as_str() == "React";
         }
-        JSXElementName::NamespacedName(_) => false,
+        JSXElementName::NamespacedName(_) | JSXElementName::Identifier(_) => false,
     }
 }
 

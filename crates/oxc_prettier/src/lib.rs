@@ -91,8 +91,8 @@ impl<'a> Prettier<'a> {
         }
     }
 
-    pub fn build(mut self, program: &Program<'a>) -> String {
-        let doc = program.format(&mut self);
+    pub fn build(&mut self, program: &Program<'a>) -> String {
+        let doc = program.format(self);
         Printer::new(doc, self.source_text, self.options, self.allocator).build()
     }
 

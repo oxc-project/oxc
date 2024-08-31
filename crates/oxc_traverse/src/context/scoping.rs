@@ -12,6 +12,7 @@ use oxc_syntax::{
 };
 
 use super::ast_operations::GatherNodeParts;
+use crate::scopes_collector::ChildScopeCollector;
 
 /// Traverse scope context.
 ///
@@ -77,7 +78,7 @@ impl TraverseScoping {
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
         let flags = self.scopes.get_new_scope_flags(flags, parent_id);
-        self.scopes.add_scope(parent_id, AstNodeId::DUMMY, flags)
+        self.scopes.add_scope(Some(parent_id), AstNodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
@@ -118,10 +119,6 @@ impl TraverseScoping {
     }
 
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
-        // Remove these scopes from parent's children
-        let current_child_scope_ids = self.scopes.get_child_ids_mut(self.current_scope_id);
-        current_child_scope_ids.retain(|scope_id| !child_scope_ids.contains(scope_id));
-
         // Create new scope as child of parent
         let new_scope_id = self.create_child_scope_of_current(flags);
 
@@ -515,103 +512,4 @@ fn create_uid_name_base(name: &str) -> CompactString {
     str.push('_');
     str.push_str(name);
     str
-}
-
-/// Visitor that locates all child scopes.
-/// NB: Child scopes only, not grandchild scopes.
-/// Does not do full traversal - stops each time it hits a node with a scope.
-struct ChildScopeCollector {
-    scope_ids: Vec<ScopeId>,
-}
-
-impl ChildScopeCollector {
-    fn new() -> Self {
-        Self { scope_ids: vec![] }
-    }
-
-    fn add_scope(&mut self, scope_id: &Cell<Option<ScopeId>>) {
-        self.scope_ids.push(scope_id.get().unwrap());
-    }
-}
-
-impl<'a> Visit<'a> for ChildScopeCollector {
-    #[inline]
-    fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
-        self.add_scope(&stmt.scope_id);
-    }
-
-    #[inline]
-    fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
-        self.add_scope(&stmt.scope_id);
-    }
-
-    #[inline]
-    fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
-        self.add_scope(&stmt.scope_id);
-    }
-
-    #[inline]
-    fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
-        self.add_scope(&stmt.scope_id);
-    }
-
-    #[inline]
-    fn visit_switch_statement(&mut self, stmt: &SwitchStatement<'a>) {
-        self.add_scope(&stmt.scope_id);
-    }
-
-    #[inline]
-    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
-        self.add_scope(&clause.scope_id);
-    }
-
-    #[inline]
-    fn visit_finally_clause(&mut self, block: &BlockStatement<'a>) {
-        self.add_scope(&block.scope_id);
-    }
-
-    #[inline]
-    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
-        self.add_scope(&func.scope_id);
-    }
-
-    #[inline]
-    fn visit_class(&mut self, class: &Class<'a>) {
-        self.add_scope(&class.scope_id);
-    }
-
-    #[inline]
-    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
-        self.add_scope(&block.scope_id);
-    }
-
-    #[inline]
-    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        self.add_scope(&expr.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
-        self.add_scope(&decl.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
-        self.add_scope(&decl.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
-        self.add_scope(&it.scope_id);
-    }
-
-    #[inline]
-    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
-        self.add_scope(&it.scope_id);
-    }
 }

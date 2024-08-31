@@ -17,10 +17,10 @@ use crate::{
     AstNode,
 };
 
-fn missing_content(span0: Span) -> OxcDiagnostic {
+fn missing_content(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing accessible content when using `a` elements.")
         .with_help("Provide screen reader accessible content when using `a` elements.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

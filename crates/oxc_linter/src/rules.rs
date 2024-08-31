@@ -334,6 +334,7 @@ mod unicorn {
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
+    pub mod prefer_structured_clone;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
@@ -356,6 +357,7 @@ mod jsx_a11y {
     pub mod html_has_lang;
     pub mod iframe_has_title;
     pub mod img_redundant_alt;
+    pub mod label_has_associated_control;
     pub mod lang;
     pub mod media_has_caption;
     pub mod mouse_events_have_key_events;
@@ -458,6 +460,7 @@ mod promise {
 mod vitest {
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
+    pub mod prefer_each;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
@@ -728,6 +731,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
@@ -791,6 +795,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::lang,
     jsx_a11y::iframe_has_title,
     jsx_a11y::img_redundant_alt,
+    jsx_a11y::label_has_associated_control,
     jsx_a11y::media_has_caption,
     jsx_a11y::mouse_events_have_key_events,
     jsx_a11y::no_access_key,
@@ -874,6 +879,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::prefer_await_to_then,
     promise::spec_only,
     vitest::no_import_node_test,
+    vitest::prefer_each,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_truthy,
     vitest::no_conditional_tests,

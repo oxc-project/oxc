@@ -24,10 +24,6 @@ fn test_only_program() {
     // ancestors
     assert_eq!(scopes.ancestors(root).count(), 1);
     assert!(scopes.get_parent_id(root).is_none());
-
-    // children
-    assert_eq!(scopes.descendants(root).count(), 0);
-    assert!(scopes.get_child_ids(root).is_empty());
 }
 
 #[test]

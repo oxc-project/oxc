@@ -9,10 +9,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_node_protocol_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn prefer_node_protocol_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using the `node:` protocol when importing Node.js builtin modules.")
         .with_help(format!("Prefer `node:{x1}` over `{x1}`."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

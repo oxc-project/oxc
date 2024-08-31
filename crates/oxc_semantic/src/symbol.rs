@@ -102,6 +102,11 @@ impl SymbolTable {
     }
 
     #[inline]
+    pub fn get_flags_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolFlags {
+        &mut self.flags[symbol_id]
+    }
+
+    #[inline]
     pub fn get_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
         if let Some(redeclaration_id) = self.redeclarations[symbol_id] {
             &self.redeclaration_spans[redeclaration_id]

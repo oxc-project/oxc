@@ -34,10 +34,20 @@ impl NoUnusedVars {
             return fixer.noop();
         }
 
-        let Some(AstKind::VariableDeclaration(declaration)) =
-            symbol.nodes().parent_node(decl_id).map(AstNode::kind)
-        else {
-            panic!("VariableDeclarator nodes should always be direct children of VariableDeclaration nodes");
+        let Some(parent) = symbol.nodes().parent_node(decl_id).map(AstNode::kind) else {
+            #[cfg(debug_assertions)]
+            panic!("VariableDeclarator nodes should always have a parent node");
+            #[cfg(not(debug_assertions))]
+            return fixer.noop();
+        };
+        let (span, declarations) = match parent {
+            AstKind::VariableDeclaration(decl) => (decl.span, &decl.declarations),
+            _ => {
+                #[cfg(debug_assertions)]
+                panic!("VariableDeclarator nodes should always be direct children of VariableDeclaration nodes");
+                #[cfg(not(debug_assertions))]
+                return fixer.noop();
+            }
         };
 
         // `true` even if references aren't considered a usage.
@@ -48,18 +58,16 @@ impl NoUnusedVars {
             // for `let x = 1;` or `const { x } = obj; the whole declaration can
             // be removed, but for `const { x, y } = obj;` or `let x = 1, y = 2`
             // we need to keep the other declarations
-            let has_neighbors = declaration.declarations.len() > 1;
-            debug_assert!(!declaration.declarations.is_empty());
+            let has_neighbors = declarations.len() > 1;
+            debug_assert!(!declarations.is_empty());
             let binding_info = symbol.get_binding_info(&decl.id.kind);
 
             match binding_info {
                 BindingInfo::SingleDestructure | BindingInfo::NotDestructure => {
                     if has_neighbors {
-                        return symbol
-                            .delete_from_list(fixer, &declaration.declarations, decl)
-                            .dangerously();
+                        return symbol.delete_from_list(fixer, declarations, decl).dangerously();
                     }
-                    return fixer.delete(declaration).dangerously();
+                    return fixer.delete_range(span).dangerously();
                 }
                 BindingInfo::MultiDestructure(mut span, is_object, is_last) => {
                     let source_after = &fixer.source_text()[(span.end as usize)..];

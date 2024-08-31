@@ -1,12 +1,12 @@
 use std::ops::Deref;
 
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use serde_json::Value;
 
 use crate::{
@@ -16,22 +16,22 @@ use crate::{
     AstNode,
 };
 
-fn missing_href_attribute(span0: Span) -> OxcDiagnostic {
+fn missing_href_attribute(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")
         .with_help("Provide an href for the `a` element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn incorrect_href(span0: Span) -> OxcDiagnostic {
+fn incorrect_href(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use an incorrect href for the 'a' element.")
         .with_help("Provide a correct href for the `a` element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn cant_be_anchor(span0: Span) -> OxcDiagnostic {
+fn cant_be_anchor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(" The a element has `href` and `onClick`.")
         .with_help("Use a `button` element instead of an `a` element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -129,15 +129,14 @@ impl Rule for AnchorIsValid {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
-            let JSXElementName::Identifier(ident) = &jsx_el.opening_element.name else {
-                return;
-            };
             let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else {
                 return;
             };
             if name != "a" {
                 return;
             };
+            // Don't eagerly get `span` here, to avoid that work unless rule fails
+            let get_span = || jsx_el.opening_element.name.span();
             if let Option::Some(href_attr) =
                 has_jsx_prop_ignore_case(&jsx_el.opening_element, "href")
             {
@@ -147,17 +146,17 @@ impl Rule for AnchorIsValid {
 
                 // Check if the 'a' element has a correct href attribute
                 let Some(value) = attr.value.as_ref() else {
-                    ctx.diagnostic(incorrect_href(ident.span));
+                    ctx.diagnostic(incorrect_href(get_span()));
                     return;
                 };
 
                 let is_empty = self.check_value_is_empty(value);
                 if is_empty {
                     if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick").is_some() {
-                        ctx.diagnostic(cant_be_anchor(ident.span));
+                        ctx.diagnostic(cant_be_anchor(get_span()));
                         return;
                     }
-                    ctx.diagnostic(incorrect_href(ident.span));
+                    ctx.diagnostic(incorrect_href(get_span()));
                     return;
                 }
                 return;
@@ -170,7 +169,7 @@ impl Rule for AnchorIsValid {
             if has_spread_attr {
                 return;
             }
-            ctx.diagnostic(missing_href_attribute(ident.span));
+            ctx.diagnostic(missing_href_attribute(get_span()));
         }
     }
 }

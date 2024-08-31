@@ -98,9 +98,9 @@ pub enum LookAroundAssertionKind {
 #[derive(Debug)]
 pub struct Quantifier<'a> {
     pub span: Span,
-    pub min: u32,
+    pub min: u64,
     /// `None` means no upper bound.
-    pub max: Option<u32>,
+    pub max: Option<u64>,
     pub greedy: bool,
     pub body: Term<'a>,
 }

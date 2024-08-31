@@ -17,7 +17,9 @@ pub use self::{
     settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
 use crate::{
-    rules::RuleEnum, utils::is_jest_rule_adapted_to_vitest, AllowWarnDeny, RuleWithSeverity,
+    rules::RuleEnum,
+    utils::{is_jest_rule_adapted_to_vitest, read_to_string},
+    AllowWarnDeny, RuleWithSeverity,
 };
 
 /// Oxlint Configuration File
@@ -68,7 +70,7 @@ impl OxlintConfig {
     ///
     /// * Parse Failure
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
-        let mut string = std::fs::read_to_string(path).map_err(|e| {
+        let mut string = read_to_string(path).map_err(|e| {
             OxcDiagnostic::error(format!("Failed to parse config {path:?} with error {e:?}"))
         })?;
 

@@ -118,7 +118,7 @@ cfg-if              = "1.0.0"
 compact_str         = "0.8.0"
 console             = "0.15.8"
 convert_case        = "0.6.0"
-criterion2          = { version = "1.0.0", default-features = false }
+criterion2          = { version = "1.1.0", default-features = false }
 daachorse           = { version = "1.0.0" }
 dashmap             = "6.0.1"
 encoding_rs         = "0.8.34"
@@ -170,6 +170,7 @@ seq-macro           = "0.3.5"
 serde               = "1.0.206"
 serde_json          = "1.0.124"
 serde-wasm-bindgen  = "0.6.5"
+simdutf8            = { version = "0.1.4", features = ["aarch64_neon"] }
 similar             = "2.6.0"
 syn                 = { version = "2.0.74", default-features = false }
 tempfile            = "3.12.0"
@@ -220,3 +221,4 @@ panic         = "abort" # Let it crash and force ourselves to write safe Rust
 inherits         = "release"
 lto              = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass
+overflow-checks  = true # Catch arithmetic overflow errors

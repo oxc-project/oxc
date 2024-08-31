@@ -11,10 +11,10 @@ use crate::{
     AstNode,
 };
 
-fn no_autofocus_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_autofocus_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")
         .with_help("Remove `autofocus` attribute")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -5,16 +5,16 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn unparenthesized_nested_ternary(span0: Span) -> OxcDiagnostic {
+fn unparenthesized_nested_ternary(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected nested ternary expression without parentheses.")
         .with_help("Add parentheses around the nested ternary expression.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn deeply_nested_ternary(span0: Span) -> OxcDiagnostic {
+fn deeply_nested_ternary(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected deeply nested ternary expression.")
         .with_help("Avoid nesting ternary expressions for more than one level.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

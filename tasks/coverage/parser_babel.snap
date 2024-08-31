@@ -1,17 +1,9 @@
-commit: 12619ffe
+commit: 3bcfee23
 
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
 Positive Passed: 2083/2101 (99.14%)
-Negative Passed: 1380/1501 (91.94%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/1.1-html-comments-close/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.1-sloppy-labeled-functions/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.2.4-duplicate-function-in-block/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.2.5-duplicate-function-in-switch/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.3-function-in-if-body/input.js
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.5-for-in-initializer/input.js
+Negative Passed: 1381/1493 (92.50%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -61,7 +53,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override-errors/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/parameter-properties-binding-patterns/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/property-optional-definite-assignment-not-allowed/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/function/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-class/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-function/input.ts
@@ -415,15 +406,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
     ·      ╰── It can not be redeclared here
  32 │ }
     ╰────
-
-  × Identifier `f` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/disabled/3.4-var-redeclaration-catch-binding/input.js:2:17]
- 1 │ try {} catch (e) { var e; }
- 2 │ try {} catch ({ f }) { var f; }
-   ·                 ┬          ┬
-   ·                 │          ╰── It can not be redeclared here
-   ·                 ╰── `f` has already been declared here
-   ╰────
 
   × Identifier `f` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.4-var-redeclaration-catch-binding/input.js:2:17]
@@ -1329,12 +1311,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ /
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/380/input.js:2:2]
- 1 │ var x = /
- 2 │ /
-   ╰────
-
   × Unterminated string
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/381/input.js:1:9]
  1 │ var x = "
@@ -1714,19 +1690,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/441/input.js:1:1]
  1 │ /a\
    · ────
- 2 │ /
-   ╰────
-
-  × Invalid regular expression: Invalid escape
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/441/input.js:1:3]
- 1 │ /a\
-   ·   ─
- 2 │ /
-   ╰────
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/441/input.js:2:2]
- 1 │ /a\
  2 │ /
    ╰────
 
@@ -3456,9 +3419,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Flag i is mentioned twice in regular expression literal
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/regex/duplicate-flags/input.js:1:7]
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/regex/duplicate-flags/input.js:1:6]
  1 │ /./gii;
-   ·       ▲
+   ·      ─
    ╰────
 
   × Unexpected token
@@ -8236,11 +8199,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ /
    ╰────
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0040/input.js:3:1]
- 2 │ /
-   ╰────
-
   × Invalid Unicode escape sequence
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0041/input.js:1:17]
  1 │ var x = /[a-z]/\ux
@@ -8412,11 +8370,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0062/input.js:1:9]
  1 │ var x = /
    ·         ──
- 2 │ /
-   ╰────
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0062/input.js:3:1]
  2 │ /
    ╰────
 
@@ -8957,18 +8910,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0157/input.js:1:1]
  1 │ /a\
    · ────
- 2 │ /
-   ╰────
-
-  × Invalid regular expression: Invalid escape
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0157/input.js:1:3]
- 1 │ /a\
-   ·   ─
- 2 │ /
-   ╰────
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0157/input.js:3:1]
  2 │ /
    ╰────
 
@@ -9890,6 +9831,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/invalid/input.ts:1:2]
+ 1 │ (a = b) += 1;
+   ·  ─────
+   ╰────
+
+  × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/assign/parenthesized-object-assign/input.ts:1:1]
  1 │ ({}) = x
    · ────
@@ -10084,6 +10031,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  4 │ 
    ╰────
 
+  × TS(1276): An 'accessor' property cannot be declared optional.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/accessor-invalid/input.ts:7:14]
+ 6 │   abstract accessor #s;
+ 7 │   accessor #d?;
+   ·              ─
+ 8 │   abstract accessor f = 1;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-new-line-abstract/input.ts:1:8]
  1 │ declare abstract
@@ -10272,6 +10227,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·   ──────
  3 │ }
    ╰────
+
+  × A property cannot be both optional and definite.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/property-optional-definite-assignment-not-allowed/input.ts:2:4]
+ 1 │ class C {
+ 2 │   x?!: number;
+   ·    ──
+ 3 │ }
+   ╰────
+  help: Remove either the `?` or the `!`
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/invalid-initializer-ambient-context/input.ts:2:35]

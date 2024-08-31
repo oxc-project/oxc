@@ -706,12 +706,12 @@ impl<'a> ReactJsx<'a> {
             JSXElementName::Identifier(ident) => {
                 if ident.name == "this" {
                     self.ast().expression_this(ident.span)
-                } else if ident.name.chars().next().is_some_and(|c| c.is_ascii_lowercase()) {
-                    self.ast().expression_string_literal(ident.span, &ident.name)
                 } else {
-                    let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
-                    self.ctx.ast.expression_from_identifier_reference(ident)
+                    self.ast().expression_string_literal(ident.span, &ident.name)
                 }
+            }
+            JSXElementName::IdentifierReference(ident) => {
+                self.ast().expression_from_identifier_reference(ident.as_ref().clone())
             }
             JSXElementName::MemberExpression(member_expr) => {
                 self.transform_jsx_member_expression(member_expr, ctx)
@@ -789,6 +789,9 @@ impl<'a> ReactJsx<'a> {
                     let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
                     self.ast().expression_from_identifier_reference(ident)
                 }
+            }
+            JSXMemberExpressionObject::IdentifierReference(ident) => {
+                self.ast().expression_from_identifier_reference(ident.as_ref().clone())
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 self.transform_jsx_member_expression(expr, ctx)
@@ -1019,7 +1022,7 @@ fn get_read_identifier_reference<'a>(
 ) -> IdentifierReference<'a> {
     let reference_id =
         ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlags::Read);
-    IdentifierReference::new_read(span, name, Some(reference_id))
+    IdentifierReference::new_with_reference_id(span, name, Some(reference_id))
 }
 
 fn create_static_member_expression<'a>(

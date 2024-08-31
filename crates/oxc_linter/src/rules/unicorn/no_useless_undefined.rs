@@ -11,8 +11,8 @@ fn warn() -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use useless `undefined`.")
         .with_help("Consider removing `undefined` or using `null` instead.")
 }
-fn no_useless_undefined_diagnostic(span0: Span) -> OxcDiagnostic {
-    warn().with_label(span0)
+fn no_useless_undefined_diagnostic(span: Span) -> OxcDiagnostic {
+    warn().with_label(span)
 }
 fn no_useless_undefined_diagnostic_spans(spans: Vec<Span>) -> OxcDiagnostic {
     warn().with_labels(spans)

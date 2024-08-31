@@ -19,6 +19,7 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    utils::read_to_string,
     Fixer, Linter, Message,
 };
 
@@ -176,7 +177,7 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let file_result = fs::read_to_string(path).map_err(|e| {
+        let file_result = read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {path:?} with error \"{e}\""
             )))
@@ -235,7 +236,7 @@ impl Runtime {
 
             if !messages.is_empty() {
                 self.ignore_path(path);
-                let errors = messages.into_iter().map(|m| m.error).collect();
+                let errors = messages.into_iter().map(Into::into).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
                 let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
                 tx_error.send(Some(diagnostics)).unwrap();
@@ -255,6 +256,7 @@ impl Runtime {
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
             .with_options(ParseOptions {
+                parse_regular_expression: true,
                 allow_return_outside_function: true,
                 ..ParseOptions::default()
             })
@@ -275,7 +277,7 @@ impl Runtime {
             .with_build_jsdoc(true)
             .with_trivias(trivias)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path.to_path_buf(), program);
+            .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
         if self.linter.options().plugins.import {

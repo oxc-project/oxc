@@ -1,3 +1,4 @@
+mod diagnostics;
 mod parser;
 mod reader;
 mod state;
@@ -32,6 +33,8 @@ mod test {
             ("a{1,", ParserOptions::default()),
             ("a{1,}", ParserOptions::default()),
             ("a{1,2}", ParserOptions::default()),
+            ("x{9007199254740991}", ParserOptions::default()),
+            ("x{9007199254740991,9007199254740991}", ParserOptions::default()),
             ("a|b", ParserOptions::default()),
             ("a|b|c", ParserOptions::default()),
             ("a|b+?|c", ParserOptions::default()),
@@ -137,6 +140,11 @@ mod test {
             ("a{1", ParserOptions::default().with_unicode_mode()),
             ("a{1,", ParserOptions::default().with_unicode_mode()),
             ("a{,", ParserOptions::default().with_unicode_mode()),
+            ("x{9007199254740992}", ParserOptions::default()),
+            ("x{9007199254740991,9007199254740992}", ParserOptions::default()),
+            ("x{99999999999999999999999999999999999999999999999999}", ParserOptions::default()),
+            (r"\99999999999999999999999999999999999999999999999999", ParserOptions::default()),
+            (r"\u{FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF}", ParserOptions::default().with_unicode_mode()),
             ("(?=a", ParserOptions::default()),
             ("(?<!a", ParserOptions::default()),
             (r"\c0", ParserOptions::default().with_unicode_mode()),

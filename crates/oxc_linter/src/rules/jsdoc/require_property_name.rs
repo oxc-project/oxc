@@ -8,10 +8,10 @@ use crate::{
     utils::{should_ignore_as_internal, should_ignore_as_private},
 };
 
-fn require_property_name_diagnostic(span0: Span) -> OxcDiagnostic {
+fn require_property_name_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing name in @property tag.")
         .with_help("Add a type name to this @property tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

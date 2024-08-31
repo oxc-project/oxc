@@ -88,8 +88,11 @@
 use std::{
     cell::Cell,
     fmt::{Debug, Display},
-    hash::Hash,
+    hash::{BuildHasherDefault, Hash},
 };
+
+use indexmap::IndexMap;
+use rustc_hash::FxHasher;
 
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
@@ -101,9 +104,10 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-use rustc_hash::FxHashMap;
 
 use crate::{ScopeTree, SemanticBuilder, SymbolTable};
+
+type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 /// Check `ScopeTree` and `SymbolTable` are correct after transform
 pub fn check_semantic_after_transform(
@@ -111,17 +115,13 @@ pub fn check_semantic_after_transform(
     scopes_after_transform: &ScopeTree,
     program: &Program<'_>,
 ) -> Option<Vec<OxcDiagnostic>> {
+    let mut errors = Errors::default();
+
     // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
-    let mut ids_after_transform = SemanticIds::default();
-    if let Some(mut errors) = ids_after_transform.check(program) {
-        errors.insert(0, OxcDiagnostic::error("Semantic Collector failed after transform"));
-        return Some(errors);
-    }
-    let data_after_transform = SemanticData {
-        symbols: symbols_after_transform,
-        scopes: scopes_after_transform,
-        ids: ids_after_transform,
-    };
+    let scoping_after_transform =
+        Scoping { symbols: symbols_after_transform, scopes: scopes_after_transform };
+    let (scope_ids_after_transform, symbol_ids_after_transform, reference_ids_after_transform) =
+        SemanticIdsCollector::new(&mut errors).collect(program);
 
     // Clone the post-transform AST, re-run semantic analysis on it, and collect `ScopeId`s,
     // `SymbolId`s and `ReferenceId`s from AST.
@@ -133,25 +133,25 @@ pub fn check_semantic_after_transform(
         .build(&program)
         .semantic
         .into_symbol_table_and_scope_tree();
+    let scoping_rebuilt = Scoping { symbols: &symbols_rebuilt, scopes: &scopes_rebuilt };
 
-    let mut ids_rebuilt = SemanticIds::default();
-    if let Some(mut errors) = ids_rebuilt.check(&program) {
-        errors.insert(0, OxcDiagnostic::error("Semantic Collector failed after rebuild"));
-        return Some(errors);
-    }
-    let data_rebuilt =
-        SemanticData { symbols: &symbols_rebuilt, scopes: &scopes_rebuilt, ids: ids_rebuilt };
+    let (scope_ids_rebuilt, symbol_ids_rebuilt, reference_ids_rebuilt) =
+        SemanticIdsCollector::new(&mut errors).collect(&program);
+
+    // Create mappings from after transform IDs to rebuilt IDs
+    let scope_ids_map = IdMapping::new(scope_ids_after_transform, scope_ids_rebuilt);
+    let symbol_ids_map = IdMapping::new(symbol_ids_after_transform, symbol_ids_rebuilt);
+    let reference_ids_map = IdMapping::new(reference_ids_after_transform, reference_ids_rebuilt);
 
     // Compare post-transform semantic data to semantic data from fresh semantic analysis
     let mut checker = PostTransformChecker {
-        after_transform: data_after_transform,
-        rebuilt: data_rebuilt,
-        scope_ids_map: IdMapping::default(),
-        symbol_ids_map: IdMapping::default(),
-        reference_ids_map: IdMapping::default(),
-        errors: Errors::default(),
+        scoping_after_transform,
+        scoping_rebuilt,
+        scope_ids_map,
+        symbol_ids_map,
+        reference_ids_map,
+        errors,
     };
-    checker.create_mappings();
     checker.check_scopes();
     checker.check_symbols();
     checker.check_references();
@@ -160,9 +160,16 @@ pub fn check_semantic_after_transform(
     checker.errors.get()
 }
 
+/// Check all AST nodes have scope, symbol and reference IDs
+pub fn check_semantic_ids(program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
+    let mut errors = Errors::default();
+    SemanticIdsCollector::new(&mut errors).collect(program);
+    errors.get()
+}
+
 struct PostTransformChecker<'s> {
-    after_transform: SemanticData<'s>,
-    rebuilt: SemanticData<'s>,
+    scoping_after_transform: Scoping<'s>,
+    scoping_rebuilt: Scoping<'s>,
     // Mappings from after transform ID to rebuilt ID
     scope_ids_map: IdMapping<ScopeId>,
     symbol_ids_map: IdMapping<SymbolId>,
@@ -170,28 +177,38 @@ struct PostTransformChecker<'s> {
     errors: Errors,
 }
 
-struct SemanticData<'s> {
+struct Scoping<'s> {
     symbols: &'s SymbolTable,
     scopes: &'s ScopeTree,
-    ids: SemanticIds,
 }
 
 /// Mapping from "after transform" ID to "rebuilt" ID
-struct IdMapping<Id>(FxHashMap<Id, Id>);
+struct IdMapping<Id>(FxIndexMap<Id, Id>);
 
 impl<Id: Copy + Eq + Hash> IdMapping<Id> {
-    fn insert(&mut self, after_transform_id: Id, rebuilt_id: Id) {
-        self.0.insert(after_transform_id, rebuilt_id);
+    fn new(after_transform: Vec<Option<Id>>, rebuilt: Vec<Option<Id>>) -> Self {
+        let map = after_transform
+            .into_iter()
+            .zip(rebuilt)
+            .filter_map(|ids| match ids {
+                (Some(after_transform_id), Some(rebuilt_id)) => {
+                    Some((after_transform_id, rebuilt_id))
+                }
+                _ => None,
+            })
+            .collect();
+        Self(map)
     }
 
     fn get(&self, after_transform_id: Id) -> Option<Id> {
         self.0.get(&after_transform_id).copied()
     }
-}
 
-impl<Id> Default for IdMapping<Id> {
-    fn default() -> Self {
-        Self(FxHashMap::default())
+    /// Iterate over pairs of after transform ID and rebuilt ID
+    fn pairs(&self) -> impl Iterator<Item = Pair<Id>> + '_ {
+        self.0
+            .iter()
+            .map(|(&after_transform_id, &rebuilt_id)| Pair::new(after_transform_id, rebuilt_id))
     }
 }
 
@@ -204,10 +221,6 @@ struct Pair<T> {
 impl<T> Pair<T> {
     fn new(after_transform: T, rebuilt: T) -> Self {
         Self { after_transform, rebuilt }
-    }
-
-    fn from_tuple(values: (T, T)) -> Self {
-        Self::new(values.0, values.1)
     }
 
     fn parts(&self) -> (&T, &T) {
@@ -309,105 +322,38 @@ rebuilt        : {value_rebuilt}
 }
 
 impl<'s> PostTransformChecker<'s> {
-    fn create_mappings(&mut self) {
-        // Scope IDs
-        for (&scope_id_after_transform, &scope_id_rebuilt) in
-            self.after_transform.ids.scope_ids.iter().zip(self.rebuilt.ids.scope_ids.iter())
-        {
-            let (Some(scope_id_after_transform), Some(scope_id_rebuilt)) =
-                (scope_id_after_transform, scope_id_rebuilt)
-            else {
-                continue;
-            };
-            self.scope_ids_map.insert(scope_id_after_transform, scope_id_rebuilt);
-        }
-
-        // Symbol IDs
-        for (&symbol_id_after_transform, &symbol_id_rebuilt) in
-            self.after_transform.ids.symbol_ids.iter().zip(self.rebuilt.ids.symbol_ids.iter())
-        {
-            self.symbol_ids_map.insert(symbol_id_after_transform, symbol_id_rebuilt);
-        }
-
-        // Reference IDs
-        for (&reference_id_after_transform, &reference_id_rebuilt) in
-            self.after_transform.ids.reference_ids.iter().zip(self.rebuilt.ids.reference_ids.iter())
-        {
-            self.reference_ids_map.insert(reference_id_after_transform, reference_id_rebuilt);
-        }
-    }
-
     fn check_scopes(&mut self) {
-        if self.get_static_pair(|data| data.ids.scope_ids.len()).is_mismatch() {
-            self.errors.push("Scopes mismatch after transform");
-            return;
-        }
-
-        for scope_ids in self
-            .after_transform
-            .ids
-            .scope_ids
-            .iter()
-            .copied()
-            .zip(self.rebuilt.ids.scope_ids.iter().copied())
-            .map(Pair::from_tuple)
-        {
+        for scope_ids in self.scope_ids_map.pairs() {
             // Check bindings are the same
-            fn get_sorted_binding_names(data: &SemanticData, scope_id: ScopeId) -> Vec<CompactStr> {
+            fn get_sorted_binding_names(scoping: &Scoping, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut binding_names =
-                    data.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
+                    scoping.scopes.get_bindings(scope_id).keys().cloned().collect::<Vec<_>>();
                 binding_names.sort_unstable();
                 binding_names
             }
 
-            let scope_ids = match scope_ids.into_parts() {
-                (None, None) => continue,
-                (Some(scope_id_after_transform), Some(scope_id_rebuilt)) => {
-                    let scope_ids = Pair::new(scope_id_after_transform, scope_id_rebuilt);
-                    let binding_names = self.get_pair(scope_ids, get_sorted_binding_names);
-                    if binding_names.is_mismatch() {
-                        self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
-                    } else {
-                        let symbol_ids = self.get_pair(scope_ids, |data, scope_id| {
-                            data.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
-                        });
-                        if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
-                            self.errors.push_mismatch(
-                                "Binding symbols mismatch",
-                                scope_ids,
-                                symbol_ids,
-                            );
-                        }
-                    }
-                    scope_ids
+            let binding_names = self.get_pair(scope_ids, get_sorted_binding_names);
+            if binding_names.is_mismatch() {
+                self.errors.push_mismatch("Bindings mismatch", scope_ids, binding_names);
+            } else {
+                let symbol_ids = self.get_pair(scope_ids, |scoping, scope_id| {
+                    scoping.scopes.get_bindings(scope_id).values().copied().collect::<Vec<_>>()
+                });
+                if self.remap_symbol_ids_sets(&symbol_ids).is_mismatch() {
+                    self.errors.push_mismatch("Binding symbols mismatch", scope_ids, symbol_ids);
                 }
-                (Some(scope_id), None) => {
-                    let binding_names = get_sorted_binding_names(&self.after_transform, scope_id);
-                    self.errors.push_mismatch_strs(
-                        "Bindings mismatch",
-                        Pair::new(format!("{scope_id:?}: {binding_names:?}").as_str(), "No scope"),
-                    );
-                    continue;
-                }
-                (None, Some(scope_id)) => {
-                    let binding_names = get_sorted_binding_names(&self.rebuilt, scope_id);
-                    self.errors.push_mismatch_strs(
-                        "Bindings mismatch",
-                        Pair::new("No scope", format!("{scope_id:?}: {binding_names:?}").as_str()),
-                    );
-                    continue;
-                }
-            };
+            }
 
             // Check flags match
-            let flags = self.get_pair(scope_ids, |data, scope_id| data.scopes.get_flags(scope_id));
+            let flags =
+                self.get_pair(scope_ids, |scoping, scope_id| scoping.scopes.get_flags(scope_id));
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Scope flags mismatch", scope_ids, flags);
             }
 
             // Check parents match
-            let parent_ids =
-                self.get_pair(scope_ids, |data, scope_id| data.scopes.get_parent_id(scope_id));
+            let parent_ids = self
+                .get_pair(scope_ids, |scoping, scope_id| scoping.scopes.get_parent_id(scope_id));
             let is_match = match parent_ids.into_parts() {
                 (Some(parent_id_after_transform), Some(parent_id_rebuilt)) => {
                     let parent_ids = Pair::new(parent_id_after_transform, parent_id_rebuilt);
@@ -420,54 +366,37 @@ impl<'s> PostTransformChecker<'s> {
                 self.errors.push_mismatch("Scope parent mismatch", scope_ids, parent_ids);
             }
 
-            // Check children match
-            let child_ids = self
-                .get_pair(scope_ids, |data, scope_id| data.scopes.get_child_ids(scope_id).to_vec());
-            if self.remap_scope_ids_sets(&child_ids).is_mismatch() {
-                self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
-            }
-
             // NB: Skip checking node IDs match - transformer does not set `AstNodeId`s
         }
     }
 
     fn check_symbols(&mut self) {
-        if self.get_static_pair(|data| data.ids.symbol_ids.len()).is_mismatch() {
-            self.errors.push("Symbols mismatch after transform");
-            return;
-        }
-
-        for symbol_ids in self
-            .after_transform
-            .ids
-            .symbol_ids
-            .iter()
-            .copied()
-            .zip(self.rebuilt.ids.symbol_ids.iter().copied())
-            .map(Pair::from_tuple)
-        {
+        for symbol_ids in self.symbol_ids_map.pairs() {
             // Check names match
-            let names =
-                self.get_pair(symbol_ids, |data, symbol_id| data.symbols.names[symbol_id].clone());
+            let names = self.get_pair(symbol_ids, |scoping, symbol_id| {
+                scoping.symbols.names[symbol_id].clone()
+            });
             if names.is_mismatch() {
                 self.errors.push_mismatch("Symbol name mismatch", symbol_ids, names);
             }
 
             // Check flags match
-            let flags = self.get_pair(symbol_ids, |data, symbol_id| data.symbols.flags[symbol_id]);
+            let flags =
+                self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.flags[symbol_id]);
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Symbol flags mismatch", symbol_ids, flags);
             }
 
             // Check spans match
-            let spans = self.get_pair(symbol_ids, |data, symbol_id| data.symbols.spans[symbol_id]);
+            let spans =
+                self.get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.spans[symbol_id]);
             if spans.is_mismatch() {
                 self.errors.push_mismatch("Symbol span mismatch", symbol_ids, spans);
             }
 
             // Check scope IDs match
-            let scope_ids =
-                self.get_pair(symbol_ids, |data, symbol_id| data.symbols.scope_ids[symbol_id]);
+            let scope_ids = self
+                .get_pair(symbol_ids, |scoping, symbol_id| scoping.symbols.scope_ids[symbol_id]);
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch("Symbol scope ID mismatch", symbol_ids, scope_ids);
             }
@@ -475,8 +404,8 @@ impl<'s> PostTransformChecker<'s> {
             // NB: Skip checking declarations match - transformer does not set `AstNodeId`s
 
             // Check resolved references match
-            let reference_ids = self.get_pair(symbol_ids, |data, symbol_id| {
-                data.symbols.resolved_references[symbol_id].clone()
+            let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
+                scoping.symbols.resolved_references[symbol_id].clone()
             });
             if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
                 self.errors.push_mismatch(
@@ -487,8 +416,8 @@ impl<'s> PostTransformChecker<'s> {
             }
 
             // Check redeclarations match
-            let redeclaration_spans = self.get_pair(symbol_ids, |data, symbol_id| {
-                let mut spans = data.symbols.get_redeclarations(symbol_id).to_vec();
+            let redeclaration_spans = self.get_pair(symbol_ids, |scoping, symbol_id| {
+                let mut spans = scoping.symbols.get_redeclarations(symbol_id).to_vec();
                 spans.sort_unstable();
                 spans
             });
@@ -503,38 +432,25 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     fn check_references(&mut self) {
-        if self.get_static_pair(|data| data.ids.reference_ids.len()).is_mismatch() {
-            self.errors.push("References mismatch after transform");
-            return;
-        }
-
-        for reference_ids in self
-            .after_transform
-            .ids
-            .reference_ids
-            .iter()
-            .copied()
-            .zip(self.rebuilt.ids.reference_ids.iter().copied())
-            .map(Pair::from_tuple)
-        {
+        for reference_ids in self.reference_ids_map.pairs() {
             // Check symbol IDs match
-            let symbol_ids = self.get_pair(reference_ids, |data, reference_id| {
-                data.symbols.references[reference_id].symbol_id()
+            let symbol_ids = self.get_pair(reference_ids, |scoping, reference_id| {
+                scoping.symbols.references[reference_id].symbol_id()
             });
             let symbol_ids_remapped = Pair::new(
                 symbol_ids.after_transform.map(|symbol_id| self.symbol_ids_map.get(symbol_id)),
                 symbol_ids.rebuilt.map(Option::Some),
             );
             if symbol_ids_remapped.is_mismatch() {
-                let symbol_names = self.get_pair(symbol_ids, |data, symbol_id| {
-                    symbol_id.map(|symbol_id| data.symbols.names[symbol_id].clone())
+                let symbol_names = self.get_pair(symbol_ids, |scoping, symbol_id| {
+                    symbol_id.map(|symbol_id| scoping.symbols.names[symbol_id].clone())
                 });
                 self.errors.push_mismatch("Reference symbol mismatch", reference_ids, symbol_names);
             }
 
             // Check flags match
-            let flags = self.get_pair(reference_ids, |data, reference_id| {
-                data.symbols.references[reference_id].flags()
+            let flags = self.get_pair(reference_ids, |scoping, reference_id| {
+                scoping.symbols.references[reference_id].flags()
             });
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Reference flags mismatch", reference_ids, flags);
@@ -543,9 +459,9 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     fn check_unresolved_references(&mut self) {
-        let unresolved_names = self.get_static_pair(|data| {
+        let unresolved_names = self.get_static_pair(|scoping| {
             let mut names =
-                data.scopes.root_unresolved_references.keys().cloned().collect::<Vec<_>>();
+                scoping.scopes.root_unresolved_references.keys().cloned().collect::<Vec<_>>();
             names.sort_unstable();
             names
         });
@@ -554,10 +470,10 @@ impl<'s> PostTransformChecker<'s> {
         }
 
         for (name, reference_ids_after_transform) in
-            &self.after_transform.scopes.root_unresolved_references
+            &self.scoping_after_transform.scopes.root_unresolved_references
         {
             if let Some(reference_ids_rebuilt) =
-                &self.rebuilt.scopes.root_unresolved_references.get(name)
+                &self.scoping_rebuilt.scopes.root_unresolved_references.get(name)
             {
                 let reference_ids = Pair::new(reference_ids_after_transform, reference_ids_rebuilt);
                 if self.remap_reference_ids_sets(&reference_ids).is_mismatch() {
@@ -571,47 +487,21 @@ impl<'s> PostTransformChecker<'s> {
     }
 
     /// Get same data from `after_transform` and `rebuilt` from a pair of IDs
-    fn get_pair<R, I: Copy, F: Fn(&SemanticData, I) -> R>(
-        &self,
-        ids: Pair<I>,
-        getter: F,
-    ) -> Pair<R> {
+    fn get_pair<R, I: Copy, F: Fn(&Scoping, I) -> R>(&self, ids: Pair<I>, getter: F) -> Pair<R> {
         Pair::new(
-            getter(&self.after_transform, ids.after_transform),
-            getter(&self.rebuilt, ids.rebuilt),
+            getter(&self.scoping_after_transform, ids.after_transform),
+            getter(&self.scoping_rebuilt, ids.rebuilt),
         )
     }
 
     /// Get same data from `after_transform` and `rebuilt`
-    fn get_static_pair<R, F: Fn(&SemanticData) -> R>(&self, getter: F) -> Pair<R> {
-        Pair::new(getter(&self.after_transform), getter(&self.rebuilt))
+    fn get_static_pair<R, F: Fn(&Scoping) -> R>(&self, getter: F) -> Pair<R> {
+        Pair::new(getter(&self.scoping_after_transform), getter(&self.scoping_rebuilt))
     }
 
     /// Map `after_transform` scope ID to `rebuilt` scope ID
     fn remap_scope_ids(&self, scope_ids: Pair<ScopeId>) -> Pair<Option<ScopeId>> {
         Pair::new(self.scope_ids_map.get(scope_ids.after_transform), Some(scope_ids.rebuilt))
-    }
-
-    /// Remap pair of arrays of `ScopeId`s.
-    /// Map `after_transform` IDs to `rebuilt` IDs.
-    /// Sort both sets.
-    fn remap_scope_ids_sets<V: AsRef<Vec<ScopeId>>>(
-        &self,
-        scope_ids: &Pair<V>,
-    ) -> Pair<Vec<Option<ScopeId>>> {
-        let mut after_transform = scope_ids
-            .after_transform
-            .as_ref()
-            .iter()
-            .map(|&scope_id| self.scope_ids_map.get(scope_id))
-            .collect::<Vec<_>>();
-        let mut rebuilt =
-            scope_ids.rebuilt.as_ref().iter().copied().map(Option::Some).collect::<Vec<_>>();
-
-        after_transform.sort_unstable();
-        rebuilt.sort_unstable();
-
-        Pair::new(after_transform, rebuilt)
     }
 
     /// Remap pair of arrays of `SymbolId`s.
@@ -659,62 +549,56 @@ impl<'s> PostTransformChecker<'s> {
     }
 }
 
-/// Collection of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
+/// Collector of `ScopeId`s, `SymbolId`s and `ReferenceId`s from an AST.
 ///
 /// `scope_ids`, `symbol_ids` and `reference_ids` lists are filled in visitation order.
-#[derive(Default)]
-pub struct SemanticIds {
+struct SemanticIdsCollector<'e> {
     scope_ids: Vec<Option<ScopeId>>,
-    symbol_ids: Vec<SymbolId>,
-    reference_ids: Vec<ReferenceId>,
+    symbol_ids: Vec<Option<SymbolId>>,
+    reference_ids: Vec<Option<ReferenceId>>,
+    errors: &'e mut Errors,
 }
 
-impl SemanticIds {
+impl<'e> SemanticIdsCollector<'e> {
+    fn new(errors: &'e mut Errors) -> Self {
+        Self { scope_ids: vec![], symbol_ids: vec![], reference_ids: vec![], errors }
+    }
+
     /// Collect IDs and check for errors
-    pub fn check(&mut self, program: &Program<'_>) -> Option<Vec<OxcDiagnostic>> {
-        if program.source_type.is_typescript_definition() {
-            return None;
+    #[allow(clippy::type_complexity)]
+    fn collect(
+        mut self,
+        program: &Program<'_>,
+    ) -> (Vec<Option<ScopeId>>, Vec<Option<SymbolId>>, Vec<Option<ReferenceId>>) {
+        if !program.source_type.is_typescript_definition() {
+            self.visit_program(program);
         }
-
-        let mut collector = SemanticIdsCollector::new(self);
-        collector.visit_program(program);
-
-        let errors = collector.errors;
-        (!errors.is_empty()).then_some(errors)
+        (self.scope_ids, self.symbol_ids, self.reference_ids)
     }
 }
 
-struct SemanticIdsCollector<'c> {
-    ids: &'c mut SemanticIds,
-    errors: Vec<OxcDiagnostic>,
-}
-
-impl<'c> SemanticIdsCollector<'c> {
-    fn new(ids: &'c mut SemanticIds) -> Self {
-        Self { ids, errors: vec![] }
-    }
-}
-
-impl<'a, 'c> Visit<'a> for SemanticIdsCollector<'c> {
+impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'e> {
     fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        self.ids.scope_ids.push(scope_id.get());
+        let scope_id = scope_id.get();
+        self.scope_ids.push(scope_id);
+        if scope_id.is_none() {
+            self.errors.push("Missing ScopeId");
+        }
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        if let Some(reference_id) = ident.reference_id.get() {
-            self.ids.reference_ids.push(reference_id);
-        } else {
-            let message = format!("Missing ReferenceId: {}", ident.name);
-            self.errors.push(OxcDiagnostic::error(message).with_label(ident.span));
+        let reference_id = ident.reference_id.get();
+        self.reference_ids.push(reference_id);
+        if reference_id.is_none() {
+            self.errors.push(format!("Missing ReferenceId: {}", ident.name));
         }
     }
 
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
-        if let Some(symbol_id) = ident.symbol_id.get() {
-            self.ids.symbol_ids.push(symbol_id);
-        } else {
-            let message = format!("Missing SymbolId: {}", ident.name);
-            self.errors.push(OxcDiagnostic::error(message).with_label(ident.span));
+        let symbol_id = ident.symbol_id.get();
+        self.symbol_ids.push(symbol_id);
+        if symbol_id.is_none() {
+            self.errors.push(format!("Missing SymbolId: {}", ident.name));
         }
     }
 
