@@ -322,7 +322,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -333,7 +333,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -344,7 +344,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -355,7 +355,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -366,7 +366,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -377,7 +377,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -388,7 +388,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │          ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Array.prototype.push()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -399,7 +399,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -410,7 +410,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -421,7 +421,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -432,7 +432,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -443,7 +443,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -454,7 +454,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      │         ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.
 
   ⚠ oxc(no-accumulating-spread): Do not spread accumulators in loops
@@ -465,5 +465,5 @@ source: crates/oxc_linter/src/tester.rs
    ·      │          ╰── For this loop
    ·      ╰── From this accumulator
    ╰────
-  help: Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.
+  help: Consider using `Object.assign()` to mutate the accumulator instead.
         Using spreads within accumulators leads to `O(n^2)` time complexity.

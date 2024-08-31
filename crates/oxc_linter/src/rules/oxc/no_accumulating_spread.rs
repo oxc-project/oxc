@@ -44,13 +44,26 @@ fn reduce_unknown(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
         ])
 }
 
-fn loop_spread_diagnostic(
+fn loop_spread_likely_object_diagnostic(
     accumulator_decl_span: Span,
     spread_span: Span,
     loop_span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in loops")
-        .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Object.assign()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_labels([
+            accumulator_decl_span.label("From this accumulator"),
+            spread_span.label("From this spread"),
+            loop_span.label("For this loop")
+        ])
+}
+fn loop_spread_likely_array_diagnostic(
+    accumulator_decl_span: Span,
+    spread_span: Span,
+    loop_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not spread accumulators in loops")
+        .with_help("Consider using `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
@@ -221,7 +234,8 @@ fn check_loop_usage<'a>(
         return;
     };
 
-    match assignment_expression.right.get_inner_expression() {
+    let assignment_expression_right_inner_expr = assignment_expression.right.get_inner_expression();
+    match assignment_expression_right_inner_expr {
         Expression::ArrayExpression(array_expr)
             if array_expr.span.contains_inclusive(spread_span) => {}
         Expression::ObjectExpression(object_expr)
@@ -234,11 +248,24 @@ fn check_loop_usage<'a>(
             if !parent.kind().span().contains_inclusive(declaration.span)
                 && parent.kind().span().contains_inclusive(spread_span)
             {
-                ctx.diagnostic(loop_spread_diagnostic(
-                    declarator.id.span(),
-                    spread_span,
-                    loop_span,
-                ));
+                match assignment_expression_right_inner_expr {
+                    Expression::ArrayExpression(_) => {
+                        ctx.diagnostic(loop_spread_likely_array_diagnostic(
+                            declarator.id.span(),
+                            spread_span,
+                            loop_span,
+                        ));
+                    }
+                    Expression::ObjectExpression(_) => {
+                        ctx.diagnostic(loop_spread_likely_object_diagnostic(
+                            declarator.id.span(),
+                            spread_span,
+                            loop_span,
+                        ));
+                    }
+                    // we check above that the expression is either an array or object expression
+                    _ => unreachable!(),
+                }
             }
         }
     }
