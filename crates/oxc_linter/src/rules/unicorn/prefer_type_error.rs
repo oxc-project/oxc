@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// ```
     PreferTypeError,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for PreferTypeError {
@@ -82,7 +82,10 @@ impl Rule for PreferTypeError {
         };
 
         if is_type_checking_expr(&if_stmt.test) {
-            ctx.diagnostic(prefer_type_error_diagnostic(new_expr.callee.span()));
+            ctx.diagnostic_with_fix(
+                prefer_type_error_diagnostic(new_expr.callee.span()),
+                |fixer| fixer.replace(new_expr.callee.span(), "TypeError"),
+            );
         }
     }
 }
@@ -468,5 +471,56 @@ fn test() {
         ",
     ];
 
-    Tester::new(PreferTypeError::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            r"if (!isFinite(foo)) { throw new Error(); }",
+            r"if (!isFinite(foo)) { throw new TypeError(); }",
+        ),
+        (
+            r"if (isNaN(foo) === false) { throw new Error(); }",
+            r"if (isNaN(foo) === false) { throw new TypeError(); }",
+        ),
+        (
+            r"if (Array.isArray(foo)) { throw new Error('foo is an Array'); }",
+            r"if (Array.isArray(foo)) { throw new TypeError('foo is an Array'); }",
+        ),
+        (
+            r"if (foo instanceof bar) { throw new Error(foobar); }",
+            r"if (foo instanceof bar) { throw new TypeError(foobar); }",
+        ),
+        (
+            r"if (_.isElement(foo)) { throw new Error(); }",
+            r"if (_.isElement(foo)) { throw new TypeError(); }",
+        ),
+        (
+            r"if (_.isElement(foo)) { throw new Error; }",
+            r"if (_.isElement(foo)) { throw new TypeError; }",
+        ),
+        (
+            r"if (wrapper._.isElement(foo)) { throw new Error; }",
+            r"if (wrapper._.isElement(foo)) { throw new TypeError; }",
+        ),
+        (
+            r"if (typeof foo == 'Foo' || 'Foo' === typeof foo) { throw new Error(); }",
+            r"if (typeof foo == 'Foo' || 'Foo' === typeof foo) { throw new TypeError(); }",
+        ),
+        (
+            r"if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) { throw new Error(); }",
+            r"if (Number.isFinite(foo) && Number.isSafeInteger(foo) && Number.isInteger(foo)) { throw new TypeError(); }",
+        ),
+        (
+            r"if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) { throw new Error(); }",
+            r"if (wrapper.n.isFinite(foo) && wrapper.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) { throw new TypeError(); }",
+        ),
+        (
+            r"if (wrapper.f.g.n.isFinite(foo) && wrapper.g.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) { throw new Error(); }",
+            r"if (wrapper.f.g.n.isFinite(foo) && wrapper.g.n.isSafeInteger(foo) && wrapper.n.isInteger(foo)) { throw new TypeError(); }",
+        ),
+        (
+            r"if (_.isElement(foo)) { throw (new Error()); }",
+            r"if (_.isElement(foo)) { throw (new TypeError()); }",
+        ),
+    ];
+
+    Tester::new(PreferTypeError::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
