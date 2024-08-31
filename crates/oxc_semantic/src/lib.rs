@@ -191,7 +191,6 @@ impl<'a> Semantic<'a> {
         let node = self.nodes.get_node(reference.node_id());
         match node.kind() {
             AstKind::IdentifierReference(id) => id.name.as_str(),
-            AstKind::JSXIdentifier(id) => id.name.as_str(),
             _ => unreachable!(),
         }
     }

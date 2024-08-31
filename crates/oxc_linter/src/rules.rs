@@ -81,6 +81,7 @@ mod eslint {
     pub mod no_loss_of_precision;
     pub mod no_multi_str;
     pub mod no_new;
+    pub mod no_new_func;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
@@ -449,10 +450,12 @@ mod tree_shaking {
 
 mod promise {
     pub mod avoid_new;
+    pub mod catch_or_return;
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
     pub mod prefer_await_to_then;
+    pub mod spec_only;
     pub mod valid_params;
 }
 
@@ -524,6 +527,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_iterator,
     eslint::no_loss_of_precision,
     eslint::no_new,
+    eslint::no_new_func,
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
@@ -876,6 +880,8 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     promise::no_return_in_finally,
     promise::prefer_await_to_then,
+    promise::catch_or_return,
+    promise::spec_only,
     vitest::no_import_node_test,
     vitest::prefer_each,
     vitest::prefer_to_be_falsy,

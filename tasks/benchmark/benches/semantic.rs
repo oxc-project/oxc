@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
@@ -26,7 +26,7 @@ fn bench_semantic(criterion: &mut Criterion) {
                     let ret = SemanticBuilder::new(source_text, source_type)
                         .with_trivias(ret.trivias.clone())
                         .with_build_jsdoc(true)
-                        .build_module_record(PathBuf::new(), program)
+                        .build_module_record(Path::new(""), program)
                         .build(program);
                     let ret = black_box(ret);
                     ret.errors

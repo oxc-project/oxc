@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -108,11 +108,7 @@ const NEXT_POLYFILLED_FEATURES: Set<&'static str> = phf_set! {
 impl Rule for NoUnwantedPolyfillio {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let tag_name = if let JSXElementName::Identifier(ident) = &jsx_el.name {
-                &ident.name
-            } else {
-                return;
-            };
+            let Some(tag_name) = jsx_el.name.get_identifier_name() else { return };
 
             if tag_name.as_str() != "script" {
                 let next_script_import_local_name = get_next_script_import_local_name(ctx);

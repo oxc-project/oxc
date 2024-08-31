@@ -2,7 +2,7 @@
 
 use std::{
     cell::{Cell, RefCell},
-    path::PathBuf,
+    path::Path,
     sync::Arc,
 };
 
@@ -195,10 +195,11 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn build_module_record(
         mut self,
-        resolved_absolute_path: PathBuf,
+        resolved_absolute_path: &Path,
         program: &Program<'a>,
     ) -> Self {
-        let mut module_record_builder = ModuleRecordBuilder::new(resolved_absolute_path);
+        let mut module_record_builder =
+            ModuleRecordBuilder::new(resolved_absolute_path.to_path_buf());
         module_record_builder.visit(program);
         self.module_record = Arc::new(module_record_builder.build());
         self
@@ -1863,9 +1864,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
-            AstKind::JSXIdentifier(ident) => {
-                self.reference_jsx_identifier(ident);
-            }
             AstKind::UpdateExpression(_) => {
                 if !self.current_reference_flags.is_type()
                     && self.is_not_expression_statement_parent()
@@ -1992,20 +1990,6 @@ impl<'a> SemanticBuilder<'a> {
         } else {
             self.current_reference_flags
         }
-    }
-
-    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier<'a>) {
-        match self.nodes.parent_kind(self.current_node_id) {
-            Some(AstKind::JSXElementName(_)) => {
-                if !ident.name.chars().next().is_some_and(char::is_uppercase) {
-                    return;
-                }
-            }
-            Some(AstKind::JSXMemberExpressionObject(_)) => {}
-            _ => return,
-        }
-        let reference = Reference::new(self.current_node_id, ReferenceFlags::read());
-        self.declare_reference(ident.name.clone(), reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

@@ -134,7 +134,7 @@ mod compile_fail_tests;
 ///         }
 ///
 ///         // Read grandparent
-///         if let Ancestor::ExpressionStatementExpression(stmt_ref) = ctx.ancestor(2) {
+///         if let Ancestor::ExpressionStatementExpression(stmt_ref) = ctx.ancestor(1) {
 ///             // This is legal
 ///             println!("expression stmt's span: {:?}", stmt_ref.span());
 ///

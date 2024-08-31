@@ -3482,6 +3482,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXElementName<'old_alloc> 
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Identifier(it) => JSXElementName::Identifier(it.clone_in(allocator)),
+            Self::IdentifierReference(it) => {
+                JSXElementName::IdentifierReference(it.clone_in(allocator))
+            }
             Self::NamespacedName(it) => JSXElementName::NamespacedName(it.clone_in(allocator)),
             Self::MemberExpression(it) => JSXElementName::MemberExpression(it.clone_in(allocator)),
         }
@@ -3515,6 +3518,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXMemberExpressionObject<'
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::Identifier(it) => JSXMemberExpressionObject::Identifier(it.clone_in(allocator)),
+            Self::IdentifierReference(it) => {
+                JSXMemberExpressionObject::IdentifierReference(it.clone_in(allocator))
+            }
             Self::MemberExpression(it) => {
                 JSXMemberExpressionObject::MemberExpression(it.clone_in(allocator))
             }

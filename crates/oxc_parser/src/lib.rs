@@ -303,9 +303,7 @@ impl<'a> ParserImpl<'a> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
             Err(error) => {
-                let error =
-                    self.flow_error().unwrap_or_else(|| self.overlong_error().unwrap_or(error));
-                self.error(error);
+                self.error(self.overlong_error().unwrap_or(error));
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
@@ -316,7 +314,18 @@ impl<'a> ParserImpl<'a> {
                 (program, true)
             }
         };
-        let errors = self.lexer.errors.into_iter().chain(self.errors).collect();
+        let mut errors = vec![];
+        // only check for `@flow` if the file failed to parse.
+        if !self.lexer.errors.is_empty() || !self.errors.is_empty() {
+            if let Some(error) = self.flow_error() {
+                errors.push(error);
+            }
+        }
+        if errors.len() != 1 {
+            errors.reserve(self.lexer.errors.len() + self.errors.len());
+            errors.extend(self.lexer.errors);
+            errors.extend(self.errors);
+        }
         let trivias = self.lexer.trivia_builder.build();
         ParserReturn { program, errors, trivias, panicked }
     }
@@ -448,10 +457,10 @@ mod test {
              */
              asdf asdf
              ",
+            "/* @flow */ super;",
         ];
         for source in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.program.is_empty());
             assert_eq!(ret.errors.len(), 1);
             assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
         }

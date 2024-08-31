@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -45,9 +45,7 @@ impl Rule for NoBeforeInteractiveScriptOutsideDocument {
             if is_in_app_dir(file_path) {
                 return;
             }
-            let tag_name = if let JSXElementName::Identifier(ident) = &jsx_el.name {
-                &ident.name
-            } else {
+            let Some(tag_name) = jsx_el.name.get_identifier_name() else {
                 return;
             };
             if jsx_el.attributes.len() == 0 {

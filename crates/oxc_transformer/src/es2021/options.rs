@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::env::{can_enable_plugin, Versions};
+
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct ES2021Options {
@@ -8,9 +10,19 @@ pub struct ES2021Options {
 }
 
 impl ES2021Options {
-    #[must_use]
-    pub fn with_logical_assignment_operators(mut self, enable: bool) -> Self {
+    pub fn with_logical_assignment_operators(&mut self, enable: bool) -> &mut Self {
         self.logical_assignment_operators = enable;
         self
+    }
+
+    #[must_use]
+    pub fn from_targets_and_bugfixes(targets: Option<&Versions>, bugfixes: bool) -> Self {
+        Self {
+            logical_assignment_operators: can_enable_plugin(
+                "transform-logical-assignment-operators",
+                targets,
+                bugfixes,
+            ),
+        }
     }
 }

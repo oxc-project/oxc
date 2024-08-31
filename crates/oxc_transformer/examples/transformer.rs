@@ -6,10 +6,7 @@ use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactOptions, TransformOptions, Transformer,
-    TypeScriptOptions,
-};
+use oxc_transformer::{EnvOptions, Targets, TransformOptions, Transformer};
 
 // Instruction:
 // create a `test.tsx`,
@@ -37,17 +34,11 @@ fn main() {
     println!("{source_text}\n");
 
     let mut program = ret.program;
-    let transform_options = TransformOptions {
-        typescript: TypeScriptOptions::default(),
-        es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
-        react: ReactOptions {
-            jsx_plugin: true,
-            jsx_self_plugin: true,
-            jsx_source_plugin: true,
-            ..Default::default()
-        },
-        ..Default::default()
-    };
+    let transform_options = TransformOptions::from_preset_env(&EnvOptions {
+        targets: Targets::from_query("chrome 51"),
+        ..EnvOptions::default()
+    })
+    .unwrap();
 
     let (symbols, scopes) = SemanticBuilder::new(&source_text, source_type)
         .build(&program)

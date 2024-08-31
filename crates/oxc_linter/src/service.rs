@@ -236,7 +236,7 @@ impl Runtime {
 
             if !messages.is_empty() {
                 self.ignore_path(path);
-                let errors = messages.into_iter().map(|m| m.error).collect();
+                let errors = messages.into_iter().map(Into::into).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
                 let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
                 tx_error.send(Some(diagnostics)).unwrap();
@@ -277,7 +277,7 @@ impl Runtime {
             .with_build_jsdoc(true)
             .with_trivias(trivias)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path.to_path_buf(), program);
+            .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
         if self.linter.options().plugins.import {

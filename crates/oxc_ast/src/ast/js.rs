@@ -1715,7 +1715,7 @@ pub struct Function<'a> {
     ///   return this.admin;
     /// });
     /// ```
-    pub this_param: Option<TSThisParameter<'a>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,

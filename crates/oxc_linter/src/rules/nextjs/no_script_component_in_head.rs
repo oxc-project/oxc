@@ -80,7 +80,7 @@ impl Rule for NoScriptComponentInHead {
 
             for child in &jsx_element.children {
                 if let JSXChild::Element(child_element) = child {
-                    if let JSXElementName::Identifier(child_element_name) =
+                    if let JSXElementName::IdentifierReference(child_element_name) =
                         &child_element.opening_element.name
                     {
                         if child_element_name.name.as_str() == "Script" {
@@ -100,31 +100,33 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"import Script from "next/script";
-			     const Head = ({children}) => children
-			
-			    export default function Index() {
-			      return (
+        r#"
+            import Script from "next/script";
+			const Head = ({children}) => children
+
+			export default function Index() {
+			    return (
 			        <Head>
-			          <Script></Script>
+			            <Script></Script>
 			        </Head>
-			      );
-			    }
-			    "#,
+			    );
+			}
+		"#,
     ];
 
     let fail = vec![
         r#"
-			      import Head from "next/head";
-			      import Script from "next/script";
-			
-			      export default function Index() {
-			        return (
-			            <Head>
-			              <Script></Script>
-			            </Head>
-			        );
-			      }"#,
+			import Head from "next/head";
+			import Script from "next/script";
+
+			export default function Index() {
+			    return (
+			        <Head>
+			            <Script></Script>
+			        </Head>
+			    );
+		    }
+        "#,
     ];
 
     Tester::new(NoScriptComponentInHead::NAME, pass, fail).test_and_snapshot();

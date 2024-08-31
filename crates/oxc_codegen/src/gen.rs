@@ -2158,16 +2158,16 @@ impl<'a> Gen for MetaProperty<'a> {
 impl<'a> Gen for Class<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.declare {
-            p.print_str("declare ");
-        }
-        if self.r#abstract {
-            p.print_str("abstract ");
-        }
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
             self.decorators.gen(p, ctx);
+            if self.declare {
+                p.print_str("declare ");
+            }
+            if self.r#abstract {
+                p.print_str("abstract ");
+            }
             p.print_str("class");
             if let Some(id) = &self.id {
                 p.print_hard_space();
@@ -2244,6 +2244,7 @@ impl<'a> Gen for JSXMemberExpressionObject<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(ident) => ident.gen(p, ctx),
+            Self::IdentifierReference(ident) => ident.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
         }
     }
@@ -2261,6 +2262,7 @@ impl<'a> Gen for JSXElementName<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(identifier) => identifier.gen(p, ctx),
+            Self::IdentifierReference(identifier) => identifier.gen(p, ctx),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
         }

@@ -33,9 +33,9 @@ ready:
 
 # Clone or update submodules
 submodules:
-  just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git a15874163e6a4f19ee7cd3e47592af382af0f5fd
-  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git 12619ffe5b0777edb0223304da1fdf8770d93e7c
-  just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git d8086f14b6b97c0df34a0cc2f56d4b5926a0c299
+  just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60
+  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git 3bcfee232506a4cebe410f02042fb0f0adeeb0b1
+  just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git a709f9899c2a544b6de65a0f2623ecbbe1394eab
   just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 7142cf354cce2558f41574f44b967baf11d5b603
 
 # Install git pre-commit to format files

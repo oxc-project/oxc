@@ -199,9 +199,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                     && !method.value.is_typescript_syntax()
             }
             ClassElement::PropertyDefinition(prop) => {
-                if prop.value.as_ref().is_some_and(Expression::is_typescript_syntax)
-                    || prop.declare && prop.decorators.is_empty()
-                {
+                if prop.declare {
                     false
                 } else {
                     matches!(prop.r#type, PropertyDefinitionType::PropertyDefinition)

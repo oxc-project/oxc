@@ -220,7 +220,7 @@ impl Baseline {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BaselineFile {
     pub files: Vec<Baseline>,
 }
@@ -243,7 +243,7 @@ impl BaselineFile {
     }
 
     pub fn parse(path: &Path) -> Self {
-        let s = fs::read_to_string(path).unwrap();
+        let Ok(s) = fs::read_to_string(path) else { return Self::default() };
 
         let mut files: Vec<Baseline> = vec![];
         let mut is_diagnostic = false;

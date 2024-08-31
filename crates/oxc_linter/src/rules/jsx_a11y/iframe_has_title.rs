@@ -1,10 +1,10 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, JSXElementName, JSXExpression},
+    ast::{JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -63,10 +63,6 @@ impl Rule for IframeHasTitle {
             return;
         };
 
-        let JSXElementName::Identifier(iden) = &jsx_el.name else {
-            return;
-        };
-
         let Some(name) = get_element_type(ctx, jsx_el) else {
             return;
         };
@@ -74,9 +70,8 @@ impl Rule for IframeHasTitle {
         if name != "iframe" {
             return;
         }
-
         let Some(alt_prop) = has_jsx_prop_ignore_case(jsx_el, "title") else {
-            ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
+            ctx.diagnostic(iframe_has_title_diagnostic(jsx_el.name.span()));
             return;
         };
 
@@ -112,7 +107,7 @@ impl Rule for IframeHasTitle {
             _ => {}
         }
 
-        ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
+        ctx.diagnostic(iframe_has_title_diagnostic(jsx_el.name.span()));
     }
 }
 

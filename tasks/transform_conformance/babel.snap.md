@@ -1,15 +1,16 @@
-commit: 12619ffe
+commit: 3bcfee23
 
-Passed: 287/953
+Passed: 318/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
+* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (100/579)
+# babel-preset-env (101/585)
 * .plugins-overlapping/chrome-49/input.js
 
 
@@ -56,6 +57,12 @@ Targets: The `esmodules` is not supported
 
 
 * bugfixes/safari-block-scoping-safari-9/input.js
+
+
+* bugfixes/safari-class-fields-safari-13/input.mjs
+
+
+* bugfixes/safari-class-fields-safari-15/input.mjs
 
 
 * bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15/input.js
@@ -1307,6 +1314,9 @@ Targets: The `esmodules` is not supported
 * plugins-integration/regression-2892/input.mjs
 
 
+* plugins-integration/regression-4855/input.js
+
+
 * plugins-integration/spread-super-firefox-40/input.js
 
 
@@ -1326,6 +1336,9 @@ Targets: node `current` is not supported
 
 
 * preset-options/destructuring-edge/input.js
+
+
+* preset-options/duplicate-named-capturing-groups-regex-chrome-123/input.js
 
 
 * preset-options/empty-options/input.mjs
@@ -1392,6 +1405,9 @@ Targets: node `current` is not supported
 
 
 * preset-options-babel-7/destructuring-edge/input.js
+
+
+* preset-options-babel-7/duplicate-named-capturing-groups-regex-chrome-120/input.js
 
 
 * preset-options-babel-7/empty-options/input.mjs
@@ -1878,6 +1894,170 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
+# babel-plugin-transform-object-rest-spread (5/59)
+* assumption-ignoreFunctionLength/parameters-object-rest-used-in-default/input.js
+
+
+* assumption-objectRestNoSymbols/rest-assignment-expression/input.js
+
+
+* assumption-objectRestNoSymbols/rest-computed/input.js
+
+
+* assumption-objectRestNoSymbols/rest-nested/input.js
+
+
+* assumption-objectRestNoSymbols/rest-var-declaration/input.js
+
+
+* assumption-pureGetters/rest-remove-unused-excluded-keys/input.js
+
+
+* assumption-pureGetters/spread-single-call/input.js
+
+
+* assumption-setSpreadProperties/assignment/input.js
+
+
+* assumption-setSpreadProperties/expression/input.js
+
+
+* assumption-setSpreadProperties/targets-support-object-assign/input.js
+
+
+* assumption-setSpreadProperties-with-useBuiltIns/assignment/input.js
+
+
+* assumption-setSpreadProperties-with-useBuiltIns/expression/input.js
+
+
+* object-rest/assignment-expression/input.js
+
+
+* object-rest/catch-clause/input.js
+
+
+* object-rest/duplicate-decl-bug/input.js
+
+
+* object-rest/export/input.mjs
+
+
+* object-rest/for-x/input.js
+
+
+* object-rest/for-x-array-pattern/input.js
+
+
+* object-rest/for-x-completion-record/input.js
+
+
+* object-rest/impure-computed/input.js
+
+
+* object-rest/nested/input.js
+
+
+* object-rest/nested-2/input.js
+
+
+* object-rest/nested-array/input.js
+
+
+* object-rest/nested-array-2/input.js
+
+
+* object-rest/nested-computed-key/input.js
+
+
+* object-rest/nested-default-value/input.js
+
+
+* object-rest/nested-literal-property/input.js
+
+
+* object-rest/nested-order/input.js
+
+
+* object-rest/non-string-computed/input.js
+
+
+* object-rest/null-destructuring/input.js
+
+
+* object-rest/object-ref-computed/input.js
+
+
+* object-rest/parameters/input.js
+
+
+* object-rest/parameters-object-rest-used-in-default/input.js
+
+
+* object-rest/remove-unused-excluded-keys-loose/input.js
+
+
+* object-rest/symbol/input.js
+
+
+* object-rest/template-literal-allLiterals-true-no-hoisting/input.js
+
+
+* object-rest/template-literal-property-allLiterals-false/input.js
+
+
+* object-rest/template-literal-property-allLiterals-true/input.js
+
+
+* object-rest/variable-destructuring/input.js
+
+
+* object-rest/with-array-rest/input.js
+
+
+* object-spread/expression/input.js
+
+
+* object-spread/side-effect/input.js
+
+
+* object-spread-loose/assignment/input.js
+
+
+* object-spread-loose/expression/input.js
+
+
+* object-spread-loose/parameters-object-rest-used-in-default/input.js
+
+
+* object-spread-loose/side-effect/input.js
+
+
+* object-spread-loose/variable-declaration/input.js
+
+
+* object-spread-loose-builtins/expression/input.js
+
+
+* object-spread-loose-builtins/side-effect/input.js
+
+
+* regression/gh-4904/input.js
+
+
+* regression/gh-5151/input.js
+
+
+* regression/gh-7304/input.mjs
+
+
+* regression/gh-7388/input.js
+
+
+* regression/gh-8323/input.js
+
+
+
 # babel-plugin-transform-exponentiation-operator (1/4)
 * exponentiation-operator/assignment/input.js
   x Symbol reference IDs mismatch:
@@ -1965,7 +2145,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-typescript (45/151)
+# babel-plugin-transform-typescript (46/152)
 * cast/as-expression/input.ts
   x Unresolved references mismatch:
   | after transform: ["T", "x"]
@@ -1979,8 +2159,9 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * class/accessor-allowDeclareFields-false/input.ts
-  x TS(18010): An accessibility modifier cannot be used with a private
-  | identifier.
+TS(18010)
+
+  x An accessibility modifier cannot be used with a private identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-false/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;
@@ -1990,8 +2171,9 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * class/accessor-allowDeclareFields-true/input.ts
-  x TS(18010): An accessibility modifier cannot be used with a private
-  | identifier.
+TS(18010)
+
+  x An accessibility modifier cannot be used with a private identifier.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/class/accessor-allowDeclareFields-true/input.ts:8:3]
  7 |   abstract accessor prop6: number;
  8 |   private accessor #p: any;
@@ -2372,6 +2554,27 @@ failed to resolve query: failed to parse the rest of input: ...''
   x Symbol flags mismatch:
   | after transform: SymbolId(4): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+
+* enum/reverse-mappings-syntactically-determinable/input.ts
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "B", "C", "D", "E", "Foo"]
+  | rebuilt        : ScopeId(1): ["Foo"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4)]
+  | rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(7),
+  | ReferenceId(10)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/scoped/input.ts
@@ -4648,102 +4851,31 @@ failed to resolve query: failed to parse the rest of input: ...''
   | rebuilt        : ["f"]
 
 
-* type-arguments/tsx/input.ts
-  x Unresolved reference IDs mismatch for "C":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
-
-
-# babel-preset-react (4/9)
-* preset-options/development/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* preset-options/development-runtime-automatic/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(2)]
-
-
-* preset-options/empty-options/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(2)]
-
-
-* preset-options/runtime-automatic/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(2)]
-
-
-* preset-options/runtime-classic/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-
-# babel-plugin-transform-react-jsx (100/142)
-* react/adds-appropriate-newlines-when-using-spread-attribute/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
-
-
+# babel-plugin-transform-react-jsx (119/144)
 * react/arrow-functions/input.js
-  x Unresolved references mismatch:
-  | after transform: ["React", "this"]
-  | rebuilt        : ["React"]
-
-
-* react/assignment/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
 
 
 * react/dont-coerce-expression-containers/input.js
   x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(1)]
 
 
 * react/honor-custom-jsx-comment/input.js
   x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(1)]
 
 
 * react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
   x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
+  | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(1)]
 
 
 * react/honor-custom-jsx-pragma-option/input.js
   x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/should-allow-constructor-as-prop/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/should-allow-deeper-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/should-allow-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
   | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(1)]
 
@@ -4751,16 +4883,8 @@ failed to resolve query: failed to parse the rest of input: ...''
 * react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
   x Unresolved reference IDs mismatch for "Composite":
   | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
-  | ReferenceId(6), ReferenceId(12), ReferenceId(14)]
+  | ReferenceId(6)]
   | rebuilt        : [ReferenceId(6), ReferenceId(9)]
-
-  x Unresolved reference IDs mismatch for "Composite2":
-  | after transform: [ReferenceId(7), ReferenceId(15)]
-  | rebuilt        : [ReferenceId(11)]
-
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(8)]
-  | rebuilt        : [ReferenceId(2)]
 
 
 * react/should-disallow-valueless-key/input.js
@@ -4783,22 +4907,10 @@ failed to resolve query: failed to parse the rest of input: ...''
    `----
 
 
-* react/should-handle-attributed-elements/input.js
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(0): [ReferenceId(2), ReferenceId(5)]
-  | rebuilt        : SymbolId(0): [ReferenceId(4)]
-
-
 * react/should-have-correct-comma-in-nested-children/input.js
   x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(6)]
-  | rebuilt        : [ReferenceId(4)]
-
-
-* react/should-not-add-quotes-to-identifier-names/input.js
-  x Unresolved reference IDs mismatch for "F":
   | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
+  | rebuilt        : [ReferenceId(4)]
 
 
 * react/should-throw-error-namespaces-if-not-flag/input.js
@@ -4812,51 +4924,18 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 * react/this-tag-name/input.js
-  x Unresolved references mismatch:
-  | after transform: ["React", "this"]
-  | rebuilt        : ["React"]
+  x Unresolved reference IDs mismatch for "this":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
 
 
 * react/weird-symbols/input.js
   x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+  | after transform: [ReferenceId(1), ReferenceId(2)]
   | rebuilt        : [ReferenceId(2)]
 
 
-* react/wraps-props-in-react-spread-for-first-spread-attributes/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
-
-
 * react-automatic/arrow-functions/input.js
-  x Unresolved references mismatch:
-  | after transform: ["this"]
-  | rebuilt        : []
-
-
-* react-automatic/assignment/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -4864,48 +4943,21 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * react-automatic/dont-coerce-expression-containers/input.js
   x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/handle-fragments-with-key/input.js
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
-  | ReferenceId(2)]
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : SymbolId(0): [ReferenceId(1)]
-
-
-* react-automatic/should-allow-constructor-as-prop/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react-automatic/should-allow-deeper-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react-automatic/should-allow-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
   x Unresolved reference IDs mismatch for "Composite":
   | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
-  | ReferenceId(6), ReferenceId(12), ReferenceId(16)]
+  | ReferenceId(6)]
   | rebuilt        : [ReferenceId(6), ReferenceId(9)]
-
-  x Unresolved reference IDs mismatch for "Composite2":
-  | after transform: [ReferenceId(7), ReferenceId(14)]
-  | rebuilt        : [ReferenceId(11)]
-
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(8)]
-  | rebuilt        : [ReferenceId(2)]
 
 
 * react-automatic/should-disallow-valueless-key/input.js
@@ -4928,22 +4980,10 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    `----
 
 
-* react-automatic/should-handle-attributed-elements/input.js
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(0): [ReferenceId(2), ReferenceId(5)]
-  | rebuilt        : SymbolId(2): [ReferenceId(4)]
-
-
 * react-automatic/should-have-correct-comma-in-nested-children/input.js
   x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(7)]
-  | rebuilt        : [ReferenceId(4)]
-
-
-* react-automatic/should-not-add-quotes-to-identifier-names/input.js
-  x Unresolved reference IDs mismatch for "F":
   | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
+  | rebuilt        : [ReferenceId(4)]
 
 
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
@@ -4957,27 +4997,21 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 * react-automatic/this-tag-name/input.js
-  x Unresolved references mismatch:
-  | after transform: ["this"]
-  | rebuilt        : []
+  x Unresolved reference IDs mismatch for "this":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/weird-symbols/input.js
   x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+  | after transform: [ReferenceId(1), ReferenceId(2)]
   | rebuilt        : [ReferenceId(2)]
 
 
-* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
+* spread-transform/transform-to-babel-extend/input.js
 
 
-* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(1)]
+* spread-transform/transform-to-object-assign/input.js
 
 
 
@@ -5000,7 +5034,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * cross-platform/handle-fragments-with-key/input.js
   x Unresolved reference IDs mismatch for "React":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(2)]
 
 

@@ -12,7 +12,7 @@ fn default_as_true() -> bool {
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct EnvOptions {
     #[serde(default)]
-    targets: Targets,
+    pub targets: Targets,
 
     #[serde(default = "default_as_true")]
     pub bugfixes: bool,

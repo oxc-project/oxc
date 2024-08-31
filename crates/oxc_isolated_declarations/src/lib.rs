@@ -426,11 +426,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
                     Some(Declaration::FunctionDeclaration(func)) => {
-                        if let Some(id) = func.id.as_ref() {
+                        if let Some(name) = func.name() {
                             assignable_properties_for_namespace
                                 .entry(&ident.name)
                                 .or_default()
-                                .insert(id.name.clone());
+                                .insert(name);
                         }
                     }
                     Some(Declaration::ClassDeclaration(cls)) => {
@@ -487,17 +487,17 @@ impl<'a> IsolatedDeclarations<'a> {
                         &decl.declaration
                     {
                         if func.body.is_some() {
-                            if let Some(id) = func.id.as_ref() {
-                                can_expando_function_names.insert(id.name.clone());
+                            if let Some(name) = func.name() {
+                                can_expando_function_names.insert(name);
                             }
                         }
                     }
                 }
                 Statement::FunctionDeclaration(func) => {
                     if func.body.is_some() {
-                        if let Some(id) = func.id.as_ref() {
-                            if self.scope.has_reference(&id.name) {
-                                can_expando_function_names.insert(id.name.clone());
+                        if let Some(name) = func.name() {
+                            if self.scope.has_reference(&name) {
+                                can_expando_function_names.insert(name);
                             }
                         }
                     }

@@ -16,6 +16,7 @@ mod options;
 mod env;
 mod es2015;
 mod es2016;
+mod es2018;
 mod es2019;
 mod es2020;
 mod es2021;
@@ -30,6 +31,7 @@ mod helpers {
 use std::{path::Path, rc::Rc};
 
 use es2016::ES2016;
+use es2018::ES2018;
 use es2019::ES2019;
 use es2020::ES2020;
 use es2021::ES2021;
@@ -37,12 +39,12 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, SPAN};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
-    env::EnvOptions,
+    env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
     react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
@@ -69,6 +71,7 @@ pub struct Transformer<'a> {
     x2_es2021: ES2021<'a>,
     x2_es2020: ES2020<'a>,
     x2_es2019: ES2019<'a>,
+    x2_es2018: ES2018<'a>,
     x2_es2016: ES2016<'a>,
     x3_es2015: ES2015<'a>,
 }
@@ -97,6 +100,7 @@ impl<'a> Transformer<'a> {
             x2_es2021: ES2021::new(options.es2021, Rc::clone(&ctx)),
             x2_es2020: ES2020::new(options.es2020, Rc::clone(&ctx)),
             x2_es2019: ES2019::new(options.es2019, Rc::clone(&ctx)),
+            x2_es2018: ES2018::new(options.es2018, Rc::clone(&ctx)),
             x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
             x3_es2015: ES2015::new(options.es2015, ctx),
         }
@@ -170,6 +174,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x1_react.transform_expression(expr, ctx);
         self.x2_es2021.enter_expression(expr, ctx);
         self.x2_es2020.enter_expression(expr, ctx);
+        self.x2_es2018.enter_expression(expr, ctx);
         self.x2_es2016.enter_expression(expr, ctx);
         self.x3_es2015.enter_expression(expr, ctx);
     }
@@ -210,6 +215,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_function(func);
+        self.x1_react.transform_function_on_exit(func, ctx);
         self.x3_es2015.exit_function(func, ctx);
     }
 
@@ -276,6 +282,28 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x2_es2021.enter_statements(stmts, ctx);
         self.x2_es2020.enter_statements(stmts, ctx);
         self.x2_es2016.enter_statements(stmts, ctx);
+    }
+
+    fn exit_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Some plugins may add new statements to the ArrowFunctionExpression's body,
+        // which can cause issues with the `() => x;` case, as it only allows a single statement.
+        // To address this, we wrap the last statement in a return statement and set the expression to false.
+        // This transforms the arrow function into the form `() => { return x; };`.
+        if arrow.expression && arrow.body.statements.len() > 1 {
+            let Statement::ExpressionStatement(statement) = arrow.body.statements.pop().unwrap()
+            else {
+                unreachable!("The last statement in an ArrowFunctionExpression should always be an ExpressionStatement.")
+            };
+            arrow
+                .body
+                .statements
+                .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
+            arrow.expression = false;
+        }
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {

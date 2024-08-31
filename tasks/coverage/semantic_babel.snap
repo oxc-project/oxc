@@ -1,8 +1,8 @@
-commit: 12619ffe
+commit: 3bcfee23
 
 semantic_babel Summary:
-AST Parsed     : 2100/2100 (100.00%)
-Positive Passed: 1768/2100 (84.19%)
+AST Parsed     : 2101/2101 (100.00%)
+Positive Passed: 1769/2101 (84.20%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["spawn"]
@@ -1598,10 +1598,7 @@ after transform: ["Generator"]
 rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/tsx/brace-is-block/input.tsx
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
-Unresolved references mismatch:
+semantic error: Unresolved references mismatch:
 after transform: ["D", "T"]
 rebuilt        : ["D"]
 
@@ -1681,9 +1678,6 @@ rebuilt        : ScopeId(0): ["C", "C1", "C2", "C3", "C4", "bar", "x10", "x11", 
 Unresolved references mismatch:
 after transform: ["f", "true"]
 rebuilt        : ["f"]
-Unresolved reference IDs mismatch for "f":
-after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(13), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19)]
-rebuilt        : [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(7)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-binary-operator/input.ts
 semantic error: Unresolved references mismatch:
@@ -1727,7 +1721,7 @@ rebuilt        : ["C"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/tsx/input.ts
 semantic error: Unresolved reference IDs mismatch for "C":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(6)]
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : [ReferenceId(1), ReferenceId(4)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/whitespace/input.ts

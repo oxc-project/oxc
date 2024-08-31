@@ -1,9 +1,9 @@
-commit: a1587416
+commit: d62fa93c
 
 parser_test262 Summary:
-AST Parsed     : 46287/46287 (100.00%)
-Positive Passed: 46287/46287 (100.00%)
-Negative Passed: 4220/4220 (100.00%)
+AST Parsed     : 43765/43765 (100.00%)
+Positive Passed: 43765/43765 (100.00%)
+Negative Passed: 4237/4237 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:18:4]
@@ -14303,13 +14303,6 @@ Negative Passed: 4220/4220 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[test262/test/language/expressions/dynamic-import/import-assertions/2nd-param-yield-ident-invalid.js:19:30]
- 18 │ 
- 19 │ import('./empty_FIXTURE.js', yield);
-    ·                              ─────
-    ╰────
-
-  × The keyword 'yield' is reserved
     ╭─[test262/test/language/expressions/dynamic-import/import-attributes/2nd-param-yield-ident-invalid.js:19:30]
  18 │ 
  19 │ import('./empty_FIXTURE.js', yield);
@@ -14473,6 +14466,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                                 ╰── `)` expected
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-typeof-import.js:33:28]
+ 32 │ 
+ 33 │ let f = () => typeof import;
+    ·                            ─
+ 34 │ 
+    ╰────
+
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-no-new-call-expression.js:37:7]
  36 │ let f = () => {
@@ -14496,6 +14497,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                    ─┬
     ·                                     ╰── `)` expected
  40 │ };
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-arrow-typeof-import.js:34:16]
+ 33 │ let f = () => {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ };
     ╰────
 
   × Unexpected token
@@ -14532,6 +14541,14 @@ Negative Passed: 4220/4220 (100.00%)
     ╰────
 
   × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-typeof-import.js:35:1]
+ 34 │   await typeof import
+ 35 │ });
+    · ─
+ 36 │ 
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-assignment-expr-not-optional.js:33:27]
  32 │ 
  33 │ (async () => await import())
@@ -14559,6 +14576,14 @@ Negative Passed: 4220/4220 (100.00%)
  38 │ (async () => await import('./empty_FIXTURE.js', {}, ''))
     ·                                                     ─┬
     ·                                                      ╰── `)` expected
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-typeof-import.js:33:33]
+ 32 │ 
+ 33 │ (async () => await typeof import)
+    ·                                 ─
+ 34 │ 
     ╰────
 
   × Unexpected token
@@ -14600,6 +14625,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                          ─┬
     ·                                           ╰── `)` expected
  40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-typeof-import.js:34:22]
+ 33 │ async function f() {
+ 34 │   await typeof import;
+    ·                      ─
+ 35 │ }
     ╰────
 
   × Cannot use new with dynamic import
@@ -14661,6 +14694,22 @@ Negative Passed: 4220/4220 (100.00%)
     ╰────
 
   × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-typeof-import.js:34:29]
+ 33 │ async function f() {
+ 34 │   return await typeof import;
+    ·                             ─
+ 35 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-function-typeof-import.js:34:16]
+ 33 │ async function f() {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ }
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-assignment-expr-not-optional.js:34:16]
  33 │ async function * f() {
  34 │   await import()
@@ -14691,6 +14740,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                          ─┬
     ·                                           ╰── `)` expected
  40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-typeof-import.js:35:1]
+ 34 │   await typeof import
+ 35 │ }
+    · ─
+ 36 │ 
     ╰────
 
   × Unexpected token
@@ -14734,6 +14791,14 @@ Negative Passed: 4220/4220 (100.00%)
  40 │ };
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-typeof-import.js:34:16]
+ 33 │ label: {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ };
+    ╰────
+
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-no-new-call-expression.js:37:7]
  36 │ {
@@ -14757,6 +14822,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                    ─┬
     ·                                     ╰── `)` expected
  40 │ };
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-block-typeof-import.js:34:16]
+ 33 │ {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ };
     ╰────
 
   × Unexpected token
@@ -14790,6 +14863,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                    ─┬
     ·                                     ╰── `)` expected
  40 │ } while (false);
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-do-while-typeof-import.js:34:16]
+ 33 │ do {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ } while (false);
     ╰────
 
   × Unexpected token
@@ -14830,6 +14911,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                          ╰── `)` expected
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-typeof-import.js:35:21]
+ 34 │ 
+ 35 │ } else typeof import;
+    ·                     ─
+ 36 │ 
+    ╰────
+
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-no-new-call-expression.js:39:7]
  38 │ } else {
@@ -14853,6 +14942,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                    ─┬
     ·                                     ╰── `)` expected
  42 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-else-typeof-import.js:36:16]
+ 35 │ } else {
+ 36 │   typeof import;
+    ·                ─
+ 37 │ }
     ╰────
 
   × Unexpected token
@@ -14922,6 +15019,22 @@ Negative Passed: 4220/4220 (100.00%)
     ╰────
 
   × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-return-typeof-import.js:34:23]
+ 33 │ function fn() {
+ 34 │   return typeof import;
+    ·                       ─
+ 35 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-function-typeof-import.js:34:16]
+ 33 │ function fn() {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ }
+    ╰────
+
+  × Unexpected token
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-assignment-expr-not-optional.js:34:10]
  33 │ if (true) {
  34 │   import();
@@ -14959,6 +15072,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                             ╰── `)` expected
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-typeof-import.js:33:24]
+ 32 │ 
+ 33 │ if (true) typeof import;
+    ·                        ─
+ 34 │ 
+    ╰────
+
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-no-new-call-expression.js:37:7]
  36 │ if (true) {
@@ -14982,6 +15103,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                    ─┬
     ·                                     ╰── `)` expected
  40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-if-typeof-import.js:34:16]
+ 33 │ if (true) {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ }
     ╰────
 
   × Unexpected token
@@ -15015,6 +15144,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                    ─┬
     ·                                     ╰── `)` expected
  42 │ };
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-while-typeof-import.js:36:16]
+ 35 │   x++;
+ 36 │   typeof import;
+    ·                ─
+ 37 │ };
     ╰────
 
   × Unexpected token
@@ -15055,6 +15192,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                         ╰── `)` expected
     ╰────
 
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-expression-typeof-import.js:33:20]
+ 32 │ 
+ 33 │ with (typeof import) {}
+    ·                    ─
+ 34 │ 
+    ╰────
+
   × Cannot use new with dynamic import
     ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-no-new-call-expression.js:37:7]
  36 │ with ({}) {
@@ -15078,6 +15223,14 @@ Negative Passed: 4220/4220 (100.00%)
     ·                                    ─┬
     ·                                     ╰── `)` expected
  40 │ }
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/nested-with-typeof-import.js:34:16]
+ 33 │ with ({}) {
+ 34 │   typeof import;
+    ·                ─
+ 35 │ }
     ╰────
 
   × Unexpected token
@@ -15108,6 +15261,14 @@ Negative Passed: 4220/4220 (100.00%)
  28 │ import('./empty_FIXTURE.js', {}, '');
     ·                                  ─┬
     ·                                   ╰── `)` expected
+    ╰────
+
+  × Unexpected token
+    ╭─[test262/test/language/expressions/dynamic-import/syntax/invalid/top-level-typeof-import.js:23:14]
+ 22 │ 
+ 23 │ typeof import;
+    ·              ─
+ 24 │ 
     ╰────
 
   × Unexpected exponentiation expression
@@ -21749,42 +21910,6 @@ Negative Passed: 4220/4220 (100.00%)
  21 │ export { Foo as "\uD83D" }
     ·                 ────────
  22 │ 
-    ╰────
-
-  × Identifier `type` has already been declared
-    ╭─[test262/test/language/module-code/import-assertions/early-dup-assert-key-export.js:21:3]
- 20 │ export * from './import-assertion-3_FIXTURE.js' assert {
- 21 │   type: 'json',
-    ·   ──┬─
-    ·     ╰── `type` has already been declared here
- 22 │   'typ\u0065': ''
-    ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
- 23 │ };
-    ╰────
-
-  × Identifier `type` has already been declared
-    ╭─[test262/test/language/module-code/import-assertions/early-dup-assert-key-import-nobinding.js:22:3]
- 21 │ import './import-assertion-2_FIXTURE.js' assert {
- 22 │   type: 'json',
-    ·   ──┬─
-    ·     ╰── `type` has already been declared here
- 23 │   'typ\u0065': ''
-    ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
- 24 │ };
-    ╰────
-
-  × Identifier `type` has already been declared
-    ╭─[test262/test/language/module-code/import-assertions/early-dup-assert-key-import-withbinding.js:22:3]
- 21 │ import x from './import-assertion-1_FIXTURE.js' assert {
- 22 │   type: 'json',
-    ·   ──┬─
-    ·     ╰── `type` has already been declared here
- 23 │   'typ\u0065': ''
-    ·   ─────┬─────
-    ·        ╰── It can not be redeclared here
- 24 │ };
     ╰────
 
   × Identifier `type` has already been declared
