@@ -115,6 +115,7 @@ fn test() {
         "module.exports = exports = {}",
         "exports = module.exports = {}",
         "function f(exports) { exports = {} }",
+        "let exports; exports = {}",
     ];
 
     let fail = vec!["exports = {}"];
