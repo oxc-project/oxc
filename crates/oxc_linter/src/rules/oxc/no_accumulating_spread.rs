@@ -44,10 +44,15 @@ fn reduce_unknown(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
         ])
 }
 
-fn loop_spread_diagnostic(spread_span: Span, loop_span: Span) -> OxcDiagnostic {
+fn loop_spread_diagnostic(
+    accumulator_decl_span: Span,
+    spread_span: Span,
+    loop_span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in loops")
         .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
+            accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
             loop_span.label("For this loop")
         ])
@@ -191,9 +196,9 @@ fn check_loop_usage<'a>(
         return;
     }
 
-    if !matches!(declarator.kind(), AstKind::VariableDeclarator(_)) {
+    let AstKind::VariableDeclarator(declarator) = declarator.kind() else {
         return;
-    }
+    };
 
     let Some(write_reference) =
         ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())
@@ -229,7 +234,11 @@ fn check_loop_usage<'a>(
             if !parent.kind().span().contains_inclusive(declaration.span)
                 && parent.kind().span().contains_inclusive(spread_span)
             {
-                ctx.diagnostic(loop_spread_diagnostic(spread_span, loop_span));
+                ctx.diagnostic(loop_spread_diagnostic(
+                    declarator.id.span(),
+                    spread_span,
+                    loop_span,
+                ));
             }
         }
     }
