@@ -185,7 +185,8 @@ fn check_loop_usage<'a>(
     let AstKind::VariableDeclaration(declaration) = declaration_node.kind() else {
         return;
     };
-
+    // if the accumulator's declaration is not a `let`, then we know it's never
+    // reassigned, hence cannot be a violation of the rule
     if !matches!(declaration.kind, VariableDeclarationKind::Let) {
         return;
     }
