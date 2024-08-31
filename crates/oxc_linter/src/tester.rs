@@ -250,6 +250,11 @@ impl Tester {
         self
     }
 
+    pub fn with_node_plugin(mut self, yes: bool) -> Self {
+        self.plugins.node = yes;
+        self
+    }
+
     /// Add cases that should fix problems found in the source code.
     ///
     /// These cases will fail if no fixes are produced or if the fixed source

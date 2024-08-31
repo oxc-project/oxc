@@ -261,6 +261,10 @@ pub struct EnablePlugins {
     /// Enable the promise plugin and detect promise usage problems
     #[bpaf(switch, hide_usage)]
     pub promise_plugin: bool,
+
+    /// Enable the node plugin and detect node usage problems
+    #[bpaf(switch, hide_usage)]
+    pub node_plugin: bool,
 }
 
 #[cfg(test)]
