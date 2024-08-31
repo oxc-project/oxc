@@ -179,10 +179,9 @@ impl Rule for ConsistentFunctionScoping {
                         function
                             .id
                             .as_ref()
-                            .map(|func_binding_ident| func_binding_ident.span)
-                            .unwrap_or(
-                                Span::sized(function.span.start, 8), // 8 for "function"
-                            ),
+                            .map_or(Span::sized(function.span.start, 8), |func_binding_ident| {
+                                func_binding_ident.span
+                            }),
                     )
                 } else if let Some(function_id) = &function.id {
                     (function_id.symbol_id.get().unwrap(), function_body, function_id.span())
