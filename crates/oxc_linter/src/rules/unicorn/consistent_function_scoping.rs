@@ -160,6 +160,10 @@ impl Rule for ConsistentFunctionScoping {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (function_declaration_symbol_id, function_body, reporter_span) = match node.kind() {
             AstKind::Function(function) => {
+                if let Some(AstKind::AssignmentExpression(_)) = ctx.nodes().parent_kind(node.id()) {
+                    return;
+                }
+
                 if function.is_typescript_syntax() {
                     return;
                 }
@@ -568,6 +572,9 @@ fn test() {
         ("t.throws(() => receiveString(function a() {}), {})", None),
         ("function test () { t.throws(() => receiveString(function a() {}), {}) }", None),
         ("function foo() { let x = new Bar(function b() {}) }", None),
+        ("module.exports = function foo() {};", None),
+        ("module.exports.foo = function foo() {};", None),
+        ("foo.bar.func = function foo() {};", None),
     ];
 
     let fail = vec![
