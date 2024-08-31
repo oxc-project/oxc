@@ -42,6 +42,7 @@ Enable Plugins
         --react-perf-plugin   Enable the React performance plugin and detect rendering performance
                               problems
         --promise-plugin      Enable the promise plugin and detect promise usage problems
+        --node-plugin         Enable the node plugin and detect node usage problems
 
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in
