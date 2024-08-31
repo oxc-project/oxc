@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// ```
     DoubleComparisons,
     correctness,
+    fix
 );
 
 #[allow(clippy::similar_names)]
@@ -84,7 +85,22 @@ impl Rule for DoubleComparisons {
             _ => return,
         };
 
-        ctx.diagnostic(double_comparisons_diagnostic(logical_expr.span, new_op));
+        ctx.diagnostic_with_fix(
+            double_comparisons_diagnostic(logical_expr.span, new_op),
+            |fixer| {
+                let modified_code = {
+                    let mut codegen = fixer.codegen();
+                    codegen.print_expression(llhs);
+                    codegen.print_char(b' ');
+                    codegen.print_str(new_op);
+                    codegen.print_char(b' ');
+                    codegen.print_expression(lrhs);
+                    codegen.into_source_text()
+                };
+
+                fixer.replace(logical_expr.span, modified_code)
+            },
+        );
     }
 }
 
@@ -127,5 +143,20 @@ fn test() {
         "x > y || x === y",
     ];
 
-    Tester::new(DoubleComparisons::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("x == y || x < y", "x <= y"),
+        ("x < y || x == y", "x <= y"),
+        ("x == y || x > y", "x >= y"),
+        ("x > y || x == y", "x >= y"),
+        ("x < y || x > y", "x != y"),
+        ("x > y || x < y", "x != y"),
+        ("x <= y && x >= y", "x == y"),
+        ("x >= y && x <= y", "x == y"),
+        ("x === y || x < y", "x <= y"),
+        ("x < y || x === y", "x <= y"),
+        ("x === y || x > y", "x >= y"),
+        ("x > y || x === y", "x >= y"),
+    ];
+
+    Tester::new(DoubleComparisons::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
