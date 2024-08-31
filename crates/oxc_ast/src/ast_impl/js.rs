@@ -1050,6 +1050,12 @@ impl<'a> Function<'a> {
         }
     }
 
+    /// Returns this [`Function`]'s name, if it has one.
+    #[inline]
+    pub fn name(&self) -> Option<Atom<'a>> {
+        self.id.as_ref().map(|id| id.name.clone())
+    }
+
     pub fn is_typescript_syntax(&self) -> bool {
         matches!(
             self.r#type,

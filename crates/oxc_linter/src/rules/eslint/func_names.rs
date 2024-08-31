@@ -42,7 +42,7 @@ enum FuncNamesConfig {
 
 impl FuncNamesConfig {
     fn is_invalid_function(self, func: &Function, parent_node: &AstNode<'_>) -> bool {
-        let func_name = get_function_name(func);
+        let func_name = func.name();
 
         match self {
             Self::Never => func_name.is_some() && func.r#type != FunctionType::FunctionDeclaration,
@@ -230,13 +230,6 @@ fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     func.id.as_ref().map(|id| &id.span)
 }
 
-/**
- * Gets the identifier name of the function
- */
-fn get_function_name<'f, 'a>(func: &'f Function<'a>) -> Option<&'f Atom<'a>> {
-    func.id.as_ref().map(|id| &id.name)
-}
-
 fn get_property_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
     if matches!(key, PropertyKey::NullLiteral(_)) {
         return Some("null".into());
@@ -342,14 +335,14 @@ fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a
                 }
             } else if let Some(static_name) = get_static_property_name(parent_node) {
                 tokens.push(static_name);
-            } else if let Some(name) = get_function_name(func) {
+            } else if let Some(name) = func.name() {
                 tokens.push(Cow::Borrowed(name.as_str()));
             }
         }
         _ => {
             if let Some(static_name) = get_static_property_name(parent_node) {
                 tokens.push(static_name);
-            } else if let Some(name) = get_function_name(func) {
+            } else if let Some(name) = func.name() {
                 tokens.push(Cow::Borrowed(name.as_str()));
             }
         }
@@ -399,8 +392,8 @@ impl Rule for FuncNames {
                         // check at first if the callee calls an invalid function
                         if !invalid_funcs
                             .iter()
-                            .filter_map(|(func, _)| get_function_name(func))
-                            .any(|func_name| func_name == &identifier.name)
+                            .filter_map(|(func, _)| func.name())
+                            .any(|func_name| func_name == identifier.name)
                         {
                             continue;
                         }
@@ -409,11 +402,9 @@ impl Rule for FuncNames {
                         let ast_span = ctx.nodes().iter_parents(node.id()).skip(1).find_map(|p| {
                             match p.kind() {
                                 AstKind::Function(func) => {
-                                    let func_name = get_function_name(func);
+                                    let func_name = func.name()?;
 
-                                    func_name?;
-
-                                    if *func_name.unwrap() == identifier.name {
+                                    if func_name == identifier.name {
                                         return Some(func.span);
                                     }
 
@@ -434,7 +425,6 @@ impl Rule for FuncNames {
         }
 
         for (func, parent_node) in &invalid_funcs {
-            let func_name = get_function_name(func);
             let func_name_complete = get_function_name_with_kind(func, parent_node);
 
             let report_span = Span::new(func.span.start, func.params.span.start);
@@ -444,10 +434,10 @@ impl Rule for FuncNames {
                     .as_ref()
                     .map_or_else(|| func.params.span.start, |tp| tp.span.start),
             );
-            if func_name.is_some() {
+            if let Some(id) = func.id.as_ref() {
                 ctx.diagnostic_with_suggestion(
                     named_diagnostic(&func_name_complete, report_span),
-                    |fixer| func.id.as_ref().map_or(fixer.noop(), |id| fixer.delete(id)),
+                    |fixer| fixer.delete(id),
                 );
             } else {
                 ctx.diagnostic_with_fix(
