@@ -5547,10 +5547,10 @@ impl<'a, 't> FunctionWithoutId<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -5628,10 +5628,10 @@ impl<'a, 't> FunctionWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -5798,10 +5798,10 @@ impl<'a, 't> FunctionWithoutParams<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -5879,10 +5879,10 @@ impl<'a, 't> FunctionWithoutReturnType<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -5960,10 +5960,10 @@ impl<'a, 't> FunctionWithoutBody<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -11079,10 +11079,10 @@ impl<'a, 't> TSMethodSignatureWithoutKey<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -11229,10 +11229,10 @@ impl<'a, 't> TSMethodSignatureWithoutParams<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -11300,10 +11300,10 @@ impl<'a, 't> TSMethodSignatureWithoutReturnType<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -11371,10 +11371,10 @@ impl<'a, 't> TSMethodSignatureWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -12241,10 +12241,10 @@ impl<'a, 't> TSFunctionTypeWithoutParams<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -12279,10 +12279,10 @@ impl<'a, 't> TSFunctionTypeWithoutReturnType<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 
@@ -12317,10 +12317,10 @@ impl<'a, 't> TSFunctionTypeWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn this_param(self) -> &'t Option<TSThisParameter<'a>> {
+    pub fn this_param(self) -> &'t Option<Box<'a, TSThisParameter<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_FUNCTION_TYPE_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
+                as *const Option<Box<'a, TSThisParameter<'a>>>)
         }
     }
 

@@ -1,8 +1,8 @@
-use oxc_ast::{ast::JSXElementName, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{rule::Rule, utils::get_element_type, LintContext};
 
@@ -55,15 +55,12 @@ impl Rule for NoDistractingElements {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        let JSXElementName::Identifier(iden) = &jsx_el.name else {
-            return;
-        };
         let Some(element_type) = get_element_type(ctx, jsx_el) else {
             return;
         };
 
         if let "marquee" | "blink" = element_type.as_ref() {
-            ctx.diagnostic(no_distracting_elements_diagnostic(iden.span));
+            ctx.diagnostic(no_distracting_elements_diagnostic(jsx_el.name.span()));
         }
     }
 }

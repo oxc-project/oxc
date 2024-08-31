@@ -1,8 +1,4 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::{env, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
@@ -35,7 +31,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let semantic_ret = SemanticBuilder::new(source_text, source_type)
                     .with_trivias(ret.trivias)
                     .with_cfg(true)
-                    .build_module_record(PathBuf::new(), program)
+                    .build_module_record(Path::new(""), program)
                     .build(program);
                 let filter = vec![
                     (AllowWarnDeny::Deny, "all".into()),

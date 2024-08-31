@@ -111,7 +111,7 @@ fn analyze(path: &Path, source_text: &str) -> String {
 /// cargo test --package oxc_semantic --test main
 #[test]
 fn main() {
-    insta::glob!("fixtures/**/*.{ts,tsx}", |path| {
+    insta::glob!("fixtures/**/*.{js,jsx,ts,tsx}", |path| {
         let source_text = fs::read_to_string(path).unwrap();
         let snapshot = analyze(path, &source_text);
         let name = path.file_stem().unwrap().to_str().unwrap();

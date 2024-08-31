@@ -35,7 +35,7 @@ fn main() -> std::io::Result<()> {
     let program = allocator.alloc(parser_ret.program);
 
     let semantic = SemanticBuilder::new(&source_text, source_type)
-        .build_module_record(path.to_path_buf(), program)
+        .build_module_record(path, program)
         // Enable additional syntax checks not performed by the parser
         .with_check_syntax_error(true)
         // Inform Semantic about comments found while parsing

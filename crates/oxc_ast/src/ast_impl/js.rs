@@ -1028,7 +1028,7 @@ impl<'a> Function<'a> {
         generator: bool,
         r#async: bool,
         declare: bool,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1048,6 +1048,12 @@ impl<'a> Function<'a> {
             return_type,
             scope_id: Cell::default(),
         }
+    }
+
+    /// Returns this [`Function`]'s name, if it has one.
+    #[inline]
+    pub fn name(&self) -> Option<Atom<'a>> {
+        self.id.as_ref().map(|id| id.name.clone())
     }
 
     pub fn is_typescript_syntax(&self) -> bool {

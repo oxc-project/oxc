@@ -107,6 +107,8 @@ impl Case for Test262Case {
             // stage 3 https://github.com/tc39/proposal-json-modules
             // ignored due to https://github.com/tc39/proposal-json-modules/issues/27
             "json-modules",
+            // stage 3 https://github.com/tc39/proposal-source-phase-imports
+            "source-phase-imports",
         ]
         .iter()
         .any(|feature| self.meta.features.iter().any(|f| **f == **feature))

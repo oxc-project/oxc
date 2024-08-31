@@ -142,7 +142,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             JSXElementName::MemberExpression(member_expr) => {
                 member_expr.get_object_identifier_mut()
             }
-            JSXElementName::NamespacedName(_) => return,
+            JSXElementName::IdentifierReference(_) | JSXElementName::NamespacedName(_) => return,
         };
         if ident.name == "this" {
             // We can't produce a proper identifier with a `ReferenceId` because `JSXIdentifier`

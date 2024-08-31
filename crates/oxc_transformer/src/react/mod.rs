@@ -131,6 +131,10 @@ impl<'a> React<'a> {
         if self.display_name_plugin {
             self.display_name.transform_call_expression(call_expr, ctx);
         }
+
+        if self.refresh_plugin {
+            self.refresh.transform_call_expression(call_expr, ctx);
+        }
     }
 
     pub fn transform_jsx_opening_element(

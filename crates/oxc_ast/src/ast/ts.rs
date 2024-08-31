@@ -914,7 +914,7 @@ pub struct TSMethodSignature<'a> {
     pub computed: bool,
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
-    pub this_param: Option<TSThisParameter<'a>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1178,7 +1178,7 @@ pub enum TSImportAttributeName<'a> {
 pub struct TSFunctionType<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub this_param: Option<TSThisParameter<'a>>,
+    pub this_param: Option<Box<'a, TSThisParameter<'a>>>,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Box<'a, TSTypeAnnotation<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

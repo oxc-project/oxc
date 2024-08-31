@@ -3462,6 +3462,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         match it {
             JSXElementName::Identifier(it) => visitor.visit_jsx_identifier(it),
+            JSXElementName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             JSXElementName::NamespacedName(it) => visitor.visit_jsx_namespaced_name(it),
             JSXElementName::MemberExpression(it) => visitor.visit_jsx_member_expression(it),
         }
@@ -3508,6 +3509,9 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         match it {
             JSXMemberExpressionObject::Identifier(it) => visitor.visit_jsx_identifier(it),
+            JSXMemberExpressionObject::IdentifierReference(it) => {
+                visitor.visit_identifier_reference(it)
+            }
             JSXMemberExpressionObject::MemberExpression(it) => {
                 visitor.visit_jsx_member_expression(it)
             }

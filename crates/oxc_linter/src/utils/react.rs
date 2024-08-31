@@ -219,7 +219,7 @@ pub fn get_element_type<'c, 'a>(
     context: &'c LintContext<'a>,
     element: &JSXOpeningElement<'a>,
 ) -> Option<Cow<'c, str>> {
-    let name = element.name.as_identifier()?;
+    let name = element.name.get_identifier_name()?;
 
     let OxlintSettings { jsx_a11y, .. } = context.settings();
 
@@ -233,7 +233,7 @@ pub fn get_element_type<'c, 'a>(
         .and_then(JSXAttributeValue::as_string_literal)
         .map(|s| s.value.as_str());
 
-    let raw_type = polymorphic_prop.unwrap_or_else(|| name.name.as_str());
+    let raw_type = polymorphic_prop.unwrap_or_else(|| name.as_str());
     match jsx_a11y.components.get(raw_type) {
         Some(component) => Some(Cow::Borrowed(component)),
         None => Some(Cow::Borrowed(raw_type)),

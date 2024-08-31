@@ -39,12 +39,12 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, Trivias};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, SPAN};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
-    env::EnvOptions,
+    env::{EnvOptions, Targets},
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
     react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
@@ -282,6 +282,28 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x2_es2021.enter_statements(stmts, ctx);
         self.x2_es2020.enter_statements(stmts, ctx);
         self.x2_es2016.enter_statements(stmts, ctx);
+    }
+
+    fn exit_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Some plugins may add new statements to the ArrowFunctionExpression's body,
+        // which can cause issues with the `() => x;` case, as it only allows a single statement.
+        // To address this, we wrap the last statement in a return statement and set the expression to false.
+        // This transforms the arrow function into the form `() => { return x; };`.
+        if arrow.expression && arrow.body.statements.len() > 1 {
+            let Statement::ExpressionStatement(statement) = arrow.body.statements.pop().unwrap()
+            else {
+                unreachable!("The last statement in an ArrowFunctionExpression should always be an ExpressionStatement.")
+            };
+            arrow
+                .body
+                .statements
+                .push(ctx.ast.statement_return(SPAN, Some(statement.unbox().expression)));
+            arrow.expression = false;
+        }
     }
 
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {

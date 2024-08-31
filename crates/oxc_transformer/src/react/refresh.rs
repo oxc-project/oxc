@@ -1,11 +1,9 @@
 use std::{cell::Cell, iter::once};
 
 use oxc_allocator::CloneIn;
-use oxc_ast::{
-    ast::*, match_expression, match_member_expression, visit::walk::walk_variable_declarator, Visit,
-};
-use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_ast::{ast::*, match_expression, match_member_expression};
+use oxc_semantic::{ReferenceFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, TraverseCtx};
 use rustc_hash::FxHashMap;
@@ -33,6 +31,9 @@ pub struct ReactRefresh<'a> {
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
     last_signature: Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)>,
     extra_statements: FxHashMap<SymbolId, oxc_allocator::Vec<'a, Statement<'a>>>,
+    // (function_scope_id, (hook_name, hook_key, custom_hook_callee)
+    hook_calls: FxHashMap<ScopeId, Vec<(Atom<'a>, Atom<'a>)>>,
+    non_builtin_hooks_callee: FxHashMap<ScopeId, Vec<Option<Expression<'a>>>>,
 }
 
 impl<'a> ReactRefresh<'a> {
@@ -47,6 +48,8 @@ impl<'a> ReactRefresh<'a> {
             ctx,
             last_signature: None,
             extra_statements: FxHashMap::default(),
+            hook_calls: FxHashMap::default(),
+            non_builtin_hooks_callee: FxHashMap::default(),
         }
     }
 
@@ -183,8 +186,69 @@ impl<'a> ReactRefresh<'a> {
         body: &mut FunctionBody<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)> {
-        let arguments =
-            CalculateSignatureKey::new(self.ctx.source_text, scope_id, ctx).calculate(body)?;
+        let fn_hook_calls = self.hook_calls.remove(&scope_id)?;
+
+        let key = fn_hook_calls
+            .into_iter()
+            .map(|(hook_name, hook_key)| format!("{hook_name}{{{hook_key}}}"))
+            .collect::<Vec<_>>()
+            .join("\\n");
+
+        let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();
+        let callee_len = callee_list.len();
+        let custom_hooks_in_scope = ctx.ast.vec_from_iter(
+            callee_list
+                .into_iter()
+                .filter_map(|e| e.map(|e| ctx.ast.array_expression_element_expression(e))),
+        );
+
+        let force_reset = custom_hooks_in_scope.len() != callee_len;
+
+        let mut arguments = ctx.ast.vec();
+        arguments.push(
+            ctx.ast
+                .argument_expression(ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&key))),
+        );
+
+        if force_reset || !custom_hooks_in_scope.is_empty() {
+            arguments.push(
+                self.ctx.ast.argument_expression(
+                    self.ctx.ast.expression_boolean_literal(SPAN, force_reset),
+                ),
+            );
+        }
+
+        if !custom_hooks_in_scope.is_empty() {
+            // function () { return custom_hooks_in_scope }
+            let formal_parameters = self.ctx.ast.formal_parameters(
+                SPAN,
+                FormalParameterKind::FormalParameter,
+                self.ctx.ast.vec(),
+                Option::<BindingRestElement>::None,
+            );
+            let function_body = self.ctx.ast.function_body(
+                SPAN,
+                self.ctx.ast.vec(),
+                self.ctx.ast.vec1(self.ctx.ast.statement_return(
+                    SPAN,
+                    Some(self.ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
+                )),
+            );
+            let fn_expr = self.ctx.ast.expression_function(
+                FunctionType::FunctionExpression,
+                SPAN,
+                None,
+                false,
+                false,
+                false,
+                Option::<TSTypeParameterDeclaration>::None,
+                Option::<TSThisParameter>::None,
+                formal_parameters,
+                Option::<TSTypeAnnotation>::None,
+                Some(function_body),
+            );
+            arguments.push(self.ctx.ast.argument_expression(fn_expr));
+        }
 
         let symbol_id =
             ctx.generate_uid("s", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
@@ -241,6 +305,103 @@ impl<'a> ReactRefresh<'a> {
         // _s(App, signature_key, false, function() { return [] });
         //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
         Some((binding_identifier, arguments))
+    }
+
+    pub fn transform_call_expression(
+        &mut self,
+        call_expr: &mut CallExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let current_scope_id = ctx.current_scope_id();
+        if !ctx.scopes().get_flags(current_scope_id).is_function() {
+            return;
+        }
+
+        let name = match &call_expr.callee {
+            Expression::Identifier(ident) => Some(ident.name.clone()),
+            Expression::StaticMemberExpression(ref member) => Some(member.property.name.clone()),
+            _ => None,
+        };
+
+        let Some(hook_name) = name else {
+            return;
+        };
+
+        if !is_use_hook_name(&hook_name) {
+            return;
+        }
+
+        if !is_builtin_hook(&hook_name) {
+            let (binding_name, hook_name) = match &call_expr.callee {
+                Expression::Identifier(ident) => (ident.name.clone(), None),
+                callee @ match_member_expression!(Expression) => {
+                    let member_expr = callee.to_member_expression();
+                    match member_expr.object() {
+                        Expression::Identifier(ident) => {
+                            (ident.name.clone(), Some(hook_name.clone()))
+                        }
+                        _ => unreachable!(),
+                    }
+                }
+                _ => unreachable!(),
+            };
+
+            let callees = self.non_builtin_hooks_callee.entry(current_scope_id).or_default();
+
+            callees.push(
+                ctx.scopes()
+                    .find_binding(
+                        ctx.scopes().get_parent_id(ctx.current_scope_id()).unwrap(),
+                        binding_name.as_str(),
+                    )
+                    .map(|symbol_id| {
+                        let ident = ctx.create_reference_id(
+                            SPAN,
+                            binding_name.clone(),
+                            Some(symbol_id),
+                            ReferenceFlags::Read,
+                        );
+
+                        let mut expr = self.ctx.ast.expression_from_identifier_reference(ident);
+
+                        if let Some(hook_name) = hook_name {
+                            // binding_name.hook_name
+                            expr = Expression::from(self.ctx.ast.member_expression_static(
+                                SPAN,
+                                expr,
+                                self.ctx.ast.identifier_name(SPAN, hook_name),
+                                false,
+                            ));
+                        }
+                        expr
+                    }),
+            );
+        }
+
+        let key = if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {
+            // TODO: if there is no LHS, consider some other heuristic.
+            declarator.id().span().source_text(self.ctx.source_text)
+        } else {
+            ""
+        };
+
+        let args = &call_expr.arguments;
+        let args_key = if hook_name == "useState" && args.len() > 0 {
+            args[0].span().source_text(self.ctx.source_text)
+        } else if hook_name == "useReducer" && args.len() > 1 {
+            args[1].span().source_text(self.ctx.source_text)
+        } else {
+            ""
+        };
+
+        let key = format!(
+            "{}{}{args_key}{}",
+            key,
+            if args_key.is_empty() { "" } else { "(" },
+            if args_key.is_empty() { "" } else { ")" }
+        );
+
+        self.hook_calls.entry(current_scope_id).or_default().push((hook_name, ctx.ast.atom(&key)));
     }
 }
 
@@ -737,211 +898,6 @@ impl<'a> ReactRefresh<'a> {
                 ),
             ),
         );
-    }
-}
-
-// TODO: Try to remove this struct, avoid double visit
-struct CalculateSignatureKey<'a, 'b> {
-    key: String,
-    source_text: &'a str,
-    ctx: &'b mut TraverseCtx<'a>,
-    callee_list: Vec<(Atom<'a>, Option<Atom<'a>>)>,
-    scope_ids: Vec<ScopeId>,
-    declarator_id_span: Option<Span>,
-}
-
-impl<'a, 'b> CalculateSignatureKey<'a, 'b> {
-    pub fn new(source_text: &'a str, scope_id: ScopeId, ctx: &'b mut TraverseCtx<'a>) -> Self {
-        Self {
-            key: String::new(),
-            ctx,
-            source_text,
-            scope_ids: vec![scope_id],
-            declarator_id_span: None,
-            callee_list: Vec::new(),
-        }
-    }
-
-    fn current_scope_id(&self) -> ScopeId {
-        *self.scope_ids.last().unwrap()
-    }
-
-    pub fn calculate(
-        mut self,
-        body: &FunctionBody<'a>,
-    ) -> Option<oxc_allocator::Vec<'a, Argument<'a>>> {
-        for statement in &body.statements {
-            self.visit_statement(statement);
-        }
-
-        if self.key.is_empty() {
-            return None;
-        }
-
-        // Check if a corresponding binding exists where we emit the signature.
-        let mut force_reset = false;
-        let mut custom_hooks_in_scope = self.ctx.ast.vec_with_capacity(self.callee_list.len());
-
-        for (binding_name, hook_name) in &self.callee_list {
-            if let Some(symbol_id) =
-                self.ctx.scopes().find_binding(self.ctx.current_scope_id(), binding_name)
-            {
-                let ident = self.ctx.create_reference_id(
-                    SPAN,
-                    binding_name.clone(),
-                    Some(symbol_id),
-                    ReferenceFlags::Read,
-                );
-
-                let mut expr = self.ctx.ast.expression_from_identifier_reference(ident);
-
-                if let Some(hook_name) = hook_name {
-                    // binding_name.hook_name
-                    expr = Expression::from(self.ctx.ast.member_expression_static(
-                        SPAN,
-                        expr,
-                        self.ctx.ast.identifier_name(SPAN, hook_name),
-                        false,
-                    ));
-                }
-
-                custom_hooks_in_scope.push(self.ctx.ast.array_expression_element_expression(expr));
-            } else {
-                force_reset = true;
-            }
-        }
-
-        let mut arguments = self.ctx.ast.vec_with_capacity(
-            1 + usize::from(force_reset) + usize::from(!custom_hooks_in_scope.is_empty()),
-        );
-        arguments.push(self.ctx.ast.argument_expression(
-            self.ctx.ast.expression_string_literal(SPAN, self.ctx.ast.atom(&self.key)),
-        ));
-
-        if force_reset || !custom_hooks_in_scope.is_empty() {
-            arguments.push(
-                self.ctx.ast.argument_expression(
-                    self.ctx.ast.expression_boolean_literal(SPAN, force_reset),
-                ),
-            );
-        }
-
-        if !custom_hooks_in_scope.is_empty() {
-            // function () { return custom_hooks_in_scope }
-            let formal_parameters = self.ctx.ast.formal_parameters(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                self.ctx.ast.vec(),
-                Option::<BindingRestElement>::None,
-            );
-            let function_body = self.ctx.ast.function_body(
-                SPAN,
-                self.ctx.ast.vec(),
-                self.ctx.ast.vec1(self.ctx.ast.statement_return(
-                    SPAN,
-                    Some(self.ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
-                )),
-            );
-            let fn_expr = self.ctx.ast.expression_function(
-                FunctionType::FunctionExpression,
-                SPAN,
-                None,
-                false,
-                false,
-                false,
-                Option::<TSTypeParameterDeclaration>::None,
-                Option::<TSThisParameter>::None,
-                formal_parameters,
-                Option::<TSTypeAnnotation>::None,
-                Some(function_body),
-            );
-            arguments.push(self.ctx.ast.argument_expression(fn_expr));
-        }
-
-        Some(arguments)
-    }
-}
-
-impl<'a, 'b> Visit<'a> for CalculateSignatureKey<'a, 'b> {
-    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<oxc_semantic::ScopeId>>) {
-        self.scope_ids.push(scope_id.get().unwrap());
-    }
-
-    fn leave_scope(&mut self) {
-        self.scope_ids.pop();
-    }
-
-    fn visit_statements(&mut self, _stmt: &oxc_allocator::Vec<'a, Statement<'a>>) {
-        // We don't need calculate any signature in nested scopes
-    }
-
-    fn visit_variable_declarator(&mut self, declarator: &VariableDeclarator<'a>) {
-        if matches!(declarator.init, Some(Expression::CallExpression(_))) {
-            self.declarator_id_span = Some(declarator.id.span());
-        }
-        walk_variable_declarator(self, declarator);
-        // We doesn't check the call expression is the hook,
-        // So we need to reset the declarator_id_span after visiting the variable declarator.
-        self.declarator_id_span = None;
-    }
-
-    fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
-        if !self.ctx.scopes().get_flags(self.current_scope_id()).is_function() {
-            return;
-        }
-
-        let name = match &call_expr.callee {
-            Expression::Identifier(ident) => Some(ident.name.clone()),
-            Expression::StaticMemberExpression(ref member) => Some(member.property.name.clone()),
-            _ => None,
-        };
-
-        let Some(hook_name) = name else {
-            return;
-        };
-
-        if !is_use_hook_name(&hook_name) {
-            return;
-        }
-
-        if !is_builtin_hook(&hook_name) {
-            let callee = match &call_expr.callee {
-                Expression::Identifier(ident) => Some((ident.name.clone(), None)),
-                callee @ match_member_expression!(Expression) => {
-                    let member_expr = callee.to_member_expression();
-                    match member_expr.object() {
-                        Expression::Identifier(ident) => {
-                            Some((ident.name.clone(), Some(hook_name.clone())))
-                        }
-                        _ => None,
-                    }
-                }
-                _ => None,
-            };
-
-            if let Some(callee) = callee {
-                self.callee_list.push(callee);
-            }
-        }
-
-        let args = &call_expr.arguments;
-        let args_key = if hook_name == "useState" && args.len() > 0 {
-            args[0].span().source_text(self.source_text)
-        } else if hook_name == "useReducer" && args.len() > 1 {
-            args[1].span().source_text(self.source_text)
-        } else {
-            ""
-        };
-
-        if !self.key.is_empty() {
-            self.key.push_str("\\n");
-        }
-        self.key.push_str(&format!(
-            "{hook_name}{{{}{}{args_key}{}}}",
-            self.declarator_id_span.take().map_or("", |span| span.source_text(self.source_text)),
-            if args_key.is_empty() { "" } else { "(" },
-            if args_key.is_empty() { "" } else { ")" }
-        ));
     }
 }
 
