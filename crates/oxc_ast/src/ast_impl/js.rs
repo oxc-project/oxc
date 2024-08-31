@@ -4,7 +4,9 @@ use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
-use oxc_syntax::{operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags};
+use oxc_syntax::{
+    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
+};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -1054,6 +1056,14 @@ impl<'a> Function<'a> {
     #[inline]
     pub fn name(&self) -> Option<Atom<'a>> {
         self.id.as_ref().map(|id| id.name.clone())
+    }
+
+    /// Get the [`SymbolId`] this [`Function`] is bound to.
+    ///
+    /// Returns [`None`] for anonymous functions, or if semantic analysis was skipped.
+    #[inline]
+    pub fn symbol_id(&self) -> Option<SymbolId> {
+        self.id.as_ref().and_then(|id| id.symbol_id.get())
     }
 
     pub fn is_typescript_syntax(&self) -> bool {

@@ -316,9 +316,17 @@ impl Span {
     }
 
     /// Create a [`LabeledSpan`] covering this [`Span`] with the given label.
+    ///
+    /// Use [`Span::primary_label`] if this is the primary span for the diagnostic.
     #[must_use]
     pub fn label<S: Into<String>>(self, label: S) -> LabeledSpan {
         LabeledSpan::new_with_span(Some(label.into()), self)
+    }
+
+    /// Creates a primary [`LabeledSpan`] covering this [`Span`] with the given label.
+    #[must_use]
+    pub fn primary_label<S: Into<String>>(self, label: S) -> LabeledSpan {
+        LabeledSpan::new_primary_with_span(Some(label.into()), self)
     }
 }
 

@@ -927,7 +927,7 @@ fn get_symbol_id_from_function_and_declarator(stmt: &Statement<'_>) -> Vec<Symbo
     let mut symbol_ids = vec![];
     match stmt {
         Statement::FunctionDeclaration(ref func) => {
-            symbol_ids.push(func.id.as_ref().unwrap().symbol_id.get().unwrap());
+            symbol_ids.push(func.symbol_id().unwrap());
         }
         Statement::VariableDeclaration(ref decl) => {
             symbol_ids.extend(decl.declarations.iter().filter_map(|decl| {
@@ -936,7 +936,7 @@ fn get_symbol_id_from_function_and_declarator(stmt: &Statement<'_>) -> Vec<Symbo
         }
         Statement::ExportNamedDeclaration(ref export_decl) => {
             if let Some(Declaration::FunctionDeclaration(func)) = &export_decl.declaration {
-                symbol_ids.push(func.id.as_ref().unwrap().symbol_id.get().unwrap());
+                symbol_ids.push(func.symbol_id().unwrap());
             } else if let Some(Declaration::VariableDeclaration(decl)) = &export_decl.declaration {
                 symbol_ids.extend(decl.declarations.iter().filter_map(|decl| {
                     decl.id.get_binding_identifier().and_then(|id| id.symbol_id.get())
@@ -947,8 +947,8 @@ fn get_symbol_id_from_function_and_declarator(stmt: &Statement<'_>) -> Vec<Symbo
             if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
                 &export_decl.declaration
             {
-                if let Some(id) = func.id.as_ref() {
-                    symbol_ids.push(id.symbol_id.get().unwrap());
+                if let Some(id) = func.symbol_id() {
+                    symbol_ids.push(id);
                 }
             }
         }

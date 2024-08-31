@@ -390,6 +390,7 @@ mod oxc {
     pub mod missing_throw;
     pub mod no_accumulating_spread;
     pub mod no_async_await;
+    pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
     pub mod no_const_enum;
     pub mod no_optional_chaining;
@@ -834,6 +835,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::no_async_await,
+    oxc::no_async_endpoint_handlers,
     oxc::uninvoked_array_callback,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
