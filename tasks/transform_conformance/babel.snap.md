@@ -1,6 +1,6 @@
-commit: 12619ffe
+commit: 3bcfee23
 
-Passed: 317/1015
+Passed: 318/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -10,7 +10,7 @@ Passed: 317/1015
 * babel-plugin-transform-react-jsx-source
 
 
-# babel-preset-env (100/580)
+# babel-preset-env (101/585)
 * .plugins-overlapping/chrome-49/input.js
 
 
@@ -57,6 +57,12 @@ Targets: The `esmodules` is not supported
 
 
 * bugfixes/safari-block-scoping-safari-9/input.js
+
+
+* bugfixes/safari-class-fields-safari-13/input.mjs
+
+
+* bugfixes/safari-class-fields-safari-15/input.mjs
 
 
 * bugfixes/safari-id-destructuring-collision-in-function-expression-safari-15/input.js
@@ -1332,6 +1338,9 @@ Targets: node `current` is not supported
 * preset-options/destructuring-edge/input.js
 
 
+* preset-options/duplicate-named-capturing-groups-regex-chrome-123/input.js
+
+
 * preset-options/empty-options/input.mjs
 
 
@@ -1396,6 +1405,9 @@ Targets: node `current` is not supported
 
 
 * preset-options-babel-7/destructuring-edge/input.js
+
+
+* preset-options-babel-7/duplicate-named-capturing-groups-regex-chrome-120/input.js
 
 
 * preset-options-babel-7/empty-options/input.mjs
@@ -2133,7 +2145,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-typescript (46/151)
+# babel-plugin-transform-typescript (46/152)
 * cast/as-expression/input.ts
   x Unresolved references mismatch:
   | after transform: ["T", "x"]
@@ -2542,6 +2554,27 @@ TS(18010)
   x Symbol flags mismatch:
   | after transform: SymbolId(4): SymbolFlags(RegularEnum)
   | rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
+
+
+* enum/reverse-mappings-syntactically-determinable/input.ts
+  x Output mismatch
+  x Bindings mismatch:
+  | after transform: ScopeId(1): ["A", "B", "C", "D", "E", "Foo"]
+  | rebuilt        : ScopeId(1): ["Foo"]
+
+  x Scope flags mismatch:
+  | after transform: ScopeId(1): ScopeFlags(StrictMode)
+  | rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2), ReferenceId(3), ReferenceId(4)]
+  | rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(7),
+  | ReferenceId(10)]
+
+  x Symbol flags mismatch:
+  | after transform: SymbolId(1): SymbolFlags(RegularEnum)
+  | rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 
 
 * enum/scoped/input.ts
