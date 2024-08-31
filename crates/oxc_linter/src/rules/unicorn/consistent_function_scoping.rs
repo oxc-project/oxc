@@ -179,12 +179,10 @@ impl Rule for ConsistentFunctionScoping {
                         function
                             .id
                             .as_ref()
-                            .unwrap_or(&oxc_ast::ast::BindingIdentifier {
-                                span: Span::sized(function.span.start, 8), // 8 for "function"
-                                name: oxc_span::Atom::empty(),
-                                symbol_id: core::cell::Cell::new(None),
-                            })
-                            .span,
+                            .map(|func_binding_ident| func_binding_ident.span)
+                            .unwrap_or(
+                                Span::sized(function.span.start, 8), // 8 for "function"
+                            ),
                     )
                 } else if let Some(function_id) = &function.id {
                     (function_id.symbol_id.get().unwrap(), function_body, function_id.span())
