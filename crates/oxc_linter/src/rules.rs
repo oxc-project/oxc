@@ -454,6 +454,7 @@ mod promise {
     pub mod no_return_in_finally;
     pub mod param_names;
     pub mod prefer_await_to_then;
+    pub mod spec_only;
     pub mod valid_params;
 }
 
@@ -878,6 +879,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     promise::no_return_in_finally,
     promise::prefer_await_to_then,
+    promise::spec_only,
     vitest::no_import_node_test,
     vitest::prefer_each,
     vitest::prefer_to_be_falsy,
