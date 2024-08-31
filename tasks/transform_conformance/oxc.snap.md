@@ -1,10 +1,18 @@
 commit: 3bcfee23
 
-Passed: 10/37
+Passed: 10/38
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
 * babel-plugin-transform-arrow-functions
+
+
+# babel-plugin-transform-nullish-coalescing-operator (0/1)
+* transform-in-arrow-function-expression/input.js
+  x Reference flags mismatch:
+  | after transform: ReferenceId(3): ReferenceFlags(Write)
+  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
 
 
 # babel-plugin-transform-typescript (2/8)
