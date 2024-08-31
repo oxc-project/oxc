@@ -152,7 +152,7 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
     // ```
     // import { jest as Jest } from '@jest/globals';
     // Jest.setTimeout(800);
-    //     test('test', () => {
+    // test('test', () => {
     //     expect(1 + 2).toEqual(3);
     // });
     // ```
