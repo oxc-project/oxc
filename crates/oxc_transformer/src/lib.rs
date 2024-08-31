@@ -13,6 +13,7 @@ mod compiler_assumptions;
 mod context;
 mod options;
 // Presets: <https://babel.dev/docs/presets>
+mod commonjs;
 mod env;
 mod es2015;
 mod es2016;
