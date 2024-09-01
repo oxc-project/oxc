@@ -250,6 +250,12 @@ impl CompactStr {
         self.0.into_string()
     }
 
+    /// Convert a [`CompactStr`] into a [`CompactString`].
+    #[inline]
+    pub fn into_compact_string(self) -> CompactString {
+        self.0
+    }
+
     /// Get length of [`CompactStr`].
     ///
     /// # Examples
@@ -420,6 +426,7 @@ impl schemars::JsonSchema for CompactStr {
 #[cfg(test)]
 mod test {
     use super::CompactStr;
+    use compact_str::CompactString;
 
     #[test]
     fn test_compactstr_eq() {
@@ -428,5 +435,6 @@ mod test {
         assert_eq!(&foo, "foo");
         assert_eq!("foo", foo);
         assert_eq!("foo", &foo);
+        assert_eq!(foo.into_compact_string(), CompactString::new("foo"));
     }
 }
