@@ -217,6 +217,7 @@ declare_oxc_lint!(
     /// ```
     NoMagicNumbers,
     style,
+    pending // TODO: enforceConst, probably copy from https://github.com/oxc-project/oxc/pull/5144
 );
 
 #[derive(Debug)]
@@ -427,10 +428,7 @@ impl NoMagicNumbers {
         matches!(parent_node.kind(), AstKind::TSEnumMember(_))
     }
 
-    fn is_ts_numeric_literal<'a>(
-        parent_node: &AstNode<'a>,
-        parent_parent_node: &AstNode<'a>,
-    ) -> bool {
+    fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, ctx: &AstNodes<'a>) -> bool {
         if let AstKind::TSLiteralType(literal) = parent_node.kind() {
             if !matches!(
                 literal.literal,
@@ -439,32 +437,28 @@ impl NoMagicNumbers {
                 return false;
             }
 
-            if matches!(
-                parent_parent_node.kind(),
-                AstKind::TSTypeAliasDeclaration(_) | AstKind::TSUnionType(_)
+            let mut node = ctx.parent_node(parent_node.id()).unwrap();
+
+            while matches!(
+                node.kind(),
+                AstKind::TSUnionType(_)
+                    | AstKind::TSIntersectionType(_)
+                    | AstKind::TSParenthesizedType(_)
             ) {
-                return true;
+                node = ctx.parent_node(node.id()).unwrap();
             }
 
-            // https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/rules/no-magic-numbers.ts#L209
+            return matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_));
         }
 
         false
     }
 
     fn is_ts_readonly_property(parent_node: &AstNode<'_>) -> bool {
-        if let AstKind::PropertyDefinition(property) = parent_node.kind() {
-            return property.readonly;
-        }
-
-        false
+        matches!(parent_node.kind(), AstKind::PropertyDefinition(property) if property.readonly)
     }
 
     fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, ctx: &AstNodes<'a>) -> bool {
-        if matches!(parent_parent_node.kind(), AstKind::TSIndexedAccessType(_)) {
-            return true;
-        }
-
         let mut node = parent_parent_node;
 
         while matches!(
@@ -522,9 +516,7 @@ impl NoMagicNumbers {
             return true;
         }
 
-        if self.ignore_numeric_literal_types
-            && NoMagicNumbers::is_ts_numeric_literal(parent, parent_parent)
-        {
+        if self.ignore_numeric_literal_types && NoMagicNumbers::is_ts_numeric_literal(parent, ctx) {
             return true;
         }
 
@@ -551,7 +543,7 @@ impl NoMagicNumbers {
                 None
             }
             AstKind::AssignmentExpression(expression) => {
-                if let AssignmentTarget::AssignmentTargetIdentifier(_) = expression.left {
+                if matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
                     return Some(NoMagicNumberReportReason::NoMagicNumber(span, &config.raw));
                 }
 
