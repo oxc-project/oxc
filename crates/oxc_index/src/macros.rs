@@ -78,7 +78,7 @@
 ///
 /// #### `DEFAULT = <expr>;`
 /// If provided, we'll implement `Default` for the index type using this
-/// expresson.
+/// expression.
 ///
 /// Example:
 ///
