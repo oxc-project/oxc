@@ -4,7 +4,10 @@ mod utils;
 
 use crate::commonjs::options::CommonjsOptions;
 use crate::context::Ctx;
-use oxc_ast::ast::{BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, PropertyKey, TSTypeAnnotation};
+use oxc_ast::ast::{
+    BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration,
+    ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, PropertyKey, TSTypeAnnotation,
+};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 use utils::import;
@@ -99,11 +102,19 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         };
     }
 
-    fn enter_export_default_declaration(&mut self, node: &mut ExportDefaultDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_export_default_declaration(
+        &mut self,
+        node: &mut ExportDefaultDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         todo!()
     }
 
-    fn enter_export_named_declaration(&mut self, node: &mut ExportNamedDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         todo!()
     }
 }
