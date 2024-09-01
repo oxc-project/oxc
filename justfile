@@ -61,7 +61,7 @@ ast:
 
 # Format all files
 fmt:
-  cargo fmt
+  cargo fmt --all
   taplo format
 
 # Run cargo check
