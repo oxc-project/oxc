@@ -185,6 +185,7 @@ ureq                = { version = "2.10.1", default-features = false }
 url                 = "2.5.2"
 walkdir             = "2.5.0"
 wasm-bindgen        = "0.2.92"
+swc        = "latest"
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_transform_napi", "prettyplease"]
@@ -221,4 +222,4 @@ panic         = "abort" # Let it crash and force ourselves to write safe Rust
 inherits         = "release"
 lto              = "thin" # Faster compile time with thin LTO
 debug-assertions = true # Make sure `debug_assert!`s pass
-overflow-checks  = true # Catch arithmetic overflow errors
+overflow-checks                   = true # Catch arithmetic overflow errors

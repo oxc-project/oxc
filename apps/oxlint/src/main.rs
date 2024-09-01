@@ -7,7 +7,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxlint::{CliRunResult, LintRunner, Runner};
+use     oxlint::{CliRunResult, LintRunner, Runner};
 
 fn main() -> CliRunResult {
     init_tracing();
