@@ -204,6 +204,20 @@ jobs:
           filters: |
             src:
               - '!crates/oxc_linter/**'
+              - '!crates/oxc_wasm/**'
+              - '!crates/oxc_language_server/**'
+
+      - uses: ./.github/actions/clone-submodules
+        if: steps.filter.outputs.src == 'true'
+
+      - uses: oven-sh/setup-bun@v2
+        if: steps.filter.outputs.src == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.filter.outputs.src == 'true'
+        with:
+          node-version-file: .node-version
+          registry-url: 'https://registry.npmjs.org'
 
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
@@ -211,21 +225,6 @@ jobs:
           cache-key: conformance
           save-cache: ${{ github.ref_name == 'main' }}
           tools: just
-
-      - name: Clone submodules
-        if: steps.filter.outputs.src == 'true'
-        uses: ./.github/actions/clone-submodules
-
-      - name: Set up Bun
-        if: steps.filter.outputs.src == 'true'
-        uses: oven-sh/setup-bun@v2
-
-      - name: Install Node.js
-        if: steps.filter.outputs.src == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Check Conformance
         if: steps.filter.outputs.src == 'true'
