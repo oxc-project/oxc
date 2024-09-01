@@ -436,11 +436,14 @@ impl NoMagicNumbers {
                 literal.literal,
                 TSLiteral::NumericLiteral(_) | TSLiteral::UnaryExpression(_)
             ) {
-                return false
+                return false;
             }
 
-            if matches!(parent_parent_node.kind(), AstKind::TSTypeAliasDeclaration(_) | AstKind::TSUnionType(_)) {
-                return true
+            if matches!(
+                parent_parent_node.kind(),
+                AstKind::TSTypeAliasDeclaration(_) | AstKind::TSUnionType(_)
+            ) {
+                return true;
             }
 
             // https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/rules/no-magic-numbers.ts#L209
