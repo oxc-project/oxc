@@ -328,26 +328,24 @@ impl NoMagicNumbers {
             AstKind::UnaryExpression(unary) => {
                 return is_unanary_index(&unary);
             }
-            AstKind::NumericLiteral(numeric) => {
-                match parent_node.kind() {
-                    AstKind::MemberExpression(expression) => {
-                        if let MemberExpression::ComputedMemberExpression(computed_expression) =
-                            expression
-                        {
-                            return computed_expression.expression.is_number(numeric.value)
-                                && numeric.value >= 0.0
-                                && numeric.value.fract() == 0.0
-                                && numeric.value < u32::MAX as f64;
-                        }
+            AstKind::NumericLiteral(numeric) => match parent_node.kind() {
+                AstKind::MemberExpression(expression) => {
+                    if let MemberExpression::ComputedMemberExpression(computed_expression) =
+                        expression
+                    {
+                        return computed_expression.expression.is_number(numeric.value)
+                            && numeric.value >= 0.0
+                            && numeric.value.fract() == 0.0
+                            && numeric.value < u32::MAX as f64;
+                    }
 
-                        false
-                    }
-                    AstKind::UnaryExpression(unary) => {
-                        return is_unanary_index(&unary);
-                    }
-                    _ => false,
+                    false
                 }
-            }
+                AstKind::UnaryExpression(unary) => {
+                    return is_unanary_index(&unary);
+                }
+                _ => false,
+            },
             _ => false,
         }
     }
