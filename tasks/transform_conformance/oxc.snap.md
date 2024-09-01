@@ -1,10 +1,11 @@
 commit: 3bcfee23
 
-Passed: 11/41
+Passed: 18/48
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-typescript
+* esbuild-tests
 
 
 # babel-plugin-transform-nullish-coalescing-operator (0/2)

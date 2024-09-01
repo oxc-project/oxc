@@ -21,6 +21,7 @@ mod es2019;
 mod es2020;
 mod es2021;
 mod react;
+mod regexp;
 mod typescript;
 
 mod helpers {
@@ -41,6 +42,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{SourceType, SPAN};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
+use regexp::RegExp;
 
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
@@ -74,6 +76,7 @@ pub struct Transformer<'a> {
     x2_es2018: ES2018<'a>,
     x2_es2016: ES2016<'a>,
     x3_es2015: ES2015<'a>,
+    x4_regexp: RegExp<'a>,
 }
 
 impl<'a> Transformer<'a> {
@@ -102,7 +105,8 @@ impl<'a> Transformer<'a> {
             x2_es2019: ES2019::new(options.es2019, Rc::clone(&ctx)),
             x2_es2018: ES2018::new(options.es2018, Rc::clone(&ctx)),
             x2_es2016: ES2016::new(options.es2016, Rc::clone(&ctx)),
-            x3_es2015: ES2015::new(options.es2015, ctx),
+            x3_es2015: ES2015::new(options.es2015, Rc::clone(&ctx)),
+            x4_regexp: RegExp::new(options.regexp, ctx),
         }
     }
 
@@ -177,6 +181,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x2_es2018.enter_expression(expr, ctx);
         self.x2_es2016.enter_expression(expr, ctx);
         self.x3_es2015.enter_expression(expr, ctx);
+        self.x4_regexp.enter_expression(expr, ctx);
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

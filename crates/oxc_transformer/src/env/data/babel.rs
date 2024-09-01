@@ -8,9 +8,16 @@ use crate::env::{targets::version::Version, Versions};
 fn features() -> &'static FxHashMap<String, Versions> {
     static FEATURES: OnceLock<FxHashMap<String, Versions>> = OnceLock::new();
     FEATURES.get_or_init(|| {
-        let map: FxHashMap<String, FxHashMap<String, String>> =
+        let mut map: FxHashMap<String, FxHashMap<String, String>> =
             serde_json::from_str(include_str!("./@babel/compat_data/data/plugins.json"))
                 .expect("failed to parse json");
+
+        map.extend(
+            serde_json::from_str::<FxHashMap<String, FxHashMap<String, String>>>(include_str!(
+                "./esbuild/features.json"
+            ))
+            .expect("failed to parse json"),
+        );
 
         map.into_iter()
             .map(|(feature, mut versions)| {
