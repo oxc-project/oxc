@@ -20,12 +20,12 @@ enum NoMagicNumberReportReason<'a> {
     NoMagicNumber(&'a Span, &'a str),
 }
 
-fn must_use_const_diagnostic(span: &Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Number constants declarations must use 'const'.").with_label(*span)
+fn must_use_const_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Number constants declarations must use 'const'.").with_label(span)
 }
 
-fn no_magic_number_diagnostic(span: &Span, raw: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("No magic number: {raw}")).with_label(*span)
+fn no_magic_number_diagnostic(span: Span, raw: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("No magic number: {raw}")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -40,7 +40,7 @@ impl std::ops::Deref for NoMagicNumbers {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct NoMagicNumbersConfig {
     ignore: Vec<f64>,
     ignore_array_indexes: bool,
@@ -54,23 +54,6 @@ pub struct NoMagicNumbersConfig {
     ignore_type_indexes: bool,
 }
 
-impl Default for NoMagicNumbersConfig {
-    fn default() -> Self {
-        Self {
-            ignore: vec![],
-            ignore_array_indexes: false,
-            ignore_default_values: false,
-            ignore_class_field_initial_values: false,
-            enforce_const: false,
-            detect_objects: false,
-            ignore_enums: false,
-            ignore_numeric_literal_types: false,
-            ignore_readonly_class_properties: false,
-            ignore_type_indexes: false,
-        }
-    }
-}
-
 impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
     type Error = OxcDiagnostic;
 
@@ -79,10 +62,10 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
             return Ok(NoMagicNumbersConfig::default());
         }
 
-        raw.as_array().unwrap().get(0).map_or_else(
+        raw.as_array().unwrap().first().map_or_else(
             || {
                 Err(OxcDiagnostic::warn(
-                    "Expecting object for eslint/no-magic-numbers configuration",
+                    "Expecting object for typescript/no-magic-numbers configuration",
                 ))
             },
             |object| {
@@ -100,7 +83,6 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
                         .map(|v| {
                             v.iter()
                                 .filter_map(serde_json::Value::as_f64)
-                                .map(|v| f64::try_from(v).unwrap())
                                 .collect()
                         })
                         .unwrap_or_default(),
@@ -131,20 +113,114 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// The no-magic-numbers rule aims to make code more readable and refactoring easier by ensuring that special numbers are declared as constants to make their meaning explicit.
+    /// The current implementation does not support BigInt numbers.
     ///
     /// ### Why is this bad?
     ///
-    ///
-    /// ### Example
+    /// ‘Magic numbers’ are numbers that occur multiple times in code without an explicit meaning. They should preferably be replaced by named constants.
+    /// 
+    /// ### Example bad
     /// ```javascript
+    /// 
+    /// var dutyFreePrice = 100;
+    /// var finalPrice = dutyFreePrice + (dutyFreePrice * 0.25);
+    /// ```
+    /// 
+    /// ### Example good with "ignore"
+    /// ```javascript
+    /// /*typescript no-magic-numbers: ["error", { "ignore": [1] }]*/
+    /// var data = ['foo', 'bar', 'baz'];
+    /// var dataLast = data.length && data[data.length - 1];
+    /// ```
+    /// 
+    /// ### Example good with "ignoreArrayIndexes"
+    /// ```javascript
+    /// /*typescript no-magic-numbers: ["error", { "ignoreArrayIndexes": true }]*/
+    /// var item = data[2];
+    /// data[100] = a;
+    /// f(data[0]);
+    /// a = data[-0]; // same as data[0], -0 will be coerced to "0"
+    /// a = data[0xAB];
+    /// a = data[5.6e1];
+    /// a = data[4294967294]; // max array index
+    /// ```
+    /// 
+    /// ### Example good with "ignoreDefaultValues"
+    /// ```javascript
+    /// /*typescript no-magic-numbers: ["error", { "ignoreDefaultValues": true }]*/
+    /// const { tax = 0.25 } = accountancy;
+    /// function mapParallel(concurrency = 3) { /***/ }
+    /// ```
+    /// 
+    /// ### Example good with "ignoreClassFieldInitialValues"
+    /// ```javascript
+    /// /*typescript no-magic-numbers: ["error", { "ignoreClassFieldInitialValues": true }]*/
+    /// class C {
+    ///     foo = 2;
+    ///     bar = -3;
+    ///     #baz = 4;
+    ///     static qux = 5;
+    /// }
+    /// ```
+    /// 
+    /// ### Example bad with "enforceConst"
+    /// ```javascript
+    /// /*typescript no-magic-numbers: ["error", { "enforceConst": true }]*/
+    /// var TAX = 0.25;
+    /// ```
+    /// 
+    /// ### Example bad with "detectObjects"
+    /// ```javascript
+    /// /*typescript no-magic-numbers: ["error", { "detectObjects": true }]*/
+    /// var magic = {
+    ///     tax: 0.25
+    /// };
+    /// ```
+    /// 
+    /// ### Example good with "detectObjects"
+    /// ```javascript
+    /// /*typescript no-magic-numbers: ["error", { "detectObjects": true }]*/
+    /// var TAX = 0.25;
+    /// 
+    /// var magic = {
+    ///     tax: TAX
+    /// };
+    /// ```
+    /// 
+    /// ### Example good with "ignoreEnums"
+    /// ```typescript
+    /// /*typescript no-magic-numbers: ["error", { "ignoreEnums": true }]*/
+    /// enum foo {
+    ///     SECOND = 1000,
+    /// }
+    /// ```
+    /// 
+    /// ### Example good with "ignoreNumericLiteralTypes"
+    /// ```typescript
+    /// /*typescript no-magic-numbers: ["error", { "ignoreNumericLiteralTypes": true }]*/
+    /// type SmallPrimes = 2 | 3 | 5 | 7 | 11;
+    /// ```
+    /// 
+    /// ### Example good with "ignoreReadonlyClassProperties"
+    /// ```typescript
+    /// /*typescript no-magic-numbers: ["error", { "ignoreReadonlyClassProperties": true }]*/
+    /// class Foo {
+    ///     readonly A = 1;
+    ///     readonly B = 2;
+    ///     public static readonly C = 1;
+    ///     static readonly D = 1;
+    /// }
+    /// ```
+    /// 
+    /// ### Example good with "ignoreTypeIndexes"
+    /// ```typescript
+    /// /*typescript no-magic-numbers: ["error", { "ignoreReadonlyClassProperties": true }]*/
+    /// type Foo = Bar[0];
+    /// type Baz = Parameters<Foo>[2];
     /// ```
     NoMagicNumbers,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix-dangerous', 'suggestion', and 'suggestion-dangerous'
+    style,
 );
 
 #[derive(Debug)]
@@ -164,23 +240,23 @@ impl InternConfig<'_> {
 
         if let AstKind::NumericLiteral(numeric) = node.kind() {
             if is_negative {
-                return Ok(InternConfig {
+                Ok(InternConfig {
                     node: parent_node,
                     value: 0.0 - numeric.value,
                     raw: format!("-{}", numeric.raw),
-                });
+                })
             } else {
-                return Ok(InternConfig {
-                    node: if !is_unary { node } else { parent_node },
+                Ok(InternConfig {
+                    node: if is_unary { parent_node } else { node },
                     value: numeric.value,
                     raw: numeric.raw.into(),
-                });
+                })
             }
         } else {
-            return Err(OxcDiagnostic::warn(format!(
+            Err(OxcDiagnostic::warn(format!(
                 "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
                 node.kind().debug_name()
-            )));
+            )))
         }
     }
 
@@ -190,46 +266,43 @@ impl InternConfig<'_> {
 }
 impl Rule for NoMagicNumbers {
     fn from_configuration(value: serde_json::Value) -> Self {
-        return Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()));
+        Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::NumericLiteral(literal) => {
-                let nodes = ctx.nodes();
-                let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
+        if let AstKind::NumericLiteral(literal) = node.kind() {
+            let nodes = ctx.nodes();
+            let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
 
-                if self.is_skipable(&config, &nodes) {
-                    return;
-                }
-
-                let parent = nodes.parent_node(config.node.id()).unwrap();
-
-                if let Some(reason) = self.get_report_reason(&parent, &config, &literal.span) {
-                    ctx.diagnostic(match reason {
-                        NoMagicNumberReportReason::MustUseConst(span) => {
-                            must_use_const_diagnostic(span)
-                        }
-                        NoMagicNumberReportReason::NoMagicNumber(span, raw) => {
-                            no_magic_number_diagnostic(span, raw)
-                        }
-                    });
-                }
+            if self.is_skipable(&config, nodes) {
+                return;
             }
-            _ => {}
+
+            let parent = nodes.parent_node(config.node.id()).unwrap();
+
+            if let Some(reason) = self.get_report_reason(parent, &config, &literal.span) {
+                ctx.diagnostic(match reason {
+                    NoMagicNumberReportReason::MustUseConst(span) => {
+                        must_use_const_diagnostic(*span)
+                    }
+                    NoMagicNumberReportReason::NoMagicNumber(span, raw) => {
+                        no_magic_number_diagnostic(*span, raw)
+                    }
+                });
+            }
         }
     }
 }
 
 impl NoMagicNumbers {
-    fn is_numeric_value<'a>(expression: &Expression<'a>, number: &f64) -> bool {
-        if expression.is_number(*number) {
+    fn is_numeric_value(expression: &Expression<'_>, number: f64) -> bool {
+        if expression.is_number(number) {
             return true;
         }
 
         if let Expression::UnaryExpression(unary) = expression {
             if let Expression::NumericLiteral(_) = &unary.argument {
                 if unary.operator == UnaryOperator::UnaryPlus {
-                    return unary.argument.is_number(*number);
+                    return unary.argument.is_number(number);
                 }
 
                 if unary.operator == UnaryOperator::UnaryNegation {
@@ -240,11 +313,11 @@ impl NoMagicNumbers {
 
         false
     }
-    fn is_ignore_value(&self, number: &f64) -> bool {
-        self.ignore.contains(number)
+    fn is_ignore_value(&self, number: f64) -> bool {
+        self.ignore.contains(&number)
     }
 
-    fn is_default_value<'a>(&self, number: &f64, parent_node: &AstNode<'a>) -> bool {
+    fn is_default_value(number: f64, parent_node: &AstNode<'_>) -> bool {
         if let AstKind::AssignmentTargetWithDefault(assignment) = parent_node.kind() {
             return NoMagicNumbers::is_numeric_value(&assignment.init, number);
         }
@@ -256,7 +329,7 @@ impl NoMagicNumbers {
         false
     }
 
-    fn is_class_field_initial_value<'a>(&self, number: &f64, parent_node: &AstNode<'a>) -> bool {
+    fn is_class_field_initial_value(number: f64, parent_node: &AstNode<'_>) -> bool {
         if let AstKind::PropertyDefinition(property) = parent_node.kind() {
             return NoMagicNumbers::is_numeric_value(property.value.as_ref().unwrap(), number);
         }
@@ -264,7 +337,7 @@ impl NoMagicNumbers {
         false
     }
 
-    fn is_parse_int_radix<'a>(&self, number: &f64, parent_parent_node: &AstNode<'a>) -> bool {
+    fn is_parse_int_radix(number: f64, parent_parent_node: &AstNode<'_>) -> bool {
         if let AstKind::CallExpression(expression) = parent_parent_node.kind() {
             if expression.arguments.get(1).is_none() {
                 return false;
@@ -272,7 +345,7 @@ impl NoMagicNumbers {
 
             let argument = expression.arguments.get(1).unwrap();
             return match argument {
-                Argument::NumericLiteral(numeric) => numeric.value == *number,
+                Argument::NumericLiteral(numeric) => numeric.value == number,
                 Argument::UnaryExpression(unary)
                     if unary.operator == UnaryOperator::UnaryNegation =>
                 {
@@ -289,48 +362,47 @@ impl NoMagicNumbers {
         false
     }
 
-    ///  Returns whether the given node is used as an array index.
-    ///  Value must coerce to a valid array index name: "0", "1", "2" ... "4294967294".
+    /// Returns whether the given node is used as an array index.
+    /// Value must coerce to a valid array index name: "0", "1", "2" ... "4294967294".
     ///
-    ///  All other values, like "-1", "2.5", or "4294967295", are just "normal" object properties,
-    ///  which can be created and accessed on an array in addition to the array index properties,
-    ///  but they don't affect array's length and are not considered by methods such as .map(), .forEach() etc.
+    /// All other values, like "-1", "2.5", or "4294967295", are just "normal" object properties,
+    /// which can be created and accessed on an array in addition to the array index properties,
+    /// but they don't affect array's length and are not considered by methods such as .map(), .forEach() etc.
     ///
-    ///  The maximum array length by the specification is 2 ** 32 - 1 = 4294967295,
-    ///  thus the maximum valid index is 2 ** 32 - 2 = 4294967294.
+    /// The maximum array length by the specification is 2 ** 32 - 1 = 4294967295,
+    /// thus the maximum valid index is 2 ** 32 - 2 = 4294967294.
     ///
-    ///  All notations are allowed, as long as the value coerces to one of "0", "1", "2" ... "4294967294".
+    /// All notations are allowed, as long as the value coerces to one of "0", "1", "2" ... "4294967294".
     ///
-    ///  Valid examples:
-    ///  a[0], a[1], a[1.2e1], a[0xAB], a[0n], a[1n]
-    ///  a[-0] (same as a[0] because -0 coerces to "0")
-    ///  a[-0n] (-0n evaluates to 0n)
-    ///
-    ///  Invalid examples:
-    ///  a[-1], a[-0xAB], a[-1n], a[2.5], a[1.23e1], a[12e-1]
-    ///  a[4294967295] (above the max index, it's an access to a regular property a["4294967295"])
-    ///  a[999999999999999999999] (even if it wasn't above the max index, it would be a["1e+21"])
-    ///  a[1e310] (same as a["Infinity"])
-    fn is_array_index<'a>(&self, node: &AstNode<'a>, parent_node: &AstNode<'a>) -> bool {
+    /// Valid examples:
+    /// ```javascript
+    /// a[0], a[1], a[1.2e1], a[0xAB], a[0n], a[1n]
+    /// a[-0] // (same as a[0] because -0 coerces to "0")
+    /// a[-0n] // (-0n evaluates to 0n)
+    /// ``` 
+    /// 
+    /// Invalid examples:
+    /// ```javascript
+    /// a[-1], a[-0xAB], a[-1n], a[2.5], a[1.23e1], a[12e-1]
+    /// a[4294967295] // (above the max index, it's an access to a regular property a["4294967295"])
+    /// a[999999999999999999999] // (even if it wasn't above the max index, it would be a["1e+21"])
+    /// a[1e310] // (same as a["Infinity"])
+    /// ``` 
+    fn is_array_index<'a>(node: &AstNode<'a>, parent_node: &AstNode<'a>) -> bool {
         fn is_unanary_index(unary: &UnaryExpression) -> bool {
             match &unary.argument {
                 Expression::NumericLiteral(numeric) => {
                     if unary.operator == UnaryOperator::UnaryNegation {
                         return numeric.value == 0.0;
                     }
-                    // ToDo: check why ("foo[+0]", ignore_array_indexes.clone()), should fail
-                    return false;
-
-                    // return numeric.value >= 0.0
-                    //     && numeric.value.fract() == 0.0
-                    //     && numeric.value < u32::MAX as f64;
+                    false
                 }
                 _ => false,
             }
         }
         match node.kind() {
             AstKind::UnaryExpression(unary) => {
-                return is_unanary_index(&unary);
+                is_unanary_index(unary)
             }
             AstKind::NumericLiteral(numeric) => match parent_node.kind() {
                 AstKind::MemberExpression(expression) => {
@@ -340,13 +412,13 @@ impl NoMagicNumbers {
                         return computed_expression.expression.is_number(numeric.value)
                             && numeric.value >= 0.0
                             && numeric.value.fract() == 0.0
-                            && numeric.value < u32::MAX as f64;
+                            && numeric.value < f64::from(u32::MAX);
                     }
 
                     false
                 }
                 AstKind::UnaryExpression(unary) => {
-                    return is_unanary_index(&unary);
+                    is_unanary_index(unary)
                 }
                 _ => false,
             },
@@ -354,11 +426,11 @@ impl NoMagicNumbers {
         }
     }
 
-    fn is_ts_enum<'a>(&self, parent_node: &AstNode<'a>) -> bool {
-        return matches!(parent_node.kind(), AstKind::TSEnumMember(_));
+    fn is_ts_enum(parent_node: &AstNode<'_>) -> bool {
+        matches!(parent_node.kind(), AstKind::TSEnumMember(_))
     }
 
-    fn is_ts_numeric_literal<'a>(&self, parent_node: &AstNode<'a>, parent_parent_node: &AstNode<'a>) -> bool {
+    fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, parent_parent_node: &AstNode<'a>) -> bool {
         if let AstKind::TSLiteralType(literal) = parent_node.kind() {
             if !matches!(
                 literal.literal,
@@ -377,15 +449,15 @@ impl NoMagicNumbers {
         false
     }
 
-    fn is_ts_readonly_property<'a>(&self, parent_node: &AstNode<'a>) -> bool {
+    fn is_ts_readonly_property(parent_node: &AstNode<'_>) -> bool {
         if let AstKind::PropertyDefinition(property) = parent_node.kind() {
             return property.readonly;
         }
-        return false;
+
+        false
     }
 
     fn is_ts_indexed_access_type<'a>(
-        &self,
         parent_parent_node: &AstNode<'a>,
         ctx: &AstNodes<'a>,
     ) -> bool {
@@ -404,47 +476,35 @@ impl NoMagicNumbers {
             node = ctx.parent_node(node.id()).unwrap();
         }
 
-        return matches!(node.kind(), AstKind::TSIndexedAccessType(_));
+        matches!(node.kind(), AstKind::TSIndexedAccessType(_))
     }
 
     fn is_skipable<'a>(&self, config: &InternConfig<'a>, ctx: &AstNodes<'a>) -> bool {
-        let parent: &AstNode<'a> = ctx.parent_node(config.node.id()).unwrap();
-        let parent_parent = ctx.parent_node(parent.id()).unwrap();
-
-        if self.is_ignore_value(&config.value) {
+        if self.is_ignore_value(config.value) {
             return true;
         }
-        if self.is_parse_int_radix(&config.value, &parent_parent) {
-            return true;
-        }
+        
+        let parent = ctx.parent_node(config.node.id()).unwrap();
 
-        if self.ignore_numeric_literal_types && self.is_ts_numeric_literal(&parent, &parent_parent) {
+        if self.ignore_enums && NoMagicNumbers::is_ts_enum(parent) {
             return true;
         }
 
-        if self.ignore_enums && self.is_ts_enum(&parent) {
+        if self.ignore_readonly_class_properties && NoMagicNumbers::is_ts_readonly_property(parent) {
             return true;
         }
 
-        if self.ignore_readonly_class_properties && self.is_ts_readonly_property(&parent) {
-            return true;
-        }
-
-        if self.ignore_type_indexes && self.is_ts_indexed_access_type(&parent_parent, &ctx) {
-            return true;
-        }
-
-        if self.ignore_default_values && self.is_default_value(&config.value, &parent) {
+        if self.ignore_default_values && NoMagicNumbers::is_default_value(config.value, parent) {
             return true;
         }
 
         if self.ignore_class_field_initial_values
-            && self.is_class_field_initial_value(&config.value, &parent)
+            && NoMagicNumbers::is_class_field_initial_value(config.value, parent)
         {
             return true;
         }
 
-        if self.ignore_array_indexes && self.is_array_index(&config.node, &parent) {
+        if self.ignore_array_indexes && NoMagicNumbers::is_array_index(config.node, parent) {
             return true;
         }
 
@@ -452,6 +512,20 @@ impl NoMagicNumbers {
             && (matches!(parent.kind(), AstKind::ObjectExpression(_))
                 || matches!(parent.kind(), AstKind::ObjectProperty(_)))
         {
+            return true;
+        }
+
+        let parent_parent = ctx.parent_node(parent.id()).unwrap();
+
+        if NoMagicNumbers::is_parse_int_radix(config.value, parent_parent) {
+            return true;
+        }
+
+        if self.ignore_numeric_literal_types && NoMagicNumbers::is_ts_numeric_literal(parent, parent_parent) {
+            return true;
+        }
+
+        if self.ignore_type_indexes && NoMagicNumbers::is_ts_indexed_access_type(parent_parent, ctx) {
             return true;
         }
 
