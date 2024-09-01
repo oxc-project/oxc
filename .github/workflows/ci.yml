@@ -43,7 +43,6 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --no-run
       - run: cargo test
       - run: git diff --exit-code # Must commit everything
 
@@ -93,9 +92,8 @@ jobs:
           RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
         shell: bash
         run: |
-          cargo test --no-run
+          # cargo ck # no need to check because it's already checked in linux
           cargo test
-          cargo ck
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
