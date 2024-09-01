@@ -1,5 +1,8 @@
-use oxc_allocator::Vec;
-use oxc_ast::ast::{BindingPattern, BindingPatternKind, BindingRestElement, Declaration, ExportDefaultDeclaration, Expression, ModuleExportName, PropertyKey, Statement, TSTypeAnnotation, TSTypeParameterInstantiation, VariableDeclarationKind};
+use oxc_allocator::{CloneIn, Vec};
+use oxc_ast::ast::{
+    BindingPatternKind, Declaration, Expression, ModuleExportName, Statement, TSTypeAnnotation,
+    VariableDeclarationKind,
+};
 use oxc_ast::AstBuilder;
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
@@ -22,7 +25,12 @@ fn create_exports<'a>(
             builder.expression_from_string_literal(literal),
             false,
         ),
-        ModuleExportName::IdentifierReference(_) => unreachable!(),
+        ModuleExportName::IdentifierReference(ident) => builder.member_expression_computed(
+            SPAN,
+            builder.expression_identifier_reference(SPAN, "exports"),
+            builder.expression_from_identifier_reference(ident),
+            false,
+        ),
     };
     builder.expression_assignment(
         SPAN,
@@ -102,23 +110,70 @@ pub fn create_named_exports<'a>(
     match declaration {
         Declaration::VariableDeclaration(decls) => {
             let mut result = builder.vec();
-            for &decl in decls.unbox().declarations.iter() {
+            for decl in decls.declarations.iter() {
                 match &decl.id.kind {
                     BindingPatternKind::BindingIdentifier(id) => {
                         result.push(builder.statement_expression(
                             SPAN,
                             create_exports(
                                 builder.module_export_name_identifier_name(SPAN, id.name.as_str()),
-                                decl.init.unwrap_or(builder.void_0()),
+                                match &decl.init {
+                                    Some(init) => init.clone_in(builder.allocator),
+                                    None => builder.void_0(),
+                                },
                                 builder,
                             ),
                         ))
                     }
-                    _ => unreachable!()
+                    _ => unreachable!(),
                 }
             }
             result
         }
-        _ => todo!()
+        Declaration::FunctionDeclaration(decls) => {
+            let mut result = builder.vec();
+            // 1. append the function declaration without export
+            result.push(builder.statement_expression(
+                SPAN,
+                builder.expression_from_function(decls.clone_in(builder.allocator)),
+            ));
+            // 2. append the export statement
+            let identifier = &decls.id;
+            match identifier {
+                Some(id) => result.push(builder.statement_expression(
+                    SPAN,
+                    create_exports(
+                        builder.module_export_name_identifier_reference(SPAN, id.name.as_str()),
+                        builder.expression_identifier_reference(SPAN, id.name.as_str()),
+                        builder,
+                    ),
+                )),
+                None => unreachable!(),
+            }
+            result
+        }
+        Declaration::ClassDeclaration(decls) => {
+            let mut result = builder.vec();
+            // 1. append the function declaration without export
+            result.push(builder.statement_expression(
+                SPAN,
+                builder.expression_from_class(decls.clone_in(builder.allocator)),
+            ));
+            // 2. append the export statement
+            let identifier = &decls.id;
+            match identifier {
+                Some(id) => result.push(builder.statement_expression(
+                    SPAN,
+                    create_exports(
+                        builder.module_export_name_identifier_reference(SPAN, id.name.as_str()),
+                        builder.expression_identifier_reference(SPAN, id.name.as_str()),
+                        builder,
+                    ),
+                )),
+                None => unreachable!(),
+            }
+            result
+        }
+        _ => todo!(),
     }
 }
