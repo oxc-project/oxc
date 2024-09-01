@@ -29,10 +29,14 @@ bitflags! {
         ///   rule category.
         const Dangerous = 1 << 2;
 
+        const SafeFix = Self::Fix.bits();
+        const SafeFixOrSuggestion = Self::Fix.bits() | Self::Suggestion.bits();
+        const DangerousFix = Self::Dangerous.bits() | Self::Fix.bits();
+        const DangerousSuggestion = Self::Dangerous.bits() | Self::Suggestion.bits();
+        const DangerousFixOrSuggestion = Self::Dangerous.bits() | Self::Fix.bits() | Self::Suggestion.bits();
+
         /// Used to specify that no fixes should be applied.
         const None = 0;
-        const SafeFix = Self::Fix.bits();
-        const DangerousFix = Self::Dangerous.bits() | Self::Fix.bits();
         /// Fixes and Suggestions that are safe or dangerous.
         const All = Self::Dangerous.bits() | Self::Fix.bits() | Self::Suggestion.bits();
     }
@@ -48,17 +52,17 @@ impl Default for FixKind {
 
 impl FixKind {
     #[inline]
-    pub fn is_none(self) -> bool {
+    pub const fn is_none(self) -> bool {
         self.is_empty()
     }
 
     #[inline]
-    pub fn is_some(self) -> bool {
+    pub const fn is_some(self) -> bool {
         self.bits() > 0
     }
 
     #[inline]
-    pub fn is_dangerous(self) -> bool {
+    pub const fn is_dangerous(self) -> bool {
         self.contains(Self::Dangerous)
     }
 
@@ -83,6 +87,30 @@ impl FixKind {
     #[inline]
     pub fn can_apply(self, rule_fix: Self) -> bool {
         self.contains(rule_fix)
+    }
+
+    /// # Panics
+    /// If this [`FixKind`] is only [`FixKind::Dangerous`] without a
+    /// [`FixKind::Fix`] or [`FixKind::Suggestion`] qualifier.
+    pub fn emoji(self) -> &'static str {
+        if self.is_empty() {
+            return "";
+        }
+        match self {
+            Self::Fix => "🛠️",
+            Self::Suggestion => "💡",
+            Self::SafeFixOrSuggestion => "🛠️💡",
+            Self::DangerousFixOrSuggestion => "⚠️🛠️️💡",
+            Self::DangerousFix => "⚠️🛠️️",
+            Self::DangerousSuggestion => "⚠️💡",
+            Self::Dangerous => panic!(
+                "Fix kinds cannot just be dangerous, they must also be 'Fix' or 'Suggestion'."
+            ),
+            _ => {
+                debug_assert!(false, "Please add an emoji for FixKind: {self:?}");
+                ""
+            }
+        }
     }
 }
 
@@ -116,6 +144,16 @@ macro_rules! impl_from {
 //    impl<'a, F: Into<CompositeFix<'a>>> From<F> for RuleFix<'a> b
 // but this breaks when implementing `From<RuleFix<'a>> for CompositeFix<'a>`.
 impl_from!(CompositeFix<'a>, Fix<'a>, Option<Fix<'a>>, Vec<Fix<'a>>);
+
+impl<'a> FromIterator<Fix<'a>> for RuleFix<'a> {
+    fn from_iter<T: IntoIterator<Item = Fix<'a>>>(iter: T) -> Self {
+        Self {
+            kind: FixKind::SafeFix,
+            message: None,
+            fix: iter.into_iter().collect::<Vec<_>>().into(),
+        }
+    }
+}
 
 impl<'a> From<RuleFix<'a>> for CompositeFix<'a> {
     #[inline]
@@ -434,12 +472,11 @@ impl<'a> CompositeFix<'a> {
         if fixes.is_empty() {
             // Do nothing
             return Fix::empty();
-        }
-        if fixes.len() == 1 {
+        } else if fixes.len() == 1 {
             return fixes.pop().unwrap();
         }
 
-        fixes.sort_by(|a, b| a.span.cmp(&b.span));
+        fixes.sort_unstable_by(|a, b| a.span.cmp(&b.span));
 
         // safe, as fixes.len() > 1
         let start = fixes[0].span.start;
@@ -618,5 +655,30 @@ mod test {
         let mut f = multiple();
         f.push(vec![f3.clone(), f3.clone()].into());
         assert_eq!(f, CompositeFix::Multiple(vec![f1, f2, f3.clone(), f3]));
+    }
+
+    #[test]
+    fn test_emojis() {
+        let tests = vec![
+            (FixKind::None, ""),
+            (FixKind::Fix, "🛠️"),
+            (FixKind::Suggestion, "💡"),
+            (FixKind::Suggestion | FixKind::Fix, "🛠️💡"),
+            (FixKind::DangerousFix, "⚠️🛠️️"),
+            (FixKind::DangerousSuggestion, "⚠️💡"),
+            (FixKind::DangerousFix.union(FixKind::Suggestion), "⚠️🛠️️💡"),
+        ];
+
+        for (kind, expected) in tests {
+            assert_eq!(kind.emoji(), expected, "Expected {kind:?} to have emoji '{expected}'.");
+        }
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Fix kinds cannot just be dangerous, they must also be 'Fix' or 'Suggestion'."
+    )]
+    fn test_emojis_invalid() {
+        FixKind::Dangerous.emoji();
     }
 }

@@ -10,18 +10,18 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_this_alias_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_this_alias_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected aliasing of 'this' to local variable.")
         .with_help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn no_this_destructure_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_this_destructure_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected aliasing of members of 'this' to local variables.")
         .with_help(
             "Disabling destructuring of this is not a default, consider allowing destructuring",
         )
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -59,12 +59,14 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Generic type parameters (<T>) in TypeScript may be "constrained" with an extends keyword.
-    /// When no extends is provided, type parameters default a constraint to unknown. It is therefore redundant to extend from any or unknown.
+    /// Generic type parameters (`<T>`) in TypeScript may be "constrained" with
+    /// an extends keyword.  When no extends is provided, type parameters
+    /// default a constraint to unknown. It is therefore redundant to extend
+    /// from any or unknown.
     ///
-    /// the rule doesn't allow const {allowedName} = this
+    /// the rule doesn't allow `const {allowedName} = this`
     /// this is to keep 1:1 with eslint implementation
-    /// sampe with obj.<allowedName> = this
+    /// sampe with `obj.<allowedName> = this`
     /// ```
     NoThisAlias,
     correctness

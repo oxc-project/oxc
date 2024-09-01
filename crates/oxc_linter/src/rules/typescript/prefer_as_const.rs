@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_as_const_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_as_const_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a `const` assertion instead of a literal type annotation.")
         .with_help("You should use `as const` instead of type annotation.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,7 +30,7 @@ declare_oxc_lint!(
     /// This rule reports when an as with an explicit literal type can be replaced with an as const.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// let bar: 2 = 2;
     /// let foo = { bar: 'baz' as 'baz' };
     /// ```

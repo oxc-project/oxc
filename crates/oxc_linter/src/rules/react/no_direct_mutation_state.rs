@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_direct_mutation_state_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("never mutate this.state directly.")
         .with_help("calling setState() afterwards may replace the mutation you made.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// calling setState() afterwards may replace the mutation you made
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     ///  // error
     ///  var Hello = createReactClass({
     ///    componentDidMount: function() {

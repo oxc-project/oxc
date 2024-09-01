@@ -33,7 +33,7 @@ export default function generateAncestorsCode(types) {
 
                 methodsCode += `
                     #[inline]
-                    pub fn ${otherField.rawName}(&self) -> &${otherField.rawTypeName} {
+                    pub fn ${otherField.rawName}(self) -> &'t ${otherField.rawTypeName} {
                         unsafe {
                             &*(
                                 (self.0 as *const u8).add(${otherField.offsetVarName})
@@ -45,17 +45,18 @@ export default function generateAncestorsCode(types) {
             }
 
             const fieldNameCamel = snakeToCamel(field.name),
-                lifetime = type.rawName.slice(type.name.length),
-                structName = `${type.name}Without${fieldNameCamel}${lifetime}`;
+                lifetimes = type.rawName.length > type.name.length ? `<'a, 't>` : "<'t>",
+                structName = `${type.name}Without${fieldNameCamel}${lifetimes}`;
 
             thisAncestorTypes += `
                 #[repr(transparent)]
-                #[derive(Debug)]
+                #[derive(Clone, Copy, Debug)]
                 pub struct ${structName}(
-                    pub(crate) *const ${type.rawName}
+                    pub(crate) *const ${type.rawName},
+                    pub(crate) PhantomData<&'t ()>,
                 );
 
-                impl${lifetime} ${structName} {
+                impl${lifetimes} ${structName} {
                     ${methodsCode}
                 }
             `;
@@ -81,7 +82,7 @@ export default function generateAncestorsCode(types) {
 
             isFunctions += `
                 #[inline]
-                pub fn is_${typeSnakeName}(&self) -> bool {
+                pub fn is_${typeSnakeName}(self) -> bool {
                     matches!(self, ${variantNames.map(name => `Self::${name}(_)`).join(' | ')})
                 }
             `;
@@ -91,7 +92,7 @@ export default function generateAncestorsCode(types) {
     for (const [typeName, variantNames] of Object.entries(variantNamesForEnums)) {
         isFunctions += `
             #[inline]
-            pub fn is_via_${camelToSnake(typeName)}(&self) -> bool {
+            pub fn is_via_${camelToSnake(typeName)}(self) -> bool {
                 matches!(self, ${variantNames.map(name => `Self::${name}(_)`).join(' | ')})
             }
         `;
@@ -106,20 +107,14 @@ export default function generateAncestorsCode(types) {
             clippy::cast_ptr_alignment
         )]
 
-        use std::cell::Cell;
+        use std::{cell::Cell, marker::PhantomData};
 
         use memoffset::offset_of;
 
         use oxc_allocator::{Box, Vec};
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;
-        use oxc_span::{Atom, SourceType, Span};
-        use oxc_syntax::{
-            operator::{
-                AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-            },
-            scope::ScopeId,
-        };
+        use oxc_syntax::scope::ScopeId;
 
         /// Type of [\`Ancestor\`].
         /// Used in [\`crate::TraverseCtx::retag_stack\`].
@@ -135,6 +130,11 @@ export default function generateAncestorsCode(types) {
         ///
         /// Encodes both the type of the parent, and child's location in the parent.
         /// i.e. variants for \`BinaryExpressionLeft\` and \`BinaryExpressionRight\`, not just \`BinaryExpression\`.
+        ///
+        /// \`'a\` is lifetime of AST nodes.
+        /// \`'t\` is lifetime of the \`Ancestor\` (which inherits lifetime from \`&'t TraverseCtx'\`).
+        /// i.e. \`Ancestor\`s can only exist within the body of \`enter_*\` and \`exit_*\` methods
+        /// and cannot "escape" from them.
         //
         // SAFETY:
         // * This type must be \`#[repr(u16)]\`.
@@ -145,13 +145,13 @@ export default function generateAncestorsCode(types) {
         // \`*(ancestor as *mut _ as *mut AncestorType) = AncestorType::Program\`.
         // \`TraverseCtx::retag_stack\` uses this technique.
         #[repr(C, u16)]
-        #[derive(Debug)]
-        pub enum Ancestor<'a> {
+        #[derive(Clone, Copy, Debug)]
+        pub enum Ancestor<'a, 't> {
             None = AncestorType::None as u16,
             ${ancestorEnumVariants}
         }
 
-        impl<'a> Ancestor<'a> {
+        impl<'a, 't> Ancestor<'a, 't> {
             ${isFunctions}
         }
 

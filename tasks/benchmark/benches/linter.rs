@@ -1,12 +1,8 @@
-use std::{
-    env,
-    path::{Path, PathBuf},
-    rc::Rc,
-};
+use std::{env, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{AllowWarnDeny, LintOptions, Linter};
+use oxc_linter::{AllowWarnDeny, FixKind, LintOptions, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -35,7 +31,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let semantic_ret = SemanticBuilder::new(source_text, source_type)
                     .with_trivias(ret.trivias)
                     .with_cfg(true)
-                    .build_module_record(PathBuf::new(), program)
+                    .build_module_record(Path::new(""), program)
                     .build(program);
                 let filter = vec![
                     (AllowWarnDeny::Deny, "all".into()),
@@ -43,6 +39,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 ];
                 let lint_options = LintOptions::default()
                     .with_filter(filter)
+                    .with_fix(FixKind::All)
                     .with_import_plugin(true)
                     .with_jsdoc_plugin(true)
                     .with_jest_plugin(true)

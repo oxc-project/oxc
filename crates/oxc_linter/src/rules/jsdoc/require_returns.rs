@@ -14,20 +14,20 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_function_nearest_jsdoc_node, should_ignore_as_avoid, should_ignore_as_internal,
-        should_ignore_as_private,
+        default_true, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
+        should_ignore_as_internal, should_ignore_as_private,
     },
 };
 
-fn missing_returns_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@returns` declaration for function.")
         .with_help("Add `@returns` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
-fn duplicate_returns_diagnostic(span0: Span) -> OxcDiagnostic {
+fn duplicate_returns_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@returns` tags.")
         .with_help("Remove redundunt `@returns` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -83,9 +83,6 @@ impl Default for RequireReturnsConfig {
             force_returns_with_async: false,
         }
     }
-}
-fn default_true() -> bool {
-    true
 }
 fn default_exempted_by() -> Vec<String> {
     vec!["inheritdoc".to_string()]

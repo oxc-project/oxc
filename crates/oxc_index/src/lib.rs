@@ -343,12 +343,11 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.raw.pop()
     }
 
-    /// Converts the vector into an owned IdxSlice, dropping excess capacity.
+    /// Converts the vector into an owned [`IndexSlice`], dropping excess capacity.
     #[inline]
-    pub fn into_boxed_slice(self) -> alloc::boxed::Box<IndexSlice<I, [T]>> {
+    pub fn into_boxed_slice(self) -> Box<IndexSlice<I, [T]>> {
         let b = self.raw.into_boxed_slice();
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
-
         unsafe { Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>) }
     }
 

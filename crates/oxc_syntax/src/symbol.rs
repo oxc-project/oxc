@@ -77,22 +77,28 @@ bitflags! {
         /// Is this symbol inside an export declaration
         const Export                  = 1 << 4;
         const Class                   = 1 << 5;
-        const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
+        /// `try {} catch(catch_variable) {}`
+        const CatchVariable           = 1 << 6;
+        /// A function declaration or expression
         const Function                = 1 << 7;
-        const Import             = 1 << 8; // Imported ESM binding
-        const TypeImport              = 1 << 9; // Imported ESM type-only binding
+        /// A function or block-scoped variable initialized to an arrow function
+        const ArrowFunction           = 1 << 8;
+        /// Imported ESM binding
+        const Import                  = 1 << 9;
+        /// Imported ESM type-only binding
+        const TypeImport              = 1 << 10;
         // Type specific symbol flags
-        const TypeAlias               = 1 << 10;
-        const Interface               = 1 << 11;
-        const RegularEnum             = 1 << 12;
-        const ConstEnum               = 1 << 13;
-        const EnumMember              = 1 << 14;
-        const TypeLiteral             = 1 << 15;
-        const TypeParameter           = 1 << 16;
-        const NameSpaceModule         = 1 << 17;
-        const ValueModule             = 1 << 18;
+        const TypeAlias               = 1 << 11;
+        const Interface               = 1 << 12;
+        const RegularEnum             = 1 << 13;
+        const ConstEnum               = 1 << 14;
+        const EnumMember              = 1 << 15;
+        const TypeLiteral             = 1 << 16;
+        const TypeParameter           = 1 << 17;
+        const NameSpaceModule         = 1 << 18;
+        const ValueModule             = 1 << 19;
         // In a dts file or there is a declare flag
-        const Ambient                 = 1 << 19;
+        const Ambient                 = 1 << 20;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
@@ -123,78 +129,110 @@ bitflags! {
 }
 
 impl SymbolFlags {
+    #[inline]
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
     }
 
+    #[inline]
     pub fn is_type_parameter(&self) -> bool {
         self.contains(Self::TypeParameter)
     }
 
     /// If true, then the symbol is a type, such as a TypeAlias, Interface, or Enum
+    #[inline]
     pub fn is_type(&self) -> bool {
         self.intersects((Self::TypeImport | Self::Type) - Self::Value)
     }
 
     /// If true, then the symbol is a value, such as a Variable, Function, or Class
+    #[inline]
     pub fn is_value(&self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function)
     }
 
+    #[inline]
     pub fn is_const_variable(&self) -> bool {
         self.contains(Self::ConstVariable)
     }
 
+    /// Returns `true` if this symbol is a function declaration or expression.
+    ///
+    /// Use [`SymbolFlags::is_function_like`] to check if this symbol is a function or an arrow function.
+    #[inline]
     pub fn is_function(&self) -> bool {
         self.contains(Self::Function)
     }
 
+    #[inline]
+    pub fn is_arrow_function(&self) -> bool {
+        self.contains(Self::ArrowFunction)
+    }
+
+    /// Returns `true` if this symbol is an arrow function or a function declaration/expression.
+    #[inline]
+    pub fn is_function_like(&self) -> bool {
+        self.intersects(Self::Function | Self::ArrowFunction)
+    }
+
+    #[inline]
     pub fn is_class(&self) -> bool {
         self.contains(Self::Class)
     }
 
+    #[inline]
     pub fn is_interface(&self) -> bool {
         self.contains(Self::Interface)
     }
 
+    #[inline]
     pub fn is_type_alias(&self) -> bool {
         self.contains(Self::TypeAlias)
     }
 
+    #[inline]
     pub fn is_enum(&self) -> bool {
         self.intersects(Self::Enum)
     }
 
+    #[inline]
     pub fn is_enum_member(&self) -> bool {
         self.contains(Self::EnumMember)
     }
 
+    #[inline]
     pub fn is_catch_variable(&self) -> bool {
         self.contains(Self::CatchVariable)
     }
 
+    #[inline]
     pub fn is_function_scoped_declaration(&self) -> bool {
         self.contains(Self::FunctionScopedVariable)
     }
 
+    #[inline]
     pub fn is_export(&self) -> bool {
         self.contains(Self::Export)
     }
 
+    #[inline]
     pub fn is_import(&self) -> bool {
         self.intersects(Self::Import | Self::TypeImport)
     }
 
+    #[inline]
     pub fn is_type_import(&self) -> bool {
         self.contains(Self::TypeImport)
     }
 
     /// If true, then the symbol can be referenced by a type
+    #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
         self.intersects(Self::Type | Self::TypeImport | Self::Import)
     }
 
     /// If true, then the symbol can be referenced by a value
+    #[inline]
     pub fn can_be_referenced_by_value(&self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function)
     }

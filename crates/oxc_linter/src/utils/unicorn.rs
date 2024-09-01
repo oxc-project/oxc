@@ -236,10 +236,18 @@ pub fn is_same_member_expression(
         MemberExpression::ComputedMemberExpression(right),
     ) = (left, right)
     {
-        if !is_same_reference(&left.expression, &right.expression, ctx) {
+        if !is_same_reference(
+            left.expression.get_inner_expression(),
+            right.expression.get_inner_expression(),
+            ctx,
+        ) {
             return false;
         }
     }
 
-    return is_same_reference(left.object(), right.object(), ctx);
+    return is_same_reference(
+        left.object().get_inner_expression(),
+        right.object().get_inner_expression(),
+        ctx,
+    );
 }

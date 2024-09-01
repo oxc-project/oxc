@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn missing_throw_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_throw_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing throw")
         .with_help("The `throw` keyword seems to be missing in front of this 'new' expression")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// ```
     MissingThrow,
     correctness,
-    pending // TODO: add a suggestion that adds `throw`
+    suggestion
 );
 
 impl Rule for MissingThrow {
@@ -35,7 +35,9 @@ impl Rule for MissingThrow {
             return;
         };
         if new_expr.callee.is_specific_id("Error") && Self::has_missing_throw(node, ctx) {
-            ctx.diagnostic(missing_throw_diagnostic(new_expr.span));
+            ctx.diagnostic_with_suggestion(missing_throw_diagnostic(new_expr.span), |fixer| {
+                fixer.insert_text_before(node, "throw ")
+            });
         }
     }
 }
@@ -80,5 +82,10 @@ fn test() {
     let fail =
         vec![("function foo() { new Error() }", None), ("const foo = () => { new Error() }", None)];
 
-    Tester::new(MissingThrow::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("function foo() { new Error() }", "function foo() { throw new Error() }"),
+        ("const foo = () => { new Error() }", "const foo = () => { throw new Error() }"),
+    ];
+
+    Tester::new(MissingThrow::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -17,7 +17,9 @@ pub use self::{
     settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
 use crate::{
-    rules::RuleEnum, utils::is_jest_rule_adapted_to_vitest, AllowWarnDeny, RuleWithSeverity,
+    rules::RuleEnum,
+    utils::{is_jest_rule_adapted_to_vitest, read_to_string},
+    AllowWarnDeny, RuleWithSeverity,
 };
 
 /// Oxlint Configuration File
@@ -28,7 +30,7 @@ use crate::{
 ///
 /// ::: danger NOTE
 ///
-/// Only the `.json` format is supported.
+/// Only the `.json` format is supported. You can use comments in configuration files.
 ///
 /// :::
 ///
@@ -54,10 +56,12 @@ use crate::{
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct OxlintConfig {
-    /// See [Oxlint Rules](./rules)
+    /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).
     pub(crate) rules: OxlintRules,
     pub(crate) settings: OxlintSettings,
+    /// Environments enable and disable collections of global variables.
     pub(crate) env: OxlintEnv,
+    /// Enabled or disabled specific global variables.
     pub(crate) globals: OxlintGlobals,
 }
 
@@ -66,7 +70,7 @@ impl OxlintConfig {
     ///
     /// * Parse Failure
     pub fn from_file(path: &Path) -> Result<Self, OxcDiagnostic> {
-        let mut string = std::fs::read_to_string(path).map_err(|e| {
+        let mut string = read_to_string(path).map_err(|e| {
             OxcDiagnostic::error(format!("Failed to parse config {path:?} with error {e:?}"))
         })?;
 

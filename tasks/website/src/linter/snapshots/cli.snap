@@ -2,11 +2,8 @@
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
-<!-- textlint-disable -->
-
-
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[**`--fix`**\] \[**`--fix-suggestions`**\] \[**`--fix-dangerously`**\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[_`PATH`_\]...
 
 ## Basic Configuration
 - **`-c`**, **`--config`**=_`<./oxlintrc.json>`_ &mdash; 
@@ -24,13 +21,13 @@ Accumulate rules and categories from left to right on the command-line.
 
  For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
  The categories are:
- * `correctness` - code that is outright wrong or useless (default)
- * `suspicious`  - code that is most likely wrong or useless
- * `pedantic`    - lints which are rather strict or have occasional false positives
- * `style`       - code that should be written in a more idiomatic way
- * `nursery`     - new lints that are still under development
- * `restriction` - lints which prevent the use of language and library features
- * `all`         - all the categories listed above except nursery
+ * `correctness` - code that is outright wrong or useless (default).
+ * `suspicious`  - code that is most likely wrong or useless.
+ * `pedantic`    - lints which are rather strict or have occasional false positives.
+ * `style`       - code that should be written in a more idiomatic way.
+ * `nursery`     - new lints that are still under development.
+ * `restriction` - lints which prevent the use of language and library features.
+ * `all`         - all the categories listed above except nursery. Does not enable plugins automatically.
 
 Arguments:
 
@@ -132,8 +129,3 @@ Arguments:
   Prints help information
 - **`-V`**, **`--version`** &mdash; 
   Prints version information
-
-
-
-
-<!-- textlint-enable -->

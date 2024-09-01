@@ -14,10 +14,10 @@ use crate::{
     },
 };
 
-fn no_conditional_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_conditional_expect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected conditional expect")
         .with_help("Avoid calling `expect` conditionally`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,8 +47,8 @@ declare_oxc_lint!(
     /// });
     ///
     /// it('throws an error', async () => {
-    //   await foo().catch(error => expect(error).toBeInstanceOf(error));
-    // });
+    ///   await foo().catch(error => expect(error).toBeInstanceOf(error));
+    /// });
     /// ```
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),

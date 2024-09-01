@@ -8,10 +8,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_cond_assign_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_cond_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a conditional expression and instead saw an assignment")
         .with_help("Consider wrapping the assignment in additional parentheses")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -29,12 +29,24 @@ enum NoCondAssignConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow assignment operators in conditional expressions
     ///
     /// ### Why is this bad?
     ///
+    /// In conditional statements, it is very easy to mistype a comparison
+    /// operator (such as `==`) as an assignment operator (such as `=`).
+    ///
+    /// There are valid reasons to use assignment operators in conditional
+    /// statements. However, it can be difficult to tell whether a specific
+    /// assignment was intentional.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// ```js
+    /// // Check the user's job title
+    /// if (user.jobTitle = "manager") {
+    ///     // user.jobTitle is now incorrect
+    /// }
     /// ```
     NoCondAssign,
     correctness

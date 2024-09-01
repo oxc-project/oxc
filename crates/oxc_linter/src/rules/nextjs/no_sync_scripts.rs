@@ -9,10 +9,10 @@ use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_sync_scripts_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_sync_scripts_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent synchronous scripts.")
         .with_help("See https://nextjs.org/docs/messages/no-sync-scripts")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

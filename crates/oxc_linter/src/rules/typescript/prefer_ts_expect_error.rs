@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_ts_expect_error_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce using `@ts-expect-error` over `@ts-ignore`")
         .with_help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// This is dangerous, as if a new error arises on that line it'll be suppressed by the forgotten about @ts-ignore, and so be missed.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// // @ts-ignore
     /// const str: string = 1;
     ///

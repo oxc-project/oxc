@@ -9,10 +9,10 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-fn no_interpolation_in_snapshots_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_interpolation_in_snapshots_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use string interpolation inside of snapshots")
         .with_help("Remove string interpolation from snapshots")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

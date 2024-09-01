@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_dom_node_append_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_dom_node_append_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.")
         .with_help("Replace `Node#appendChild()` with `Node#append()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -5,12 +5,12 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn switch_case_braces_diagnostic(span0: Span) -> OxcDiagnostic {
+fn switch_case_braces_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         " Empty switch case shouldn't have braces and not-empty case should have braces around it.",
     )
     .with_help("There is less visual clutter for empty cases and proper scope for non-empty cases.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -86,8 +86,8 @@ impl Rule for SwitchCaseBraces {
                                         formatter.print_str("default");
                                     }
 
-                                    formatter.print_colon();
-                                    formatter.print_hard_space();
+                                    formatter.print_char(b':');
+                                    formatter.print_char(b' ');
                                     formatter.print_char(b'{');
                                     case.consequent
                                         .iter()

@@ -20,6 +20,7 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
     match task {
         "parser" => args.run_parser(),
+        "semantic" => args.run_semantic(),
         "codegen" => args.run_codegen(),
         "codegen-runtime" => args.run_codegen_runtime(),
         // "prettier" => args.run_prettier(),
@@ -27,6 +28,11 @@ fn main() {
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),
         "v8_test262_status" => args.run_sync_v8_test262_status(),
+        "all" => {
+            args.run_all();
+            args.run_codegen_runtime();
+            args.run_sync_v8_test262_status();
+        }
         _ => args.run_all(),
     };
 }

@@ -22,7 +22,7 @@ declare_oxc_lint!(
     /// removed, this rule helps locate TSLint annotations
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// // tslint:disable-next-line
     /// someCode();
     /// ```

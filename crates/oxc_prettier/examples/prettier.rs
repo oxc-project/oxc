@@ -2,7 +2,7 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_prettier::{Prettier, PrettierOptions, TrailingComma};
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -22,7 +22,9 @@ fn main() -> std::io::Result<()> {
     let source_text = std::fs::read_to_string(path)?;
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
-    let ret = Parser::new(&allocator, &source_text, source_type).preserve_parens(false).parse();
+    let ret = Parser::new(&allocator, &source_text, source_type)
+        .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+        .parse();
     let output = Prettier::new(
         &allocator,
         &source_text,

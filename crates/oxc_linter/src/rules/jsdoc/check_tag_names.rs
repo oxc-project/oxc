@@ -10,8 +10,8 @@ use crate::{
     utils::{should_ignore_as_internal, should_ignore_as_private},
 };
 
-fn check_tag_names_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Invalid tag name found.").with_help(x1.to_string()).with_label(span0)
+fn check_tag_names_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid tag name found.").with_help(x1.to_string()).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

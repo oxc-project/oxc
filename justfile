@@ -1,10 +1,15 @@
 #!/usr/bin/env -S just --justfile
 
+set windows-shell := ["powershell"]
+set shell := ["bash", "-cu"]
+
 _default:
   @just --list -u
 
 alias r := ready
 alias c := coverage
+alias f := fix
+alias new-typescript-rule := new-ts-rule
 
 # Make sure you have cargo-binstall installed.
 # You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
@@ -28,14 +33,14 @@ ready:
 
 # Clone or update submodules
 submodules:
-  just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git a15874163e6a4f19ee7cd3e47592af382af0f5fd
-  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git 12619ffe5b0777edb0223304da1fdf8770d93e7c
-  just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git d8086f14b6b97c0df34a0cc2f56d4b5926a0c299
+  just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60
+  just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git 3bcfee232506a4cebe410f02042fb0f0adeeb0b1
+  just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git a709f9899c2a544b6de65a0f2623ecbbe1394eab
   just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 7142cf354cce2558f41574f44b967baf11d5b603
 
 # Install git pre-commit to format files
 install-hook:
-  echo "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
+  echo -e "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
   chmod +x .git/hooks/pre-commit
 
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
@@ -48,9 +53,15 @@ watch command:
 example tool *args='':
   just watch 'run -p oxc_{{tool}} --example {{tool}} -- {{args}}'
 
+# Generate AST related boilerplate code.
+# Run this when AST definition is changed.
+ast:
+  cargo run -p oxc_ast_tools
+  just check
+
 # Format all files
 fmt:
-  cargo fmt
+  cargo fmt --all
   taplo format
 
 # Run cargo check
@@ -68,12 +79,22 @@ lint:
 doc:
   RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
+# Fix all auto-fixable format and lint issues. Make sure your working tree is clean first.
+fix:
+  cargo clippy --fix --allow-staged --no-deps
+  just fmt
+  typos -w
+  git status
+
 # Run all the conformance tests. See `tasks/coverage`, `tasks/transform_conformance`, `tasks/minsize`
 coverage:
   cargo coverage
   cargo run -p oxc_transform_conformance -- --exec
   cargo run -p oxc_prettier_conformance
   # cargo minsize
+
+conformance *args='':
+  cargo coverage -- {{args}}
 
 # Get code coverage
 codecov:
@@ -148,16 +169,14 @@ new-n-rule name:
 new-promise-rule name:
     cargo run -p rulegen {{name}} promise
 
+new-vitest-rule name:
+    cargo run -p rulegen {{name}} vitest
+
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
 
 website path:
-  cargo run -p website -- linter-rules > {{path}}/src/docs/guide/usage/linter/generated-rules.md
+  cargo run -p website -- linter-rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
-
-# sync ast changes
-ast:
-  cargo run -p oxc_ast_codegen
-  just check

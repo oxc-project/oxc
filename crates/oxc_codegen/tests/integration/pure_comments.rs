@@ -184,4 +184,28 @@ const builtInSymbols = new Set(
     test("(/* @__PURE__ */ new Foo()).bar();\n", "(/* @__PURE__ */ new Foo()).bar();\n");
 
     test("(/* @__PURE__ */ Foo()).bar();\n", "(/* @__PURE__ */ Foo()).bar();\n");
+
+    // https://github.com/oxc-project/oxc/issues/4843
+    test(
+        r"
+/* #__NO_SIDE_EFFECTS__ */
+const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
+	options,
+	extraOptions,
+) => {
+	return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
+};
+",
+        "const defineSSRCustomElement = /* #__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {\n\treturn /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);\n};\n",
+    );
+
+    // Range leading comments
+    test(
+        r"
+const defineSSRCustomElement = () => {
+	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
+};
+",
+        "const defineSSRCustomElement = () => {\n\treturn /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);\n};\n",
+    );
 }

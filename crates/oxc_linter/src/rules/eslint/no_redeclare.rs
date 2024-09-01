@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -56,33 +57,31 @@ impl Rule for NoRedeclare {
         Self { built_in_globals }
     }
 
-    fn run_once(&self, ctx: &LintContext) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
         let symbol_table = ctx.semantic().symbols();
-
-        for symbol_id in ctx.symbols().iter() {
-            let decl = symbol_table.get_declaration(symbol_id);
-            let symbol_name = symbol_table.get_name(symbol_id);
-            match ctx.nodes().kind(decl) {
-                AstKind::VariableDeclarator(var) => {
-                    if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
-                        if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclarations(symbol_id) {
-                                self.report_diagnostic(ctx, *span, ident);
-                            }
+        let decl_node_id = symbol_table.get_declaration(symbol_id);
+        match ctx.nodes().kind(decl_node_id) {
+            AstKind::VariableDeclarator(var) => {
+                if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
+                    let symbol_name = symbol_table.get_name(symbol_id);
+                    if symbol_name == ident.name.as_str() {
+                        for span in ctx.symbols().get_redeclarations(symbol_id) {
+                            self.report_diagnostic(ctx, *span, ident);
                         }
                     }
                 }
-                AstKind::FormalParameter(param) => {
-                    if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                        if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclarations(symbol_id) {
-                                self.report_diagnostic(ctx, *span, ident);
-                            }
-                        }
-                    }
-                }
-                _ => {}
             }
+            AstKind::FormalParameter(param) => {
+                if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
+                    let symbol_name = symbol_table.get_name(symbol_id);
+                    if symbol_name == ident.name.as_str() {
+                        for span in ctx.symbols().get_redeclarations(symbol_id) {
+                            self.report_diagnostic(ctx, *span, ident);
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
     }
 }

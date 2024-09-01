@@ -10,18 +10,18 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_prop_value, AstNode};
 
-fn boolean_value_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
+fn boolean_value_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Value must be omitted for boolean attribute {x0:?}"))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn boolean_value_always_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Value must be set for boolean attribute {x0:?}")).with_label(span0)
+fn boolean_value_always_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Value must be set for boolean attribute {x0:?}")).with_label(span)
 }
 
-fn boolean_value_undefined_false_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
+fn boolean_value_undefined_false_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Value must be omitted for `false` attribute {x0:?}"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -55,7 +55,7 @@ declare_oxc_lint!(
     /// Enforce a consistent boolean attribute style in your code.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// const Hello = <Hello personal={true} />;
     /// ```
     JsxBooleanValue,

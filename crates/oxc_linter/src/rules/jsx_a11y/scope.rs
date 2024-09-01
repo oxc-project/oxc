@@ -11,10 +11,10 @@ use crate::{
     AstNode,
 };
 
-fn scope_diagnostic(span0: Span) -> OxcDiagnostic {
+fn scope_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The scope prop can only be used on <th> elements")
         .with_help("Must use scope prop only on <th> elements")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -23,7 +23,7 @@ pub struct Scope;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The scope prop should be used only on <th> elements.
+    /// The scope prop should be used only on `<th>` elements.
     ///
     /// ### Why is this bad?
     /// The scope attribute makes table navigation much easier for screen reader users, provided that it is used correctly.
@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// A screen reader operates under the assumption that a table has a header and that this header specifies a scope. Because of the way screen readers function, having an accurate header makes viewing a table far more accessible and more efficient for people who use the device.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div scope />
     ///
@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// <th scope={scope} />
     /// ```
     Scope,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for Scope {
@@ -73,7 +74,9 @@ impl Rule for Scope {
             return;
         }
 
-        ctx.diagnostic(scope_diagnostic(scope_attribute.span));
+        ctx.diagnostic_with_fix(scope_diagnostic(scope_attribute.span), |fixer| {
+            fixer.delete_range(scope_attribute.span)
+        });
     }
 }
 
@@ -106,5 +109,13 @@ fn test() {
     let fail =
         vec![(r"<div scope />", None, None), (r"<Foo scope='bar' />;", None, Some(settings()))];
 
-    Tester::new(Scope::NAME, pass, fail).with_jsx_a11y_plugin(true).test_and_snapshot();
+    let fix = vec![
+        (r"<div scope />", r"<div  />", None),
+        (r"<h1 scope='bar' />;", r"<h1  />;", Some(settings())),
+    ];
+
+    Tester::new(Scope::NAME, pass, fail)
+        .expect_fix(fix)
+        .with_jsx_a11y_plugin(true)
+        .test_and_snapshot();
 }

@@ -6,13 +6,13 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_empty_interface_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("an empty interface is equivalent to `{}`").with_label(span0)
+fn no_empty_interface_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("an empty interface is equivalent to `{}`").with_label(span)
 }
 
-fn no_empty_interface_extend_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_empty_interface_extend_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("an interface declaring no members is equivalent to its supertype")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// This rule aims to ensure that only meaningful interfaces are declared in the code.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// interface Foo {}
     /// interface Bar extends Foo {}
     /// ```

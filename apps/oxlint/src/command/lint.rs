@@ -77,13 +77,13 @@ pub struct BasicOptions {
 /// Accumulate rules and categories from left to right on the command-line.
 ///   For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
 ///   The categories are:
-///   * `correctness` - code that is outright wrong or useless (default)
-///   * `suspicious`  - code that is most likely wrong or useless
-///   * `pedantic`    - lints which are rather strict or have occasional false positives
-///   * `style`       - code that should be written in a more idiomatic way
-///   * `nursery`     - new lints that are still under development
-///   * `restriction` - lints which prevent the use of language and library features
-///   * `all`         - all the categories listed above except nursery
+///   * `correctness` - code that is outright wrong or useless (default).
+///   * `suspicious`  - code that is most likely wrong or useless.
+///   * `pedantic`    - lints which are rather strict or have occasional false positives.
+///   * `style`       - code that should be written in a more idiomatic way.
+///   * `nursery`     - new lints that are still under development.
+///   * `restriction` - lints which prevent the use of language and library features.
+///   * `all`         - all the categories listed above except nursery. Does not enable plugins automatically.
 ///
 /// Arguments:
 //  ^ This shows up on the website but not from the cli's `--help`.
@@ -120,14 +120,14 @@ impl LintFilter {
 #[derive(Debug, Clone, Bpaf)]
 pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output
-    #[bpaf(switch)]
+    #[bpaf(switch, hide_usage)]
     pub fix: bool,
     /// Apply auto-fixable suggestions. May change program behavior.
-    #[bpaf(switch)]
+    #[bpaf(switch, hide_usage)]
     pub fix_suggestions: bool,
 
     /// Apply dangerous fixes and suggestions.
-    #[bpaf(switch)]
+    #[bpaf(switch, hide_usage)]
     pub fix_dangerously: bool,
 }
 

@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_danger_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_danger_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `dangerouslySetInnerHTML` prop")
         .with_help("`dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -29,10 +29,26 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// `dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.
+    /// `dangerouslySetInnerHTML` is a way to inject HTML into your React
+    /// component. This is dangerous because it can easily lead to XSS
+    /// vulnerabilities.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    ///
+    /// ```jsx
+    /// import React from "react";
+    ///
+    /// const Hello = <div dangerouslySetInnerHTML={{ __html: "Hello World" }}></div>;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    ///
+    /// ```jsx
+    /// import React from "react";
+    ///
+    /// const Hello = <div>Hello World</div>;
     /// ```
     NoDanger,
     restriction

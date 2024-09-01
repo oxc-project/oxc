@@ -3,10 +3,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
 
-fn static_promise_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Disallow calling `new` on a `Promise.{x0}`")).with_label(span0)
+fn static_promise_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Disallow calling `new` on a `Promise.{x0}`")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,11 +52,7 @@ impl Rule for NoNewStatics {
             return;
         };
 
-        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
-        if matches!(
-            prop_name,
-            "resolve" | "reject" | "all" | "allSettled" | "race" | "any" | "withResolvers"
-        ) {
+        if PROMISE_STATIC_METHODS.contains(prop_name) {
             ctx.diagnostic_with_fix(
                 static_promise_diagnostic(
                     prop_name,

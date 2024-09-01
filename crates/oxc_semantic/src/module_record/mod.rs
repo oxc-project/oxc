@@ -4,7 +4,7 @@ pub use builder::ModuleRecordBuilder;
 
 #[cfg(test)]
 mod module_record_tests {
-    use std::{path::PathBuf, sync::Arc};
+    use std::{path::Path, sync::Arc};
 
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
@@ -21,7 +21,7 @@ mod module_record_tests {
         let program = allocator.alloc(ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
-            .build_module_record(PathBuf::new(), program)
+            .build_module_record(Path::new(""), program)
             .build(program);
         Arc::clone(&semantic_ret.semantic.module_record)
     }

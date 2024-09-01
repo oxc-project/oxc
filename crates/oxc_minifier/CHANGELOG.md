@@ -4,6 +4,72 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.25.0] - 2024-08-23
+
+- 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)
+
+- c4c08a7 ast: [**BREAKING**] Rename `IdentifierReference::reference_flags` field (#5024) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)
+
+### Features
+
+- 2b21be3 oxc_minifier: Define plugin with postfix wildcard (#4979) (IWANABETHATGUY)
+
+### Refactor
+
+- 0f64d10 minifier: Remove duplicated helper `move_out_expression` (#5007) (IWANABETHATGUY)
+- b4407c4 oxc,mangler: `oxc` crate add mangler; mangler use options API (Boshen)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 46cb1c1 minifier: Handle `Object.definedPropert(exports` for @babel/types/lib/index.js (#4933) (Boshen)
+- 81fd637 minifier: Do not fold `0 && (module.exports = {})` for `cjs-module-lexer` (#4878) (Boshen)
+- 879a271 minifier: Do not join `require` calls for `cjs-module-lexer` (#4875) (Boshen)
+
+## [0.24.2] - 2024-08-12
+
+### Performance
+
+- 504ac0b minifier: `InjectGlobalVariables` only add to `replaced_dot_defines` once for each (#4803) (overlookmotel)
+- 35f2742 minifier: Avoid repeated `Atom` creation in `InjectGlobalVariables` (#4802) (overlookmotel)
+
+## [0.24.1] - 2024-08-10
+
+### Features
+
+- c519295 minifier: Add `InjectGlobalVariables` plugin (`@rollup/plugin-inject`) (#4759) (Boshen)
+
+## [0.24.0] - 2024-08-08
+
+### Features
+
+- 229a0e9 minifier: Implement dot define for member expressions (#3959) (camc314)
+
+### Bug Fixes
+
+- 94d3c31 minifier: Avoid removing function declaration from `KeepVar` (#4722) (Boshen)
+- bf43148 minifier: Do not `remove_syntax` in dead_code_elimination (Boshen)
+- bf48c7f minifier: Fix `keep_var` keeping vars from arrow functions (#4680) (Boshen)
+- 9be29af minifier: Temporarily fix shadowed `undefined` variable (#4678) (Boshen)
+- e8b662a minifier: Various fixes to pass minifier conformance (#4667) (Boshen)
+
+### Performance
+
+- 0f5e982 minifier: Only visit arrow expression after dropping `console.log` (#4677) (Boshen)
+
+### Refactor
+
+- fbfd852 minifier: Add `NodeUtil` trait for accessing symbols on ast nodes (#4734) (Boshen)
+- e0832f8 minifier: Use `oxc_traverse` for AST passes (#4725) (Boshen)
+- 17602db minifier: Move tests and files around (Boshen)
+- 3289477 minifier: Clean up tests (#4724) (Boshen)
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
 ## [0.23.1] - 2024-08-06
 
 ### Features

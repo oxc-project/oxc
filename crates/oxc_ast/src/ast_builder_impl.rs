@@ -62,10 +62,10 @@ impl<'a> AstBuilder<'a> {
     /// This method is completely unsound and should not be used.
     /// We need to remove all uses of it. Please don't add any more!
     /// <https://github.com/oxc-project/oxc/issues/3483>
+    #[allow(clippy::missing_safety_doc)]
     #[inline]
-    pub fn copy<T>(self, src: &T) -> T {
+    pub unsafe fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)
-
         unsafe { std::mem::transmute_copy(src) }
     }
 
@@ -83,13 +83,9 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn move_statement_vec(self, stmts: &mut Vec<'a, Statement<'a>>) -> Vec<'a, Statement<'a>> {
-        mem::replace(stmts, self.vec())
-    }
-
-    #[inline]
     pub fn move_assignment_target(self, target: &mut AssignmentTarget<'a>) -> AssignmentTarget<'a> {
-        let dummy = self.simple_assignment_target_identifier_reference(Span::default(), "");
+        let dummy =
+            self.simple_assignment_target_identifier_reference(Span::default(), Atom::from(""));
         mem::replace(target, dummy.into())
     }
 
@@ -103,6 +99,11 @@ impl<'a> AstBuilder<'a> {
         );
         let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
         mem::replace(decl, empty_decl)
+    }
+
+    #[inline]
+    pub fn move_vec<T>(self, vec: &mut Vec<'a, T>) -> Vec<'a, T> {
+        mem::replace(vec, self.vec())
     }
 
     /* ---------- Constructors ---------- */
@@ -146,7 +147,7 @@ impl<'a> AstBuilder<'a> {
             false,
             false,
             Option::<TSTypeParameterDeclaration>::None,
-            None,
+            None::<Box<'a, TSThisParameter<'a>>>,
             params,
             Option::<TSTypeAnnotation>::None,
             body,

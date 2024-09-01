@@ -5,19 +5,19 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/factory/jsx
 [
   {
     "children": [],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(Import)",
+        "flags": "SymbolFlags(Import)",
         "id": 0,
         "name": "React",
         "node": "ImportDefaultSpecifier",
         "references": []
       },
       {
-        "flag": "SymbolFlags(Import)",
+        "flags": "SymbolFlags(Import)",
         "id": 1,
         "name": "Fragment",
         "node": "ImportSpecifier(Fragment)",

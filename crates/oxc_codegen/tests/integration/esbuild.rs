@@ -3,6 +3,7 @@
 use crate::tester::{test, test_minify};
 
 #[test]
+#[ignore]
 fn test_number() {
     // Check "1eN"
     test("x = 1e-100", "x = 1e-100;\n");

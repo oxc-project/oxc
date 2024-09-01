@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_empty_function_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_empty_function_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow empty functions")
         .with_help("Unexpected empty function block")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

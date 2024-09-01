@@ -1,5 +1,5 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_codegen/src/generators/visit.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/generators/visit.rs`
 
 //! Visitor Pattern
 //!
@@ -21,7 +21,9 @@ use std::cell::Cell;
 use oxc_allocator::Vec;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{ast::*, ast_kind::AstType};
+#[allow(clippy::wildcard_imports)]
+use crate::ast::*;
+use crate::ast_kind::AstType;
 
 use walk_mut::*;
 
@@ -1067,11 +1069,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_variable_declarator(&mut self, it: &mut VariableDeclarator<'a>) {
         walk_variable_declarator(self, it);
-    }
-
-    #[inline]
-    fn visit_using_declaration(&mut self, it: &mut UsingDeclaration<'a>) {
-        walk_using_declaration(self, it);
     }
 
     #[inline]
@@ -3022,11 +3019,11 @@ pub mod walk_mut {
     pub fn walk_call_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CallExpression<'a>) {
         let kind = AstType::CallExpression;
         visitor.enter_node(kind);
-        visitor.visit_arguments(&mut it.arguments);
         visitor.visit_expression(&mut it.callee);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_instantiation(type_parameters);
         }
+        visitor.visit_arguments(&mut it.arguments);
         visitor.leave_node(kind);
     }
 
@@ -3251,6 +3248,9 @@ pub mod walk_mut {
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
         }
+        if let Some(type_annotation) = &mut it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
     }
 
     #[inline]
@@ -3462,6 +3462,7 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         match it {
             JSXElementName::Identifier(it) => visitor.visit_jsx_identifier(it),
+            JSXElementName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             JSXElementName::NamespacedName(it) => visitor.visit_jsx_namespaced_name(it),
             JSXElementName::MemberExpression(it) => visitor.visit_jsx_member_expression(it),
         }
@@ -3508,6 +3509,9 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         match it {
             JSXMemberExpressionObject::Identifier(it) => visitor.visit_jsx_identifier(it),
+            JSXMemberExpressionObject::IdentifierReference(it) => {
+                visitor.visit_identifier_reference(it)
+            }
             JSXMemberExpressionObject::MemberExpression(it) => {
                 visitor.visit_jsx_member_expression(it)
             }
@@ -3690,16 +3694,11 @@ pub mod walk_mut {
     ) {
         let kind = AstType::ForInStatement;
         visitor.enter_node(kind);
-        let scope_events_cond = it.left.is_lexical_declaration();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_for_statement_left(&mut it.left);
         visitor.visit_expression(&mut it.right);
         visitor.visit_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3710,7 +3709,6 @@ pub mod walk_mut {
     ) {
         match it {
             ForStatementLeft::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
-            ForStatementLeft::UsingDeclaration(it) => visitor.visit_using_declaration(it),
             match_assignment_target!(ForStatementLeft) => {
                 visitor.visit_assignment_target(it.to_assignment_target_mut())
             }
@@ -3753,33 +3751,17 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_using_declaration<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut UsingDeclaration<'a>,
-    ) {
-        let kind = AstType::UsingDeclaration;
-        visitor.enter_node(kind);
-        visitor.visit_variable_declarators(&mut it.declarations);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
     pub fn walk_for_of_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ForOfStatement<'a>,
     ) {
         let kind = AstType::ForOfStatement;
         visitor.enter_node(kind);
-        let scope_events_cond = it.left.is_lexical_declaration();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_for_statement_left(&mut it.left);
         visitor.visit_expression(&mut it.right);
         visitor.visit_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3787,11 +3769,7 @@ pub mod walk_mut {
     pub fn walk_for_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ForStatement<'a>) {
         let kind = AstType::ForStatement;
         visitor.enter_node(kind);
-        let scope_events_cond =
-            it.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(init) = &mut it.init {
             visitor.visit_for_statement_init(init);
         }
@@ -3802,9 +3780,7 @@ pub mod walk_mut {
             visitor.visit_expression(update);
         }
         visitor.visit_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3817,7 +3793,6 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         match it {
             ForStatementInit::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
-            ForStatementInit::UsingDeclaration(it) => visitor.visit_using_declaration(it),
             match_expression!(ForStatementInit) => visitor.visit_expression(it.to_expression_mut()),
         }
         visitor.leave_node(kind);
@@ -3921,17 +3896,12 @@ pub mod walk_mut {
     pub fn walk_catch_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CatchClause<'a>) {
         let kind = AstType::CatchClause;
         visitor.enter_node(kind);
-        let scope_events_cond = it.param.is_some();
-        if scope_events_cond {
-            visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
-        }
+        visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
         if let Some(param) = &mut it.param {
             visitor.visit_catch_parameter(param);
         }
         visitor.visit_block_statement(&mut it.body);
-        if scope_events_cond {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3979,7 +3949,6 @@ pub mod walk_mut {
                 visitor.visit_function(it, flags)
             }
             Declaration::ClassDeclaration(it) => visitor.visit_class(it),
-            Declaration::UsingDeclaration(it) => visitor.visit_using_declaration(it),
             Declaration::TSTypeAliasDeclaration(it) => visitor.visit_ts_type_alias_declaration(it),
             Declaration::TSInterfaceDeclaration(it) => visitor.visit_ts_interface_declaration(it),
             Declaration::TSEnumDeclaration(it) => visitor.visit_ts_enum_declaration(it),

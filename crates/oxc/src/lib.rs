@@ -2,6 +2,12 @@
 //!
 //! <https://github.com/oxc-project/oxc>
 
+#[cfg(feature = "full")]
+mod compiler;
+
+#[cfg(feature = "full")]
+pub use compiler::{Compiler, CompilerInterface};
+
 pub mod allocator {
     #[doc(inline)]
     pub use oxc_allocator::*;
@@ -55,7 +61,7 @@ pub mod minifier {
     pub use oxc_minifier::*;
 }
 
-#[cfg(feature = "minifier")]
+#[cfg(feature = "mangler")]
 pub mod mangler {
     #[doc(inline)]
     pub use oxc_mangler::*;

@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, AstNode};
 
-fn no_constant_condition_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant condition")
         .with_help("Constant expression as a test condition is not allowed")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -23,13 +23,43 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// A constant expression (for example, a literal) as a test condition might be a typo or development trigger for a specific behavior.
+    /// A constant expression (for example, a literal) as a test condition might
+    /// be a typo or development trigger for a specific behavior.
+    ///
+    /// This rule disallows constant expressions in the test condition of:
+    ///
+    /// - `if`, `for`, `while`, or `do...while` statement
+    /// - `?`: ternary expression
+    ///
     ///
     /// ### Example
     ///
-    /// ```javascript
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// if (false) {
     ///    doSomethingUnfinished();
+    /// }
+    ///
+    /// if (new Boolean(x)) {
+    ///     doSomethingAlways();
+    /// }
+    /// if (x ||= true) {
+    ///     doSomethingAlways();
+    /// }
+    ///
+    /// do {
+    ///     doSomethingForever();
+    /// } while (x = -1);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// if (x === 0) {
+    ///     doSomething();
+    /// }
+    ///
+    /// while (typeof x === "undefined") {
+    ///     doSomething();
     /// }
     /// ```
     NoConstantCondition,

@@ -7,12 +7,12 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/scope
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "flags": "ScopeFlags(StrictMode | TsModuleBlock)",
         "id": 1,
         "node": "TSModuleDeclaration(Foo)",
         "symbols": [
           {
-            "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+            "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
             "id": 1,
             "name": "x",
             "node": "VariableDeclarator(x)",
@@ -21,19 +21,19 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/scope
         ]
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(NameSpaceModule | ValueModule)",
+        "flags": "SymbolFlags(NameSpaceModule | ValueModule)",
         "id": 0,
         "name": "Foo",
         "node": "TSModuleDeclaration(Foo)",
         "references": []
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 2,
         "name": "unresolved",
         "node": "VariableDeclarator(unresolved)",

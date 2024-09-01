@@ -6,14 +6,14 @@ use crate::{Allocator, Box};
 /// implementation containing blanket implementation for `IntoIn`, reflective implementation and a
 /// bunch of primitive conversions from Rust types to their arena equivalent.
 pub trait FromIn<'a, T>: Sized {
-    fn from_in(value: T, alloc: &'a Allocator) -> Self;
+    fn from_in(value: T, allocator: &'a Allocator) -> Self;
 }
 
 /// This trait works similarly to the standard library `Into` trait.
 /// It is similar to `FromIn` is reflective, A `FromIn` implementation also implicitly implements
 /// `IntoIn` for the opposite type.
 pub trait IntoIn<'a, T>: Sized {
-    fn into_in(self, alloc: &'a Allocator) -> T;
+    fn into_in(self, allocator: &'a Allocator) -> T;
 }
 
 /// `FromIn` is reflective
@@ -30,8 +30,8 @@ where
     U: FromIn<'a, T>,
 {
     #[inline]
-    fn into_in(self, alloc: &'a Allocator) -> U {
-        U::from_in(self, alloc)
+    fn into_in(self, allocator: &'a Allocator) -> U {
+        U::from_in(self, allocator)
     }
 }
 
@@ -39,28 +39,28 @@ where
 
 impl<'a> FromIn<'a, String> for crate::String<'a> {
     #[inline(always)]
-    fn from_in(value: String, alloc: &'a Allocator) -> Self {
-        crate::String::from_str_in(value.as_str(), alloc)
+    fn from_in(value: String, allocator: &'a Allocator) -> Self {
+        crate::String::from_str_in(value.as_str(), allocator)
     }
 }
 
 impl<'a> FromIn<'a, String> for &'a str {
     #[inline(always)]
-    fn from_in(value: String, alloc: &'a Allocator) -> Self {
-        crate::String::from_str_in(value.as_str(), alloc).into_bump_str()
+    fn from_in(value: String, allocator: &'a Allocator) -> Self {
+        crate::String::from_str_in(value.as_str(), allocator).into_bump_str()
     }
 }
 
 impl<'a, T> FromIn<'a, T> for Box<'a, T> {
     #[inline(always)]
-    fn from_in(value: T, alloc: &'a Allocator) -> Self {
-        Box::new_in(value, alloc)
+    fn from_in(value: T, allocator: &'a Allocator) -> Self {
+        Box::new_in(value, allocator)
     }
 }
 
 impl<'a, T> FromIn<'a, Option<T>> for Option<Box<'a, T>> {
     #[inline(always)]
-    fn from_in(value: Option<T>, alloc: &'a Allocator) -> Self {
-        value.map(|it| Box::new_in(it, alloc))
+    fn from_in(value: Option<T>, allocator: &'a Allocator) -> Self {
+        value.map(|it| Box::new_in(it, allocator))
     }
 }

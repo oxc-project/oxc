@@ -308,7 +308,7 @@ impl<'a> ParserImpl<'a> {
         let using_decl = self.parse_using_declaration(StatementContext::For)?;
 
         if matches!(self.cur_kind(), Kind::In) {
-            if using_decl.is_await {
+            if using_decl.kind.is_await() {
                 self.error(diagnostics::await_using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
@@ -320,11 +320,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-            let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(using_decl));
+            let init = ForStatementLeft::VariableDeclaration(self.ast.alloc(using_decl));
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(using_decl)));
+        let init = Some(ForStatementInit::VariableDeclaration(self.ast.alloc(using_decl)));
         self.parse_for_loop(span, init, r#await)
     }
 
