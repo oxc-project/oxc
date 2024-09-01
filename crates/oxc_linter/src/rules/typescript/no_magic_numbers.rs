@@ -358,17 +358,24 @@ impl NoMagicNumbers {
         return matches!(parent_node.kind(), AstKind::TSEnumMember(_));
     }
 
-    fn is_ts_numeric_literal<'a>(&self, parent_node: &AstNode<'a>, parent_parent_node: &AstNode<'a>) -> bool {
+    fn is_ts_numeric_literal<'a>(
+        &self,
+        parent_node: &AstNode<'a>,
+        parent_parent_node: &AstNode<'a>,
+    ) -> bool {
         if let AstKind::TSLiteralType(literal) = parent_node.kind() {
             if !matches!(
                 literal.literal,
                 TSLiteral::NumericLiteral(_) | TSLiteral::UnaryExpression(_)
             ) {
-                return false
+                return false;
             }
 
-            if matches!(parent_parent_node.kind(), AstKind::TSTypeAliasDeclaration(_) | AstKind::TSUnionType(_)) {
-                return true
+            if matches!(
+                parent_parent_node.kind(),
+                AstKind::TSTypeAliasDeclaration(_) | AstKind::TSUnionType(_)
+            ) {
+                return true;
             }
 
             // https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/eslint-plugin/src/rules/no-magic-numbers.ts#L209
@@ -418,7 +425,8 @@ impl NoMagicNumbers {
             return true;
         }
 
-        if self.ignore_numeric_literal_types && self.is_ts_numeric_literal(&parent, &parent_parent) {
+        if self.ignore_numeric_literal_types && self.is_ts_numeric_literal(&parent, &parent_parent)
+        {
             return true;
         }
 
