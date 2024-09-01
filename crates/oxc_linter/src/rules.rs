@@ -465,6 +465,7 @@ mod vitest {
     pub mod no_import_node_test;
     pub mod prefer_each;
     pub mod prefer_to_be_falsy;
+    pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
 }
@@ -887,6 +888,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::no_import_node_test,
     vitest::prefer_each,
     vitest::prefer_to_be_falsy,
+    vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::no_conditional_tests,
     vitest::require_local_test_context_for_concurrent_snapshots,
