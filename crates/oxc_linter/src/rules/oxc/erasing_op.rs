@@ -31,12 +31,16 @@ declare_oxc_lint!(
     /// The whole expression can be replaced by zero. This is most likely not the intended outcome and should probably be corrected.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // Bad
     /// let x = 1;
     /// let y = x * 0;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let x = 1;
     /// let y = 0;
     /// ```
