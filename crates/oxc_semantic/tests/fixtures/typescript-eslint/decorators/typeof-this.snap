@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/type
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(StrictMode | Function)",
         "id": 1,
         "node": "Function(decorator)",
         "symbols": []
@@ -16,12 +16,12 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/type
         "children": [
           {
             "children": [],
-            "flag": "ScopeFlags(StrictMode | Function)",
+            "flags": "ScopeFlags(StrictMode | Function)",
             "id": 3,
             "node": "Function(<anonymous>)",
             "symbols": [
               {
-                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "flags": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "baz",
                 "node": "FormalParameter(baz)",
@@ -30,24 +30,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/type
             ]
           }
         ],
-        "flag": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(StrictMode)",
         "id": 2,
         "node": "Class(Foo)",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "flags": "SymbolFlags(BlockScopedVariable | Function)",
         "id": 0,
         "name": "decorator",
         "node": "Function(decorator)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "decorator",
             "node_id": 7
@@ -55,7 +55,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/type
         ]
       },
       {
-        "flag": "SymbolFlags(Class)",
+        "flags": "SymbolFlags(Class)",
         "id": 1,
         "name": "Foo",
         "node": "Class(Foo)",

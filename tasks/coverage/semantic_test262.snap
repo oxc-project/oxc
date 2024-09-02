@@ -1,0 +1,215 @@
+commit: d62fa93c
+
+semantic_test262 Summary:
+AST Parsed     : 43765/43765 (100.00%)
+Positive Passed: 43735/43765 (99.93%)
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-decl-b-func-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-else-stmt-func-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-decl-no-else-func-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+
+tasks/coverage/test262/test/annexB/language/function-code/if-stmt-else-decl-func-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(9)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(11)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(7)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+
+tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-block-scoping.js
+semantic error: Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(7)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+rebuilt        : SymbolId(1): [ReferenceId(3), ReferenceId(9)]
+Unresolved reference IDs mismatch for "f":
+after transform: [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+rebuilt        : [ReferenceId(1), ReferenceId(2), ReferenceId(4), ReferenceId(5), ReferenceId(11)]
+
+tasks/coverage/test262/test/language/module-code/eval-rqstd-once.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns1", "ns3"]
+rebuilt        : ScopeId(0): ["global"]
+
+tasks/coverage/test262/test/language/module-code/eval-rqstd-order.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns1", "ns2"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/eval-self-once.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "global", "ns", "ns1"]
+rebuilt        : ScopeId(0): ["global"]
+
+tasks/coverage/test262/test/language/module-code/import-attributes/allow-nlt-before-with.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-many.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-trlng-comma.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-double.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/import-attributes/import-attribute-value-string-single.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous-as.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["y"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-ambiguous.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-as.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-dflt-thru-star-dflt.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-as.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["y"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found-dflt.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-named-err-not-found.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["x"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/instn-once.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["dflt1", "dflt2", "dflt3", "ns", "ns1", "x"]
+rebuilt        : ScopeId(0): ["x"]
+
+tasks/coverage/test262/test/language/module-code/instn-star-err-not-found.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["ns"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-body.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["foo"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection-tick.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["foo"]
+rebuilt        : ScopeId(0): []
+
+tasks/coverage/test262/test/language/module-code/top-level-await/module-import-rejection.js
+semantic error: Bindings mismatch:
+after transform: ScopeId(0): ["resolved"]
+rebuilt        : ScopeId(0): []
+

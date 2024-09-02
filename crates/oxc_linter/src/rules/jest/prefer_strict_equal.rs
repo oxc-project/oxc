@@ -9,10 +9,10 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-fn use_to_strict_equal(span0: Span) -> OxcDiagnostic {
+fn use_to_strict_equal(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Suggest using `toStrictEqual()`.")
         .with_help("Use `toStrictEqual()` instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -1,0 +1,34 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/member-expression.jsx
+---
+[
+  {
+    "children": [],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "A",
+        "node": "VariableDeclarator(A)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "A",
+            "node_id": 13
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "A",
+            "node_id": 22
+          }
+        ]
+      }
+    ]
+  }
+]

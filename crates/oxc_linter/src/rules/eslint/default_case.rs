@@ -6,10 +6,10 @@ use regex::{Regex, RegexBuilder};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn default_case_diagnostic(span0: Span) -> OxcDiagnostic {
+fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require default cases in switch statements.")
         .with_help("Add a default case.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

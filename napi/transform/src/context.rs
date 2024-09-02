@@ -121,8 +121,8 @@ impl<'a> TransformContext<'a> {
         self.program.borrow_mut()
     }
 
-    pub fn codegen<const MINIFY: bool>(&self) -> Codegen<'a, MINIFY> {
-        let codegen = Codegen::<MINIFY>::new();
+    pub fn codegen(&self) -> Codegen<'a> {
+        let codegen = Codegen::new();
         if self.source_map {
             codegen.enable_source_map(self.file_name(), self.source_text())
         } else {

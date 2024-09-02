@@ -2,15 +2,14 @@
 
 use std::{collections::HashMap, fs, path::Path, sync::Arc};
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_diagnostics::{NamedSource, OxcDiagnostic};
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc::allocator::Allocator;
+use oxc::codegen::CodeGenerator;
+use oxc::diagnostics::{NamedSource, OxcDiagnostic};
+use oxc::parser::Parser;
+use oxc::span::SourceType;
 use regex::Regex;
 
-use super::TESTS_ROOT;
-use crate::project_root;
+use crate::workspace_root;
 
 lazy_static::lazy_static! {
     // Returns a match for a test option. Test options have the form `// @name: value`
@@ -142,8 +141,11 @@ impl TestCaseContent {
         let test_unit_data = test_unit_data
             .into_iter()
             .filter_map(|mut unit| {
-                let source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
-                unit.source_type = source_type.with_module(is_module);
+                let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
+                if is_module {
+                    source_type = source_type.with_module(true);
+                }
+                unit.source_type = source_type;
                 Some(unit)
             })
             .collect::<Vec<_>>();
@@ -172,7 +174,7 @@ impl TestCaseContent {
     //   * `filename.errors.txt`
     fn get_error_files(path: &Path, options: &CompilerSettings) -> Vec<String> {
         let file_name = path.file_stem().unwrap().to_string_lossy();
-        let root = project_root().join(TESTS_ROOT).join("baselines/reference");
+        let root = workspace_root().join("typescript/tests/baselines/reference");
         let mut suffixes = vec![String::new()];
         suffixes.extend(options.modules.iter().map(|module| format!("(module={module})")));
         suffixes.extend(options.targets.iter().map(|target| format!("(target={target})")));
@@ -218,7 +220,7 @@ impl Baseline {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct BaselineFile {
     pub files: Vec<Baseline>,
 }
@@ -241,7 +243,7 @@ impl BaselineFile {
     }
 
     pub fn parse(path: &Path) -> Self {
-        let s = fs::read_to_string(path).unwrap();
+        let Ok(s) = fs::read_to_string(path) else { return Self::default() };
 
         let mut files: Vec<Baseline> = vec![];
         let mut is_diagnostic = false;

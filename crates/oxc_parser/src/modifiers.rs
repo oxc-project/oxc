@@ -297,12 +297,12 @@ impl<'a> ParserImpl<'a> {
         let mut modifiers = self.ast.vec();
         while self.at_modifier() {
             let span = self.start_span();
-            let modifier_flag = self.cur_kind().into();
+            let modifier_flags = self.cur_kind().into();
             let kind = self.cur_kind();
             self.bump_any();
             let modifier = self.modifier(kind, self.end_span(span))?;
             self.check_for_duplicate_modifiers(flags, &modifier);
-            flags.set(modifier_flag, true);
+            flags.set(modifier_flags, true);
             modifiers.push(modifier);
         }
         Ok(Modifiers::new(modifiers, flags))

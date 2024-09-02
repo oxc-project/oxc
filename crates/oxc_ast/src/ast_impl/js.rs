@@ -5,9 +5,7 @@ use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
-    operator::UnaryOperator,
-    reference::{ReferenceFlag, ReferenceId},
-    scope::ScopeFlags,
+    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
 };
 
 #[cfg(feature = "serialize")]
@@ -216,6 +214,20 @@ impl<'a> Expression<'a> {
         }
     }
 
+    pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
+        match self {
+            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSInstantiationExpression(expr) => {
+                expr.expression.get_inner_expression_mut()
+            }
+            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression_mut(),
+            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression_mut(),
+            _ => self,
+        }
+    }
+
     pub fn is_identifier_reference(&self) -> bool {
         matches!(self, Expression::Identifier(_))
     }
@@ -285,6 +297,14 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
+
+    pub fn is_require_call(&self) -> bool {
+        if let Self::CallExpression(call_expr) = self {
+            call_expr.is_require_call()
+        } else {
+            false
+        }
+    }
 }
 
 impl<'a> IdentifierName<'a> {
@@ -307,17 +327,18 @@ impl<'a> Hash for IdentifierReference<'a> {
 }
 
 impl<'a> IdentifierReference<'a> {
+    #[inline]
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
+        Self { span, name, reference_id: Cell::default() }
     }
 
-    pub fn new_read(span: Span, name: Atom<'a>, reference_id: Option<ReferenceId>) -> Self {
-        Self {
-            span,
-            name,
-            reference_id: Cell::new(reference_id),
-            reference_flag: ReferenceFlag::Read,
-        }
+    #[inline]
+    pub fn new_with_reference_id(
+        span: Span,
+        name: Atom<'a>,
+        reference_id: Option<ReferenceId>,
+    ) -> Self {
+        Self { span, name, reference_id: Cell::new(reference_id) }
     }
 
     #[inline]
@@ -604,6 +625,10 @@ impl<'a> AssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         self.as_simple_assignment_target().and_then(SimpleAssignmentTarget::get_expression)
     }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        self.as_simple_assignment_target_mut().and_then(SimpleAssignmentTarget::get_expression_mut)
+    }
 }
 
 impl<'a> SimpleAssignmentTarget<'a> {
@@ -621,6 +646,17 @@ impl<'a> SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
             Self::TSNonNullExpression(expr) => Some(&expr.expression),
             Self::TSTypeAssertion(expr) => Some(&expr.expression),
+            _ => None,
+        }
+    }
+
+    pub fn get_expression_mut(&mut self) -> Option<&mut Expression<'a>> {
+        match self {
+            Self::TSAsExpression(expr) => Some(&mut expr.expression),
+            Self::TSSatisfiesExpression(expr) => Some(&mut expr.expression),
+            Self::TSNonNullExpression(expr) => Some(&mut expr.expression),
+            Self::TSTypeAssertion(expr) => Some(&mut expr.expression),
+            Self::TSInstantiationExpression(expr) => Some(&mut expr.expression),
             _ => None,
         }
     }
@@ -694,10 +730,10 @@ impl<'a> Statement<'a> {
 }
 
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
-    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+    fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
         Statement::ExpressionStatement(Box::from_in(
             ExpressionStatement { span: expression.span(), expression },
-            alloc,
+            allocator,
         ))
     }
 }
@@ -729,7 +765,6 @@ impl<'a> Declaration<'a> {
             Self::VariableDeclaration(decl) => decl.is_typescript_syntax(),
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
-            Self::UsingDeclaration(_) => false,
             _ => true,
         }
     }
@@ -755,7 +790,7 @@ impl<'a> Declaration<'a> {
             Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
             Declaration::TSModuleDeclaration(decl) => decl.declare,
             Declaration::TSInterfaceDeclaration(decl) => decl.declare,
-            _ => false,
+            Declaration::TSImportEqualsDeclaration(_) => false,
         }
     }
 }
@@ -783,11 +818,17 @@ impl VariableDeclarationKind {
         matches!(self, Self::Const | Self::Let)
     }
 
+    pub fn is_await(&self) -> bool {
+        matches!(self, Self::AwaitUsing)
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Var => "var",
             Self::Const => "const",
             Self::Let => "let",
+            Self::Using => "using",
+            Self::AwaitUsing => "await using",
         }
     }
 }
@@ -989,7 +1030,7 @@ impl<'a> Function<'a> {
         generator: bool,
         r#async: bool,
         declare: bool,
-        this_param: Option<TSThisParameter<'a>>,
+        this_param: Option<Box<'a, TSThisParameter<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1009,6 +1050,20 @@ impl<'a> Function<'a> {
             return_type,
             scope_id: Cell::default(),
         }
+    }
+
+    /// Returns this [`Function`]'s name, if it has one.
+    #[inline]
+    pub fn name(&self) -> Option<Atom<'a>> {
+        self.id.as_ref().map(|id| id.name.clone())
+    }
+
+    /// Get the [`SymbolId`] this [`Function`] is bound to.
+    ///
+    /// Returns [`None`] for anonymous functions, or if semantic analysis was skipped.
+    #[inline]
+    pub fn symbol_id(&self) -> Option<SymbolId> {
+        self.id.as_ref().and_then(|id| id.symbol_id.get())
     }
 
     pub fn is_typescript_syntax(&self) -> bool {

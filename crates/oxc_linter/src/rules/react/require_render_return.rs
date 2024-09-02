@@ -14,10 +14,10 @@ use crate::{
     AstNode,
 };
 
-fn require_render_return_diagnostic(span0: Span) -> OxcDiagnostic {
+fn require_render_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Your render method should have a return statement")
         .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// var Hello = createReactClass({
     ///   render() {
     ///     <div>Hello</div>;

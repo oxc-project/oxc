@@ -3,9 +3,9 @@
 //! ECMAScript Minifier
 
 mod ast_passes;
-mod ast_util;
 mod compressor;
 mod keep_var;
+mod node_util;
 mod options;
 mod plugins;
 mod tri;
@@ -13,13 +13,13 @@ mod ty;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
-use oxc_mangler::{Mangler, ManglerBuilder};
+use oxc_mangler::Mangler;
 
 pub use crate::{
     ast_passes::{CompressorPass, RemoveDeadCode, RemoveSyntax},
     compressor::Compressor,
     options::CompressOptions,
-    plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig},
+    plugins::*,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -49,7 +49,7 @@ impl Minifier {
 
     pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
         Compressor::new(allocator, self.options.compress).build(program);
-        let mangler = self.options.mangle.then(|| ManglerBuilder::default().build(program));
+        let mangler = self.options.mangle.then(|| Mangler::default().build(program));
         MinifierReturn { mangler }
     }
 }

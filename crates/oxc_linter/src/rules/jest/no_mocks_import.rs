@@ -7,10 +7,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_mocks_import_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_mocks_import_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Mocks should not be manually imported from a `__mocks__` directory.")
         .with_help("Instead use `jest.mock` and import from the original module path.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-mocks-import.md>
@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// import thing from './__mocks__/index';
     /// require('./__mocks__/index');
     /// require('__mocks__');
-    ///
+    /// ```
     NoMocksImport,
     style
 );
@@ -48,7 +48,7 @@ impl Rule for NoMocksImport {
             return;
         };
 
-        for (reference_id, _) in require_reference_ids {
+        for reference_id in require_reference_ids {
             let reference = ctx.symbols().get_reference(*reference_id);
             let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
                 return;

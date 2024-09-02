@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-to-be-truthy): Use `toBeTruthy` instead.
+   ╭─[prefer_to_be_truthy.tsx:1:15]
+ 1 │ expect(false).toBe(true);
+   ·               ──────────
+   ╰────
+  help: Replace `toBe(true)` with `toBeTruthy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-truthy): Use `toBeTruthy` instead.
+   ╭─[prefer_to_be_truthy.tsx:1:21]
+ 1 │ expectTypeOf(false).toBe(true);
+   ·                     ──────────
+   ╰────
+  help: Replace `toBe(true)` with `toBeTruthy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-truthy): Use `toBeTruthy` instead.
+   ╭─[prefer_to_be_truthy.tsx:1:23]
+ 1 │ expect(wasSuccessful).toEqual(true);
+   ·                       ─────────────
+   ╰────
+  help: Replace `toEqual(true)` with `toBeTruthy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-truthy): Use `toBeTruthy` instead.
+   ╭─[prefer_to_be_truthy.tsx:1:40]
+ 1 │ expect(fs.existsSync('/path/to/file')).toStrictEqual(true);
+   ·                                        ───────────────────
+   ╰────
+  help: Replace `toStrictEqual(true)` with `toBeTruthy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-truthy): Use `toBeTruthy` instead.
+   ╭─[prefer_to_be_truthy.tsx:1:24]
+ 1 │ expect("a string").not.toBe(true);
+   ·                        ──────────
+   ╰────
+  help: Replace `toBe(true)` with `toBeTruthy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-truthy): Use `toBeTruthy` instead.
+   ╭─[prefer_to_be_truthy.tsx:1:24]
+ 1 │ expect("a string").not.toEqual(true);
+   ·                        ─────────────
+   ╰────
+  help: Replace `toEqual(true)` with `toBeTruthy()`.
+
+  ⚠ eslint-plugin-vitest(prefer-to-be-truthy): Use `toBeTruthy` instead.
+   ╭─[prefer_to_be_truthy.tsx:1:30]
+ 1 │ expectTypeOf("a string").not.toStrictEqual(true);
+   ·                              ───────────────────
+   ╰────
+  help: Replace `toStrictEqual(true)` with `toBeTruthy()`.

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 216
 ---
   ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
@@ -327,12 +326,12 @@ assertion_line: 216
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
-    ╭─[no_conditional_expect.tsx:9:37]
-  8 │                     .then(() => { throw new Error('oh noes!'); })
-  9 │                     .catch(error => expect(error).toBeInstanceOf(Error));
-    ·                                     ──────
- 10 │                 });
-    ╰────
+   ╭─[no_conditional_expect.tsx:5:37]
+ 4 │                     .then(() => { throw new Error('oh noes!'); })
+ 5 │                     .catch(error => expect(error).toBeInstanceOf(Error))
+   ·                                     ──────
+ 6 │                     .then(() => { throw new Error('oh noes!'); })
+   ╰────
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
@@ -345,20 +344,20 @@ assertion_line: 216
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:5:37]
- 4 │                     .then(() => { throw new Error('oh noes!'); })
- 5 │                     .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                     ──────
- 6 │                     .then(() => { throw new Error('oh noes!'); })
-   ╰────
+    ╭─[no_conditional_expect.tsx:9:37]
+  8 │                     .then(() => { throw new Error('oh noes!'); })
+  9 │                     .catch(error => expect(error).toBeInstanceOf(Error));
+    ·                                     ──────
+ 10 │                 });
+    ╰────
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:6:32]
- 5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
- 6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
+   ╭─[no_conditional_expect.tsx:4:32]
+ 3 │                       await Promise.resolve()
+ 4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
    ·                                         ──────
- 7 │                     });
+ 5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
    ╰────
   help: Avoid calling `expect` conditionally`
 
@@ -372,11 +371,11 @@ assertion_line: 216
   help: Avoid calling `expect` conditionally`
 
   ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
-   ╭─[no_conditional_expect.tsx:4:32]
- 3 │                       await Promise.resolve()
- 4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
-   ·                                         ──────
+   ╭─[no_conditional_expect.tsx:6:32]
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
+ 6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
+   ·                                         ──────
+ 7 │                     });
    ╰────
   help: Avoid calling `expect` conditionally`
 

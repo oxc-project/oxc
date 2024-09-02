@@ -13,10 +13,10 @@ use crate::{
     },
 };
 
-fn reorder_hooks(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+fn reorder_hooks(x1: &str, x2: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer having hooks in a consistent order.")
         .with_help(format!("{x1:?} hooks should be before any {x2:?} hooks"))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -166,7 +166,7 @@ impl PreferHooksInOrder {
         call_expr: &'a CallExpression<'_>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
+        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             *previous_hook_index = -1;

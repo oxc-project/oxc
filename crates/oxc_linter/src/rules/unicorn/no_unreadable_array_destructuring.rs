@@ -6,10 +6,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_unreadable_array_destructuring_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_unreadable_array_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow unreadable array destructuring")
         .with_help("Array destructuring may not contain consecutive ignored values.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

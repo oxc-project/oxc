@@ -102,7 +102,7 @@ declare_oxc_lint!(
     /// reduces the effectiveness of TypeScript overall.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```ts
     /// if (false) {
     ///   // @ts-ignore: Unreachable code error
     ///   console.log('hello');

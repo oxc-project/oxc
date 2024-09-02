@@ -4,17 +4,20 @@ mod jsx;
 mod jsx_self;
 mod jsx_source;
 mod options;
+mod refresh;
 mod utils;
 
 use std::rc::Rc;
 
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::TraverseCtx;
+use refresh::ReactRefresh;
 
 pub use self::{
     display_name::ReactDisplayName,
     jsx::ReactJsx,
-    options::{ReactJsxRuntime, ReactOptions},
+    options::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
 };
 use crate::context::Ctx;
 
@@ -29,10 +32,12 @@ use crate::context::Ctx;
 pub struct React<'a> {
     jsx: ReactJsx<'a>,
     display_name: ReactDisplayName<'a>,
+    refresh: ReactRefresh<'a>,
     jsx_plugin: bool,
     display_name_plugin: bool,
     jsx_self_plugin: bool,
     jsx_source_plugin: bool,
+    refresh_plugin: bool,
 }
 
 // Constructors
@@ -49,26 +54,58 @@ impl<'a> React<'a> {
             jsx_source_plugin,
             ..
         } = options;
+        let refresh = options.refresh.clone();
         Self {
             jsx: ReactJsx::new(options, Rc::clone(&ctx)),
-            display_name: ReactDisplayName::new(ctx),
+            display_name: ReactDisplayName::new(Rc::clone(&ctx)),
             jsx_plugin,
             display_name_plugin,
             jsx_self_plugin,
             jsx_source_plugin,
+            refresh_plugin: refresh.is_some(),
+            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ctx),
         }
     }
 }
 
 // Transforms
 impl<'a> React<'a> {
+    pub fn transform_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.refresh_plugin {
+            self.refresh.transform_program(program, ctx);
+        }
+    }
+
     pub fn transform_program_on_exit(
         &mut self,
         program: &mut Program<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if self.refresh_plugin {
+            self.refresh.transform_program_on_exit(program, ctx);
+        }
         if self.jsx_plugin {
             self.jsx.transform_program_on_exit(program, ctx);
+        }
+    }
+
+    pub fn transform_statements(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.refresh_plugin {
+            self.refresh.transform_statements(stmts, ctx);
+        }
+    }
+
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.refresh_plugin {
+            self.refresh.transform_statements_on_exit(stmts, ctx);
         }
     }
 
@@ -87,12 +124,16 @@ impl<'a> React<'a> {
     }
 
     pub fn transform_call_expression(
-        &self,
+        &mut self,
         call_expr: &mut CallExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if self.display_name_plugin {
             self.display_name.transform_call_expression(call_expr, ctx);
+        }
+
+        if self.refresh_plugin {
+            self.refresh.transform_call_expression(call_expr, ctx);
         }
     }
 
@@ -106,6 +147,26 @@ impl<'a> React<'a> {
         }
         if self.jsx_source_plugin {
             self.jsx.jsx_source.transform_jsx_opening_element(elem, ctx);
+        }
+    }
+
+    pub fn transform_expression_on_exit(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.refresh_plugin {
+            self.refresh.transform_expression_on_exit(expr, ctx);
+        }
+    }
+
+    pub fn transform_function_on_exit(
+        &mut self,
+        func: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.refresh_plugin {
+            self.refresh.transform_function_on_exit(func, ctx);
         }
     }
 }

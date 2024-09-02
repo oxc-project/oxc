@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_is_mounted_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_is_mounted_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use isMounted")
         .with_help("isMounted is on its way to being officially deprecated. You can use a _isMounted property to track the mounted status yourself.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -25,7 +25,7 @@ declare_oxc_lint!(
     /// and it is on its way to being officially deprecated.///
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// class Hello extends React.Component {
     ///     someMethod() {
     ///         if (!this.isMounted()) {

@@ -15,24 +15,24 @@ use crate::{
     },
 };
 
-fn too_many_describes(max: usize, repeat: &str, span0: Span) -> OxcDiagnostic {
+fn too_many_describes(max: usize, repeat: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
         .with_help(format!(
             "There should not be more than {max:?} describe{repeat} at the top level."
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn unexpected_test_case(span0: Span) -> OxcDiagnostic {
+fn unexpected_test_case(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
         .with_help("All test cases must be wrapped in a describe block.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn unexpected_hook(span0: Span) -> OxcDiagnostic {
+fn unexpected_hook(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
         .with_help("All hooks must be wrapped in a describe block.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Clone)]
@@ -57,20 +57,24 @@ declare_oxc_lint!(
     ///
     /// ```javascript
     /// // invalid
-    /// Above a describe block
+    ///
+    /// // Above a describe block
     /// test('my test', () => {});
     /// describe('test suite', () => {
     ///     it('test', () => {});
     /// });
+    ///
     /// // Below a describe block
     /// describe('test suite', () => {});
     /// test('my test', () => {});
+    ///
     /// // Same for hooks
     /// beforeAll('my beforeAll', () => {});
     /// describe('test suite', () => {});
     /// afterEach('my afterEach', () => {});
     ///
     /// //valid
+    ///
     /// // Above a describe block
     /// // In a describe block
     /// describe('test suite', () => {
@@ -80,9 +84,9 @@ declare_oxc_lint!(
     /// // In a nested describe block
     /// describe('test suite', () => {
     ///     test('my test', () => {});
-    /// describe('another test suite', () => {
-    ///     test('my other test', () => {});
-    /// });
+    ///     describe('another test suite', () => {
+    ///         test('my other test', () => {});
+    ///     });
     /// });
     /// ```
     ///
@@ -144,7 +148,7 @@ impl RequireTopLevelDescribe {
             return;
         };
 
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(ParsedGeneralJestFnCall { kind, .. })) =
+        let Some(ParsedJestFnCallNew::GeneralJest(ParsedGeneralJestFnCall { kind, .. })) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;

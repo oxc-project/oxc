@@ -1,7 +1,8 @@
+use oxc_allocator::Box;
 use oxc_ast::ast::{
     ArrayExpression, ArrayExpressionElement, ArrowFunctionExpression, Expression, Function,
-    ObjectExpression, ObjectPropertyKind, TSLiteral, TSMethodSignatureKind, TSTupleElement, TSType,
-    TSTypeOperatorOperator,
+    ObjectExpression, ObjectPropertyKind, TSLiteral, TSMethodSignatureKind, TSThisParameter,
+    TSTupleElement, TSType, TSTypeOperatorOperator,
 };
 use oxc_span::{GetSpan, Span, SPAN};
 
@@ -26,10 +27,12 @@ impl<'a> IsolatedDeclarations<'a> {
         return_type.map(|return_type| {
             self.ast.ts_type_function_type(
                 func.span,
-                self.ast.copy(&func.this_param),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.this_param) },
                 params,
                 return_type,
-                self.ast.copy(&func.type_parameters),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.type_parameters) },
             )
         })
     }
@@ -52,10 +55,11 @@ impl<'a> IsolatedDeclarations<'a> {
         return_type.map(|return_type| {
             self.ast.ts_type_function_type(
                 func.span,
-                None,
+                None::<Box<'a, TSThisParameter<'a>>>,
                 params,
                 return_type,
-                self.ast.copy(&func.type_parameters),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&func.type_parameters) },
             )
         })
     }
@@ -95,14 +99,17 @@ impl<'a> IsolatedDeclarations<'a> {
                             let params = self.transform_formal_parameters(&function.params);
                             return Some(self.ast.ts_signature_method_signature(
                                 object.span,
-                                self.ast.copy(&object.key),
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&object.key) },
                                 object.computed,
                                 false,
                                 TSMethodSignatureKind::Method,
-                                self.ast.copy(&function.this_param),
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&function.this_param) },
                                 params,
                                 return_type,
-                                self.ast.copy(&function.type_parameters),
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ast.copy(&function.type_parameters) },
                             ));
                         }
                     }
@@ -123,7 +130,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         false,
                         false,
                         is_const,
-                        self.ast.copy(&object.key),
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        unsafe { self.ast.copy(&object.key) },
                         type_annotation.map(|type_annotation| {
                             self.ast.ts_type_annotation(SPAN, type_annotation)
                         }),
@@ -169,18 +177,34 @@ impl<'a> IsolatedDeclarations<'a> {
     // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions
     pub fn transform_expression_to_ts_type(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
-            Expression::BooleanLiteral(lit) => Some(
-                self.ast.ts_type_literal_type(SPAN, TSLiteral::BooleanLiteral(self.ast.copy(lit))),
-            ),
-            Expression::NumericLiteral(lit) => Some(
-                self.ast.ts_type_literal_type(SPAN, TSLiteral::NumericLiteral(self.ast.copy(lit))),
-            ),
-            Expression::BigIntLiteral(lit) => Some(
-                self.ast.ts_type_literal_type(SPAN, TSLiteral::BigIntLiteral(self.ast.copy(lit))),
-            ),
-            Expression::StringLiteral(lit) => Some(
-                self.ast.ts_type_literal_type(SPAN, TSLiteral::StringLiteral(self.ast.copy(lit))),
-            ),
+            Expression::BooleanLiteral(lit) => Some(self.ast.ts_type_literal_type(
+                SPAN,
+                TSLiteral::BooleanLiteral({
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(lit) }
+                }),
+            )),
+            Expression::NumericLiteral(lit) => Some(self.ast.ts_type_literal_type(
+                SPAN,
+                TSLiteral::NumericLiteral({
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(lit) }
+                }),
+            )),
+            Expression::BigIntLiteral(lit) => Some(self.ast.ts_type_literal_type(
+                SPAN,
+                TSLiteral::BigIntLiteral({
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(lit) }
+                }),
+            )),
+            Expression::StringLiteral(lit) => Some(self.ast.ts_type_literal_type(
+                SPAN,
+                TSLiteral::StringLiteral({
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    unsafe { self.ast.copy(lit) }
+                }),
+            )),
             Expression::NullLiteral(lit) => Some(self.ast.ts_type_null_keyword(lit.span)),
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Some(self.ast.ts_type_undefined_keyword(ident.span)),
@@ -195,7 +219,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 if Self::can_infer_unary_expression(expr) {
                     Some(self.ast.ts_type_literal_type(
                         SPAN,
-                        TSLiteral::UnaryExpression(self.ast.copy(expr)),
+                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                        TSLiteral::UnaryExpression(unsafe { self.ast.copy(expr) }),
                     ))
                 } else {
                     None
@@ -215,7 +240,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 if expr.type_annotation.is_const_type_reference() {
                     self.transform_expression_to_ts_type(&expr.expression)
                 } else {
-                    Some(self.ast.copy(&expr.type_annotation))
+                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                    Some(unsafe { self.ast.copy(&expr.type_annotation) })
                 }
             }
             _ => None,

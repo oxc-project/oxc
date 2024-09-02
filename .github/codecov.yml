@@ -17,7 +17,6 @@ ignore:
   - "editor"
   - "napi"
   - "crates/oxc_ast/src/generated"
-  - "crates/oxc_traverse"
+  - "crates/oxc_traverse/src/generated"
   - "crates/oxc_wasm" # Remove this once wasm is completed
   - "crates/oxc_diagnostics"
-  - "crates/oxc_js_regex" # not ready

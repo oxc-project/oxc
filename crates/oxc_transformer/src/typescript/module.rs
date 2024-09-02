@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_syntax::reference::ReferenceFlag;
+use oxc_syntax::reference::ReferenceFlags;
 use oxc_traverse::TraverseCtx;
 
 use super::TypeScript;
@@ -59,9 +59,9 @@ impl<'a> TypeScript<'a> {
                     ));
                     self.ctx.ast.expression_call(
                         SPAN,
-                        arguments,
                         callee,
                         Option::<TSTypeParameterInstantiation>::None,
+                        arguments,
                         false,
                     )
                 }
@@ -85,14 +85,11 @@ impl<'a> TypeScript<'a> {
     ) -> Expression<'a> {
         match type_name {
             TSTypeName::IdentifierReference(ident) => {
-                ident.reference_flag = ReferenceFlag::Read;
-                if let Some(reference_id) = ident.reference_id.get() {
-                    let reference = ctx.symbols_mut().get_reference_mut(reference_id);
-                    *reference.flag_mut() = ReferenceFlag::Read;
-                } else {
-                    unreachable!()
-                }
-                self.ctx.ast.expression_from_identifier_reference(ctx.ast.copy(ident))
+                let ident = ident.clone();
+                let reference_id = ident.reference_id.get().unwrap();
+                let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+                *reference.flags_mut() = ReferenceFlags::Read;
+                self.ctx.ast.expression_from_identifier_reference(ident)
             }
             TSTypeName::QualifiedName(qualified_name) => self
                 .ctx

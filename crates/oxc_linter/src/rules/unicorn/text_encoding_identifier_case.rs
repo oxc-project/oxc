@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -9,8 +9,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn text_encoding_identifier_case_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`.")).with_label(span0)
+fn text_encoding_identifier_case_diagnostic(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,25 +26,27 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
-    /// // Fail
-    /// await fs.readFile(file, 'UTF-8');
+    /// import fs from 'node:fs/promises';
+    /// async function bad() {
+    ///     await fs.readFile(file, 'UTF-8');
     ///
-    /// await fs.readFile(file, 'ASCII');
+    ///     await fs.readFile(file, 'ASCII');
     ///
-    /// const string = buffer.toString('utf-8');
+    ///     const string = buffer.toString('utf-8');
+    /// }
     ///
-    /// // pass
+    /// async function good() {
+    ///     await fs.readFile(file, 'utf8');
     ///
-    /// await fs.readFile(file, 'utf8');
+    ///     await fs.readFile(file, 'ascii');
     ///
-    /// await fs.readFile(file, 'ascii');
-    ///
-    /// const string = buffer.toString('utf8');
+    ///     const string = buffer.toString('utf8');
+    /// }
     ///
     /// ```
     TextEncodingIdentifierCase,
     style,
-    pending
+    fix
 );
 
 impl Rule for TextEncodingIdentifierCase {
@@ -70,7 +72,10 @@ impl Rule for TextEncodingIdentifierCase {
             return;
         }
 
-        ctx.diagnostic(text_encoding_identifier_case_diagnostic(span, replacement, s));
+        ctx.diagnostic_with_fix(
+            text_encoding_identifier_case_diagnostic(span, replacement, s),
+            |fixer| fixer.replace(Span::new(span.start + 1, span.end - 1), replacement),
+        );
     }
 }
 
@@ -113,11 +118,9 @@ fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool 
         return false;
     };
 
-    let JSXElementName::Identifier(name) = &opening_elem.name else {
-        return false;
-    };
+    let Some(tag_name) = opening_elem.name.get_identifier_name() else { return false };
 
-    if !name.name.eq_ignore_ascii_case("meta") {
+    if !tag_name.eq_ignore_ascii_case("meta") {
         return false;
     }
 
@@ -167,5 +170,31 @@ fn test() {
         r#"<META CHARSET="ASCII" />"#,
     ];
 
-    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#""UTF-8""#, r#""utf8""#),
+        (r#""utf-8""#, r#""utf8""#),
+        (r"'utf-8'", r"'utf8'"),
+        (r#""Utf8""#, r#""utf8""#),
+        (r#""ASCII""#, r#""ascii""#),
+        (r#"fs.readFile?.(file, "UTF-8")"#, r#"fs.readFile?.(file, "utf8")"#),
+        (r#"fs?.readFile(file, "UTF-8")"#, r#"fs?.readFile(file, "utf8")"#),
+        (r#"readFile(file, "UTF-8")"#, r#"readFile(file, "utf8")"#),
+        (r#"fs.readFile(...file, "UTF-8")"#, r#"fs.readFile(...file, "utf8")"#),
+        (r#"new fs.readFile(file, "UTF-8")"#, r#"new fs.readFile(file, "utf8")"#),
+        (r#"fs.readFile(file, {encoding: "UTF-8"})"#, r#"fs.readFile(file, {encoding: "utf8"})"#),
+        (r#"fs.readFile("UTF-8")"#, r#"fs.readFile("utf8")"#),
+        (r#"fs.readFile(file, "UTF-8", () => {})"#, r#"fs.readFile(file, "utf8", () => {})"#),
+        (r#"fs.readFileSync(file, "UTF-8")"#, r#"fs.readFileSync(file, "utf8")"#),
+        (r#"fs[readFile](file, "UTF-8")"#, r#"fs[readFile](file, "utf8")"#),
+        (r#"fs["readFile"](file, "UTF-8")"#, r#"fs["readFile"](file, "utf8")"#),
+        (r#"await fs.readFile(file, "UTF-8",)"#, r#"await fs.readFile(file, "utf8",)"#),
+        (r#"fs.promises.readFile(file, "UTF-8",)"#, r#"fs.promises.readFile(file, "utf8",)"#),
+        (r#"whatever.readFile(file, "UTF-8",)"#, r#"whatever.readFile(file, "utf8",)"#),
+        (r#"<not-meta charset="utf-8" />"#, r#"<not-meta charset="utf8" />"#),
+        (r#"<meta not-charset="utf-8" />"#, r#"<meta not-charset="utf8" />"#),
+        (r#"<meta charset="ASCII" />"#, r#"<meta charset="ascii" />"#),
+        (r#"<META CHARSET="ASCII" />"#, r#"<META CHARSET="ascii" />"#),
+    ];
+
+    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

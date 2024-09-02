@@ -8,10 +8,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
 
-fn no_children_prop_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_children_prop_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid passing children using a prop.")
         .with_help("The canonical way to pass children in React is to use JSX elements")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// When not using JSX, the children should be passed as additional arguments to `React.createElement`.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```jsx
     /// // Bad
     /// <div children='Children' />
     ///

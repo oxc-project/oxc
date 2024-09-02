@@ -37,7 +37,7 @@ impl<'a> TypeScript<'a> {
         // every time a namespace declaration is encountered.
         let mut new_stmts = self.ctx.ast.vec();
 
-        for stmt in self.ctx.ast.move_statement_vec(&mut program.body) {
+        for stmt in self.ctx.ast.move_vec(&mut program.body) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
                     if !decl.declare {
@@ -45,9 +45,14 @@ impl<'a> TypeScript<'a> {
                             self.ctx.error(namespace_not_supported(decl.span));
                         }
 
-                        if let Some(transformed_stmt) =
-                            self.handle_nested(self.ctx.ast.copy(&decl).unbox(), None, ctx)
-                        {
+                        if let Some(transformed_stmt) = self.handle_nested(
+                            {
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                unsafe { self.ctx.ast.copy(&decl) }.unbox()
+                            },
+                            None,
+                            ctx,
+                        ) {
                             let name = decl.id.name();
                             if names.insert(name.clone()) {
                                 new_stmts
@@ -68,9 +73,14 @@ impl<'a> TypeScript<'a> {
                                     self.ctx.error(namespace_not_supported(decl.span));
                                 }
 
-                                if let Some(transformed_stmt) =
-                                    self.handle_nested(self.ctx.ast.copy(decl), None, ctx)
-                                {
+                                if let Some(transformed_stmt) = self.handle_nested(
+                                    {
+                                        // SAFETY: `ast.copy` is unsound! We need to fix.
+                                        unsafe { self.ctx.ast.copy(decl) }
+                                    },
+                                    None,
+                                    ctx,
+                                ) {
                                     let name = decl.id.name();
                                     if names.insert(name.clone()) {
                                         let declaration = self.create_variable_declaration(name);
@@ -339,7 +349,9 @@ impl<'a> TypeScript<'a> {
             // (_N.M = {}) or (N = {})
             let mut logical_right = {
                 // _N.M
-                let assign_left = if let Some(parent_export) = self.ctx.ast.copy(&parent_export) {
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                let parent_export = unsafe { self.ctx.ast.copy(&parent_export) };
+                let assign_left = if let Some(parent_export) = parent_export {
                     self.ctx.ast.simple_assignment_target_member_expression(
                         self.ctx.ast.member_expression_static(
                             SPAN,
@@ -390,9 +402,9 @@ impl<'a> TypeScript<'a> {
 
         let expr = self.ctx.ast.expression_call(
             SPAN,
-            arguments,
             callee,
             Option::<TSTypeParameterInstantiation>::None,
+            arguments,
             false,
         );
         self.ctx.ast.statement_expression(SPAN, expr)
@@ -448,7 +460,7 @@ impl<'a> TypeScript<'a> {
                 let Some(property_name) = declarator.id.get_identifier() else {
                     return;
                 };
-                if let Some(init) = &declarator.init {
+                if let Some(init) = &mut declarator.init {
                     declarator.init = Some(
                         self.ctx.ast.expression_assignment(
                             SPAN,
@@ -464,7 +476,7 @@ impl<'a> TypeScript<'a> {
                                     ),
                                 )
                                 .into(),
-                            self.ctx.ast.copy(init),
+                            self.ctx.ast.move_expression(init),
                         ),
                     );
                 }

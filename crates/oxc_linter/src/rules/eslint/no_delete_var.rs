@@ -6,8 +6,8 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_delete_var_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("variables should not be deleted").with_label(span0)
+fn no_delete_var_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("variables should not be deleted").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -16,13 +16,17 @@ pub struct NoDeleteVar;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The purpose of the delete operator is to remove a property from an object.
+    /// The purpose of the `delete` operator is to remove a property from an
+    /// object.
     ///
     /// ### Why is this bad?
     ///
-    /// Using the delete operator on a variable might lead to unexpected behavior.
+    /// Using the `delete` operator on a variable might lead to unexpected
+    /// behavior.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// var x;
     /// delete x;

@@ -336,7 +336,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used.
    ╭─[no_unused_vars.ts:1:7]
  1 │ const foo: number = 1;
-   ·       ─────┬─────
-   ·            ╰── 'foo' is declared here
+   ·       ─┬─
+   ·        ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.

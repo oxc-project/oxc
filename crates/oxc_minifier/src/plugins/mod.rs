@@ -1,3 +1,5 @@
+mod inject_global_variables;
 mod replace_global_defines;
 
-pub use replace_global_defines::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
+pub use inject_global_variables::*;
+pub use replace_global_defines::*;

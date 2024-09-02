@@ -10,10 +10,10 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn erasing_op_diagnostic(span0: Span) -> OxcDiagnostic {
+fn erasing_op_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected erasing operation. This expression will always evaluate to zero.")
         .with_help("This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -31,12 +31,16 @@ declare_oxc_lint!(
     /// The whole expression can be replaced by zero. This is most likely not the intended outcome and should probably be corrected.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// // Bad
     /// let x = 1;
     /// let y = x * 0;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let x = 1;
     /// let y = 0;
     /// ```

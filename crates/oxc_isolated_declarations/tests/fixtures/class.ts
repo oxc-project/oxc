@@ -35,3 +35,11 @@ export class Boo {
     readonly prop3: number = 1,
   ) {}
 }
+
+export class Bux {
+  private constructor(
+    public readonly prop: number = 0,
+    private readonly prop2: number = 1,
+    readonly prop3: number = 1,
+  ) {}
+}

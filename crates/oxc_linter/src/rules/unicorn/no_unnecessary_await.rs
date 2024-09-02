@@ -5,10 +5,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_unnecessary_await_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_unnecessary_await_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow awaiting non-promise values")
         .with_help("consider to remove the `await`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -22,8 +22,11 @@ declare_oxc_lint!(
     /// The `await` operator should only be used on `Promise` values.
     ///
     /// ### Example
+    ///
     /// ```javascript
-    /// await await promise;
+    /// async function bad() {
+    ///     await await promise;
+    /// }
     /// ```
     NoUnnecessaryAwait,
     correctness,

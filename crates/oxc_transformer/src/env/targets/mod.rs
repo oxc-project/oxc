@@ -12,6 +12,7 @@ use serde::Deserialize;
 
 use self::version::Version;
 
+pub use self::query::Targets;
 pub mod query;
 pub mod version;
 

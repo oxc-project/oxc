@@ -1,6 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
@@ -188,10 +189,9 @@ impl<'a> ParserImpl<'a> {
                 }
             }
             Kind::LParen => self.parse_parenthesized_expression(span),
-            Kind::Slash | Kind::SlashEq => {
-                let literal = self.parse_literal_regexp();
-                Ok(self.ast.expression_from_reg_exp_literal(literal))
-            }
+            Kind::Slash | Kind::SlashEq => self
+                .parse_literal_regexp()
+                .map(|literal| self.ast.expression_from_reg_exp_literal(literal)),
             // JSXElement, JSXFragment
             Kind::LAngle if self.source_type.is_jsx() => self.parse_jsx_expression(),
             _ => self.parse_identifier_expression(),
@@ -226,7 +226,7 @@ impl<'a> ParserImpl<'a> {
             )
         };
 
-        Ok(if self.preserve_parens {
+        Ok(if self.options.preserve_parens {
             self.ast.expression_parenthesized(paren_span, expression)
         } else {
             expression
@@ -335,20 +335,46 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.big_int_literal(self.end_span(span), raw, base))
     }
 
-    pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
+    pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral<'a>> {
         let span = self.start_span();
 
         // split out pattern
-        let (pattern_end, flags) = self.read_regex();
+        let (pattern_end, flags) = self.read_regex()?;
         let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
         let pattern = &self.source_text[pattern_start as usize..pattern_end as usize];
-
         self.bump_any();
-        self.ast.reg_exp_literal(
+
+        let _pattern = self
+            .options
+            .parse_regular_expression
+            .then(|| self.parse_regex_pattern(pattern_start, pattern, flags));
+
+        Ok(self.ast.reg_exp_literal(
             self.end_span(span),
             EmptyObject,
             RegExp { pattern: self.ast.atom(pattern), flags },
-        )
+        ))
+    }
+
+    fn parse_regex_pattern(
+        &mut self,
+        span_offset: u32,
+        pattern: &'a str,
+        flags: RegExpFlags,
+    ) -> Option<Pattern<'a>> {
+        use oxc_regular_expression::{ParserOptions, PatternParser};
+        let options = ParserOptions {
+            span_offset,
+            unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
+            unicode_sets_mode: flags.contains(RegExpFlags::V),
+        };
+        match PatternParser::new(self.ast.allocator, pattern, options).parse() {
+            Ok(regular_expression) => Some(regular_expression),
+            Err(diagnostic) => {
+                self.error(diagnostic);
+                None
+            }
+        }
     }
 
     pub(crate) fn parse_literal_string(&mut self) -> Result<StringLiteral<'a>> {
@@ -804,9 +830,9 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RParen)?;
         Ok(self.ast.expression_call(
             self.end_span(lhs_span),
-            call_arguments,
             lhs,
             type_parameters,
+            call_arguments,
             optional,
         ))
     }

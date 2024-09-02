@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_anonymous_default_export_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn no_anonymous_default_export_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow anonymous functions and classes as the default export")
         .with_help(format!("The {x1} should be named."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -15,10 +15,10 @@ use crate::{
     },
 };
 
-fn no_duplicate_hooks_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
+fn no_duplicate_hooks_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow duplicate setup and teardown hooks.")
         .with_help(format!("Duplicate {x0:?} in describe block."))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -127,7 +127,7 @@ impl NoDuplicateHooks {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
+        let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)
         else {
             return;

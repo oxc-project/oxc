@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn tabindex_no_positive_diagnostic(span0: Span) -> OxcDiagnostic {
+fn tabindex_no_positive_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid positive integer values for tabIndex.")
         .with_help("Change the tabIndex prop to a non-negative value")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,13 +21,19 @@ pub struct TabindexNoPositive;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces that positive values for the tabIndex attribute are not used in JSX.
+    ///
+    /// Enforces that positive values for the `tabIndex` attribute are not used
+    /// in JSX.
     ///
     /// ### Why is this bad?
-    /// Using tabIndex values greater than 0 can make navigation and interaction difficult for keyboard and assistive technology users, disrupting the logical order of content.
+    ///
+    /// Using `tabIndex` values greater than `0` can make navigation and
+    /// interaction difficult for keyboard and assistive technology users,
+    /// disrupting the logical order of content.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// ```jsx
     /// // Bad
     /// <span tabIndex="1">foo</span>
     ///
@@ -36,7 +42,8 @@ declare_oxc_lint!(
     /// <span tabIndex="-1">bar</span>
     /// ```
     TabindexNoPositive,
-    correctness
+    correctness,
+    pending
 );
 
 impl Rule for TabindexNoPositive {

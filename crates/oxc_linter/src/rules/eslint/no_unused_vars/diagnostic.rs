@@ -1,6 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use super::Symbol;
 

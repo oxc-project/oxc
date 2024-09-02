@@ -147,6 +147,10 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_property_definition(def);
     }
 
+    pub fn transform_accessor_property(&mut self, def: &mut AccessorProperty<'a>) {
+        self.annotations.transform_accessor_property(def);
+    }
+
     pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         self.annotations.transform_statements(stmts);
     }

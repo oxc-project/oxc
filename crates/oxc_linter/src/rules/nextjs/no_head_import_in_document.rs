@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_head_import_in_document_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_head_import_in_document_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `next/head` in `pages/_document.js`.")
         .with_help("See https://nextjs.org/docs/messages/no-head-import-in-document")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

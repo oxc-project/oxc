@@ -6,10 +6,10 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-fn prefer_logical_operator_over_ternary_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_logical_operator_over_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using a logical operator over a ternary.")
         .with_help("Switch to \"||\" or \"??\" operator")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

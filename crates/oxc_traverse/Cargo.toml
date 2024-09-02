@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_traverse"
-version                = "0.23.1"
+version                = "0.25.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true

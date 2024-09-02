@@ -12,12 +12,12 @@ fn missing_message(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Pass a message to the {x0:1} constructor.")).with_label(span1)
 }
 
-fn empty_message(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span0)
+fn empty_message(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span)
 }
 
-fn not_string(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should be a string.").with_label(span0)
+fn not_string(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Error message should be a string.").with_label(span)
 }
 
 #[derive(Default, Debug, Clone)]

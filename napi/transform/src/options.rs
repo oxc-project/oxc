@@ -35,6 +35,7 @@ impl From<TypeScriptBindingOptions> for TypeScriptOptions {
                 .unwrap_or(ops.only_remove_type_imports),
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
+            optimize_const_enums: false,
         }
     }
 }
@@ -168,6 +169,7 @@ impl From<ES2015BindingOptions> for ES2015Options {
 ///
 /// @see {@link transform}
 #[napi(object)]
+#[derive(Default)]
 pub struct TransformOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,

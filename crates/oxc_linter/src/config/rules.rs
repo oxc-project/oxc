@@ -8,12 +8,16 @@ use serde::{
     Deserialize,
 };
 
-use crate::AllowWarnDeny;
+use crate::{
+    rules::{RuleEnum, RULES},
+    AllowWarnDeny,
+};
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
 // <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
+// Note: when update document comment, also update `DummyRuleMap`'s description in this file.
 #[derive(Debug, Clone, Default)]
 pub struct OxlintRules(Vec<ESLintRule>);
 
@@ -42,7 +46,15 @@ impl JsonSchema for OxlintRules {
             Toggle(AllowWarnDeny),
             ToggleAndConfig(Vec<serde_json::Value>),
         }
-        gen.subschema_for::<FxHashMap<String, DummyRule>>()
+
+        #[allow(unused)]
+        #[derive(Debug, JsonSchema)]
+        #[schemars(
+            description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+        )]
+        struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
+
+        gen.subschema_for::<DummyRuleMap>()
     }
 }
 
@@ -85,7 +97,14 @@ impl<'de> Deserialize<'de> for OxlintRules {
 
 fn parse_rule_key(name: &str) -> (String, String) {
     let Some((plugin_name, rule_name)) = name.split_once('/') else {
-        return ("eslint".to_string(), name.to_string());
+        return (
+            RULES
+                .iter()
+                .find(|r| r.name() == name)
+                .map_or("unknown_plugin", RuleEnum::plugin_name)
+                .to_string(),
+            name.to_string(),
+        );
     };
 
     let (oxlint_plugin_name, rule_name) = match plugin_name {
@@ -186,7 +205,7 @@ mod test {
 
         let r3 = rules.next().unwrap();
         assert_eq!(r3.rule_name, "dummy");
-        assert_eq!(r3.plugin_name, "eslint");
+        assert_eq!(r3.plugin_name, "unknown_plugin");
         assert!(r3.severity.is_warn_deny());
         assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
 

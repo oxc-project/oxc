@@ -16,7 +16,6 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
 
     match kind {
         AstKind::Program(_) => {
-            js::check_labeled_statement(ctx);
             js::check_duplicate_class_elements(ctx);
         }
         AstKind::BindingIdentifier(ident) => {
@@ -47,6 +46,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::BreakStatement(stmt) => js::check_break_statement(stmt, node, ctx),
         AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, node, ctx),
         AstKind::LabeledStatement(stmt) => {
+            js::check_labeled_statement(stmt, node, ctx);
             js::check_function_declaration(&stmt.body, true, ctx);
         }
         AstKind::ForInStatement(stmt) => {
@@ -99,6 +99,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
         AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
+        AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
         AstKind::TSTypeParameterDeclaration(declaration) => {
             ts::check_ts_type_parameter_declaration(declaration, ctx);
         }

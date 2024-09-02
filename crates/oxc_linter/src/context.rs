@@ -41,6 +41,7 @@ pub struct LintContext<'a> {
     eslint_config: Arc<OxlintConfig>,
 
     // states
+    current_plugin_name: &'static str,
     current_plugin_prefix: &'static str,
     current_rule_name: &'static str,
     #[cfg(debug_assertions)]
@@ -60,6 +61,7 @@ pub struct LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
+    const WEBSITE_BASE_URL: &'static str = "https://oxc.rs/docs/guide/usage/linter/rules";
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
@@ -81,6 +83,7 @@ impl<'a> LintContext<'a> {
             fix: FixKind::None,
             file_path: file_path.into(),
             eslint_config: Arc::new(OxlintConfig::default()),
+            current_plugin_name: "eslint",
             current_plugin_prefix: "eslint",
             current_rule_name: "",
             #[cfg(debug_assertions)]
@@ -102,6 +105,7 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
+        self.current_plugin_name = plugin;
         self.current_plugin_prefix = plugin_name_to_prefix(plugin);
         self
     }
@@ -209,16 +213,24 @@ impl<'a> LintContext<'a> {
         self.diagnostics.borrow().iter().cloned().collect::<Vec<_>>()
     }
 
-    fn add_diagnostic(&self, message: Message<'a>) {
-        if !self.disable_directives.contains(self.current_rule_name, message.span()) {
-            let mut message = message;
-            message.error =
-                message.error.with_error_code(self.current_plugin_prefix, self.current_rule_name);
-            if message.error.severity != self.severity {
-                message.error = message.error.with_severity(self.severity);
-            }
-            self.diagnostics.borrow_mut().push(message);
+    fn add_diagnostic(&self, mut message: Message<'a>) {
+        if self.disable_directives.contains(self.current_rule_name, message.span()) {
+            return;
         }
+        message.error = message
+            .error
+            .with_error_code(self.current_plugin_prefix, self.current_rule_name)
+            .with_url(format!(
+                "{}/{}/{}.html",
+                Self::WEBSITE_BASE_URL,
+                self.current_plugin_name,
+                self.current_rule_name
+            ));
+        if message.error.severity != self.severity {
+            message.error = message.error.with_severity(self.severity);
+        }
+
+        self.diagnostics.borrow_mut().push(message);
     }
 
     /// Report a lint rule violation.

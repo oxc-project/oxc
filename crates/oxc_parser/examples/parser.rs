@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_span::SourceType;
 
 // Instruction:
@@ -17,7 +17,9 @@ fn main() -> Result<(), String> {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let now = std::time::Instant::now();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let ret = Parser::new(&allocator, &source_text, source_type)
+        .with_options(ParseOptions { parse_regular_expression: true, ..ParseOptions::default() })
+        .parse();
     let elapsed_time = now.elapsed();
     println!("{}ms.", elapsed_time.as_millis());
 
