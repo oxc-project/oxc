@@ -18,16 +18,16 @@ export interface Es2015BindingOptions {
 }
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
-export declare function isolatedDeclaration(filename: string, sourceText: string, options: IsolatedDeclarationsOptions): IsolatedDeclarationsResult
+function isolatedDeclaration(filename: string, sourceText: string, options: IsolatedDeclarationsOptions): IsolatedDeclarationsResult
 
 export interface IsolatedDeclarationsOptions {
   sourcemap: boolean
 }
 
 export interface IsolatedDeclarationsResult {
+  code: string
+  map?: SourceMap
   errors: Array<string>
-  sourceText: string
-  sourceMap?: SourceMap
 }
 
 /**
@@ -136,7 +136,7 @@ export interface SourceMap {
  * @returns an object containing the transformed code, source maps, and any
  * errors that occurred during parsing or transformation.
  */
-export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
+function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
 
 /**
  * Options for transforming a JavaScript or TypeScript file.
@@ -180,13 +180,13 @@ export interface TransformResult {
    *
    * If parsing failed, this will be an empty string.
    */
-  sourceText: string
+  code: string
   /**
    * The source map for the transformed code.
    *
    * This will be set if {@link TransformOptions#sourcemap} is `true`.
    */
-  sourceMap?: SourceMap
+  map?: SourceMap
   /**
    * The `.d.ts` declaration file for the transformed code. Declarations are
    * only generated if `declaration` is set to `true` and a TypeScript file
