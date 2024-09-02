@@ -15,9 +15,9 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-enum NoMagicNumberReportReason<'a> {
-    MustUseConst(&'a Span),
-    NoMagicNumber(&'a Span, &'a str),
+enum NoMagicNumberReportReason {
+    MustUseConst,
+    NoMagicNumber,
 }
 
 fn must_use_const_diagnostic(span: Span) -> OxcDiagnostic {
@@ -275,16 +275,13 @@ impl Rule for NoMagicNumbers {
             }
 
             let parent = nodes.parent_node(config.node.id()).unwrap();
+            let span = config.node.kind().span();
 
-            if let Some(reason) =
-                self.get_report_reason(parent, &config, &config.node.kind().span())
-            {
+            if let Some(reason) = self.get_report_reason(parent) {
                 ctx.diagnostic(match reason {
-                    NoMagicNumberReportReason::MustUseConst(span) => {
-                        must_use_const_diagnostic(*span)
-                    }
-                    NoMagicNumberReportReason::NoMagicNumber(span, raw) => {
-                        no_magic_number_diagnostic(*span, raw)
+                    NoMagicNumberReportReason::MustUseConst => must_use_const_diagnostic(span),
+                    NoMagicNumberReportReason::NoMagicNumber => {
+                        no_magic_number_diagnostic(span, &config.raw)
                     }
                 });
             }
@@ -430,7 +427,7 @@ impl NoMagicNumbers {
         matches!(parent_node.kind(), AstKind::TSEnumMember(_))
     }
 
-    fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, ctx: &AstNodes<'a>) -> bool {
+    fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
         if let AstKind::TSLiteralType(literal) = parent_node.kind() {
             if !matches!(
                 literal.literal,
@@ -439,7 +436,7 @@ impl NoMagicNumbers {
                 return false;
             }
 
-            let mut node = ctx.parent_node(parent_node.id()).unwrap();
+            let mut node = nodes.parent_node(parent_node.id()).unwrap();
 
             while matches!(
                 node.kind(),
@@ -447,7 +444,7 @@ impl NoMagicNumbers {
                     | AstKind::TSIntersectionType(_)
                     | AstKind::TSParenthesizedType(_)
             ) {
-                node = ctx.parent_node(node.id()).unwrap();
+                node = nodes.parent_node(node.id()).unwrap();
             }
 
             return matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_));
@@ -460,7 +457,10 @@ impl NoMagicNumbers {
         matches!(parent_node.kind(), AstKind::PropertyDefinition(property) if property.readonly)
     }
 
-    fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, ctx: &AstNodes<'a>) -> bool {
+    fn is_ts_indexed_access_type<'a>(
+        parent_parent_node: &AstNode<'a>,
+        nodes: &AstNodes<'a>,
+    ) -> bool {
         let mut node = parent_parent_node;
 
         while matches!(
@@ -469,18 +469,18 @@ impl NoMagicNumbers {
                 | AstKind::TSIntersectionType(_)
                 | AstKind::TSParenthesizedType(_)
         ) {
-            node = ctx.parent_node(node.id()).unwrap();
+            node = nodes.parent_node(node.id()).unwrap();
         }
 
         matches!(node.kind(), AstKind::TSIndexedAccessType(_))
     }
 
-    fn is_skipable<'a>(&self, config: &InternConfig<'a>, ctx: &AstNodes<'a>) -> bool {
+    fn is_skipable<'a>(&self, config: &InternConfig<'a>, nodes: &AstNodes<'a>) -> bool {
         if self.is_ignore_value(config.value) {
             return true;
         }
 
-        let parent = ctx.parent_node(config.node.id()).unwrap();
+        let parent = nodes.parent_node(config.node.id()).unwrap();
 
         if self.ignore_enums && NoMagicNumbers::is_ts_enum(parent) {
             return true;
@@ -512,17 +512,19 @@ impl NoMagicNumbers {
             return true;
         }
 
-        let parent_parent = ctx.parent_node(parent.id()).unwrap();
+        let parent_parent = nodes.parent_node(parent.id()).unwrap();
 
         if NoMagicNumbers::is_parse_int_radix(config.value, parent_parent) {
             return true;
         }
 
-        if self.ignore_numeric_literal_types && NoMagicNumbers::is_ts_numeric_literal(parent, ctx) {
+        if self.ignore_numeric_literal_types && NoMagicNumbers::is_ts_numeric_literal(parent, nodes)
+        {
             return true;
         }
 
-        if self.ignore_type_indexes && NoMagicNumbers::is_ts_indexed_access_type(parent_parent, ctx)
+        if self.ignore_type_indexes
+            && NoMagicNumbers::is_ts_indexed_access_type(parent_parent, nodes)
         {
             return true;
         }
@@ -530,29 +532,24 @@ impl NoMagicNumbers {
         false
     }
 
-    fn get_report_reason<'a>(
-        &self,
-        parent: &'a AstNode<'a>,
-        config: &'a InternConfig<'a>,
-        span: &'a Span,
-    ) -> Option<NoMagicNumberReportReason<'a>> {
+    fn get_report_reason<'a>(&self, parent: &'a AstNode<'a>) -> Option<NoMagicNumberReportReason> {
         match parent.kind() {
             AstKind::VariableDeclarator(declarator) => {
                 if self.enforce_const && declarator.kind != VariableDeclarationKind::Const {
-                    return Some(NoMagicNumberReportReason::MustUseConst(span));
+                    return Some(NoMagicNumberReportReason::MustUseConst);
                 }
 
                 None
             }
             AstKind::AssignmentExpression(expression) => {
                 if matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_)) {
-                    return Some(NoMagicNumberReportReason::NoMagicNumber(span, &config.raw));
+                    return Some(NoMagicNumberReportReason::NoMagicNumber);
                 }
 
                 None
             }
             AstKind::JSXExpressionContainer(_) => None,
-            _ => return Some(NoMagicNumberReportReason::NoMagicNumber(span, &config.raw)),
+            _ => Some(NoMagicNumberReportReason::NoMagicNumber),
         }
     }
 }
