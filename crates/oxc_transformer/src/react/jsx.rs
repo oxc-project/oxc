@@ -782,16 +782,13 @@ impl<'a> ReactJsx<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let object = match &expr.object {
-            JSXMemberExpressionObject::Identifier(ident) => {
+            JSXMemberExpressionObject::IdentifierReference(ident) => {
                 if ident.name == "this" {
                     self.ast().expression_this(ident.span)
                 } else {
                     let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
                     self.ast().expression_from_identifier_reference(ident)
                 }
-            }
-            JSXMemberExpressionObject::IdentifierReference(ident) => {
-                self.ast().expression_from_identifier_reference(ident.as_ref().clone())
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 self.transform_jsx_member_expression(expr, ctx)

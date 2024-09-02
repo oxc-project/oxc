@@ -3517,7 +3517,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXMemberExpressionObject<'
     type Cloned = JSXMemberExpressionObject<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => JSXMemberExpressionObject::Identifier(it.clone_in(allocator)),
             Self::IdentifierReference(it) => {
                 JSXMemberExpressionObject::IdentifierReference(it.clone_in(allocator))
             }

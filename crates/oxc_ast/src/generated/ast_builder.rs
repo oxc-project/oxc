@@ -12971,37 +12971,6 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.jsx_member_expression(span, object, property), self.allocator)
     }
 
-    /// Build a [`JSXMemberExpressionObject::Identifier`]
-    ///
-    /// This node contains a [`JSXIdentifier`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// - span: The [`Span`] covering this node
-    /// - name: The name of the identifier.
-    #[inline]
-    pub fn jsx_member_expression_object_jsx_identifier<A>(
-        self,
-        span: Span,
-        name: A,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        A: IntoIn<'a, Atom<'a>>,
-    {
-        JSXMemberExpressionObject::Identifier(self.alloc(self.jsx_identifier(span, name)))
-    }
-
-    /// Convert a [`JSXIdentifier`] into a [`JSXMemberExpressionObject::Identifier`]
-    #[inline]
-    pub fn jsx_member_expression_object_from_jsx_identifier<T>(
-        self,
-        inner: T,
-    ) -> JSXMemberExpressionObject<'a>
-    where
-        T: IntoIn<'a, Box<'a, JSXIdentifier<'a>>>,
-    {
-        JSXMemberExpressionObject::Identifier(inner.into_in(self.allocator))
-    }
-
     /// Build a [`JSXMemberExpressionObject::IdentifierReference`]
     ///
     /// This node contains a [`IdentifierReference`] that will be stored in the memory arena.

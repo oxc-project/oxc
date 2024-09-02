@@ -2243,7 +2243,6 @@ impl<'a> Gen for JSXIdentifier<'a> {
 impl<'a> Gen for JSXMemberExpressionObject<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::Identifier(ident) => ident.gen(p, ctx),
             Self::IdentifierReference(ident) => ident.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
         }

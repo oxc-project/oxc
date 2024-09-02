@@ -3329,9 +3329,6 @@ pub(crate) unsafe fn walk_jsx_member_expression_object<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_jsx_member_expression_object(&mut *node, ctx);
     match &mut *node {
-        JSXMemberExpressionObject::Identifier(node) => {
-            walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
-        }
         JSXMemberExpressionObject::IdentifierReference(node) => {
             walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
         }

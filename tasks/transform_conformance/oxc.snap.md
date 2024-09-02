@@ -640,57 +640,61 @@ Passed: 10/39
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
   x Output mismatch
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(13): [ReferenceId(22), ReferenceId(44),
-  | ReferenceId(45)]
+  | after transform: SymbolId(9): [ReferenceId(17), ReferenceId(42)]
+  | rebuilt        : SymbolId(11): [ReferenceId(33)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(13): [ReferenceId(22), ReferenceId(45),
+  | ReferenceId(46)]
   | rebuilt        : SymbolId(15): [ReferenceId(2), ReferenceId(45)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(14): [ReferenceId(24), ReferenceId(46),
-  | ReferenceId(47)]
+  | after transform: SymbolId(14): [ReferenceId(24), ReferenceId(47),
+  | ReferenceId(48)]
   | rebuilt        : SymbolId(16): [ReferenceId(5), ReferenceId(47)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(15): [ReferenceId(26), ReferenceId(48),
-  | ReferenceId(49)]
+  | after transform: SymbolId(15): [ReferenceId(26), ReferenceId(49),
+  | ReferenceId(50)]
   | rebuilt        : SymbolId(17): [ReferenceId(11), ReferenceId(49)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(16): [ReferenceId(28), ReferenceId(50),
-  | ReferenceId(51)]
+  | after transform: SymbolId(16): [ReferenceId(28), ReferenceId(51),
+  | ReferenceId(52)]
   | rebuilt        : SymbolId(18): [ReferenceId(34), ReferenceId(51)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(17): [ReferenceId(30), ReferenceId(52),
-  | ReferenceId(53)]
+  | after transform: SymbolId(17): [ReferenceId(30), ReferenceId(53),
+  | ReferenceId(54)]
   | rebuilt        : SymbolId(19): [ReferenceId(38), ReferenceId(53)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(18): [ReferenceId(32), ReferenceId(54),
-  | ReferenceId(55)]
+  | after transform: SymbolId(18): [ReferenceId(32), ReferenceId(55),
+  | ReferenceId(56)]
   | rebuilt        : SymbolId(20): [ReferenceId(42), ReferenceId(55)]
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(44): Some("_c")
+  | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(44): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(46): Some("_c2")
+  | after transform: ReferenceId(47): Some("_c2")
   | rebuilt        : ReferenceId(46): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(48): Some("_c3")
+  | after transform: ReferenceId(49): Some("_c3")
   | rebuilt        : ReferenceId(48): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(50): Some("_c4")
+  | after transform: ReferenceId(51): Some("_c4")
   | rebuilt        : ReferenceId(50): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(52): Some("_c5")
+  | after transform: ReferenceId(53): Some("_c5")
   | rebuilt        : ReferenceId(52): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(54): Some("_c6")
+  | after transform: ReferenceId(55): Some("_c6")
   | rebuilt        : ReferenceId(54): None
 
   x Unresolved references mismatch:

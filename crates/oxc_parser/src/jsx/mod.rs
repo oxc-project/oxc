@@ -442,10 +442,6 @@ impl<'a> ParserImpl<'a> {
         }
         match (&lhs.object, &rhs.object) {
             (
-                JSXMemberExpressionObject::Identifier(lhs),
-                JSXMemberExpressionObject::Identifier(rhs),
-            ) => lhs.name == rhs.name,
-            (
                 JSXMemberExpressionObject::IdentifierReference(lhs),
                 JSXMemberExpressionObject::IdentifierReference(rhs),
             ) => lhs.name == rhs.name,

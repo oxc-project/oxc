@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 318/1021
+Passed: 314/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -4852,8 +4852,11 @@ TS(18010)
 
 
 
-# babel-plugin-transform-react-jsx (119/144)
+# babel-plugin-transform-react-jsx (115/144)
 * react/arrow-functions/input.js
+  x Unresolved references mismatch:
+  | after transform: ["React", "this"]
+  | rebuilt        : ["React"]
 
 
 * react/dont-coerce-expression-containers/input.js
@@ -4876,6 +4879,18 @@ TS(18010)
 
 * react/honor-custom-jsx-pragma-option/input.js
   x Unresolved reference IDs mismatch for "Foo":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-deeper-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react/should-allow-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
   | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(1)]
 
@@ -4924,9 +4939,9 @@ TS(18010)
 
 
 * react/this-tag-name/input.js
-  x Unresolved reference IDs mismatch for "this":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
+  x Unresolved references mismatch:
+  | after transform: ["React", "this"]
+  | rebuilt        : ["React"]
 
 
 * react/weird-symbols/input.js
@@ -4936,6 +4951,9 @@ TS(18010)
 
 
 * react-automatic/arrow-functions/input.js
+  x Unresolved references mismatch:
+  | after transform: ["this"]
+  | rebuilt        : []
 
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -4949,8 +4967,21 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * react-automatic/handle-fragments-with-key/input.js
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
+  | ReferenceId(2)]
   | rebuilt        : SymbolId(0): [ReferenceId(1)]
+
+
+* react-automatic/should-allow-deeper-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
+
+
+* react-automatic/should-allow-js-namespacing/input.js
+  x Unresolved reference IDs mismatch for "Namespace":
+  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
@@ -4997,9 +5028,9 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 * react-automatic/this-tag-name/input.js
-  x Unresolved reference IDs mismatch for "this":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
+  x Unresolved references mismatch:
+  | after transform: ["this"]
+  | rebuilt        : []
 
 
 * react-automatic/weird-symbols/input.js
@@ -5034,7 +5065,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * cross-platform/handle-fragments-with-key/input.js
   x Unresolved reference IDs mismatch for "React":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
+  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
   | rebuilt        : [ReferenceId(2)]
 
 

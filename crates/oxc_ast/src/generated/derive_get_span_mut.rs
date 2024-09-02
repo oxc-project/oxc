@@ -2054,7 +2054,6 @@ impl<'a> GetSpanMut for JSXMemberExpression<'a> {
 impl<'a> GetSpanMut for JSXMemberExpressionObject<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => it.span_mut(),
             Self::IdentifierReference(it) => it.span_mut(),
             Self::MemberExpression(it) => it.span_mut(),
         }

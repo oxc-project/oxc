@@ -44,7 +44,6 @@ impl<'a> fmt::Display for JSXMemberExpression<'a> {
 impl<'a> fmt::Display for JSXMemberExpressionObject<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Identifier(id) => id.fmt(f),
             Self::IdentifierReference(id) => id.fmt(f),
             Self::MemberExpression(expr) => expr.fmt(f),
         }
