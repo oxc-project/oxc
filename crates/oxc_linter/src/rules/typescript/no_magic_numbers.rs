@@ -10,7 +10,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodes;
-use oxc_span::Span;
+use oxc_span::{Span, GetSpan};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -266,7 +266,7 @@ impl Rule for NoMagicNumbers {
         Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::NumericLiteral(literal) = node.kind() {
+        if matches!(node.kind(), AstKind::NumericLiteral(_)) {
             let nodes = ctx.nodes();
             let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
 
@@ -276,7 +276,7 @@ impl Rule for NoMagicNumbers {
 
             let parent = nodes.parent_node(config.node.id()).unwrap();
 
-            if let Some(reason) = self.get_report_reason(parent, &config, &literal.span) {
+            if let Some(reason) = self.get_report_reason(parent, &config, &config.node.kind().span()) {
                 ctx.diagnostic(match reason {
                     NoMagicNumberReportReason::MustUseConst(span) => {
                         must_use_const_diagnostic(*span)

@@ -44,9 +44,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -2
-   ╭─[no_magic_numbers.tsx:1:20]
+   ╭─[no_magic_numbers.tsx:1:19]
  1 │ var foo = 0 + 1 + -2 + 2;
-   ·                    ─
+   ·                   ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 2
@@ -110,9 +110,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -60
-   ╭─[no_magic_numbers.tsx:1:48]
+   ╭─[no_magic_numbers.tsx:1:47]
  1 │ function getNegativeSecondsInMinute() {return -60;}
-   ·                                                ──
+   ·                                               ───
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 3
@@ -134,51 +134,51 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -100
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-100]
-   ·      ───
+   ·     ────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1.5
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-1.5]
-   ·      ───
+   ·     ────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-1]
-   ·      ─
+   ·     ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -0.1
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-0.1]
-   ·      ───
+   ·     ────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -0b110
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-0b110]
-   ·      ─────
+   ·     ──────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -0o71
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-0o71]
-   ·      ────
+   ·     ─────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -0x12
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-0x12]
-   ·      ────
+   ·     ─────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -012
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-012]
-   ·      ───
+   ·     ────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 0.1
@@ -242,27 +242,27 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1e310
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[-1e310]
-   ·      ─────
+   ·     ──────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 0
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[+0]
-   ·      ─
+   ·     ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1
-   ╭─[no_magic_numbers.tsx:1:6]
+   ╭─[no_magic_numbers.tsx:1:5]
  1 │ foo[+1]
-   ·      ─
+   ·     ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1
-   ╭─[no_magic_numbers.tsx:1:8]
+   ╭─[no_magic_numbers.tsx:1:7]
  1 │ foo[-(-1)]
-   ·        ─
+   ·       ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 100
@@ -362,9 +362,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -2
-   ╭─[no_magic_numbers.tsx:1:18]
+   ╭─[no_magic_numbers.tsx:1:17]
  1 │ class C { foo = -2; }
-   ·                  ─
+   ·                 ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 2
@@ -416,9 +416,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -1;
-   ·             ─
+   ·            ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1
@@ -446,9 +446,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1
-   ╭─[no_magic_numbers.tsx:1:17]
+   ╭─[no_magic_numbers.tsx:1:16]
  1 │ type Foo = 1 | -1;
-   ·                 ─
+   ·                ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1
@@ -468,18 +468,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1
-   ╭─[no_magic_numbers.tsx:5:13]
+   ╭─[no_magic_numbers.tsx:5:12]
  4 │               NUM = '0123456789',
  5 │               NEG = -1,
-   ·                      ─
+   ·                     ──
  6 │               POS = +1,
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1
-   ╭─[no_magic_numbers.tsx:6:13]
+   ╭─[no_magic_numbers.tsx:6:12]
  5 │               NEG = -1,
  6 │               POS = +1,
-   ·                      ─
+   ·                     ──
  7 │             }
    ╰────
 
@@ -516,18 +516,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -5
-   ╭─[no_magic_numbers.tsx:7:20]
+   ╭─[no_magic_numbers.tsx:7:19]
  6 │               static readonly D = 4;
  7 │               readonly E = -5;
-   ·                             ─
+   ·                            ──
  8 │               readonly F = +6;
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 6
-   ╭─[no_magic_numbers.tsx:8:20]
+   ╭─[no_magic_numbers.tsx:8:19]
  7 │               readonly E = -5;
  8 │               readonly F = +6;
-   ·                             ─
+   ·                            ──
  9 │               private readonly G = 100n;
    ╰────
 
@@ -538,9 +538,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -1
-   ╭─[no_magic_numbers.tsx:1:17]
+   ╭─[no_magic_numbers.tsx:1:16]
  1 │ type Foo = Bar[-1];
-   ·                 ─
+   ·                ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 0xab
@@ -562,9 +562,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -2
-   ╭─[no_magic_numbers.tsx:1:21]
+   ╭─[no_magic_numbers.tsx:1:20]
  1 │ type Foo = Bar[1 | -2];
-   ·                     ─
+   ·                    ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1
@@ -574,9 +574,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -2
-   ╭─[no_magic_numbers.tsx:1:21]
+   ╭─[no_magic_numbers.tsx:1:20]
  1 │ type Foo = Bar[1 & -2];
-   ·                     ─
+   ·                    ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1
@@ -592,9 +592,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -2
-   ╭─[no_magic_numbers.tsx:1:23]
+   ╭─[no_magic_numbers.tsx:1:22]
  1 │ type Foo = Bar[((1 & -2) | 3) | 4];
-   ·                       ─
+   ·                      ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 3
@@ -678,9 +678,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -2
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -2;
-   ·             ─
+   ·            ──
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 5.6
@@ -690,9 +690,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -7.8
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -7.8;
-   ·             ───
+   ·            ────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 0x0a
@@ -702,9 +702,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -0xbc
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -0xbc;
-   ·             ────
+   ·            ─────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1e2
@@ -714,9 +714,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -3e4
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -3e4;
-   ·             ───
+   ·            ────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 5e-6
@@ -726,9 +726,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -7e-8
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -7e-8;
-   ·             ────
+   ·            ─────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 1.1e2
@@ -738,9 +738,9 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -3.1e4
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -3.1e4;
-   ·             ─────
+   ·            ──────
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: 5.1e-6
@@ -750,7 +750,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ typescript-eslint(no-magic-numbers): No magic number: -7.1e-8
-   ╭─[no_magic_numbers.tsx:1:13]
+   ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -7.1e-8;
-   ·             ──────
+   ·            ───────
    ╰────
