@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 302
+---
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:3:12]
+ 2 │                     const props = { dangerouslySetInnerHTML: { __html: "HTML" } };
+ 3 │                     <div {...props}>Children</div>
+   ·                     ──────────────────────────────
+ 4 │                   
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
