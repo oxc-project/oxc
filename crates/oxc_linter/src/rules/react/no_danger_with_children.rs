@@ -1,19 +1,12 @@
 use oxc_ast::{
-    ast::{
-        Expression, JSXAttributeItem, JSXAttributeName, JSXChild, JSXElement, ObjectPropertyKind,
-    },
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXChild, ObjectPropertyKind},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_danger_with_children_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Only set one of `children` or `props.dangerouslySetInnerHTML`")
@@ -43,12 +36,7 @@ declare_oxc_lint!(
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
     NoDangerWithChildren,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    correctness
 );
 
 impl Rule for NoDangerWithChildren {
