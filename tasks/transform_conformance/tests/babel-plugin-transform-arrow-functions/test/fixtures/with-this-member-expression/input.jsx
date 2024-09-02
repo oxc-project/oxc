@@ -1,0 +1,3 @@
+() => {
+  <this.foo></this.foo>
+}

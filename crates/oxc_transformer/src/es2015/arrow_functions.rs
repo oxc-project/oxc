@@ -137,22 +137,31 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             return;
         }
 
-        let ident = match name {
-            JSXElementName::Identifier(ident) => ident,
-            JSXElementName::MemberExpression(member_expr) => {
-                member_expr.get_object_identifier_mut()
+        if let JSXElementName::Identifier(ident) = name {
+            if ident.name == "this" {
+                let mut new_ident = self.get_this_name(ctx).create_read_reference(ctx);
+                new_ident.span = ident.span;
+                *name = self.ctx.ast.jsx_element_name_from_identifier_reference(new_ident);
             }
-            JSXElementName::IdentifierReference(_) | JSXElementName::NamespacedName(_) => return,
-        };
-        if ident.name == "this" {
-            // We can't produce a proper identifier with a `ReferenceId` because `JSXIdentifier`
-            // lacks that field. https://github.com/oxc-project/oxc/issues/3528
-            // So generate a reference and just use its name.
-            // If JSX transform is enabled, that transform runs before this and will have converted
-            // this to a proper `ThisExpression`, and this visitor won't run.
-            // So only a problem if JSX transform is disabled.
-            let new_ident = self.get_this_name(ctx).create_read_reference(ctx);
-            ident.name = new_ident.name;
+        }
+    }
+
+    /// Change <this.foo></this.foo> to <_this.foo></_this.foo>, and mark it as found
+    fn enter_jsx_member_expression_object(
+        &mut self,
+        node: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.is_inside_arrow_function() {
+            return;
+        }
+
+        if let JSXMemberExpressionObject::IdentifierReference(ident) = node {
+            if ident.name == "this" {
+                let mut new_ident = self.get_this_name(ctx).create_read_reference(ctx);
+                new_ident.span = ident.span;
+                *node = ctx.ast.jsx_member_expression_object_from_identifier_reference(new_ident);
+            }
         }
     }
 
