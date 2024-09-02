@@ -5,7 +5,7 @@ use oxc_ast::ast::{
 use oxc_ast::AstBuilder;
 use oxc_span::SPAN;
 
-fn create_require<'a>(target: &str, builder: &'a AstBuilder) -> Expression<'a> {
+pub fn create_require<'a>(target: &str, builder: &'a AstBuilder) -> Expression<'a> {
     builder.expression_call(
         SPAN,
         builder.expression_identifier_reference(SPAN, "require"),
