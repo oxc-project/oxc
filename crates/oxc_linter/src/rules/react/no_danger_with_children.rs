@@ -78,36 +78,38 @@ impl Rule for NoDangerWithChildren {
 
                     dbg!(call_expr);
 
-                    match props {
-                        Some(Expression::ObjectExpression(obj_expr)) => {
-                            let has_danger_prop = is_object_with_prop_name(
-                                &obj_expr.properties,
-                                "dangerouslySetInnerHTML",
-                            );
-
-                            // If there are three arguments, then it is a JSX element with children.
-                            // If it's just two arguments, it only has children if the props object has a children property.
-                            let has_children = if call_expr.arguments.len() == 2 {
+                    // If there are three arguments, then it is a JSX element with children.
+                    // If it's just two arguments, it only has children if the props object has a children property.
+                    let has_children = if call_expr.arguments.len() == 2 {
+                        match props {
+                            Some(Expression::ObjectExpression(obj_expr)) => {
                                 is_object_with_prop_name(&obj_expr.properties, "children")
-                            } else {
-                                true
-                            };
+                            }
+                            Some(Expression::Identifier(ident)) => {
+                                does_object_var_have_prop_name(ctx, node, &ident.name, "children")
+                            }
+                            _ => false,
+                        }
+                    } else {
+                        true
+                    };
 
-                            if has_danger_prop && has_children {
-                                ctx.diagnostic(no_danger_with_children_diagnostic(call_expr.span));
-                            }
-                        }
-                        Some(Expression::Identifier(ident)) => {
-                            if does_object_var_have_prop_name(
-                                ctx,
-                                node,
-                                &ident.name,
-                                "dangerouslySetInnerHTML",
-                            ) {
-                                ctx.diagnostic(no_danger_with_children_diagnostic(call_expr.span));
-                            }
-                        }
-                        _ => (),
+                    let has_danger_prop = match props {
+                        Some(Expression::ObjectExpression(obj_expr)) => is_object_with_prop_name(
+                            &obj_expr.properties,
+                            "dangerouslySetInnerHTML",
+                        ),
+                        Some(Expression::Identifier(ident)) => does_object_var_have_prop_name(
+                            ctx,
+                            node,
+                            &ident.name,
+                            "dangerouslySetInnerHTML",
+                        ),
+                        _ => false,
+                    };
+
+                    if has_danger_prop && has_children {
+                        ctx.diagnostic(no_danger_with_children_diagnostic(call_expr.span));
                     }
                 }
             }
