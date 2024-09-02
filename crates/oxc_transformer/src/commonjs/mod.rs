@@ -2,14 +2,20 @@ mod options;
 mod types;
 mod utils;
 
-use oxc_allocator::CloneIn;
 use crate::commonjs::options::CommonjsOptions;
+use crate::commonjs::utils::export::{
+    create_declared_named_exports, create_default_exports, create_listed_named_exports,
+    create_reexported_named_exports,
+};
 use crate::context::Ctx;
-use oxc_ast::ast::{BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, PropertyKey, TSTypeAnnotation};
+use oxc_allocator::CloneIn;
+use oxc_ast::ast::{
+    BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration,
+    ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, PropertyKey, TSTypeAnnotation,
+};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 use utils::import;
-use crate::commonjs::utils::export::{create_declared_named_exports, create_default_exports, create_listed_named_exports, create_reexported_named_exports};
 
 pub struct Commonjs<'a> {
     ctx: Ctx<'a>,
@@ -101,17 +107,29 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         };
     }
 
-    fn enter_export_default_declaration(&mut self, node: &mut ExportDefaultDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_export_default_declaration(
+        &mut self,
+        node: &mut ExportDefaultDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let expr = node.declaration.clone_in(self.ctx.ast.allocator);
         let stmt = create_default_exports(expr.into_expression(), &self.ctx.ast);
     }
 
-    fn enter_export_named_declaration(&mut self, node: &mut ExportNamedDeclaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         let stmt = if let Some(decl) = &node.declaration {
             create_declared_named_exports(decl.clone_in(self.ctx.ast.allocator), &self.ctx.ast)
         } else if let Some(src) = &node.source {
             let specifiers = node.specifiers.clone_in(self.ctx.ast.allocator);
-            create_reexported_named_exports(specifiers, src.clone_in(self.ctx.ast.allocator), &self.ctx.ast)
+            create_reexported_named_exports(
+                specifiers,
+                src.clone_in(self.ctx.ast.allocator),
+                &self.ctx.ast,
+            )
         } else {
             let specifiers = node.specifiers.clone_in(self.ctx.ast.allocator);
             create_listed_named_exports(specifiers, &self.ctx.ast)

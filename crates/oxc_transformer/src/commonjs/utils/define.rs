@@ -1,6 +1,5 @@
 //! It is not `amd define`, but for `Object.defineProperty` related codes.
 
-use std::borrow::Cow;
 use oxc_ast::ast::{
     BindingRestElement, Expression, FormalParameterKind, FunctionType, IdentifierReference,
     PropertyKind, Statement, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration,
@@ -9,17 +8,18 @@ use oxc_ast::ast::{
 use oxc_ast::AstBuilder;
 use oxc_span::SPAN;
 use oxc_syntax::identifier;
+use std::borrow::Cow;
 
 /// Generates `Object.defineProperty` call for a given target.
-/// 
+///
 /// Useful when re-exporting:
-/// 
+///
 /// ```js
 /// export { foo as bar } from './foobar.js'
 /// ```
-/// 
+///
 /// It can be transformed from:
-/// 
+///
 /// ```js
 /// Object.defineProperty(exports, 'bar', {
 ///   enumerable: true,
@@ -48,7 +48,9 @@ pub fn create_object_define_property<'a>(
                 builder
                     .argument_expression(builder.expression_identifier_reference(SPAN, "exports")),
             );
-            items.push(builder.argument_expression(builder.expression_from_identifier_reference(target)));
+            items.push(
+                builder.argument_expression(builder.expression_from_identifier_reference(target)),
+            );
             items.push(builder.argument_expression(builder.expression_object(
                 SPAN,
                 {
@@ -120,8 +122,9 @@ pub fn legitimize_identifier_name(name: &str) -> Cow<str> {
     }
 
     if first_invalid_char_index.is_none() {
-        first_invalid_char_index =
-            chars_indices.find(|(_idx, char)| !identifier::is_identifier_part(*char)).map(|(idx, _)| idx);
+        first_invalid_char_index = chars_indices
+            .find(|(_idx, char)| !identifier::is_identifier_part(*char))
+            .map(|(idx, _)| idx);
     }
 
     if let Some(first_invalid_char_index) = first_invalid_char_index {
