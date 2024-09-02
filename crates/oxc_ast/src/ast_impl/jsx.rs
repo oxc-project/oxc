@@ -35,42 +35,6 @@ impl<'a> JSXElementName<'a> {
     }
 }
 
-impl<'a> JSXMemberExpression<'a> {
-    pub fn get_object_identifier(&self) -> &JSXIdentifier<'a> {
-        let mut member_expr = self;
-        loop {
-            match &member_expr.object {
-                JSXMemberExpressionObject::Identifier(ident) => {
-                    break ident;
-                }
-                JSXMemberExpressionObject::IdentifierReference(_) => {
-                    unreachable!()
-                }
-                JSXMemberExpressionObject::MemberExpression(expr) => {
-                    member_expr = expr;
-                }
-            }
-        }
-    }
-
-    pub fn get_object_identifier_mut(&mut self) -> &mut JSXIdentifier<'a> {
-        let mut member_expr = self;
-        loop {
-            match &mut member_expr.object {
-                JSXMemberExpressionObject::Identifier(ident) => {
-                    break &mut *ident;
-                }
-                JSXMemberExpressionObject::IdentifierReference(_) => {
-                    unreachable!()
-                }
-                JSXMemberExpressionObject::MemberExpression(expr) => {
-                    member_expr = expr;
-                }
-            }
-        }
-    }
-}
-
 impl<'a> fmt::Display for JSXMemberExpression<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}.{}", self.object, self.property)
