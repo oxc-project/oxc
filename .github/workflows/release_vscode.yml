@@ -45,8 +45,6 @@ jobs:
     if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
-    outputs:
-      version: ${{ env.version }}
     strategy:
       matrix:
         include:
@@ -74,8 +72,9 @@ jobs:
       - uses: taiki-e/checkout-action@v1
 
       - name: Install pnpm
-        working-directory: editors/vscode
-        run: corepack enable
+        uses: pnpm/action-setup@v4.0.0
+        with:
+          package_json_file: ./editors/vscode/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -148,8 +147,9 @@ jobs:
           path: editors/vscode
 
       - name: Install pnpm
-        working-directory: editors/vscode
-        run: corepack enable
+        uses: pnpm/action-setup@v4.0.0
+        with:
+          package_json_file: ./editors/vscode/package.json
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
