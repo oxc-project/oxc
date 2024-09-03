@@ -1,24 +1,11 @@
 commit: 3bcfee23
 
-Passed: 11/41
+Passed: 13/41
 
 # All Passed:
+* babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-typescript
-
-
-# babel-plugin-transform-nullish-coalescing-operator (0/2)
-* invalid-variable-name/input.js
-  x Reference flags mismatch:
-  | after transform: ReferenceId(3): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-
-
-* transform-in-arrow-function-expression/input.js
-  x Reference flags mismatch:
-  | after transform: ReferenceId(3): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-
 
 
 # babel-plugin-transform-arrow-functions (1/2)

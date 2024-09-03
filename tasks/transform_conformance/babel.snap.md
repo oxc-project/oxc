@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 314/1021
+Passed: 317/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -1707,28 +1707,12 @@ failed to resolve query: failed to parse the rest of input: ...''
   | rebuilt        : SymbolId(14): [ReferenceId(88), ReferenceId(94)]
 
   x Reference flags mismatch:
-  | after transform: ReferenceId(58): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
-
-  x Reference flags mismatch:
-  | after transform: ReferenceId(62): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(14): ReferenceFlags(Read | Write)
-
-  x Reference flags mismatch:
-  | after transform: ReferenceId(67): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(26): ReferenceFlags(Read | Write)
-
-  x Reference flags mismatch:
   | after transform: ReferenceId(65): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(27): ReferenceFlags(Read | Write)
 
   x Reference flags mismatch:
   | after transform: ReferenceId(64): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(31): ReferenceFlags(Read)
-
-  x Reference flags mismatch:
-  | after transform: ReferenceId(72): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(35): ReferenceFlags(Read | Write)
 
   x Reference flags mismatch:
   | after transform: ReferenceId(70): ReferenceFlags(Write)
@@ -1739,10 +1723,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   | rebuilt        : ReferenceId(40): ReferenceFlags(Read)
 
   x Reference flags mismatch:
-  | after transform: ReferenceId(78): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(46): ReferenceFlags(Read | Write)
-
-  x Reference flags mismatch:
   | after transform: ReferenceId(76): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(48): ReferenceFlags(Read | Write)
 
@@ -1751,20 +1731,12 @@ failed to resolve query: failed to parse the rest of input: ...''
   | rebuilt        : ReferenceId(53): ReferenceFlags(Read)
 
   x Reference flags mismatch:
-  | after transform: ReferenceId(84): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(58): ReferenceFlags(Read | Write)
-
-  x Reference flags mismatch:
   | after transform: ReferenceId(82): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(60): ReferenceFlags(Read | Write)
 
   x Reference flags mismatch:
   | after transform: ReferenceId(80): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(65): ReferenceFlags(Read)
-
-  x Reference flags mismatch:
-  | after transform: ReferenceId(92): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(72): ReferenceFlags(Read | Write)
 
   x Reference flags mismatch:
   | after transform: ReferenceId(87): ReferenceFlags(Write)
@@ -1777,10 +1749,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   x Reference flags mismatch:
   | after transform: ReferenceId(88): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(80): ReferenceFlags(Read)
-
-  x Reference flags mismatch:
-  | after transform: ReferenceId(100): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(87): ReferenceFlags(Read | Write)
 
   x Reference flags mismatch:
   | after transform: ReferenceId(95): ReferenceFlags(Write)
@@ -1833,33 +1801,17 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-nullish-coalescing-operator (2/12)
+# babel-plugin-transform-nullish-coalescing-operator (5/12)
 * assumption-noDocumentAll/transform/input.js
-  x Output mismatch
-  x Reference flags mismatch:
-  | after transform: ReferenceId(2): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-destructuring/input.js
-  x Output mismatch
-  x Reference flags mismatch:
-  | after transform: ReferenceId(2): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-default-param/input.js
-  x Output mismatch
-  x Reference flags mismatch:
-  | after transform: ReferenceId(3): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-in-function/input.js
-  x Output mismatch
-  x Reference flags mismatch:
-  | after transform: ReferenceId(2): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 * assumption-noDocumentAll/transform-static-refs-in-default/input.js
@@ -1868,29 +1820,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 * assumption-noDocumentAll/transform-static-refs-in-function/input.js
 
 
-* nullish-coalescing/transform-in-default-destructuring/input.js
-  x Reference flags mismatch:
-  | after transform: ReferenceId(2): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-
-
-* nullish-coalescing/transform-in-default-param/input.js
-  x Reference flags mismatch:
-  | after transform: ReferenceId(3): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-
-
-* nullish-coalescing/transform-in-function/input.js
-  x Reference flags mismatch:
-  | after transform: ReferenceId(2): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-
-
 * nullish-coalescing/transform-loose/input.js
-  x Output mismatch
-  x Reference flags mismatch:
-  | after transform: ReferenceId(2): ReferenceFlags(Write)
-  | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
 
 
 
