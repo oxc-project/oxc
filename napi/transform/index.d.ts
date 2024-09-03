@@ -234,7 +234,7 @@ export interface TypeScriptBindingOptions {
    * Rewrite or remove TypeScript import/export declaration extensions.
    *
    * - When set to `rewrite`, it will change `.ts`, `.mts`, `.cts` extensions to `.js`, `.mjs`, `.cjs` respectively.
-   * - When set to `remove`, it will remove the extensions entirely.
+   * - When set to `remove`, it will remove `.ts`/`.mts`/`.cts`/`.tsx` extension entirely.
    * - When set to `true`, it's equivalent to `rewrite`.
    * - When set to `false` or omitted, no changes will be made to the extensions.
    *
