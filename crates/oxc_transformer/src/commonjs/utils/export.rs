@@ -177,7 +177,7 @@ pub fn create_declared_named_exports<'a>(
             }
             result
         }
-        _ => todo!(),
+        _ => unreachable!(),
     }
 }
 
