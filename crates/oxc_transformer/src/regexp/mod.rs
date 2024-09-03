@@ -177,6 +177,14 @@ impl<'a> RegExp<'a> {
     ///
     /// Port from [esbuild](https://github.com/evanw/esbuild/blob/332727499e62315cff4ecaff9fa8b86336555e46/internal/js_parser/js_parser.go#L12667-L12800)
     fn has_unsupported_regex_syntax_raw(&self, pattern: &str, flags: RegExpFlags) -> bool {
+        // Early return if no unsupported features-related plugins are enabled
+        if !(self.options.named_capture_groups
+            || self.options.unicode_property_escapes
+            || self.options.look_behind_assertions)
+        {
+            return false;
+        }
+
         let is_unicode = flags.contains(RegExpFlags::U);
         let mut paren_depth = 0;
         let mut chars = pattern.chars().peekable();
