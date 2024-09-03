@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXChild, ObjectPropertyKind},
+    ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXChild, ObjectPropertyKind},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -77,11 +77,7 @@ impl Rule for NoDangerWithChildren {
                     return;
                 }
 
-                let Some(props) = call_expr
-                    .arguments
-                    .get(1)
-                    .expect("Could not get props argument for createElement call")
-                    .as_expression()
+                let Some(props) = call_expr.arguments.get(1).and_then(Argument::as_expression)
                 else {
                     return;
                 };
