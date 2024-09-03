@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 23e8456 traverse: [**BREAKING**] `TraverseCtx::ancestor` with level 0 = equivalent to `parent` (#5294) (overlookmotel)
+
+- 582ce9e traverse: [**BREAKING**] `TraverseCtx::ancestor` return `Ancestor::None` if out of bounds (#5286) (overlookmotel)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+- c100826 semantic: [**BREAKING**] Always create a scope for `for` statements (#5110) (overlookmotel)
+
+- d304d6f semantic: [**BREAKING**] Always create a scope for `CatchClause` (#5109) (overlookmotel)
+
+### Features
+
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+
+### Bug Fixes
+
+- d594818 traverse: `insert_scope_below` update child scopes records (#5409) (overlookmotel)
+- 25d6e20 traverse: Add missing visitors to `ChildScopeCollector` (#5118) (overlookmotel)
+
+### Refactor
+
+- 946c867 ast: Box `TSThisParameter` (#5325) (overlookmotel)
+- 05d25e2 semantic: Combine add scope methods (#5262) (overlookmotel)
+- a17cf33 semantic: Remove `ScopeTree::child_ids` (#5232) (Boshen)
+- b43a394 traverse: Correct code comments (#5293) (overlookmotel)
+- d71f0ed traverse: Inline all passthrough methods (#5279) (overlookmotel)
+- 188ce07 traverse: Improve safety via type system (#5277) (overlookmotel)
+- 0f4a8b3 traverse: Add debug asserts for safety invariants (#5272) (overlookmotel)
+- 341e42a traverse: Make `Ancestor` an owned type (#5269) (overlookmotel)
+- eba5033 traverse: Codegen `ChildScopeCollector` (#5119) (overlookmotel)
+- f771d7c traverse: Remove unnecessary imports (#5116) (overlookmotel)
+- c6590ae traverse: Move generated files into separate folder (#5115) (overlookmotel)
+- fc2e9ad traverse: Remove support for `#[scope(if(...))]` attr (#5114) (overlookmotel)
+- 1ba11a3 traverse: Refactor `ChildScopeCollector` (#5112) (overlookmotel)
+- 40e2f6e traverse: Remove unnecessary branch in `ChildScopeCollector` (#5111) (overlookmotel)
+
 ## [0.25.0] - 2024-08-23
 
 - 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)

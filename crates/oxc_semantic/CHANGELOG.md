@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.26.0] - 2024-09-03
+
+- 01cc2ce semantic: [**BREAKING**] Add `ScopeTree:get_child_ids` API behind a runtime flag (#5403) (Boshen)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+- c100826 semantic: [**BREAKING**] Always create a scope for `for` statements (#5110) (overlookmotel)
+
+- d304d6f semantic: [**BREAKING**] Always create a scope for `CatchClause` (#5109) (overlookmotel)
+
+### Features
+
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+- be4642f semantic: Transform checker check child scope IDs (#5410) (overlookmotel)
+- 6e969f9 semantic: Add `ScopeTree::delete_root_unresolved_reference` (#5305) (overlookmotel)
+
+### Bug Fixes
+
+- 293413f semantic: Implicit return `UpdateExpression` in `ArrowFunctionExpression` does not as read reference (#5161) (Dunqing)
+- f8bb022 transformer/arrow-functions: Remove `SymbolFlags::ArrowFunction` (#5190) (Dunqing)
+- d594818 traverse: `insert_scope_below` update child scopes records (#5409) (overlookmotel)
+
+### Refactor
+
+- 3ae94b8 semantic: Change `build_module_record` to accept &Path instead of PathBuf (Boshen)
+- 05d25e2 semantic: Combine add scope methods (#5262) (overlookmotel)
+- fdedc0f semantic: Transform checker: rename `SemanticData` to `Scoping` (#5261) (overlookmotel)
+- 1086109 semantic: Transform checker do not output spans in errors (#5260) (overlookmotel)
+- af5713e semantic: Transform checker continue checks if missing IDs (#5259) (overlookmotel)
+- 943454f semantic: Update transform checker for no conditional scopes (#5252) (overlookmotel)
+- 892a7fa semantic: Replace `ref` syntax (#5253) (overlookmotel)
+- cbb4725 semantic: Add comment to transform checker (#5250) (overlookmotel)
+- a17cf33 semantic: Remove `ScopeTree::child_ids` (#5232) (Boshen)
+- d5a4940 semantic: Rewrite handling of label statement errors (#5138) (Boshen)
+
+### Testing
+
+- be7b8c6 semantic: Add `JSXIdentifierReference`-related tests (#5224) (Dunqing)
+
 ## [0.25.0] - 2024-08-23
 
 - f2b8d82 semantic: [**BREAKING**] `ScopeTree::get_child_ids` + `get_child_ids_mut` return value not `Option` (#5058) (overlookmotel)
