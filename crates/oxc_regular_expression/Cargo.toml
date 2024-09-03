@@ -36,3 +36,6 @@ wasm-bindgen = { workspace = true, optional = true }
 [features]
 default   = []
 serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_allocator/serialize", "oxc_span/serialize"]
+
+[package.metadata.cargo-shear]
+ignored = ["wasm-bindgen"] # wasm-bindgen used by tsify
