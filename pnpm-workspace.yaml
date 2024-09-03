@@ -1,2 +1,3 @@
 packages:
   - 'napi/**'
+  - 'tasks/benchmark/codspeed'
