@@ -54,10 +54,10 @@ jobs:
           # bot account with PAT required for triggering workflow runs
           # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
           token: ${{ secrets.OXC_BOT_PAT }}
-          commit-message: release: ${{ inputs.name }}
+          commit-message: "release: ${{ inputs.name }}"
           branch: release/${{ inputs.name }}
           branch-suffix: timestamp
           base: main
-          title: release: ${{ inputs.name }} v${{ steps.run.outputs.VERSION }}
+          title: "release: ${{ inputs.name }} v${{ steps.run.outputs.VERSION }}"
           body: ${{ steps.run.outputs.CHANGELOG }}
           assignees: Boshen
