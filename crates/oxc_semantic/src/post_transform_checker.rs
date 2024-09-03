@@ -130,6 +130,7 @@ pub fn check_semantic_after_transform(
     let allocator = Allocator::default();
     let program = program.clone_in(&allocator);
     let (symbols_rebuilt, scopes_rebuilt) = SemanticBuilder::new("", program.source_type)
+        .with_scope_tree_child_ids(scopes_after_transform.has_child_ids())
         .build(&program)
         .semantic
         .into_symbol_table_and_scope_tree();
@@ -366,6 +367,16 @@ impl<'s> PostTransformChecker<'s> {
                 self.errors.push_mismatch("Scope parent mismatch", scope_ids, parent_ids);
             }
 
+            // Check children match
+            if self.scoping_after_transform.scopes.has_child_ids() {
+                let child_ids = self.get_pair(scope_ids, |scoping, scope_id| {
+                    scoping.scopes.get_child_ids(scope_id).to_vec()
+                });
+                if self.remap_scope_ids_sets(&child_ids).is_mismatch() {
+                    self.errors.push_mismatch("Scope children mismatch", scope_ids, child_ids);
+                }
+            }
+
             // NB: Skip checking node IDs match - transformer does not set `AstNodeId`s
         }
     }
@@ -502,6 +513,28 @@ impl<'s> PostTransformChecker<'s> {
     /// Map `after_transform` scope ID to `rebuilt` scope ID
     fn remap_scope_ids(&self, scope_ids: Pair<ScopeId>) -> Pair<Option<ScopeId>> {
         Pair::new(self.scope_ids_map.get(scope_ids.after_transform), Some(scope_ids.rebuilt))
+    }
+
+    /// Remap pair of arrays of `ScopeId`s.
+    /// Map `after_transform` IDs to `rebuilt` IDs.
+    /// Sort both sets.
+    fn remap_scope_ids_sets<V: AsRef<Vec<ScopeId>>>(
+        &self,
+        scope_ids: &Pair<V>,
+    ) -> Pair<Vec<Option<ScopeId>>> {
+        let mut after_transform = scope_ids
+            .after_transform
+            .as_ref()
+            .iter()
+            .map(|&scope_id| self.scope_ids_map.get(scope_id))
+            .collect::<Vec<_>>();
+        let mut rebuilt =
+            scope_ids.rebuilt.as_ref().iter().copied().map(Option::Some).collect::<Vec<_>>();
+
+        after_transform.sort_unstable();
+        rebuilt.sort_unstable();
+
+        Pair::new(after_transform, rebuilt)
     }
 
     /// Remap pair of arrays of `SymbolId`s.

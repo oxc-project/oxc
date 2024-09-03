@@ -43,6 +43,10 @@ impl CompilerInterface for Driver {
         }
     }
 
+    fn semantic_child_scope_ids(&self) -> bool {
+        true
+    }
+
     fn transform_options(&self) -> Option<TransformOptions> {
         self.transform.clone()
     }
