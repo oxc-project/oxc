@@ -8,9 +8,9 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
+use crate::codegen::generated_header;
 use crate::{
     codegen::LateCtx,
-    generators::generated_header,
     output,
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
@@ -36,7 +36,7 @@ impl Generator for AstBuilderGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput::Stream((
+        GeneratorOutput(
             output(crate::AST_CRATE, "ast_builder.rs"),
             quote! {
                 #header
@@ -66,7 +66,7 @@ impl Generator for AstBuilderGenerator {
                     #(#fns)*
                 }
             },
-        ))
+        )
     }
 }
 

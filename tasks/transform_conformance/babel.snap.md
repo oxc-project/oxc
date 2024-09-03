@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 314/1021
+Passed: 310/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -2101,7 +2101,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-preset-typescript (4/10)
+# babel-preset-typescript (5/10)
 * jsx-compat/ts-invalid/input.ts
   x Expected `>` but found `/`
    ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
@@ -2141,11 +2141,8 @@ failed to resolve query: failed to parse the rest of input: ...''
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 
-* opts/rewriteImportExtensions/input.ts
 
-
-
-# babel-plugin-transform-typescript (46/152)
+# babel-plugin-transform-typescript (41/152)
 * cast/as-expression/input.ts
   x Unresolved references mismatch:
   | after transform: ["T", "x"]
@@ -2192,9 +2189,26 @@ TS(18010)
   | rebuilt        : ["D"]
 
 
+* class/methods/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4),
+  | ScopeId(5)]
+  | rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+
+
+* class/private-method-override/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+  | rebuilt        : ScopeId(1): [ScopeId(2)]
+
+
 * declarations/const-enum/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["E"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2203,16 +2217,29 @@ TS(18010)
   | after transform: ScopeId(0): ["E", "I", "M", "N", "T", "m", "x"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
+  | rebuilt        : ScopeId(0): []
+
 
 * declarations/export-declare-enum/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
+
 
 * declarations/nested-namespace/input.mjs
   x Bindings mismatch:
   | after transform: ScopeId(0): ["P"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2670,6 +2697,10 @@ TS(18010)
 
 
 * exports/declare-namespace/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
+
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(Export | Class | NameSpaceModule
   | | Ambient)
@@ -2685,6 +2716,11 @@ TS(18010)
 
 
 * exports/declare-shadowed/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
   x Unresolved references mismatch:
   | after transform: ["Signal", "Signal2"]
   | rebuilt        : []
@@ -2696,6 +2732,14 @@ TS(18010)
   | after transform: ScopeId(0): ["AA", "AA2", "BB", "BB2", "Bar", "C2", "E",
   | "I", "II2", "II3", "M", "N", "T", "foo", "m", "x"]
   | rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9),
+  | ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14),
+  | ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5)]
 
   x Bindings mismatch:
   | after transform: ScopeId(12): ["BB", "K"]
@@ -2766,6 +2810,12 @@ TS(18010)
   | rebuilt        : ["Bar", "E", "x"]
 
 
+* exports/default-function/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
+
+
 * exports/export-const-enums/input.ts
   x Scope flags mismatch:
   | after transform: ScopeId(1): ScopeFlags(StrictMode)
@@ -2791,6 +2841,10 @@ TS(18010)
 * exports/export-type/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
 
@@ -2822,11 +2876,19 @@ TS(18010)
   | after transform: ScopeId(0): ["A", "I"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
+
 
 * exports/issue-9916-1/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
   | rebuilt        : ScopeId(0): ["a"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
 
   x Unresolved references mismatch:
   | after transform: ["PromiseLike"]
@@ -2836,6 +2898,10 @@ TS(18010)
 * exports/issue-9916-2/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
   | rebuilt        : ScopeId(0): []
 
   x Unresolved references mismatch:
@@ -2848,6 +2914,10 @@ TS(18010)
   | after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
   | rebuilt        : ScopeId(0): ["a"]
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
+
   x Unresolved references mismatch:
   | after transform: ["PromiseLike"]
   | rebuilt        : []
@@ -2857,6 +2927,18 @@ TS(18010)
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(0): [ReferenceId(0)]
   | rebuilt        : SymbolId(0): []
+
+
+* function/overloads/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
+
+
+* function/overloads-exports/input.mjs
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
 
 
 * function/parameters/input.ts
@@ -2925,6 +3007,10 @@ TS(18010)
   | after transform: ScopeId(0): ["A", "B", "C", "Class", "D", "E", "F", "G",
   | "H", "Iface", "x", "y"]
   | rebuilt        : ScopeId(0): ["A", "Class", "x", "y"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): [ScopeId(1)]
 
 
 * imports/elision-qualifiedname/input.ts
@@ -3121,6 +3207,10 @@ TS(18010)
   | "babel", "bar", "baz", "node", "some", "str"]
   | rebuilt        : ScopeId(0): ["AliasModule", "b", "babel", "bar", "baz",
   | "node", "some", "str"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
 
   x Reference symbol mismatch:
   | after transform: ReferenceId(3): Some("AliasModule")
@@ -3693,6 +3783,11 @@ TS(18010)
   | after transform: ScopeId(1): ["B", "_N", "e", "v"]
   | rebuilt        : ScopeId(1): ["_N"]
 
+  x Scope children mismatch:
+  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4),
+  | ScopeId(5)]
+  | rebuilt        : ScopeId(1): []
+
 
 * namespace/declare-global-nested-namespace/input.ts
   x Missing SymbolId: X
@@ -3706,6 +3801,10 @@ TS(18010)
   x Bindings mismatch:
   | after transform: ScopeId(0): ["X", "global", "i18n"]
   | rebuilt        : ScopeId(0): ["X", "i18n"]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 
   x Binding symbols mismatch:
   | after transform: ScopeId(3): [SymbolId(4), SymbolId(6)]
@@ -3801,6 +3900,10 @@ TS(18010)
   | after transform: ScopeId(1): ["_a", "b", "c", "d"]
   | rebuilt        : ScopeId(1): ["_a", "c"]
 
+  x Scope children mismatch:
+  | after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
+  | rebuilt        : ScopeId(1): [ScopeId(2)]
+
   x Binding symbols mismatch:
   | after transform: ScopeId(3): [SymbolId(3), SymbolId(26)]
   | rebuilt        : ScopeId(2): [SymbolId(3), SymbolId(4)]
@@ -3809,9 +3912,18 @@ TS(18010)
   | after transform: ScopeId(6): ["_WithTypes", "a", "b", "c", "d"]
   | rebuilt        : ScopeId(3): ["_WithTypes", "d"]
 
+  x Scope children mismatch:
+  | after transform: ScopeId(6): [ScopeId(7), ScopeId(9), ScopeId(11),
+  | ScopeId(12)]
+  | rebuilt        : ScopeId(3): [ScopeId(4)]
+
   x Binding symbols mismatch:
   | after transform: ScopeId(12): [SymbolId(33)]
   | rebuilt        : ScopeId(4): [SymbolId(8)]
+
+  x Scope children mismatch:
+  | after transform: ScopeId(12): [ScopeId(13)]
+  | rebuilt        : ScopeId(4): []
 
   x Binding symbols mismatch:
   | after transform: ScopeId(14): [SymbolId(15), SymbolId(17), SymbolId(19),
@@ -3873,6 +3985,10 @@ TS(18010)
 * namespace/export-type-only/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["Platform"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
   x Unresolved references mismatch:
@@ -4295,6 +4411,10 @@ TS(18010)
   | after transform: ScopeId(1): ["B", "G", "_A"]
   | rebuilt        : ScopeId(1): ["G", "_A"]
 
+  x Scope children mismatch:
+  | after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
+  | rebuilt        : ScopeId(1): [ScopeId(2)]
+
   x Bindings mismatch:
   | after transform: ScopeId(4): ["G", "H"]
   | rebuilt        : ScopeId(2): ["G"]
@@ -4589,6 +4709,10 @@ TS(18010)
   x Output mismatch
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A"]
+  | rebuilt        : ScopeId(0): []
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
   | rebuilt        : ScopeId(0): []
 
   x Reference symbol mismatch:

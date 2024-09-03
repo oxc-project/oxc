@@ -10,6 +10,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+use oxc_allocator::CloneIn;
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::NumberBase;
 
@@ -118,6 +119,35 @@ impl<'a> fmt::Display for RegExp<'a> {
     }
 }
 
+impl<'a> RegExpPattern<'a> {
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Raw(it) | Self::Invalid(it) => it.len(),
+            Self::Pattern(it) => it.span.size() as usize,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn source_text(&self, source_text: &'a str) -> &'a str {
+        match self {
+            Self::Raw(raw) | Self::Invalid(raw) => raw,
+            Self::Pattern(pat) => pat.span.source_text(source_text),
+        }
+    }
+}
+
+impl<'a> fmt::Display for RegExpPattern<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Raw(it) | Self::Invalid(it) => write!(f, "{it}"),
+            Self::Pattern(it) => it.fmt(f),
+        }
+    }
+}
+
 impl TryFrom<char> for RegExpFlags {
     type Error = char;
 
@@ -220,5 +250,12 @@ impl<'a> fmt::Display for StringLiteral<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.value.fmt(f)
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for RegExpFlags {
+    type Cloned = Self;
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
     }
 }

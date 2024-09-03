@@ -165,6 +165,7 @@ impl ScopeTree {
     pub fn set_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
         self.parent_ids[scope_id] = parent_id;
         if self.build_child_ids {
+            // Set this scope as child of parent scope
             if let Some(parent_id) = parent_id {
                 self.child_ids[parent_id].push(scope_id);
             }
@@ -247,10 +248,22 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
+    /// Return whether this `ScopeTree` has child IDs recorded
+    #[inline]
+    pub fn has_child_ids(&self) -> bool {
+        self.build_child_ids
+    }
+
     /// Get the child scopes of a scope
     #[inline]
     pub fn get_child_ids(&self, scope_id: ScopeId) -> &[ScopeId] {
         &self.child_ids[scope_id]
+    }
+
+    /// Get a mutable reference to a scope's children
+    #[inline]
+    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> &mut Vec<ScopeId> {
+        &mut self.child_ids[scope_id]
     }
 
     /// Create a scope.

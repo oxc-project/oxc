@@ -158,9 +158,9 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
         if let JSXMemberExpressionObject::IdentifierReference(ident) = node {
             if ident.name == "this" {
-                let mut new_ident = self.get_this_name(ctx).create_read_reference(ctx);
-                new_ident.span = ident.span;
-                *node = ctx.ast.jsx_member_expression_object_from_identifier_reference(new_ident);
+                let new_ident = self.get_this_name(ctx).create_read_reference(ctx);
+                ident.name = new_ident.name;
+                ident.reference_id = new_ident.reference_id;
             }
         }
     }

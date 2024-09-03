@@ -18,7 +18,7 @@ export interface Es2015BindingOptions {
 }
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
-function isolatedDeclaration(filename: string, sourceText: string, options: IsolatedDeclarationsOptions): IsolatedDeclarationsResult
+export declare function isolatedDeclaration(filename: string, sourceText: string, options: IsolatedDeclarationsOptions): IsolatedDeclarationsResult
 
 export interface IsolatedDeclarationsOptions {
   sourcemap: boolean
@@ -136,7 +136,7 @@ export interface SourceMap {
  * @returns an object containing the transformed code, source maps, and any
  * errors that occurred during parsing or transformation.
  */
-function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
+export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
 
 /**
  * Options for transforming a JavaScript or TypeScript file.
@@ -230,5 +230,16 @@ export interface TypeScriptBindingOptions {
    * @default false
    */
   declaration?: boolean
+  /**
+   * Rewrite or remove TypeScript import/export declaration extensions.
+   *
+   * - When set to `rewrite`, it will change `.ts`, `.mts`, `.cts` extensions to `.js`, `.mjs`, `.cjs` respectively.
+   * - When set to `remove`, it will remove `.ts`/`.mts`/`.cts`/`.tsx` extension entirely.
+   * - When set to `true`, it's equivalent to `rewrite`.
+   * - When set to `false` or omitted, no changes will be made to the extensions.
+   *
+   * @default false
+   */
+  rewriteImportExtensions?: 'rewrite' | 'remove' | boolean
 }
 

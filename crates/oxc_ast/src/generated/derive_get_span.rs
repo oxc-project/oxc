@@ -1,12 +1,21 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/derive_get_span.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_span.rs`
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 #[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use crate::ast::js::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::jsx::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::literal::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::ts::*;
 
 impl GetSpan for BooleanLiteral {
     #[inline]

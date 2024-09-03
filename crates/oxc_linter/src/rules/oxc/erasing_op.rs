@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// let y = 0;
     /// ```
     ErasingOp,
-    correctness
+    correctness,
+    suggestion
 );
 
 impl Rule for ErasingOp {
@@ -84,7 +85,9 @@ fn check_op<'a, 'b>(
     ctx: &LintContext<'a>,
 ) {
     if is_number_value(op, 0.0) {
-        ctx.diagnostic(erasing_op_diagnostic(binary_expression.span));
+        ctx.diagnostic_with_suggestion(erasing_op_diagnostic(binary_expression.span), |fixer| {
+            fixer.replace(binary_expression.span, "0")
+        });
     }
 }
 
@@ -96,5 +99,7 @@ fn test() {
 
     let fail = vec!["x * 0;", "0 * x;", "0 & x;", "0 / x;"];
 
-    Tester::new(ErasingOp::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![("x * 0;", "0;"), ("0 * x;", "0;"), ("0 & x;", "0;"), ("0 / x;", "0;")];
+
+    Tester::new(ErasingOp::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

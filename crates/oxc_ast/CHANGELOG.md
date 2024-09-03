@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+- c100826 semantic: [**BREAKING**] Always create a scope for `for` statements (#5110) (overlookmotel)
+
+- d304d6f semantic: [**BREAKING**] Always create a scope for `CatchClause` (#5109) (overlookmotel)
+
+### Features
+
+- 180b1a1 ast: Add `Function::name()` (#5361) (DonIsaac)
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+
+### Bug Fixes
+
+- 8ebc23f ast: Serialize `TSParenthesizedType` with camelCase (#5199) (Kevin Deng 三咲智子)
+- 8a17807 parser: Treat JSX element tags starting with `_` or `$` as `IdentifierReference`s (#5343) (overlookmotel)
+
+### Performance
+
+- 292f217 ast: Optimize `JSXIdentifier::is_reference` (#5344) (overlookmotel)
+
+### Refactor
+
+- c2d8c9e ast: Reduce allocations in `AstBuilder::move_assignment_target` (#5367) (overlookmotel)
+- 946c867 ast: Box `TSThisParameter` (#5325) (overlookmotel)
+- 960e1d5 ast: Rename `IdentifierReference::new_with_reference_id` (#5157) (overlookmotel)
+- f63b568 ast: Remove `#[non_exhaustive]` attr from `AstBuilder` (#5130) (overlookmotel)
+- d236554 parser: Move `JSXIdentifier` conversion code into parser (#5345) (overlookmotel)
+
 ## [0.25.0] - 2024-08-23
 
 - 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)

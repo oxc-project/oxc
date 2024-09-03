@@ -1391,7 +1391,7 @@ checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
 name = "oxc"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1411,9 +1411,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "1.0.2"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c18f34190f311397d0e6fa5a3e097e692b361d1311009915e83f7a9b68aef83e"
+checksum = "50b5ad390a7cf69d5f574ea41eada88a7c0947272647703fe1ec6ce23bfe1714"
 dependencies = [
  "js-sys",
  "nom",
@@ -1428,7 +1428,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1438,12 +1438,13 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "bitflags 2.6.0",
  "num-bigint",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
  "serde",
@@ -1454,7 +1455,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1501,7 +1502,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "bitflags 2.6.0",
  "itertools",
@@ -1512,7 +1513,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "base64",
  "bitflags 2.6.0",
@@ -1559,7 +1560,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "miette",
  "owo-colors",
@@ -1569,14 +1570,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "insta",
  "oxc_allocator",
@@ -1667,7 +1668,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "itertools",
  "oxc_ast",
@@ -1678,7 +1679,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "insta",
  "num-bigint",
@@ -1712,7 +1713,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_module_lexer"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1722,7 +1723,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
@@ -1796,14 +1797,18 @@ dependencies = [
 
 [[package]]
 name = "oxc_regular_expression"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "oxc_allocator",
+ "oxc_ast_macros",
  "oxc_diagnostics",
  "oxc_span",
  "phf 0.11.2",
  "rustc-hash",
+ "serde",
+ "tsify",
  "unicode-id-start",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1826,7 +1831,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "assert-unchecked",
  "indexmap",
@@ -1850,7 +1855,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -1862,7 +1867,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "compact_str",
  "miette",
@@ -1876,7 +1881,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "bitflags 2.6.0",
  "dashmap 6.0.1",
@@ -1918,7 +1923,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -1937,7 +1942,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "dashmap 6.0.1",
  "indexmap",
@@ -1959,7 +1964,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.25.0"
+version = "0.26.0"
 dependencies = [
  "compact_str",
  "memoffset",

@@ -175,11 +175,11 @@
 //!
 //! If you are seeing compile-time errors in `src/ast/macros.rs`, this will be the cause.
 
-mod js;
-mod jsx;
-mod literal;
-mod macros;
-mod ts;
+pub(crate) mod js;
+pub(crate) mod jsx;
+pub(crate) mod literal;
+pub(crate) mod macros;
+pub(crate) mod ts;
 
 use macros::inherit_variants;
 

@@ -1,9 +1,10 @@
 commit: 3bcfee23
 
-Passed: 10/39
+Passed: 11/40
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
+* babel-preset-typescript
 
 
 # babel-plugin-transform-nullish-coalescing-operator (0/1)
@@ -102,6 +103,10 @@ Passed: 10/39
   | after transform: ScopeId(0): ["A", "ReactiveMarkerSymbol"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
+
 
 * enum-member-reference/input.ts
   x Missing ReferenceId: Foo
@@ -144,6 +149,12 @@ Passed: 10/39
   | rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok",
   | "T"]
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4)]
+
   x Binding symbols mismatch:
   | after transform: ScopeId(5): [SymbolId(8), SymbolId(10)]
   | rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
@@ -178,6 +189,10 @@ Passed: 10/39
 
 
 * redeclarations/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
   | ConstVariable | Export | Import)
@@ -512,6 +527,10 @@ Passed: 10/39
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
   x Missing ScopeId
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(10): [ReferenceId(17), ReferenceId(18),
   | ReferenceId(20)]
@@ -549,6 +568,11 @@ Passed: 10/39
   x Missing ScopeId
 
   x Missing ScopeId
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(5), ScopeId(6)]
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(7): [ReferenceId(9), ReferenceId(10),

@@ -471,6 +471,10 @@ mod vitest {
     pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
+mod node {
+    pub mod no_exports_assign;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
@@ -894,4 +898,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_truthy,
     vitest::no_conditional_tests,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    node::no_exports_assign,
 }

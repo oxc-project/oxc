@@ -7,6 +7,7 @@ use crate::{
     body_parser::{diagnostics, reader::Reader, state::State, unicode, unicode_property},
     options::ParserOptions,
     span::SpanFactory,
+    surroage_pair,
 };
 
 pub struct PatternParser<'a> {
@@ -1847,14 +1848,14 @@ impl<'a> PatternParser<'a> {
             let span_start = self.reader.offset();
 
             if let Some(lead_surrogate) =
-                self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
+                self.reader.peek().filter(|&cp| surroage_pair::is_lead_surrogate(cp))
             {
                 if let Some(trail_surrogate) =
-                    self.reader.peek2().filter(|&cp| unicode::is_trail_surrogate(cp))
+                    self.reader.peek2().filter(|&cp| surroage_pair::is_trail_surrogate(cp))
                 {
                     self.reader.advance();
                     self.reader.advance();
-                    let cp = unicode::combine_surrogate_pair(lead_surrogate, trail_surrogate);
+                    let cp = surroage_pair::combine_surrogate_pair(lead_surrogate, trail_surrogate);
 
                     // [SS:EE] RegExpIdentifierStart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierStart is not matched by the UnicodeIDStart lexical grammar production.
@@ -1907,15 +1908,15 @@ impl<'a> PatternParser<'a> {
             let span_start = self.reader.offset();
 
             if let Some(lead_surrogate) =
-                self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
+                self.reader.peek().filter(|&cp| surroage_pair::is_lead_surrogate(cp))
             {
                 if let Some(trail_surrogate) =
-                    self.reader.peek2().filter(|&cp| unicode::is_trail_surrogate(cp))
+                    self.reader.peek2().filter(|&cp| surroage_pair::is_trail_surrogate(cp))
                 {
                     self.reader.advance();
                     self.reader.advance();
 
-                    let cp = unicode::combine_surrogate_pair(lead_surrogate, trail_surrogate);
+                    let cp = surroage_pair::combine_surrogate_pair(lead_surrogate, trail_surrogate);
                     // [SS:EE] RegExpIdentifierPart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierPart is not matched by the UnicodeIDContinue lexical grammar production.
                     if !unicode::is_unicode_id_continue(cp) {
@@ -1953,15 +1954,16 @@ impl<'a> PatternParser<'a> {
                 let checkpoint = self.reader.checkpoint();
 
                 // HexLeadSurrogate + HexTrailSurrogate
-                if let Some(lead_surrogate) =
-                    self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
+                if let Some(lead_surrogate) = self
+                    .consume_fixed_hex_digits(4)
+                    .filter(|&cp| surroage_pair::is_lead_surrogate(cp))
                 {
                     if self.reader.eat2('\\', 'u') {
                         if let Some(trail_surrogate) = self
                             .consume_fixed_hex_digits(4)
-                            .filter(|&cp| unicode::is_trail_surrogate(cp))
+                            .filter(|&cp| surroage_pair::is_trail_surrogate(cp))
                         {
-                            return Ok(Some(unicode::combine_surrogate_pair(
+                            return Ok(Some(surroage_pair::combine_surrogate_pair(
                                 lead_surrogate,
                                 trail_surrogate,
                             )));
@@ -1971,16 +1973,18 @@ impl<'a> PatternParser<'a> {
                 self.reader.rewind(checkpoint);
 
                 // HexLeadSurrogate
-                if let Some(lead_surrogate) =
-                    self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
+                if let Some(lead_surrogate) = self
+                    .consume_fixed_hex_digits(4)
+                    .filter(|&cp| surroage_pair::is_lead_surrogate(cp))
                 {
                     return Ok(Some(lead_surrogate));
                 }
                 self.reader.rewind(checkpoint);
 
                 // HexTrailSurrogate
-                if let Some(trail_surrogate) =
-                    self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_trail_surrogate(cp))
+                if let Some(trail_surrogate) = self
+                    .consume_fixed_hex_digits(4)
+                    .filter(|&cp| surroage_pair::is_trail_surrogate(cp))
                 {
                     return Ok(Some(trail_surrogate));
                 }

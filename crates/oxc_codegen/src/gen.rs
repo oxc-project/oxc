@@ -1234,14 +1234,15 @@ impl<'a> Gen for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         let last = p.peek_nth(0);
+        let pattern_text = self.regex.pattern.source_text(p.source_text);
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
-            || (Some('<') == last && self.regex.pattern.to_lowercase().starts_with("script"))
+            || (Some('<') == last && pattern_text.to_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }
         p.print_char(b'/');
-        p.print_str(self.regex.pattern.as_str());
+        p.print_str(pattern_text);
         p.print_char(b'/');
         p.print_str(self.regex.flags.to_string().as_str());
         p.prev_reg_exp_end = p.code().len();

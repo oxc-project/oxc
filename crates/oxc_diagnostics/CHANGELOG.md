@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.26.0] - 2024-09-03
+
+### Features
+
+- 9c22ce9 linter: Add hyperlinks to diagnostic messages (#5318) (DonIsaac)
+
+### Bug Fixes
+
+- ff7fa98 diagnostics: Improve "file is too long to fit on the screen" (#5120) (Boshen)
+
+### Refactor
+
+- cd63336 diagnostic: Change how diagnostic codes are rendered (#5317) (DonIsaac)
+
 ## [0.22.0] - 2024-07-23
 
 ### Features

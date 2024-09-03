@@ -48,7 +48,7 @@ pub use crate::{
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
     react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
-    typescript::TypeScriptOptions,
+    typescript::{RewriteExtensionsMode, TypeScriptOptions},
 };
 use crate::{
     context::{Ctx, TransformCtx},
@@ -381,6 +381,30 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x3_es2015.enter_variable_declarator(node, ctx);
+    }
+
+    fn enter_import_declaration(
+        &mut self,
+        node: &mut ImportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.enter_import_declaration(node, ctx);
+    }
+
+    fn enter_export_all_declaration(
+        &mut self,
+        node: &mut ExportAllDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.enter_export_all_declaration(node, ctx);
+    }
+
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.enter_export_named_declaration(node, ctx);
     }
 
     fn enter_ts_export_assignment(
