@@ -105,7 +105,8 @@ impl Runner for LintRunner {
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
             .with_nextjs_plugin(enable_plugins.nextjs_plugin)
             .with_react_perf_plugin(enable_plugins.react_perf_plugin)
-            .with_promise_plugin(enable_plugins.promise_plugin);
+            .with_promise_plugin(enable_plugins.promise_plugin)
+            .with_node_plugin(enable_plugins.node_plugin);
 
         let linter = match Linter::from_options(lint_options) {
             Ok(lint_service) => lint_service,
