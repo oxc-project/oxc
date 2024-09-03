@@ -305,122 +305,125 @@ pub fn create_export_star_exports<'a>(
     )));
     // 2. Iterate the exports and assign them.
 
-    builder.expression_call(
+    result.push(builder.statement_expression(
         SPAN,
-        builder.expression_member(builder.member_expression_static(
+        builder.expression_call(
             SPAN,
-            builder.expression_call(
+            builder.expression_member(builder.member_expression_static(
                 SPAN,
-                builder.expression_member(builder.member_expression_static(
+                builder.expression_call(
                     SPAN,
-                    builder.expression_identifier_reference(SPAN, "Object"),
-                    builder.identifier_name(SPAN, "keys"),
-                    false,
-                )),
-                None::<TSTypeParameterInstantiation>,
-                builder.vec1(builder.argument_expression(
-                    builder.expression_identifier_reference(SPAN, ident.as_str()),
-                )),
-                false,
-            ),
-            builder.identifier_name(SPAN, "forEach"),
-            false,
-        )),
-        None::<TSTypeParameterInstantiation>,
-        builder.vec1(builder.argument_expression(builder.expression_function(
-            FunctionType::FunctionExpression,
-            SPAN,
-            None,
-            false,
-            false,
-            false,
-            None::<TSTypeParameterDeclaration>,
-            None::<TSThisParameter>,
-            builder.formal_parameters(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                builder.vec1(builder.formal_parameter(
-                    SPAN,
-                    builder.vec(),
-                    builder.binding_pattern(
-                        builder.binding_pattern_kind_binding_identifier(SPAN, "key"),
-                        None::<TSTypeAnnotation>,
+                    builder.expression_member(builder.member_expression_static(
+                        SPAN,
+                        builder.expression_identifier_reference(SPAN, "Object"),
+                        builder.identifier_name(SPAN, "keys"),
                         false,
-                    ),
-                    None::<TSAccessibility>,
+                    )),
+                    None::<TSTypeParameterInstantiation>,
+                    builder.vec1(builder.argument_expression(
+                        builder.expression_identifier_reference(SPAN, ident.as_str()),
+                    )),
                     false,
-                    false,
-                )),
-                None::<BindingRestElement>,
-            ),
-            None::<TSTypeAnnotation>,
-            Some(builder.function_body(SPAN, builder.vec(), {
-                let mut items = builder.vec();
-                items.push(builder.statement_if(
+                ),
+                builder.identifier_name(SPAN, "forEach"),
+                false,
+            )),
+            None::<TSTypeParameterInstantiation>,
+            builder.vec1(builder.argument_expression(builder.expression_function(
+                FunctionType::FunctionExpression,
+                SPAN,
+                None,
+                false,
+                false,
+                false,
+                None::<TSTypeParameterDeclaration>,
+                None::<TSThisParameter>,
+                builder.formal_parameters(
                     SPAN,
-                    builder.expression_logical(
+                    FormalParameterKind::FormalParameter,
+                    builder.vec1(builder.formal_parameter(
                         SPAN,
-                        builder.expression_binary(
-                            SPAN,
-                            builder.expression_identifier_reference(SPAN, "key"),
-                            BinaryOperator::StrictEquality,
-                            builder.expression_string_literal(SPAN, "default"),
+                        builder.vec(),
+                        builder.binding_pattern(
+                            builder.binding_pattern_kind_binding_identifier(SPAN, "key"),
+                            None::<TSTypeAnnotation>,
+                            false,
                         ),
-                        LogicalOperator::Or,
-                        builder.expression_binary(
-                            SPAN,
-                            builder.expression_identifier_reference(SPAN, "key"),
-                            BinaryOperator::StrictEquality,
-                            builder.expression_string_literal(SPAN, "__esModule"),
-                        ),
-                    ),
-                    builder.statement_return(SPAN, None),
-                    None,
-                ));
-                items.push(builder.statement_if(
-                    SPAN,
-                    builder.expression_logical(
+                        None::<TSAccessibility>,
+                        false,
+                        false,
+                    )),
+                    None::<BindingRestElement>,
+                ),
+                None::<TSTypeAnnotation>,
+                Some(builder.function_body(SPAN, builder.vec(), {
+                    let mut items = builder.vec();
+                    items.push(builder.statement_if(
                         SPAN,
-                        builder.expression_binary(
+                        builder.expression_logical(
                             SPAN,
-                            builder.expression_identifier_reference(SPAN, "key"),
-                            BinaryOperator::In,
-                            builder.expression_identifier_reference(SPAN, "exports"),
-                        ),
-                        LogicalOperator::And,
-                        builder.expression_binary(
-                            SPAN,
-                            builder.expression_member(builder.member_expression_computed(
+                            builder.expression_binary(
                                 SPAN,
+                                builder.expression_identifier_reference(SPAN, "key"),
+                                BinaryOperator::StrictEquality,
+                                builder.expression_string_literal(SPAN, "default"),
+                            ),
+                            LogicalOperator::Or,
+                            builder.expression_binary(
+                                SPAN,
+                                builder.expression_identifier_reference(SPAN, "key"),
+                                BinaryOperator::StrictEquality,
+                                builder.expression_string_literal(SPAN, "__esModule"),
+                            ),
+                        ),
+                        builder.statement_return(SPAN, None),
+                        None,
+                    ));
+                    items.push(builder.statement_if(
+                        SPAN,
+                        builder.expression_logical(
+                            SPAN,
+                            builder.expression_binary(
+                                SPAN,
+                                builder.expression_identifier_reference(SPAN, "key"),
+                                BinaryOperator::In,
                                 builder.expression_identifier_reference(SPAN, "exports"),
-                                builder.expression_identifier_reference(SPAN, "key"),
-                                false,
-                            )),
-                            BinaryOperator::StrictEquality,
-                            builder.expression_member(builder.member_expression_computed(
+                            ),
+                            LogicalOperator::And,
+                            builder.expression_binary(
                                 SPAN,
-                                builder.expression_identifier_reference(SPAN, ident.as_str()),
-                                builder.expression_identifier_reference(SPAN, "key"),
-                                false,
-                            )),
+                                builder.expression_member(builder.member_expression_computed(
+                                    SPAN,
+                                    builder.expression_identifier_reference(SPAN, "exports"),
+                                    builder.expression_identifier_reference(SPAN, "key"),
+                                    false,
+                                )),
+                                BinaryOperator::StrictEquality,
+                                builder.expression_member(builder.member_expression_computed(
+                                    SPAN,
+                                    builder.expression_identifier_reference(SPAN, ident.as_str()),
+                                    builder.expression_identifier_reference(SPAN, "key"),
+                                    false,
+                                )),
+                            ),
                         ),
-                    ),
-                    builder.statement_return(SPAN, None),
-                    None,
-                ));
-                items.push(builder.statement_expression(
-                    SPAN,
-                    create_object_define_property(
-                        builder.identifier_reference(SPAN, ident.as_str()),
-                        builder.expression_identifier_reference(SPAN, "key"),
-                        builder,
-                    ),
-                ));
-                items
-            })),
-        ))),
-        false,
-    );
+                        builder.statement_return(SPAN, None),
+                        None,
+                    ));
+                    items.push(builder.statement_expression(
+                        SPAN,
+                        create_object_define_property(
+                            builder.identifier_reference(SPAN, ident.as_str()),
+                            builder.expression_identifier_reference(SPAN, "key"),
+                            builder,
+                        ),
+                    ));
+                    items
+                })),
+            ))),
+            false,
+        ),
+    ));
     result
 }
 
