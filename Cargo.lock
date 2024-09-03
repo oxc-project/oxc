@@ -1572,6 +1572,7 @@ dependencies = [
 name = "oxc_index"
 version = "0.26.0"
 dependencies = [
+ "rayon",
  "serde",
 ]
 

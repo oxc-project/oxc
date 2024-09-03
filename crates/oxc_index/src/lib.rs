@@ -153,6 +153,10 @@ mod idxslice;
 mod indexing;
 pub use idxslice::{IndexBox, IndexSlice};
 pub use indexing::{IdxRangeBounds, IdxSliceIndex};
+#[cfg(feature = "rayon")]
+pub use rayon_impl::*;
+#[cfg(feature = "rayon")]
+mod rayon_impl;
 
 #[macro_use]
 mod macros;
