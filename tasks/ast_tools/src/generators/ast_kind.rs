@@ -3,14 +3,14 @@ use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
 use crate::{
-    codegen::LateCtx,
+    codegen::{generated_header, LateCtx},
     output,
     schema::{GetIdent, ToType, TypeDef},
     util::ToIdent,
     Generator, GeneratorOutput,
 };
 
-use super::{define_generator, generated_header};
+use super::define_generator;
 
 define_generator! {
     pub struct AstKindGenerator;
@@ -156,7 +156,7 @@ impl Generator for AstKindGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput::Stream((
+        GeneratorOutput(
             output(crate::AST_CRATE, "ast_kind.rs"),
             quote! {
                 #header
@@ -190,6 +190,6 @@ impl Generator for AstKindGenerator {
                     }
                 }
             },
-        ))
+        )
     }
 }

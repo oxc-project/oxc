@@ -1,12 +1,21 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/derive_clone_in.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
 
 #![allow(clippy::default_trait_access)]
 
 use oxc_allocator::{Allocator, CloneIn};
 
 #[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use crate::ast::js::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::jsx::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::literal::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::ts::*;
 
 impl<'alloc> CloneIn<'alloc> for BooleanLiteral {
     type Cloned = BooleanLiteral;

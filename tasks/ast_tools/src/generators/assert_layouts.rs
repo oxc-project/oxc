@@ -3,14 +3,14 @@ use quote::quote;
 use syn::Type;
 
 use crate::{
-    codegen::LateCtx,
+    codegen::{generated_header, LateCtx},
     output,
     schema::{FieldDef, ToType, TypeDef},
     util::ToIdent,
     Generator, GeneratorOutput,
 };
 
-use super::{define_generator, generated_header};
+use super::define_generator;
 
 define_generator! {
     pub struct AssertLayouts;
@@ -29,7 +29,7 @@ impl Generator for AssertLayouts {
 
         let header = generated_header!();
 
-        GeneratorOutput::Stream((
+        GeneratorOutput(
             output(crate::AST_CRATE, "assert_layouts.rs"),
             quote! {
                 #header
@@ -52,7 +52,7 @@ impl Generator for AssertLayouts {
                 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]
                 const _: () = panic!("Platforms with pointer width other than 64 or 32 bit are not supported");
             },
-        ))
+        )
     }
 }
 

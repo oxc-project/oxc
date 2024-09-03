@@ -30,13 +30,27 @@ impl From<Ident> for Inherit {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct EnumMeta {
     pub inherits: Vec<Inherit>,
     pub layout_32: Layout,
     pub layout_64: Layout,
     pub visitable: bool,
     pub ast: bool,
+    pub module_path: String,
+}
+
+impl EnumMeta {
+    fn new(module_path: String) -> Self {
+        Self {
+            inherits: Vec::default(),
+            layout_32: Layout::default(),
+            layout_64: Layout::default(),
+            visitable: false,
+            ast: false,
+            module_path,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -61,19 +75,26 @@ impl Enum {
     }
 }
 
-impl From<ItemEnum> for Enum {
-    fn from(item: ItemEnum) -> Self {
-        Self { item, meta: EnumMeta::default() }
-    }
-}
-
 /// Placeholder for now!
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct StructMeta {
     pub layout_32: Layout,
     pub layout_64: Layout,
     pub visitable: bool,
     pub ast: bool,
+    pub module_path: String,
+}
+
+impl StructMeta {
+    fn new(module_path: String) -> Self {
+        Self {
+            layout_32: Layout::default(),
+            layout_64: Layout::default(),
+            visitable: false,
+            ast: false,
+            module_path,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -83,6 +104,10 @@ pub struct Struct {
 }
 
 impl Struct {
+    pub fn with_meta(item: ItemStruct, meta: StructMeta) -> Self {
+        Self { item, meta }
+    }
+
     pub fn ident(&self) -> &Ident {
         &self.item.ident
     }
@@ -94,9 +119,26 @@ impl Struct {
     }
 }
 
-impl From<ItemStruct> for Struct {
-    fn from(item: ItemStruct) -> Self {
-        Self { item, meta: StructMeta::default() }
+#[derive(Debug)]
+pub struct Macro {
+    pub item: ItemMacro,
+    pub meta: MacroMeta,
+}
+
+impl Macro {
+    pub fn with_meta(item: ItemMacro, meta: MacroMeta) -> Self {
+        Self { item, meta }
+    }
+}
+
+#[derive(Debug)]
+pub struct MacroMeta {
+    pub module_path: String,
+}
+
+impl MacroMeta {
+    fn new(module_path: String) -> Self {
+        Self { module_path }
     }
 }
 
@@ -106,7 +148,7 @@ pub enum AstType {
     Struct(Struct),
 
     // we need this to expand `inherit` macro calls.
-    Macro(ItemMacro),
+    Macro(Macro),
 }
 
 impl ToTokens for AstType {
@@ -114,18 +156,30 @@ impl ToTokens for AstType {
         match self {
             Self::Enum(it) => it.item.to_tokens(tokens),
             Self::Struct(it) => it.item.to_tokens(tokens),
-
-            Self::Macro(it) => it.to_tokens(tokens),
+            Self::Macro(it) => it.item.to_tokens(tokens),
         }
     }
 }
 
 impl AstType {
+    fn new(item: Item, module_path: String) -> Result<Self> {
+        match item {
+            Item::Enum(it) => Ok(AstType::Enum(Enum::with_meta(it, EnumMeta::new(module_path)))),
+            Item::Struct(it) => {
+                Ok(AstType::Struct(Struct::with_meta(it, StructMeta::new(module_path))))
+            }
+            Item::Macro(it) => {
+                Ok(AstType::Macro(Macro::with_meta(it, MacroMeta::new(module_path))))
+            }
+            _ => Err(String::from("Unsupported Item!")),
+        }
+    }
+
     pub fn ident(&self) -> Option<&Ident> {
         match self {
             AstType::Enum(ty) => Some(ty.ident()),
             AstType::Struct(ty) => Some(ty.ident()),
-            AstType::Macro(tt) => tt.ident.as_ref(),
+            AstType::Macro(ty) => ty.item.ident.as_ref(),
         }
     }
 
@@ -156,7 +210,7 @@ impl AstType {
         match self {
             AstType::Enum(it) => assign!(it),
             AstType::Struct(it) => assign!(it),
-            AstType::Macro(it) => return Err(unexpanded_macro_err(it)),
+            AstType::Macro(it) => return Err(unexpanded_macro_err(&it.item)),
         }
         Ok(())
     }
@@ -165,7 +219,7 @@ impl AstType {
         match self {
             AstType::Enum(it) => it.meta.ast = value,
             AstType::Struct(it) => it.meta.ast = value,
-            AstType::Macro(it) => return Err(unexpanded_macro_err(it)),
+            AstType::Macro(it) => return Err(unexpanded_macro_err(&it.item)),
         }
         Ok(())
     }
@@ -174,7 +228,7 @@ impl AstType {
         match self {
             AstType::Enum(it) => Ok(it.meta.layout_32.clone()),
             AstType::Struct(it) => Ok(it.meta.layout_32.clone()),
-            AstType::Macro(it) => Err(unexpanded_macro_err(it)),
+            AstType::Macro(it) => Err(unexpanded_macro_err(&it.item)),
         }
     }
 
@@ -182,7 +236,7 @@ impl AstType {
         match self {
             AstType::Enum(it) => Ok(it.meta.layout_64.clone()),
             AstType::Struct(it) => Ok(it.meta.layout_64.clone()),
-            AstType::Macro(it) => Err(unexpanded_macro_err(it)),
+            AstType::Macro(it) => Err(unexpanded_macro_err(&it.item)),
         }
     }
 
@@ -200,20 +254,16 @@ impl AstType {
         match self {
             AstType::Enum(it) => assign!(it),
             AstType::Struct(it) => assign!(it),
-            AstType::Macro(it) => return Err(unexpanded_macro_err(it)),
+            AstType::Macro(it) => return Err(unexpanded_macro_err(&it.item)),
         }
         Ok(())
     }
-}
 
-impl TryFrom<Item> for AstType {
-    type Error = String;
-    fn try_from(item: Item) -> Result<Self> {
-        match item {
-            Item::Enum(it) => Ok(AstType::Enum(it.into())),
-            Item::Struct(it) => Ok(AstType::Struct(it.into())),
-            Item::Macro(it) => Ok(AstType::Macro(it)),
-            _ => Err(String::from("Unsupported Item!")),
+    pub fn module_path(&self) -> String {
+        match self {
+            AstType::Enum(it) => it.meta.module_path.clone(),
+            AstType::Struct(it) => it.meta.module_path.clone(),
+            AstType::Macro(it) => it.meta.module_path.clone(),
         }
     }
 }
@@ -221,11 +271,8 @@ impl TryFrom<Item> for AstType {
 const LOAD_ERROR: &str = "should be loaded by now!";
 #[derive(Debug)]
 pub struct Module {
-    pub path: PathBuf,
-    // TODO: remove me
-    #[allow(dead_code)]
-    #[allow(clippy::struct_field_names)]
-    pub module: String,
+    pub file: PathBuf,
+    pub path: String,
     pub shebang: Option<String>,
     pub attrs: Vec<Attribute>,
     pub items: Vec<AstRef>,
@@ -240,15 +287,25 @@ impl ToTokens for Module {
 }
 
 impl Module {
-    pub fn with_path(path: PathBuf) -> Self {
-        let module = path.file_stem().map(|it| it.to_string_lossy().to_string()).unwrap();
-        Self { path, module, shebang: None, attrs: Vec::new(), items: Vec::new(), loaded: false }
+    /// Expects a file path to a rust source file in the `crates` directory.
+    pub fn with_path(file: PathBuf) -> Self {
+        let path = {
+            let no_ext = file.with_extension("");
+            let string = no_ext.to_string_lossy();
+            let mut parts = string.split('/');
+            assert_eq!(parts.next(), Some("crates"));
+            let krate = parts.next().unwrap();
+            assert_eq!(parts.next(), Some("src"));
+            let mut parts = [krate].into_iter().chain(parts);
+            parts.join("::")
+        };
+        Self { file, path, shebang: None, attrs: Vec::new(), items: Vec::new(), loaded: false }
     }
 
     pub fn load(mut self) -> Result<Self> {
         assert!(!self.loaded, "can't load twice!");
 
-        let mut file = std::fs::File::open(&self.path).normalize()?;
+        let mut file = std::fs::File::open(&self.file).normalize()?;
         let mut content = String::new();
         file.read_to_string(&mut content).normalize()?;
         let file = parse_file(content.as_str()).normalize()?;
@@ -263,7 +320,7 @@ impl Module {
                 Item::Macro(m) if m.mac.path.is_ident("inherit_variants") => true,
                 _ => false,
             })
-            .map(TryInto::try_into)
+            .map(|it| AstType::new(it, self.path.clone()))
             .map_ok(|it| Rc::new(RefCell::new(it)))
             .collect::<Result<_>>()?;
         self.loaded = true;
@@ -294,8 +351,9 @@ impl Module {
 
 pub fn expand(ast_ref: &AstRef) -> Result<()> {
     let to_replace = match &*ast_ref.borrow() {
-        AstType::Macro(mac) => {
+        ast_ref @ AstType::Macro(mac) => {
             let (enum_, inherits) = mac
+                .item
                 .mac
                 .parse_body_with(|input: &ParseBuffer| {
                     // Because of `@inherit`s we can't use the actual `ItemEnum` parse,
@@ -349,7 +407,7 @@ pub fn expand(ast_ref: &AstRef) -> Result<()> {
                 enum_,
                 EnumMeta {
                     inherits: inherits.into_iter().map(Into::into).collect(),
-                    ..EnumMeta::default()
+                    ..EnumMeta::new(ast_ref.module_path())
                 },
             )))
         }
