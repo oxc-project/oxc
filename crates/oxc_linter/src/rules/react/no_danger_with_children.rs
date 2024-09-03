@@ -20,20 +20,28 @@ pub struct NoDangerWithChildren;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallows when a DOM element is using both `children` and `dangerouslySetInnerHTML` properties.
     ///
     /// ### Why is this bad?
     ///
+    /// React will throw a warning if this rule is ignored and both `children` and `dangerouslySetInnerHTML` are used.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// <div dangerouslySetInnerHTML={{ __html: "HTML" }}>Children</div>
+    /// React.createElement(
+    ///     "div",
+    ///     { dangerouslySetInnerHTML: { __html: "HTML" } },
+    ///     "Children"
+    /// );
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// <div>Children</div>
+    /// <div dangerouslySetInnerHTML={{ __html: "HTML" }} />
     /// ```
     NoDangerWithChildren,
     correctness
@@ -62,30 +70,36 @@ impl Rule for NoDangerWithChildren {
                 }
             }
             AstKind::CallExpression(call_expr) => {
+                // Calls with zero or one arguments are safe since they are not proper createElement calls.
                 if call_expr.arguments.len() <= 1 {
                     return;
                 }
                 let Expression::StaticMemberExpression(callee) = &call_expr.callee else {
                     return;
                 };
+
+                // Only accept calls like `.createElement(...)`
                 if callee.property.name != "createElement" {
                     return;
                 }
 
-                let props = call_expr
+                let Some(props) = call_expr
                     .arguments
                     .get(1)
                     .expect("Could not get props argument for createElement call")
-                    .as_expression();
+                    .as_expression()
+                else {
+                    return;
+                };
 
                 // If there are three arguments, then it is a JSX element with children.
                 // If it's just two arguments, it only has children if the props object has a children property.
                 let has_children = if call_expr.arguments.len() == 2 {
                     match props {
-                        Some(Expression::ObjectExpression(obj_expr)) => {
+                        Expression::ObjectExpression(obj_expr) => {
                             is_object_with_prop_name(&obj_expr.properties, "children")
                         }
-                        Some(Expression::Identifier(ident)) => {
+                        Expression::Identifier(ident) => {
                             does_object_var_have_prop_name(ctx, node, &ident.name, "children")
                         }
                         _ => false,
@@ -94,11 +108,15 @@ impl Rule for NoDangerWithChildren {
                     true
                 };
 
+                if !has_children {
+                    return;
+                }
+
                 let has_danger_prop = match props {
-                    Some(Expression::ObjectExpression(obj_expr)) => {
+                    Expression::ObjectExpression(obj_expr) => {
                         is_object_with_prop_name(&obj_expr.properties, "dangerouslySetInnerHTML")
                     }
-                    Some(Expression::Identifier(ident)) => does_object_var_have_prop_name(
+                    Expression::Identifier(ident) => does_object_var_have_prop_name(
                         ctx,
                         node,
                         &ident.name,
