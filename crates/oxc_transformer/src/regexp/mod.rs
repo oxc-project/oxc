@@ -130,7 +130,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
 
 impl<'a> RegExp<'a> {
     /// Check if the regular expression contains any unsupported flags.
-    fn has_unsupported_regular_expression_flags(&mut self, flags: RegExpFlags) -> bool {
+    fn has_unsupported_regular_expression_flags(&self, flags: RegExpFlags) -> bool {
         flags.iter().any(|f| match f {
             RegExpFlags::G | RegExpFlags::I | RegExpFlags::M => true,
             RegExpFlags::S if self.options.dot_all_flag => true,
@@ -145,7 +145,7 @@ impl<'a> RegExp<'a> {
     /// Check if the regular expression contains any unsupported syntax.
     ///
     /// Based on parsed regular expression pattern.
-    fn has_unsupported_regular_expression_pattern(&mut self, pattern: &Pattern<'a>) -> bool {
+    fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
         // Early return if no unsupported features-related plugins are enabled
         if !(self.options.named_capture_groups
             || self.options.unicode_property_escapes
@@ -176,7 +176,7 @@ impl<'a> RegExp<'a> {
     /// Check if the regular expression contains any unsupported syntax.
     ///
     /// Port from [esbuild](https://github.com/evanw/esbuild/blob/332727499e62315cff4ecaff9fa8b86336555e46/internal/js_parser/js_parser.go#L12667-L12800)
-    fn has_unsupported_regex_syntax_raw(&mut self, pattern: &str, flags: RegExpFlags) -> bool {
+    fn has_unsupported_regex_syntax_raw(&self, pattern: &str, flags: RegExpFlags) -> bool {
         let is_unicode = flags.contains(RegExpFlags::U);
         let mut paren_depth = 0;
         let mut chars = pattern.chars().peekable();
