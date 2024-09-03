@@ -23,7 +23,12 @@ pub struct NoConditionalTests;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// The rule disallows the use of conditional statements within test cases to ensure that tests are deterministic and clearly readable.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Conditional statements in test cases can make tests unpredictable and harder to understand. Tests should be consistent and straightforward to ensure reliable results and maintainability.
     ///
     /// ### Examples
     ///

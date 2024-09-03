@@ -18,10 +18,14 @@ declare_oxc_lint!(
     ///
     /// This rule warns when `node:test` is imported (usually accidentally). With `--fix`, it will replace the import with `vitest`.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Using `node:test` instead of `vitest` can lead to inconsistent test results and missing features. `vitest` should be used for all testing to ensure compatibility and access to its full functionality.
+    ///
     /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // invalid
     /// import { test } from 'node:test'
     /// import { expect } from 'vitest'
     ///
@@ -30,8 +34,8 @@ declare_oxc_lint!(
     /// })
     /// ```
     ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// // valid
     /// import { test, expect } from 'vitest'
     ///
     /// test('foo', () => {
