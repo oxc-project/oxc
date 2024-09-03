@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 310/1021
+Passed: 314/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -4976,7 +4976,7 @@ TS(18010)
 
 
 
-# babel-plugin-transform-react-jsx (115/144)
+# babel-plugin-transform-react-jsx (119/144)
 * react/arrow-functions/input.js
   x Unresolved references mismatch:
   | after transform: ["React", "this"]
@@ -5003,18 +5003,6 @@ TS(18010)
 
 * react/honor-custom-jsx-pragma-option/input.js
   x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/should-allow-deeper-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/should-allow-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
   | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(1)]
 
@@ -5091,21 +5079,8 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * react-automatic/handle-fragments-with-key/input.js
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1),
-  | ReferenceId(2)]
+  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : SymbolId(0): [ReferenceId(1)]
-
-
-* react-automatic/should-allow-deeper-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react-automatic/should-allow-js-namespacing/input.js
-  x Unresolved reference IDs mismatch for "Namespace":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
 
 
 * react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
@@ -5189,7 +5164,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 * cross-platform/handle-fragments-with-key/input.js
   x Unresolved reference IDs mismatch for "React":
-  | after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
+  | after transform: [ReferenceId(0), ReferenceId(1)]
   | rebuilt        : [ReferenceId(2)]
 
 
