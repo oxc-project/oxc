@@ -11,7 +11,7 @@ use std::hash::Hash;
 
 use bitflags::bitflags;
 use oxc_allocator::CloneIn;
-use oxc_ast_macros::{ast, CloneIn};
+use oxc_ast_macros::ast;
 use oxc_span::{Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -137,7 +137,7 @@ bitflags! {
     /// Regular expression flags.
     ///
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, CloneIn)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct RegExpFlags: u8 {
         /// Global flag
         ///

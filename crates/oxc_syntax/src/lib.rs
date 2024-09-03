@@ -13,3 +13,6 @@ pub mod reference;
 pub mod scope;
 pub mod symbol;
 pub mod xml_entities;
+mod generated {
+    mod derive_clone_in;
+}

@@ -10,6 +10,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+use oxc_allocator::CloneIn;
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::NumberBase;
 
@@ -220,5 +221,12 @@ impl<'a> fmt::Display for StringLiteral<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.value.fmt(f)
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for RegExpFlags {
+    type Cloned = Self;
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
     }
 }

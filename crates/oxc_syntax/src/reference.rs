@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
-use oxc_ast_macros::CloneIn;
+use oxc_allocator::CloneIn;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
@@ -76,7 +76,7 @@ bitflags! {
     /// [`Read`]: ReferenceFlags::Read
     /// [`Write`]: ReferenceFlags::Write
     /// [`TSTypeQuery`]: ReferenceFlags::TSTypeQuery
-    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, CloneIn)]
+    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlags: u8 {
         const None = 0;
@@ -164,5 +164,12 @@ impl ReferenceFlags {
     #[inline]
     pub const fn is_value(&self) -> bool {
         self.intersects(Self::Value)
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for ReferenceFlags {
+    type Cloned = Self;
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
     }
 }
