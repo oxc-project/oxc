@@ -1,7 +1,6 @@
 use oxc_ast::{
     ast::{
-        AssignmentTarget, Expression, MemberExpression, TSLiteral, UnaryExpression,
-        VariableDeclarationKind,
+        AssignmentTarget, Expression, MemberExpression, UnaryExpression, VariableDeclarationKind,
     },
     AstKind,
 };
@@ -375,16 +374,8 @@ fn is_ts_enum(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::TSEnumMember(_))
 }
 
-fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
-    let AstKind::TSLiteralType(literal) = parent_node.kind() else {
-        return false;
-    };
-
-    if !matches!(literal.literal, TSLiteral::NumericLiteral(_) | TSLiteral::UnaryExpression(_)) {
-        return false;
-    }
-
-    let mut node = nodes.parent_node(parent_node.id()).unwrap();
+fn is_ts_numeric_literal<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
+    let mut node = parent_parent_node;
 
     while matches!(
         node.kind(),
@@ -452,7 +443,7 @@ impl NoMagicNumbers {
             return true;
         }
 
-        if self.ignore_numeric_literal_types && is_ts_numeric_literal(parent, nodes) {
+        if self.ignore_numeric_literal_types && is_ts_numeric_literal(parent_parent, nodes) {
             return true;
         }
 
