@@ -376,27 +376,24 @@ fn is_ts_enum(parent_kind: &AstKind<'_>) -> bool {
 }
 
 fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
-    if let AstKind::TSLiteralType(literal) = parent_node.kind() {
-        if !matches!(literal.literal, TSLiteral::NumericLiteral(_) | TSLiteral::UnaryExpression(_))
-        {
-            return false;
-        }
+    let AstKind::TSLiteralType(literal) = parent_node.kind() else {
+        return false;
+    };
 
-        let mut node = nodes.parent_node(parent_node.id()).unwrap();
-
-        while matches!(
-            node.kind(),
-            AstKind::TSUnionType(_)
-                | AstKind::TSIntersectionType(_)
-                | AstKind::TSParenthesizedType(_)
-        ) {
-            node = nodes.parent_node(node.id()).unwrap();
-        }
-
-        return matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_));
+    if !matches!(literal.literal, TSLiteral::NumericLiteral(_) | TSLiteral::UnaryExpression(_)) {
+        return false;
     }
 
-    false
+    let mut node = nodes.parent_node(parent_node.id()).unwrap();
+
+    while matches!(
+        node.kind(),
+        AstKind::TSUnionType(_) | AstKind::TSIntersectionType(_) | AstKind::TSParenthesizedType(_)
+    ) {
+        node = nodes.parent_node(node.id()).unwrap();
+    }
+
+    matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_))
 }
 
 fn is_ts_readonly_property(parent_kind: &AstKind<'_>) -> bool {
