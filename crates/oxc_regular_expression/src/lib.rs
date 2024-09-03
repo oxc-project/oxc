@@ -9,6 +9,10 @@ mod options;
 mod span;
 mod surroage_pair;
 
+mod generated {
+    mod derive_clone_in;
+}
+
 pub use crate::body_parser::PatternParser;
 pub use crate::flag_parser::FlagsParser;
 pub use crate::literal_parser::Parser;

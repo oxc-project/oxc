@@ -41,6 +41,10 @@ impl Generator for AssertLayouts {
                 use crate::ast::*;
 
                 ///@@line_break
+                #[allow(clippy::wildcard_imports)]
+                use oxc_regular_expression::ast::*;
+
+                ///@@line_break
                 #[cfg(target_pointer_width = "64")]
                 const _: () = { #(#assertions_64)* };
 

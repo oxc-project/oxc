@@ -23,7 +23,22 @@ doctest = false
 oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_span        = { workspace = true }
+oxc_ast_macros  = { workspace = true }
 
 phf              = { workspace = true, features = ["macros"] }
 rustc-hash       = { workspace = true }
 unicode-id-start = { workspace = true }
+serde            = { workspace = true, features = ["derive"], optional = true }
+
+tsify            = { workspace = true, optional = true }
+wasm-bindgen     = { workspace = true, optional = true }
+
+[features]
+default = []
+serialize = [
+  "dep:serde",
+  "dep:tsify",
+  "dep:wasm-bindgen",
+  "oxc_allocator/serialize",
+  "oxc_span/serialize",
+]

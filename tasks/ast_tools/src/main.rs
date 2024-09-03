@@ -34,6 +34,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_syntax/src/operator.rs",
     "crates/oxc_span/src/span/types.rs",
     "crates/oxc_span/src/source_type/types.rs",
+    "crates/oxc_regular_expression/src/ast.rs",
 ];
 
 const AST_CRATE: &str = "crates/oxc_ast";

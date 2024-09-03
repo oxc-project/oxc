@@ -75,6 +75,17 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExp<'old_alloc> {
     }
 }
 
+impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'old_alloc> {
+    type Cloned = RegExpPattern<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Raw(it) => RegExpPattern::Raw(it.clone_in(allocator)),
+            Self::Invalid(it) => RegExpPattern::Invalid(it.clone_in(allocator)),
+            Self::Pattern(it) => RegExpPattern::Pattern(it.clone_in(allocator)),
+        }
+    }
+}
+
 impl<'alloc> CloneIn<'alloc> for EmptyObject {
     type Cloned = EmptyObject;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {

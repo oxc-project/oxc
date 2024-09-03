@@ -19,10 +19,11 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_allocator  = { workspace = true }
-oxc_ast_macros = { workspace = true }
-oxc_span       = { workspace = true }
-oxc_syntax     = { workspace = true }
+oxc_allocator          = { workspace = true }
+oxc_ast_macros         = { workspace = true }
+oxc_span               = { workspace = true }
+oxc_syntax             = { workspace = true }
+oxc_regular_expression = { workspace = true }
 
 bitflags   = { workspace = true }
 num-bigint = { workspace = true }
@@ -44,4 +45,5 @@ serialize = [
   "oxc_span/serialize",
   "oxc_syntax/serialize",
   "oxc_syntax/to_js_string",
+  "oxc_regular_expression/serialize"
 ]

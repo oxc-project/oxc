@@ -1444,6 +1444,7 @@ dependencies = [
  "num-bigint",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
  "serde",
@@ -1799,11 +1800,15 @@ name = "oxc_regular_expression"
 version = "0.26.0"
 dependencies = [
  "oxc_allocator",
+ "oxc_ast_macros",
  "oxc_diagnostics",
  "oxc_span",
  "phf 0.11.2",
  "rustc-hash",
+ "serde",
+ "tsify",
  "unicode-id-start",
+ "wasm-bindgen",
 ]
 
 [[package]]
