@@ -1,8 +1,6 @@
-use std::ops::Mul;
-
 use oxc_ast::{
     ast::{
-        Argument, AssignmentTarget, Expression, MemberExpression, TSLiteral, UnaryExpression,
+        AssignmentTarget, Expression, MemberExpression, TSLiteral, UnaryExpression,
         VariableDeclarationKind,
     },
     AstKind,
@@ -235,25 +233,25 @@ impl InternConfig<'_> {
         let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
         let is_negative = matches!(parent_node.kind(), AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation);
 
-        if let AstKind::NumericLiteral(numeric) = node.kind() {
-            if is_negative {
-                Ok(InternConfig {
-                    node: parent_node,
-                    value: 0.0 - numeric.value,
-                    raw: format!("-{}", numeric.raw),
-                })
-            } else {
-                Ok(InternConfig {
-                    node: if is_unary { parent_node } else { node },
-                    value: numeric.value,
-                    raw: numeric.raw.into(),
-                })
-            }
-        } else {
-            Err(OxcDiagnostic::warn(format!(
+        let AstKind::NumericLiteral(numeric) = node.kind() else {
+            return Err(OxcDiagnostic::warn(format!(
                 "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
                 node.kind().debug_name()
-            )))
+            )));
+        };
+
+        if is_negative {
+            Ok(InternConfig {
+                node: parent_node,
+                value: 0.0 - numeric.value,
+                raw: format!("-{}", numeric.raw),
+            })
+        } else {
+            Ok(InternConfig {
+                node: if is_unary { parent_node } else { node },
+                value: numeric.value,
+                raw: numeric.raw.into(),
+            })
         }
     }
 
@@ -266,202 +264,125 @@ impl Rule for NoMagicNumbers {
         Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if matches!(node.kind(), AstKind::NumericLiteral(_)) {
-            let nodes = ctx.nodes();
-            let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
-
-            if self.is_skipable(&config, nodes) {
-                return;
-            }
-
-            let parent = nodes.parent_node(config.node.id()).unwrap();
-            let span = config.node.kind().span();
-
-            if let Some(reason) = self.get_report_reason(parent) {
-                ctx.diagnostic(match reason {
-                    NoMagicNumberReportReason::MustUseConst => must_use_const_diagnostic(span),
-                    NoMagicNumberReportReason::NoMagicNumber => {
-                        no_magic_number_diagnostic(span, &config.raw)
-                    }
-                });
-            }
+        if !matches!(node.kind(), AstKind::NumericLiteral(_)) {
+            return;
         }
+
+        let nodes = ctx.semantic().nodes();
+        let config = InternConfig::from(node, nodes.parent_node(node.id()).unwrap());
+
+        if self.is_skipable(&config, nodes) {
+            return;
+        }
+
+        let parent_kind = nodes.parent_node(config.node.id()).unwrap().kind();
+        let span = config.node.kind().span();
+
+        let Some(reason) = self.get_report_reason(&parent_kind) else {
+            return;
+        };
+
+        ctx.diagnostic(match reason {
+            NoMagicNumberReportReason::MustUseConst => must_use_const_diagnostic(span),
+            NoMagicNumberReportReason::NoMagicNumber => {
+                no_magic_number_diagnostic(span, &config.raw)
+            }
+        });
     }
 }
 
-impl NoMagicNumbers {
-    fn is_numeric_f64(actual: f64, expected: f64) -> bool {
-        (actual - expected).abs() < f64::EPSILON
-    }
-    fn is_numeric_expression(expression: &Expression<'_>, number: f64) -> bool {
-        if expression.is_number(number) {
-            return true;
-        }
+fn is_default_value(parent_kind: &AstKind<'_>) -> bool {
+    matches!(parent_kind, AstKind::AssignmentTargetWithDefault(_) | AstKind::AssignmentPattern(_))
+}
 
-        if let Expression::UnaryExpression(unary) = expression {
-            if let Expression::NumericLiteral(_) = &unary.argument {
-                if unary.operator == UnaryOperator::UnaryPlus {
-                    return unary.argument.is_number(number);
-                }
+fn is_class_field_initial_value(parent_kind: &AstKind<'_>) -> bool {
+    matches!(parent_kind, AstKind::PropertyDefinition(_))
+}
 
-                if unary.operator == UnaryOperator::UnaryNegation {
-                    return unary.argument.is_number(number * -1.0);
-                }
+fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
+    matches!(parent_kind, AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_))
+}
+
+fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
+    let AstKind::CallExpression(expression) = parent_parent_node.kind() else {
+        return false;
+    };
+
+    let callee = expression.callee.without_parenthesized();
+
+    callee.is_specific_id("parseInt") || callee.is_specific_member_access("Number", "parseInt")
+}
+
+/// Returns whether the given node is used as an array index.
+/// Value must coerce to a valid array index name: "0", "1", "2" ... "4294967294".
+///
+/// All other values, like "-1", "2.5", or "4294967295", are just "normal" object properties,
+/// which can be created and accessed on an array in addition to the array index properties,
+/// but they don't affect array's length and are not considered by methods such as .map(), .forEach() etc.
+///
+/// The maximum array length by the specification is 2 ** 32 - 1 = 4294967295,
+/// thus the maximum valid index is 2 ** 32 - 2 = 4294967294.
+///
+/// All notations are allowed, as long as the value coerces to one of "0", "1", "2" ... "4294967294".
+///
+/// Valid examples:
+/// ```javascript
+/// a[0], a[1], a[1.2e1], a[0xAB], a[0n], a[1n]
+/// a[-0] // (same as a[0] because -0 coerces to "0")
+/// a[-0n] // (-0n evaluates to 0n)
+/// ```
+///
+/// Invalid examples:
+/// ```javascript
+/// a[-1], a[-0xAB], a[-1n], a[2.5], a[1.23e1], a[12e-1]
+/// a[4294967295] // (above the max index, it's an access to a regular property a["4294967295"])
+/// a[999999999999999999999] // (even if it wasn't above the max index, it would be a["1e+21"])
+/// a[1e310] // (same as a["Infinity"])
+/// ```
+fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool {
+    fn is_unanary_index(unary: &UnaryExpression) -> bool {
+        match &unary.argument {
+            Expression::NumericLiteral(numeric)
+                if unary.operator == UnaryOperator::UnaryNegation =>
+            {
+                numeric.value == 0.0
             }
-        }
-
-        false
-    }
-    fn is_ignore_value(&self, number: f64) -> bool {
-        self.ignore.contains(&number)
-    }
-
-    fn is_default_value(number: f64, parent_node: &AstNode<'_>) -> bool {
-        if let AstKind::AssignmentTargetWithDefault(assignment) = parent_node.kind() {
-            return NoMagicNumbers::is_numeric_expression(&assignment.init, number);
-        }
-
-        if let AstKind::AssignmentPattern(pattern) = parent_node.kind() {
-            return NoMagicNumbers::is_numeric_expression(&pattern.right, number);
-        }
-
-        false
-    }
-
-    fn is_class_field_initial_value(number: f64, parent_node: &AstNode<'_>) -> bool {
-        if let AstKind::PropertyDefinition(property) = parent_node.kind() {
-            return NoMagicNumbers::is_numeric_expression(property.value.as_ref().unwrap(), number);
-        }
-
-        false
-    }
-
-    fn is_parse_int_radix(number: f64, parent_parent_node: &AstNode<'_>) -> bool {
-        if let AstKind::CallExpression(expression) = parent_parent_node.kind() {
-            if expression.arguments.get(1).is_none() {
-                return false;
-            }
-
-            let argument = expression.arguments.get(1).unwrap();
-            return match argument {
-                Argument::NumericLiteral(numeric) => {
-                    NoMagicNumbers::is_numeric_f64(numeric.value, number)
-                }
-                Argument::UnaryExpression(unary)
-                    if unary.operator == UnaryOperator::UnaryNegation =>
-                {
-                    if let Expression::NumericLiteral(numeric) = &unary.argument {
-                        return NoMagicNumbers::is_numeric_f64(numeric.value, number.mul(-1.0));
-                    }
-
-                    return false;
-                }
-                _ => false,
-            };
-        }
-
-        false
-    }
-
-    /// Returns whether the given node is used as an array index.
-    /// Value must coerce to a valid array index name: "0", "1", "2" ... "4294967294".
-    ///
-    /// All other values, like "-1", "2.5", or "4294967295", are just "normal" object properties,
-    /// which can be created and accessed on an array in addition to the array index properties,
-    /// but they don't affect array's length and are not considered by methods such as .map(), .forEach() etc.
-    ///
-    /// The maximum array length by the specification is 2 ** 32 - 1 = 4294967295,
-    /// thus the maximum valid index is 2 ** 32 - 2 = 4294967294.
-    ///
-    /// All notations are allowed, as long as the value coerces to one of "0", "1", "2" ... "4294967294".
-    ///
-    /// Valid examples:
-    /// ```javascript
-    /// a[0], a[1], a[1.2e1], a[0xAB], a[0n], a[1n]
-    /// a[-0] // (same as a[0] because -0 coerces to "0")
-    /// a[-0n] // (-0n evaluates to 0n)
-    /// ```
-    ///
-    /// Invalid examples:
-    /// ```javascript
-    /// a[-1], a[-0xAB], a[-1n], a[2.5], a[1.23e1], a[12e-1]
-    /// a[4294967295] // (above the max index, it's an access to a regular property a["4294967295"])
-    /// a[999999999999999999999] // (even if it wasn't above the max index, it would be a["1e+21"])
-    /// a[1e310] // (same as a["Infinity"])
-    /// ```
-    fn is_array_index<'a>(node: &AstNode<'a>, parent_node: &AstNode<'a>) -> bool {
-        fn is_unanary_index(unary: &UnaryExpression) -> bool {
-            match &unary.argument {
-                Expression::NumericLiteral(numeric) => {
-                    if unary.operator == UnaryOperator::UnaryNegation {
-                        return numeric.value == 0.0;
-                    }
-                    false
-                }
-                _ => false,
-            }
-        }
-        match node.kind() {
-            AstKind::UnaryExpression(unary) => is_unanary_index(unary),
-            AstKind::NumericLiteral(numeric) => match parent_node.kind() {
-                AstKind::MemberExpression(expression) => {
-                    if let MemberExpression::ComputedMemberExpression(computed_expression) =
-                        expression
-                    {
-                        return computed_expression.expression.is_number(numeric.value)
-                            && numeric.value >= 0.0
-                            && numeric.value.fract() == 0.0
-                            && numeric.value < f64::from(u32::MAX);
-                    }
-
-                    false
-                }
-                AstKind::UnaryExpression(unary) => is_unanary_index(unary),
-                _ => false,
-            },
             _ => false,
         }
     }
+    match ast_kind {
+        AstKind::UnaryExpression(unary) => is_unanary_index(unary),
+        AstKind::NumericLiteral(numeric) => match parent_kind {
+            AstKind::MemberExpression(expression) => {
+                if let MemberExpression::ComputedMemberExpression(computed_expression) = expression
+                {
+                    return computed_expression.expression.is_number(numeric.value)
+                        && numeric.value >= 0.0
+                        && numeric.value.fract() == 0.0
+                        && numeric.value < f64::from(u32::MAX);
+                }
 
-    fn is_ts_enum(parent_node: &AstNode<'_>) -> bool {
-        matches!(parent_node.kind(), AstKind::TSEnumMember(_))
+                false
+            }
+            AstKind::UnaryExpression(unary) => is_unanary_index(unary),
+            _ => false,
+        },
+        _ => false,
     }
+}
 
-    fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
-        if let AstKind::TSLiteralType(literal) = parent_node.kind() {
-            if !matches!(
-                literal.literal,
-                TSLiteral::NumericLiteral(_) | TSLiteral::UnaryExpression(_)
-            ) {
-                return false;
-            }
+fn is_ts_enum(parent_kind: &AstKind<'_>) -> bool {
+    matches!(parent_kind, AstKind::TSEnumMember(_))
+}
 
-            let mut node = nodes.parent_node(parent_node.id()).unwrap();
-
-            while matches!(
-                node.kind(),
-                AstKind::TSUnionType(_)
-                    | AstKind::TSIntersectionType(_)
-                    | AstKind::TSParenthesizedType(_)
-            ) {
-                node = nodes.parent_node(node.id()).unwrap();
-            }
-
-            return matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_));
+fn is_ts_numeric_literal<'a>(parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
+    if let AstKind::TSLiteralType(literal) = parent_node.kind() {
+        if !matches!(literal.literal, TSLiteral::NumericLiteral(_) | TSLiteral::UnaryExpression(_))
+        {
+            return false;
         }
 
-        false
-    }
-
-    fn is_ts_readonly_property(parent_node: &AstNode<'_>) -> bool {
-        matches!(parent_node.kind(), AstKind::PropertyDefinition(property) if property.readonly)
-    }
-
-    fn is_ts_indexed_access_type<'a>(
-        parent_parent_node: &AstNode<'a>,
-        nodes: &AstNodes<'a>,
-    ) -> bool {
-        let mut node = parent_parent_node;
+        let mut node = nodes.parent_node(parent_node.id()).unwrap();
 
         while matches!(
             node.kind(),
@@ -472,68 +393,84 @@ impl NoMagicNumbers {
             node = nodes.parent_node(node.id()).unwrap();
         }
 
-        matches!(node.kind(), AstKind::TSIndexedAccessType(_))
+        return matches!(node.kind(), AstKind::TSTypeAliasDeclaration(_));
     }
 
+    false
+}
+
+fn is_ts_readonly_property(parent_kind: &AstKind<'_>) -> bool {
+    matches!(parent_kind, AstKind::PropertyDefinition(property) if property.readonly)
+}
+
+fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
+    let mut node = parent_parent_node;
+
+    while matches!(
+        node.kind(),
+        AstKind::TSUnionType(_) | AstKind::TSIntersectionType(_) | AstKind::TSParenthesizedType(_)
+    ) {
+        node = nodes.parent_node(node.id()).unwrap();
+    }
+
+    matches!(node.kind(), AstKind::TSIndexedAccessType(_))
+}
+
+impl NoMagicNumbers {
     fn is_skipable<'a>(&self, config: &InternConfig<'a>, nodes: &AstNodes<'a>) -> bool {
-        if self.is_ignore_value(config.value) {
+        if self.ignore.contains(&config.value) {
             return true;
         }
 
         let parent = nodes.parent_node(config.node.id()).unwrap();
+        let parent_kind = parent.kind();
 
-        if self.ignore_enums && NoMagicNumbers::is_ts_enum(parent) {
+        if self.ignore_enums && is_ts_enum(&parent_kind) {
             return true;
         }
 
-        if self.ignore_readonly_class_properties && NoMagicNumbers::is_ts_readonly_property(parent)
-        {
+        if self.ignore_readonly_class_properties && is_ts_readonly_property(&parent_kind) {
             return true;
         }
 
-        if self.ignore_default_values && NoMagicNumbers::is_default_value(config.value, parent) {
+        if self.ignore_default_values && is_default_value(&parent_kind) {
             return true;
         }
 
-        if self.ignore_class_field_initial_values
-            && NoMagicNumbers::is_class_field_initial_value(config.value, parent)
-        {
+        if self.ignore_class_field_initial_values && is_class_field_initial_value(&parent_kind) {
             return true;
         }
 
-        if self.ignore_array_indexes && NoMagicNumbers::is_array_index(config.node, parent) {
+        if self.ignore_array_indexes && is_array_index(&config.node.kind(), &parent_kind) {
             return true;
         }
 
-        if !self.detect_objects
-            && (matches!(parent.kind(), AstKind::ObjectExpression(_))
-                || matches!(parent.kind(), AstKind::ObjectProperty(_)))
-        {
+        if !self.detect_objects && is_detectable_object(&parent_kind) {
             return true;
         }
 
         let parent_parent = nodes.parent_node(parent.id()).unwrap();
 
-        if NoMagicNumbers::is_parse_int_radix(config.value, parent_parent) {
+        if is_parse_int_radix(parent_parent) {
             return true;
         }
 
-        if self.ignore_numeric_literal_types && NoMagicNumbers::is_ts_numeric_literal(parent, nodes)
-        {
+        if self.ignore_numeric_literal_types && is_ts_numeric_literal(parent, nodes) {
             return true;
         }
 
-        if self.ignore_type_indexes
-            && NoMagicNumbers::is_ts_indexed_access_type(parent_parent, nodes)
-        {
+        if self.ignore_type_indexes && is_ts_indexed_access_type(parent_parent, nodes) {
             return true;
         }
 
         false
     }
 
-    fn get_report_reason<'a>(&self, parent: &'a AstNode<'a>) -> Option<NoMagicNumberReportReason> {
-        match parent.kind() {
+    fn get_report_reason<'a>(
+        &self,
+        parent_kind: &'a AstKind<'a>,
+    ) -> Option<NoMagicNumberReportReason> {
+        match parent_kind {
             AstKind::VariableDeclarator(declarator) => {
                 if self.enforce_const && declarator.kind != VariableDeclarationKind::Const {
                     return Some(NoMagicNumberReportReason::MustUseConst);
