@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.26.0] - 2024-09-03
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 180b1a1 ast: Add `Function::name()` (#5361) (DonIsaac)
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+
+### Bug Fixes
+
+
+### Refactor
+
+- 946c867 ast: Box `TSThisParameter` (#5325) (overlookmotel)
+
 ## [0.25.0] - 2024-08-23
 
 ### Bug Fixes

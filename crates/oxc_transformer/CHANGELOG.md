@@ -4,6 +4,57 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 23e8456 traverse: [**BREAKING**] `TraverseCtx::ancestor` with level 0 = equivalent to `parent` (#5294) (overlookmotel)
+
+- 582ce9e traverse: [**BREAKING**] `TraverseCtx::ancestor` return `Ancestor::None` if out of bounds (#5286) (overlookmotel)
+
+### Features
+
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+- d04857b transformer: Support `Targets::from_query` method (#5336) (Dunqing)
+- 3d4a64c transformer: Make `Targets` public (#5335) (Dunqing)
+- 0eb7602 transformer: Support `TransformOptions::from_preset_env` API (#5323) (Dunqing)
+- 08dc0ad transformer: Add `object-spread` plugin (#3133) (magic-akari)
+- 01c0c3e transformer: Add remaining options to transformer options (#5169) (Boshen)
+- 056c667 transformer/arrow-functions: The output that uses `this` inside blocks doesn't match Babel (#5188) (Dunqing)
+- 0abfc50 transformer/typescript: Support `rewrite_import_extensions` option (#5399) (Dunqing)
+
+### Bug Fixes
+
+- 35f03db transformer: `ArrowfunctionExpression`'s expression is true but has more than one body statement (#5366) (Dunqing)
+- 8d6b05c transformer: Class property with typescript value should not be removed (#5298) (Boshen)
+- 47e69a8 transformer-optional-catch-binding: The `unused` binding is not in the correct scope (#5066) (Dunqing)
+- 94ff94c transformer/arrow-functions: Reaches `unreachable` when `<this.foo>` is inside an arrow function (#5356) (Dunqing)
+- f8bb022 transformer/arrow-functions: Remove `SymbolFlags::ArrowFunction` (#5190) (Dunqing)
+- d9ba5ad transformer/arrow-functions: Correct scope for `_this` (#5189) (Dunqing)
+- 3acb3f6 transformer/react: Mismatch output caused by incorrect transformation ordering (#5255) (Dunqing)
+- 5754c89 transformer/typescript: Remove accessibility from `AccessorProperty` (#5292) (Dunqing)
+
+### Performance
+
+- a1523c6 transformer: Remove an allocation from arrow functions transform (#5412) (overlookmotel)
+
+### Documentation
+
+- 8334bd4 transformer: Add documentation for `Targets::get_targets` (#5337) (Dunqing)
+- d51a954 transformer: Add documentation for arrow-functions plugin (#5186) (Dunqing)
+
+### Refactor
+
+- 960e1d5 ast: Rename `IdentifierReference::new_with_reference_id` (#5157) (overlookmotel)
+- 0de844d transformer: Remove unnecessary code from JSX transform (#5339) (overlookmotel)
+- 5136f01 transformer: Remove unnecessary type annotation (#5131) (overlookmotel)
+- 260c9d2 transformer/es2015: Move all entry points to implementation of Traverse trait (#5187) (Dunqing)
+- 1645115 transformer/object-reset-spread: Make plugin initialization unconditional (#5319) (Dunqing)
+- d2666fe transformer/object-rest-spread: Move plugin-relates files to `object_rest_spread` mod (#5320) (Dunqing)
+- 7e2a7af transformer/react: Remove `CalculateSignatureKey` implementation from refresh (#5289) (Dunqing)
+
 ## [0.25.0] - 2024-08-23
 
 - 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)

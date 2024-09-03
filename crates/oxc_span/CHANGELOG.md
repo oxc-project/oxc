@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.26.0] - 2024-09-03
+
+### Features
+
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+- 1b20ceb span: Add `CompactStr::to_compact_string` method (#5385) (Boshen)
+- 5a137f0 span/source-type: Add SourceType factory methods (#5242) (DonIsaac)
+- f5e05db span/source-type: Impl `Display` and `Error` for `UnknownExtension` (#5240) (DonIsaac)
+
+### Bug Fixes
+
+- a6bb3b1 span/source-type: Consider `.cjs` and `.cts` files as `ModuleKind::Script` (#5239) (DonIsaac)
+
+### Refactor
+
+- 94f60e7 span/source-type: Make `SourceType` factories `const` (#5241) (DonIsaac)
+
 ## [0.25.0] - 2024-08-23
 
 ### Refactor
