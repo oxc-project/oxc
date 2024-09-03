@@ -1,4 +1,4 @@
-ts compatibility: 50/528 (9.47%)
+ts compatibility: 50/526 (9.51%)
 
 # Failed
 
@@ -86,7 +86,6 @@ ts compatibility: 50/528 (9.47%)
 * class/declare-readonly-field-initializer-w-annotation.ts
 * class/declare-readonly-field-initializer.ts
 * class/dunder.ts
-* class/duplicates-access-modifier.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
 * class/generics.ts
@@ -396,7 +395,6 @@ ts compatibility: 50/528 (9.47%)
 * declare/declare_class_fields.ts
 * declare/declare_enum.ts
 * declare/declare_function.ts
-* declare/declare_function_with_body.ts
 * declare/declare_interface.ts
 * declare/declare_module.ts
 * declare/declare_namespace.ts

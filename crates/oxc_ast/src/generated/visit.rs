@@ -3341,7 +3341,6 @@ pub mod walk {
         let kind = AstKind::JSXMemberExpressionObject(visitor.alloc(it));
         visitor.enter_node(kind);
         match it {
-            JSXMemberExpressionObject::Identifier(it) => visitor.visit_jsx_identifier(it),
             JSXMemberExpressionObject::IdentifierReference(it) => {
                 visitor.visit_identifier_reference(it)
             }

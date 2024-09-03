@@ -196,12 +196,23 @@ impl TransformOptions {
         });
 
         transformer_options.typescript = {
-            let plugin_name = "transform-typescript";
-            from_value::<TypeScriptOptions>(get_plugin_options(plugin_name, options))
+            let preset_name = "typescript";
+            if options.has_preset("typescript") {
+                from_value::<TypeScriptOptions>(
+                    get_preset_options("typescript", options).unwrap_or_else(|| json!({})),
+                )
                 .unwrap_or_else(|err| {
-                    report_error(plugin_name, &err, false, &mut errors);
+                    report_error(preset_name, &err, true, &mut errors);
                     TypeScriptOptions::default()
                 })
+            } else {
+                let plugin_name = "transform-typescript";
+                from_value::<TypeScriptOptions>(get_plugin_options(plugin_name, options))
+                    .unwrap_or_else(|err| {
+                        report_error(plugin_name, &err, false, &mut errors);
+                        TypeScriptOptions::default()
+                    })
+            }
         };
 
         transformer_options.assumptions = if options.assumptions.is_null() {

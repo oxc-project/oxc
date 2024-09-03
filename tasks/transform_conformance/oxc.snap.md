@@ -1,10 +1,10 @@
 commit: 3bcfee23
 
-Passed: 10/38
+Passed: 11/40
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
-* babel-plugin-transform-arrow-functions
+* babel-preset-typescript
 
 
 # babel-plugin-transform-nullish-coalescing-operator (0/1)
@@ -12,6 +12,14 @@ Passed: 10/38
   x Reference flags mismatch:
   | after transform: ReferenceId(3): ReferenceFlags(Write)
   | rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
+
+
+
+# babel-plugin-transform-arrow-functions (1/2)
+* with-this-member-expression/input.jsx
+  x Unresolved references mismatch:
+  | after transform: ["this"]
+  | rebuilt        : []
 
 
 
@@ -95,6 +103,10 @@ Passed: 10/38
   | after transform: ScopeId(0): ["A", "ReactiveMarkerSymbol"]
   | rebuilt        : ScopeId(0): []
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): []
+
 
 * enum-member-reference/input.ts
   x Missing ReferenceId: Foo
@@ -137,6 +149,12 @@ Passed: 10/38
   | rebuilt        : ScopeId(0): ["Bar", "Foo", "Func", "Im", "Name", "Ok",
   | "T"]
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(4)]
+
   x Binding symbols mismatch:
   | after transform: ScopeId(5): [SymbolId(8), SymbolId(10)]
   | rebuilt        : ScopeId(3): [SymbolId(6), SymbolId(7)]
@@ -171,6 +189,10 @@ Passed: 10/38
 
 
 * redeclarations/input.ts
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+  | rebuilt        : ScopeId(0): []
+
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(BlockScopedVariable |
   | ConstVariable | Export | Import)
@@ -505,6 +527,10 @@ Passed: 10/38
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
   x Missing ScopeId
 
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
+
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(10): [ReferenceId(17), ReferenceId(18),
   | ReferenceId(20)]
@@ -542,6 +568,11 @@ Passed: 10/38
   x Missing ScopeId
 
   x Missing ScopeId
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3),
+  | ScopeId(5), ScopeId(6)]
 
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(7): [ReferenceId(9), ReferenceId(10),
@@ -633,57 +664,61 @@ Passed: 10/38
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
   x Output mismatch
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(13): [ReferenceId(22), ReferenceId(44),
-  | ReferenceId(45)]
+  | after transform: SymbolId(9): [ReferenceId(17), ReferenceId(42)]
+  | rebuilt        : SymbolId(11): [ReferenceId(33)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(13): [ReferenceId(22), ReferenceId(45),
+  | ReferenceId(46)]
   | rebuilt        : SymbolId(15): [ReferenceId(2), ReferenceId(45)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(14): [ReferenceId(24), ReferenceId(46),
-  | ReferenceId(47)]
+  | after transform: SymbolId(14): [ReferenceId(24), ReferenceId(47),
+  | ReferenceId(48)]
   | rebuilt        : SymbolId(16): [ReferenceId(5), ReferenceId(47)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(15): [ReferenceId(26), ReferenceId(48),
-  | ReferenceId(49)]
+  | after transform: SymbolId(15): [ReferenceId(26), ReferenceId(49),
+  | ReferenceId(50)]
   | rebuilt        : SymbolId(17): [ReferenceId(11), ReferenceId(49)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(16): [ReferenceId(28), ReferenceId(50),
-  | ReferenceId(51)]
+  | after transform: SymbolId(16): [ReferenceId(28), ReferenceId(51),
+  | ReferenceId(52)]
   | rebuilt        : SymbolId(18): [ReferenceId(34), ReferenceId(51)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(17): [ReferenceId(30), ReferenceId(52),
-  | ReferenceId(53)]
+  | after transform: SymbolId(17): [ReferenceId(30), ReferenceId(53),
+  | ReferenceId(54)]
   | rebuilt        : SymbolId(19): [ReferenceId(38), ReferenceId(53)]
 
   x Symbol reference IDs mismatch:
-  | after transform: SymbolId(18): [ReferenceId(32), ReferenceId(54),
-  | ReferenceId(55)]
+  | after transform: SymbolId(18): [ReferenceId(32), ReferenceId(55),
+  | ReferenceId(56)]
   | rebuilt        : SymbolId(20): [ReferenceId(42), ReferenceId(55)]
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(44): Some("_c")
+  | after transform: ReferenceId(45): Some("_c")
   | rebuilt        : ReferenceId(44): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(46): Some("_c2")
+  | after transform: ReferenceId(47): Some("_c2")
   | rebuilt        : ReferenceId(46): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(48): Some("_c3")
+  | after transform: ReferenceId(49): Some("_c3")
   | rebuilt        : ReferenceId(48): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(50): Some("_c4")
+  | after transform: ReferenceId(51): Some("_c4")
   | rebuilt        : ReferenceId(50): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(52): Some("_c5")
+  | after transform: ReferenceId(53): Some("_c5")
   | rebuilt        : ReferenceId(52): None
 
   x Reference symbol mismatch:
-  | after transform: ReferenceId(54): Some("_c6")
+  | after transform: ReferenceId(55): Some("_c6")
   | rebuilt        : ReferenceId(54): None
 
   x Unresolved references mismatch:

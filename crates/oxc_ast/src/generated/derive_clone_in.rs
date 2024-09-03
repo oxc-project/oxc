@@ -1,12 +1,21 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/derive_clone_in.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/clone_in.rs`
 
 #![allow(clippy::default_trait_access)]
 
 use oxc_allocator::{Allocator, CloneIn};
 
 #[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use crate::ast::js::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::jsx::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::literal::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::ts::*;
 
 impl<'alloc> CloneIn<'alloc> for BooleanLiteral {
     type Cloned = BooleanLiteral;
@@ -63,6 +72,17 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExp<'old_alloc> {
     type Cloned = RegExp<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         RegExp { pattern: self.pattern.clone_in(allocator), flags: self.flags.clone_in(allocator) }
+    }
+}
+
+impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegExpPattern<'old_alloc> {
+    type Cloned = RegExpPattern<'new_alloc>;
+    fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
+        match self {
+            Self::Raw(it) => RegExpPattern::Raw(it.clone_in(allocator)),
+            Self::Invalid(it) => RegExpPattern::Invalid(it.clone_in(allocator)),
+            Self::Pattern(it) => RegExpPattern::Pattern(it.clone_in(allocator)),
+        }
     }
 }
 
@@ -3517,7 +3537,6 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXMemberExpressionObject<'
     type Cloned = JSXMemberExpressionObject<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => JSXMemberExpressionObject::Identifier(it.clone_in(allocator)),
             Self::IdentifierReference(it) => {
                 JSXMemberExpressionObject::IdentifierReference(it.clone_in(allocator))
             }

@@ -73,20 +73,25 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.0.0
+        with:
+          package_json_file: ./tasks/benchmark/codspeed/package.json
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+          cache-dependency-path: ./tasks/benchmark/codspeed/package.json
+          cache: pnpm
 
       - name: Start bench results interceptor server
         working-directory: ./tasks/benchmark/codspeed
         env:
           COMPONENT: ${{ matrix.component }}
         run: |
-          corepack enable
           pnpm install
-          node capture.mjs &
+          pnpm run start &
 
       - name: Build benchmark
         env:

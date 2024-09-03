@@ -63,8 +63,8 @@ fn fixtures_root() -> PathBuf {
     project_root().join(root()).join("prettier/tests/format")
 }
 
-const SNAP_NAME: &str = "jsfmt.spec.js";
-const SNAP_RELATIVE_PATH: &str = "__snapshots__/jsfmt.spec.js.snap";
+const SNAP_NAME: &str = "format.test.js";
+const SNAP_RELATIVE_PATH: &str = "__snapshots__/format.test.js.snap";
 const LF: char = '\u{a}';
 const CR: char = '\u{d}';
 

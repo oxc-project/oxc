@@ -1416,7 +1416,7 @@ impl<'a> Format<'a> for RegExpLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         parts.push(ss!("/"));
-        parts.push(p.str(self.regex.pattern.as_str()));
+        parts.push(p.str(self.regex.pattern.source_text(p.source_text)));
         parts.push(ss!("/"));
         parts.push(format!(p, self.regex.flags));
         Doc::Array(parts)

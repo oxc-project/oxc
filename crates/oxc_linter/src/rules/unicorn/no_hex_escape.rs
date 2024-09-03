@@ -85,7 +85,9 @@ impl Rule for NoHexEscape {
                 });
             }
             AstKind::RegExpLiteral(regex) => {
-                if let Some(fixed) = check_escape(&regex.regex.pattern) {
+                if let Some(fixed) =
+                    check_escape(regex.regex.pattern.source_text(ctx.source_text()))
+                {
                     #[allow(clippy::cast_possible_truncation)]
                     ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), |fixer| {
                         fixer.replace(

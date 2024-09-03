@@ -3,7 +3,7 @@ use std::{env, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast, AstKind, Visit};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_regular_expression::{FlagsParser, ParserOptions, PatternParser};
 use oxc_span::SourceType;
 
@@ -18,8 +18,10 @@ fn main() {
     let source_type = SourceType::from_path(path).unwrap();
 
     let allocator = Allocator::default();
+    let options = ParseOptions { parse_regular_expression: true, ..ParseOptions::default() };
 
-    let parser_ret = Parser::new(&allocator, source_text.as_ref(), source_type).parse();
+    let parser_ret =
+        Parser::new(&allocator, source_text.as_ref(), source_type).with_options(options).parse();
     if !parser_ret.errors.is_empty() {
         println!("Parsing failed:");
         for error in parser_ret.errors {
@@ -47,24 +49,7 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
             AstKind::RegExpLiteral(re) => {
                 println!("🍀 {}", re.span.source_text(self.source_text.as_ref()));
 
-                let parsed = PatternParser::new(
-                    &allocator,
-                    re.regex.pattern.as_str(),
-                    ParserOptions {
-                        span_offset: re.span.start + 1,
-                        unicode_mode: re.regex.flags.contains(ast::RegExpFlags::U)
-                            || re.regex.flags.contains(ast::RegExpFlags::V),
-                        unicode_sets_mode: re.regex.flags.contains(ast::RegExpFlags::V),
-                    },
-                )
-                .parse();
-
-                if let Err(error) = parsed {
-                    let error = error.with_source_code(Arc::clone(&self.source_text));
-                    println!("{error:?}");
-                    return;
-                }
-                println!("{parsed:#?}");
+                println!("{re:#?}");
                 println!();
             }
             AstKind::NewExpression(new_expr)

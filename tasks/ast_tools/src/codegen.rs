@@ -1,12 +1,16 @@
 use std::{cell::RefCell, collections::HashMap, path::PathBuf};
 
 use itertools::Itertools;
+use proc_macro2::TokenStream;
 
 use crate::{
+    derives::{Derive, DeriveOutput},
+    fmt::pretty_print,
     generators::{Generator, GeneratorOutput},
     passes::Pass,
     rust_ast::{self, AstRef},
     schema::{lower_ast_types, Schema, TypeDef},
+    util::write_all_to,
     Result, TypeId,
 };
 
@@ -15,16 +19,51 @@ pub struct AstCodegen {
     files: Vec<PathBuf>,
     passes: Vec<Box<dyn Runner<Output = (), Context = EarlyCtx>>>,
     generators: Vec<Box<dyn Runner<Output = GeneratorOutput, Context = LateCtx>>>,
+    derives: Vec<Box<dyn Runner<Output = DeriveOutput, Context = LateCtx>>>,
 }
 
 pub struct AstCodegenResult {
     pub schema: Schema,
-    pub outputs: Vec<(/* generator name */ &'static str, /* output */ GeneratorOutput)>,
+    pub outputs: Vec<SideEffect>,
+}
+
+pub struct SideEffect(/* path */ pub PathBuf, /* output */ pub Vec<u8>);
+
+impl SideEffect {
+    /// Apply the side-effect
+    pub fn apply(self) -> std::io::Result<()> {
+        let Self(path, data) = self;
+        let path = path.into_os_string();
+        let path = path.to_str().unwrap();
+        write_all_to(&data, path)?;
+        Ok(())
+    }
+
+    #[allow(clippy::unnecessary_wraps)]
+    pub fn path(&self) -> Option<String> {
+        let Self(path, _) = self;
+        let path = path.to_string_lossy();
+        Some(path.replace('\\', "/"))
+    }
+}
+
+impl From<(PathBuf, TokenStream)> for SideEffect {
+    fn from((path, stream): (PathBuf, TokenStream)) -> Self {
+        let content = pretty_print(&stream);
+        Self(path, content.as_bytes().into())
+    }
+}
+
+impl From<GeneratorOutput> for SideEffect {
+    fn from(output: GeneratorOutput) -> Self {
+        Self::from((output.0, output.1))
+    }
 }
 
 pub trait Runner {
     type Context;
     type Output;
+    #[allow(dead_code)]
     fn name(&self) -> &'static str;
     fn run(&mut self, ctx: &Self::Context) -> Result<Self::Output>;
 }
@@ -116,7 +155,7 @@ impl AstCodegen {
     }
 
     #[must_use]
-    pub fn gen<G>(mut self, generator: G) -> Self
+    pub fn generate<G>(mut self, generator: G) -> Self
     where
         G: Generator + Runner<Output = GeneratorOutput, Context = LateCtx> + 'static,
     {
@@ -124,7 +163,16 @@ impl AstCodegen {
         self
     }
 
-    pub fn generate(self) -> Result<AstCodegenResult> {
+    #[must_use]
+    pub fn derive<D>(mut self, derive: D) -> Self
+    where
+        D: Derive + Runner<Output = DeriveOutput, Context = LateCtx> + 'static,
+    {
+        self.derives.push(Box::new(derive));
+        self
+    }
+
+    pub fn run(self) -> Result<AstCodegenResult> {
         let modules = self
             .files
             .into_iter()
@@ -140,17 +188,42 @@ impl AstCodegen {
             _ = self
                 .passes
                 .into_iter()
-                .map(|mut runner| runner.run(&ctx).map(|res| (runner.name(), res)))
+                .map(|mut runner| runner.run(&ctx))
                 .collect::<Result<Vec<_>>>()?;
             ctx.into_late_ctx()
         };
 
+        let derives = self
+            .derives
+            .into_iter()
+            .map(|mut runner| runner.run(&ctx))
+            .map_ok(|output| output.0.into_iter().map(SideEffect::from))
+            .flatten_ok();
+
         let outputs = self
             .generators
             .into_iter()
-            .map(|mut runner| runner.run(&ctx).map(|res| (runner.name(), res)))
+            .map(|mut runner| runner.run(&ctx))
+            .map_ok(SideEffect::from)
+            .chain(derives)
             .collect::<Result<Vec<_>>>()?;
 
         Ok(AstCodegenResult { outputs, schema: ctx.schema })
     }
 }
+
+/// Creates a generated file warning + required information for a generated file.
+macro_rules! generated_header {
+    () => {{
+        let file = file!().replace("\\", "/");
+        // TODO add generation date, AST source hash, etc here.
+        let edit_comment = format!("@ To edit this generated file you have to edit `{file}`");
+        quote::quote! {
+            //!@ Auto-generated code, DO NOT EDIT DIRECTLY!
+            #![doc = #edit_comment]
+            //!@@line_break
+        }
+    }};
+}
+
+pub(crate) use generated_header;

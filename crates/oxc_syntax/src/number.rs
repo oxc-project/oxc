@@ -1,7 +1,9 @@
-use oxc_ast_macros::{ast, CloneIn};
+use oxc_allocator::CloneIn;
+use oxc_ast_macros::ast;
 
 #[ast]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, CloneIn)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(CloneIn)]
 pub enum NumberBase {
     Float = 0,
     Decimal = 1,
@@ -17,7 +19,8 @@ impl NumberBase {
 }
 
 #[ast]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, CloneIn)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[generate_derive(CloneIn)]
 pub enum BigintBase {
     Decimal = 0,
     Binary = 1,

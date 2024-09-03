@@ -3508,7 +3508,6 @@ pub mod walk_mut {
         let kind = AstType::JSXMemberExpressionObject;
         visitor.enter_node(kind);
         match it {
-            JSXMemberExpressionObject::Identifier(it) => visitor.visit_jsx_identifier(it),
             JSXMemberExpressionObject::IdentifierReference(it) => {
                 visitor.visit_identifier_reference(it)
             }

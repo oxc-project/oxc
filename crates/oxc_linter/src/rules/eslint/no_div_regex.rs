@@ -36,7 +36,7 @@ declare_oxc_lint!(
 impl Rule for NoDivRegex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            if lit.regex.pattern.starts_with('=') {
+            if lit.regex.pattern.source_text(ctx.source_text()).starts_with('=') {
                 ctx.diagnostic_with_fix(no_div_regex_diagnostic(lit.span), |fixer| {
                     let span = Span::sized(lit.span.start + 1, 1);
                     fixer.replace(span, "[=]")

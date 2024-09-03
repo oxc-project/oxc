@@ -9,9 +9,9 @@ use crate::{context::TransformContext, SourceMap, TransformOptions};
 
 #[napi(object)]
 pub struct IsolatedDeclarationsResult {
+    pub code: String,
+    pub map: Option<SourceMap>,
     pub errors: Vec<String>,
-    pub source_text: String,
-    pub source_map: Option<SourceMap>,
 }
 
 #[napi(object)]
@@ -39,9 +39,9 @@ pub fn isolated_declaration(
     let transformed_ret = build_declarations(&ctx);
 
     IsolatedDeclarationsResult {
+        code: transformed_ret.source_text,
+        map: options.sourcemap.then(|| transformed_ret.source_map.map(Into::into)).flatten(),
         errors: ctx.take_and_render_reports(),
-        source_text: transformed_ret.source_text,
-        source_map: options.sourcemap.then(|| transformed_ret.source_map.map(Into::into)).flatten(),
     }
 }
 

@@ -220,3 +220,21 @@ fn var_hoisting() {
     .is_in_scope(ScopeFlags::Top)
     .test();
 }
+
+#[test]
+fn get_child_ids() {
+    let test = SemanticTester::js(
+        "
+            function foo() {
+            }
+        ",
+    )
+    .with_scope_tree_child_ids(true);
+    let semantic = test.build();
+    let (_symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+
+    let child_scope_ids = scopes.get_child_ids(scopes.root_scope_id());
+    assert_eq!(child_scope_ids.len(), 1);
+    let child_scope_ids = scopes.get_child_ids(child_scope_ids[0]);
+    assert!(child_scope_ids.is_empty());
+}

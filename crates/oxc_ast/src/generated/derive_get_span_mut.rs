@@ -1,12 +1,21 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
-// To edit this generated file you have to edit `tasks/ast_tools/src/generators/derive_get_span.rs`
+// To edit this generated file you have to edit `tasks/ast_tools/src/derives/get_span.rs`
 
 #![allow(clippy::match_same_arms)]
 
-use oxc_span::GetSpanMut;
+use oxc_span::{GetSpanMut, Span};
 
 #[allow(clippy::wildcard_imports)]
-use crate::ast::*;
+use crate::ast::js::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::jsx::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::literal::*;
+
+#[allow(clippy::wildcard_imports)]
+use crate::ast::ts::*;
 
 impl GetSpanMut for BooleanLiteral {
     #[inline]
@@ -2054,7 +2063,6 @@ impl<'a> GetSpanMut for JSXMemberExpression<'a> {
 impl<'a> GetSpanMut for JSXMemberExpressionObject<'a> {
     fn span_mut(&mut self) -> &mut Span {
         match self {
-            Self::Identifier(it) => it.span_mut(),
             Self::IdentifierReference(it) => it.span_mut(),
             Self::MemberExpression(it) => it.span_mut(),
         }

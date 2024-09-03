@@ -1,0 +1,31 @@
+name: autofix.ci # For security reasons, the workflow in which the autofix.ci action is used must be named "autofix.ci".
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.yml'
+      - '!.github/workflows/ci.yml'
+      - '!.github/actions/clone-submodules/action.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: Boshen/setup-rust@main
+        with:
+          restore-cache: false
+          tools: taplo-cli,cargo-shear@1
+          components: rustfmt
+      - run: cargo shear --fix
+      - run: taplo fmt
+      - run: cargo fmt --all
+      - uses: autofix-ci/action@v1.3.1
+        with:
+          fail-fast: false

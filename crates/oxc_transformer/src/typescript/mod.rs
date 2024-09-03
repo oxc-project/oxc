@@ -4,14 +4,16 @@ mod r#enum;
 mod module;
 mod namespace;
 mod options;
+mod rewrite_extensions;
 
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
+use rewrite_extensions::TypeScriptRewriteExtensions;
 
-pub use self::options::TypeScriptOptions;
+pub use self::options::{RewriteExtensionsMode, TypeScriptOptions};
 use self::{annotations::TypeScriptAnnotations, r#enum::TypeScriptEnum};
 use crate::context::Ctx;
 
@@ -43,6 +45,7 @@ pub struct TypeScript<'a> {
 
     annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum<'a>,
+    rewrite_extensions: TypeScriptRewriteExtensions,
 }
 
 impl<'a> TypeScript<'a> {
@@ -52,8 +55,43 @@ impl<'a> TypeScript<'a> {
         Self {
             annotations: TypeScriptAnnotations::new(Rc::clone(&options), Rc::clone(&ctx)),
             r#enum: TypeScriptEnum::new(Rc::clone(&ctx)),
+            rewrite_extensions: TypeScriptRewriteExtensions::new(
+                options.rewrite_import_extensions.clone().unwrap_or_default(),
+            ),
             options,
             ctx,
+        }
+    }
+}
+
+impl<'a> Traverse<'a> for TypeScript<'a> {
+    fn enter_import_declaration(
+        &mut self,
+        node: &mut ImportDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.rewrite_import_extensions.is_some() {
+            self.rewrite_extensions.enter_import_declaration(node, ctx);
+        }
+    }
+
+    fn enter_export_all_declaration(
+        &mut self,
+        node: &mut ExportAllDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.rewrite_import_extensions.is_some() {
+            self.rewrite_extensions.enter_export_all_declaration(node, ctx);
+        }
+    }
+
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.rewrite_import_extensions.is_some() {
+            self.rewrite_extensions.enter_export_named_declaration(node, ctx);
         }
     }
 }

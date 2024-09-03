@@ -6,49 +6,34 @@ use syn::Ident;
 use crate::{
     codegen::LateCtx,
     markers::CloneInAttribute,
-    output,
     schema::{EnumDef, GetIdent, StructDef, TypeDef},
-    GeneratorOutput,
 };
 
-use super::{define_generator, generated_header, Generator};
+use super::{define_derive, Derive, DeriveOutput};
 
-define_generator! {
+define_derive! {
     pub struct DeriveCloneIn;
 }
 
-impl Generator for DeriveCloneIn {
-    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
-        let impls: Vec<TokenStream> = ctx
-            .schema()
-            .into_iter()
-            .filter(|def| def.generates_derive("CloneIn"))
-            .map(|def| match &def {
-                TypeDef::Enum(it) => derive_enum(it),
-                TypeDef::Struct(it) => derive_struct(it),
-            })
-            .collect();
+impl Derive for DeriveCloneIn {
+    fn trait_name() -> &'static str {
+        "CloneIn"
+    }
 
-        let header = generated_header!();
+    fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
+        match &def {
+            TypeDef::Enum(it) => derive_enum(it),
+            TypeDef::Struct(it) => derive_struct(it),
+        }
+    }
 
-        GeneratorOutput::Stream((
-            output(crate::AST_CRATE, "derive_clone_in.rs"),
-            quote! {
-                #header
+    fn prelude() -> TokenStream {
+        quote! {
+            #![allow(clippy::default_trait_access)]
 
-                #![allow(clippy::default_trait_access)]
-
-                ///@@line_break
-                use oxc_allocator::{Allocator, CloneIn};
-
-                ///@@line_break
-                #[allow(clippy::wildcard_imports)]
-                use crate::ast::*;
-
-                ///@@line_break
-                #(#impls)*
-            },
-        ))
+            ///@@line_break
+            use oxc_allocator::{Allocator, CloneIn};
+        }
     }
 }
 
@@ -106,7 +91,6 @@ fn impl_clone_in(
 ) -> TokenStream {
     if has_lifetime {
         quote! {
-            ///@@line_break
             impl <'old_alloc, 'new_alloc> CloneIn<'new_alloc> for #ty_ident<'old_alloc> {
                 type Cloned = #ty_ident<'new_alloc>;
                 fn clone_in(&self, #alloc_ident: &'new_alloc Allocator) -> Self::Cloned {
@@ -116,7 +100,6 @@ fn impl_clone_in(
         }
     } else {
         quote! {
-            ///@@line_break
             impl <'alloc> CloneIn<'alloc> for #ty_ident {
                 type Cloned = #ty_ident;
                 fn clone_in(&self, #alloc_ident: &'alloc Allocator) -> Self::Cloned {

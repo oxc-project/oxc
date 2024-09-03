@@ -250,6 +250,11 @@ impl Tester {
         self
     }
 
+    pub fn with_node_plugin(mut self, yes: bool) -> Self {
+        self.plugins.node = yes;
+        self
+    }
+
     /// Add cases that should fix problems found in the source code.
     ///
     /// These cases will fail if no fixes are produced or if the fixed source
@@ -351,7 +356,8 @@ impl Tester {
             .with_vitest_plugin(self.plugins.vitest)
             .with_jsx_a11y_plugin(self.plugins.jsx_a11y)
             .with_nextjs_plugin(self.plugins.nextjs)
-            .with_react_perf_plugin(self.plugins.react_perf);
+            .with_react_perf_plugin(self.plugins.react_perf)
+            .with_node_plugin(self.plugins.node);
         let eslint_config = eslint_config
             .as_ref()
             .map_or_else(OxlintConfig::default, |v| OxlintConfig::deserialize(v).unwrap());

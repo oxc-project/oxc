@@ -1,4 +1,4 @@
-js compatibility: 264/586 (45.05%)
+js compatibility: 265/593 (44.69%)
 
 # Failed
 
@@ -202,6 +202,10 @@ js compatibility: 264/586 (45.05%)
 * directives/newline.js
 * directives/test.js
 
+### dynamic-import
+* dynamic-import/import-phase.js
+* dynamic-import/template-literal.js
+
 ### empty-paren-comment
 * empty-paren-comment/class-property.js
 * empty-paren-comment/class.js
@@ -223,6 +227,7 @@ js compatibility: 264/586 (45.05%)
 * for/continue-and-break-comment-1.js
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
+* for/for-in-with-initializer.js
 
 ### function
 * function/issue-10277.js
@@ -265,6 +270,10 @@ js compatibility: 264/586 (45.05%)
 ### import-attributes
 * import-attributes/empty.js
 * import-attributes/keyword-detect.js
+* import-attributes/long-sources.js
+
+### import-attributes/quote-props
+* import-attributes/quote-props/quoted-keys.js
 
 ### label
 * label/comment.js
@@ -337,6 +346,9 @@ js compatibility: 264/586 (45.05%)
 
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js
+
+### nullish-coalescing
+* nullish-coalescing/nullish_coalesing_operator.js
 
 ### object-prop-break-in
 * object-prop-break-in/short-keys.js

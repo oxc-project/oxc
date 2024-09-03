@@ -74,6 +74,10 @@ pub trait CompilerInterface {
         true
     }
 
+    fn semantic_child_scope_ids(&self) -> bool {
+        false
+    }
+
     fn after_parse(&mut self, _parser_return: &mut ParserReturn) -> ControlFlow<()> {
         ControlFlow::Continue(())
     }
@@ -186,6 +190,7 @@ pub trait CompilerInterface {
     ) -> SemanticBuilderReturn<'a> {
         SemanticBuilder::new(source_text, source_type)
             .with_check_syntax_error(self.check_semantic_error())
+            .with_scope_tree_child_ids(self.semantic_child_scope_ids())
             .build_module_record(source_path, program)
             .build(program)
     }

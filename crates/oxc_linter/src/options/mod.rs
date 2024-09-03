@@ -144,6 +144,12 @@ impl LintOptions {
         self.plugins.promise = yes;
         self
     }
+
+    #[must_use]
+    pub fn with_node_plugin(mut self, yes: bool) -> Self {
+        self.plugins.node = yes;
+        self
+    }
 }
 
 impl LintOptions {
@@ -240,6 +246,7 @@ impl LintOptions {
                 "oxc" => self.plugins.oxc,
                 "eslint" | "tree_shaking" => true,
                 "promise" => self.plugins.promise,
+                "node" => self.plugins.node,
                 name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()

@@ -186,6 +186,12 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    #[must_use]
+    pub fn with_scope_tree_child_ids(mut self, yes: bool) -> Self {
+        self.scope.build_child_ids = yes;
+        self
+    }
+
     /// Get the built module record from `build_module_record`
     pub fn module_record(&self) -> Arc<ModuleRecord> {
         Arc::clone(&self.module_record)
