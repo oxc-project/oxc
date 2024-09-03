@@ -126,11 +126,7 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
             create_declared_named_exports(decl.clone_in(self.ctx.ast.allocator), &self.ctx.ast)
         } else if let Some(src) = &node.source {
             let specifiers = node.specifiers.clone_in(self.ctx.ast.allocator);
-            create_reexported_named_exports(
-                specifiers,
-                src.clone_in(self.ctx.ast.allocator),
-                &self.ctx.ast,
-            )
+            create_reexported_named_exports(specifiers, src.value.as_str(), &self.ctx.ast)
         } else {
             let specifiers = node.specifiers.clone_in(self.ctx.ast.allocator);
             create_listed_named_exports(specifiers, &self.ctx.ast)

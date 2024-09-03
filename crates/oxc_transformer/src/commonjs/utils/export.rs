@@ -67,7 +67,7 @@ fn create_exports_with_assignment<'a>(
                     ),
                     Some(create_exports(target, declaration, builder)),
                     false,
-                ))
+                ));
             }
             decls
         },
@@ -126,7 +126,7 @@ pub fn create_declared_named_exports<'a>(
                                 },
                                 builder,
                             ),
-                        ))
+                        ));
                     }
                     _ => unreachable!(),
                 }
@@ -219,12 +219,12 @@ pub fn create_listed_named_exports<'a>(
 ///
 pub fn create_reexported_named_exports<'a>(
     specifiers: Vec<'a, ExportSpecifier<'a>>,
-    source: StringLiteral<'a>,
+    source: &'a str,
     builder: &'a AstBuilder,
 ) -> Vec<'a, Statement<'a>> {
     let mut result = builder.vec();
     // TODO deconflict the name
-    let ident = legitimize_identifier_name(source.value.as_str()).to_string();
+    let ident = legitimize_identifier_name(source).to_string();
     // 1. Generate require
     result.push(builder.statement_declaration(builder.declaration_variable(
         SPAN,
@@ -237,7 +237,7 @@ pub fn create_reexported_named_exports<'a>(
                 None::<TSTypeAnnotation>,
                 false,
             ),
-            Some(create_require(source.value.as_str(), builder)),
+            Some(create_require(source, builder)),
             false,
         )),
         false,
