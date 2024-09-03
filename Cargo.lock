@@ -1884,6 +1884,7 @@ dependencies = [
 name = "oxc_syntax"
 version = "0.26.0"
 dependencies = [
+ "assert-unchecked",
  "bitflags 2.6.0",
  "dashmap 6.0.1",
  "nonmax",
