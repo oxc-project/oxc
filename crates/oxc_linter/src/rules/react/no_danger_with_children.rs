@@ -51,20 +51,14 @@ impl Rule for NoDangerWithChildren {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx) => {
-                let has_children = if !jsx.children.is_empty() && !is_line_break(&jsx.children[0]) {
-                    true
-                } else if has_jsx_prop(ctx, node, "children") {
-                    true
-                } else {
-                    false
-                };
-
+                // Either children are passed in as a prop like `children={}` or they are nested between the tags.
+                let has_children = has_jsx_prop(ctx, node, "children")
+                    || (!jsx.children.is_empty() && !is_line_break(&jsx.children[0]));
                 if !has_children {
                     return;
                 }
 
                 let has_danger_prop = has_jsx_prop(ctx, node, "dangerouslySetInnerHTML");
-
                 if has_danger_prop {
                     ctx.diagnostic(no_danger_with_children_diagnostic(jsx.span));
                 }
@@ -256,7 +250,7 @@ fn is_line_break(child: &JSXChild) -> bool {
     let JSXChild::Text(text) = child else {
         return false;
     };
-    let is_multi_line = text.value.contains("\n");
+    let is_multi_line = text.value.contains('\n');
     is_multi_line && is_whitespace(text.value.as_str())
 }
 
@@ -278,7 +272,7 @@ fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> b
             let Some(ident) = attr.argument.get_identifier_reference() else {
                 return false;
             };
-            does_object_var_have_prop_name(ctx, node, &ident.name.as_str(), prop_name)
+            does_object_var_have_prop_name(ctx, node, ident.name.as_str(), prop_name)
         }
     })
 }
@@ -318,13 +312,13 @@ fn does_object_var_have_prop_name(
             };
             // If the next symbol is the same as the current symbol, then there is a cycle,
             // for example: `const props = {...props}`, so we will stop searching.
-            if let Some(next_symbol) = find_var_in_scope(ctx, node, &ident.name.as_str()) {
+            if let Some(next_symbol) = find_var_in_scope(ctx, node, ident.name.as_str()) {
                 if next_symbol.id() == symbol.id() {
                     return false;
                 }
             }
 
-            does_object_var_have_prop_name(ctx, symbol, &ident.name.as_str(), prop_name)
+            does_object_var_have_prop_name(ctx, symbol, ident.name.as_str(), prop_name)
         }
     })
 }
@@ -352,6 +346,6 @@ fn is_object_with_prop_name(
             };
             key == prop_name
         }
-        _ => false,
+        ObjectPropertyKind::SpreadProperty(_) => false,
     })
 }
