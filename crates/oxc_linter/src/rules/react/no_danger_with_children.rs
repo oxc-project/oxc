@@ -244,7 +244,7 @@ fn is_line_break(child: &JSXChild) -> bool {
 
 /// Given a JSX element, find the JSXAttributeItem with the given name.
 /// If there are spread props, it will search within those as well.
-fn has_jsx_prop<'a>(ctx: &LintContext<'a>, node: &AstNode<'a>, prop_name: &'static str) -> bool {
+fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> bool {
     let AstKind::JSXElement(jsx) = node.kind() else {
         return false;
     };
@@ -265,17 +265,13 @@ fn has_jsx_prop<'a>(ctx: &LintContext<'a>, node: &AstNode<'a>, prop_name: &'stat
     })
 }
 
-fn does_object_var_have_prop_name<'a>(
-    ctx: &LintContext<'a>,
-    node: &AstNode<'a>,
+fn does_object_var_have_prop_name(
+    ctx: &LintContext,
+    node: &AstNode,
     name: &str,
     prop_name: &str,
 ) -> bool {
-    let Some(symbol) = ctx
-        .scopes()
-        .find_binding(node.scope_id(), name)
-        .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
-    else {
+    let Some(symbol) = &find_var_in_scope(ctx, node, name) else {
         return false;
     };
 
@@ -302,12 +298,10 @@ fn does_object_var_have_prop_name<'a>(
             let Some(ident) = spread_prop.argument.get_identifier_reference() else {
                 return false;
             };
-            if let Some(symbol2) = ctx
-                .scopes()
-                .find_binding(symbol.scope_id(), &ident.name.as_str())
-                .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
-            {
-                if symbol2.id() == symbol.id() {
+            // If the next symbol is the same as the current symbol, then there is a cycle,
+            // for example: `const props = {...props}`, so we will stop searching.
+            if let Some(next_symbol) = find_var_in_scope(ctx, node, &ident.name.as_str()) {
+                if next_symbol.id() == symbol.id() {
                     return false;
                 }
             }
@@ -315,6 +309,17 @@ fn does_object_var_have_prop_name<'a>(
             does_object_var_have_prop_name(ctx, symbol, &ident.name.as_str(), prop_name)
         }
     })
+}
+
+/// Given the name of an identifier, find the variable declaration in the current scope.
+fn find_var_in_scope<'c>(
+    ctx: &'c LintContext,
+    node: &AstNode,
+    name: &str,
+) -> Option<&'c AstNode<'c>> {
+    ctx.scopes()
+        .find_binding(node.scope_id(), name)
+        .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
 }
 
 /// Returns whether a given object has a property with the given name.
