@@ -65,50 +65,50 @@ impl Rule for NoDangerWithChildren {
                 if call_expr.arguments.len() <= 1 {
                     return;
                 }
-                if let Expression::StaticMemberExpression(callee) = &call_expr.callee {
-                    if callee.property.name != "createElement" {
-                        return;
-                    }
+                let Expression::StaticMemberExpression(callee) = &call_expr.callee else {
+                    return;
+                };
+                if callee.property.name != "createElement" {
+                    return;
+                }
 
-                    let props = call_expr
-                        .arguments
-                        .get(1)
-                        .expect("Could not get props argument for createElement call")
-                        .as_expression();
+                let props = call_expr
+                    .arguments
+                    .get(1)
+                    .expect("Could not get props argument for createElement call")
+                    .as_expression();
 
-                    // If there are three arguments, then it is a JSX element with children.
-                    // If it's just two arguments, it only has children if the props object has a children property.
-                    let has_children = if call_expr.arguments.len() == 2 {
-                        match props {
-                            Some(Expression::ObjectExpression(obj_expr)) => {
-                                is_object_with_prop_name(&obj_expr.properties, "children")
-                            }
-                            Some(Expression::Identifier(ident)) => {
-                                does_object_var_have_prop_name(ctx, node, &ident.name, "children")
-                            }
-                            _ => false,
+                // If there are three arguments, then it is a JSX element with children.
+                // If it's just two arguments, it only has children if the props object has a children property.
+                let has_children = if call_expr.arguments.len() == 2 {
+                    match props {
+                        Some(Expression::ObjectExpression(obj_expr)) => {
+                            is_object_with_prop_name(&obj_expr.properties, "children")
                         }
-                    } else {
-                        true
-                    };
-
-                    let has_danger_prop = match props {
-                        Some(Expression::ObjectExpression(obj_expr)) => is_object_with_prop_name(
-                            &obj_expr.properties,
-                            "dangerouslySetInnerHTML",
-                        ),
-                        Some(Expression::Identifier(ident)) => does_object_var_have_prop_name(
-                            ctx,
-                            node,
-                            &ident.name,
-                            "dangerouslySetInnerHTML",
-                        ),
+                        Some(Expression::Identifier(ident)) => {
+                            does_object_var_have_prop_name(ctx, node, &ident.name, "children")
+                        }
                         _ => false,
-                    };
-
-                    if has_danger_prop && has_children {
-                        ctx.diagnostic(no_danger_with_children_diagnostic(call_expr.span));
                     }
+                } else {
+                    true
+                };
+
+                let has_danger_prop = match props {
+                    Some(Expression::ObjectExpression(obj_expr)) => {
+                        is_object_with_prop_name(&obj_expr.properties, "dangerouslySetInnerHTML")
+                    }
+                    Some(Expression::Identifier(ident)) => does_object_var_have_prop_name(
+                        ctx,
+                        node,
+                        &ident.name,
+                        "dangerouslySetInnerHTML",
+                    ),
+                    _ => false,
+                };
+
+                if has_danger_prop && has_children {
+                    ctx.diagnostic(no_danger_with_children_diagnostic(call_expr.span));
                 }
             }
             _ => (),
@@ -235,38 +235,34 @@ fn is_whitespace(s: &str) -> bool {
 }
 
 fn is_line_break(child: &JSXChild) -> bool {
-    if let JSXChild::Text(text) = child {
-        let is_multi_line = text.value.contains("\n");
-        is_multi_line && is_whitespace(text.value.as_str())
-    } else {
-        false
-    }
+    let JSXChild::Text(text) = child else {
+        return false;
+    };
+    let is_multi_line = text.value.contains("\n");
+    is_multi_line && is_whitespace(text.value.as_str())
 }
 
 /// Given a JSX element, find the JSXAttributeItem with the given name.
 /// If there are spread props, it will search within those as well.
 fn has_jsx_prop<'a>(ctx: &LintContext<'a>, node: &AstNode<'a>, prop_name: &'static str) -> bool {
-    println!("has_jsx_propr");
-    if let AstKind::JSXElement(jsx) = node.kind() {
-        jsx.opening_element.attributes.iter().any(|attr| match attr {
-            JSXAttributeItem::Attribute(attr) => {
-                if let JSXAttributeName::Identifier(ident) = &attr.name {
-                    ident.name == prop_name
-                } else {
-                    false
-                }
-            }
-            JSXAttributeItem::SpreadAttribute(attr) => {
-                if let Some(ident) = attr.argument.get_identifier_reference() {
-                    does_object_var_have_prop_name(ctx, node, &ident.name.as_str(), prop_name)
-                } else {
-                    false
-                }
-            }
-        })
-    } else {
-        false
-    }
+    let AstKind::JSXElement(jsx) = node.kind() else {
+        return false;
+    };
+
+    jsx.opening_element.attributes.iter().any(|attr| match attr {
+        JSXAttributeItem::Attribute(attr) => {
+            let JSXAttributeName::Identifier(ident) = &attr.name else {
+                return false;
+            };
+            ident.name == prop_name
+        }
+        JSXAttributeItem::SpreadAttribute(attr) => {
+            let Some(ident) = attr.argument.get_identifier_reference() else {
+                return false;
+            };
+            does_object_var_have_prop_name(ctx, node, &ident.name.as_str(), prop_name)
+        }
+    })
 }
 
 fn does_object_var_have_prop_name<'a>(
@@ -275,57 +271,50 @@ fn does_object_var_have_prop_name<'a>(
     name: &str,
     prop_name: &str,
 ) -> bool {
-    if let Some(symbol) = ctx
+    let Some(symbol) = ctx
         .scopes()
         .find_binding(node.scope_id(), name)
         .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
-    {
-        if let AstKind::VariableDeclarator(var_decl) = symbol.kind() {
-            if let Some(init) = &var_decl.init {
-                if let Expression::ObjectExpression(obj_expr) = init {
-                    obj_expr.properties.iter().any(|prop| match prop {
-                        ObjectPropertyKind::ObjectProperty(obj_prop) => {
-                            if let Some(key) = obj_prop.key.static_name() {
-                                key == prop_name
-                            } else {
-                                false
-                            }
-                        }
-                        ObjectPropertyKind::SpreadProperty(spread_prop) => {
-                            if let Some(ident) = spread_prop.argument.get_identifier_reference() {
-                                if let Some(symbol2) = ctx
-                                    .scopes()
-                                    .find_binding(symbol.scope_id(), &ident.name.as_str())
-                                    .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
-                                {
-                                    if symbol2.id() == symbol.id() {
-                                        return false;
-                                    }
-                                }
+    else {
+        return false;
+    };
 
-                                does_object_var_have_prop_name(
-                                    ctx,
-                                    symbol,
-                                    &ident.name.as_str(),
-                                    prop_name,
-                                )
-                            } else {
-                                false
-                            }
-                        }
-                    })
-                } else {
-                    false
-                }
-            } else {
-                false
-            }
-        } else {
-            false
+    let AstKind::VariableDeclarator(var_decl) = symbol.kind() else {
+        return false;
+    };
+
+    let Some(init) = &var_decl.init else {
+        return false;
+    };
+
+    let Expression::ObjectExpression(obj_expr) = init else {
+        return false;
+    };
+
+    obj_expr.properties.iter().any(|prop| match prop {
+        ObjectPropertyKind::ObjectProperty(obj_prop) => {
+            let Some(key) = obj_prop.key.static_name() else {
+                return false;
+            };
+            key == prop_name
         }
-    } else {
-        false
-    }
+        ObjectPropertyKind::SpreadProperty(spread_prop) => {
+            let Some(ident) = spread_prop.argument.get_identifier_reference() else {
+                return false;
+            };
+            if let Some(symbol2) = ctx
+                .scopes()
+                .find_binding(symbol.scope_id(), &ident.name.as_str())
+                .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
+            {
+                if symbol2.id() == symbol.id() {
+                    return false;
+                }
+            }
+
+            does_object_var_have_prop_name(ctx, symbol, &ident.name.as_str(), prop_name)
+        }
+    })
 }
 
 /// Returns whether a given object has a property with the given name.
@@ -335,11 +324,10 @@ fn is_object_with_prop_name(
 ) -> bool {
     obj_props.iter().any(|prop| match prop {
         ObjectPropertyKind::ObjectProperty(obj_prop) => {
-            if let Some(key) = obj_prop.key.static_name() {
-                key == prop_name
-            } else {
-                false
-            }
+            let Some(key) = obj_prop.key.static_name() else {
+                return false;
+            };
+            key == prop_name
         }
         _ => false,
     })
