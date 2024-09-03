@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 309/1021
+Passed: 310/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -2101,7 +2101,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-preset-typescript (4/10)
+# babel-preset-typescript (5/10)
 * jsx-compat/ts-invalid/input.ts
   x Expected `>` but found `/`
    ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
@@ -2139,9 +2139,6 @@ failed to resolve query: failed to parse the rest of input: ...''
   x Symbol flags mismatch:
   | after transform: SymbolId(0): SymbolFlags(ConstEnum)
   | rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
-
-
-* opts/rewriteImportExtensions/input.ts
 
 
 
