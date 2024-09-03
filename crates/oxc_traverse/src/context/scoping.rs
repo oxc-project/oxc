@@ -11,7 +11,7 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use super::ast_operations::GatherNodeParts;
+use super::{ast_operations::GatherNodeParts, identifier::to_identifier};
 use crate::scopes_collector::ChildScopeCollector;
 
 /// Traverse scope context.
@@ -248,7 +248,7 @@ impl TraverseScoping {
             parts.push_str(part);
         });
         let name = if parts.is_empty() { "ref" } else { parts.trim_start_matches('_') };
-        self.generate_uid(name, scope_id, flags)
+        self.generate_uid(&to_identifier(name.get(..20).unwrap_or(name)), scope_id, flags)
     }
 
     /// Generate UID in current scope based on node.
