@@ -4,8 +4,9 @@ mod utils;
 
 use crate::commonjs::options::CommonjsOptions;
 use crate::commonjs::utils::export::{
-    create_declared_named_exports, create_default_exports, create_listed_named_exports,
-    create_reexported_named_exports,
+    create_declared_named_exports, create_default_exports, create_export_star_exports,
+    create_listed_named_exports, create_reexported_named_exports,
+    create_renamed_export_star_exports,
 };
 use crate::context::Ctx;
 use oxc_allocator::CloneIn;
@@ -133,6 +134,22 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         } else {
             let specifiers = node.specifiers.clone_in(self.ctx.ast.allocator);
             create_listed_named_exports(specifiers, &self.ctx.ast)
+        };
+    }
+
+    fn enter_export_all_declaration(
+        &mut self,
+        node: &mut ExportAllDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let stmt = if let Some(reexported) = &node.exported {
+            create_renamed_export_star_exports(
+                node.source.value.as_str(),
+                reexported.clone_in(self.ctx.ast.allocator),
+                &self.ctx.ast,
+            )
+        } else {
+            create_export_star_exports(node.source.value.as_str(), &self.ctx.ast)
         };
     }
 }
