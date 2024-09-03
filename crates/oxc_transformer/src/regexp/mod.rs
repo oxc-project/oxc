@@ -48,6 +48,7 @@ pub use options::RegExpOptions;
 use oxc_ast::ast::*;
 use oxc_regular_expression::ast::{LookAroundAssertionKind, Pattern, Term};
 use oxc_semantic::ReferenceFlags;
+use oxc_span::Atom;
 use oxc_traverse::Traverse;
 
 use crate::context::Ctx;
@@ -99,7 +100,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
             let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
             let ident = ctx.create_reference_id(
                 regexp.span,
-                "RegExp".into(),
+                Atom::from("RegExp"),
                 symbol_id,
                 ReferenceFlags::read(),
             );
