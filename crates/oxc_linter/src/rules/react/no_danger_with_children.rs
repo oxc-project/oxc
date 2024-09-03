@@ -76,8 +76,6 @@ impl Rule for NoDangerWithChildren {
                         .expect("Could not get props argument for createElement call")
                         .as_expression();
 
-                    dbg!(call_expr);
-
                     // If there are three arguments, then it is a JSX element with children.
                     // If it's just two arguments, it only has children if the props object has a children property.
                     let has_children = if call_expr.arguments.len() == 2 {
@@ -248,6 +246,7 @@ fn is_line_break(child: &JSXChild) -> bool {
 /// Given a JSX element, find the JSXAttributeItem with the given name.
 /// If there are spread props, it will search within those as well.
 fn has_jsx_prop<'a>(ctx: &LintContext<'a>, node: &AstNode<'a>, prop_name: &'static str) -> bool {
+    println!("has_jsx_propr");
     if let AstKind::JSXElement(jsx) = node.kind() {
         jsx.opening_element.attributes.iter().any(|attr| match attr {
             JSXAttributeItem::Attribute(attr) => {
@@ -284,7 +283,37 @@ fn does_object_var_have_prop_name<'a>(
         if let AstKind::VariableDeclarator(var_decl) = symbol.kind() {
             if let Some(init) = &var_decl.init {
                 if let Expression::ObjectExpression(obj_expr) = init {
-                    is_object_with_prop_name(&obj_expr.properties, prop_name)
+                    obj_expr.properties.iter().any(|prop| match prop {
+                        ObjectPropertyKind::ObjectProperty(obj_prop) => {
+                            if let Some(key) = obj_prop.key.static_name() {
+                                key == prop_name
+                            } else {
+                                false
+                            }
+                        }
+                        ObjectPropertyKind::SpreadProperty(spread_prop) => {
+                            if let Some(ident) = spread_prop.argument.get_identifier_reference() {
+                                if let Some(symbol2) = ctx
+                                    .scopes()
+                                    .find_binding(symbol.scope_id(), &ident.name.as_str())
+                                    .map(|symbol_id| ctx.semantic().symbol_declaration(symbol_id))
+                                {
+                                    if symbol2.id() == symbol.id() {
+                                        return false;
+                                    }
+                                }
+
+                                does_object_var_have_prop_name(
+                                    ctx,
+                                    symbol,
+                                    &ident.name.as_str(),
+                                    prop_name,
+                                )
+                            } else {
+                                false
+                            }
+                        }
+                    })
                 } else {
                     false
                 }
