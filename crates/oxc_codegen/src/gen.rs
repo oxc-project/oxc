@@ -2033,6 +2033,9 @@ impl<'a> Gen for TaggedTemplateExpression<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         self.tag.gen_expr(p, Precedence::Postfix, Context::empty());
+        if let Some(type_parameters) = &self.type_parameters {
+            type_parameters.gen(p, ctx);
+        }
         self.quasi.gen(p, ctx);
     }
 }

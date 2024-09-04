@@ -21,6 +21,8 @@ doctest = false
 
 [dependencies]
 serde = { workspace = true, optional = true }
+rayon = { workspace = true, optional = true }
 
 [features]
 serialize = ["dep:serde"]
+rayon     = ["dep:rayon"]

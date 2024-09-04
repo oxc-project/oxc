@@ -8,6 +8,8 @@ mod rewrite_extensions;
 
 use std::rc::Rc;
 
+use module::TypeScriptModule;
+use namespace::TypeScriptNamespace;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -45,6 +47,8 @@ pub struct TypeScript<'a> {
 
     annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum<'a>,
+    namespace: TypeScriptNamespace<'a>,
+    module: TypeScriptModule<'a>,
     rewrite_extensions: TypeScriptRewriteExtensions,
 }
 
@@ -58,6 +62,8 @@ impl<'a> TypeScript<'a> {
             rewrite_extensions: TypeScriptRewriteExtensions::new(
                 options.rewrite_import_extensions.clone().unwrap_or_default(),
             ),
+            namespace: TypeScriptNamespace::new(Rc::clone(&options), Rc::clone(&ctx)),
+            module: TypeScriptModule::new(Rc::clone(&ctx)),
             options,
             ctx,
         }
@@ -65,6 +71,189 @@ impl<'a> TypeScript<'a> {
 }
 
 impl<'a> Traverse<'a> for TypeScript<'a> {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.ctx.source_type.is_typescript_definition() {
+            // Output empty file for TS definitions
+            program.directives.clear();
+            program.hashbang = None;
+            program.body.clear();
+        } else {
+            self.namespace.enter_program(program, ctx);
+        }
+    }
+
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.exit_program(program, ctx);
+    }
+
+    fn enter_arrow_function_expression(
+        &mut self,
+        expr: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_arrow_function_expression(expr, ctx);
+    }
+
+    fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_binding_pattern(pat, ctx);
+    }
+
+    fn enter_call_expression(&mut self, expr: &mut CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_call_expression(expr, ctx);
+    }
+
+    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_class(class, ctx);
+    }
+
+    fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_class_body(body, ctx);
+    }
+
+    fn enter_ts_module_declaration(
+        &mut self,
+        decl: &mut TSModuleDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_ts_module_declaration(decl, ctx);
+    }
+
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_expression(expr, ctx);
+    }
+
+    fn enter_simple_assignment_target(
+        &mut self,
+        target: &mut SimpleAssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_simple_assignment_target(target, ctx);
+    }
+
+    fn enter_assignment_target(
+        &mut self,
+        target: &mut AssignmentTarget<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_assignment_target(target, ctx);
+    }
+
+    fn enter_formal_parameter(
+        &mut self,
+        param: &mut FormalParameter<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_formal_parameter(param, ctx);
+    }
+
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.exit_function(func, ctx);
+    }
+
+    fn enter_jsx_opening_element(
+        &mut self,
+        elem: &mut JSXOpeningElement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_jsx_opening_element(elem, ctx);
+    }
+
+    fn enter_method_definition(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_method_definition(def, ctx);
+    }
+
+    fn exit_method_definition(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.exit_method_definition(def, ctx);
+    }
+
+    fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_new_expression(expr, ctx);
+    }
+
+    fn enter_property_definition(
+        &mut self,
+        def: &mut PropertyDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_property_definition(def, ctx);
+    }
+
+    fn enter_accessor_property(
+        &mut self,
+        def: &mut AccessorProperty<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_accessor_property(def, ctx);
+    }
+
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_statements(stmts, ctx);
+    }
+
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.exit_statements(stmts, ctx);
+    }
+
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.r#enum.enter_statement(stmt, ctx);
+    }
+
+    fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_if_statement(stmt, ctx);
+    }
+
+    fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_while_statement(stmt, ctx);
+    }
+
+    fn enter_do_while_statement(
+        &mut self,
+        stmt: &mut DoWhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_do_while_statement(stmt, ctx);
+    }
+
+    fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_for_statement(stmt, ctx);
+    }
+
+    fn enter_for_in_statement(&mut self, stmt: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_for_in_statement(stmt, ctx);
+    }
+
+    fn enter_for_of_statement(&mut self, stmt: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_for_of_statement(stmt, ctx);
+    }
+
+    fn enter_tagged_template_expression(
+        &mut self,
+        expr: &mut TaggedTemplateExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.enter_tagged_template_expression(expr, ctx);
+    }
+
+    fn enter_jsx_element(&mut self, elem: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_jsx_element(elem, ctx);
+    }
+
+    fn enter_jsx_fragment(&mut self, elem: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.annotations.enter_jsx_fragment(elem, ctx);
+    }
+
+    fn enter_declaration(&mut self, node: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.module.enter_declaration(node, ctx);
+    }
+
     fn enter_import_declaration(
         &mut self,
         node: &mut ImportDeclaration<'a>,
@@ -94,177 +283,12 @@ impl<'a> Traverse<'a> for TypeScript<'a> {
             self.rewrite_extensions.enter_export_named_declaration(node, ctx);
         }
     }
-}
 
-// Transforms
-impl<'a> TypeScript<'a> {
-    pub fn transform_program(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx) {
-        if self.ctx.source_type.is_typescript_definition() {
-            // Output empty file for TS definitions
-            program.directives.clear();
-            program.hashbang = None;
-            program.body.clear();
-        } else {
-            self.transform_program_for_namespace(program, ctx);
-        }
-    }
-
-    pub fn transform_program_on_exit(
+    fn enter_ts_export_assignment(
         &mut self,
-        program: &mut Program<'a>,
+        node: &mut TSExportAssignment<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.annotations.transform_program_on_exit(program, ctx);
-    }
-
-    pub fn transform_arrow_expression(&mut self, expr: &mut ArrowFunctionExpression<'a>) {
-        self.annotations.transform_arrow_expression(expr);
-    }
-
-    pub fn transform_binding_pattern(&mut self, pat: &mut BindingPattern<'a>) {
-        self.annotations.transform_binding_pattern(pat);
-    }
-
-    pub fn transform_call_expression(&mut self, expr: &mut CallExpression<'a>) {
-        self.annotations.transform_call_expression(expr);
-    }
-
-    pub fn transform_class(&mut self, class: &mut Class<'a>) {
-        self.annotations.transform_class(class);
-    }
-
-    pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
-        self.annotations.transform_class_body(body);
-    }
-
-    pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
-        self.annotations.transform_ts_module_declaration(decl);
-    }
-
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        self.annotations.transform_expression(expr);
-    }
-
-    pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
-        self.annotations.transform_simple_assignment_target(target);
-    }
-
-    pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
-        self.annotations.transform_assignment_target(target);
-    }
-
-    pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
-        self.annotations.transform_formal_parameter(param);
-    }
-
-    pub fn transform_function(&mut self, func: &mut Function<'a>) {
-        self.annotations.transform_function(func);
-    }
-
-    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
-        self.annotations.transform_jsx_opening_element(elem);
-    }
-
-    pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
-        self.annotations.transform_method_definition(def);
-    }
-
-    pub fn transform_method_definition_on_exit(
-        &mut self,
-        def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_method_definition_on_exit(def, ctx);
-    }
-
-    pub fn transform_new_expression(&mut self, expr: &mut NewExpression<'a>) {
-        self.annotations.transform_new_expression(expr);
-    }
-
-    pub fn transform_property_definition(&mut self, def: &mut PropertyDefinition<'a>) {
-        self.annotations.transform_property_definition(def);
-    }
-
-    pub fn transform_accessor_property(&mut self, def: &mut AccessorProperty<'a>) {
-        self.annotations.transform_accessor_property(def);
-    }
-
-    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        self.annotations.transform_statements(stmts);
-    }
-
-    pub fn transform_statements_on_exit(
-        &mut self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_statements_on_exit(stmts, ctx);
-    }
-
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.r#enum.transform_statement(stmt, ctx);
-    }
-
-    pub fn transform_if_statement(
-        &mut self,
-        stmt: &mut IfStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_if_statement(stmt, ctx);
-    }
-
-    pub fn transform_while_statement(
-        &mut self,
-        stmt: &mut WhileStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_while_statement(stmt, ctx);
-    }
-
-    pub fn transform_do_while_statement(
-        &mut self,
-        stmt: &mut DoWhileStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_do_while_statement(stmt, ctx);
-    }
-
-    pub fn transform_for_statement(
-        &mut self,
-        stmt: &mut ForStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_for_statement(stmt, ctx);
-    }
-
-    pub fn transform_for_in_statement(
-        &mut self,
-        stmt: &mut ForInStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_for_in_statement(stmt, ctx);
-    }
-
-    pub fn transform_for_of_statement(
-        &mut self,
-        stmt: &mut ForOfStatement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.annotations.transform_for_of_statement(stmt, ctx);
-    }
-
-    pub fn transform_tagged_template_expression(
-        &mut self,
-        expr: &mut TaggedTemplateExpression<'a>,
-    ) {
-        self.annotations.transform_tagged_template_expression(expr);
-    }
-
-    pub fn transform_jsx_element(&mut self, elem: &mut JSXElement<'a>) {
-        self.annotations.transform_jsx_element(elem);
-    }
-
-    pub fn transform_jsx_fragment(&mut self, elem: &mut JSXFragment<'a>) {
-        self.annotations.transform_jsx_fragment(elem);
+        self.module.enter_ts_export_assignment(node, ctx);
     }
 }

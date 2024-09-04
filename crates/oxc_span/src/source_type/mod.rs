@@ -6,6 +6,8 @@ use oxc_allocator::{Allocator, CloneIn};
 use std::path::Path;
 pub use types::*;
 
+use crate::cmp::ContentEq;
+
 impl Default for SourceType {
     #[inline]
     fn default() -> Self {
@@ -18,6 +20,13 @@ impl<'a> CloneIn<'a> for SourceType {
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self
+    }
+}
+
+impl ContentEq for SourceType {
+    #[inline]
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
     }
 }
 

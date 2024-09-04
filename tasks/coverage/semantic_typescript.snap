@@ -40538,10 +40538,10 @@ Reference symbol mismatch:
 after transform: ReferenceId(9): Some("Component")
 rebuilt        : ReferenceId(48): None
 Reference symbol mismatch:
-after transform: ReferenceId(76): Some("Namespace")
+after transform: ReferenceId(10): Some("Namespace")
 rebuilt        : ReferenceId(51): None
 Reference symbol mismatch:
-after transform: ReferenceId(79): Some("Namespace")
+after transform: ReferenceId(11): Some("Namespace")
 rebuilt        : ReferenceId(54): None
 Reference symbol mismatch:
 after transform: ReferenceId(12): Some("Component")
@@ -40717,9 +40717,6 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "foo", "t"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName8.tsx
 semantic error: Unresolved references mismatch:
@@ -40757,7 +40754,7 @@ Symbol reference IDs mismatch:
 after transform: SymbolId(5): []
 rebuilt        : SymbolId(6): [ReferenceId(2)]
 Reference symbol mismatch:
-after transform: ReferenceId(8): Some("Dotted")
+after transform: ReferenceId(1): Some("Dotted")
 rebuilt        : ReferenceId(13): Some("Dotted")
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution13.tsx
@@ -41200,9 +41197,6 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
-Reference symbol mismatch:
-after transform: ReferenceId(2): Some("A")
-rebuilt        : ReferenceId(2): None
 Unresolved reference IDs mismatch for "A":
 after transform: [ReferenceId(0), ReferenceId(1)]
 rebuilt        : [ReferenceId(2)]

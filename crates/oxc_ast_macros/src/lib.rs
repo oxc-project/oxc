@@ -37,7 +37,7 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
         .into_iter()
     }
 
-    // TODO: benchmark this to see if a lazy static cell would perform better.
+    // TODO: benchmark this to see if a lazy static cell containing `HashMap` would perform better.
     #[inline]
     fn abs_trait(
         ident: &syn::Ident,
@@ -48,8 +48,11 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
             (quote!(::oxc_span::GetSpan), TokenStream2::default())
         } else if ident == "GetSpanMut" {
             (quote!(::oxc_span::GetSpanMut), TokenStream2::default())
+        } else if ident == "ContentEq" {
+            (quote!(::oxc_span::cmp::ContentEq), quote!(<()>))
         } else {
-            panic!("Invalid derive trait(generate_derive): {ident}");
+            panic!("Invalid derive trait(generate_derive): {ident}.\
+                    Help: If you are trying to implement a new `generate_derive` trait, Make sure to add it to the list above.");
         }
     }
 

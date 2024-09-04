@@ -621,7 +621,7 @@ impl<'a> ReactJsx<'a> {
         // TODO(improve-on-babel): Change this if we can handle differing output in tests.
         let argument_expr = match e {
             JSXElementOrFragment::Element(e) => {
-                self.transform_element_name(&e.opening_element.name, ctx)
+                self.transform_element_name(&e.opening_element.name)
             }
             JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),
         };
@@ -697,11 +697,7 @@ impl<'a> ReactJsx<'a> {
         )
     }
 
-    fn transform_element_name(
-        &self,
-        name: &JSXElementName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    fn transform_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
                 if ident.name == "this" {
@@ -714,7 +710,7 @@ impl<'a> ReactJsx<'a> {
                 self.ast().expression_from_identifier_reference(ident.as_ref().clone())
             }
             JSXElementName::MemberExpression(member_expr) => {
-                self.transform_jsx_member_expression(member_expr, ctx)
+                self.transform_jsx_member_expression(member_expr)
             }
             JSXElementName::NamespacedName(namespaced) => {
                 if self.options.throw_if_namespace {
@@ -776,22 +772,17 @@ impl<'a> ReactJsx<'a> {
         }
     }
 
-    fn transform_jsx_member_expression(
-        &self,
-        expr: &JSXMemberExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
+    fn transform_jsx_member_expression(&self, expr: &JSXMemberExpression<'a>) -> Expression<'a> {
         let object = match &expr.object {
             JSXMemberExpressionObject::IdentifierReference(ident) => {
                 if ident.name == "this" {
                     self.ast().expression_this(ident.span)
                 } else {
-                    let ident = get_read_identifier_reference(ident.span, ident.name.clone(), ctx);
-                    self.ast().expression_from_identifier_reference(ident)
+                    self.ast().expression_from_identifier_reference(ident.as_ref().clone())
                 }
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
-                self.transform_jsx_member_expression(expr, ctx)
+                self.transform_jsx_member_expression(expr)
             }
         };
         let property = IdentifierName::new(expr.property.span, expr.property.name.clone());

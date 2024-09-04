@@ -11,7 +11,7 @@ use std::{
 };
 
 use oxc_allocator::CloneIn;
-use oxc_span::{Atom, Span};
+use oxc_span::{cmp::ContentEq, Atom, Span};
 use oxc_syntax::number::NumberBase;
 
 impl BooleanLiteral {
@@ -148,6 +148,19 @@ impl<'a> fmt::Display for RegExpPattern<'a> {
     }
 }
 
+impl ContentEq for RegExpFlags {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for RegExpFlags {
+    type Cloned = Self;
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
+    }
+}
+
 impl TryFrom<char> for RegExpFlags {
     type Error = char;
 
@@ -250,12 +263,5 @@ impl<'a> fmt::Display for StringLiteral<'a> {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.value.fmt(f)
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for RegExpFlags {
-    type Cloned = Self;
-    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
-        *self
     }
 }

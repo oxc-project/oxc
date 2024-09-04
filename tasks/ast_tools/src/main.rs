@@ -16,7 +16,7 @@ mod rust_ast;
 mod schema;
 mod util;
 
-use derives::{DeriveCloneIn, DeriveGetSpan, DeriveGetSpanMut};
+use derives::{DeriveCloneIn, DeriveContentEq, DeriveGetSpan, DeriveGetSpanMut};
 use fmt::cargo_fmt;
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
@@ -65,6 +65,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .derive(DeriveCloneIn)
         .derive(DeriveGetSpan)
         .derive(DeriveGetSpanMut)
+        .derive(DeriveContentEq)
         .generate(AssertLayouts)
         .generate(AstKindGenerator)
         .generate(AstBuilderGenerator)
