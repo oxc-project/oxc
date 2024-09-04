@@ -2,11 +2,21 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::reference::ReferenceFlags;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
-use super::TypeScript;
+use crate::context::Ctx;
 
-impl<'a> TypeScript<'a> {
+pub struct TypeScriptModule<'a> {
+    ctx: Ctx<'a>,
+}
+
+impl<'a> TypeScriptModule<'a> {
+    pub fn new(ctx: Ctx<'a>) -> Self {
+        Self { ctx }
+    }
+}
+
+impl<'a> Traverse<'a> for TypeScriptModule<'a> {
     /// ```TypeScript
     /// import b = babel;
     /// import AliasModule = LongNameModule;
@@ -15,7 +25,7 @@ impl<'a> TypeScript<'a> {
     /// var b = babel;
     /// var AliasModule = LongNameModule;
     /// ```
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         match decl {
             Declaration::TSImportEqualsDeclaration(ts_import_equals)
                 if ts_import_equals.import_kind.is_value() =>
@@ -26,6 +36,19 @@ impl<'a> TypeScript<'a> {
         }
     }
 
+    fn enter_ts_export_assignment(
+        &mut self,
+        export_assignment: &mut TSExportAssignment<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.ctx.source_type.is_module() {
+            self.ctx
+                .error(super::diagnostics::export_assignment_unsupported(export_assignment.span));
+        }
+    }
+}
+
+impl<'a> TypeScriptModule<'a> {
     fn transform_ts_import_equals(
         &self,
         decl: &mut Box<'a, TSImportEqualsDeclaration<'a>>,
@@ -34,8 +57,8 @@ impl<'a> TypeScript<'a> {
         let kind = VariableDeclarationKind::Var;
         let decls = {
             let binding_pattern_kind =
-                self.ctx.ast.binding_pattern_kind_binding_identifier(SPAN, &decl.id.name);
-            let binding = self.ctx.ast.binding_pattern(
+                ctx.ast.binding_pattern_kind_binding_identifier(SPAN, &decl.id.name);
+            let binding = ctx.ast.binding_pattern(
                 binding_pattern_kind,
                 Option::<TSTypeAnnotation>::None,
                 false,
@@ -53,11 +76,11 @@ impl<'a> TypeScript<'a> {
                         ));
                     }
 
-                    let callee = self.ctx.ast.expression_identifier_reference(SPAN, "require");
-                    let arguments = self.ctx.ast.vec1(Argument::from(
-                        self.ctx.ast.expression_from_string_literal(reference.expression.clone()),
+                    let callee = ctx.ast.expression_identifier_reference(SPAN, "require");
+                    let arguments = ctx.ast.vec1(Argument::from(
+                        ctx.ast.expression_from_string_literal(reference.expression.clone()),
                     ));
-                    self.ctx.ast.expression_call(
+                    ctx.ast.expression_call(
                         SPAN,
                         callee,
                         Option::<TSTypeParameterInstantiation>::None,
@@ -66,18 +89,13 @@ impl<'a> TypeScript<'a> {
                     )
                 }
             };
-            self.ctx.ast.vec1(self.ctx.ast.variable_declarator(
-                SPAN,
-                kind,
-                binding,
-                Some(init),
-                false,
-            ))
+            ctx.ast.vec1(ctx.ast.variable_declarator(SPAN, kind, binding, Some(init), false))
         };
 
-        self.ctx.ast.declaration_variable(SPAN, kind, decls, false)
+        ctx.ast.declaration_variable(SPAN, kind, decls, false)
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn transform_ts_type_name(
         &self,
         type_name: &mut TSTypeName<'a>,
@@ -89,10 +107,9 @@ impl<'a> TypeScript<'a> {
                 let reference_id = ident.reference_id.get().unwrap();
                 let reference = ctx.symbols_mut().get_reference_mut(reference_id);
                 *reference.flags_mut() = ReferenceFlags::Read;
-                self.ctx.ast.expression_from_identifier_reference(ident)
+                ctx.ast.expression_from_identifier_reference(ident)
             }
-            TSTypeName::QualifiedName(qualified_name) => self
-                .ctx
+            TSTypeName::QualifiedName(qualified_name) => ctx
                 .ast
                 .member_expression_static(
                     SPAN,
@@ -101,16 +118,6 @@ impl<'a> TypeScript<'a> {
                     false,
                 )
                 .into(),
-        }
-    }
-
-    pub fn transform_ts_export_assignment(
-        &mut self,
-        export_assignment: &mut TSExportAssignment<'a>,
-    ) {
-        if self.ctx.source_type.is_module() {
-            self.ctx
-                .error(super::diagnostics::export_assignment_unsupported(export_assignment.span));
         }
     }
 }

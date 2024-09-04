@@ -116,7 +116,7 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
 
         let left =
             AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
+                ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
             ));
 
         let reference = ctx.ast.expression_from_identifier_reference(ident);

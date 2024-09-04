@@ -25,6 +25,7 @@ oxc_span       = { workspace = true }
 oxc_ast_macros = { workspace = true }
 oxc_allocator  = { workspace = true }
 
+assert-unchecked = { workspace = true }
 unicode-id-start = { workspace = true }
 bitflags         = { workspace = true }
 rustc-hash       = { workspace = true }
