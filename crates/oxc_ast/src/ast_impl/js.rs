@@ -203,29 +203,35 @@ impl<'a> Expression<'a> {
     }
 
     pub fn get_inner_expression(&self) -> &Expression<'a> {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSInstantiationExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression(),
-            _ => self,
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::ParenthesizedExpression(e) => &e.expression,
+                Expression::TSAsExpression(e) => &e.expression,
+                Expression::TSSatisfiesExpression(e) => &e.expression,
+                Expression::TSInstantiationExpression(e) => &e.expression,
+                Expression::TSNonNullExpression(e) => &e.expression,
+                Expression::TSTypeAssertion(e) => &e.expression,
+                _ => break,
+            };
         }
+        expr
     }
 
     pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSInstantiationExpression(expr) => {
-                expr.expression.get_inner_expression_mut()
-            }
-            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression_mut(),
-            _ => self,
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::ParenthesizedExpression(e) => &mut e.expression,
+                Expression::TSAsExpression(e) => &mut e.expression,
+                Expression::TSSatisfiesExpression(e) => &mut e.expression,
+                Expression::TSInstantiationExpression(e) => &mut e.expression,
+                Expression::TSNonNullExpression(e) => &mut e.expression,
+                Expression::TSTypeAssertion(e) => &mut e.expression,
+                _ => break,
+            };
         }
+        expr
     }
 
     pub fn is_identifier_reference(&self) -> bool {
