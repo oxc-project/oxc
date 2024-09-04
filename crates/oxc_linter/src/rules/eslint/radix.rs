@@ -67,36 +67,29 @@ impl Rule for Radix {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            match &call_expr.callee.without_parenthesized() {
-                Expression::Identifier(ident) if ident.name == "parseInt" => {
-                    if ctx.symbols().get_symbol_id_from_name("parseInt").is_none() {
+            match call_expr.callee.without_parenthesized() {
+                Expression::Identifier(ident) => {
+                    if ident.name == "parseInt"
+                        && ctx.symbols().get_symbol_id_from_name("parseInt").is_none()
+                    {
                         Self::check_arguments(self, call_expr, ctx);
                     }
                 }
                 Expression::StaticMemberExpression(member_expr) => {
-                    if let Expression::Identifier(ident) = &member_expr.object {
+                    if let Expression::Identifier(ident) =
+                        member_expr.object.without_parenthesized()
+                    {
                         if ident.name == "Number"
                             && member_expr.property.name == "parseInt"
                             && ctx.symbols().get_symbol_id_from_name("Number").is_none()
                         {
                             Self::check_arguments(self, call_expr, ctx);
                         }
-                    } else if let Expression::ParenthesizedExpression(paren_expr) =
-                        &member_expr.object
-                    {
-                        if let Expression::Identifier(ident) = &paren_expr.expression {
-                            if ident.name == "Number"
-                                && member_expr.property.name == "parseInt"
-                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
-                            {
-                                Self::check_arguments(self, call_expr, ctx);
-                            }
-                        }
                     }
                 }
                 Expression::ChainExpression(chain_expr) => {
                     if let Some(member_expr) = chain_expr.expression.as_member_expression() {
-                        if let Expression::Identifier(ident) = &member_expr.object() {
+                        if let Expression::Identifier(ident) = member_expr.object() {
                             if ident.name == "Number"
                                 && member_expr.static_property_name() == Some("parseInt")
                                 && ctx.symbols().get_symbol_id_from_name("Number").is_none()
