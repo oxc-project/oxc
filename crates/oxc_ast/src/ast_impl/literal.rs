@@ -11,6 +11,7 @@ use std::{
 };
 
 use oxc_allocator::CloneIn;
+use oxc_regular_expression::ast::Pattern;
 use oxc_span::{cmp::ContentEq, Atom, Span};
 use oxc_syntax::number::NumberBase;
 
@@ -135,6 +136,28 @@ impl<'a> RegExpPattern<'a> {
         match self {
             Self::Raw(raw) | Self::Invalid(raw) => raw,
             Self::Pattern(pat) => pat.span.source_text(source_text),
+        }
+    }
+
+    /// # Panics
+    /// If `self` is anything but `RegExpPattern::Pattern`.
+    pub fn require_pattern(&self) -> &Pattern<'a> {
+        if let Some(it) = self.as_pattern() {
+            it
+        } else {
+            unreachable!(
+                "Required `{}` to be `{}`",
+                stringify!(RegExpPattern),
+                stringify!(Pattern)
+            );
+        }
+    }
+
+    pub fn as_pattern(&self) -> Option<&Pattern<'a>> {
+        if let Self::Pattern(it) = self {
+            Some(it.as_ref())
+        } else {
+            None
         }
     }
 }

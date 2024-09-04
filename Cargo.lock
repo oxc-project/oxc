@@ -1639,6 +1639,7 @@ dependencies = [
  "oxc_index",
  "oxc_macros",
  "oxc_parser",
+ "oxc_regular_expression",
  "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
