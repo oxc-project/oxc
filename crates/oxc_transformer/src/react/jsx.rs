@@ -703,7 +703,7 @@ impl<'a> ReactJsx<'a> {
                 if ident.name == "this" {
                     self.ast().expression_this(ident.span)
                 } else {
-                    self.ast().expression_string_literal(ident.span, &ident.name)
+                    self.ast().expression_string_literal(ident.span, ident.name.clone())
                 }
             }
             JSXElementName::IdentifierReference(ident) => {
