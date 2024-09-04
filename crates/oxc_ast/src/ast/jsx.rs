@@ -231,8 +231,8 @@ pub struct JSXMemberExpression<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXMemberExpressionObject<'a> {
-    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
-    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 2,
+    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
+    MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 1,
 }
 
 /// JSX Expression Container
