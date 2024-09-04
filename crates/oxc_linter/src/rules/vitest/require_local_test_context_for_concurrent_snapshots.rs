@@ -51,14 +51,14 @@ pub struct RequireLocalTestContextForConcurrentSnapshots;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The rule is intended to ensure that concurrent snapshot tests are executed 
+    /// The rule is intended to ensure that concurrent snapshot tests are executed
     /// within a properly configured local test context.
     ///
     /// ### Why is this bad?
     ///
-    /// Running snapshot tests concurrently without a proper context can lead to 
-    /// unreliable or inconsistent snapshots. Ensuring that concurrent tests are 
-    /// correctly configured with the appropriate context helps maintain accurate 
+    /// Running snapshot tests concurrently without a proper context can lead to
+    /// unreliable or inconsistent snapshots. Ensuring that concurrent tests are
+    /// correctly configured with the appropriate context helps maintain accurate
     /// and stable snapshots, avoiding potential conflicts or failures.
     ///
     /// ### Examples

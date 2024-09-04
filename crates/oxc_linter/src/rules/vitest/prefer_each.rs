@@ -43,8 +43,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Manual loops for tests can be less readable and more error-prone. Using 
-    /// `each` provides a clearer and more concise way to run parameterized tests, 
+    /// Manual loops for tests can be less readable and more error-prone. Using
+    /// `each` provides a clearer and more concise way to run parameterized tests,
     /// improving readability and maintainability.
     ///
     /// ### Examples
