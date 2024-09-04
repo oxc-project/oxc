@@ -212,8 +212,8 @@ impl<'a> RegExp<'a> {
                                     return true;
                                 }
                                 _ => {
-                                    if self.options.named_capture_groups {
-                                        return chars.any(|c| c == '>');
+                                    if self.options.named_capture_groups && chars.any(|c| c == '>') {
+                                        return true;
                                     }
                                 }
                             }
