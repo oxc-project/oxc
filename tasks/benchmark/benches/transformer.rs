@@ -40,18 +40,18 @@ fn bench_transformer(criterion: &mut Criterion) {
                 // in measure.
                 let trivias_copy = trivias.clone();
 
+                let env_options = EnvOptions {
+                    // >= ES2016
+                    targets: Targets::from_query("chrome 51"),
+                    ..Default::default()
+                };
+                let mut transform_options =
+                    TransformOptions::from_preset_env(&env_options).unwrap();
+
+                // Enable React related plugins
+                transform_options.react.development = true;
+
                 runner.run(|| {
-                    let env_options = EnvOptions {
-                        // >= ES2016
-                        targets: Targets::from_query("chrome 51"),
-                        ..Default::default()
-                    };
-                    let mut transform_options =
-                        TransformOptions::from_preset_env(&env_options).unwrap();
-
-                    // Enable React related plugins
-                    transform_options.react.development = true;
-
                     let ret = Transformer::new(
                         &allocator,
                         Path::new(&file.file_name),
