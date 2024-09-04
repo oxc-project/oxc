@@ -5,7 +5,7 @@ use std::{
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
-use crate::surroage_pair::{combine_surrogate_pair, is_lead_surrogate, is_trail_surrogate};
+use crate::surrogate_pair::{combine_surrogate_pair, is_lead_surrogate, is_trail_surrogate};
 
 impl<'a> Display for RegularExpression<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

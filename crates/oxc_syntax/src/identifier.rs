@@ -1,3 +1,5 @@
+use assert_unchecked::assert_unchecked;
+
 use unicode_id_start::{is_id_continue_unicode, is_id_start_unicode};
 
 pub const EOF: char = '\0';
@@ -143,6 +145,7 @@ pub fn is_identifier_name(name: &str) -> bool {
     // the cheap `is_identifier_start_ascii` and `is_identifier_part_ascii` to test bytes.
     // Only if a Unicode char is found, fall back to iterating over `char`s, and using the more
     // expensive `is_identifier_start_unicode` and `is_identifier_part`.
+    // As a further optimization, we test if bytes are ASCII in blocks of 8 or 4 bytes, rather than 1 by 1.
 
     // Get first byte. Exit if empty string.
     let bytes = name.as_bytes();
@@ -154,26 +157,83 @@ pub fn is_identifier_name(name: &str) -> bool {
             return false;
         }
 
-        // `'outer` loop never actually loops - only here to allow breaking out of it when Unicode found
-        #[allow(clippy::never_loop)]
-        let index = 'outer: loop {
-            for (index, &b) in bytes[1..].iter().enumerate() {
-                if b.is_ascii() {
+        let mut index = 1;
+        'outer: loop {
+            // Check blocks of 8 bytes, then 4 bytes, then single bytes
+            let bytes_remaining = bytes.len() - index;
+            if bytes_remaining >= 8 {
+                // Process block of 8 bytes.
+                // Check that next 8 bytes are all ASCII.
+                // SAFETY: We checked above that there are at least 8 bytes to read starting at `index`
+                #[allow(clippy::cast_ptr_alignment)]
+                let next8_as_u64 = unsafe {
+                    let ptr = bytes.as_ptr().add(index).cast::<u64>();
+                    ptr.read_unaligned()
+                };
+                let high_bits = next8_as_u64 & 0x8080_8080_8080_8080;
+                if high_bits != 0 {
+                    // Some chars in this block are non-ASCII
+                    break;
+                }
+
+                let next8 = next8_as_u64.to_ne_bytes();
+                for b in next8 {
+                    // SAFETY: We just checked all these bytes are ASCII
+                    unsafe { assert_unchecked!(b.is_ascii()) };
                     if !is_identifier_part_ascii(b as char) {
                         return false;
                     }
-                } else {
-                    // Unicode byte found
-                    break 'outer index;
+                }
+
+                index += 8;
+            } else if bytes_remaining >= 4 {
+                // Process block of 4 bytes.
+                // Check that next 4 bytes are all ASCII.
+                // SAFETY: We checked above that there are at least 4 bytes to read starting at `index`
+                #[allow(clippy::cast_ptr_alignment)]
+                let next4_as_u32 = unsafe {
+                    let ptr = bytes.as_ptr().add(index).cast::<u32>();
+                    ptr.read_unaligned()
+                };
+                let high_bits = next4_as_u32 & 0x8080_8080;
+                if high_bits != 0 {
+                    // Some chars in this block are non-ASCII
+                    break;
+                }
+
+                let next4 = next4_as_u32.to_ne_bytes();
+                for b in next4 {
+                    // SAFETY: We just checked all these bytes are ASCII
+                    unsafe { assert_unchecked!(b.is_ascii()) };
+                    if !is_identifier_part_ascii(b as char) {
+                        return false;
+                    }
+                }
+
+                index += 4;
+            } else {
+                loop {
+                    let Some(&b) = bytes.get(index) else {
+                        // We got to the end with no non-identifier chars found
+                        return true;
+                    };
+
+                    if b.is_ascii() {
+                        if !is_identifier_part_ascii(b as char) {
+                            return false;
+                        }
+                    } else {
+                        // Unicode byte found
+                        break 'outer;
+                    }
+
+                    index += 1;
                 }
             }
-            // We got to end without finding any non-identifier of Unicode characters
-            return true;
-        };
+        }
 
-        // Unicode byte found - search rest of string (from this byte onwards) as Unicode.
-        // `index + 1` because `index` returned from the loop is relative to start of `bytes[1..]`.
-        name[index + 1..].chars()
+        // Unicode byte found - search rest of string (from this byte onwards) as Unicode
+        name[index..].chars()
     } else {
         // First char is Unicode.
         // NB: `unwrap()` cannot fail because we already checked the string is not empty.
@@ -260,6 +320,12 @@ fn is_identifier_name_false() {
         "A£",
         "A৸",
         "A𐄬",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$abc£",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$abc৸",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$abc𐄬",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$abc£abcdefghijklmnopqrstuvwxyz",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$abc৸abcdefghijklmnopqrstuvwxyz",
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$abc𐄬abcdefghijklmnopqrstuvwxyz",
         // ASCII + Unicode, starting with Unicode
         "£A",
         "৸A",
