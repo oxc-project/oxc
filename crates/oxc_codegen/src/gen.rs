@@ -3161,7 +3161,7 @@ impl<'a> Gen for TSFunctionType<'a> {
 
 impl<'a> Gen for TSThisParameter<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        self.this.gen(p, ctx);
+        p.print_str("this");
         if let Some(type_annotation) = &self.type_annotation {
             p.print_str(": ");
             type_annotation.gen(p, ctx);

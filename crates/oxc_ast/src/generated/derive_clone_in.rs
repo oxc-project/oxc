@@ -2278,7 +2278,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSThisParameter<'old_alloc>
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSThisParameter {
             span: self.span.clone_in(allocator),
-            this: self.this.clone_in(allocator),
+            this_span: self.this_span.clone_in(allocator),
             type_annotation: self.type_annotation.clone_in(allocator),
         }
     }

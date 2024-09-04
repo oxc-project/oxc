@@ -14,9 +14,10 @@ define_derive! {
     pub struct DeriveContentEq;
 }
 
-const IGNORE_FIELDS: [(/* field name */ &str, /* field type */ &str); 5] = [
+const IGNORE_FIELDS: [(/* field name */ &str, /* field type */ &str); 6] = [
     ("span", "Span"),
     ("trailing_comma", "Span"),
+    ("this_span", "Span"),
     ("scope_id", "ScopeId"),
     ("symbol_id", "SymbolId"),
     ("reference_id", "ReferenceId"),

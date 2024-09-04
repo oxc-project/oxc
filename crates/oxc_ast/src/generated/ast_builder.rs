@@ -7878,19 +7878,23 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - this
+    /// - this_span
     /// - type_annotation
     #[inline]
     pub fn ts_this_parameter<T1>(
         self,
         span: Span,
-        this: IdentifierName<'a>,
+        this_span: Span,
         type_annotation: T1,
     ) -> TSThisParameter<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
-        TSThisParameter { span, this, type_annotation: type_annotation.into_in(self.allocator) }
+        TSThisParameter {
+            span,
+            this_span,
+            type_annotation: type_annotation.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`TSThisParameter`] and stores it in the memory arena.
@@ -7899,19 +7903,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - this
+    /// - this_span
     /// - type_annotation
     #[inline]
     pub fn alloc_ts_this_parameter<T1>(
         self,
         span: Span,
-        this: IdentifierName<'a>,
+        this_span: Span,
         type_annotation: T1,
     ) -> Box<'a, TSThisParameter<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(self.ts_this_parameter(span, this, type_annotation), self.allocator)
+        Box::new_in(self.ts_this_parameter(span, this_span, type_annotation), self.allocator)
     }
 
     /// Builds a [`TSEnumDeclaration`]

@@ -41,7 +41,7 @@ export interface TSIndexSignatureName extends Span {
 pub struct TSThisParameter<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub this: IdentifierName<'a>,
+    pub this_span: Span,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 

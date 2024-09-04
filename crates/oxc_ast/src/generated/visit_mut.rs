@@ -2174,7 +2174,6 @@ pub mod walk_mut {
     ) {
         let kind = AstType::TSThisParameter;
         visitor.enter_node(kind);
-        visitor.visit_identifier_name(&mut it.this);
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }

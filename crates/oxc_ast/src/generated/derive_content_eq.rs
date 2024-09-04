@@ -2378,7 +2378,7 @@ impl<'a> ContentEq for ModuleExportName<'a> {
 
 impl<'a> ContentEq for TSThisParameter<'a> {
     fn content_eq(&self, other: &Self) -> bool {
-        self.this.content_eq(&other.this) && self.type_annotation.content_eq(&other.type_annotation)
+        self.type_annotation.content_eq(&other.type_annotation)
     }
 }
 
