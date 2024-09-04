@@ -7,7 +7,7 @@ mod flag_parser;
 mod literal_parser;
 mod options;
 mod span;
-mod surroage_pair;
+mod surrogate_pair;
 
 mod generated {
     mod derive_clone_in;
