@@ -273,6 +273,8 @@ fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> b
     })
 }
 
+/// Given a variable name, finds the variable and checks if it is an object that has a property
+/// by the given name, either by directly being set or by being spread into the object.
 fn does_object_var_have_prop_name(
     ctx: &LintContext,
     node: &AstNode,
@@ -335,13 +337,13 @@ fn is_object_with_prop_name(
     obj_props: &oxc_allocator::Vec<'_, ObjectPropertyKind<'_>>,
     prop_name: &str,
 ) -> bool {
-    obj_props.iter().any(|prop| match prop {
-        ObjectPropertyKind::ObjectProperty(obj_prop) => {
-            let Some(key) = obj_prop.key.static_name() else {
-                return false;
-            };
-            key == prop_name
-        }
-        ObjectPropertyKind::SpreadProperty(_) => false,
+    obj_props.iter().any(|prop| {
+        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
+            return false;
+        };
+        let Some(key) = obj_prop.key.static_name() else {
+            return false;
+        };
+        key == prop_name
     })
 }
