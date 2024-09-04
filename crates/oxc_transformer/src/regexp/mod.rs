@@ -45,8 +45,11 @@ mod options;
 use std::borrow::Cow;
 
 pub use options::RegExpOptions;
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_regular_expression::ast::{LookAroundAssertionKind, Pattern, Term};
+use oxc_regular_expression::ast::{
+    CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
+};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::Atom;
 use oxc_traverse::Traverse;
@@ -153,10 +156,13 @@ impl<'a> RegExp<'a> {
             return false;
         }
 
-        pattern.body.body.iter().any(|alternative| {
-            alternative.body.iter().any(|element| match element {
+        let check_terms = |terms: &Vec<'a, Term>| {
+            terms.iter().any(|element| match element {
                 Term::CapturingGroup(_) if self.options.named_capture_groups => true,
                 Term::UnicodePropertyEscape(_) if self.options.unicode_property_escapes => true,
+                Term::CharacterClass(character_class) if self.options.unicode_property_escapes => {
+                    has_unicode_property_escape_character_class(character_class)
+                }
                 Term::LookAroundAssertion(assertion)
                     if self.options.look_behind_assertions
                         && matches!(
@@ -169,7 +175,9 @@ impl<'a> RegExp<'a> {
                 }
                 _ => false,
             })
-        })
+        };
+
+        pattern.body.body.iter().any(|alternative| check_terms(&alternative.body))
     }
 
     /// Check if the regular expression contains any unsupported syntax.
@@ -245,4 +253,14 @@ impl<'a> RegExp<'a> {
 
         false
     }
+}
+
+fn has_unicode_property_escape_character_class(character_class: &CharacterClass) -> bool {
+    character_class.body.iter().any(|element| match element {
+        CharacterClassContents::UnicodePropertyEscape(_) => true,
+        CharacterClassContents::NestedCharacterClass(character_class) => {
+            has_unicode_property_escape_character_class(character_class)
+        }
+        _ => false,
+    })
 }
