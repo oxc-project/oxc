@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 18/48
+Passed: 19/49
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding

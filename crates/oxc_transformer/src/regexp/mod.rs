@@ -54,13 +54,13 @@ use oxc_traverse::Traverse;
 use crate::context::Ctx;
 
 pub struct RegExp<'a> {
-    ctx: Ctx<'a>,
+    _ctx: Ctx<'a>,
     options: RegExpOptions,
 }
 
 impl<'a> RegExp<'a> {
     pub fn new(options: RegExpOptions, ctx: Ctx<'a>) -> Self {
-        Self { ctx, options }
+        Self { _ctx: ctx, options }
     }
 }
 
@@ -76,20 +76,20 @@ impl<'a> Traverse<'a> for RegExp<'a> {
 
         let is_unsupported = self.has_unsupported_regular_expression_flags(regexp.regex.flags);
 
-        let mut pattern_source = Cow::Borrowed(match regexp.regex.pattern {
+        let mut pattern_source = match regexp.regex.pattern {
             RegExpPattern::Raw(pattern)
                 if is_unsupported
                     || self.has_unsupported_regex_syntax_raw(pattern, regexp.regex.flags) =>
             {
-                pattern
+                Cow::Borrowed(pattern)
             }
             RegExpPattern::Pattern(ref pattern)
                 if is_unsupported || self.has_unsupported_regular_expression_pattern(pattern) =>
             {
-                regexp.regex.pattern.source_text(self.ctx.source_text)
+                Cow::Owned(regexp.regex.pattern.to_string())
             }
             _ => return,
-        });
+        };
 
         if pattern_source.contains('\\') {
             // Escape backslashes in the pattern source
@@ -132,7 +132,6 @@ impl<'a> RegExp<'a> {
     /// Check if the regular expression contains any unsupported flags.
     fn has_unsupported_regular_expression_flags(&self, flags: RegExpFlags) -> bool {
         flags.iter().any(|f| match f {
-            RegExpFlags::G | RegExpFlags::I | RegExpFlags::M => true,
             RegExpFlags::S if self.options.dot_all_flag => true,
             RegExpFlags::Y if self.options.sticky_flag => true,
             RegExpFlags::U if self.options.unicode_flag => true,
@@ -212,8 +211,8 @@ impl<'a> RegExp<'a> {
                                     return true;
                                 }
                                 _ => {
-                                    if self.options.named_capture_groups && chars.any(|c| c == '>') {
-                                        return true;
+                                    if self.options.named_capture_groups {
+                                        return chars.any(|c| c == '>');
                                     }
                                 }
                             }
@@ -231,8 +230,11 @@ impl<'a> RegExp<'a> {
                     if self.options.unicode_property_escapes && is_unicode {
                         if let Some(&next_char) = chars.peek() {
                             // \p{ and \P{
-                            if (next_char == 'p' || next_char == 'P') && chars.nth(1) == Some('{') {
-                                return chars.any(|c| c == '}');
+                            if (next_char == 'p' || next_char == 'P')
+                                && chars.nth(1) == Some('{')
+                                && chars.any(|c| c == '}')
+                            {
+                                return true;
                             }
                         }
                     }
