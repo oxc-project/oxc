@@ -123,10 +123,10 @@ oxlint:
   cargo oxlint
 
 watch-wasm:
-  cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm
+  cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm dev
 
-build-wasm:
-  wasm-pack build --out-dir ../../npm/oxc-wasm --target web --scope oxc crates/oxc_wasm
+build-wasm mode="release":
+  wasm-pack build --out-dir ../../npm/oxc-wasm --target web --{{mode}} --scope oxc crates/oxc_wasm
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:
