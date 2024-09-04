@@ -11,6 +11,7 @@ mod surrogate_pair;
 
 mod generated {
     mod derive_clone_in;
+    mod derive_content_eq;
 }
 
 pub use crate::body_parser::PatternParser;

@@ -14,7 +14,7 @@ use std::{cell::Cell, hash::Hash};
 
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
-use oxc_span::{Atom, GetSpan, GetSpanMut, Span};
+use oxc_span::{cmp::ContentEq, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::scope::ScopeId;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -35,7 +35,7 @@ export interface TSIndexSignatureName extends Span {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSThisParameter<'a> {
@@ -65,7 +65,7 @@ pub struct TSThisParameter<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSEnumDeclaration<'a> {
@@ -96,7 +96,7 @@ pub struct TSEnumDeclaration<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSEnumMember<'a> {
@@ -114,7 +114,7 @@ inherit_variants! {
 /// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSEnumMemberName<'a> {
@@ -143,7 +143,7 @@ pub enum TSEnumMemberName<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAnnotation<'a> {
@@ -169,7 +169,7 @@ pub struct TSTypeAnnotation<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSLiteralType<'a> {
@@ -180,7 +180,7 @@ pub struct TSLiteralType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSLiteral<'a> {
@@ -200,7 +200,7 @@ pub enum TSLiteral<'a> {
 /// expressions.
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSType<'a> {
@@ -305,7 +305,7 @@ pub use match_ts_type;
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSConditionalType<'a> {
@@ -331,7 +331,7 @@ pub struct TSConditionalType<'a> {
 /// <https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions>
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSUnionType<'a> {
@@ -345,7 +345,7 @@ pub struct TSUnionType<'a> {
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types>
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSIntersectionType<'a> {
@@ -356,7 +356,7 @@ pub struct TSIntersectionType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSParenthesizedType<'a> {
@@ -375,7 +375,7 @@ pub struct TSParenthesizedType<'a> {
 /// <https://www.typescriptlang.org/docs/handbook/2/keyof-types.html>
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeOperator<'a> {
@@ -387,7 +387,7 @@ pub struct TSTypeOperator<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn)]
+#[generate_derive(CloneIn, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSTypeOperatorOperator {
@@ -409,7 +409,7 @@ pub enum TSTypeOperatorOperator {
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type>
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSArrayType<'a> {
@@ -431,7 +431,7 @@ pub struct TSArrayType<'a> {
 /// <https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html#handbook-content>
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSIndexedAccessType<'a> {
@@ -452,7 +452,7 @@ pub struct TSIndexedAccessType<'a> {
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTupleType<'a> {
@@ -463,7 +463,7 @@ pub struct TSTupleType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSNamedTupleMember<'a> {
@@ -476,7 +476,7 @@ pub struct TSNamedTupleMember<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSOptionalType<'a> {
@@ -487,7 +487,7 @@ pub struct TSOptionalType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSRestType<'a> {
@@ -506,7 +506,7 @@ inherit_variants! {
 /// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSTupleElement<'a> {
@@ -521,7 +521,7 @@ pub enum TSTupleElement<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSAnyKeyword {
@@ -531,7 +531,7 @@ pub struct TSAnyKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSStringKeyword {
@@ -541,7 +541,7 @@ pub struct TSStringKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSBooleanKeyword {
@@ -551,7 +551,7 @@ pub struct TSBooleanKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSNumberKeyword {
@@ -561,7 +561,7 @@ pub struct TSNumberKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSNeverKeyword {
@@ -572,7 +572,7 @@ pub struct TSNeverKeyword {
 /// `type Uppercase<T extends character> = intrinsic;`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSIntrinsicKeyword {
@@ -582,7 +582,7 @@ pub struct TSIntrinsicKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSUnknownKeyword {
@@ -592,7 +592,7 @@ pub struct TSUnknownKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSNullKeyword {
@@ -602,7 +602,7 @@ pub struct TSNullKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSUndefinedKeyword {
@@ -612,7 +612,7 @@ pub struct TSUndefinedKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSVoidKeyword {
@@ -622,7 +622,7 @@ pub struct TSVoidKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSSymbolKeyword {
@@ -632,7 +632,7 @@ pub struct TSSymbolKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSThisType {
@@ -642,7 +642,7 @@ pub struct TSThisType {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSObjectKeyword {
@@ -652,7 +652,7 @@ pub struct TSObjectKeyword {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct TSBigIntKeyword {
@@ -665,7 +665,7 @@ pub struct TSBigIntKeyword {
 /// type E = D.c.b.a;
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeReference<'a> {
@@ -680,7 +680,7 @@ pub struct TSTypeReference<'a> {
 ///     NamespaceName . IdentifierReference
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSTypeName<'a> {
@@ -699,7 +699,7 @@ pub use match_ts_type_name;
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSQualifiedName<'a> {
@@ -711,7 +711,7 @@ pub struct TSQualifiedName<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeParameterInstantiation<'a> {
@@ -722,7 +722,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeParameter<'a> {
@@ -738,7 +738,7 @@ pub struct TSTypeParameter<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeParameterDeclaration<'a> {
@@ -750,7 +750,7 @@ pub struct TSTypeParameterDeclaration<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAliasDeclaration<'a> {
@@ -768,7 +768,7 @@ pub struct TSTypeAliasDeclaration<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn)]
+#[generate_derive(CloneIn, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSAccessibility {
@@ -779,7 +779,7 @@ pub enum TSAccessibility {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSClassImplements<'a> {
@@ -795,7 +795,7 @@ pub struct TSClassImplements<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInterfaceDeclaration<'a> {
@@ -815,7 +815,7 @@ pub struct TSInterfaceDeclaration<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInterfaceBody<'a> {
@@ -826,7 +826,7 @@ pub struct TSInterfaceBody<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSPropertySignature<'a> {
@@ -841,7 +841,7 @@ pub struct TSPropertySignature<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSSignature<'a> {
@@ -865,7 +865,7 @@ pub enum TSSignature<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSIndexSignature<'a> {
@@ -878,7 +878,7 @@ pub struct TSIndexSignature<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSCallSignatureDeclaration<'a> {
@@ -892,7 +892,7 @@ pub struct TSCallSignatureDeclaration<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn)]
+#[generate_derive(CloneIn, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMethodSignatureKind {
@@ -904,7 +904,7 @@ pub enum TSMethodSignatureKind {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSMethodSignature<'a> {
@@ -926,7 +926,7 @@ pub struct TSMethodSignature<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSConstructSignatureDeclaration<'a> {
@@ -942,7 +942,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[serde(tag = "type", rename = "Identifier", rename_all = "camelCase")]
 pub struct TSIndexSignatureName<'a> {
@@ -954,7 +954,7 @@ pub struct TSIndexSignatureName<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInterfaceHeritage<'a> {
@@ -966,7 +966,7 @@ pub struct TSInterfaceHeritage<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypePredicate<'a> {
@@ -979,7 +979,7 @@ pub struct TSTypePredicate<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSTypePredicateName<'a> {
@@ -993,7 +993,7 @@ pub enum TSTypePredicateName<'a> {
     strict_if(self.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict)),
 )]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSModuleDeclaration<'a> {
@@ -1020,7 +1020,7 @@ pub struct TSModuleDeclaration<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn)]
+#[generate_derive(CloneIn, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
@@ -1037,7 +1037,7 @@ impl TSModuleDeclarationKind {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationName<'a> {
@@ -1047,7 +1047,7 @@ pub enum TSModuleDeclarationName<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationBody<'a> {
@@ -1058,7 +1058,7 @@ pub enum TSModuleDeclarationBody<'a> {
 // See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSModuleBlock<'a> {
@@ -1071,7 +1071,7 @@ pub struct TSModuleBlock<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeLiteral<'a> {
@@ -1082,7 +1082,7 @@ pub struct TSTypeLiteral<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInferType<'a> {
@@ -1093,7 +1093,7 @@ pub struct TSInferType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeQuery<'a> {
@@ -1111,7 +1111,7 @@ inherit_variants! {
 /// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSTypeQueryExprName<'a> {
@@ -1123,7 +1123,7 @@ pub enum TSTypeQueryExprName<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSImportType<'a> {
@@ -1138,7 +1138,7 @@ pub struct TSImportType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSImportAttributes<'a> {
@@ -1150,7 +1150,7 @@ pub struct TSImportAttributes<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSImportAttribute<'a> {
@@ -1162,7 +1162,7 @@ pub struct TSImportAttribute<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSImportAttributeName<'a> {
@@ -1172,7 +1172,7 @@ pub enum TSImportAttributeName<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSFunctionType<'a> {
@@ -1186,7 +1186,7 @@ pub struct TSFunctionType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSConstructorType<'a> {
@@ -1201,7 +1201,7 @@ pub struct TSConstructorType<'a> {
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSMappedType<'a> {
@@ -1219,7 +1219,7 @@ pub struct TSMappedType<'a> {
 
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn)]
+#[generate_derive(CloneIn, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMappedTypeModifierOperator {
@@ -1233,7 +1233,7 @@ pub enum TSMappedTypeModifierOperator {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTemplateLiteralType<'a> {
@@ -1245,7 +1245,7 @@ pub struct TSTemplateLiteralType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSAsExpression<'a> {
@@ -1257,7 +1257,7 @@ pub struct TSAsExpression<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSSatisfiesExpression<'a> {
@@ -1269,7 +1269,7 @@ pub struct TSSatisfiesExpression<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAssertion<'a> {
@@ -1281,7 +1281,7 @@ pub struct TSTypeAssertion<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSImportEqualsDeclaration<'a> {
@@ -1300,7 +1300,7 @@ inherit_variants! {
 /// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSModuleReference<'a> {
@@ -1312,7 +1312,7 @@ pub enum TSModuleReference<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSExternalModuleReference<'a> {
@@ -1323,7 +1323,7 @@ pub struct TSExternalModuleReference<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSNonNullExpression<'a> {
@@ -1358,7 +1358,7 @@ pub struct TSNonNullExpression<'a> {
 /// [`CallExpression`]: crate::ast::js::CallExpression
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct Decorator<'a> {
@@ -1372,7 +1372,7 @@ pub struct Decorator<'a> {
 /// `export = foo`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSExportAssignment<'a> {
@@ -1386,7 +1386,7 @@ pub struct TSExportAssignment<'a> {
 /// `export as namespace foo`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSNamespaceExportDeclaration<'a> {
@@ -1397,7 +1397,7 @@ pub struct TSNamespaceExportDeclaration<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInstantiationExpression<'a> {
@@ -1410,7 +1410,7 @@ pub struct TSInstantiationExpression<'a> {
 /// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[generate_derive(CloneIn)]
+#[generate_derive(CloneIn, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
@@ -1425,7 +1425,7 @@ pub enum ImportOrExportKind {
 /// `type foo = ty?` or `type foo = ?ty`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSDocNullableType<'a> {
@@ -1439,7 +1439,7 @@ pub struct JSDocNullableType<'a> {
 /// `type foo = ty!` or `type foo = !ty`
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSDocNonNullableType<'a> {
@@ -1451,7 +1451,7 @@ pub struct JSDocNonNullableType<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
-#[generate_derive(CloneIn, GetSpan, GetSpanMut)]
+#[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSDocUnknownType {
