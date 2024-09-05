@@ -1830,6 +1830,14 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSInterfaceHeritage(_) => {
                 self.current_reference_flags = ReferenceFlags::Type;
             }
+            AstKind::TSPropertySignature(signature) => {
+                if signature.key.is_expression() {
+                    // interface A { [prop]: string }
+                    //               ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
+                    self.current_reference_flags =
+                        ReferenceFlags::Read | ReferenceFlags::TSTypeQuery; // TODO: Should use another flag
+                }
+            }
             AstKind::TSTypeQuery(_) => {
                 // type A = typeof a;
                 //          ^^^^^^^^
@@ -1962,8 +1970,10 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::MemberExpression(_)
+            | AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
-            | AstKind::ExportNamedDeclaration(_) => {
+            // Clear the reference flags that are set in AstKind::PropertySignature
+            | AstKind::PropertyKey(_) => {
                 self.current_reference_flags = ReferenceFlags::empty();
             }
             AstKind::AssignmentTarget(_) => self.current_reference_flags -= ReferenceFlags::Write,

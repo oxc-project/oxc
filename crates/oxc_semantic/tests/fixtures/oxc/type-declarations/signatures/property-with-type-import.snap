@@ -1,6 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
-input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/signatures/property-computed-name.ts
+input_file: crates/oxc_semantic/tests/fixtures/oxc/type-declarations/signatures/property-with-type-import.ts
 ---
 [
   {
@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "children": [],
         "flags": "ScopeFlags(StrictMode)",
         "id": 2,
-        "node": "TSTypeAliasDeclaration",
+        "node": "TSInterfaceDeclaration",
         "symbols": []
       }
     ],
@@ -25,38 +25,38 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(TypeImport)",
         "id": 0,
-        "name": "x",
-        "node": "VariableDeclarator(x)",
+        "name": "X",
+        "node": "ImportDefaultSpecifier",
         "references": [
           {
-            "flags": "ReferenceFlags(Read | TSTypeQuery)",
+            "flags": "ReferenceFlags(Type | TSTypeQuery)",
             "id": 0,
-            "name": "x",
-            "node_id": 14
+            "name": "X",
+            "node_id": 15
           }
         ]
       },
       {
         "flags": "SymbolFlags(TypeAlias)",
         "id": 1,
-        "name": "T",
+        "name": "B",
         "node": "TSTypeAliasDeclaration",
         "references": [
           {
             "flags": "ReferenceFlags(Type)",
             "id": 1,
-            "name": "T",
-            "node_id": 18
+            "name": "B",
+            "node_id": 19
           }
         ]
       },
       {
-        "flags": "SymbolFlags(TypeAlias)",
+        "flags": "SymbolFlags(Export | Interface)",
         "id": 2,
         "name": "A",
-        "node": "TSTypeAliasDeclaration",
+        "node": "TSInterfaceDeclaration",
         "references": []
       }
     ]
