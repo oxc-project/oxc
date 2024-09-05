@@ -120,7 +120,13 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         };
 
         let has_unsupported_flags = regexp.regex.flags.intersects(self.unsupported_flags);
-        if !has_unsupported_flags && self.some_unsupported_patterns {
+        if !has_unsupported_flags {
+            if !self.some_unsupported_patterns {
+                // This RegExp has no unsupported flags, and there are no patterns which may need transforming,
+                // so there's nothing to do
+                return;
+            }
+
             match try_parse_pattern(regexp, ctx) {
                 Ok(pattern) => {
                     let is_unsupported = self.has_unsupported_regular_expression_pattern(&pattern);
@@ -134,7 +140,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
                     return;
                 }
             }
-        };
+        }
 
         let pattern_source: Cow<'_, str> = match &regexp.regex.pattern {
             RegExpPattern::Raw(raw) | RegExpPattern::Invalid(raw) => Cow::Borrowed(raw),
