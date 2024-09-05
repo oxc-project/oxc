@@ -302,7 +302,7 @@ impl NoUnusedVars {
     /// Returns `true` if this binding rest element should be allowed (i.e. not
     /// reported). Currently, this handles the case where a rest element is part
     /// of a TS function declaration.
-    pub(super) fn is_allowed_binding_rest_element<'a>(&self, symbol: &Symbol<'_, 'a>) -> bool {
+    pub(super) fn is_allowed_binding_rest_element(symbol: &Symbol) -> bool {
         for parent in symbol.iter_parents() {
             // If this is a binding rest element that is part of a TS function parameter,
             // for example: `function foo(...messages: string[]) {}`, then we will allow it.
