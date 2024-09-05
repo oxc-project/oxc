@@ -384,14 +384,14 @@ pub fn create_export_star_exports<'a>(
                                 SPAN,
                                 builder.expression_identifier_reference(SPAN, "key"),
                                 BinaryOperator::In,
-                                builder.expression_identifier_reference(SPAN, ident.as_str()),
+                                builder.expression_identifier_reference(SPAN, "exports"),
                             ),
                             LogicalOperator::And,
                             builder.expression_binary(
                                 SPAN,
                                 builder.expression_member(builder.member_expression_computed(
                                     SPAN,
-                                    builder.expression_identifier_reference(SPAN, ident.as_str()),
+                                    builder.expression_identifier_reference(SPAN, "exports"),
                                     builder.expression_identifier_reference(SPAN, "key"),
                                     false,
                                 )),
