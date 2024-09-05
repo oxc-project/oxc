@@ -307,9 +307,7 @@ impl NoUnusedVars {
             // If this is a binding rest element that is part of a TS function parameter,
             // for example: `function foo(...messages: string[]) {}`, then we will allow it.
             if let AstKind::Function(f) = parent.kind() {
-                if f.is_typescript_syntax() {
-                    return true;
-                }
+                return f.is_typescript_syntax();
             }
         }
 
