@@ -299,7 +299,7 @@ impl NoUnusedVars {
                 ctx.diagnostic(diagnostic::param(symbol));
             }
             AstKind::BindingRestElement(_) => {
-                if self.is_allowed_binding_rest_element(ctx.semantic().as_ref(), symbol) {
+                if self.is_allowed_binding_rest_element(symbol) {
                     return;
                 }
                 ctx.diagnostic(diagnostic::declared(symbol));
