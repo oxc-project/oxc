@@ -162,7 +162,7 @@ impl Generator for AstKindGenerator {
                     format_ident!("as_{}", ident.to_string().to_case(Case::Snake));
                 parse_quote!(
                     ///@@line_break
-                    pub fn #snake_case_name(&self) -> Option<&#typ> {
+                    pub fn #snake_case_name(&self) -> Option<&'a #typ> {
                         if let Self::#ident(v) = self {
                             Some(*v)
                         } else {
