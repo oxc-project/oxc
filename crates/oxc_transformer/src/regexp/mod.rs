@@ -45,7 +45,6 @@ mod options;
 use std::borrow::Cow;
 
 pub use options::RegExpOptions;
-use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
@@ -198,36 +197,35 @@ impl<'a> RegExp<'a> {
     ///
     /// Based on parsed regular expression pattern.
     fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
-        let check_terms = |terms: &Vec<'a, Term>| {
-            terms.iter().any(|element| match element {
-                Term::CapturingGroup(_) if self.named_capture_groups => true,
-                Term::UnicodePropertyEscape(_) if self.unicode_property_escapes => true,
-                Term::CharacterClass(character_class) if self.unicode_property_escapes => {
-                    has_unicode_property_escape_character_class(character_class)
+        let terms_contains_unsupported = |terms: &[Term]| {
+            terms.iter().any(|term| match term {
+                Term::CapturingGroup(_) => self.named_capture_groups,
+                Term::UnicodePropertyEscape(_) => self.unicode_property_escapes,
+                Term::CharacterClass(character_class) => {
+                    self.unicode_property_escapes
+                        && character_class_has_unicode_property_escape(character_class)
                 }
-                Term::LookAroundAssertion(assertion)
-                    if self.look_behind_assertions
+                Term::LookAroundAssertion(assertion) => {
+                    self.look_behind_assertions
                         && matches!(
                             assertion.kind,
                             LookAroundAssertionKind::Lookbehind
                                 | LookAroundAssertionKind::NegativeLookbehind
-                        ) =>
-                {
-                    true
+                        )
                 }
                 _ => false,
             })
         };
 
-        pattern.body.body.iter().any(|alternative| check_terms(&alternative.body))
+        pattern.body.body.iter().any(|alternative| terms_contains_unsupported(&alternative.body))
     }
 }
 
-fn has_unicode_property_escape_character_class(character_class: &CharacterClass) -> bool {
+fn character_class_has_unicode_property_escape(character_class: &CharacterClass) -> bool {
     character_class.body.iter().any(|element| match element {
         CharacterClassContents::UnicodePropertyEscape(_) => true,
         CharacterClassContents::NestedCharacterClass(character_class) => {
-            has_unicode_property_escape_character_class(character_class)
+            character_class_has_unicode_property_escape(character_class)
         }
         _ => false,
     })
