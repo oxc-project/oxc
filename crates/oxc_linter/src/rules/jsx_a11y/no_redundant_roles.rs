@@ -35,11 +35,14 @@ declare_oxc_lint!(
     /// Redundant roles can lead to confusion and verbosity in the codebase.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <nav role="navigation" />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <nav role="navigation" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <nav />
     /// ```
     NoRedundantRoles,

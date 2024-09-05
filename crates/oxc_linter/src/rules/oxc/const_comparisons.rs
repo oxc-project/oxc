@@ -54,13 +54,16 @@ declare_oxc_lint!(
     /// Only one of the comparisons has any effect on the result, the programmer probably intended to flip one of the comparison operators, or compare a different value entirely.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// status_code <= 400 && status_code > 500;
     /// status_code < 200 && status_code <= 299;
     /// status_code > 500 && status_code >= 500;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// status_code >= 400 && status_code < 500;
     /// 500 <= status_code && 600 > status_code;
     /// 500 <= status_code && status_code <= 600;

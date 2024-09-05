@@ -30,11 +30,13 @@ declare_oxc_lint!(
     ///
     /// ### Example
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// let log10e = 0.434294
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let log10e = Math.LOG10E
     /// ```
     ApproxConstant,

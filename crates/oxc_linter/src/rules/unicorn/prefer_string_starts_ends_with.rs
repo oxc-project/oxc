@@ -34,12 +34,15 @@ declare_oxc_lint!(
     /// Using `String#startsWith()` and `String#endsWith()` is more readable and performant as it does not need to parse a regex.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// const foo = "hello";
     /// /^abc/.test(foo);
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = "hello";
     /// foo.startsWith("abc");
     /// ```

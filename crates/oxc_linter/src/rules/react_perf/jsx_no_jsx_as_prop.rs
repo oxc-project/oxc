@@ -13,13 +13,16 @@ declare_oxc_lint!(
     /// Prevent JSX that are local to the current method from being used as values of JSX props
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <Item jsx={<SubItem />} />
     /// <Item jsx={this.props.jsx || <SubItem />} />
     /// <Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />
-    ///
-    /// // Good
+    /// ```
+    /// 
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <Item callback={this.props.jsx} />
     /// ```
     JsxNoJsxAsProp,

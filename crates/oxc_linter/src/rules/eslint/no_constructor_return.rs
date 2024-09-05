@@ -27,14 +27,15 @@ declare_oxc_lint!(
     /// Forbidding this pattern prevents mistakes resulting from unfamiliarity with the language or a copy-paste error.
     ///
     /// ### Example
-    /// Bad:
+    /// 
+    /// Examples of **incorrect** code for this rule:
     /// ```rust
     /// class C {
     ///     constructor() { return 42; }
     /// }
     /// ```
     ///
-    /// Good:
+    /// Examples of **correct** code for this rule:
     /// ```rust
     /// class C {
     ///     constructor() { this.value = 42; }

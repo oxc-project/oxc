@@ -38,12 +38,15 @@ declare_oxc_lint!(
     /// Most likely these are bugs where one meant to write `a op= b`.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// a += a + b;
     /// a -= a - b;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// a += b;
     /// a -= b;
     /// ```

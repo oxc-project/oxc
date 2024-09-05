@@ -17,16 +17,19 @@ declare_oxc_lint!(
     /// Prevent Arrays that are local to the current method from being used as values of JSX props
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <Item list={[]} />
     ///
     /// <Item list={new Array()} />
     /// <Item list={Array()} />
     /// <Item list={this.props.list || []} />
     /// <Item list={this.props.list ? this.props.list : []} />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <Item list={this.props.list} />
     /// ```
     JsxNoNewArrayAsProp,

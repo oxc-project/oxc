@@ -29,11 +29,14 @@ declare_oxc_lint!(
     /// Passing `length` as the end argument of a `slice` call is unnecessary and can be confusing.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// foo.slice(1, foo.length)
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// foo.slice(1, foo.length)
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// foo.slice(1)
     /// ```
     NoLengthAsSliceEnd,

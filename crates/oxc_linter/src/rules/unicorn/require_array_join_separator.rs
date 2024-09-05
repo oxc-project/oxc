@@ -28,11 +28,14 @@ declare_oxc_lint!(
     /// instead of relying on the default comma (',') separator.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// foo.join()
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// foo.join()
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// foo.join(",")
     /// ```
     RequireArrayJoinSeparator,

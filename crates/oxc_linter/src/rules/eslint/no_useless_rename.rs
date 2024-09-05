@@ -45,13 +45,16 @@ declare_oxc_lint!(
     /// It is unnecessary to rename a variable to the same name.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// import { foo as foo } from 'foo';
     /// const { bar: bar } = obj;
     /// export { baz as baz };
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// import { foo } from 'foo';
     /// const { bar: renamed } = obj;
     /// export { baz };
