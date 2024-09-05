@@ -50,7 +50,7 @@ impl Rule for NoEmptyCharacterClass {
 
         if let AstKind::RegExpLiteral(lit) = node.kind() {
             if !NO_EMPTY_CLASS_REGEX_PATTERN
-                .is_match(lit.regex.pattern.source_text(ctx.source_text()))
+                .is_match(lit.regex.pattern.source_text(ctx.source_text()).as_ref())
             {
                 ctx.diagnostic(no_empty_character_class_diagnostic(lit.span));
             }

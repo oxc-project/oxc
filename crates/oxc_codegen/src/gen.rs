@@ -1,4 +1,4 @@
-use std::ops::Not;
+use std::{borrow::Cow, ops::Not};
 
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
@@ -1234,7 +1234,10 @@ impl<'a> Gen for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         let last = p.peek_nth(0);
-        let pattern_text = self.regex.pattern.source_text(p.source_text);
+        let pattern_text = p.source_text.map_or_else(
+            || Cow::Owned(self.regex.pattern.to_string()),
+            |src| self.regex.pattern.source_text(src),
+        );
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
             || (Some('<') == last && pattern_text.to_lowercase().starts_with("script"))
@@ -1242,7 +1245,7 @@ impl<'a> Gen for RegExpLiteral<'a> {
             p.print_hard_space();
         }
         p.print_char(b'/');
-        p.print_str(pattern_text);
+        p.print_str(pattern_text.as_ref());
         p.print_char(b'/');
         p.print_str(self.regex.flags.to_string().as_str());
         p.prev_reg_exp_end = p.code().len();

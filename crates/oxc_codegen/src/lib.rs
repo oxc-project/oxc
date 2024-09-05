@@ -63,7 +63,8 @@ pub struct Codegen<'a> {
     options: CodegenOptions,
     comment_options: CommentOptions,
 
-    source_text: &'a str,
+    /// Original source code of the AST
+    source_text: Option<&'a str>,
 
     trivias: Trivias,
 
@@ -131,7 +132,7 @@ impl<'a> Codegen<'a> {
         Self {
             options: CodegenOptions::default(),
             comment_options: CommentOptions::default(),
-            source_text: "",
+            source_text: None,
             trivias: Trivias::default(),
             mangler: None,
             code: vec![],
@@ -169,6 +170,15 @@ impl<'a> Codegen<'a> {
         self
     }
 
+    /// Adds the source text of the original AST, It is used with comments or for improving the
+    /// generated output.
+    #[must_use]
+    pub fn with_source_text(mut self, source_text: &'a str) -> Self {
+        self.source_text = Some(source_text);
+        self
+    }
+
+    /// Also sets the [Self::with_source_text]
     #[must_use]
     pub fn enable_comment(
         mut self,
@@ -176,10 +186,9 @@ impl<'a> Codegen<'a> {
         trivias: Trivias,
         options: CommentOptions,
     ) -> Self {
-        self.source_text = source_text;
         self.trivias = trivias;
         self.comment_options = options;
-        self
+        self.with_source_text(source_text)
     }
 
     #[must_use]
@@ -539,8 +548,12 @@ impl<'a> Codegen<'a> {
     /// Avoid issue related to rustc borrow checker .
     /// Since if you want to print a range of source code, you need to borrow the source code
     /// as immutable first, and call the [Self::print_str] which is a mutable borrow.
+    ///
+    /// # Panics
+    /// If `self.source_text` isn't set.
     fn print_range_of_source_code(&mut self, range: Range<usize>) {
-        self.code.extend_from_slice(self.source_text[range].as_bytes());
+        let source_text = self.source_text.expect("expect `Codegen::source_text` to be set.");
+        self.code.extend_from_slice(source_text[range].as_bytes());
     }
 
     fn get_leading_comments(

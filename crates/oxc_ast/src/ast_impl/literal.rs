@@ -6,6 +6,7 @@
 use crate::ast::*;
 
 use std::{
+    borrow::Cow,
     fmt,
     hash::{Hash, Hasher},
 };
@@ -132,10 +133,11 @@ impl<'a> RegExpPattern<'a> {
         self.len() == 0
     }
 
-    pub fn source_text(&self, source_text: &'a str) -> &'a str {
+    pub fn source_text(&self, source_text: &'a str) -> Cow<str> {
         match self {
-            Self::Raw(raw) | Self::Invalid(raw) => raw,
-            Self::Pattern(pat) => pat.span.source_text(source_text),
+            Self::Raw(raw) | Self::Invalid(raw) => Cow::Borrowed(raw),
+            Self::Pattern(pat) if pat.span.is_unspanned() => Cow::Owned(pat.to_string()),
+            Self::Pattern(pat) => Cow::Borrowed(pat.span.source_text(source_text)),
         }
     }
 
