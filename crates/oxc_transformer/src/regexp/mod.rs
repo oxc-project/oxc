@@ -62,7 +62,9 @@ pub struct RegExp<'a> {
     _ctx: Ctx<'a>,
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
-    options: RegExpOptions,
+    look_behind_assertions: bool,
+    named_capture_groups: bool,
+    unicode_property_escapes: bool,
 }
 
 impl<'a> RegExp<'a> {
@@ -86,11 +88,24 @@ impl<'a> RegExp<'a> {
         }
 
         // Get if some unsupported patterns
-        let some_unsupported_patterns = options.named_capture_groups
-            || options.unicode_property_escapes
-            || options.look_behind_assertions;
+        let RegExpOptions {
+            look_behind_assertions,
+            named_capture_groups,
+            unicode_property_escapes,
+            ..
+        } = options;
 
-        Self { _ctx: ctx, unsupported_flags, some_unsupported_patterns, options }
+        let some_unsupported_patterns =
+            look_behind_assertions || named_capture_groups || unicode_property_escapes;
+
+        Self {
+            _ctx: ctx,
+            unsupported_flags,
+            some_unsupported_patterns,
+            look_behind_assertions,
+            named_capture_groups,
+            unicode_property_escapes,
+        }
     }
 }
 
@@ -165,13 +180,13 @@ impl<'a> RegExp<'a> {
     fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
         let check_terms = |terms: &Vec<'a, Term>| {
             terms.iter().any(|element| match element {
-                Term::CapturingGroup(_) if self.options.named_capture_groups => true,
-                Term::UnicodePropertyEscape(_) if self.options.unicode_property_escapes => true,
-                Term::CharacterClass(character_class) if self.options.unicode_property_escapes => {
+                Term::CapturingGroup(_) if self.named_capture_groups => true,
+                Term::UnicodePropertyEscape(_) if self.unicode_property_escapes => true,
+                Term::CharacterClass(character_class) if self.unicode_property_escapes => {
                     has_unicode_property_escape_character_class(character_class)
                 }
                 Term::LookAroundAssertion(assertion)
-                    if self.options.look_behind_assertions
+                    if self.look_behind_assertions
                         && matches!(
                             assertion.kind,
                             LookAroundAssertionKind::Lookbehind
