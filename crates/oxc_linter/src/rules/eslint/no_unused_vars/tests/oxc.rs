@@ -925,7 +925,7 @@ fn test_type_references() {
         "
         import type { mySchema } from './my-schema';
         function test(arg: ReturnType<typeof mySchema>) {
-            arg;g
+            arg;
         }
         test('');
         ",
@@ -934,7 +934,7 @@ fn test_type_references() {
         type PermissionValues<T> = {
             [K in keyof T]: T[K] extends object ? PermissionValues<T[K]> : T[K];
         }[keyof T];
-
+        
         export type ApiPermission = PermissionValues<typeof API_PERMISSIONS>;
         
         export const API_PERMISSIONS = {} as const;
