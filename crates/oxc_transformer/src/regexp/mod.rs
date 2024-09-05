@@ -43,10 +43,8 @@
 mod options;
 
 use std::borrow::Cow;
-use std::mem;
 
 pub use options::RegExpOptions;
-use oxc_allocator::Box;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_regular_expression::ast::{
@@ -119,7 +117,8 @@ impl<'a> Traverse<'a> for RegExp<'a> {
             return;
         };
 
-        let has_unsupported_flags = regexp.regex.flags.intersects(self.unsupported_flags);
+        let flags = regexp.regex.flags;
+        let has_unsupported_flags = flags.intersects(self.unsupported_flags);
         if !has_unsupported_flags {
             if !self.some_unsupported_patterns {
                 // This RegExp has no unsupported flags, and there are no patterns which may need transforming,
@@ -127,18 +126,26 @@ impl<'a> Traverse<'a> for RegExp<'a> {
                 return;
             }
 
-            match try_parse_pattern(regexp, ctx) {
-                Ok(pattern) => {
-                    let is_unsupported = self.has_unsupported_regular_expression_pattern(&pattern);
-                    regexp.regex.pattern = RegExpPattern::Pattern(pattern);
-                    if !is_unsupported {
+            let span = regexp.span;
+            let pattern = match &mut regexp.regex.pattern {
+                RegExpPattern::Raw(raw) => {
+                    if let Some(pattern) = try_parse_pattern(raw, span, flags, ctx) {
+                        regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
+                        let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
+                            unreachable!()
+                        };
+                        pattern
+                    } else {
+                        regexp.regex.pattern = RegExpPattern::Invalid(raw);
                         return;
                     }
                 }
-                Err(err) => {
-                    regexp.regex.pattern = RegExpPattern::Invalid(err);
-                    return;
-                }
+                RegExpPattern::Invalid(_) => return,
+                RegExpPattern::Pattern(pattern) => &**pattern,
+            };
+
+            if !self.has_unsupported_regular_expression_pattern(pattern) {
+                return;
             }
         }
 
@@ -220,26 +227,22 @@ fn has_unicode_property_escape_character_class(character_class: &CharacterClass)
 }
 
 fn try_parse_pattern<'a>(
-    literal: &mut RegExpLiteral<'a>,
+    raw: &'a str,
+    span: Span,
+    flags: RegExpFlags,
     ctx: &mut TraverseCtx<'a>,
-) -> Result<Box<'a, Pattern<'a>>, &'a str> {
-    // Take the ownership of the pattern
-    let regexp_pattern = mem::replace(&mut literal.regex.pattern, RegExpPattern::Raw(""));
+) -> Option<Pattern<'a>> {
+    use oxc_regular_expression::{ParserOptions, PatternParser};
 
-    match regexp_pattern {
-        RegExpPattern::Raw(raw) => {
-            use oxc_regular_expression::{ParserOptions, PatternParser};
-            let options = ParserOptions {
-                span_offset: literal.span.start + 1, // exclude `/`
-                unicode_mode: literal.regex.flags.contains(RegExpFlags::U)
-                    || literal.regex.flags.contains(RegExpFlags::V),
-                unicode_sets_mode: literal.regex.flags.contains(RegExpFlags::V),
-            };
-            PatternParser::new(ctx.ast.allocator, raw, options)
-                .parse()
-                .map_or_else(|_| Err(raw), |p| Ok(ctx.alloc(p)))
-        }
-        RegExpPattern::Pattern(pattern) => Ok(pattern),
-        RegExpPattern::Invalid(raw) => Err(raw),
+    let options = ParserOptions {
+        span_offset: span.start + 1, // exclude `/`
+        unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
+        unicode_sets_mode: flags.contains(RegExpFlags::V),
+    };
+
+    let ret = PatternParser::new(ctx.ast.allocator, raw, options).parse();
+    match ret {
+        Ok(pattern) => Some(pattern),
+        Err(_) => None,
     }
 }
