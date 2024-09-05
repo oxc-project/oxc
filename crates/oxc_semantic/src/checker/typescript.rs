@@ -26,9 +26,25 @@ pub fn check_ts_type_parameter_declaration(
     }
 }
 
+/// Initializers are not allowed in ambient contexts. ts(1039)
+fn initializer_in_ambient_context(init_span: Span) -> OxcDiagnostic {
+    ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(init_span)
+}
+
+pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
+    if decl.declare {
+        for var in &decl.declarations {
+            if let Some(init) = &var.init {
+                ctx.error(initializer_in_ambient_context(init.span()));
+            }
+        }
+    }
+}
+
 fn unexpected_optional(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected `?` operator").with_label(span0)
 }
+
 #[allow(clippy::cast_possible_truncation)]
 pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
     if decl.id.optional {
