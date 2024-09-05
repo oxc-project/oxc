@@ -58,7 +58,7 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
         } else if ident == "GetSpanMut" {
             (quote!(::oxc_span::GetSpanMut), TokenStream2::default())
         } else if ident == "ContentEq" {
-            (quote!(::oxc_span::cmp::ContentEq), quote!(<()>))
+            (quote!(::oxc_span::cmp::ContentEq), TokenStream2::default())
         } else if ident == "ContentHash" {
             (quote!(::oxc_span::hash::ContentHash), TokenStream2::default())
         } else {

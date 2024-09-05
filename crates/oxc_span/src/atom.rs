@@ -180,30 +180,6 @@ impl<'a> ContentEq for Atom<'a> {
     }
 }
 
-impl<'a> ContentEq<Atom<'a>> for &str {
-    fn content_eq(&self, other: &Atom<'a>) -> bool {
-        self == other
-    }
-}
-
-impl<'a> ContentEq<str> for Atom<'a> {
-    fn content_eq(&self, other: &str) -> bool {
-        self == other
-    }
-}
-
-impl<'a> ContentEq<Atom<'a>> for Cow<'_, str> {
-    fn content_eq(&self, other: &Atom<'a>) -> bool {
-        self == other
-    }
-}
-
-impl<'a> ContentEq<&Atom<'a>> for Cow<'_, str> {
-    fn content_eq(&self, other: &&Atom<'a>) -> bool {
-        self == other
-    }
-}
-
 impl<'a> ContentHash for Atom<'a> {
     fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
         hash::Hash::hash(self, state);
