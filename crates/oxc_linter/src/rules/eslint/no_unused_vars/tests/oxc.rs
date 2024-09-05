@@ -451,7 +451,7 @@ fn test_functions() {
         "
         function foo(a: number): number;
         function foo(a: number | string): number {
-            return Number(a)
+            return Number(a) 
         }
         foo();
         ",
@@ -925,7 +925,7 @@ fn test_type_references() {
         "
         import type { mySchema } from './my-schema';
         function test(arg: ReturnType<typeof mySchema>) {
-            arg;
+            arg;g
         }
         test('');
         ",
