@@ -55,24 +55,24 @@ impl<'a> Traverse<'a> for OptionalCatchBinding<'a> {
     /// If CatchClause has no param, add a parameter called `unused`.
     #[allow(clippy::unused_self)]
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
-        if clause.param.is_some() {
-            return;
-        }
+        // if clause.param.is_some() {
+        // return;
+        // }
 
-        let block_scope_id = clause.body.scope_id.get().unwrap();
-        let symbol_id = ctx.generate_uid(
-            "unused",
-            block_scope_id,
-            SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
-        );
-        let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-        let binding_identifier =
-            BindingIdentifier { span: SPAN, symbol_id: Cell::new(Some(symbol_id)), name };
-        let binding_pattern_kind =
-            ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let binding_pattern =
-            ctx.ast.binding_pattern(binding_pattern_kind, None::<TSTypeAnnotation<'a>>, false);
-        let param = ctx.ast.catch_parameter(SPAN, binding_pattern);
-        clause.param = Some(param);
+        // let block_scope_id = clause.body.scope_id.get().unwrap();
+        // let symbol_id = ctx.generate_uid(
+        // "unused",
+        // block_scope_id,
+        // SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
+        // );
+        // let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+        // let binding_identifier =
+        // BindingIdentifier { span: SPAN, symbol_id: Cell::new(Some(symbol_id)), name };
+        // let binding_pattern_kind =
+        // ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
+        // let binding_pattern =
+        // ctx.ast.binding_pattern(binding_pattern_kind, None::<TSTypeAnnotation<'a>>, false);
+        // let param = ctx.ast.catch_parameter(SPAN, binding_pattern);
+        // clause.param = Some(param);
     }
 }
