@@ -426,3 +426,26 @@ fn test_arrow_explicit_return() {
         .has_number_of_writes(1)
         .test();
 }
+
+#[test]
+fn test_tagged_templates() {
+    // https://github.com/oxc-project/oxc/issues/5391
+    SemanticTester::tsx(
+        "
+        import styled from 'styled-components';
+
+        import { Prose, ProseProps } from './prose';
+        
+        interface Props extends ProseProps {
+          density?: number;
+        }
+        export const HandMarkedPaperBallotProse = styled(Prose)<Props>`
+          line-height: ${({ density }) => (density !== 0 ? '1.1' : '1.3')};
+        `;
+    ",
+    )
+    .has_some_symbol("density")
+    .has_number_of_reads(1)
+    .has_number_of_writes(0)
+    .test();
+}

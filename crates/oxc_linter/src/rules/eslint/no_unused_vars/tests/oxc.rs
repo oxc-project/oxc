@@ -19,6 +19,23 @@ fn test_vars_simple() {
               });",
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/5391
+        (
+            "
+            import styled from 'styled-components';
+
+            import { Prose, ProseProps } from './prose';
+
+            interface Props extends ProseProps {
+              density?: number;
+            }
+
+            export const HandMarkedPaperBallotProse = styled(Prose)<Props>`
+            line-height: ${({ density }) => (density !== 0 ? '1.1' : '1.3')};
+            `;
+            ",
+            None,
+        ),
     ];
     let fail = vec![
         ("let a = 1", None),
