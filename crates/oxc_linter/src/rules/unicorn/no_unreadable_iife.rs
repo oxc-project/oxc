@@ -53,7 +53,7 @@ impl Rule for NoUnreadableIife {
         };
 
         let Expression::ArrowFunctionExpression(arrow_expr) =
-            &call_expr.callee.without_parenthesized()
+            &call_expr.callee.without_parentheses()
         else {
             return;
         };

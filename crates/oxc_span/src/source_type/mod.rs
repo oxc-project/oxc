@@ -3,10 +3,10 @@ mod types;
 
 pub use error::UnknownExtension;
 use oxc_allocator::{Allocator, CloneIn};
-use std::path::Path;
+use std::{hash::Hash, path::Path};
 pub use types::*;
 
-use crate::cmp::ContentEq;
+use crate::{cmp::ContentEq, hash::ContentHash};
 
 impl Default for SourceType {
     #[inline]
@@ -27,6 +27,13 @@ impl ContentEq for SourceType {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other
+    }
+}
+
+impl ContentHash for SourceType {
+    #[inline]
+    fn content_hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.hash(state);
     }
 }
 

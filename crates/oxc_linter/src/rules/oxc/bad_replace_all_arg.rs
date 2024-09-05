@@ -81,7 +81,7 @@ fn resolve_flags<'a>(
     expr: &'a Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<(RegExpFlags, Span)> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::RegExpLiteral(regexp_literal) => {
             Some((regexp_literal.regex.flags, regexp_literal.span))
         }

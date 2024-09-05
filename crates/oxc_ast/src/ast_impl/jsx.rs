@@ -46,6 +46,7 @@ impl<'a> fmt::Display for JSXMemberExpressionObject<'a> {
         match self {
             Self::IdentifierReference(id) => id.fmt(f),
             Self::MemberExpression(expr) => expr.fmt(f),
+            Self::ThisExpression(_) => "this".fmt(f),
         }
     }
 }
@@ -57,6 +58,7 @@ impl<'a> fmt::Display for JSXElementName<'a> {
             Self::IdentifierReference(ident) => ident.fmt(f),
             Self::NamespacedName(namespaced) => namespaced.fmt(f),
             Self::MemberExpression(member_expr) => member_expr.fmt(f),
+            Self::ThisExpression(_) => "this".fmt(f),
         }
     }
 }

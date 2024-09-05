@@ -95,7 +95,7 @@ impl GetterReturn {
     }
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
-        match callee.without_parenthesized() {
+        match callee.without_parentheses() {
             expr @ match_member_expression!(Expression) => {
                 Self::handle_member_expression(expr.to_member_expression())
             }
@@ -112,7 +112,7 @@ impl GetterReturn {
     }
 
     fn handle_paren_expr<'a>(expr: &'a Expression<'a>) -> bool {
-        match expr.without_parenthesized() {
+        match expr.without_parentheses() {
             Expression::CallExpression(ce) => Self::handle_actual_expression(&ce.callee),
             _ => false,
         }

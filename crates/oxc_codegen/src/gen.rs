@@ -1,4 +1,4 @@
-use std::ops::Not;
+use std::{borrow::Cow, ops::Not};
 
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
@@ -1234,7 +1234,10 @@ impl<'a> Gen for RegExpLiteral<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         let last = p.peek_nth(0);
-        let pattern_text = self.regex.pattern.source_text(p.source_text);
+        let pattern_text = p.source_text.map_or_else(
+            || Cow::Owned(self.regex.pattern.to_string()),
+            |src| self.regex.pattern.source_text(src),
+        );
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
             || (Some('<') == last && pattern_text.to_lowercase().starts_with("script"))
@@ -1242,7 +1245,7 @@ impl<'a> Gen for RegExpLiteral<'a> {
             p.print_hard_space();
         }
         p.print_char(b'/');
-        p.print_str(pattern_text);
+        p.print_str(pattern_text.as_ref());
         p.print_char(b'/');
         p.print_str(self.regex.flags.to_string().as_str());
         p.prev_reg_exp_end = p.code().len();
@@ -1558,7 +1561,7 @@ impl<'a> Gen for ObjectProperty<'a> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if let Expression::Identifier(ident) = self.value.without_parenthesized() {
+            if let Expression::Identifier(ident) = self.value.without_parentheses() {
                 if key.name == p.get_identifier_reference_name(ident) && key.name != "__proto__" {
                     shorthand = true;
                 }
@@ -2249,6 +2252,7 @@ impl<'a> Gen for JSXMemberExpressionObject<'a> {
         match self {
             Self::IdentifierReference(ident) => ident.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::ThisExpression(expr) => expr.gen(p, ctx),
         }
     }
 }
@@ -2268,6 +2272,7 @@ impl<'a> Gen for JSXElementName<'a> {
             Self::IdentifierReference(identifier) => identifier.gen(p, ctx),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::ThisExpression(expr) => expr.gen(p, ctx),
         }
     }
 }

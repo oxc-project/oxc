@@ -66,7 +66,7 @@ impl Rule for JsxPropsNoSpreadMulti {
             let mut duplicate_spreads: FxHashMap<&Atom, Vec<Span>> = FxHashMap::default();
 
             for spread_attr in spread_attrs {
-                let argument_without_parenthesized = spread_attr.argument.without_parenthesized();
+                let argument_without_parenthesized = spread_attr.argument.without_parentheses();
 
                 if let Some(identifier_name) =
                     argument_without_parenthesized.get_identifier_reference().map(|arg| &arg.name)

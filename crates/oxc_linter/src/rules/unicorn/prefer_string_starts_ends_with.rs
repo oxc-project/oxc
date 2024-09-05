@@ -70,11 +70,12 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         }
 
-        let Expression::RegExpLiteral(regex) = &member_expr.object().without_parenthesized() else {
+        let Expression::RegExpLiteral(regex) = &member_expr.object().without_parentheses() else {
             return;
         };
 
         let pattern_text = regex.regex.pattern.source_text(ctx.source_text());
+        let pattern_text = pattern_text.as_ref();
 
         let Some(err_kind) = check_regex(regex, pattern_text) else {
             return;
@@ -117,7 +118,7 @@ fn can_replace(call_expr: &CallExpression) -> Option<Span> {
 
     let arg = &call_expr.arguments[0];
     let expr = arg.as_expression()?;
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::StringLiteral(s) => Some(s.span),
         Expression::TemplateLiteral(s) => Some(s.span),
         Expression::Identifier(ident) => Some(ident.span),

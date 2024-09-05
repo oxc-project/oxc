@@ -41,7 +41,7 @@ impl Rule for NoNewBuffer {
             return;
         };
 
-        let Expression::Identifier(ident) = &new_expr.callee.without_parenthesized() else {
+        let Expression::Identifier(ident) = &new_expr.callee.without_parentheses() else {
             return;
         };
         if ident.name != "Buffer" {

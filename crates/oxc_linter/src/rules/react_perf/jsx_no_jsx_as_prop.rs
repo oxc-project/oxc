@@ -10,16 +10,27 @@ pub struct JsxNoJsxAsProp;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent JSX that are local to the current method from being used as values of JSX props
+    /// Prevent JSX elements that are local to the current method from being
+    /// used as values of JSX props.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using locally defined JSX elements as values for props can lead to
+    /// unintentional re-renders and performance issues. Every time the parent
+    /// renders, a new instance of the JSX element is created, causing unnecessary
+    /// re-renders of child components. This also leads to harder-to-maintain code
+    /// as the component's props are not passed consistently.
     ///
     /// ### Example
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <Item jsx={<SubItem />} />
     /// <Item jsx={this.props.jsx || <SubItem />} />
     /// <Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <Item callback={this.props.jsx} />
     /// ```
     JsxNoJsxAsProp,
@@ -47,7 +58,7 @@ impl ReactPerfRule for JsxNoJsxAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::JSXElement(expr) => Some(expr.span),
         Expression::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))

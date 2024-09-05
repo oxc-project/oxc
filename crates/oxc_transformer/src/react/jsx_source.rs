@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use super::utils::get_line_column;
 use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
@@ -27,15 +27,19 @@ impl<'a> ReactJsxSource<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { ctx, filename_var: None }
     }
+}
 
-    pub fn transform_jsx_opening_element(
+impl<'a> Traverse<'a> for ReactJsxSource<'a> {
+    fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.add_source_attribute(elem, ctx);
     }
+}
 
+impl<'a> ReactJsxSource<'a> {
     pub fn get_object_property_kind_for_jsx_plugin(
         &mut self,
         line: usize,
@@ -54,9 +58,7 @@ impl<'a> ReactJsxSource<'a> {
         let error = OxcDiagnostic::warn("Duplicate __source prop found.").with_label(span);
         self.ctx.error(error);
     }
-}
 
-impl<'a> ReactJsxSource<'a> {
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
     ///           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     fn add_source_attribute(

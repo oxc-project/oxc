@@ -3300,6 +3300,7 @@ pub mod walk {
             JSXElementName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             JSXElementName::NamespacedName(it) => visitor.visit_jsx_namespaced_name(it),
             JSXElementName::MemberExpression(it) => visitor.visit_jsx_member_expression(it),
+            JSXElementName::ThisExpression(it) => visitor.visit_this_expression(it),
         }
         visitor.leave_node(kind);
     }
@@ -3346,6 +3347,7 @@ pub mod walk {
             JSXMemberExpressionObject::MemberExpression(it) => {
                 visitor.visit_jsx_member_expression(it)
             }
+            JSXMemberExpressionObject::ThisExpression(it) => visitor.visit_this_expression(it),
         }
         visitor.leave_node(kind);
     }

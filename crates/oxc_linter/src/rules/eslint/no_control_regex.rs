@@ -68,7 +68,7 @@ impl Rule for NoControlRegex {
             let mut violations: Vec<&str> = Vec::new();
             let pattern = pattern.as_ref();
             let pattern_text = pattern.source_text(context.source_text());
-            for matched_ctl_pattern in control_patterns(pattern_text) {
+            for matched_ctl_pattern in control_patterns(pattern_text.as_ref()) {
                 let ctl = matched_ctl_pattern.as_str();
 
                 // check for an even number of backslashes, since these will

@@ -117,6 +117,6 @@ impl Reference {
     /// Returns `true` if this reference is used in a type context.
     #[inline]
     pub fn is_type(&self) -> bool {
-        self.flags.is_type() || self.flags.is_ts_type_query()
+        self.flags.is_type()
     }
 }

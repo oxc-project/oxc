@@ -141,7 +141,7 @@ impl CatchErrorName {
         ctx: &LintContext,
     ) -> Option<OxcDiagnostic> {
         let expr = arg0.as_expression()?;
-        let expr = expr.without_parenthesized();
+        let expr = expr.without_parentheses();
 
         if let Expression::ArrowFunctionExpression(arrow_expr) = expr {
             if let Some(arg0) = arrow_expr.params.items.first() {

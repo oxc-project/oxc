@@ -1,7 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -23,20 +23,19 @@ impl<'a> ReactJsxSelf<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { ctx }
     }
+}
 
-    pub fn transform_jsx_opening_element(&self, elem: &mut JSXOpeningElement<'a>) {
+impl<'a> Traverse<'a> for ReactJsxSelf<'a> {
+    fn enter_jsx_opening_element(
+        &mut self,
+        elem: &mut JSXOpeningElement<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
         self.add_self_this_attribute(elem);
     }
+}
 
-    pub fn get_object_property_kind_for_jsx_plugin(&self) -> ObjectPropertyKind<'a> {
-        let kind = PropertyKind::Init;
-        let key = self.ctx.ast.property_key_identifier_name(SPAN, SELF);
-        let value = self.ctx.ast.expression_this(SPAN);
-        self.ctx
-            .ast
-            .object_property_kind_object_property(SPAN, kind, key, value, None, false, false, false)
-    }
-
+impl<'a> ReactJsxSelf<'a> {
     pub fn report_error(&self, span: Span) {
         let error = OxcDiagnostic::warn("Duplicate __self prop found.").with_label(span);
         self.ctx.error(error);
@@ -63,12 +62,19 @@ impl<'a> ReactJsxSelf<'a> {
         true
     }
 
+    pub fn get_object_property_kind_for_jsx_plugin(&self) -> ObjectPropertyKind<'a> {
+        let kind = PropertyKind::Init;
+        let key = self.ctx.ast.property_key_identifier_name(SPAN, SELF);
+        let value = self.ctx.ast.expression_this(SPAN);
+        self.ctx
+            .ast
+            .object_property_kind_object_property(SPAN, kind, key, value, None, false, false, false)
+    }
+
     pub fn can_add_self_attribute(&self, ctx: &TraverseCtx<'a>) -> bool {
         !self.is_inside_constructor(ctx) || Self::has_no_super_class(ctx)
     }
-}
 
-impl<'a> ReactJsxSelf<'a> {
     /// `<div __self={this} />`
     ///       ^^^^^^^^^^^^^
     fn add_self_this_attribute(&self, elem: &mut JSXOpeningElement<'a>) {

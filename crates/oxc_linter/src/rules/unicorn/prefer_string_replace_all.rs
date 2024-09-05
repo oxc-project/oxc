@@ -127,6 +127,7 @@ fn get_pattern_replacement<'a>(
     }
 
     let pattern_text = reg_exp_literal.regex.pattern.source_text(ctx.source_text());
+    let pattern_text = pattern_text.as_ref();
     if !is_simple_string(pattern_text) {
         return None;
     }

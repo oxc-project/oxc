@@ -65,10 +65,10 @@ impl Rule for NoNegatedCondition {
                     return;
                 }
 
-                if_stmt.test.without_parenthesized()
+                if_stmt.test.without_parentheses()
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                conditional_expr.test.without_parenthesized()
+                conditional_expr.test.without_parentheses()
             }
             _ => {
                 return;

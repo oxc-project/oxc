@@ -21,15 +21,15 @@ pub enum Binaryish<'a> {
 impl<'a> Binaryish<'a> {
     pub fn left(&self) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.left.without_parenthesized(),
-            Self::Logical(e) => e.left.without_parenthesized(),
+            Self::Binary(e) => e.left.without_parentheses(),
+            Self::Logical(e) => e.left.without_parentheses(),
         }
     }
 
     pub fn right(&self) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.right.without_parenthesized(),
-            Self::Logical(e) => e.right.without_parenthesized(),
+            Self::Binary(e) => e.right.without_parentheses(),
+            Self::Logical(e) => e.right.without_parentheses(),
         }
     }
 
