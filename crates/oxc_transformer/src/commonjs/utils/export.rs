@@ -97,7 +97,7 @@ pub fn create_default_exports<'a>(
         create_exports_with_assignment(
             builder.vec1((
                 "_default",
-                builder.module_export_name_identifier_name(SPAN, "_default"),
+                builder.module_export_name_identifier_name(SPAN, "default"),
                 declaration,
             )),
             VariableDeclarationKind::Var,
@@ -250,21 +250,21 @@ pub fn create_reexported_named_exports<'a>(
                 builder.expression_member(match specifier.local {
                     ModuleExportName::IdentifierName(name) => builder.member_expression_static(
                         SPAN,
-                        builder.expression_identifier_reference(SPAN, "exports"),
+                        builder.expression_identifier_reference(SPAN, ident.as_str()),
                         name,
                         false,
                     ),
                     ModuleExportName::StringLiteral(literal) => builder.member_expression_computed(
                         SPAN,
-                        builder.expression_identifier_reference(SPAN, "exports"),
+                        builder.expression_identifier_reference(SPAN, ident.as_str()),
                         builder.expression_from_string_literal(literal),
                         false,
                     ),
-                    ModuleExportName::IdentifierReference(ident) => {
+                    ModuleExportName::IdentifierReference(reference) => {
                         builder.member_expression_computed(
                             SPAN,
-                            builder.expression_identifier_reference(SPAN, "exports"),
-                            builder.expression_from_identifier_reference(ident),
+                            builder.expression_identifier_reference(SPAN, ident.as_str()),
+                            builder.expression_from_identifier_reference(reference),
                             false,
                         )
                     }
@@ -384,14 +384,14 @@ pub fn create_export_star_exports<'a>(
                                 SPAN,
                                 builder.expression_identifier_reference(SPAN, "key"),
                                 BinaryOperator::In,
-                                builder.expression_identifier_reference(SPAN, "exports"),
+                                builder.expression_identifier_reference(SPAN, ident.as_str()),
                             ),
                             LogicalOperator::And,
                             builder.expression_binary(
                                 SPAN,
                                 builder.expression_member(builder.member_expression_computed(
                                     SPAN,
-                                    builder.expression_identifier_reference(SPAN, "exports"),
+                                    builder.expression_identifier_reference(SPAN, ident.as_str()),
                                     builder.expression_identifier_reference(SPAN, "key"),
                                     false,
                                 )),
