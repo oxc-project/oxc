@@ -1,6 +1,5 @@
-use core::hash::Hasher;
 use std::{
-    hash::Hash,
+    hash::{Hash, Hasher},
     mem::{discriminant, Discriminant},
 };
 
@@ -53,11 +52,12 @@ impl<'a, T: ContentHash> ContentHash for oxc_allocator::Vec<'a, T> {
 
 mod auto_impl_content_hash {
     use super::ContentHash;
+
     macro_rules! impl_content_hash {
         ($($t:ty)*) => {
             $(
                 impl ContentHash for $t {
-                    fn content_hash<H: core::hash::Hasher>(&self, state: &mut H) {
+                    fn content_hash<H: std::hash::Hasher>(&self, state: &mut H) {
                         std::hash::Hash::hash(self, state);
                     }
                 }
