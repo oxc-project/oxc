@@ -41,6 +41,7 @@ oxc-browserslist = { workspace = true }
 [dev-dependencies]
 oxc_parser  = { workspace = true }
 oxc_codegen = { workspace = true }
+pico-args   = { workspace = true }
 
 [features]
 default = []
