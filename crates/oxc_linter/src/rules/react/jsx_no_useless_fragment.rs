@@ -172,7 +172,9 @@ fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
                 false
             }
         }
-        JSXElementName::NamespacedName(_) | JSXElementName::Identifier(_) => false,
+        JSXElementName::NamespacedName(_)
+        | JSXElementName::Identifier(_)
+        | JSXElementName::ThisExpression(_) => false,
     }
 }
 

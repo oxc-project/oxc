@@ -1,4 +1,4 @@
-use crate::tester::{test, test_minify};
+use crate::tester::{test, test_minify, test_without_source};
 
 #[test]
 fn module_decl() {
@@ -61,6 +61,33 @@ fn unicode_escape() {
     test("console.log('こんにちは');", "console.log(\"こんにちは\");\n");
     test("console.log('안녕하세요');", "console.log(\"안녕하세요\");\n");
     test("console.log('🧑‍🤝‍🧑');", "console.log(\"🧑‍🤝‍🧑\");\n");
+}
+
+#[test]
+fn regex() {
+    fn test_all(source: &str, expect: &str, minify: &str) {
+        test(source, expect);
+        test_minify(source, minify);
+        test_without_source(source, expect);
+    }
+    test_all("/regex/giv", "/regex/giv;\n", "/regex/giv;");
+    test_all(
+        r"/(.)(.)(.)(.)(.)(.)(.)(.)\8\8/",
+        "/(.)(.)(.)(.)(.)(.)(.)(.)\\8\\8/;\n",
+        "/(.)(.)(.)(.)(.)(.)(.)(.)\\8\\8/;",
+    );
+
+    test_all(
+        r"/\n\cM\0\x41\u{1f600}\./u",
+        "/\\n\\cM\\0\\x41\\u{1f600}\\./u;\n",
+        "/\\n\\cM\\0\\x41\\u{1f600}\\./u;",
+    );
+    test_all(r"/\n\cM\0\x41\./u", "/\\n\\cM\\0\\x41\\./u;\n", "/\\n\\cM\\0\\x41\\./u;");
+    test_all(
+        r"/\n\cM\0\x41\u1234\./",
+        "/\\n\\cM\\0\\x41\\u1234\\./;\n",
+        "/\\n\\cM\\0\\x41\\u1234\\./;",
+    );
 }
 
 #[test]

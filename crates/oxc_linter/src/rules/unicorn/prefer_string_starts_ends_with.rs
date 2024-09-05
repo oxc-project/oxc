@@ -75,6 +75,7 @@ impl Rule for PreferStringStartsEndsWith {
         };
 
         let pattern_text = regex.regex.pattern.source_text(ctx.source_text());
+        let pattern_text = pattern_text.as_ref();
 
         let Some(err_kind) = check_regex(regex, pattern_text) else {
             return;

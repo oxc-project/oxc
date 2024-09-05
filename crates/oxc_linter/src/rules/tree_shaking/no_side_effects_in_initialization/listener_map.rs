@@ -8,10 +8,10 @@ use oxc_ast::{
         FormalParameter, Function, IdentifierReference, JSXAttribute, JSXAttributeItem,
         JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
         JSXExpressionContainer, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
-        JSXOpeningElement, LogicalExpression, MemberExpression, NewExpression, ObjectExpression,
-        ObjectPropertyKind, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
-        SequenceExpression, SimpleAssignmentTarget, Statement, StaticMemberExpression, SwitchCase,
-        ThisExpression, UnaryExpression, VariableDeclarator,
+        JSXOpeningElement, LogicalExpression, MemberExpression, ModuleExportName, NewExpression,
+        ObjectExpression, ObjectPropertyKind, ParenthesizedExpression, PrivateFieldExpression,
+        Program, PropertyKey, SequenceExpression, SimpleAssignmentTarget, Statement,
+        StaticMemberExpression, SwitchCase, ThisExpression, UnaryExpression, VariableDeclarator,
     },
     AstKind,
 };
@@ -195,9 +195,10 @@ impl<'a> ListenerMap for ExportSpecifier<'a> {
         let ctx = options.ctx;
         let symbol_table = ctx.symbols();
         if has_comment_about_side_effect_check(self.exported.span(), ctx) {
-            let Some(name) = self.exported.identifier_name() else { return };
-            let Some(symbol_id) = options.ctx.symbols().get_symbol_id_from_name(name.as_str())
-            else {
+            let ModuleExportName::IdentifierReference(ident) = &self.local else {
+                return;
+            };
+            let Some(symbol_id) = get_symbol_id_of_variable(ident, ctx) else {
                 return;
             };
 
@@ -791,6 +792,7 @@ impl<'a> ListenerMap for JSXElementName<'a> {
             Self::Identifier(_) | Self::NamespacedName(_) => {}
             Self::IdentifierReference(ident) => ident.report_effects_when_called(options),
             Self::MemberExpression(member) => member.report_effects_when_called(options),
+            Self::ThisExpression(expr) => expr.report_effects_when_called(options),
         }
     }
 }
@@ -806,6 +808,7 @@ impl<'a> ListenerMap for JSXMemberExpressionObject<'a> {
         match self {
             Self::IdentifierReference(ident) => ident.report_effects_when_called(options),
             Self::MemberExpression(member) => member.report_effects_when_called(options),
+            Self::ThisExpression(expr) => expr.report_effects_when_called(options),
         }
     }
 }

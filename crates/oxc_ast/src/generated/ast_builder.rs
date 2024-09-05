@@ -12903,6 +12903,26 @@ impl<'a> AstBuilder<'a> {
         JSXElementName::MemberExpression(inner.into_in(self.allocator))
     }
 
+    /// Build a [`JSXElementName::ThisExpression`]
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn jsx_element_name_this_expression(self, span: Span) -> JSXElementName<'a> {
+        JSXElementName::ThisExpression(self.alloc(self.this_expression(span)))
+    }
+
+    /// Convert a [`ThisExpression`] into a [`JSXElementName::ThisExpression`]
+    #[inline]
+    pub fn jsx_element_name_from_this_expression<T>(self, inner: T) -> JSXElementName<'a>
+    where
+        T: IntoIn<'a, Box<'a, ThisExpression>>,
+    {
+        JSXElementName::ThisExpression(inner.into_in(self.allocator))
+    }
+
     /// Builds a [`JSXNamespacedName`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_namespaced_name`] instead.
@@ -13038,6 +13058,32 @@ impl<'a> AstBuilder<'a> {
         T: IntoIn<'a, Box<'a, JSXMemberExpression<'a>>>,
     {
         JSXMemberExpressionObject::MemberExpression(inner.into_in(self.allocator))
+    }
+
+    /// Build a [`JSXMemberExpressionObject::ThisExpression`]
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn jsx_member_expression_object_this_expression(
+        self,
+        span: Span,
+    ) -> JSXMemberExpressionObject<'a> {
+        JSXMemberExpressionObject::ThisExpression(self.alloc(self.this_expression(span)))
+    }
+
+    /// Convert a [`ThisExpression`] into a [`JSXMemberExpressionObject::ThisExpression`]
+    #[inline]
+    pub fn jsx_member_expression_object_from_this_expression<T>(
+        self,
+        inner: T,
+    ) -> JSXMemberExpressionObject<'a>
+    where
+        T: IntoIn<'a, Box<'a, ThisExpression>>,
+    {
+        JSXMemberExpressionObject::ThisExpression(inner.into_in(self.allocator))
     }
 
     /// Builds a [`JSXExpressionContainer`]

@@ -2,7 +2,7 @@ commit: a709f989
 
 semantic_typescript Summary:
 AST Parsed     : 6479/6479 (100.00%)
-Positive Passed: 3256/6479 (50.25%)
+Positive Passed: 3259/6479 (50.30%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -40687,11 +40687,6 @@ Symbol reference IDs mismatch:
 after transform: SymbolId(3): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(2): [ReferenceId(2)]
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName5.tsx
-semantic error: Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName6.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "foo", "t"]
@@ -40699,16 +40694,6 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "foo", "t"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName8.tsx
-semantic error: Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName9.tsx
-semantic error: Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution.tsx
 semantic error: Missing SymbolId: Dotted

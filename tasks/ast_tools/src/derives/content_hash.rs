@@ -11,7 +11,7 @@ use crate::{
 use super::{define_derive, Derive, DeriveOutput};
 
 define_derive! {
-    pub struct DeriveContentEq;
+    pub struct DeriveContentHash;
 }
 
 const IGNORE_FIELDS: [(/* field name */ &str, /* field type */ &str); 6] = [
@@ -23,65 +23,69 @@ const IGNORE_FIELDS: [(/* field name */ &str, /* field type */ &str); 6] = [
     ("reference_id", "ReferenceId"),
 ];
 
-impl Derive for DeriveContentEq {
+impl Derive for DeriveContentHash {
     fn trait_name() -> &'static str {
-        "ContentEq"
+        "ContentHash"
     }
 
     fn derive(&mut self, def: &TypeDef, _: &LateCtx) -> TokenStream {
-        let (other, body) = match &def {
+        let (hasher, body) = match &def {
             TypeDef::Enum(it) => derive_enum(it),
             TypeDef::Struct(it) => derive_struct(it),
         };
 
-        impl_content_eq(def, other, &body)
+        impl_content_hash(def, hasher, &body)
     }
 
     fn prelude() -> TokenStream {
         quote! {
-            // NOTE: writing long match expressions formats better than using `matches` macro.
-            #![allow(clippy::match_like_matches_macro)]
+            #![allow(clippy::match_same_arms)]
 
             ///@@line_break
-            use oxc_span::cmp::ContentEq;
+            use std::{hash::Hasher, mem::discriminant};
+
+            ///@@line_break
+            use oxc_span::hash::ContentHash;
         }
     }
 }
 
 fn derive_enum(def: &EnumDef) -> (&str, TokenStream) {
-    let body = if def.is_unit() {
-        // we assume unit enums implement `PartialEq`
-        quote!(self == other)
+    let mut body = quote! {
+        ContentHash::content_hash(&discriminant(self), state);
+    };
+
+    body.extend(if def.is_unit() {
+        TokenStream::default()
     } else {
-        let matches = def.all_variants().map(|var| {
-            let ident = var.ident();
-            if var.is_unit() {
-                quote!(Self :: #ident => matches!(other, Self :: #ident))
-            } else {
-                quote! {
-                    Self :: #ident(it) => {
-                        // NOTE: writing the match expression formats better than using `matches` macro.
-                        match other {
-                            Self :: #ident (other) if ContentEq::content_eq(it, other) => true,
-                            _ => false,
-                        }
-                    }
+        let mut non_exhaustive = false;
+        let matches = def
+            .all_variants()
+            .filter_map(|var| {
+                let ident = var.ident();
+                if var.is_unit() {
+                    non_exhaustive = true;
+                    None
+                } else {
+                    Some(quote!(Self :: #ident(it) => ContentHash::content_hash(it, state)))
                 }
-            }
-        });
+            })
+            .collect_vec();
+        let exhaust = non_exhaustive.then(|| quote!(_ => {}));
         quote! {
             match self {
                 #(#matches),*
+                #exhaust
             }
         }
-    };
+    });
 
-    ("other", body)
+    ("state", body)
 }
 
 fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
     if def.fields.is_empty() {
-        ("_", quote!(true))
+        ("_", TokenStream::default())
     } else {
         let fields = def
             .fields
@@ -94,25 +98,25 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
             })
             .map(|field| {
                 let ident = field.ident();
-                quote!(ContentEq::content_eq(&self.#ident, &other.#ident))
+                quote!(ContentHash::content_hash(&self.#ident, state);)
             })
             .collect_vec();
         if fields.is_empty() {
-            ("_", quote!(true))
+            ("_", TokenStream::default())
         } else {
-            ("other", quote!(#(#fields)&&*))
+            ("state", quote!(#(#fields)*))
         }
     }
 }
 
-fn impl_content_eq(def: &TypeDef, other_name: &str, body: &TokenStream) -> TokenStream {
+fn impl_content_hash(def: &TypeDef, hasher_name: &str, body: &TokenStream) -> TokenStream {
     let ty = def.to_type();
     let generics = def.generics();
-    let other = other_name.to_ident();
+    let hasher = hasher_name.to_ident();
 
     quote! {
-        impl #generics ContentEq for #ty {
-            fn content_eq(&self, #other: &Self) -> bool {
+        impl #generics ContentHash for #ty {
+            fn content_hash<H: Hasher>(&self, #hasher: &mut H) {
                 #body
             }
         }

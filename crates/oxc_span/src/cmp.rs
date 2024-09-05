@@ -5,17 +5,17 @@
 ///
 /// One should always prefer using the [PartialEq] over this since implementations of this trait
 /// inherently are slower or in the best-case scenario as fast as the [PartialEq] comparison.
-pub trait ContentEq<Rhs: ?Sized = Self> {
+pub trait ContentEq {
     /// This method tests for contents of `self` and `other` to be equal.
     #[must_use]
-    fn content_eq(&self, other: &Rhs) -> bool;
+    fn content_eq(&self, other: &Self) -> bool;
 
     /// This method tests for contents of `self` and `other` not to be equal.
     /// The default implementation is almost always
     /// sufficient, and should not be overridden without very good reason.
     #[inline]
     #[must_use]
-    fn content_ne(&self, other: &Rhs) -> bool {
+    fn content_ne(&self, other: &Self) -> bool {
         !self.content_eq(other)
     }
 }
@@ -29,66 +29,6 @@ impl ContentEq for () {
     #[inline]
     fn content_ne(&self, _other: &()) -> bool {
         false
-    }
-}
-
-/// Blanket implementation for references
-impl<A: ?Sized, B: ?Sized> ContentEq<&B> for &A
-where
-    A: ContentEq<B>,
-{
-    #[inline]
-    fn content_eq(&self, other: &&B) -> bool {
-        ContentEq::content_eq(*self, *other)
-    }
-    #[inline]
-    fn content_ne(&self, other: &&B) -> bool {
-        ContentEq::content_ne(*self, *other)
-    }
-}
-
-/// Blanket implementation for mutable references
-impl<A: ?Sized, B: ?Sized> ContentEq<&mut B> for &mut A
-where
-    A: ContentEq<B>,
-{
-    #[inline]
-    fn content_eq(&self, other: &&mut B) -> bool {
-        ContentEq::content_eq(*self, *other)
-    }
-    #[inline]
-    fn content_ne(&self, other: &&mut B) -> bool {
-        ContentEq::content_ne(*self, *other)
-    }
-}
-
-/// Blanket implementation for mixed references
-impl<A: ?Sized, B: ?Sized> ContentEq<&mut B> for &A
-where
-    A: ContentEq<B>,
-{
-    #[inline]
-    fn content_eq(&self, other: &&mut B) -> bool {
-        ContentEq::content_eq(*self, *other)
-    }
-    #[inline]
-    fn content_ne(&self, other: &&mut B) -> bool {
-        ContentEq::content_ne(*self, *other)
-    }
-}
-
-/// Blanket implementation for mixed references
-impl<A: ?Sized, B: ?Sized> ContentEq<&B> for &mut A
-where
-    A: ContentEq<B>,
-{
-    #[inline]
-    fn content_eq(&self, other: &&B) -> bool {
-        ContentEq::content_eq(*self, *other)
-    }
-    #[inline]
-    fn content_ne(&self, other: &&B) -> bool {
-        ContentEq::content_ne(*self, *other)
     }
 }
 

@@ -356,7 +356,7 @@ fn character_to_string(
 ) -> (/* result */ String, /* true of peek should be consumed */ bool) {
     let cp = this.value;
 
-    if let CharacterKind::Symbol = this.kind {
+    if matches!(this.kind, CharacterKind::Symbol | CharacterKind::UnicodeEscape) {
         // Trail only
         if is_trail_surrogate(cp) {
             return (format!(r"\u{cp:X}"), false);
@@ -493,7 +493,7 @@ mod test {
         (r"/\d/g", None),
         // we lose the flags ordering
         (r"/\d/ug", Some(r"/\d/gu")),
-        // NOTE: we capitalize hex unicodes.
+        // we capitalize hex unicodes.
         (r"/\n\cM\0\x41\u{1f600}\./u", Some(r"/\n\cM\0\x41\u{1F600}\./u")),
         (r"/c]/", None),
         // Octal tests from: <https://github.com/tc39/test262/blob/d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60/test/annexB/language/literals/regexp/legacy-octal-escape.js>
@@ -540,6 +540,14 @@ mod test {
         (r"/[\c8]/", None),
         (r"/[\c80]+/", None),
         (r"/\c_/", None),
+        // we capitalize hex unicodes.
+        (r"/^|\udf06/gu", Some(r"/^|\uDF06/gu")),
+        // we capitalize hex unicodes.
+        (r"/\udf06/", Some(r"/\uDF06/")),
+        // we capitalize hex unicodes.
+        (r"/\udf06/u", Some(r"/\uDF06/u")),
+        // we capitalize hex unicodes.
+        (r"/^|\udf06/g", Some(r"/^|\uDF06/g")),
     ];
 
     fn test_display(allocator: &Allocator, (source, expect): &Case) {

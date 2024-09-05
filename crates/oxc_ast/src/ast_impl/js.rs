@@ -1,6 +1,6 @@
 use crate::ast::*;
 
-use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
+use std::{borrow::Cow, cell::Cell, fmt};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
@@ -34,15 +34,6 @@ impl<'a> Program<'a> {
         body: Vec<'a, Statement<'a>>,
     ) -> Self {
         Self { span, source_type, directives, hashbang, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for Program<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.source_type.hash(state);
-        self.directives.hash(state);
-        self.hashbang.hash(state);
-        self.body.hash(state);
     }
 }
 
@@ -327,12 +318,6 @@ impl<'a> fmt::Display for IdentifierName<'a> {
     }
 }
 
-impl<'a> Hash for IdentifierReference<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
-
 impl<'a> IdentifierReference<'a> {
     #[inline]
     pub fn new(span: Span, name: Atom<'a>) -> Self {
@@ -357,12 +342,6 @@ impl<'a> IdentifierReference<'a> {
 impl<'a> fmt::Display for IdentifierReference<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.name.fmt(f)
-    }
-}
-
-impl<'a> Hash for BindingIdentifier<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
     }
 }
 
@@ -769,12 +748,6 @@ impl<'a> BlockStatement<'a> {
     }
 }
 
-impl<'a> Hash for BlockStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.body.hash(state);
-    }
-}
-
 impl<'a> Declaration<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
         match self {
@@ -868,15 +841,6 @@ impl<'a> ForStatement<'a> {
     }
 }
 
-impl<'a> Hash for ForStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.init.hash(state);
-        self.test.hash(state);
-        self.update.hash(state);
-        self.body.hash(state);
-    }
-}
-
 impl<'a> ForStatementInit<'a> {
     /// LexicalDeclaration[In, Yield, Await] :
     ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
@@ -896,14 +860,6 @@ impl<'a> ForInStatement<'a> {
     }
 }
 
-impl<'a> Hash for ForInStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.left.hash(state);
-        self.right.hash(state);
-        self.body.hash(state);
-    }
-}
-
 impl<'a> ForOfStatement<'a> {
     pub fn new(
         span: Span,
@@ -913,15 +869,6 @@ impl<'a> ForOfStatement<'a> {
         body: Statement<'a>,
     ) -> Self {
         Self { span, r#await, left, right, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for ForOfStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.r#await.hash(state);
-        self.left.hash(state);
-        self.right.hash(state);
-        self.body.hash(state);
     }
 }
 
@@ -939,13 +886,6 @@ impl<'a> SwitchStatement<'a> {
     }
 }
 
-impl<'a> Hash for SwitchStatement<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.discriminant.hash(state);
-        self.cases.hash(state);
-    }
-}
-
 impl<'a> SwitchCase<'a> {
     pub fn is_default_case(&self) -> bool {
         self.test.is_none()
@@ -959,13 +899,6 @@ impl<'a> CatchClause<'a> {
         body: Box<'a, BlockStatement<'a>>,
     ) -> Self {
         Self { span, param, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for CatchClause<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.param.hash(state);
-        self.body.hash(state);
     }
 }
 
@@ -1111,21 +1044,6 @@ impl<'a> Function<'a> {
     }
 }
 
-impl<'a> Hash for Function<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.r#type.hash(state);
-        self.id.hash(state);
-        self.generator.hash(state);
-        self.r#async.hash(state);
-        self.declare.hash(state);
-        self.this_param.hash(state);
-        self.params.hash(state);
-        self.body.hash(state);
-        self.type_parameters.hash(state);
-        self.return_type.hash(state);
-    }
-}
-
 impl<'a> FormalParameters<'a> {
     pub fn parameters_count(&self) -> usize {
         self.items.len() + self.rest.as_ref().map_or(0, |_| 1)
@@ -1209,17 +1127,6 @@ impl<'a> ArrowFunctionExpression<'a> {
     }
 }
 
-impl<'a> Hash for ArrowFunctionExpression<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.expression.hash(state);
-        self.r#async.hash(state);
-        self.params.hash(state);
-        self.body.hash(state);
-        self.type_parameters.hash(state);
-        self.return_type.hash(state);
-    }
-}
-
 impl<'a> Class<'a> {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -1275,21 +1182,6 @@ impl<'a> Class<'a> {
 
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare || self.r#abstract
-    }
-}
-
-impl<'a> Hash for Class<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.r#type.hash(state);
-        self.decorators.hash(state);
-        self.id.hash(state);
-        self.super_class.hash(state);
-        self.body.hash(state);
-        self.type_parameters.hash(state);
-        self.super_type_parameters.hash(state);
-        self.implements.hash(state);
-        self.r#abstract.hash(state);
-        self.declare.hash(state);
     }
 }
 
@@ -1464,12 +1356,6 @@ impl<'a> PrivateIdentifier<'a> {
 impl<'a> StaticBlock<'a> {
     pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
         Self { span, body, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for StaticBlock<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.body.hash(state);
     }
 }
 
