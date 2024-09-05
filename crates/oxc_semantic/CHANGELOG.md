@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-05
+
+### Features
+
+- 0f50b1e semantic: Check for initializers in ambient `VariableDeclaration`s (#5463) (DonIsaac)
+- 62f7fff semantic: Check for non-declared, non-abstract object accessors without bodies (#5461) (DonIsaac)
+- 5407143 semantic: Check for non-declared, non-abstract class accessors without bodies (#5460) (DonIsaac)
+- 052e94c semantic: Check for parameter properties in constructor overloads (#5459) (DonIsaac)
+
+### Bug Fixes
+
+- d8b9909 semantic: `IdentifierReference` within `TSPropertySignature` cannot reference type-only import binding (#5441) (Dunqing)
+
+### Refactor
+
+- e4ed41d semantic: Change the reference flag to `ReferenceFlags::Type` if it is used within a `TSTypeQuery` (#5444) (Dunqing)
+
 ## [0.26.0] - 2024-09-03
 
 - 01cc2ce semantic: [**BREAKING**] Add `ScopeTree:get_child_ids` API behind a runtime flag (#5403) (Boshen)
