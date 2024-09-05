@@ -150,8 +150,9 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         }
 
         let pattern_source: Cow<'_, str> = match &regexp.regex.pattern {
-            RegExpPattern::Raw(raw) | RegExpPattern::Invalid(raw) => Cow::Borrowed(raw),
+            RegExpPattern::Raw(raw) => Cow::Borrowed(raw),
             RegExpPattern::Pattern(p) => Cow::Owned(p.to_string()),
+            RegExpPattern::Invalid(_) => return,
         };
 
         let callee = {
