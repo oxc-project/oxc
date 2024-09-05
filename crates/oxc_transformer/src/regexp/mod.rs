@@ -60,12 +60,31 @@ use crate::context::Ctx;
 
 pub struct RegExp<'a> {
     _ctx: Ctx<'a>,
+    unsupported_flags: RegExpFlags,
     options: RegExpOptions,
 }
 
 impl<'a> RegExp<'a> {
     pub fn new(options: RegExpOptions, ctx: Ctx<'a>) -> Self {
-        Self { _ctx: ctx, options }
+        // Get unsupported flags
+        let mut unsupported_flags = RegExpFlags::empty();
+        if options.dot_all_flag {
+            unsupported_flags |= RegExpFlags::S;
+        }
+        if options.sticky_flag {
+            unsupported_flags |= RegExpFlags::Y;
+        }
+        if options.unicode_flag {
+            unsupported_flags |= RegExpFlags::U;
+        }
+        if options.match_indices {
+            unsupported_flags |= RegExpFlags::D;
+        }
+        if options.set_notation {
+            unsupported_flags |= RegExpFlags::V;
+        }
+
+        Self { _ctx: ctx, unsupported_flags, options }
     }
 }
 
@@ -79,9 +98,8 @@ impl<'a> Traverse<'a> for RegExp<'a> {
             return;
         };
 
-        if !self.has_unsupported_regular_expression_flags(regexp.regex.flags)
-            && self.requires_pattern_analysis()
-        {
+        let has_unsupported_flags = regexp.regex.flags.intersects(self.unsupported_flags);
+        if !has_unsupported_flags && self.requires_pattern_analysis() {
             match try_parse_pattern(regexp, ctx) {
                 Ok(pattern) => {
                     let is_unsupported = self.has_unsupported_regular_expression_pattern(&pattern);
@@ -139,18 +157,6 @@ impl<'a> RegExp<'a> {
         self.options.named_capture_groups
             || self.options.unicode_property_escapes
             || self.options.look_behind_assertions
-    }
-
-    /// Check if the regular expression contains any unsupported flags.
-    fn has_unsupported_regular_expression_flags(&self, flags: RegExpFlags) -> bool {
-        flags.iter().any(|f| match f {
-            RegExpFlags::S if self.options.dot_all_flag => true,
-            RegExpFlags::Y if self.options.sticky_flag => true,
-            RegExpFlags::U if self.options.unicode_flag => true,
-            RegExpFlags::D if self.options.match_indices => true,
-            RegExpFlags::V if self.options.set_notation => true,
-            _ => false,
-        })
     }
 
     /// Check if the regular expression contains any unsupported syntax.
