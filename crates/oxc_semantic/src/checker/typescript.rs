@@ -359,3 +359,13 @@ pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &Semant
         ctx.error(abstract_property_cannot_have_initializer(prop_name, span));
     }
 }
+
+pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
+    if let Expression::FunctionExpression(func) = &prop.value {
+        if prop.kind.is_accessor()
+            && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
+        {
+            ctx.error(accessor_without_body(prop.key.span()));
+        }
+    }
+}

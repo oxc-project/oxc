@@ -448,6 +448,15 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
+impl PropertyKind {
+    /// Returns `true` if this property is a getter or setter.
+    ///
+    /// Analogous to [`MethodDefinitionKind::is_accessor`].
+    pub fn is_accessor(self) -> bool {
+        matches!(self, Self::Get | Self::Set)
+    }
+}
+
 impl<'a> TemplateLiteral<'a> {
     pub fn is_no_substitution_template(&self) -> bool {
         self.expressions.is_empty() && self.quasis.len() == 1
@@ -1424,6 +1433,8 @@ impl MethodDefinitionKind {
     }
 
     /// Returns `true` if this method is a getter or a setter.
+    ///
+    /// Analogous to [`PropertyKind::is_accessor`].
     pub fn is_accessor(&self) -> bool {
         matches!(self, Self::Get | Self::Set)
     }

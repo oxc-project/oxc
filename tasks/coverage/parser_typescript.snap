@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6470/6479 (99.86%)
 Positive Passed: 6445/6479 (99.48%)
-Negative Passed: 1201/5715 (21.01%)
+Negative Passed: 1203/5715 (21.05%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -31,8 +31,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorAcci
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorDeclarationEmitVisibilityErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorInferredReturnTypeErrorInReturnStatement.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorWithInitializer.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorWithoutBody1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorWithoutBody2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorsInAmbientContext.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessors_spec_section-4.5_error-cases.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/addMoreOverloadsToBaseSignature.ts
@@ -5075,6 +5073,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │     static set X(...v2) { }
    ·                  ─────
  4 │ }
+   ╰────
+
+  × Getters and setters must have an implementation.
+   ╭─[typescript/tests/cases/compiler/accessorWithoutBody1.ts:1:15]
+ 1 │ var v = { get foo() }
+   ·               ───
+   ╰────
+
+  × Getters and setters must have an implementation.
+   ╭─[typescript/tests/cases/compiler/accessorWithoutBody2.ts:1:15]
+ 1 │ var v = { set foo(a) }
+   ·               ───
    ╰────
 
   × Unexpected token
