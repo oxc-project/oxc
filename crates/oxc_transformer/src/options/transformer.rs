@@ -14,6 +14,7 @@ use crate::{
     es2021::ES2021Options,
     options::babel::BabelOptions,
     react::ReactOptions,
+    regexp::RegExpOptions,
     typescript::TypeScriptOptions,
 };
 
@@ -38,6 +39,8 @@ pub struct TransformOptions {
     /// [preset-react](https://babeljs.io/docs/babel-preset-react)
     pub react: ReactOptions,
 
+    pub regexp: RegExpOptions,
+
     pub es2015: ES2015Options,
 
     pub es2016: ES2016Options,
@@ -60,6 +63,7 @@ impl TransformOptions {
             es2019: ES2019Options::from_targets_and_bugfixes(targets, bugfixes),
             es2020: ES2020Options::from_targets_and_bugfixes(targets, bugfixes),
             es2021: ES2021Options::from_targets_and_bugfixes(targets, bugfixes),
+            regexp: RegExpOptions::from_targets_and_bugfixes(targets, bugfixes),
             ..Default::default()
         }
     }
@@ -214,6 +218,29 @@ impl TransformOptions {
                     })
             }
         };
+
+        let regexp = transformer_options.regexp;
+        if !regexp.sticky_flag {
+            transformer_options.regexp.sticky_flag = options.has_plugin("transform-sticky-regex");
+        }
+        if !regexp.unicode_flag {
+            transformer_options.regexp.unicode_flag = options.has_plugin("transform-unicode-regex");
+        }
+        if !regexp.dot_all_flag {
+            transformer_options.regexp.dot_all_flag = options.has_plugin("transform-dotall-regex");
+        }
+        if !regexp.named_capture_groups {
+            transformer_options.regexp.named_capture_groups =
+                options.has_plugin("transform-named-capturing-groups-regex");
+        }
+        if !regexp.unicode_property_escapes {
+            transformer_options.regexp.unicode_property_escapes =
+                options.has_plugin("transform-unicode-property-regex");
+        }
+        if !regexp.set_notation {
+            transformer_options.regexp.set_notation =
+                options.has_plugin("transform-unicode-sets-regex");
+        }
 
         transformer_options.assumptions = if options.assumptions.is_null() {
             CompilerAssumptions::default()
