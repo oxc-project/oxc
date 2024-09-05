@@ -96,7 +96,7 @@ pub fn create_default_exports<'a>(
     } else {
         create_exports_with_assignment(
             builder.vec1((
-                "default",
+                "_default",
                 builder.module_export_name_identifier_name(SPAN, "_default"),
                 declaration,
             )),

@@ -1,6 +1,6 @@
 //! It is not `amd define`, but for `Object.defineProperty` related codes.
 
-use oxc_ast::ast::{BindingRestElement, Expression, FormalParameterKind, FunctionType, IdentifierReference, ModuleExportName, PropertyKind, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration, TSTypeParameterInstantiation};
+use oxc_ast::ast::{BindingRestElement, Expression, FormalParameterKind, FunctionType, ModuleExportName, PropertyKind, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration, TSTypeParameterInstantiation};
 use oxc_ast::AstBuilder;
 use oxc_span::SPAN;
 use oxc_syntax::identifier;
