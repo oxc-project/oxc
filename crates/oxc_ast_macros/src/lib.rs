@@ -42,6 +42,15 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
     fn abs_trait(
         ident: &syn::Ident,
     ) -> (/* absolute type path */ TokenStream2, /* possible generics */ TokenStream2) {
+        #[cold]
+        fn invalid_derive(ident: &syn::Ident) -> ! {
+            panic!(
+                "Invalid derive trait(generate_derive): {ident}.\n\
+                    Help: If you are trying to implement a new `generate_derive` trait, \
+                    Make sure to add it to the list below."
+            )
+        }
+
         if ident == "CloneIn" {
             (quote!(::oxc_allocator::CloneIn), quote!(<'static>))
         } else if ident == "GetSpan" {
@@ -50,9 +59,10 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
             (quote!(::oxc_span::GetSpanMut), TokenStream2::default())
         } else if ident == "ContentEq" {
             (quote!(::oxc_span::cmp::ContentEq), quote!(<()>))
+        } else if ident == "ContentHash" {
+            (quote!(::oxc_span::hash::ContentHash), TokenStream2::default())
         } else {
-            panic!("Invalid derive trait(generate_derive): {ident}.\
-                    Help: If you are trying to implement a new `generate_derive` trait, Make sure to add it to the list above.");
+            invalid_derive(ident)
         }
     }
 

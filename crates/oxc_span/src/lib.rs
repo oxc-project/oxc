@@ -7,6 +7,7 @@ mod source_type;
 mod span;
 
 pub mod cmp;
+pub mod hash;
 
 pub use crate::{
     atom::{Atom, CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN},

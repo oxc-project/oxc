@@ -12,7 +12,7 @@ use std::{
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, Atom, Span};
+use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
 use oxc_syntax::number::NumberBase;
 
 impl BooleanLiteral {
@@ -36,10 +36,10 @@ impl fmt::Display for BooleanLiteral {
     }
 }
 
-impl Hash for NullLiteral {
+impl ContentHash for NullLiteral {
     #[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        None::<bool>.hash(state);
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(&Option::<bool>::None, state);
     }
 }
 
@@ -89,10 +89,10 @@ impl<'a> NumericLiteral<'a> {
     }
 }
 
-impl<'a> Hash for NumericLiteral<'a> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.base.hash(state);
-        self.raw.hash(state);
+impl<'a> ContentHash for NumericLiteral<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.base, state);
+        ContentHash::content_hash(&self.raw, state);
     }
 }
 
@@ -174,6 +174,12 @@ impl<'a> fmt::Display for RegExpPattern<'a> {
 impl ContentEq for RegExpFlags {
     fn content_eq(&self, other: &Self) -> bool {
         self == other
+    }
+}
+
+impl ContentHash for RegExpFlags {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(self, state);
     }
 }
 

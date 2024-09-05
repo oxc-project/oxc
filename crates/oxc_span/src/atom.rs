@@ -8,7 +8,7 @@ use compact_str::CompactString;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
-use crate::{cmp::ContentEq, Span};
+use crate::{cmp::ContentEq, hash::ContentHash, Span};
 use oxc_allocator::{Allocator, CloneIn, FromIn};
 
 #[cfg(feature = "serialize")]
@@ -201,6 +201,12 @@ impl<'a> ContentEq<Atom<'a>> for Cow<'_, str> {
 impl<'a> ContentEq<&Atom<'a>> for Cow<'_, str> {
     fn content_eq(&self, other: &&Atom<'a>) -> bool {
         self == other
+    }
+}
+
+impl<'a> ContentHash for Atom<'a> {
+    fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
+        hash::Hash::hash(self, state);
     }
 }
 
