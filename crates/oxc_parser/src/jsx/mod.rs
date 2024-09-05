@@ -171,6 +171,10 @@ impl<'a> ParserImpl<'a> {
         let element_name = if is_reference {
             let identifier = self.ast.identifier_reference(identifier.span, identifier.name);
             JSXElementName::IdentifierReference(self.ast.alloc(identifier))
+        } else if name == "this" {
+            JSXElementName::ThisExpression(
+                self.ast.alloc(self.ast.this_expression(identifier.span)),
+            )
         } else {
             JSXElementName::Identifier(self.ast.alloc(identifier))
         };
@@ -185,9 +189,15 @@ impl<'a> ParserImpl<'a> {
         span: Span,
         object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
+        let mut object = if object.name == "this" {
+            let object = self.ast.this_expression(object.span);
+            JSXMemberExpressionObject::ThisExpression(self.ast.alloc(object))
+        } else {
+            let object = self.ast.identifier_reference(object.span, object.name);
+            JSXMemberExpressionObject::IdentifierReference(self.ast.alloc(object))
+        };
+
         let mut span = span;
-        let object = self.ast.identifier_reference(object.span, object.name);
-        let mut object = JSXMemberExpressionObject::IdentifierReference(self.ast.alloc(object));
         let mut property = None;
 
         while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
@@ -434,6 +444,7 @@ impl<'a> ParserImpl<'a> {
             (JSXElementName::MemberExpression(lhs), JSXElementName::MemberExpression(rhs)) => {
                 Self::jsx_member_expression_eq(lhs, rhs)
             }
+            (JSXElementName::ThisExpression(_), JSXElementName::ThisExpression(_)) => true,
             _ => false,
         }
     }
@@ -454,6 +465,10 @@ impl<'a> ParserImpl<'a> {
                 JSXMemberExpressionObject::MemberExpression(lhs),
                 JSXMemberExpressionObject::MemberExpression(rhs),
             ) => Self::jsx_member_expression_eq(lhs, rhs),
+            (
+                JSXMemberExpressionObject::ThisExpression(_),
+                JSXMemberExpressionObject::ThisExpression(_),
+            ) => true,
             _ => false,
         }
     }

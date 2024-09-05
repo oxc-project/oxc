@@ -700,11 +700,7 @@ impl<'a> ReactJsx<'a> {
     fn transform_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
-                if ident.name == "this" {
-                    self.ast().expression_this(ident.span)
-                } else {
-                    self.ast().expression_string_literal(ident.span, &ident.name)
-                }
+                self.ast().expression_string_literal(ident.span, ident.name.clone())
             }
             JSXElementName::IdentifierReference(ident) => {
                 self.ast().expression_from_identifier_reference(ident.as_ref().clone())
@@ -718,6 +714,7 @@ impl<'a> ReactJsx<'a> {
                 }
                 self.ast().expression_string_literal(namespaced.span, namespaced.to_string())
             }
+            JSXElementName::ThisExpression(expr) => self.ast().expression_this(expr.span),
         }
     }
 
@@ -775,14 +772,13 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx_member_expression(&self, expr: &JSXMemberExpression<'a>) -> Expression<'a> {
         let object = match &expr.object {
             JSXMemberExpressionObject::IdentifierReference(ident) => {
-                if ident.name == "this" {
-                    self.ast().expression_this(ident.span)
-                } else {
-                    self.ast().expression_from_identifier_reference(ident.as_ref().clone())
-                }
+                self.ast().expression_from_identifier_reference(ident.as_ref().clone())
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 self.transform_jsx_member_expression(expr)
+            }
+            JSXMemberExpressionObject::ThisExpression(expr) => {
+                self.ast().expression_this(expr.span)
             }
         };
         let property = IdentifierName::new(expr.property.span, expr.property.name.clone());

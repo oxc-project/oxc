@@ -2042,6 +2042,7 @@ impl<'a> GetSpan for JSXElementName<'a> {
             Self::IdentifierReference(it) => it.span(),
             Self::NamespacedName(it) => it.span(),
             Self::MemberExpression(it) => it.span(),
+            Self::ThisExpression(it) => it.span(),
         }
     }
 }
@@ -2065,6 +2066,7 @@ impl<'a> GetSpan for JSXMemberExpressionObject<'a> {
         match self {
             Self::IdentifierReference(it) => it.span(),
             Self::MemberExpression(it) => it.span(),
+            Self::ThisExpression(it) => it.span(),
         }
     }
 }

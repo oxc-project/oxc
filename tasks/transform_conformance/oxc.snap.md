@@ -10,9 +10,6 @@ Passed: 13/41
 
 # babel-plugin-transform-arrow-functions (1/2)
 * with-this-member-expression/input.jsx
-  x Unresolved references mismatch:
-  | after transform: ["this"]
-  | rebuilt        : []
 
 
 

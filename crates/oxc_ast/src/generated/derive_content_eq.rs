@@ -3555,6 +3555,9 @@ impl<'a> ContentEq for JSXElementName<'a> {
             Self::MemberExpression(it) => {
                 matches!(other, Self::MemberExpression(other) if it.content_eq(other))
             }
+            Self::ThisExpression(it) => {
+                matches!(other, Self::ThisExpression(other) if it.content_eq(other))
+            }
         }
     }
 }
@@ -3579,6 +3582,9 @@ impl<'a> ContentEq for JSXMemberExpressionObject<'a> {
             }
             Self::MemberExpression(it) => {
                 matches!(other, Self::MemberExpression(other) if it.content_eq(other))
+            }
+            Self::ThisExpression(it) => {
+                matches!(other, Self::ThisExpression(other) if it.content_eq(other))
             }
         }
     }

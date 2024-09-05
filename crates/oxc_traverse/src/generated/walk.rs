@@ -3268,6 +3268,9 @@ pub(crate) unsafe fn walk_jsx_element_name<'a, Tr: Traverse<'a>>(
         JSXElementName::MemberExpression(node) => {
             walk_jsx_member_expression(traverser, (&mut **node) as *mut _, ctx)
         }
+        JSXElementName::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_jsx_element_name(&mut *node, ctx);
 }
@@ -3334,6 +3337,9 @@ pub(crate) unsafe fn walk_jsx_member_expression_object<'a, Tr: Traverse<'a>>(
         }
         JSXMemberExpressionObject::MemberExpression(node) => {
             walk_jsx_member_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXMemberExpressionObject::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
         }
     }
     traverser.exit_jsx_member_expression_object(&mut *node, ctx);

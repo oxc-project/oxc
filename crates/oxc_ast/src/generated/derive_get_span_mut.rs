@@ -2042,6 +2042,7 @@ impl<'a> GetSpanMut for JSXElementName<'a> {
             Self::IdentifierReference(it) => it.span_mut(),
             Self::NamespacedName(it) => it.span_mut(),
             Self::MemberExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
         }
     }
 }
@@ -2065,6 +2066,7 @@ impl<'a> GetSpanMut for JSXMemberExpressionObject<'a> {
         match self {
             Self::IdentifierReference(it) => it.span_mut(),
             Self::MemberExpression(it) => it.span_mut(),
+            Self::ThisExpression(it) => it.span_mut(),
         }
     }
 }

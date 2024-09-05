@@ -791,6 +791,7 @@ impl<'a> ListenerMap for JSXElementName<'a> {
             Self::Identifier(_) | Self::NamespacedName(_) => {}
             Self::IdentifierReference(ident) => ident.report_effects_when_called(options),
             Self::MemberExpression(member) => member.report_effects_when_called(options),
+            Self::ThisExpression(expr) => expr.report_effects_when_called(options),
         }
     }
 }
@@ -806,6 +807,7 @@ impl<'a> ListenerMap for JSXMemberExpressionObject<'a> {
         match self {
             Self::IdentifierReference(ident) => ident.report_effects_when_called(options),
             Self::MemberExpression(member) => member.report_effects_when_called(options),
+            Self::ThisExpression(expr) => expr.report_effects_when_called(options),
         }
     }
 }

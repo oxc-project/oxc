@@ -173,6 +173,8 @@ pub enum JSXElementName<'a> {
     NamespacedName(Box<'a, JSXNamespacedName<'a>>) = 2,
     /// `<Apple.Orange />`
     MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 3,
+    /// `<this />`
+    ThisExpression(Box<'a, ThisExpression>) = 4,
 }
 
 /// JSX Namespaced Name
@@ -233,6 +235,7 @@ pub struct JSXMemberExpression<'a> {
 pub enum JSXMemberExpressionObject<'a> {
     IdentifierReference(Box<'a, IdentifierReference<'a>>) = 0,
     MemberExpression(Box<'a, JSXMemberExpression<'a>>) = 1,
+    ThisExpression(Box<'a, ThisExpression>) = 2,
 }
 
 /// JSX Expression Container

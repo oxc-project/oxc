@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 317/1021
+Passed: 321/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -4906,13 +4906,7 @@ TS(18010)
 
 
 
-# babel-plugin-transform-react-jsx (119/144)
-* react/arrow-functions/input.js
-  x Unresolved references mismatch:
-  | after transform: ["React", "this"]
-  | rebuilt        : ["React"]
-
-
+# babel-plugin-transform-react-jsx (123/144)
 * react/dont-coerce-expression-containers/input.js
   x Unresolved reference IDs mismatch for "Text":
   | after transform: [ReferenceId(0), ReferenceId(1)]
@@ -4980,22 +4974,10 @@ TS(18010)
    `----
 
 
-* react/this-tag-name/input.js
-  x Unresolved references mismatch:
-  | after transform: ["React", "this"]
-  | rebuilt        : ["React"]
-
-
 * react/weird-symbols/input.js
   x Unresolved reference IDs mismatch for "Text":
   | after transform: [ReferenceId(1), ReferenceId(2)]
   | rebuilt        : [ReferenceId(2)]
-
-
-* react-automatic/arrow-functions/input.js
-  x Unresolved references mismatch:
-  | after transform: ["this"]
-  | rebuilt        : []
 
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
@@ -5054,12 +5036,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
  1 | <f:image />;
    :  ^^^^^^^
    `----
-
-
-* react-automatic/this-tag-name/input.js
-  x Unresolved references mismatch:
-  | after transform: ["this"]
-  | rebuilt        : []
 
 
 * react-automatic/weird-symbols/input.js

@@ -2249,6 +2249,7 @@ impl<'a> Gen for JSXMemberExpressionObject<'a> {
         match self {
             Self::IdentifierReference(ident) => ident.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::ThisExpression(expr) => expr.gen(p, ctx),
         }
     }
 }
@@ -2268,6 +2269,7 @@ impl<'a> Gen for JSXElementName<'a> {
             Self::IdentifierReference(identifier) => identifier.gen(p, ctx),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::ThisExpression(expr) => expr.gen(p, ctx),
         }
     }
 }
