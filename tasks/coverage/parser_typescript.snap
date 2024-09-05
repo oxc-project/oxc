@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6470/6479 (99.86%)
 Positive Passed: 6445/6479 (99.48%)
-Negative Passed: 1193/5715 (20.87%)
+Negative Passed: 1201/5715 (21.01%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -22,8 +22,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDecl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/InterfaceDeclaration8.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ParameterList7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ParameterList8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractClassInLocalScopeIsAbstract.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractClassUnionInstantiation.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
@@ -1669,11 +1667,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsWit
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsWithProvisionalErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overridingPrivateStaticMembers.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overshifts.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/paramPropertiesInSignatures.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterListAsTupleType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterNamesInTypeParameterList.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/paramsOnlyHaveLiteralTypesWhenAppropriatelyContextualized.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/paramterDestrcuturingDeclaration.ts
@@ -2285,7 +2280,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_superClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useUnknownInCatchVariables01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varAndFunctionShareName.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varBlock.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varNameConflictsWithImportInDifferentPartOfModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/vararg.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/variableDeclaratorResolvedDuringContextualTyping.ts
@@ -3850,8 +3844,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList16.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected7.ts
@@ -4974,6 +4966,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │   constructor(C: (public A) => any) {
    ·                   ────────
  3 │   }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList7.ts:2:14]
+ 1 │ class C1 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList7.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any) {} // OK
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList8.ts:2:14]
+ 1 │ declare class C2 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList8.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList8.ts:4:14]
+ 3 │  constructor(private p2:number); // ERROR
+ 4 │  constructor(public p3:any); // ERROR
+   ·              ─────────────
+ 5 │ }
    ╰────
 
   × Invalid Character `؆`
@@ -9986,6 +10018,62 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  6 │  
    ╰────
 
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:2:14]
+ 1 │ class C1 {
+ 2 │     constructor(public p1:string); // ERROR
+   ·                 ────────────────
+ 3 │     constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:3:14]
+ 2 │     constructor(public p1:string); // ERROR
+ 3 │     constructor(private p2:number); // ERROR
+   ·                 ─────────────────
+ 4 │     constructor(public p3:any) {} // OK
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:8:14]
+ 7 │ declare class C2 {
+ 8 │     constructor(public p1:string); // ERROR
+   ·                 ────────────────
+ 9 │     constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:9:14]
+  8 │     constructor(public p1:string); // ERROR
+  9 │     constructor(private p2:number); // ERROR
+    ·                 ─────────────────
+ 10 │     constructor(public p3:any); // ERROR
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:10:14]
+  9 │     constructor(private p2:number); // ERROR
+ 10 │     constructor(public p3:any); // ERROR
+    ·                 ─────────────
+ 11 │ }
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/parameterPropertyInConstructor1.ts:3:17]
+ 2 │   class Customers {
+ 3 │     constructor(public names: string);
+   ·                 ────────────────────
+ 4 │   }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/parameterPropertyInConstructor2.ts:3:17]
+ 2 │   class Customers {
+ 3 │     constructor(public names: string);
+   ·                 ────────────────────
+ 4 │     constructor(public names: string, public ages: number) {
+   ╰────
+
   × A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/parameterPropertyOutsideConstructor.ts:2:9]
  1 │ class C {
@@ -12557,6 +12645,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  1 │ function t1(...) {}
    ·                ─
    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:11:22]
+ 10 │     class C {
+ 11 │         constructor (public c = 10);
+    ·                      ─────────────
+ 12 │     }
+    ╰────
 
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/variableDeclarationInStrictMode1.ts:2:5]
@@ -20428,6 +20524,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │   }
    ╰────
 
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts:2:14]
+ 1 │ class C1 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any) {} // OK
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts:2:14]
+ 1 │ declare class C2 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts:4:14]
+ 3 │  constructor(private p2:number); // ERROR
+ 4 │  constructor(public p3:any); // ERROR
+   ·              ─────────────
+ 5 │ }
+   ╰────
+
   × A rest parameter cannot be optional
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList9.ts:2:14]
  1 │ class C {
@@ -23203,6 +23339,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  28 │     new (private x);
     ·          ─────────
  29 │ }
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:4:17]
+ 3 │ class C {
+ 4 │     constructor(public x, private y);
+   ·                 ────────
+ 5 │     constructor(public x, private y) { }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:4:27]
+ 3 │ class C {
+ 4 │     constructor(public x, private y);
+   ·                           ─────────
+ 5 │     constructor(public x, private y) { }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:9:17]
+  8 │ class C2 {
+  9 │     constructor(private x);
+    ·                 ─────────
+ 10 │     constructor(public x) { }
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:14:17]
+ 13 │ class C3 {
+ 14 │     constructor(private x);
+    ·                 ─────────
+ 15 │     constructor(private y) { }
     ╰────
 
   × A parameter property is only allowed in a constructor implementation.

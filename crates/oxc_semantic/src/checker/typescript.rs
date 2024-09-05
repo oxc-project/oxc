@@ -281,6 +281,12 @@ fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
+/// A parameter property is only allowed in a constructor implementation.ts(2369)
+fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {
+    ts_error("2369", "A parameter property is only allowed in a constructor implementation.")
+        .with_label(span)
+}
+
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     if method.r#type.is_abstract() {
         // constructors cannot be abstract, no matter what
@@ -304,6 +310,17 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
                 MethodDefinitionKind::Constructor => {}
             }
             ctx.error(abstract_method_cannot_have_implementation(method_name, span));
+        }
+    }
+
+    // Illegal to have `constructor(public foo);`
+    if method.kind.is_constructor()
+        && method.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
+    {
+        for param in &method.value.params.items {
+            if param.accessibility.is_some() {
+                ctx.error(parameter_property_only_in_constructor_impl(param.span));
+            }
         }
     }
 }
