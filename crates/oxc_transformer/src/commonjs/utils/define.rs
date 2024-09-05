@@ -1,10 +1,6 @@
 //! It is not `amd define`, but for `Object.defineProperty` related codes.
 
-use oxc_ast::ast::{
-    BindingRestElement, Expression, FormalParameterKind, FunctionType, IdentifierReference,
-    PropertyKind, Statement, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration,
-    TSTypeParameterInstantiation,
-};
+use oxc_ast::ast::{BindingRestElement, Expression, FormalParameterKind, FunctionType, IdentifierReference, ModuleExportName, PropertyKind, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration, TSTypeParameterInstantiation};
 use oxc_ast::AstBuilder;
 use oxc_span::SPAN;
 use oxc_syntax::identifier;
@@ -29,7 +25,7 @@ use std::borrow::Cow;
 /// })
 /// ```
 pub fn create_object_define_property<'a>(
-    target: IdentifierReference<'a>,
+    target: ModuleExportName<'a>,
     expression: Expression<'a>,
     builder: &'a AstBuilder,
 ) -> Expression<'a> {
@@ -49,7 +45,11 @@ pub fn create_object_define_property<'a>(
                     .argument_expression(builder.expression_identifier_reference(SPAN, "exports")),
             );
             items.push(
-                builder.argument_expression(builder.expression_from_identifier_reference(target)),
+                builder.argument_expression(match target {
+                    ModuleExportName::IdentifierReference(id) => builder.expression_from_identifier_reference(id),
+                    ModuleExportName::StringLiteral(id) => builder.expression_from_string_literal(id),
+                    ModuleExportName::IdentifierName(id) => builder.expression_string_literal(SPAN, id.name.as_str())
+                }),
             );
             items.push(builder.argument_expression(builder.expression_object(
                 SPAN,

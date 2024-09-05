@@ -3,7 +3,7 @@ use crate::commonjs::utils::import::create_require;
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::{
     BindingPatternKind, BindingRestElement, Declaration, ExportSpecifier, Expression,
-    FormalParameterKind, FunctionType, ModuleExportName, Statement, StringLiteral, TSAccessibility,
+    FormalParameterKind, FunctionType, ModuleExportName, Statement, TSAccessibility,
     TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration, TSTypeParameterInstantiation,
     VariableDeclarationKind,
 };
@@ -246,10 +246,7 @@ pub fn create_reexported_named_exports<'a>(
         result.push(builder.statement_expression(
             SPAN,
             create_object_define_property(
-                match specifier.exported {
-                    ModuleExportName::IdentifierReference(id) => id.clone_in(builder.allocator),
-                    _ => unreachable!(),
-                },
+                specifier.exported,
                 builder.expression_member(match specifier.local {
                     ModuleExportName::IdentifierName(name) => builder.member_expression_static(
                         SPAN,
@@ -413,7 +410,9 @@ pub fn create_export_star_exports<'a>(
                     items.push(builder.statement_expression(
                         SPAN,
                         create_object_define_property(
-                            builder.identifier_reference(SPAN, ident.as_str()),
+                            builder.module_export_name_from_identifier_reference(
+                                builder.identifier_reference(SPAN, ident.as_str()),
+                            ),
                             builder.expression_identifier_reference(SPAN, "key"),
                             builder,
                         ),

@@ -18,6 +18,7 @@ use crate::{
     typescript::TypeScriptOptions,
     ReactRefreshOptions,
 };
+use crate::commonjs::options::CommonjsOptions;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]
@@ -53,6 +54,8 @@ pub struct TransformOptions {
     pub es2020: ES2020Options,
 
     pub es2021: ES2021Options,
+    
+    pub commonjs: CommonjsOptions,
 }
 
 impl TransformOptions {

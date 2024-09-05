@@ -1,4 +1,4 @@
-mod options;
+pub mod options;
 mod types;
 mod utils;
 
@@ -10,33 +10,31 @@ use crate::commonjs::utils::export::{
 };
 use crate::context::Ctx;
 use oxc_allocator::CloneIn;
-use oxc_ast::ast::{
-    BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration,
-    ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, PropertyKey, TSTypeAnnotation,
-};
+use oxc_ast::ast::{BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Program, PropertyKey, Statement, TSTypeAnnotation};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 use utils::import;
 
 pub struct Commonjs<'a> {
     ctx: Ctx<'a>,
-    options: CommonjsOptions,
+    _options: CommonjsOptions,
 }
 
 impl<'a> Commonjs<'a> {
     pub fn new(options: CommonjsOptions, ctx: Ctx<'a>) -> Self {
-        Self { ctx, options }
+        Self { ctx, _options: options }
     }
 }
 
-impl<'a> Traverse<'a> for Commonjs<'a> {
-    fn enter_import_declaration(
+#[allow(clippy::needless_pass_by_value)]
+impl<'a> Commonjs<'a> {
+    pub fn transform_import_declaration(
         &mut self,
-        node: &mut ImportDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let stmt = match &node.specifiers {
-            None => import::create_empty_require(&node.source.value, &self.ctx.ast),
+        node: oxc_allocator::Box<ImportDeclaration<'a>>,
+    ) -> Statement<'a> {
+        match &node.specifiers {
+            None => import::create_empty_require(node.source.value.as_str(), &self.ctx.ast)
+                .clone_in(self.ctx.ast.allocator),
             Some(specifiers) => {
                 let star_specifier = specifiers.iter().find(|specifier| {
                     matches!(specifier, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
@@ -53,6 +51,7 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
                         &self.ctx.ast,
                         false,
                     )
+                    .clone_in(self.ctx.ast.allocator)
                 } else {
                     let assignees: Vec<(PropertyKey<'a>, BindingPattern<'a>)> = specifiers
                         .iter()
@@ -103,49 +102,82 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
                         &self.ctx.ast,
                         false,
                     )
+                    .clone_in(self.ctx.ast.allocator)
                 }
             }
-        };
+        }
     }
 
-    fn enter_export_default_declaration(
+    pub fn transform_export_default_declaration(
         &mut self,
-        node: &mut ExportDefaultDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+        node: oxc_allocator::Box<ExportDefaultDeclaration<'a>>,
+    ) -> Statement<'a> {
         let expr = node.declaration.clone_in(self.ctx.ast.allocator);
-        let stmt = create_default_exports(expr.into_expression(), &self.ctx.ast);
+        create_default_exports(expr.into_expression(), &self.ctx.ast)
+            .clone_in(self.ctx.ast.allocator)
     }
 
-    fn enter_export_named_declaration(
+    pub fn transform_export_named_declaration(
         &mut self,
-        node: &mut ExportNamedDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let stmt = if let Some(decl) = &node.declaration {
+        node: oxc_allocator::Box<ExportNamedDeclaration<'a>>,
+    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        if let Some(decl) = &node.declaration {
             create_declared_named_exports(decl.clone_in(self.ctx.ast.allocator), &self.ctx.ast)
+                .clone_in(self.ctx.ast.allocator)
         } else if let Some(src) = &node.source {
             let specifiers = node.specifiers.clone_in(self.ctx.ast.allocator);
             create_reexported_named_exports(specifiers, src.value.as_str(), &self.ctx.ast)
+                .clone_in(self.ctx.ast.allocator)
         } else {
             let specifiers = node.specifiers.clone_in(self.ctx.ast.allocator);
-            create_listed_named_exports(specifiers, &self.ctx.ast)
-        };
+            create_listed_named_exports(specifiers, &self.ctx.ast).clone_in(self.ctx.ast.allocator)
+        }
     }
 
-    fn enter_export_all_declaration(
+    pub fn transform_export_all_declaration(
         &mut self,
-        node: &mut ExportAllDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        let stmt = if let Some(reexported) = &node.exported {
+        node: oxc_allocator::Box<ExportAllDeclaration<'a>>,
+    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        if let Some(reexported) = &node.exported {
             create_renamed_export_star_exports(
                 node.source.value.as_str(),
                 reexported.clone_in(self.ctx.ast.allocator),
                 &self.ctx.ast,
             )
+            .clone_in(self.ctx.ast.allocator)
         } else {
             create_export_star_exports(node.source.value.as_str(), &self.ctx.ast)
-        };
+                .clone_in(self.ctx.ast.allocator)
+        }
+    }
+}
+
+impl<'a> Traverse<'a> for Commonjs<'a> {
+    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        let mut latest = self.ctx.ast.vec();
+        
+        for stmt in self.ctx.ast.move_vec(&mut program.body) {
+            match stmt {
+                Statement::ImportDeclaration(s) => {
+                    latest.push(self.transform_import_declaration(s));
+                }
+                Statement::ExportNamedDeclaration(s) => {
+                    let results = self.transform_export_named_declaration(s);
+                    latest.extend(results);
+                }
+                Statement::ExportDefaultDeclaration(s) => {
+                    latest.push(self.transform_export_default_declaration(s));
+                }
+                Statement::ExportAllDeclaration(s) => {
+                    let results = self.transform_export_all_declaration(s);
+                    latest.extend(results);
+                }
+                _ => {
+                    latest.push(stmt);
+                }
+            }
+        }
+        
+        program.body = latest;
     }
 }

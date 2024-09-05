@@ -59,6 +59,7 @@ use crate::{
     react::React,
     typescript::TypeScript,
 };
+use crate::commonjs::Commonjs;
 
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,
@@ -70,6 +71,7 @@ pub struct Transformer<'a> {
     ctx: Ctx<'a>,
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
+    x1_commonjs: Commonjs<'a>,
     x1_react: React<'a>,
     x2_es2021: ES2021<'a>,
     x2_es2020: ES2020<'a>,
@@ -100,6 +102,7 @@ impl<'a> Transformer<'a> {
         Self {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
+            x1_commonjs: Commonjs::new(options.commonjs, Rc::clone(&ctx)),
             x1_react: React::new(options.react, Rc::clone(&ctx)),
             x2_es2021: ES2021::new(options.es2021, Rc::clone(&ctx)),
             x2_es2020: ES2020::new(options.es2020, Rc::clone(&ctx)),
@@ -130,8 +133,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x1_react.exit_program(program, ctx);
         self.x0_typescript.exit_program(program, ctx);
+        self.x1_react.exit_program(program, ctx);
+        self.x1_commonjs.exit_program(program, ctx);
         self.x3_es2015.exit_program(program, ctx);
     }
 
