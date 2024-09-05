@@ -73,48 +73,48 @@ declare_oxc_lint!(
 
 impl Rule for RequireAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::FunctionBody(body) = node.kind() {
-            if body.is_empty() {
-                return;
-            }
+        let AstKind::FunctionBody(body) = node.kind() else {
+            return;
+        };
+        if body.is_empty() {
+            return;
+        }
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
 
-            let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-                return;
-            };
-
-            match parent.kind() {
-                AstKind::Function(func) => {
-                    if func.r#async && !func.generator {
-                        let mut finder = AwaitFinder { found: false };
-                        finder.visit_function_body(body);
-                        if !finder.found {
-                            if let Some(AstKind::ObjectProperty(p)) =
-                                ctx.nodes().parent_kind(parent.id())
-                            {
-                                if let PropertyKey::StaticIdentifier(iden) = &p.key {
-                                    ctx.diagnostic(require_await_diagnostic(iden.span));
-                                } else {
-                                    ctx.diagnostic(require_await_diagnostic(func.span));
-                                }
+        match parent.kind() {
+            AstKind::Function(func) => {
+                if func.r#async && !func.generator {
+                    let mut finder = AwaitFinder { found: false };
+                    finder.visit_function_body(body);
+                    if !finder.found {
+                        if let Some(AstKind::ObjectProperty(p)) =
+                            ctx.nodes().parent_kind(parent.id())
+                        {
+                            if let PropertyKey::StaticIdentifier(iden) = &p.key {
+                                ctx.diagnostic(require_await_diagnostic(iden.span));
                             } else {
-                                ctx.diagnostic(require_await_diagnostic(
-                                    func.id.as_ref().map_or(func.span, |ident| ident.span),
-                                ));
+                                ctx.diagnostic(require_await_diagnostic(func.span));
                             }
+                        } else {
+                            ctx.diagnostic(require_await_diagnostic(
+                                func.id.as_ref().map_or(func.span, |ident| ident.span),
+                            ));
                         }
                     }
                 }
-                AstKind::ArrowFunctionExpression(func) => {
-                    if func.r#async {
-                        let mut finder = AwaitFinder { found: false };
-                        finder.visit_function_body(body);
-                        if !finder.found {
-                            ctx.diagnostic(require_await_diagnostic(func.span));
-                        }
-                    }
-                }
-                _ => {}
             }
+            AstKind::ArrowFunctionExpression(func) => {
+                if func.r#async {
+                    let mut finder = AwaitFinder { found: false };
+                    finder.visit_function_body(body);
+                    if !finder.found {
+                        ctx.diagnostic(require_await_diagnostic(func.span));
+                    }
+                }
+            }
+            _ => {}
         }
     }
 }

@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{
         match_expression, Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
         BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
-        ObjectPropertyKind, PropertyKey, VariableDeclarator,
+        ObjectPropertyKind, PropertyKey,
     },
     AstKind,
 };
@@ -239,18 +239,17 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             ident.reference_id.get().and_then(|ref_id| {
                 tab.get_reference(ref_id).symbol_id().and_then(|symbol_id| {
                     let decl = ctx.semantic().nodes().get_node(tab.get_declaration(symbol_id));
-                    if let AstKind::VariableDeclarator(VariableDeclarator {
-                        init: Some(Expression::StringLiteral(ref lit)),
-                        ..
-                    }) = decl.kind()
-                    {
-                        if lit.value == "then" {
-                            Some(lit.span)
-                        } else {
-                            None
+                    let var_decl = decl.kind().as_variable_declarator()?;
+
+                    match var_decl.init {
+                        Some(Expression::StringLiteral(ref lit)) => {
+                            if lit.value == "then" {
+                                Some(lit.span)
+                            } else {
+                                None
+                            }
                         }
-                    } else {
-                        None
+                        _ => None,
                     }
                 })
             })

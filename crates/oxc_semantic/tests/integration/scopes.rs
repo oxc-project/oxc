@@ -188,11 +188,8 @@ fn test_enums() {
         .nodes()
         .iter()
         .find_map(|node| {
-            if let AstKind::TSEnumDeclaration(e) = node.kind() {
-                Some((node, e))
-            } else {
-                None
-            }
+            let e = node.kind().as_ts_enum_declaration()?;
+            Some((node, e))
         })
         .expect("Expected TS test case to have an enum declaration for A.");
 

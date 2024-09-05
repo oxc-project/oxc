@@ -96,12 +96,10 @@ fn resolve_flags<'a>(
             }
         }
         Expression::Identifier(ident) => {
-            if let Some(decl) = get_declaration_of_variable(ident, ctx) {
-                if let AstKind::VariableDeclarator(var_decl) = decl.kind() {
-                    if let Some(init) = &var_decl.init {
-                        return resolve_flags(init, ctx);
-                    }
-                }
+            let decl = get_declaration_of_variable(ident, ctx)?;
+            let var_decl = decl.kind().as_variable_declarator()?;
+            if let Some(init) = &var_decl.init {
+                return resolve_flags(init, ctx);
             }
             None
         }

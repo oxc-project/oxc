@@ -50,9 +50,7 @@ impl ReactPerfRule for JsxNoJsxAsProp {
         kind: &AstKind<'_>,
         _symbol_id: SymbolId,
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
-        let AstKind::VariableDeclarator(decl) = kind else {
-            return None;
-        };
+        let decl = kind.as_variable_declarator()?;
         let init_span = decl.init.as_ref().and_then(check_expression)?;
         Some((decl.id.span(), Some(init_span)))
     }

@@ -1,6 +1,5 @@
 use std::rc::Rc;
 
-use oxc_ast::AstKind;
 use oxc_semantic::Semantic;
 use oxc_syntax::class::ClassId;
 
@@ -14,11 +13,12 @@ impl<'a> ClassTester<'a> {
     pub(super) fn has_class(semantic: Semantic<'a>, name: &str) -> Self {
         let class_id = semantic.classes().iter_enumerated().find_map(|(class_id, ast_node_id)| {
             let kind = semantic.nodes().kind(*ast_node_id);
-            if let AstKind::Class(class) = kind {
-                if class.id.clone().is_some_and(|id| id.name == name) {
-                    return Some(class_id);
-                };
-            }
+            let class = kind.as_class()?;
+
+            if class.id.clone().is_some_and(|id| id.name == name) {
+                return Some(class_id);
+            };
+
             None
         });
         ClassTester {

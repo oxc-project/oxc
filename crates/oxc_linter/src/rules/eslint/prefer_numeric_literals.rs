@@ -58,41 +58,42 @@ declare_oxc_lint!(
 
 impl Rule for PreferNumericLiterals {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            match &call_expr.callee.without_parentheses() {
-                Expression::Identifier(ident) if ident.name == "parseInt" => {
-                    if is_parse_int_call(ctx, ident, None) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        match &call_expr.callee.without_parentheses() {
+            Expression::Identifier(ident) if ident.name == "parseInt" => {
+                if is_parse_int_call(ctx, ident, None) {
+                    check_arguments(call_expr, ctx);
+                }
+            }
+            Expression::StaticMemberExpression(member_expr) => {
+                if let Expression::Identifier(ident) = &member_expr.object {
+                    if is_parse_int_call(ctx, ident, Some(member_expr)) {
                         check_arguments(call_expr, ctx);
                     }
+                } else if let Expression::ParenthesizedExpression(paren_expr) = &member_expr.object
+                {
+                    if let Expression::Identifier(ident) = &paren_expr.expression {
+                        if is_parse_int_call(ctx, ident, Some(member_expr)) {
+                            check_arguments(call_expr, ctx);
+                        }
+                    }
                 }
-                Expression::StaticMemberExpression(member_expr) => {
+            }
+            Expression::ChainExpression(chain_expr) => {
+                if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
+                    chain_expr.expression.as_member_expression()
+                {
                     if let Expression::Identifier(ident) = &member_expr.object {
                         if is_parse_int_call(ctx, ident, Some(member_expr)) {
                             check_arguments(call_expr, ctx);
                         }
-                    } else if let Expression::ParenthesizedExpression(paren_expr) =
-                        &member_expr.object
-                    {
-                        if let Expression::Identifier(ident) = &paren_expr.expression {
-                            if is_parse_int_call(ctx, ident, Some(member_expr)) {
-                                check_arguments(call_expr, ctx);
-                            }
-                        }
                     }
                 }
-                Expression::ChainExpression(chain_expr) => {
-                    if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
-                        chain_expr.expression.as_member_expression()
-                    {
-                        if let Expression::Identifier(ident) = &member_expr.object {
-                            if is_parse_int_call(ctx, ident, Some(member_expr)) {
-                                check_arguments(call_expr, ctx);
-                            }
-                        }
-                    }
-                }
-                _ => {}
             }
+            _ => {}
         }
     }
 }
