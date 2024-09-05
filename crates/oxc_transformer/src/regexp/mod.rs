@@ -40,11 +40,8 @@
 //! - @babel/plugin-transform-unicode-sets-regex: <https://babeljs.io/docs/en/babel-plugin-proposal-unicode-sets-regex>
 //! - TC39 Proposal: <https://github.com/tc39/proposal-regexp-set-notation>
 
-mod options;
-
 use std::borrow::Cow;
 
-pub use options::RegExpOptions;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
@@ -55,6 +52,9 @@ use oxc_span::Atom;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
+
+mod options;
+pub use options::RegExpOptions;
 
 pub struct RegExp<'a> {
     ctx: Ctx<'a>,
