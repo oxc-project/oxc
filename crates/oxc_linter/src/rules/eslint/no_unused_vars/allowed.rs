@@ -298,4 +298,40 @@ impl NoUnusedVars {
             _ => false,
         }
     }
+
+    /// Returns `true` if this binding rest element should be allowed (i.e. not
+    /// reported). Currently, this handles the case where a rest element is part
+    /// of a TS function declaration.
+    pub(super) fn is_allowed_binding_rest_element<'a>(
+        &self,
+        semantic: &Semantic<'a>,
+        symbol: &Symbol<'_, 'a>,
+    ) -> bool {
+        // Handle binding rest element as part of a function parameter, for example:
+        // `function foo(...messages: string[]) {}`
+        let parent = symbol.iter_parents().find_map(|p| match p.kind() {
+            AstKind::FormalParameters(_) => Some(p.id()),
+            _ => None,
+        });
+        match parent {
+            Some(params_id) => {
+                let mut parents_iter =
+                    semantic.nodes().iter_parents(params_id).skip(1).map(AstNode::kind);
+
+                // in function declarations, the parent immediately before the
+                // FormalParameters is a TSDeclareBlock
+                let Some(parent) = parents_iter.next() else {
+                    return false;
+                };
+                // allow unused rest parameters in function overloads
+                if matches!(parent, AstKind::Function(f) if f.r#type == FunctionType::TSDeclareFunction)
+                {
+                    return true;
+                }
+
+                false
+            }
+            None => false,
+        }
+    }
 }
