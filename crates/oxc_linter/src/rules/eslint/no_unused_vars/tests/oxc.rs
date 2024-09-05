@@ -451,7 +451,7 @@ fn test_functions() {
         "
         function foo(a: number): number;
         function foo(a: number | string): number {
-            return Number(a) 
+            return Number(a)
         }
         foo();
         ",
@@ -476,13 +476,32 @@ fn test_functions() {
             });
         ",
         "const foo = () => function bar() { }\nfoo()",
-        "module.exports.foo = () => function bar() { }"
+        "module.exports.foo = () => function bar() { }",
+        // https://github.com/oxc-project/oxc/issues/5406
+        "
+        export function log(message: string, ...interpolations: unknown[]): void;
+        export function log(message: string, ...interpolations: unknown[]): void {
+            console.log(message, interpolations);
+        }
+        ",
+        "declare function func(strings: any, ...values: any[]): object"
     ];
 
     let fail = vec![
         "function foo() {}",
         "function foo() { foo() }",
         "const foo = () => { function bar() { } }\nfoo()",
+        "
+        export function log(message: string, ...interpolations: unknown[]): void;
+        export function log(message: string, ...interpolations: unknown[]): void {
+            console.log(message);
+        }
+        ",
+        "
+        export function log(...messages: unknown[]): void {
+            return;
+        }
+        ",
     ];
 
     let fix = vec![
@@ -915,7 +934,7 @@ fn test_type_references() {
         type PermissionValues<T> = {
             [K in keyof T]: T[K] extends object ? PermissionValues<T[K]> : T[K];
         }[keyof T];
-        
+
         export type ApiPermission = PermissionValues<typeof API_PERMISSIONS>;
         
         export const API_PERMISSIONS = {} as const;
