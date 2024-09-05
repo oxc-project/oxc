@@ -122,11 +122,14 @@ pub struct RegExp<'a> {
 #[generate_derive(CloneIn, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum RegExpPattern<'a> {
-    /// Unparsed pattern, Contains a string slice of the pattern.
+    /// Unparsed pattern. Contains string slice of the pattern.
+    /// Pattern was not parsed, so may be valid or invalid.
     Raw(&'a str) = 0,
-    /// An invalid pattern, Contains a string slice of the pattern.
-    Invalid(/* raw */ &'a str) = 1,
-    /// A parsed pattern, Read [Pattern] for more details.
+    /// An invalid pattern. Contains string slice of the pattern.
+    /// Pattern was parsed and found to be invalid.
+    Invalid(&'a str) = 1,
+    /// A parsed pattern. Read [Pattern] for more details.
+    /// Pattern was parsed and found to be valid.
     Pattern(Box<'a, Pattern<'a>>) = 2,
 }
 
