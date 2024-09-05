@@ -1,1 +1,1 @@
-d1 = new RegExp("\\\\p{Emoji}", "u");
+d1 = new RegExp("\\p{Emoji}", "u");

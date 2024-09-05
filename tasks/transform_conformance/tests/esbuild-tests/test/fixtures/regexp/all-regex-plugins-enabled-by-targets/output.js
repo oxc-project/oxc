@@ -4,6 +4,6 @@ a1 = new RegExp("a.b", "s");
 b1 = new RegExp("(?<!x)", "");
 b2 = new RegExp("(?<=x)", "");
 c1 = new RegExp("(?<a>b)", "");
-d1 = new RegExp("\\\\p{Emoji}", "u");
+d1 = new RegExp("\\p{Emoji}", "u");
 f1 = new RegExp("y", "d");
-g1 = new RegExp("[\\\\p{White_Space}&&\\\\p{ASCII}]", "v");
+g1 = new RegExp("[\\p{White_Space}&&\\p{ASCII}]", "v");

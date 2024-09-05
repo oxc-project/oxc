@@ -43,8 +43,10 @@
 mod options;
 
 use std::borrow::Cow;
+use std::mem;
 
 pub use options::RegExpOptions;
+use oxc_allocator::Box;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_regular_expression::ast::{
@@ -52,7 +54,7 @@ use oxc_regular_expression::ast::{
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::Atom;
-use oxc_traverse::Traverse;
+use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -73,31 +75,32 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut oxc_traverse::TraverseCtx<'a>,
     ) {
-        let Expression::RegExpLiteral(regexp) = expr else {
+        let Expression::RegExpLiteral(ref mut regexp) = expr else {
             return;
         };
 
-        let is_unsupported = self.has_unsupported_regular_expression_flags(regexp.regex.flags);
-
-        let mut pattern_source = match regexp.regex.pattern {
-            RegExpPattern::Raw(pattern)
-                if is_unsupported
-                    || self.has_unsupported_regex_syntax_raw(pattern, regexp.regex.flags) =>
-            {
-                Cow::Borrowed(pattern)
+        if !self.has_unsupported_regular_expression_flags(regexp.regex.flags)
+            && self.requires_pattern_analysis()
+        {
+            match try_parse_pattern(regexp, ctx) {
+                Ok(pattern) => {
+                    let is_unsupported = self.has_unsupported_regular_expression_pattern(&pattern);
+                    regexp.regex.pattern = RegExpPattern::Pattern(pattern);
+                    if !is_unsupported {
+                        return;
+                    }
+                }
+                Err(err) => {
+                    regexp.regex.pattern = RegExpPattern::Invalid(err);
+                    return;
+                }
             }
-            RegExpPattern::Pattern(ref pattern)
-                if is_unsupported || self.has_unsupported_regular_expression_pattern(pattern) =>
-            {
-                Cow::Owned(regexp.regex.pattern.to_string())
-            }
-            _ => return,
         };
 
-        if pattern_source.contains('\\') {
-            // Escape backslashes in the pattern source
-            pattern_source = Cow::Owned(pattern_source.replace('\\', "\\\\"));
-        }
+        let pattern_source: Cow<'_, str> = match &regexp.regex.pattern {
+            RegExpPattern::Raw(raw) | RegExpPattern::Invalid(raw) => Cow::Borrowed(raw),
+            RegExpPattern::Pattern(p) => Cow::Owned(p.to_string()),
+        };
 
         let callee = {
             let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
@@ -132,6 +135,12 @@ impl<'a> Traverse<'a> for RegExp<'a> {
 }
 
 impl<'a> RegExp<'a> {
+    fn requires_pattern_analysis(&self) -> bool {
+        self.options.named_capture_groups
+            || self.options.unicode_property_escapes
+            || self.options.look_behind_assertions
+    }
+
     /// Check if the regular expression contains any unsupported flags.
     fn has_unsupported_regular_expression_flags(&self, flags: RegExpFlags) -> bool {
         flags.iter().any(|f| match f {
@@ -148,14 +157,6 @@ impl<'a> RegExp<'a> {
     ///
     /// Based on parsed regular expression pattern.
     fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
-        // Early return if no unsupported features-related plugins are enabled
-        if !(self.options.named_capture_groups
-            || self.options.unicode_property_escapes
-            || self.options.look_behind_assertions)
-        {
-            return false;
-        }
-
         let check_terms = |terms: &Vec<'a, Term>| {
             terms.iter().any(|element| match element {
                 Term::CapturingGroup(_) if self.options.named_capture_groups => true,
@@ -179,80 +180,6 @@ impl<'a> RegExp<'a> {
 
         pattern.body.body.iter().any(|alternative| check_terms(&alternative.body))
     }
-
-    /// Check if the regular expression contains any unsupported syntax.
-    ///
-    /// Port from [esbuild](https://github.com/evanw/esbuild/blob/332727499e62315cff4ecaff9fa8b86336555e46/internal/js_parser/js_parser.go#L12667-L12800)
-    fn has_unsupported_regex_syntax_raw(&self, pattern: &str, flags: RegExpFlags) -> bool {
-        // Early return if no unsupported features-related plugins are enabled
-        if !(self.options.named_capture_groups
-            || self.options.unicode_property_escapes
-            || self.options.look_behind_assertions)
-        {
-            return false;
-        }
-
-        let is_unicode = flags.contains(RegExpFlags::U);
-        let mut paren_depth = 0;
-        let mut chars = pattern.chars().peekable();
-
-        while let Some(c) = chars.next() {
-            match c {
-                '[' => {
-                    while let Some(c) = chars.next() {
-                        if c == ']' {
-                            break;
-                        }
-                        if c == '\\' {
-                            chars.next();
-                        }
-                    }
-                }
-                '(' => {
-                    if matches!(chars.peek(), Some(&'?')) {
-                        chars.next();
-                        if matches!(chars.peek(), Some(&'<')) {
-                            chars.next();
-                            match chars.peek() {
-                                Some(&'!' | &'=') if self.options.look_behind_assertions => {
-                                    // (?<=) and (?<!)
-                                    return true;
-                                }
-                                _ => {
-                                    if self.options.named_capture_groups {
-                                        return chars.any(|c| c == '>');
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    paren_depth += 1;
-                }
-                ')' => {
-                    if paren_depth == 0 {
-                        return true;
-                    }
-                    paren_depth -= 1;
-                }
-                '\\' => {
-                    if self.options.unicode_property_escapes && is_unicode {
-                        if let Some(&next_char) = chars.peek() {
-                            // \p{ and \P{
-                            if (next_char == 'p' || next_char == 'P')
-                                && chars.nth(1) == Some('{')
-                                && chars.any(|c| c == '}')
-                            {
-                                return true;
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        false
-    }
 }
 
 fn has_unicode_property_escape_character_class(character_class: &CharacterClass) -> bool {
@@ -263,4 +190,29 @@ fn has_unicode_property_escape_character_class(character_class: &CharacterClass)
         }
         _ => false,
     })
+}
+
+fn try_parse_pattern<'a>(
+    literal: &mut RegExpLiteral<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) -> Result<Box<'a, Pattern<'a>>, &'a str> {
+    // Take the ownership of the pattern
+    let regexp_pattern = mem::replace(&mut literal.regex.pattern, RegExpPattern::Raw(""));
+
+    match regexp_pattern {
+        RegExpPattern::Raw(raw) => {
+            use oxc_regular_expression::{ParserOptions, PatternParser};
+            let options = ParserOptions {
+                span_offset: literal.span.start + 1, // exclude `/`
+                unicode_mode: literal.regex.flags.contains(RegExpFlags::U)
+                    || literal.regex.flags.contains(RegExpFlags::V),
+                unicode_sets_mode: literal.regex.flags.contains(RegExpFlags::V),
+            };
+            PatternParser::new(ctx.ast.allocator, raw, options)
+                .parse()
+                .map_or_else(|_| Err(raw), |p| Ok(ctx.alloc(p)))
+        }
+        RegExpPattern::Pattern(pattern) => Ok(pattern),
+        RegExpPattern::Invalid(raw) => Err(raw),
+    }
 }
