@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// Forbidding this pattern prevents mistakes resulting from unfamiliarity with the language or a copy-paste error.
     ///
     /// ### Example
-    /// 
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```rust
     /// class C {

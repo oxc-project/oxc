@@ -20,7 +20,7 @@ declare_oxc_lint! {
     /// elements do not contain the `role` and/or `aria-*` props.
     ///
     /// ### Example
-    /// 
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <meta charset="UTF-8" aria-hidden="false" />

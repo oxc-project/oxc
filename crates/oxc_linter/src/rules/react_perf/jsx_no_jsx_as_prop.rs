@@ -20,7 +20,7 @@ declare_oxc_lint!(
     /// <Item jsx={this.props.jsx || <SubItem />} />
     /// <Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
     /// <Item callback={this.props.jsx} />
