@@ -197,27 +197,33 @@ impl<'a> RegExp<'a> {
     ///
     /// Based on parsed regular expression pattern.
     fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
-        let terms_contains_unsupported = |terms: &[Term]| {
-            terms.iter().any(|term| match term {
-                Term::CapturingGroup(_) => self.named_capture_groups,
-                Term::UnicodePropertyEscape(_) => self.unicode_property_escapes,
+        pattern.body.body.iter().any(|alternative| {
+            alternative.body.iter().any(|term| self.term_contains_unsupported(term))
+        })
+    }
+
+    fn term_contains_unsupported(&self, mut term: &Term) -> bool {
+        // Loop because `Term::Quantifier` contains a nested `Term`
+        loop {
+            match term {
+                Term::CapturingGroup(_) => return self.named_capture_groups,
+                Term::UnicodePropertyEscape(_) => return self.unicode_property_escapes,
                 Term::CharacterClass(character_class) => {
-                    self.unicode_property_escapes
+                    return self.unicode_property_escapes
                         && character_class_has_unicode_property_escape(character_class)
                 }
                 Term::LookAroundAssertion(assertion) => {
-                    self.look_behind_assertions
+                    return self.look_behind_assertions
                         && matches!(
                             assertion.kind,
                             LookAroundAssertionKind::Lookbehind
                                 | LookAroundAssertionKind::NegativeLookbehind
                         )
                 }
-                _ => false,
-            })
-        };
-
-        pattern.body.body.iter().any(|alternative| terms_contains_unsupported(&alternative.body))
+                Term::Quantifier(quantifier) => term = &quantifier.body,
+                _ => return false,
+            }
+        }
     }
 }
 
