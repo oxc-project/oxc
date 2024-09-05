@@ -67,8 +67,7 @@ impl Rule for PreferExponentiationOperator {
                     return;
                 }
 
-                if let Expression::Identifier(ident) = member_expr.object().without_parenthesized()
-                {
+                if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
                     if GLOBAL_OBJECT_NAMES.contains(ident.name.as_str())
                         && ctx.semantic().is_reference_to_global_variable(ident)
                     {

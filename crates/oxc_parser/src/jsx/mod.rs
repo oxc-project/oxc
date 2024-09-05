@@ -198,7 +198,12 @@ impl<'a> ParserImpl<'a> {
             }
 
             // <foo.bar>
-            property = Some(self.parse_jsx_identifier()?);
+            let ident = self.parse_jsx_identifier()?;
+            // `<foo.bar- />` is a syntax error.
+            if ident.name.contains('-') {
+                return Err(diagnostics::unexpected_token(ident.span));
+            }
+            property = Some(ident);
             span = self.end_span(span);
         }
 

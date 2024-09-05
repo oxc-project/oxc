@@ -52,8 +52,7 @@ impl Rule for PreferTypeError {
             return;
         };
 
-        let Expression::NewExpression(new_expr) = &throw_stmt.argument.without_parenthesized()
-        else {
+        let Expression::NewExpression(new_expr) = &throw_stmt.argument.without_parentheses() else {
             return;
         };
 

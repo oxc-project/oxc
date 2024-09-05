@@ -65,7 +65,7 @@ impl Rule for ThrowNewError {
             return;
         };
 
-        match call_expr.callee.without_parenthesized() {
+        match call_expr.callee.without_parentheses() {
             Expression::Identifier(v) => {
                 if !CUSTOM_ERROR_REGEX_PATTERN.is_match(&v.name) {
                     return;

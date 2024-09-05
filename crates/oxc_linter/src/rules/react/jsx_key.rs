@@ -194,7 +194,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 return Some(InsideArrayOrIterator::Array);
             }
             AstKind::CallExpression(v) => {
-                let callee = &v.callee.without_parenthesized();
+                let callee = &v.callee.without_parentheses();
 
                 if let Some(v) = callee.as_member_expression() {
                     if let Some((span, ident)) = v.static_property_info() {

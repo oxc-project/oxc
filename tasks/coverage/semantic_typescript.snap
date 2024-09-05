@@ -12996,9 +12996,6 @@ rebuilt        : ScopeId(0): ["A", "B"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Reference flags mismatch:
-after transform: ReferenceId(12): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Extract", "Parameters"]
 rebuilt        : []
@@ -14600,15 +14597,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), Sc
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-Reference flags mismatch:
-after transform: ReferenceId(1): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(2): ReferenceFlags(Type)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(3): ReferenceFlags(Type)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation5.ts
 semantic error: Bindings mismatch:
@@ -31028,12 +31016,6 @@ rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(4): [ReferenceId(12)]
 rebuilt        : SymbolId(3): []
-Reference flags mismatch:
-after transform: ReferenceId(1): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(3): ReferenceFlags(Type)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpression.ts
 semantic error: Missing SymbolId: M

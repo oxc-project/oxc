@@ -172,7 +172,7 @@ impl ButtonHasType {
     }
 
     fn is_valid_button_type_prop_expression(&self, expr: &Expression) -> bool {
-        match expr.without_parenthesized() {
+        match expr.without_parentheses() {
             Expression::StringLiteral(str) => {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }

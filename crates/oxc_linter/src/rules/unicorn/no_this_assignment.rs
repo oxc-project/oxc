@@ -62,7 +62,7 @@ impl Rule for NoThisAssignment {
                     return;
                 };
 
-                if !matches!(init.without_parenthesized(), Expression::ThisExpression(_)) {
+                if !matches!(init.without_parentheses(), Expression::ThisExpression(_)) {
                     return;
                 }
 
@@ -78,7 +78,7 @@ impl Rule for NoThisAssignment {
             }
             AstKind::AssignmentExpression(assignment_expr) => {
                 if !matches!(
-                    assignment_expr.right.without_parenthesized(),
+                    assignment_expr.right.without_parentheses(),
                     Expression::ThisExpression(_)
                 ) {
                     return;

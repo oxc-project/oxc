@@ -26,9 +26,25 @@ pub fn check_ts_type_parameter_declaration(
     }
 }
 
+/// Initializers are not allowed in ambient contexts. ts(1039)
+fn initializer_in_ambient_context(init_span: Span) -> OxcDiagnostic {
+    ts_error("1039", "Initializers are not allowed in ambient contexts.").with_label(init_span)
+}
+
+pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
+    if decl.declare {
+        for var in &decl.declarations {
+            if let Some(init) = &var.init {
+                ctx.error(initializer_in_ambient_context(init.span()));
+            }
+        }
+    }
+}
+
 fn unexpected_optional(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected `?` operator").with_label(span0)
 }
+
 #[allow(clippy::cast_possible_truncation)]
 pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
     if decl.id.optional {
@@ -281,8 +297,35 @@ fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
+/// A parameter property is only allowed in a constructor implementation.ts(2369)
+fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {
+    ts_error("2369", "A parameter property is only allowed in a constructor implementation.")
+        .with_label(span)
+}
+
+/// Getter or setter without a body. There is no corresponding TS error code,
+/// since in TSC this is a parse error.
+fn accessor_without_body(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Getters and setters must have an implementation.").with_label(span)
+}
+
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
-    if method.r#type.is_abstract() {
+    let is_abstract = method.r#type.is_abstract();
+    let is_declare = ctx.class_table_builder.current_class_id.map_or(
+        ctx.source_type.is_typescript_definition(),
+        |id| {
+            let ast_node_id = ctx.class_table_builder.classes.declarations[id];
+            let AstKind::Class(class) = ctx.nodes.get_node(ast_node_id).kind() else {
+                #[cfg(debug_assertions)]
+                panic!("current_class_id is set, but does not point to a Class node.");
+                #[cfg(not(debug_assertions))]
+                return ctx.source_type.is_typescript_definition();
+            };
+            class.declare || ctx.source_type.is_typescript_definition()
+        },
+    );
+
+    if is_abstract {
         // constructors cannot be abstract, no matter what
         if method.kind.is_constructor() {
             ctx.error(illegal_abstract_modifier(method.key.span()));
@@ -306,6 +349,21 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
             ctx.error(abstract_method_cannot_have_implementation(method_name, span));
         }
     }
+
+    let is_empty_body = method.value.r#type == FunctionType::TSEmptyBodyFunctionExpression;
+    // Illegal to have `constructor(public foo);`
+    if method.kind.is_constructor() && is_empty_body {
+        for param in &method.value.params.items {
+            if param.accessibility.is_some() {
+                ctx.error(parameter_property_only_in_constructor_impl(param.span));
+            }
+        }
+    }
+
+    // Illegal to have `get foo();` or `set foo(a)`
+    if method.kind.is_accessor() && is_empty_body && !is_abstract && !is_declare {
+        ctx.error(accessor_without_body(method.key.span()));
+    }
 }
 
 pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &SemanticBuilder<'a>) {
@@ -315,5 +373,15 @@ pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &Semant
             (&ctx.source_text[key_span], key_span)
         });
         ctx.error(abstract_property_cannot_have_initializer(prop_name, span));
+    }
+}
+
+pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
+    if let Expression::FunctionExpression(func) = &prop.value {
+        if prop.kind.is_accessor()
+            && matches!(func.r#type, FunctionType::TSEmptyBodyFunctionExpression)
+        {
+            ctx.error(accessor_without_body(prop.key.span()));
+        }
     }
 }

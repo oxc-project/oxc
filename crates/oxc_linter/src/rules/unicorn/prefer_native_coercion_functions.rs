@@ -130,7 +130,7 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
         if let Statement::ExpressionStatement(expr_stmt) = &stmt {
             return expr_stmt
                 .expression
-                .without_parenthesized()
+                .without_parentheses()
                 .get_identifier_reference()
                 .map(|v| v.name.as_str());
         }
@@ -145,7 +145,7 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
     if let Statement::ReturnStatement(return_statement) = &stmt {
         if let Some(return_expr) = &return_statement.argument {
             return return_expr
-                .without_parenthesized()
+                .without_parentheses()
                 .get_identifier_reference()
                 .map(|v| v.name.as_str());
         }

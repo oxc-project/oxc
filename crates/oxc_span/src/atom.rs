@@ -8,7 +8,7 @@ use compact_str::CompactString;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
-use crate::Span;
+use crate::{cmp::ContentEq, Span};
 use oxc_allocator::{Allocator, CloneIn, FromIn};
 
 #[cfg(feature = "serialize")]
@@ -167,9 +167,40 @@ impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
         self.as_ref() == other.as_str()
     }
 }
+
 impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
     fn eq(&self, other: &&Atom<'a>) -> bool {
         self.as_ref() == other.as_str()
+    }
+}
+
+impl<'a> ContentEq for Atom<'a> {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl<'a> ContentEq<Atom<'a>> for &str {
+    fn content_eq(&self, other: &Atom<'a>) -> bool {
+        self == other
+    }
+}
+
+impl<'a> ContentEq<str> for Atom<'a> {
+    fn content_eq(&self, other: &str) -> bool {
+        self == other
+    }
+}
+
+impl<'a> ContentEq<Atom<'a>> for Cow<'_, str> {
+    fn content_eq(&self, other: &Atom<'a>) -> bool {
+        self == other
+    }
+}
+
+impl<'a> ContentEq<&Atom<'a>> for Cow<'_, str> {
+    fn content_eq(&self, other: &&Atom<'a>) -> bool {
+        self == other
     }
 }
 

@@ -78,6 +78,9 @@ fn dce_if_statement() {
         "const a = { fn: function() { if (true) { foo; } } }",
         "const a = { fn: function() { { foo; } } }",
     );
+
+    // parenthesized
+    test("if (!!(false)) { REMOVE; } else { KEEP; }", "{ KEEP }");
 }
 
 #[test]

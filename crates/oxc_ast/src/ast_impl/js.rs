@@ -173,11 +173,12 @@ impl<'a> Expression<'a> {
     }
 
     /// Remove nested parentheses from this expression.
-    pub fn without_parenthesized(&self) -> &Self {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.without_parenthesized(),
-            _ => self,
+    pub fn without_parentheses(&self) -> &Self {
+        let mut expr = self;
+        while let Expression::ParenthesizedExpression(paran_expr) = expr {
+            expr = &paran_expr.expression;
         }
+        expr
     }
 
     pub fn is_specific_id(&self, name: &str) -> bool {
@@ -203,29 +204,35 @@ impl<'a> Expression<'a> {
     }
 
     pub fn get_inner_expression(&self) -> &Expression<'a> {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSInstantiationExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression(),
-            _ => self,
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::ParenthesizedExpression(e) => &e.expression,
+                Expression::TSAsExpression(e) => &e.expression,
+                Expression::TSSatisfiesExpression(e) => &e.expression,
+                Expression::TSInstantiationExpression(e) => &e.expression,
+                Expression::TSNonNullExpression(e) => &e.expression,
+                Expression::TSTypeAssertion(e) => &e.expression,
+                _ => break,
+            };
         }
+        expr
     }
 
     pub fn get_inner_expression_mut(&mut self) -> &mut Expression<'a> {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSInstantiationExpression(expr) => {
-                expr.expression.get_inner_expression_mut()
-            }
-            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression_mut(),
-            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression_mut(),
-            _ => self,
+        let mut expr = self;
+        loop {
+            expr = match expr {
+                Expression::ParenthesizedExpression(e) => &mut e.expression,
+                Expression::TSAsExpression(e) => &mut e.expression,
+                Expression::TSSatisfiesExpression(e) => &mut e.expression,
+                Expression::TSInstantiationExpression(e) => &mut e.expression,
+                Expression::TSNonNullExpression(e) => &mut e.expression,
+                Expression::TSTypeAssertion(e) => &mut e.expression,
+                _ => break,
+            };
         }
+        expr
     }
 
     pub fn is_identifier_reference(&self) -> bool {
@@ -441,6 +448,15 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
+impl PropertyKind {
+    /// Returns `true` if this property is a getter or setter.
+    ///
+    /// Analogous to [`MethodDefinitionKind::is_accessor`].
+    pub fn is_accessor(self) -> bool {
+        matches!(self, Self::Get | Self::Set)
+    }
+}
+
 impl<'a> TemplateLiteral<'a> {
     pub fn is_no_substitution_template(&self) -> bool {
         self.expressions.is_empty() && self.quasis.len() == 1
@@ -504,12 +520,12 @@ impl<'a> MemberExpression<'a> {
     }
 
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
-        let object_matches = match self.object().without_parenthesized() {
+        let object_matches = match self.object().without_parentheses() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
                 match_member_expression!(ChainElement) => {
                     let member_expr = x.expression.to_member_expression();
-                    member_expr.object().without_parenthesized().is_specific_id(object)
+                    member_expr.object().without_parentheses().is_specific_id(object)
                 }
             },
             x => x.is_specific_id(object),
@@ -1414,6 +1430,13 @@ impl MethodDefinitionKind {
 
     pub fn is_get(&self) -> bool {
         matches!(self, Self::Get)
+    }
+
+    /// Returns `true` if this method is a getter or a setter.
+    ///
+    /// Analogous to [`PropertyKind::is_accessor`].
+    pub fn is_accessor(&self) -> bool {
+        matches!(self, Self::Get | Self::Set)
     }
 
     pub fn scope_flags(self) -> ScopeFlags {

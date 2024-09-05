@@ -307,7 +307,7 @@ fn check_useless_iterable_to_array<'a>(
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
-            if for_of_stmt.right.without_parenthesized().span() == array_expr.span {
+            if for_of_stmt.right.without_parentheses().span() == array_expr.span {
                 ctx.diagnostic(iterable_to_array_in_for_of(span));
                 return true;
             }

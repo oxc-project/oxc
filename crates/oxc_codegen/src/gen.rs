@@ -1558,7 +1558,7 @@ impl<'a> Gen for ObjectProperty<'a> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if let Expression::Identifier(ident) = self.value.without_parenthesized() {
+            if let Expression::Identifier(ident) = self.value.without_parentheses() {
                 if key.name == p.get_identifier_reference_name(ident) && key.name != "__proto__" {
                     shorthand = true;
                 }
@@ -2033,6 +2033,9 @@ impl<'a> Gen for TaggedTemplateExpression<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         self.tag.gen_expr(p, Precedence::Postfix, Context::empty());
+        if let Some(type_parameters) = &self.type_parameters {
+            type_parameters.gen(p, ctx);
+        }
         self.quasi.gen(p, ctx);
     }
 }
@@ -3158,7 +3161,7 @@ impl<'a> Gen for TSFunctionType<'a> {
 
 impl<'a> Gen for TSThisParameter<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        self.this.gen(p, ctx);
+        p.print_str("this");
         if let Some(type_annotation) = &self.type_annotation {
             p.print_str(": ");
             type_annotation.gen(p, ctx);
