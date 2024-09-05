@@ -479,23 +479,20 @@ impl<'a> SemanticBuilder<'a> {
                     let flags = reference.flags();
                     if flags.is_type() && symbol_flags.can_be_referenced_by_type()
                         || flags.is_value() && symbol_flags.can_be_referenced_by_value()
-                        || flags.is_ts_type_query() && symbol_flags.is_import()
+                        || flags.is_value_as_type()
+                            && (symbol_flags.can_be_referenced_by_value()
+                                || symbol_flags.is_type_import())
                     {
-                        // The non type-only ExportSpecifier can reference a type/value symbol,
-                        // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
-                        if symbol_flags.is_value() && !flags.is_type_only() {
+                        if flags.is_value_as_type() {
+                            // Resolve pending type references (e.g., from `typeof` expressions) to proper type references.
+                            *reference.flags_mut() = ReferenceFlags::Type;
+                        } else if symbol_flags.is_value() && !flags.is_type_only() {
+                            // The non type-only ExportSpecifier can reference a type/value symbol,
+                            // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                             *reference.flags_mut() -= ReferenceFlags::Type;
                         } else {
                             // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
                             *reference.flags_mut() -= ReferenceFlags::Value;
-                        }
-
-                        // import type { T } from './mod'; type A = typeof T
-                        //                                                 ^ can reference type-only import
-                        // If symbol is type-import, we need to replace the ReferenceFlags::Value with ReferenceFlags::Type
-                        if flags.is_ts_type_query() && symbol_flags.is_type_import() {
-                            *reference.flags_mut() -= ReferenceFlags::Value;
-                            *reference.flags_mut() |= ReferenceFlags::Type;
                         }
 
                         reference.set_symbol_id(symbol_id);
@@ -1834,19 +1831,18 @@ impl<'a> SemanticBuilder<'a> {
                 if signature.key.is_expression() {
                     // interface A { [prop]: string }
                     //               ^^^^^ The property can reference value or [`SymbolFlags::TypeImport`] symbol
-                    self.current_reference_flags =
-                        ReferenceFlags::Read | ReferenceFlags::TSTypeQuery; // TODO: Should use another flag
+                    self.current_reference_flags = ReferenceFlags::ValueAsType;
                 }
             }
             AstKind::TSTypeQuery(_) => {
                 // type A = typeof a;
                 //          ^^^^^^^^
-                self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::TSTypeQuery;
+                self.current_reference_flags = ReferenceFlags::ValueAsType;
             }
             AstKind::TSTypeParameterInstantiation(_) => {
                 // type A<T> = typeof a<T>;
                 //                     ^^^ avoid treat T as a value and TSTypeQuery
-                self.current_reference_flags -= ReferenceFlags::Read | ReferenceFlags::TSTypeQuery;
+                self.current_reference_flags -= ReferenceFlags::ValueAsType;
             }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
@@ -1862,7 +1858,8 @@ impl<'a> SemanticBuilder<'a> {
                         //            ^^^ Keep the current reference flag
                     }
                     _ => {
-                        if !self.current_reference_flags.is_ts_type_query() {
+                        // Handled in `AstKind::PropertySignature` or `AstKind::TSTypeQuery`
+                        if !self.current_reference_flags.is_value_as_type() {
                             self.current_reference_flags = ReferenceFlags::Type;
                         }
                     }

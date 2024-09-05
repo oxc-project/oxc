@@ -31,7 +31,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/type-declarations/signatures/
         "node": "ImportDefaultSpecifier",
         "references": [
           {
-            "flags": "ReferenceFlags(Type | TSTypeQuery)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "X",
             "node_id": 15
