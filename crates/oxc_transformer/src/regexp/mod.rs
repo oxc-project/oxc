@@ -61,6 +61,7 @@ use crate::context::Ctx;
 pub struct RegExp<'a> {
     _ctx: Ctx<'a>,
     unsupported_flags: RegExpFlags,
+    some_unsupported_patterns: bool,
     options: RegExpOptions,
 }
 
@@ -84,7 +85,12 @@ impl<'a> RegExp<'a> {
             unsupported_flags |= RegExpFlags::V;
         }
 
-        Self { _ctx: ctx, unsupported_flags, options }
+        // Get if some unsupported patterns
+        let some_unsupported_patterns = options.named_capture_groups
+            || options.unicode_property_escapes
+            || options.look_behind_assertions;
+
+        Self { _ctx: ctx, unsupported_flags, some_unsupported_patterns, options }
     }
 }
 
@@ -99,7 +105,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         };
 
         let has_unsupported_flags = regexp.regex.flags.intersects(self.unsupported_flags);
-        if !has_unsupported_flags && self.requires_pattern_analysis() {
+        if !has_unsupported_flags && self.some_unsupported_patterns {
             match try_parse_pattern(regexp, ctx) {
                 Ok(pattern) => {
                     let is_unsupported = self.has_unsupported_regular_expression_pattern(&pattern);
@@ -153,12 +159,6 @@ impl<'a> Traverse<'a> for RegExp<'a> {
 }
 
 impl<'a> RegExp<'a> {
-    fn requires_pattern_analysis(&self) -> bool {
-        self.options.named_capture_groups
-            || self.options.unicode_property_escapes
-            || self.options.look_behind_assertions
-    }
-
     /// Check if the regular expression contains any unsupported syntax.
     ///
     /// Based on parsed regular expression pattern.
