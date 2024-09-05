@@ -174,10 +174,11 @@ impl<'a> Expression<'a> {
 
     /// Remove nested parentheses from this expression.
     pub fn without_parenthesized(&self) -> &Self {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.without_parenthesized(),
-            _ => self,
+        let mut expr = self;
+        while let Expression::ParenthesizedExpression(paran_expr) = expr {
+            expr = &paran_expr.expression;
         }
+        expr
     }
 
     pub fn is_specific_id(&self, name: &str) -> bool {
