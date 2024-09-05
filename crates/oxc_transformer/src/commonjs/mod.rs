@@ -11,9 +11,9 @@ use crate::commonjs::utils::export::{
 use crate::context::Ctx;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::{
-    BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration,
-    ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Program, PropertyKey,
-    Statement, TSTypeAnnotation,
+    BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
+    ExportNamedDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+    ModuleExportName, Program, PropertyKey, Statement, TSTypeAnnotation,
 };
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -117,8 +117,17 @@ impl<'a> Commonjs<'a> {
         node: oxc_allocator::Box<ExportDefaultDeclaration<'a>>,
     ) -> Statement<'a> {
         let expr = node.declaration.clone_in(self.ctx.ast.allocator);
-        create_default_exports(expr.into_expression(), &self.ctx.ast)
-            .clone_in(self.ctx.ast.allocator)
+
+        let expression: Expression<'a> = match expr {
+            ExportDefaultDeclarationKind::FunctionDeclaration(decl) => {
+                self.ctx.ast.expression_from_function(decl)
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(decl) => {
+                self.ctx.ast.expression_from_class(decl)
+            }
+            _ => expr.into_expression(),
+        };
+        create_default_exports(expression, &self.ctx.ast).clone_in(self.ctx.ast.allocator)
     }
 
     pub fn transform_export_named_declaration(
