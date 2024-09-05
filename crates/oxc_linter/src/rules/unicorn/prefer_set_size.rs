@@ -57,7 +57,7 @@ impl Rule for PreferSetSize {
             return;
         }
 
-        let Expression::ArrayExpression(array_expr) = member_expr.object().without_parenthesized()
+        let Expression::ArrayExpression(array_expr) = member_expr.object().without_parentheses()
         else {
             return;
         };

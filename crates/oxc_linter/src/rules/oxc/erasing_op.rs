@@ -72,7 +72,7 @@ impl Rule for ErasingOp {
 }
 
 fn is_number_value(expr: &Expression, value: f64) -> bool {
-    if let Expression::NumericLiteral(number_literal) = expr.without_parenthesized() {
+    if let Expression::NumericLiteral(number_literal) = expr.without_parentheses() {
         (number_literal.value - value).abs() < f64::EPSILON
     } else {
         false

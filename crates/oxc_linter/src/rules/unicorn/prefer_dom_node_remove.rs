@@ -58,7 +58,7 @@ impl Rule for PreferDomNodeRemove {
             return;
         };
 
-        let expr = expr.without_parenthesized();
+        let expr = expr.without_parentheses();
         if matches!(
             expr,
             Expression::ArrayExpression(_)

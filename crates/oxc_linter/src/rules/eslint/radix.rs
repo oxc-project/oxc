@@ -67,7 +67,7 @@ impl Rule for Radix {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            match call_expr.callee.without_parenthesized() {
+            match call_expr.callee.without_parentheses() {
                 Expression::Identifier(ident) => {
                     if ident.name == "parseInt"
                         && ctx.symbols().is_global_reference(ident.reference_id().unwrap())
@@ -76,8 +76,7 @@ impl Rule for Radix {
                     }
                 }
                 Expression::StaticMemberExpression(member_expr) => {
-                    if let Expression::Identifier(ident) =
-                        member_expr.object.without_parenthesized()
+                    if let Expression::Identifier(ident) = member_expr.object.without_parentheses()
                     {
                         if ident.name == "Number"
                             && member_expr.property.name == "parseInt"

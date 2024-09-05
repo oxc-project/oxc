@@ -47,8 +47,7 @@ impl Rule for NoObjectAsDefaultParameter {
             return;
         };
 
-        let Expression::ObjectExpression(object_expr) =
-            &assignment_pat.right.without_parenthesized()
+        let Expression::ObjectExpression(object_expr) = &assignment_pat.right.without_parentheses()
         else {
             return;
         };

@@ -59,7 +59,7 @@ declare_oxc_lint!(
 impl Rule for PreferNumericLiterals {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            match &call_expr.callee.without_parenthesized() {
+            match &call_expr.callee.without_parentheses() {
                 Expression::Identifier(ident) if ident.name == "parseInt" => {
                     if is_parse_int_call(ctx, ident, None) {
                         check_arguments(call_expr, ctx);

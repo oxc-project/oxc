@@ -47,7 +47,7 @@ impl ReactPerfRule for JsxNoJsxAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::JSXElement(expr) => Some(expr.span),
         Expression::LogicalExpression(expr) => {
             check_expression(&expr.left).or_else(|| check_expression(&expr.right))

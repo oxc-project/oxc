@@ -121,12 +121,12 @@ fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
     match node.kind() {
         AstKind::CallExpression(expr) => expr
             .callee
-            .without_parenthesized()
+            .without_parentheses()
             .get_identifier_reference()
             .is_some_and(|x| x.name == "Boolean"),
         AstKind::NewExpression(expr) => expr
             .callee
-            .without_parenthesized()
+            .without_parentheses()
             .get_identifier_reference()
             .is_some_and(|x| x.name == "Boolean"),
         _ => false,
@@ -137,14 +137,14 @@ fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
     match parent.kind() {
         AstKind::CallExpression(expr) => expr.arguments.first().map_or(false, |arg| {
             if let Some(expr) = arg.as_expression() {
-                expr.without_parenthesized().span() == node.kind().span()
+                expr.without_parentheses().span() == node.kind().span()
             } else {
                 false
             }
         }),
         AstKind::NewExpression(expr) => expr.arguments.first().map_or(false, |arg| {
             if let Some(expr) = arg.as_expression() {
-                expr.without_parenthesized().span() == node.kind().span()
+                expr.without_parentheses().span() == node.kind().span()
             } else {
                 false
             }
@@ -156,23 +156,23 @@ fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
 fn is_inside_test_condition(node: &AstNode, ctx: &LintContext) -> bool {
     get_real_parent(node, ctx).map_or(false, |parent| match parent.kind() {
         AstKind::IfStatement(stmt) => {
-            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            let expr_span = stmt.test.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
         }
         AstKind::DoWhileStatement(stmt) => {
-            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            let expr_span = stmt.test.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
         }
         AstKind::WhileStatement(stmt) => {
-            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            let expr_span = stmt.test.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
         }
         AstKind::ConditionalExpression(stmt) => {
-            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            let expr_span = stmt.test.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
         }
         AstKind::ForStatement(stmt) => stmt.test.as_ref().map_or(false, |expr| {
-            let expr_span = expr.get_inner_expression().without_parenthesized().span();
+            let expr_span = expr.get_inner_expression().without_parentheses().span();
             expr_span == node.kind().span()
         }),
         _ => false,

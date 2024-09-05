@@ -64,7 +64,7 @@ impl ReactPerfRule for JsxNoNewArrayAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::ArrayExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Array")

@@ -57,7 +57,7 @@ impl ReactPerfRule for JsxNoNewFunctionAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::ArrowFunctionExpression(expr) => Some(expr.span),
         Expression::FunctionExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {

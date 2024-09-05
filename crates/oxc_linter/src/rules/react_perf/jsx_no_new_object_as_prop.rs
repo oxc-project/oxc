@@ -63,7 +63,7 @@ impl ReactPerfRule for JsxNoNewObjectAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::ObjectExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Object")

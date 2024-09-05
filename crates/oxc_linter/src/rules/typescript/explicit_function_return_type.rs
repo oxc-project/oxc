@@ -548,7 +548,7 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
         return true;
     }
 
-    match call_expr.callee.without_parenthesized() {
+    match call_expr.callee.without_parentheses() {
         Expression::FunctionExpression(func_expr) => {
             let AstKind::Function(callee_func_expr) = callee.unwrap().kind() else { return false };
             func_expr.span != callee_func_expr.span

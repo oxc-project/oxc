@@ -60,7 +60,7 @@ impl Rule for NoLengthAsSliceEnd {
         let Some(MemberExpression::StaticMemberExpression(second_argument)) = call_expr.arguments
             [1]
         .as_expression()
-        .map(oxc_ast::ast::Expression::without_parenthesized)
+        .map(oxc_ast::ast::Expression::without_parentheses)
         .and_then(|e| e.get_member_expr()) else {
             return;
         };

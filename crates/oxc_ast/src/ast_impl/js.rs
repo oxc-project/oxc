@@ -173,7 +173,7 @@ impl<'a> Expression<'a> {
     }
 
     /// Remove nested parentheses from this expression.
-    pub fn without_parenthesized(&self) -> &Self {
+    pub fn without_parentheses(&self) -> &Self {
         let mut expr = self;
         while let Expression::ParenthesizedExpression(paran_expr) = expr {
             expr = &paran_expr.expression;
@@ -511,12 +511,12 @@ impl<'a> MemberExpression<'a> {
     }
 
     pub fn through_optional_is_specific_member_access(&self, object: &str, property: &str) -> bool {
-        let object_matches = match self.object().without_parenthesized() {
+        let object_matches = match self.object().without_parentheses() {
             Expression::ChainExpression(x) => match &x.expression {
                 ChainElement::CallExpression(_) => false,
                 match_member_expression!(ChainElement) => {
                     let member_expr = x.expression.to_member_expression();
-                    member_expr.object().without_parenthesized().is_specific_id(object)
+                    member_expr.object().without_parentheses().is_specific_id(object)
                 }
             },
             x => x.is_specific_id(object),
