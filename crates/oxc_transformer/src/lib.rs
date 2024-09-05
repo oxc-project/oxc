@@ -45,6 +45,7 @@ use oxc_span::{SourceType, SPAN};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 use regexp::RegExp;
 
+use crate::commonjs::Commonjs;
 pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     env::{EnvOptions, Targets},
@@ -59,7 +60,6 @@ use crate::{
     react::React,
     typescript::TypeScript,
 };
-use crate::commonjs::Commonjs;
 
 pub struct TransformerReturn {
     pub errors: std::vec::Vec<OxcDiagnostic>,

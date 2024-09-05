@@ -10,7 +10,11 @@ use crate::commonjs::utils::export::{
 };
 use crate::context::Ctx;
 use oxc_allocator::CloneIn;
-use oxc_ast::ast::{BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration, ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Program, PropertyKey, Statement, TSTypeAnnotation};
+use oxc_ast::ast::{
+    BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration,
+    ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Program, PropertyKey,
+    Statement, TSTypeAnnotation,
+};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 use utils::import;
@@ -155,7 +159,7 @@ impl<'a> Commonjs<'a> {
 impl<'a> Traverse<'a> for Commonjs<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         let mut latest = self.ctx.ast.vec();
-        
+
         for stmt in self.ctx.ast.move_vec(&mut program.body) {
             match stmt {
                 Statement::ImportDeclaration(s) => {
@@ -177,7 +181,7 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
                 }
             }
         }
-        
+
         program.body = latest;
     }
 }

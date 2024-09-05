@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde_json::{from_value, json, Value};
 
+use crate::commonjs::options::CommonjsOptions;
 use crate::{
     compiler_assumptions::CompilerAssumptions,
     env::{can_enable_plugin, EnvOptions, Versions},
@@ -17,7 +18,6 @@ use crate::{
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
 };
-use crate::commonjs::options::CommonjsOptions;
 
 /// <https://babel.dev/docs/options>
 #[derive(Debug, Default, Clone)]
@@ -53,7 +53,7 @@ pub struct TransformOptions {
     pub es2020: ES2020Options,
 
     pub es2021: ES2021Options,
-    
+
     pub commonjs: CommonjsOptions,
 }
 
