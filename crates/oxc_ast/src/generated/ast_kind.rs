@@ -526,3 +526,1351 @@ impl<'a> GetSpan for AstKind<'a> {
         }
     }
 }
+
+impl<'a> AstKind<'a> {
+    pub fn as_boolean_literal(&self) -> Option<&BooleanLiteral> {
+        if let Self::BooleanLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_null_literal(&self) -> Option<&NullLiteral> {
+        if let Self::NullLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_numeric_literal(&self) -> Option<&NumericLiteral<'a>> {
+        if let Self::NumericLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_big_int_literal(&self) -> Option<&BigIntLiteral<'a>> {
+        if let Self::BigIntLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_reg_exp_literal(&self) -> Option<&RegExpLiteral<'a>> {
+        if let Self::RegExpLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_string_literal(&self) -> Option<&StringLiteral<'a>> {
+        if let Self::StringLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_program(&self) -> Option<&Program<'a>> {
+        if let Self::Program(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_identifier_name(&self) -> Option<&IdentifierName<'a>> {
+        if let Self::IdentifierName(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_identifier_reference(&self) -> Option<&IdentifierReference<'a>> {
+        if let Self::IdentifierReference(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
+        if let Self::BindingIdentifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_label_identifier(&self) -> Option<&LabelIdentifier<'a>> {
+        if let Self::LabelIdentifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_this_expression(&self) -> Option<&ThisExpression> {
+        if let Self::ThisExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_array_expression(&self) -> Option<&ArrayExpression<'a>> {
+        if let Self::ArrayExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_array_expression_element(&self) -> Option<&ArrayExpressionElement<'a>> {
+        if let Self::ArrayExpressionElement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_elision(&self) -> Option<&Elision> {
+        if let Self::Elision(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_object_expression(&self) -> Option<&ObjectExpression<'a>> {
+        if let Self::ObjectExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_object_property(&self) -> Option<&ObjectProperty<'a>> {
+        if let Self::ObjectProperty(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_property_key(&self) -> Option<&PropertyKey<'a>> {
+        if let Self::PropertyKey(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_template_literal(&self) -> Option<&TemplateLiteral<'a>> {
+        if let Self::TemplateLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_tagged_template_expression(&self) -> Option<&TaggedTemplateExpression<'a>> {
+        if let Self::TaggedTemplateExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_member_expression(&self) -> Option<&MemberExpression<'a>> {
+        if let Self::MemberExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_call_expression(&self) -> Option<&CallExpression<'a>> {
+        if let Self::CallExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_new_expression(&self) -> Option<&NewExpression<'a>> {
+        if let Self::NewExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_meta_property(&self) -> Option<&MetaProperty<'a>> {
+        if let Self::MetaProperty(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_spread_element(&self) -> Option<&SpreadElement<'a>> {
+        if let Self::SpreadElement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_argument(&self) -> Option<&Argument<'a>> {
+        if let Self::Argument(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_update_expression(&self) -> Option<&UpdateExpression<'a>> {
+        if let Self::UpdateExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_unary_expression(&self) -> Option<&UnaryExpression<'a>> {
+        if let Self::UnaryExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_binary_expression(&self) -> Option<&BinaryExpression<'a>> {
+        if let Self::BinaryExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_private_in_expression(&self) -> Option<&PrivateInExpression<'a>> {
+        if let Self::PrivateInExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_logical_expression(&self) -> Option<&LogicalExpression<'a>> {
+        if let Self::LogicalExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_conditional_expression(&self) -> Option<&ConditionalExpression<'a>> {
+        if let Self::ConditionalExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_assignment_expression(&self) -> Option<&AssignmentExpression<'a>> {
+        if let Self::AssignmentExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_assignment_target(&self) -> Option<&AssignmentTarget<'a>> {
+        if let Self::AssignmentTarget(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_simple_assignment_target(&self) -> Option<&SimpleAssignmentTarget<'a>> {
+        if let Self::SimpleAssignmentTarget(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_assignment_target_pattern(&self) -> Option<&AssignmentTargetPattern<'a>> {
+        if let Self::AssignmentTargetPattern(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_array_assignment_target(&self) -> Option<&ArrayAssignmentTarget<'a>> {
+        if let Self::ArrayAssignmentTarget(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_object_assignment_target(&self) -> Option<&ObjectAssignmentTarget<'a>> {
+        if let Self::ObjectAssignmentTarget(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_assignment_target_with_default(&self) -> Option<&AssignmentTargetWithDefault<'a>> {
+        if let Self::AssignmentTargetWithDefault(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_sequence_expression(&self) -> Option<&SequenceExpression<'a>> {
+        if let Self::SequenceExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_super(&self) -> Option<&Super> {
+        if let Self::Super(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_await_expression(&self) -> Option<&AwaitExpression<'a>> {
+        if let Self::AwaitExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_chain_expression(&self) -> Option<&ChainExpression<'a>> {
+        if let Self::ChainExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_parenthesized_expression(&self) -> Option<&ParenthesizedExpression<'a>> {
+        if let Self::ParenthesizedExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_directive(&self) -> Option<&Directive<'a>> {
+        if let Self::Directive(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_hashbang(&self) -> Option<&Hashbang<'a>> {
+        if let Self::Hashbang(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_block_statement(&self) -> Option<&BlockStatement<'a>> {
+        if let Self::BlockStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_variable_declaration(&self) -> Option<&VariableDeclaration<'a>> {
+        if let Self::VariableDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_variable_declarator(&self) -> Option<&VariableDeclarator<'a>> {
+        if let Self::VariableDeclarator(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_empty_statement(&self) -> Option<&EmptyStatement> {
+        if let Self::EmptyStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_expression_statement(&self) -> Option<&ExpressionStatement<'a>> {
+        if let Self::ExpressionStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_if_statement(&self) -> Option<&IfStatement<'a>> {
+        if let Self::IfStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_do_while_statement(&self) -> Option<&DoWhileStatement<'a>> {
+        if let Self::DoWhileStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_while_statement(&self) -> Option<&WhileStatement<'a>> {
+        if let Self::WhileStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_for_statement(&self) -> Option<&ForStatement<'a>> {
+        if let Self::ForStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_for_statement_init(&self) -> Option<&ForStatementInit<'a>> {
+        if let Self::ForStatementInit(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_for_in_statement(&self) -> Option<&ForInStatement<'a>> {
+        if let Self::ForInStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_for_of_statement(&self) -> Option<&ForOfStatement<'a>> {
+        if let Self::ForOfStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_continue_statement(&self) -> Option<&ContinueStatement<'a>> {
+        if let Self::ContinueStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_break_statement(&self) -> Option<&BreakStatement<'a>> {
+        if let Self::BreakStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_return_statement(&self) -> Option<&ReturnStatement<'a>> {
+        if let Self::ReturnStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_with_statement(&self) -> Option<&WithStatement<'a>> {
+        if let Self::WithStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_switch_statement(&self) -> Option<&SwitchStatement<'a>> {
+        if let Self::SwitchStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_switch_case(&self) -> Option<&SwitchCase<'a>> {
+        if let Self::SwitchCase(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_labeled_statement(&self) -> Option<&LabeledStatement<'a>> {
+        if let Self::LabeledStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_throw_statement(&self) -> Option<&ThrowStatement<'a>> {
+        if let Self::ThrowStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_try_statement(&self) -> Option<&TryStatement<'a>> {
+        if let Self::TryStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_finally_clause(&self) -> Option<&BlockStatement<'a>> {
+        if let Self::FinallyClause(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_catch_clause(&self) -> Option<&CatchClause<'a>> {
+        if let Self::CatchClause(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_catch_parameter(&self) -> Option<&CatchParameter<'a>> {
+        if let Self::CatchParameter(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_debugger_statement(&self) -> Option<&DebuggerStatement> {
+        if let Self::DebuggerStatement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_assignment_pattern(&self) -> Option<&AssignmentPattern<'a>> {
+        if let Self::AssignmentPattern(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_object_pattern(&self) -> Option<&ObjectPattern<'a>> {
+        if let Self::ObjectPattern(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_array_pattern(&self) -> Option<&ArrayPattern<'a>> {
+        if let Self::ArrayPattern(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_binding_rest_element(&self) -> Option<&BindingRestElement<'a>> {
+        if let Self::BindingRestElement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_function(&self) -> Option<&Function<'a>> {
+        if let Self::Function(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_formal_parameters(&self) -> Option<&FormalParameters<'a>> {
+        if let Self::FormalParameters(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_formal_parameter(&self) -> Option<&FormalParameter<'a>> {
+        if let Self::FormalParameter(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_function_body(&self) -> Option<&FunctionBody<'a>> {
+        if let Self::FunctionBody(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_arrow_function_expression(&self) -> Option<&ArrowFunctionExpression<'a>> {
+        if let Self::ArrowFunctionExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_yield_expression(&self) -> Option<&YieldExpression<'a>> {
+        if let Self::YieldExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_class(&self) -> Option<&Class<'a>> {
+        if let Self::Class(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_class_heritage(&self) -> Option<&Expression<'a>> {
+        if let Self::ClassHeritage(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_class_body(&self) -> Option<&ClassBody<'a>> {
+        if let Self::ClassBody(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_method_definition(&self) -> Option<&MethodDefinition<'a>> {
+        if let Self::MethodDefinition(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_property_definition(&self) -> Option<&PropertyDefinition<'a>> {
+        if let Self::PropertyDefinition(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_private_identifier(&self) -> Option<&PrivateIdentifier<'a>> {
+        if let Self::PrivateIdentifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_static_block(&self) -> Option<&StaticBlock<'a>> {
+        if let Self::StaticBlock(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_module_declaration(&self) -> Option<&ModuleDeclaration<'a>> {
+        if let Self::ModuleDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_import_expression(&self) -> Option<&ImportExpression<'a>> {
+        if let Self::ImportExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_import_declaration(&self) -> Option<&ImportDeclaration<'a>> {
+        if let Self::ImportDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_import_specifier(&self) -> Option<&ImportSpecifier<'a>> {
+        if let Self::ImportSpecifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_import_default_specifier(&self) -> Option<&ImportDefaultSpecifier<'a>> {
+        if let Self::ImportDefaultSpecifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_import_namespace_specifier(&self) -> Option<&ImportNamespaceSpecifier<'a>> {
+        if let Self::ImportNamespaceSpecifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_export_named_declaration(&self) -> Option<&ExportNamedDeclaration<'a>> {
+        if let Self::ExportNamedDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_export_default_declaration(&self) -> Option<&ExportDefaultDeclaration<'a>> {
+        if let Self::ExportDefaultDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_export_all_declaration(&self) -> Option<&ExportAllDeclaration<'a>> {
+        if let Self::ExportAllDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_export_specifier(&self) -> Option<&ExportSpecifier<'a>> {
+        if let Self::ExportSpecifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_this_parameter(&self) -> Option<&TSThisParameter<'a>> {
+        if let Self::TSThisParameter(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_enum_declaration(&self) -> Option<&TSEnumDeclaration<'a>> {
+        if let Self::TSEnumDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_enum_member(&self) -> Option<&TSEnumMember<'a>> {
+        if let Self::TSEnumMember(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_annotation(&self) -> Option<&TSTypeAnnotation<'a>> {
+        if let Self::TSTypeAnnotation(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_literal_type(&self) -> Option<&TSLiteralType<'a>> {
+        if let Self::TSLiteralType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_conditional_type(&self) -> Option<&TSConditionalType<'a>> {
+        if let Self::TSConditionalType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_union_type(&self) -> Option<&TSUnionType<'a>> {
+        if let Self::TSUnionType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_intersection_type(&self) -> Option<&TSIntersectionType<'a>> {
+        if let Self::TSIntersectionType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_parenthesized_type(&self) -> Option<&TSParenthesizedType<'a>> {
+        if let Self::TSParenthesizedType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_indexed_access_type(&self) -> Option<&TSIndexedAccessType<'a>> {
+        if let Self::TSIndexedAccessType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_named_tuple_member(&self) -> Option<&TSNamedTupleMember<'a>> {
+        if let Self::TSNamedTupleMember(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_any_keyword(&self) -> Option<&TSAnyKeyword> {
+        if let Self::TSAnyKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_string_keyword(&self) -> Option<&TSStringKeyword> {
+        if let Self::TSStringKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_boolean_keyword(&self) -> Option<&TSBooleanKeyword> {
+        if let Self::TSBooleanKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_number_keyword(&self) -> Option<&TSNumberKeyword> {
+        if let Self::TSNumberKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_never_keyword(&self) -> Option<&TSNeverKeyword> {
+        if let Self::TSNeverKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_intrinsic_keyword(&self) -> Option<&TSIntrinsicKeyword> {
+        if let Self::TSIntrinsicKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_unknown_keyword(&self) -> Option<&TSUnknownKeyword> {
+        if let Self::TSUnknownKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_null_keyword(&self) -> Option<&TSNullKeyword> {
+        if let Self::TSNullKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_undefined_keyword(&self) -> Option<&TSUndefinedKeyword> {
+        if let Self::TSUndefinedKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_void_keyword(&self) -> Option<&TSVoidKeyword> {
+        if let Self::TSVoidKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_symbol_keyword(&self) -> Option<&TSSymbolKeyword> {
+        if let Self::TSSymbolKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_this_type(&self) -> Option<&TSThisType> {
+        if let Self::TSThisType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_object_keyword(&self) -> Option<&TSObjectKeyword> {
+        if let Self::TSObjectKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_big_int_keyword(&self) -> Option<&TSBigIntKeyword> {
+        if let Self::TSBigIntKeyword(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_reference(&self) -> Option<&TSTypeReference<'a>> {
+        if let Self::TSTypeReference(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_name(&self) -> Option<&TSTypeName<'a>> {
+        if let Self::TSTypeName(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_qualified_name(&self) -> Option<&TSQualifiedName<'a>> {
+        if let Self::TSQualifiedName(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_parameter_instantiation(&self) -> Option<&TSTypeParameterInstantiation<'a>> {
+        if let Self::TSTypeParameterInstantiation(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_parameter(&self) -> Option<&TSTypeParameter<'a>> {
+        if let Self::TSTypeParameter(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_parameter_declaration(&self) -> Option<&TSTypeParameterDeclaration<'a>> {
+        if let Self::TSTypeParameterDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_alias_declaration(&self) -> Option<&TSTypeAliasDeclaration<'a>> {
+        if let Self::TSTypeAliasDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_class_implements(&self) -> Option<&TSClassImplements<'a>> {
+        if let Self::TSClassImplements(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_interface_declaration(&self) -> Option<&TSInterfaceDeclaration<'a>> {
+        if let Self::TSInterfaceDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_property_signature(&self) -> Option<&TSPropertySignature<'a>> {
+        if let Self::TSPropertySignature(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_method_signature(&self) -> Option<&TSMethodSignature<'a>> {
+        if let Self::TSMethodSignature(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_construct_signature_declaration(
+        &self,
+    ) -> Option<&TSConstructSignatureDeclaration<'a>> {
+        if let Self::TSConstructSignatureDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_interface_heritage(&self) -> Option<&TSInterfaceHeritage<'a>> {
+        if let Self::TSInterfaceHeritage(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_module_declaration(&self) -> Option<&TSModuleDeclaration<'a>> {
+        if let Self::TSModuleDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_module_block(&self) -> Option<&TSModuleBlock<'a>> {
+        if let Self::TSModuleBlock(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_literal(&self) -> Option<&TSTypeLiteral<'a>> {
+        if let Self::TSTypeLiteral(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_infer_type(&self) -> Option<&TSInferType<'a>> {
+        if let Self::TSInferType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_query(&self) -> Option<&TSTypeQuery<'a>> {
+        if let Self::TSTypeQuery(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_import_type(&self) -> Option<&TSImportType<'a>> {
+        if let Self::TSImportType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_mapped_type(&self) -> Option<&TSMappedType<'a>> {
+        if let Self::TSMappedType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_template_literal_type(&self) -> Option<&TSTemplateLiteralType<'a>> {
+        if let Self::TSTemplateLiteralType(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_as_expression(&self) -> Option<&TSAsExpression<'a>> {
+        if let Self::TSAsExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_satisfies_expression(&self) -> Option<&TSSatisfiesExpression<'a>> {
+        if let Self::TSSatisfiesExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_type_assertion(&self) -> Option<&TSTypeAssertion<'a>> {
+        if let Self::TSTypeAssertion(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_import_equals_declaration(&self) -> Option<&TSImportEqualsDeclaration<'a>> {
+        if let Self::TSImportEqualsDeclaration(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_module_reference(&self) -> Option<&TSModuleReference<'a>> {
+        if let Self::TSModuleReference(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_external_module_reference(&self) -> Option<&TSExternalModuleReference<'a>> {
+        if let Self::TSExternalModuleReference(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_non_null_expression(&self) -> Option<&TSNonNullExpression<'a>> {
+        if let Self::TSNonNullExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_decorator(&self) -> Option<&Decorator<'a>> {
+        if let Self::Decorator(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_export_assignment(&self) -> Option<&TSExportAssignment<'a>> {
+        if let Self::TSExportAssignment(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_ts_instantiation_expression(&self) -> Option<&TSInstantiationExpression<'a>> {
+        if let Self::TSInstantiationExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_element(&self) -> Option<&JSXElement<'a>> {
+        if let Self::JSXElement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_opening_element(&self) -> Option<&JSXOpeningElement<'a>> {
+        if let Self::JSXOpeningElement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_closing_element(&self) -> Option<&JSXClosingElement<'a>> {
+        if let Self::JSXClosingElement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_fragment(&self) -> Option<&JSXFragment<'a>> {
+        if let Self::JSXFragment(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_element_name(&self) -> Option<&JSXElementName<'a>> {
+        if let Self::JSXElementName(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_namespaced_name(&self) -> Option<&JSXNamespacedName<'a>> {
+        if let Self::JSXNamespacedName(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_member_expression(&self) -> Option<&JSXMemberExpression<'a>> {
+        if let Self::JSXMemberExpression(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_member_expression_object(&self) -> Option<&JSXMemberExpressionObject<'a>> {
+        if let Self::JSXMemberExpressionObject(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_expression_container(&self) -> Option<&JSXExpressionContainer<'a>> {
+        if let Self::JSXExpressionContainer(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_attribute_item(&self) -> Option<&JSXAttributeItem<'a>> {
+        if let Self::JSXAttributeItem(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_spread_attribute(&self) -> Option<&JSXSpreadAttribute<'a>> {
+        if let Self::JSXSpreadAttribute(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_identifier(&self) -> Option<&JSXIdentifier<'a>> {
+        if let Self::JSXIdentifier(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_jsx_text(&self) -> Option<&JSXText<'a>> {
+        if let Self::JSXText(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_expression_array_element(&self) -> Option<&Expression<'a>> {
+        if let Self::ExpressionArrayElement(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+}
