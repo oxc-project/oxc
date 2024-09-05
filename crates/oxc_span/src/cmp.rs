@@ -59,10 +59,10 @@ impl<'a, T: ContentEq> ContentEq for oxc_allocator::Box<'a, T> {
 
 /// Blanket implementation for [oxc_allocator::Vec] types
 ///
-/// # WARNING
-///
-/// This implementation is slow compared to `[PartialEq]`, Consider comparing the 2 vectors using
-/// that when one is implemented. This implementation takes triple the time the `PartialEq` would take.
+/// # Warning
+/// This implementation is slow compared to [PartialEq] for native types which are [Copy] (e.g. `u32`).
+/// Prefer comparing the 2 vectors using `==` if they contain such native types (e.g. `Vec<u32>`).
+/// <https://godbolt.org/z/54on5sMWc>
 impl<'a, T: ContentEq> ContentEq for oxc_allocator::Vec<'a, T> {
     #[inline]
     fn content_eq(&self, other: &Self) -> bool {
