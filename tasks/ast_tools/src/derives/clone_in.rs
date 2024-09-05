@@ -49,7 +49,7 @@ fn derive_enum(def: &EnumDef) -> TokenStream {
                 quote!(Self :: #ident => #ty_ident :: #ident)
             } else {
                 used_alloc = true;
-                quote!(Self :: #ident(it) => #ty_ident :: #ident(it.clone_in(allocator)))
+                quote!(Self :: #ident(it) => #ty_ident :: #ident(CloneIn::clone_in(it, allocator)))
             }
         })
         .collect_vec();
@@ -74,7 +74,9 @@ fn derive_struct(def: &StructDef) -> TokenStream {
             let ident = field.ident();
             match field.markers.derive_attributes.clone_in {
                 CloneInAttribute::Default => quote!(#ident: Default::default()),
-                CloneInAttribute::None => quote!(#ident: self.#ident.clone_in(allocator)),
+                CloneInAttribute::None => {
+                    quote!(#ident: CloneIn::clone_in(&self.#ident, allocator))
+                }
             }
         });
         (format_ident!("allocator"), quote!(#ty_ident { #(#fields),* }))

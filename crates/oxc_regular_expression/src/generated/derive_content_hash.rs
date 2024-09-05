@@ -12,39 +12,39 @@ use crate::ast::*;
 
 impl<'a> ContentHash for RegularExpression<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.pattern.content_hash(state);
-        self.flags.content_hash(state);
+        ContentHash::content_hash(&self.pattern, state);
+        ContentHash::content_hash(&self.flags, state);
     }
 }
 
 impl ContentHash for Flags {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.global.content_hash(state);
-        self.ignore_case.content_hash(state);
-        self.multiline.content_hash(state);
-        self.unicode.content_hash(state);
-        self.sticky.content_hash(state);
-        self.dot_all.content_hash(state);
-        self.has_indices.content_hash(state);
-        self.unicode_sets.content_hash(state);
+        ContentHash::content_hash(&self.global, state);
+        ContentHash::content_hash(&self.ignore_case, state);
+        ContentHash::content_hash(&self.multiline, state);
+        ContentHash::content_hash(&self.unicode, state);
+        ContentHash::content_hash(&self.sticky, state);
+        ContentHash::content_hash(&self.dot_all, state);
+        ContentHash::content_hash(&self.has_indices, state);
+        ContentHash::content_hash(&self.unicode_sets, state);
     }
 }
 
 impl<'a> ContentHash for Pattern<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
 impl<'a> ContentHash for Disjunction<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
 impl<'a> ContentHash for Alternative<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
@@ -52,25 +52,25 @@ impl<'a> ContentHash for Term<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
-            Self::BoundaryAssertion(it) => it.content_hash(state),
-            Self::LookAroundAssertion(it) => it.content_hash(state),
-            Self::Quantifier(it) => it.content_hash(state),
-            Self::Character(it) => it.content_hash(state),
-            Self::Dot(it) => it.content_hash(state),
-            Self::CharacterClassEscape(it) => it.content_hash(state),
-            Self::UnicodePropertyEscape(it) => it.content_hash(state),
-            Self::CharacterClass(it) => it.content_hash(state),
-            Self::CapturingGroup(it) => it.content_hash(state),
-            Self::IgnoreGroup(it) => it.content_hash(state),
-            Self::IndexedReference(it) => it.content_hash(state),
-            Self::NamedReference(it) => it.content_hash(state),
+            Self::BoundaryAssertion(it) => ContentHash::content_hash(it, state),
+            Self::LookAroundAssertion(it) => ContentHash::content_hash(it, state),
+            Self::Quantifier(it) => ContentHash::content_hash(it, state),
+            Self::Character(it) => ContentHash::content_hash(it, state),
+            Self::Dot(it) => ContentHash::content_hash(it, state),
+            Self::CharacterClassEscape(it) => ContentHash::content_hash(it, state),
+            Self::UnicodePropertyEscape(it) => ContentHash::content_hash(it, state),
+            Self::CharacterClass(it) => ContentHash::content_hash(it, state),
+            Self::CapturingGroup(it) => ContentHash::content_hash(it, state),
+            Self::IgnoreGroup(it) => ContentHash::content_hash(it, state),
+            Self::IndexedReference(it) => ContentHash::content_hash(it, state),
+            Self::NamedReference(it) => ContentHash::content_hash(it, state),
         }
     }
 }
 
 impl ContentHash for BoundaryAssertion {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.kind.content_hash(state);
+        ContentHash::content_hash(&self.kind, state);
     }
 }
 
@@ -82,8 +82,8 @@ impl ContentHash for BoundaryAssertionKind {
 
 impl<'a> ContentHash for LookAroundAssertion<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.kind.content_hash(state);
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.kind, state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
@@ -95,17 +95,17 @@ impl ContentHash for LookAroundAssertionKind {
 
 impl<'a> ContentHash for Quantifier<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.min.content_hash(state);
-        self.max.content_hash(state);
-        self.greedy.content_hash(state);
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.min, state);
+        ContentHash::content_hash(&self.max, state);
+        ContentHash::content_hash(&self.greedy, state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
 impl ContentHash for Character {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.kind.content_hash(state);
-        self.value.content_hash(state);
+        ContentHash::content_hash(&self.kind, state);
+        ContentHash::content_hash(&self.value, state);
     }
 }
 
@@ -117,7 +117,7 @@ impl ContentHash for CharacterKind {
 
 impl ContentHash for CharacterClassEscape {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.kind.content_hash(state);
+        ContentHash::content_hash(&self.kind, state);
     }
 }
 
@@ -129,10 +129,10 @@ impl ContentHash for CharacterClassEscapeKind {
 
 impl<'a> ContentHash for UnicodePropertyEscape<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.negative.content_hash(state);
-        self.strings.content_hash(state);
-        self.name.content_hash(state);
-        self.value.content_hash(state);
+        ContentHash::content_hash(&self.negative, state);
+        ContentHash::content_hash(&self.strings, state);
+        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.value, state);
     }
 }
 
@@ -142,9 +142,9 @@ impl ContentHash for Dot {
 
 impl<'a> ContentHash for CharacterClass<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.negative.content_hash(state);
-        self.kind.content_hash(state);
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.negative, state);
+        ContentHash::content_hash(&self.kind, state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
@@ -158,68 +158,68 @@ impl<'a> ContentHash for CharacterClassContents<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);
         match self {
-            Self::CharacterClassRange(it) => it.content_hash(state),
-            Self::CharacterClassEscape(it) => it.content_hash(state),
-            Self::UnicodePropertyEscape(it) => it.content_hash(state),
-            Self::Character(it) => it.content_hash(state),
-            Self::NestedCharacterClass(it) => it.content_hash(state),
-            Self::ClassStringDisjunction(it) => it.content_hash(state),
+            Self::CharacterClassRange(it) => ContentHash::content_hash(it, state),
+            Self::CharacterClassEscape(it) => ContentHash::content_hash(it, state),
+            Self::UnicodePropertyEscape(it) => ContentHash::content_hash(it, state),
+            Self::Character(it) => ContentHash::content_hash(it, state),
+            Self::NestedCharacterClass(it) => ContentHash::content_hash(it, state),
+            Self::ClassStringDisjunction(it) => ContentHash::content_hash(it, state),
         }
     }
 }
 
 impl ContentHash for CharacterClassRange {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.min.content_hash(state);
-        self.max.content_hash(state);
+        ContentHash::content_hash(&self.min, state);
+        ContentHash::content_hash(&self.max, state);
     }
 }
 
 impl<'a> ContentHash for ClassStringDisjunction<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.strings.content_hash(state);
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.strings, state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
 impl<'a> ContentHash for ClassString<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.strings.content_hash(state);
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.strings, state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
 impl<'a> ContentHash for CapturingGroup<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.name.content_hash(state);
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.name, state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
 impl<'a> ContentHash for IgnoreGroup<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.enabling_modifiers.content_hash(state);
-        self.disabling_modifiers.content_hash(state);
-        self.body.content_hash(state);
+        ContentHash::content_hash(&self.enabling_modifiers, state);
+        ContentHash::content_hash(&self.disabling_modifiers, state);
+        ContentHash::content_hash(&self.body, state);
     }
 }
 
 impl ContentHash for ModifierFlags {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.ignore_case.content_hash(state);
-        self.sticky.content_hash(state);
-        self.multiline.content_hash(state);
+        ContentHash::content_hash(&self.ignore_case, state);
+        ContentHash::content_hash(&self.sticky, state);
+        ContentHash::content_hash(&self.multiline, state);
     }
 }
 
 impl ContentHash for IndexedReference {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.index.content_hash(state);
+        ContentHash::content_hash(&self.index, state);
     }
 }
 
 impl<'a> ContentHash for NamedReference<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
-        self.name.content_hash(state);
+        ContentHash::content_hash(&self.name, state);
     }
 }

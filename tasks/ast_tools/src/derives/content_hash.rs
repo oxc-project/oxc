@@ -67,7 +67,7 @@ fn derive_enum(def: &EnumDef) -> (&str, TokenStream) {
                     non_exhaustive = true;
                     None
                 } else {
-                    Some(quote!(Self :: #ident(it) => it.content_hash(state)))
+                    Some(quote!(Self :: #ident(it) => ContentHash::content_hash(it, state)))
                 }
             })
             .collect_vec();
@@ -98,7 +98,7 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
             })
             .map(|field| {
                 let ident = field.ident();
-                quote!(self.#ident.content_hash(state);)
+                quote!(ContentHash::content_hash(&self.#ident, state);)
             })
             .collect_vec();
         if fields.is_empty() {

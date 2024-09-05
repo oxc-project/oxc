@@ -39,6 +39,9 @@ impl Derive for DeriveContentEq {
 
     fn prelude() -> TokenStream {
         quote! {
+            // NOTE: writing long match expressions formats better than using `matches` macro.
+            #![allow(clippy::match_like_matches_macro)]
+
             ///@@line_break
             use oxc_span::cmp::ContentEq;
         }
@@ -57,7 +60,11 @@ fn derive_enum(def: &EnumDef) -> (&str, TokenStream) {
             } else {
                 quote! {
                     Self :: #ident(it) => {
-                        matches!(other, Self :: #ident (other) if it.content_eq(other))
+                        // NOTE: writing the match expression formats better than using `matches` macro.
+                        match other {
+                            Self :: #ident (other) if ContentEq::content_eq(it, other) => true,
+                            _ => false,
+                        }
                     }
                 }
             }
@@ -87,7 +94,7 @@ fn derive_struct(def: &StructDef) -> (&str, TokenStream) {
             })
             .map(|field| {
                 let ident = field.ident();
-                quote!(self.#ident.content_eq(&other.#ident))
+                quote!(ContentEq::content_eq(&self.#ident, &other.#ident))
             })
             .collect_vec();
         if fields.is_empty() {
