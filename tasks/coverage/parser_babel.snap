@@ -3,7 +3,7 @@ commit: 3bcfee23
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
 Positive Passed: 2083/2101 (99.14%)
-Negative Passed: 1381/1493 (92.50%)
+Negative Passed: 1382/1493 (92.57%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-loop/input.js
@@ -39,7 +39,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-invalid-order-modifiers-3/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-type-parameters-babel-7/input.ts
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-field-initializer/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-initializer/input.ts
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/declare-method/input.ts
@@ -10037,6 +10036,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │   accessor #d?;
    ·              ─
  8 │   abstract accessor f = 1;
+   ╰────
+
+  × Getters and setters must have an implementation.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:2:15]
+ 1 │ class Foo {
+ 2 │   declare get foo()
+   ·               ───
+ 3 │   declare set foo(v)
+   ╰────
+
+  × Getters and setters must have an implementation.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-accessor/input.ts:3:15]
+ 2 │   declare get foo()
+ 3 │   declare set foo(v)
+   ·               ───
+ 4 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

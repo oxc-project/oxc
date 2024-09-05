@@ -5021,6 +5021,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ╰────
   help: Try insert a semicolon here
 
+  × Getters and setters must have an implementation.
+    ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
+ 15 │     abstract notAllowed: string;
+ 16 │     get concreteWithNoBody(): string;
+    ·         ──────────────────
+ 17 │ }
+    ╰────
+
   × TS(1253): Abstract properties can only appear within an abstract class.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:15:14]
  14 │     readonly ro = "readonly please";

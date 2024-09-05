@@ -1423,6 +1423,11 @@ impl MethodDefinitionKind {
         matches!(self, Self::Get)
     }
 
+    /// Returns `true` if this method is a getter or a setter.
+    pub fn is_accessor(&self) -> bool {
+        matches!(self, Self::Get | Self::Set)
+    }
+
     pub fn scope_flags(self) -> ScopeFlags {
         match self {
             Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
