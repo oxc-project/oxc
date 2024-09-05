@@ -156,3 +156,21 @@ source: crates/oxc_linter/src/tester.rs
  1 │ function *f(){ yield(Number).parseInt() }
    ·                     ───────────────────
    ╰────
+
+  ⚠ eslint(radix): Missing parameters.
+   ╭─[radix.tsx:1:19]
+ 1 │ { let parseInt; } parseInt();
+   ·                   ──────────
+   ╰────
+
+  ⚠ eslint(radix): Missing parameters.
+   ╭─[radix.tsx:1:17]
+ 1 │ { let Number; } Number.parseInt();
+   ·                 ─────────────────
+   ╰────
+
+  ⚠ eslint(radix): Missing parameters.
+   ╭─[radix.tsx:1:17]
+ 1 │ { let Number; } (Number?.parseInt)();
+   ·                 ────────────────────
+   ╰────

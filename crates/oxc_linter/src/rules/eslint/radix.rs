@@ -70,7 +70,7 @@ impl Rule for Radix {
             match call_expr.callee.without_parenthesized() {
                 Expression::Identifier(ident) => {
                     if ident.name == "parseInt"
-                        && ctx.symbols().get_symbol_id_from_name("parseInt").is_none()
+                        && ctx.symbols().is_global_reference(ident.reference_id().unwrap())
                     {
                         Self::check_arguments(self, call_expr, ctx);
                     }
@@ -81,7 +81,7 @@ impl Rule for Radix {
                     {
                         if ident.name == "Number"
                             && member_expr.property.name == "parseInt"
-                            && ctx.symbols().get_symbol_id_from_name("Number").is_none()
+                            && ctx.symbols().is_global_reference(ident.reference_id().unwrap())
                         {
                             Self::check_arguments(self, call_expr, ctx);
                         }
@@ -92,7 +92,7 @@ impl Rule for Radix {
                         if let Expression::Identifier(ident) = member_expr.object() {
                             if ident.name == "Number"
                                 && member_expr.static_property_name() == Some("parseInt")
-                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
+                                && ctx.symbols().is_global_reference(ident.reference_id().unwrap())
                             {
                                 Self::check_arguments(self, call_expr, ctx);
                             }
@@ -224,6 +224,9 @@ fn test() {
         (r#"Number?.parseInt("10");"#, None),
         (r#"(Number?.parseInt)("10");"#, None),
         ("function *f(){ yield(Number).parseInt() }", None), // { "ecmaVersion": 6 },
+        ("{ let parseInt; } parseInt();", None),
+        ("{ let Number; } Number.parseInt();", None),
+        ("{ let Number; } (Number?.parseInt)();", None),
     ];
 
     Tester::new(Radix::NAME, pass, fail).test_and_snapshot();
