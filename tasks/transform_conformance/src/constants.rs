@@ -59,6 +59,8 @@ pub(crate) const PLUGINS: &[&str] = &[
 
     // Tests port from esbuild
     "esbuild-tests",
+    // Additional RegExp tests
+    "regexp",
 ];
 
 pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
