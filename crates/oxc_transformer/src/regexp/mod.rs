@@ -47,6 +47,7 @@ use std::borrow::Cow;
 pub use options::RegExpOptions;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
     CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
 };
@@ -57,7 +58,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 use crate::context::Ctx;
 
 pub struct RegExp<'a> {
-    _ctx: Ctx<'a>,
+    ctx: Ctx<'a>,
     unsupported_flags: RegExpFlags,
     some_unsupported_patterns: bool,
     look_behind_assertions: bool,
@@ -97,7 +98,7 @@ impl<'a> RegExp<'a> {
             look_behind_assertions || named_capture_groups || unicode_property_escapes;
 
         Self {
-            _ctx: ctx,
+            ctx,
             unsupported_flags,
             some_unsupported_patterns,
             look_behind_assertions,
@@ -129,15 +130,20 @@ impl<'a> Traverse<'a> for RegExp<'a> {
             let span = regexp.span;
             let pattern = match &mut regexp.regex.pattern {
                 RegExpPattern::Raw(raw) => {
-                    if let Some(pattern) = try_parse_pattern(raw, span, flags, ctx) {
-                        regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
-                        let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
-                            unreachable!()
-                        };
-                        pattern
-                    } else {
-                        regexp.regex.pattern = RegExpPattern::Invalid(raw);
-                        return;
+                    // Try to parse pattern
+                    match try_parse_pattern(raw, span, flags, ctx) {
+                        Ok(pattern) => {
+                            regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
+                            let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
+                                unreachable!()
+                            };
+                            pattern
+                        }
+                        Err(error) => {
+                            regexp.regex.pattern = RegExpPattern::Invalid(raw);
+                            self.ctx.error(error);
+                            return;
+                        }
                     }
                 }
                 RegExpPattern::Invalid(_) => return,
@@ -232,7 +238,7 @@ fn try_parse_pattern<'a>(
     span: Span,
     flags: RegExpFlags,
     ctx: &mut TraverseCtx<'a>,
-) -> Option<Pattern<'a>> {
+) -> Result<Pattern<'a>> {
     use oxc_regular_expression::{ParserOptions, PatternParser};
 
     let options = ParserOptions {
@@ -240,10 +246,5 @@ fn try_parse_pattern<'a>(
         unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
         unicode_sets_mode: flags.contains(RegExpFlags::V),
     };
-
-    let ret = PatternParser::new(ctx.ast.allocator, raw, options).parse();
-    match ret {
-        Ok(pattern) => Some(pattern),
-        Err(_) => None,
-    }
+    PatternParser::new(ctx.ast.allocator, raw, options).parse()
 }
