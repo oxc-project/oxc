@@ -127,54 +127,63 @@ impl<'a> From<Atom<'a>> for Cow<'a, str> {
 impl<'a> Deref for Atom<'a> {
     type Target = str;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.as_str()
     }
 }
 
 impl<'a> AsRef<str> for Atom<'a> {
+    #[inline]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
 impl<'a> Borrow<str> for Atom<'a> {
+    #[inline]
     fn borrow(&self) -> &str {
         self.as_str()
     }
 }
 
 impl<'a, T: AsRef<str>> PartialEq<T> for Atom<'a> {
+    #[inline]
     fn eq(&self, other: &T) -> bool {
         self.as_str() == other.as_ref()
     }
 }
 
 impl<'a> PartialEq<Atom<'a>> for &str {
+    #[inline]
     fn eq(&self, other: &Atom<'a>) -> bool {
         *self == other.as_str()
     }
 }
 
 impl<'a> PartialEq<str> for Atom<'a> {
+    #[inline]
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
     }
 }
 
 impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
+    #[inline]
     fn eq(&self, other: &Atom<'a>) -> bool {
         self.as_ref() == other.as_str()
     }
 }
 
 impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
+    #[inline]
     fn eq(&self, other: &&Atom<'a>) -> bool {
         self.as_ref() == other.as_str()
     }
 }
 
 impl<'a> ContentEq for Atom<'a> {
+    #[inline]
     fn content_eq(&self, other: &Self) -> bool {
         self == other
     }
