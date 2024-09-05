@@ -53,12 +53,15 @@ declare_oxc_lint!(
     /// unexpected page reloads.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <button />
     /// <button type="foo" />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <button type="button" />
     /// <button type="submit" />
     /// ```

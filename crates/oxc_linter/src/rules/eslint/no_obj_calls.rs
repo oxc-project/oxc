@@ -36,8 +36,9 @@ declare_oxc_lint! {
     /// Calling them as functions will usually result in a TypeError being thrown.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// let math = Math();
     /// let newMath = new Math();
     ///
@@ -52,8 +53,10 @@ declare_oxc_lint! {
     ///
     /// let reflect = Reflect();
     /// let newReflect = new Reflect();
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let area = r => 2 * Math.PI * r * r;
     /// let object = JSON.parse("{}");
     /// let first = Atomics.load(sharedArray, 0);

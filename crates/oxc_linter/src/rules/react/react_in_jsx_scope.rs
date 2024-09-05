@@ -25,11 +25,14 @@ declare_oxc_lint!(
     /// the `React` variable must be in scope.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// var a = <a />;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// var a = <a />;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// import React from "react";
     /// var a = <a />;
     ///

@@ -28,11 +28,14 @@ declare_oxc_lint!(
     /// While [`EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter) is only available in Node.js, [`EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget) is also available in _Deno_ and browsers.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// class Foo extends EventEmitter {}
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// class Foo extends EventEmitter {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// class Foo extends OtherClass {}
     /// ```
     PreferEventTarget,

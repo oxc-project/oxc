@@ -29,15 +29,17 @@ declare_oxc_lint!(
     /// Creating JSX elements with duplicate props can cause unexpected behavior in your application.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <App a a />;
     /// <App foo={2} bar baz foo={3} />;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <App a />;
     /// <App bar baz foo={3} />;
-    ///
     /// ```
     JsxNoDuplicateProps,
     correctness

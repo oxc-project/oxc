@@ -31,14 +31,15 @@ declare_oxc_lint!(
     /// The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
-    /// // Bad
     /// console.log("abc ", "def");
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// console.log("abc", "def");
-    ///
     /// ```
     NoConsoleSpaces,
     style,

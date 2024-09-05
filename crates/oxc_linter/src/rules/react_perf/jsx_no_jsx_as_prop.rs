@@ -22,6 +22,7 @@ declare_oxc_lint!(
     /// as the component's props are not passed consistently.
     ///
     /// ### Example
+    ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <Item jsx={<SubItem />} />

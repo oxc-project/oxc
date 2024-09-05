@@ -41,11 +41,14 @@ declare_oxc_lint!(
     /// - Using `null` makes TypeScript types more verbose: `type A = {foo?: string | null}` vs `type A = {foo?: string}`.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// let foo = null;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// let foo = null;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let foo
     /// ```
     NoNull,

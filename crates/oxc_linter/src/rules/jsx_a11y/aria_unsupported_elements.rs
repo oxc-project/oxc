@@ -21,12 +21,14 @@ declare_oxc_lint! {
     ///
     /// ### Example
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Good
-    ///	<meta charset="UTF-8" />
-    ///
-    /// // Bad
     /// <meta charset="UTF-8" aria-hidden="false" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    ///	<meta charset="UTF-8" />
     /// ```
     ///
     AriaUnsupportedElements,
