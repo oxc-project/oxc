@@ -24,15 +24,17 @@ declare_oxc_lint!(
     ///
     /// Spreading [falsy values](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// const object = { ...(foo || {}) }
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const object = { ...(foo || {}) }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const object = { ...foo }
     /// const object = { ...(foo || { not: "empty" }) }
-    ///
     /// ```
     NoUselessFallbackInSpread,
     correctness,

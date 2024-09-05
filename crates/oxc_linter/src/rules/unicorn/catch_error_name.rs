@@ -42,15 +42,18 @@ declare_oxc_lint!(
     ///
     /// This rule enforces naming conventions for catch statements.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
-    /// // fail
     /// try { } catch (foo) { }
+    /// ```
     ///
-    /// // pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// try { } catch (error) { }
-    ///
     /// ```
     CatchErrorName,
     style

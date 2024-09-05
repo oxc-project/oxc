@@ -32,17 +32,21 @@ impl Default for NoUselessUndefined {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Do not use useless `undefined`.
     ///
     /// ### Why is this bad?
+    ///
     /// `undefined` is the default value for new variables, parameters, return statements, etc… so specifying it doesn't make any difference.
     ///
-    ///
-    /// ### Example
+    /// ### Examples
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// let foo = undefined;
-    /// // good:
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let foo;
     /// ```
     NoUselessUndefined,

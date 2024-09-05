@@ -28,17 +28,20 @@ declare_oxc_lint!(
     ///
     /// This rule enforces a `message` value to be passed in when creating an instance of a built-in `Error` object, which leads to more readable and debuggable code.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Fail
     /// throw Error()
     /// throw new TypeError()
+    /// ```
     ///
-    /// // Pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// throw new Error('Unexpected token')
     /// throw new TypeError('Number expected')
-    ///
-    ///
     /// ```
     ErrorMessage,
     style

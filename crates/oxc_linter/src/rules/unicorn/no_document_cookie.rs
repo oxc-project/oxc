@@ -35,17 +35,20 @@ declare_oxc_lint!(
     /// API](https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API)
     /// or a [cookie library](https://www.npmjs.com/search?q=cookie).
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// document.cookie =
     ///     'foo=bar' +
     ///     '; Path=/' +
     ///     '; Domain=example.com' +
     ///     '; expires=Fri, 31 Dec 9999 23:59:59 GMT' +
     ///     '; Secure';
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function storeCookies() {
     ///     await cookieStore.set({
     ///         name: 'foo',
