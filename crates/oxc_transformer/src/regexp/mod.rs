@@ -120,7 +120,6 @@ impl<'a> Traverse<'a> for RegExp<'a> {
 }
 
 impl<'a> RegExp<'a> {
-    /// Transform RegExp if it contains unsupported flags or unsupported patterns
     fn transform_regexp(
         &mut self,
         expr: &mut Expression<'a>,
@@ -131,7 +130,8 @@ impl<'a> RegExp<'a> {
             _ => unreachable!(),
         };
 
-        let has_unsupported_flags = regexp.regex.flags.intersects(self.unsupported_flags);
+        let flags = regexp.regex.flags;
+        let has_unsupported_flags = flags.intersects(self.unsupported_flags);
         if !has_unsupported_flags {
             if !self.some_unsupported_patterns {
                 // This RegExp has no unsupported flags, and there are no patterns which may need transforming,
@@ -139,31 +139,38 @@ impl<'a> RegExp<'a> {
                 return;
             }
 
-            if !self.has_unsuppported_pattern(regexp, ctx) {
+            let span = regexp.span;
+            let pattern = match &mut regexp.regex.pattern {
+                RegExpPattern::Raw(raw) => {
+                    // Try to parse pattern
+                    match try_parse_pattern(raw, span, flags, ctx) {
+                        Ok(pattern) => {
+                            regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
+                            let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
+                                unreachable!()
+                            };
+                            pattern
+                        }
+                        Err(error) => {
+                            regexp.regex.pattern = RegExpPattern::Invalid(raw);
+                            self.ctx.error(error);
+                            return;
+                        }
+                    }
+                }
+                RegExpPattern::Invalid(_) => return,
+                RegExpPattern::Pattern(pattern) => &**pattern,
+            };
+
+            if !self.has_unsupported_regular_expression_pattern(pattern) {
                 return;
             }
-        } else if matches!(&regexp.regex.pattern, RegExpPattern::Invalid(_)) {
-            return;
         }
 
-        *expr = Self::transform_regexp_if_required(regexp, ctx);
-    }
-
-    /// Convert `RegExpLiteral` to `new RegExp(...)`.
-    /// Caller should have already checked for unsupported flags and unsupported patterns.
-    /// Caller must ensure pattern is not `RegExpPattern::Invalid` before calling this.
-    ///
-    /// This heavy logic is broken out into a separate function from `transform_regexp`, so that
-    /// `transform_regexp` remains small, and maybe compiler will be able to inline `transform_regexp`.
-    /// That would create a fast path for common case where RegExp has no unsupported features.
-    fn transform_regexp_if_required(
-        regexp: &mut RegExpLiteral<'a>,
-        ctx: &mut oxc_traverse::TraverseCtx<'a>,
-    ) -> Expression<'a> {
         let pattern_source: Cow<'_, str> = match &regexp.regex.pattern {
             RegExpPattern::Raw(raw) => Cow::Borrowed(raw),
             RegExpPattern::Pattern(p) => Cow::Owned(p.to_string()),
-            RegExpPattern::Invalid(_) => unreachable!(),
+            RegExpPattern::Invalid(_) => return,
         };
 
         let callee = {
@@ -186,48 +193,23 @@ impl<'a> RegExp<'a> {
         let flags = ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags));
         arguments.push(flags);
 
-        ctx.ast.expression_new(regexp.span, callee, arguments, None::<TSTypeParameterInstantiation>)
+        *expr = ctx.ast.expression_new(
+            regexp.span,
+            callee,
+            arguments,
+            None::<TSTypeParameterInstantiation>,
+        );
     }
 
-    /// Check if RegExp's pattern contains unsupported syntax.
-    /// Returns `true` if it does.
-    /// If pattern was not already parsed, parse it here.
-    fn has_unsuppported_pattern(
-        &mut self,
-        regexp: &mut RegExpLiteral<'a>,
-        ctx: &mut oxc_traverse::TraverseCtx<'a>,
-    ) -> bool {
-        let span = regexp.span;
-        let flags = regexp.regex.flags;
-        let pattern = match &mut regexp.regex.pattern {
-            RegExpPattern::Raw(raw) => {
-                // Try to parse pattern
-                match try_parse_pattern(raw, span, flags, ctx) {
-                    Ok(pattern) => {
-                        regexp.regex.pattern = RegExpPattern::Pattern(ctx.alloc(pattern));
-                        let RegExpPattern::Pattern(pattern) = &regexp.regex.pattern else {
-                            unreachable!()
-                        };
-                        pattern
-                    }
-                    Err(error) => {
-                        regexp.regex.pattern = RegExpPattern::Invalid(raw);
-                        self.ctx.error(error);
-                        return false;
-                    }
-                }
-            }
-            RegExpPattern::Invalid(_) => return false,
-            RegExpPattern::Pattern(pattern) => &**pattern,
-        };
-
-        // Check if pattern contains any unsupported syntax
+    /// Check if the regular expression contains any unsupported syntax.
+    ///
+    /// Based on parsed regular expression pattern.
+    fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
         pattern.body.body.iter().any(|alternative| {
             alternative.body.iter().any(|term| self.term_contains_unsupported(term))
         })
     }
 
-    /// Check if a `Term` contains unsupported syntax
     fn term_contains_unsupported(&self, mut term: &Term) -> bool {
         // Loop because `Term::Quantifier` contains a nested `Term`
         loop {
