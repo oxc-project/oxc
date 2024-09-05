@@ -48,7 +48,7 @@ use oxc_regular_expression::ast::{
     CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
 };
 use oxc_semantic::ReferenceFlags;
-use oxc_span::Atom;
+use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
@@ -164,7 +164,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         let callee = {
             let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
             let ident = ctx.create_reference_id(
-                regexp.span,
+                SPAN,
                 Atom::from("RegExp"),
                 symbol_id,
                 ReferenceFlags::read(),
@@ -174,14 +174,11 @@ impl<'a> Traverse<'a> for RegExp<'a> {
 
         let mut arguments = ctx.ast.vec_with_capacity(2);
         arguments.push(
-            ctx.ast.argument_expression(
-                ctx.ast.expression_string_literal(regexp.span, pattern_source),
-            ),
+            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, pattern_source)),
         );
 
         let flags = regexp.regex.flags.to_string();
-        let flags =
-            ctx.ast.argument_expression(ctx.ast.expression_string_literal(regexp.span, flags));
+        let flags = ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags));
         arguments.push(flags);
 
         *expr = ctx.ast.expression_new(
