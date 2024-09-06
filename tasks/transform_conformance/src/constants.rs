@@ -59,6 +59,9 @@ pub(crate) const PLUGINS: &[&str] = &[
 
     // RegExp tests ported from esbuild + a few additions
     "regexp",
+    
+    // CommonJS formats should be supported, but needs manually opening the option
+    "transform-modules-commonjs",
 ];
 
 pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
@@ -66,7 +69,6 @@ pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
     "transform-class-properties",
     "transform-classes",
     "transform-destructuring",
-    "transform-modules-commonjs",
     "transform-optional-chaining",
     "transform-parameters",
     "transform-private-methods",
