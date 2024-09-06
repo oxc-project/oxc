@@ -37,9 +37,16 @@ impl std::ops::Deref for NoMagicNumbers {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum NoMagicNumbersNumber {
+    Float(f64),
+    BigInt(String)
+}
+
+#[derive(Debug, Default, Clone)]
 pub struct NoMagicNumbersConfig {
-    ignore: Vec<f64>,
+    ignore: Vec<NoMagicNumbersNumber>,
     ignore_array_indexes: bool,
     ignore_default_values: bool,
     ignore_class_field_initial_values: bool,
@@ -73,7 +80,11 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
                     ignore: object
                         .get("ignore")
                         .and_then(serde_json::Value::as_array)
-                        .map(|v| v.iter().filter_map(serde_json::Value::as_f64).collect())
+                        .map(|v| v.iter().map(|v| if v.is_number() {
+                            NoMagicNumbersNumber::Float(v.as_f64().unwrap())
+                        } else {
+                            NoMagicNumbersNumber::BigInt(v.as_str().unwrap().to_owned())
+                        }).collect())
                         .unwrap_or_default(),
                     ignore_array_indexes: get_bool_property(object, "ignoreArrayIndexes"),
                     ignore_default_values: get_bool_property(object, "ignoreDefaultValues"),
@@ -103,7 +114,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// The no-magic-numbers rule aims to make code more readable and refactoring easier by ensuring that special numbers are declared as constants to make their meaning explicit.
-    /// The current implementation does not support BigInt numbers.
+    /// The current implementation does not support BigInt numbers inside array indexes.
     ///
     /// ### Why is this bad?
     ///
@@ -218,35 +229,60 @@ declare_oxc_lint!(
 #[derive(Debug)]
 struct InternConfig<'a> {
     node: &'a AstNode<'a>,
-    value: f64,
+    value: NoMagicNumbersNumber,
     raw: String,
 }
 
 impl InternConfig<'_> {
     pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
-        let AstKind::NumericLiteral(numeric) = node.kind() else {
-            unreachable!(
-                "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
-                node.kind().debug_name()
-            );
-        };
-
         let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
         let is_negative = matches!(parent_node.kind(), AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation);
 
-        if is_negative {
-            InternConfig {
-                node: parent_node,
-                value: 0.0 - numeric.value,
-                raw: format!("-{}", numeric.raw),
+        match node.kind() {
+            AstKind::NumericLiteral(numeric) => {
+                if is_negative {
+                    InternConfig {
+                        node: parent_node,
+                        value: NoMagicNumbersNumber::Float(0.0 - numeric.value),
+                        raw: format!("-{}", numeric.raw),
+                    }
+                } else {
+                    InternConfig {
+                        node: if is_unary { parent_node } else { node },
+                        value: NoMagicNumbersNumber::Float(numeric.value),
+                        raw: numeric.raw.into(),
+                    }
+                }
+            },
+            AstKind::BigIntLiteral(bigint) => {
+                let big_int_string = bigint.raw.clone().into_string();
+                if is_negative {
+                    let raw = format!("-{}", big_int_string);
+
+                    InternConfig {
+                        node: parent_node,
+                        value: NoMagicNumbersNumber::BigInt(raw.clone()),
+                        raw: format!("-{}", raw),
+                    }
+                } else {
+                    InternConfig {
+                        node: if is_unary { parent_node } else { node },
+                        value: NoMagicNumbersNumber::BigInt(big_int_string.clone()),
+                        raw: big_int_string,
+                    }
+                }
             }
-        } else {
-            InternConfig {
-                node: if is_unary { parent_node } else { node },
-                value: numeric.value,
-                raw: numeric.raw.into(),
+            _ => {
+                unreachable!(
+                    "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
+                    node.kind().debug_name()
+                )    
             }
         }
+
+        
+
+        
     }
 }
 
@@ -255,7 +291,7 @@ impl Rule for NoMagicNumbers {
         Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !matches!(node.kind(), AstKind::NumericLiteral(_)) {
+        if !matches!(node.kind(), AstKind::NumericLiteral(_) | AstKind::BigIntLiteral(_)) {
             return;
         }
 
@@ -316,6 +352,7 @@ fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
 ///
 /// All notations are allowed, as long as the value coerces to one of "0", "1", "2" ... "4294967294".
 ///
+/// This current implementation does not check for BigInt Numbers, they will always accept them as array_index
 /// Valid examples:
 /// ```javascript
 /// a[0], a[1], a[1.2e1], a[0xAB], a[0n], a[1n]
@@ -333,6 +370,7 @@ fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
 fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool {
     fn is_unanary_index(unary: &UnaryExpression) -> bool {
         match &unary.argument {
+            Expression::BigIntLiteral(_) => true,
             Expression::NumericLiteral(numeric)
                 if unary.operator == UnaryOperator::UnaryNegation =>
             {
@@ -341,8 +379,10 @@ fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool
             _ => false,
         }
     }
+
     match ast_kind {
         AstKind::UnaryExpression(unary) => is_unanary_index(unary),
+        AstKind::BigIntLiteral(_) => true,
         AstKind::NumericLiteral(numeric) => match parent_kind {
             AstKind::MemberExpression(expression) => {
                 if let MemberExpression::ComputedMemberExpression(computed_expression) = expression
@@ -421,10 +461,6 @@ impl NoMagicNumbers {
             return true;
         }
 
-        if self.ignore_array_indexes && is_array_index(&config.node.kind(), &parent_kind) {
-            return true;
-        }
-
         if !self.detect_objects && is_detectable_object(&parent_kind) {
             return true;
         }
@@ -440,6 +476,11 @@ impl NoMagicNumbers {
         }
 
         if self.ignore_type_indexes && is_ts_indexed_access_type(parent_parent, nodes) {
+            return true;
+        }
+
+        // test it at the end because of false positives with BigInt values
+        if self.ignore_array_indexes && is_array_index(&config.node.kind(), &parent_kind) {
             return true;
         }
 
@@ -673,8 +714,8 @@ fn test() {
     let fail = vec![
         ("var foo = 42", enforce_const.clone()), // { "ecmaVersion": 6 },
         ("var foo = 0 + 1;", None),
-        // ("var foo = 42n", enforce_const.clone()), // {                "ecmaVersion": 2020            },
-        // ("var foo = 0n + 1n;", None), // {                "ecmaVersion": 2020            },
+        ("var foo = 42n", enforce_const.clone()), // {                "ecmaVersion": 2020            },
+        ("var foo = 0n + 1n;", None), // {                "ecmaVersion": 2020            },
         ("a = a + 5;", None),
         ("a += 5;", None),
         ("var foo = 0 + 1 + -2 + 2;", None),
@@ -731,12 +772,12 @@ fn test() {
         // ("foo[- -1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         ("100 .toString()", ignore_array_indexes.clone()),
         ("200[100]", ignore_array_indexes.clone()),
-        // ("var a = <div arrayProp={[1,2,3]}></div>;", None), // {                "parserOptions": {                    "ecmaFeatures": {                        "jsx": true                    }                }            },
+        ("var a = <div arrayProp={[1,2,3]}></div>;", None), // {                "parserOptions": {                    "ecmaFeatures": {                        "jsx": true                    }                }            },
         ("var min, max, mean; min = 1; max = 10; mean = 4;", Some(serde_json::json!([{}]))),
-        // ("f(100n)", Some(serde_json::json!([{ "ignore": [100] }]))), // { "ecmaVersion": 2020 },
-        // ("f(-100n)", Some(serde_json::json!([{ "ignore": ["100n"] }]))), // { "ecmaVersion": 2020 },
-        // ("f(100n)", Some(serde_json::json!([{ "ignore": ["-100n"] }]))), // { "ecmaVersion": 2020 },
-        // ("f(100)", Some(serde_json::json!([{ "ignore": ["100n"] }]))),
+        ("f(100n)", Some(serde_json::json!([{ "ignore": [100] }]))), // { "ecmaVersion": 2020 },
+        ("f(-100n)", Some(serde_json::json!([{ "ignore": ["100n"] }]))), // { "ecmaVersion": 2020 },
+        ("f(100n)", Some(serde_json::json!([{ "ignore": ["-100n"] }]))), // { "ecmaVersion": 2020 },
+        ("f(100)", Some(serde_json::json!([{ "ignore": ["100n"] }]))),
         (
             "const func = (param = 123) => {}",
             Some(serde_json::json!([{ "ignoreDefaultValues": false }])),
@@ -868,8 +909,8 @@ fn test() {
         ),
         ("type Foo = 1;", Some(serde_json::json!([{ "ignore": [-1] }]))),
         ("type Foo = -2;", Some(serde_json::json!([{ "ignore": [2] }]))),
-        // ("type Foo = 3n;", Some(serde_json::json!([{ "ignore": ["-3n"] }]))),
-        // ("type Foo = -4n;", Some(serde_json::json!([{ "ignore": ["4n"] }]))),
+        ("type Foo = 3n;", Some(serde_json::json!([{ "ignore": ["-3n"] }]))),
+        ("type Foo = -4n;", Some(serde_json::json!([{ "ignore": ["4n"] }]))),
         ("type Foo = 5.6;", Some(serde_json::json!([{ "ignore": [-5.6] }]))),
         ("type Foo = -7.8;", Some(serde_json::json!([{ "ignore": [7.8] }]))),
         ("type Foo = 0x0a;", Some(serde_json::json!([{ "ignore": [-0x0a] }]))),
