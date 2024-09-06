@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6470/6479 (99.86%)
 Positive Passed: 6445/6479 (99.48%)
-Negative Passed: 1208/5715 (21.14%)
+Negative Passed: 1212/5715 (21.21%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -50,10 +50,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSynthet
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports8.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/alwaysStrict.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/alwaysStrictES6.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/alwaysStrictModule.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/alwaysStrictNoImplicitUseStrict.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientEnum1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExportDefaultErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleInAnotherExternalModule.ts
@@ -5091,11 +5087,43 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
-   ╭─[typescript/tests/cases/compiler/alwaysStrictModule2.ts:3:13]
- 2 │     export function f() {
- 3 │         var arguments = [];
+   ╭─[typescript/tests/cases/compiler/alwaysStrict.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments = [];
+   ·         ─────────
+ 4 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/alwaysStrictES6.ts:3:9]
+ 2 │ function f() {
+ 3 │     var arguments = [];
+   ·         ─────────
+ 4 │ }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/alwaysStrictModule.ts:4:13]
+ 3 │     export function f() {
+ 4 │         var arguments = [];
    ·             ─────────
- 4 │     }
+ 5 │     }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/alwaysStrictModule2.ts:4:13]
+ 3 │     export function f() {
+ 4 │         var arguments = [];
+   ·             ─────────
+ 5 │     }
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/tests/cases/compiler/alwaysStrictNoImplicitUseStrict.ts:4:13]
+ 3 │     export function f() {
+ 4 │         var arguments = [];
+   ·             ─────────
+ 5 │     }
    ╰────
 
   × TS(1039): Initializers are not allowed in ambient contexts.

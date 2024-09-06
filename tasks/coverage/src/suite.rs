@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fs,
     io::{stdout, Read, Write},
     panic::UnwindSafe,
@@ -291,6 +292,13 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         false
     }
 
+    /// Mark strict mode as always strict
+    ///
+    /// See <https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode>
+    fn always_strict(&self) -> bool {
+        false
+    }
+
     fn test_passed(&self) -> bool {
         let result = self.test_result();
         assert!(!matches!(result, TestResult::ToBeRun), "test should be run");
@@ -317,7 +325,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
     /// Execute the parser once and get the test result
     fn execute(&mut self, source_type: SourceType) -> TestResult {
-        let source_text = self.code();
         let path = self.path();
 
         let mut driver = Driver {
@@ -325,7 +332,17 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             allow_return_outside_function: self.allow_return_outside_function(),
             ..Driver::default()
         };
-        driver.run(source_text, source_type);
+
+        let source_text = if self.always_strict() {
+            // To run in strict mode, the test contents must be modified prior to execution--
+            // a "use strict" directive must be inserted as the initial character sequence of the file,
+            // followed by a semicolon (;) and newline character (\n): "use strict";
+            Cow::Owned(format!("'use strict';\n{}", self.code()))
+        } else {
+            Cow::Borrowed(self.code())
+        };
+
+        driver.run(&source_text, source_type);
         let errors = driver.errors();
 
         let result = if errors.is_empty() {
