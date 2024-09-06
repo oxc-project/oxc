@@ -1,9 +1,8 @@
-use crate::util::ToIdent;
-
 use super::{
     defs::{EnumDef, StructDef, TypeDef},
     with_either,
 };
+use crate::util::ToIdent;
 
 pub trait GetIdent {
     fn ident(&self) -> syn::Ident;

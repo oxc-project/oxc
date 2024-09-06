@@ -36,6 +36,7 @@ enum Allowed {
 
 impl TryFrom<&str> for Allowed {
     type Error = ();
+
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "always" => Ok(Self::Always),
@@ -50,6 +51,7 @@ impl Allowed {
     pub fn is_never(self) -> bool {
         matches!(self, Self::Never)
     }
+
     #[inline]
     pub fn is_always(self) -> bool {
         matches!(self, Self::Always)
@@ -327,6 +329,7 @@ impl Rule for JsxCurlyBracePresence {
             _ => default,
         }
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(el) => {
@@ -559,8 +562,9 @@ fn has_adjacent_jsx_expression_containers<'a>(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("<App {...props}>foo</App>", None),

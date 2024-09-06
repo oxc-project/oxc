@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
+use napi::Either;
 use napi_derive::napi;
-
 use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, TypeScriptOptions,
+    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, RewriteExtensionsMode,
+    TypeScriptOptions,
 };
 
 #[napi(object)]
@@ -22,6 +23,16 @@ pub struct TypeScriptBindingOptions {
     ///
     /// @default false
     pub declaration: Option<bool>,
+    /// Rewrite or remove TypeScript import/export declaration extensions.
+    ///
+    /// - When set to `rewrite`, it will change `.ts`, `.mts`, `.cts` extensions to `.js`, `.mjs`, `.cjs` respectively.
+    /// - When set to `remove`, it will remove `.ts`/`.mts`/`.cts`/`.tsx` extension entirely.
+    /// - When set to `true`, it's equivalent to `rewrite`.
+    /// - When set to `false` or omitted, no changes will be made to the extensions.
+    ///
+    /// @default false
+    #[napi(ts_type = "'rewrite' | 'remove' | boolean")]
+    pub rewrite_import_extensions: Option<Either<bool, String>>,
 }
 
 impl From<TypeScriptBindingOptions> for TypeScriptOptions {
@@ -36,6 +47,22 @@ impl From<TypeScriptBindingOptions> for TypeScriptOptions {
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
             optimize_const_enums: false,
+            rewrite_import_extensions: options.rewrite_import_extensions.and_then(|value| {
+                match value {
+                    Either::A(v) => {
+                        if v {
+                            Some(RewriteExtensionsMode::Rewrite)
+                        } else {
+                            None
+                        }
+                    }
+                    Either::B(v) => match v.as_str() {
+                        "rewrite" => Some(RewriteExtensionsMode::Rewrite),
+                        "remove" => Some(RewriteExtensionsMode::Remove),
+                        _ => None,
+                    },
+                }
+            }),
         }
     }
 }

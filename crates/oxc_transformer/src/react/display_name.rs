@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
-use oxc_traverse::{Ancestor, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 
@@ -23,12 +23,11 @@ impl<'a> ReactDisplayName<'a> {
     }
 }
 
-// Transforms
-impl<'a> ReactDisplayName<'a> {
-    pub fn transform_call_expression(
-        &self,
+impl<'a> Traverse<'a> for ReactDisplayName<'a> {
+    fn enter_call_expression(
+        &mut self,
         call_expr: &mut CallExpression<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         let Some(obj_expr) = Self::get_object_from_create_class(call_expr) else {
             return;

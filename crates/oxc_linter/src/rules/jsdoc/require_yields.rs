@@ -39,25 +39,31 @@ pub struct RequireYields(Box<RequireYieldsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that yields are documented.
     /// Will also report if multiple `@yields` tags are present.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is intended to prevent the omission of `@yields` tags when they are necessary.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
-    /// /** * @yields Foo */
     /// function * quux (foo) { yield foo; }
     ///
-    /// // Failing
-    /// function * quux (foo) { yield foo; }
     /// /**
     ///  * @yields {undefined}
     ///  * @yields {void}
     ///  */
     /// function * quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** * @yields Foo */
+    /// function * quux (foo) { yield foo; }
     /// ```
     RequireYields,
     correctness

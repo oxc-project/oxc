@@ -36,7 +36,7 @@ submodules:
   just clone-submodule tasks/coverage/test262 git@github.com:tc39/test262.git d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60
   just clone-submodule tasks/coverage/babel git@github.com:babel/babel.git 3bcfee232506a4cebe410f02042fb0f0adeeb0b1
   just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git a709f9899c2a544b6de65a0f2623ecbbe1394eab
-  just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 7142cf354cce2558f41574f44b967baf11d5b603
+  just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 52829385bcc4d785e58ae2602c0b098a643523c9
 
 # Install git pre-commit to format files
 install-hook:
@@ -123,10 +123,10 @@ oxlint:
   cargo oxlint
 
 watch-wasm:
-  cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm
+  cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm dev
 
-build-wasm:
-  wasm-pack build --out-dir ../../npm/oxc-wasm --target web --dev --scope oxc crates/oxc_wasm
+build-wasm mode="release":
+  wasm-pack build --out-dir ../../npm/oxc-wasm --target web --{{mode}} --scope oxc crates/oxc_wasm
 
 # Generate the JavaScript global variables. See `tasks/javascript_globals`
 javascript-globals:

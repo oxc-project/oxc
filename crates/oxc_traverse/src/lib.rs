@@ -73,11 +73,8 @@ mod generated {
     pub mod traverse;
     pub(super) mod walk;
 }
-pub use generated::ancestor;
-pub use generated::ancestor::Ancestor;
-use generated::scopes_collector;
-pub use generated::traverse::Traverse;
-use generated::walk;
+pub use generated::{ancestor, ancestor::Ancestor, traverse::Traverse};
+use generated::{scopes_collector, walk};
 
 mod compile_fail_tests;
 

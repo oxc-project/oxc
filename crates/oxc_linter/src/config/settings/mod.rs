@@ -35,9 +35,8 @@ mod test {
     use oxc_span::CompactStr;
     use serde::Deserialize;
 
-    use crate::config::settings::react::ComponentAttrs;
-
     use super::OxlintSettings;
+    use crate::config::settings::react::ComponentAttrs;
 
     fn as_attrs<S: Into<CompactStr>, I: IntoIterator<Item = S>>(
         attrs: I,

@@ -61,19 +61,26 @@ declare_oxc_lint!(
     ///     Enforces non-zero to be checked with: foo.length > 0
     /// not-equal
     ///     Enforces non-zero to be checked with: foo.length !== 0
-    /// ### Example
+    ///
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // fail
-    /// const isEmpty = !foo.length;
     /// const isEmpty = foo.length == 0;
     /// const isEmpty = foo.length < 1;
     /// const isEmpty = 0 === foo.length;
     /// const isEmpty = 0 == foo.length;
     /// const isEmpty = 1 > foo.length;
-    /// // Negative style is disallowed too
+    ///
+    /// const isEmpty = !foo.length;
     /// const isEmpty = !(foo.length > 0);
     /// const isEmptySet = !foo.size;
-    /// // pass
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const isEmpty = foo.length === 0;
     /// ```
     ExplicitLengthCheck,

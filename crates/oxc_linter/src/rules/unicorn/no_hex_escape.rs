@@ -20,13 +20,18 @@ declare_oxc_lint!(
     ///
     /// Enforces a convention of using [Unicode escapes](https://mathiasbynens.be/notes/javascript-escapes#unicode) instead of [hexadecimal escapes](https://mathiasbynens.be/notes/javascript-escapes#hexadecimal) for consistency and clarity.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // fail
     /// const foo = '\x1B';
     /// const foo = `\x1B${bar}`;
+    /// ```
     ///
-    /// // pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = '\u001B';
     /// const foo = `\u001B${bar}`;
     /// ```
@@ -85,7 +90,9 @@ impl Rule for NoHexEscape {
                 });
             }
             AstKind::RegExpLiteral(regex) => {
-                if let Some(fixed) = check_escape(&regex.regex.pattern) {
+                if let Some(fixed) =
+                    check_escape(regex.regex.pattern.source_text(ctx.source_text()).as_ref())
+                {
                     #[allow(clippy::cast_possible_truncation)]
                     ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), |fixer| {
                         fixer.replace(

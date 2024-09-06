@@ -346,6 +346,11 @@ fn test() {
         r#"export {x as default} from "import""#,
         "export const /* tree-shaking no-side-effects-when-called */ x = function(){}",
         "export function /* tree-shaking no-side-effects-when-called */ x(){}",
+        "
+            { let x = ext; }
+            let x =  () => {}
+            export {/* tree-shaking no-side-effects-when-called */ x}
+        ",
         "const x = function(){}; export {/* tree-shaking no-side-effects-when-called */ x}",
         // ExpressionStatement
         "const x = 1",
@@ -632,6 +637,11 @@ fn test() {
         "export const /* tree-shaking no-side-effects-when-called */ x = ext",
         "export function /* tree-shaking no-side-effects-when-called */ x(){ext()}",
         "const x = ext; export {/* tree-shaking no-side-effects-when-called */ x}",
+        "
+            { let x = () => {}; }
+            let x = ext 
+            export {/* tree-shaking no-side-effects-when-called */ x}
+        ",
         // ExpressionStatement
         "ext()",
         // ForInStatement

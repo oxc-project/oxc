@@ -38,8 +38,9 @@ impl Parse for VisitArg {
 pub struct VisitArgs(Punctuated<VisitArg, Token![,]>);
 
 impl IntoIterator for VisitArgs {
-    type Item = VisitArg;
     type IntoIter = syn::punctuated::IntoIter<Self::Item>;
+    type Item = VisitArg;
+
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
@@ -137,7 +138,7 @@ pub fn get_visit_markers<'a, I>(attrs: I) -> crate::Result<VisitMarkers>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
-    #[allow(clippy::trivially_copy_pass_by_ref)]
+    #[expect(clippy::trivially_copy_pass_by_ref)]
     fn predicate(it: &&Attribute) -> bool {
         it.path().is_ident("visit")
     }
@@ -186,7 +187,7 @@ pub fn get_scope_markers<'a, I>(attrs: I) -> crate::Result<ScopeMarkers>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
-    #[allow(clippy::trivially_copy_pass_by_ref)]
+    #[expect(clippy::trivially_copy_pass_by_ref)]
     fn predicate(it: &&Attribute) -> bool {
         it.path().is_ident("scope")
     }

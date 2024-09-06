@@ -132,7 +132,7 @@ impl AppArgs {
 
     // Generate v8 test262 status file, which is used to skip failed tests
     // see https://chromium.googlesource.com/v8/v8/+/refs/heads/main/test/test262/test262.status
-    #[allow(clippy::missing_panics_doc)]
+    #[expect(clippy::missing_panics_doc)]
     pub fn run_sync_v8_test262_status(&self) {
         let res = agent()
             .get("http://raw.githubusercontent.com/v8/v8/main/test/test262/test262.status")

@@ -63,8 +63,8 @@ fn fixtures_root() -> PathBuf {
     project_root().join(root()).join("prettier/tests/format")
 }
 
-const SNAP_NAME: &str = "jsfmt.spec.js";
-const SNAP_RELATIVE_PATH: &str = "__snapshots__/jsfmt.spec.js.snap";
+const SNAP_NAME: &str = "format.test.js";
+const SNAP_RELATIVE_PATH: &str = "__snapshots__/format.test.js.snap";
 const LF: char = '\u{a}';
 const CR: char = '\u{d}';
 
@@ -82,7 +82,7 @@ impl TestRunner {
     }
 
     /// # Panics
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     pub fn run(mut self) {
         let fixture_root = &self.fixtures_root;
         // Read the first level of directories that contain `__snapshots__`

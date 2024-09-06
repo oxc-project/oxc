@@ -3,16 +3,15 @@ mod plugins;
 
 use std::{convert::From, path::PathBuf};
 
+pub use allow_warn_deny::AllowWarnDeny;
 use oxc_diagnostics::Error;
+pub use plugins::LintPluginOptions;
 use rustc_hash::FxHashSet;
 
 use crate::{
     config::OxlintConfig, fixer::FixKind, rules::RULES, utils::is_jest_rule_adapted_to_vitest,
     FrameworkFlags, RuleCategory, RuleEnum, RuleWithSeverity,
 };
-
-pub use allow_warn_deny::AllowWarnDeny;
-pub use plugins::LintPluginOptions;
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -144,6 +143,12 @@ impl LintOptions {
         self.plugins.promise = yes;
         self
     }
+
+    #[must_use]
+    pub fn with_node_plugin(mut self, yes: bool) -> Self {
+        self.plugins.node = yes;
+        self
+    }
 }
 
 impl LintOptions {
@@ -240,6 +245,7 @@ impl LintOptions {
                 "oxc" => self.plugins.oxc,
                 "eslint" | "tree_shaking" => true,
                 "promise" => self.plugins.promise,
+                "node" => self.plugins.node,
                 name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()

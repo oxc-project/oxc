@@ -1,12 +1,11 @@
 use serde::Serialize;
 
+use super::{with_either, TypeName};
 use crate::{
     markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
-
-use super::{with_either, TypeName};
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
@@ -36,6 +35,10 @@ impl TypeDef {
         let generated_derives = self.generated_derives();
         generated_derives.iter().any(|it| it == derive)
     }
+
+    pub fn module_path(&self) -> &str {
+        with_either!(self, it => &it.module_path)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -58,6 +61,8 @@ pub struct StructDef {
     pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub markers: OuterMarkers,
+    #[serde(skip)]
+    pub module_path: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -77,6 +82,8 @@ pub struct EnumDef {
     pub align_32: usize,
     pub offsets_32: Option<Vec<usize>>,
     pub generated_derives: Vec<String>,
+    #[serde(skip)]
+    pub module_path: String,
 }
 
 impl EnumDef {

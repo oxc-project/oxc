@@ -3268,6 +3268,9 @@ pub(crate) unsafe fn walk_jsx_element_name<'a, Tr: Traverse<'a>>(
         JSXElementName::MemberExpression(node) => {
             walk_jsx_member_expression(traverser, (&mut **node) as *mut _, ctx)
         }
+        JSXElementName::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_jsx_element_name(&mut *node, ctx);
 }
@@ -3329,14 +3332,14 @@ pub(crate) unsafe fn walk_jsx_member_expression_object<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_jsx_member_expression_object(&mut *node, ctx);
     match &mut *node {
-        JSXMemberExpressionObject::Identifier(node) => {
-            walk_jsx_identifier(traverser, (&mut **node) as *mut _, ctx)
-        }
         JSXMemberExpressionObject::IdentifierReference(node) => {
             walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
         }
         JSXMemberExpressionObject::MemberExpression(node) => {
             walk_jsx_member_expression(traverser, (&mut **node) as *mut _, ctx)
+        }
+        JSXMemberExpressionObject::ThisExpression(node) => {
+            walk_this_expression(traverser, (&mut **node) as *mut _, ctx)
         }
     }
     traverser.exit_jsx_member_expression_object(&mut *node, ctx);
@@ -3642,19 +3645,13 @@ pub(crate) unsafe fn walk_ts_this_parameter<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_this_parameter(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::TSThisParameterThis(
-        ancestor::TSThisParameterWithoutThis(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::TSThisParameterTypeAnnotation(
+        ancestor::TSThisParameterWithoutTypeAnnotation(node, PhantomData),
     ));
-    walk_identifier_name(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_THIS_PARAMETER_THIS) as *mut IdentifierName,
-        ctx,
-    );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION)
         as *mut Option<Box<TSTypeAnnotation>>)
     {
-        ctx.retag_stack(AncestorType::TSThisParameterTypeAnnotation);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);

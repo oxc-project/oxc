@@ -4,9 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
-
-use oxc_span::GetSpan;
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
@@ -78,7 +76,7 @@ impl Rule for PreferStringReplaceAll {
         let pattern = &call_expr.arguments[0];
         match method_name_str {
             "replaceAll" => {
-                if let Some(k) = get_pattern_replacement(pattern) {
+                if let Some(k) = get_pattern_replacement(pattern, ctx) {
                     ctx.diagnostic_with_fix(string_literal(pattern.span(), &k), |fixer| {
                         // foo.replaceAll(/hello world/g, bar) => foo.replaceAll("hello world", bar)
                         fixer.replace(pattern.span(), format!("{k:?}"))
@@ -114,7 +112,10 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
     false
 }
 
-fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
+fn get_pattern_replacement<'a>(
+    expr: &'a Argument<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<CompactStr> {
     let Argument::RegExpLiteral(reg_exp_literal) = expr else {
         return None;
     };
@@ -123,11 +124,13 @@ fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
         return None;
     }
 
-    if !is_simple_string(&reg_exp_literal.regex.pattern) {
+    let pattern_text = reg_exp_literal.regex.pattern.source_text(ctx.source_text());
+    let pattern_text = pattern_text.as_ref();
+    if !is_simple_string(pattern_text) {
         return None;
     }
 
-    Some(reg_exp_literal.regex.pattern.to_compact_str())
+    Some(CompactStr::new(pattern_text))
 }
 
 fn is_simple_string(str: &str) -> bool {

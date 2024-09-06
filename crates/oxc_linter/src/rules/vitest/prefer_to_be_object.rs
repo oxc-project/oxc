@@ -42,7 +42,10 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Using other methods such as `toBeInstanceOf(Object)` or `instanceof Object` can be less clear and potentially misleading. Enforcing the use of `toBeObject()` provides more explicit and readable code, making your intentions clear and improving the overall maintainability and readability of your tests.
+    /// Using other methods such as `toBeInstanceOf(Object)` or `instanceof Object` can
+    /// be less clear and potentially misleading. Enforcing the use of `toBeObject()`
+    /// provides more explicit and readable code, making your intentions clear and
+    /// improving the overall maintainability and readability of your tests.
     ///
     /// ### Examples
     ///

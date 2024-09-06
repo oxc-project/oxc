@@ -1,12 +1,12 @@
-use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, Trivias};
-use oxc_codegen::Codegen;
 use std::{
     cell::{OnceCell, Ref, RefCell, RefMut},
     path::Path,
     sync::Arc,
 };
 
+use oxc_allocator::Allocator;
+use oxc_ast::{ast::Program, Trivias};
+use oxc_codegen::Codegen;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
@@ -86,6 +86,7 @@ impl<'a> TransformContext<'a> {
     pub fn file_name(&self) -> &'a str {
         self.filename
     }
+
     #[inline]
     pub fn file_path(&self) -> &'a Path {
         Path::new(self.filename)

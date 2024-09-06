@@ -34,12 +34,15 @@ declare_oxc_lint!(
     ///
     /// The `replaceAll` method replaces all occurrences of a string with another string. If the global flag (g) is not used in the regular expression, only the first occurrence of the string will be replaced.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Bad: The global flag (g) is missing in the regular expression.
-    /// withSpaces.replaceAll(/\s+/, ',');
+    /// ### Examples
     ///
-    /// // Good: The global flag (g) is used in the regular expression.
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// withSpaces.replaceAll(/\s+/, ',');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// withSpaces.replaceAll(/\s+/g, ',');
     /// ```
     BadReplaceAllArg,
@@ -81,7 +84,7 @@ fn resolve_flags<'a>(
     expr: &'a Expression<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<(RegExpFlags, Span)> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::RegExpLiteral(regexp_literal) => {
             Some((regexp_literal.regex.flags, regexp_literal.span))
         }
@@ -96,12 +99,10 @@ fn resolve_flags<'a>(
             }
         }
         Expression::Identifier(ident) => {
-            if let Some(decl) = get_declaration_of_variable(ident, ctx) {
-                if let AstKind::VariableDeclarator(var_decl) = decl.kind() {
-                    if let Some(init) = &var_decl.init {
-                        return resolve_flags(init, ctx);
-                    }
-                }
+            let decl = get_declaration_of_variable(ident, ctx)?;
+            let var_decl = decl.kind().as_variable_declarator()?;
+            if let Some(init) = &var_decl.init {
+                return resolve_flags(init, ctx);
             }
             None
         }

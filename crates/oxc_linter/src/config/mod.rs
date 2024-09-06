@@ -195,9 +195,8 @@ mod test {
     use rustc_hash::FxHashSet;
     use serde::Deserialize;
 
-    use crate::rules::RULES;
-
     use super::OxlintConfig;
+    use crate::rules::RULES;
 
     #[test]
     fn test_from_file() {

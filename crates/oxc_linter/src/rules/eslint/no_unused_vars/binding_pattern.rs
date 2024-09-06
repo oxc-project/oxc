@@ -14,6 +14,7 @@ impl<'s, 'a> BindingContext<'s, 'a> {
     pub fn symbol(&self, symbol_id: SymbolId) -> Symbol<'s, 'a> {
         Symbol::new(self.semantic, symbol_id)
     }
+
     #[inline]
     pub fn has_usages(&self, symbol_id: SymbolId) -> bool {
         self.symbol(symbol_id).has_usages(self.options)

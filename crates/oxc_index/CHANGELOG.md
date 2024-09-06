@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- 4cb63fe index: Impl rayon related to trait for IndexVec (#5421) (IWANABETHATGUY)
+
+### Documentation
+- 00511fd Use `oxc_index` instead of `index_vec` in doc comments (#5423) (IWANABETHATGUY)
+
 ## [0.24.3] - 2024-08-18
 
 ### Refactor

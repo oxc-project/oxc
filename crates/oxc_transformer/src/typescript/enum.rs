@@ -10,7 +10,7 @@ use oxc_syntax::{
     reference::ReferenceFlags,
     symbol::SymbolFlags,
 };
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
 
 use crate::context::Ctx;
@@ -24,8 +24,10 @@ impl<'a> TypeScriptEnum<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { ctx, enums: FxHashMap::default() }
     }
+}
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a> Traverse<'a> for TypeScriptEnum<'a> {
+    fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_stmt = match stmt {
             Statement::TSEnumDeclaration(ts_enum_decl) => {
                 self.transform_ts_enum(ts_enum_decl, None, ctx)
@@ -45,7 +47,9 @@ impl<'a> TypeScriptEnum<'a> {
             *stmt = new_stmt;
         }
     }
+}
 
+impl<'a> TypeScriptEnum<'a> {
     /// ```TypeScript
     /// enum Foo {
     ///   X = 1,

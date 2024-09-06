@@ -17,6 +17,7 @@ pub struct EmptyTags(Box<EmptyTagsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Expects the following tags to be empty of any content:
     /// - `@abstract`
     /// - `@async`
@@ -38,19 +39,23 @@ declare_oxc_lint!(
     /// - `@static`
     ///
     /// ### Why is this bad?
+    ///
     /// The void tags should be empty.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
-    /// /** @async */
-    ///
-    /// /** @private */
-    ///
-    /// // Failing
     /// /** @async foo */
     ///
     /// /** @private bar */
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @async */
+    ///
+    /// /** @private */
     /// ```
     EmptyTags,
     restriction

@@ -107,62 +107,67 @@ const NEXT_POLYFILLED_FEATURES: Set<&'static str> = phf_set! {
 
 impl Rule for NoUnwantedPolyfillio {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(tag_name) = jsx_el.name.get_identifier_name() else { return };
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+            return;
+        };
 
-            if tag_name.as_str() != "script" {
-                let next_script_import_local_name = get_next_script_import_local_name(ctx);
-                if !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
-                {
-                    return;
-                }
-            }
+        let Some(tag_name) = jsx_el.name.get_identifier_name() else {
+            return;
+        };
 
-            if jsx_el.attributes.len() == 0 {
+        if tag_name.as_str() != "script" {
+            let next_script_import_local_name = get_next_script_import_local_name(ctx);
+            if !matches!(next_script_import_local_name, Some(import) if tag_name.as_str() == import.as_str())
+            {
                 return;
             }
+        }
 
-            let Some(JSXAttributeItem::Attribute(src)) = jsx_el.attributes.iter().find(|attr| {
-                matches!(
-                    attr,
-                    JSXAttributeItem::Attribute(jsx_attr)
-                        if matches!(
-                            &jsx_attr.name,
-                            JSXAttributeName::Identifier(id) if id.name.as_str() == "src"
-                        )
-                )
-            }) else {
+        if jsx_el.attributes.len() == 0 {
+            return;
+        }
+
+        let Some(JSXAttributeItem::Attribute(src)) = jsx_el.attributes.iter().find(|attr| {
+            matches!(
+                attr,
+                JSXAttributeItem::Attribute(jsx_attr)
+                    if matches!(
+                        &jsx_attr.name,
+                        JSXAttributeName::Identifier(id) if id.name.as_str() == "src"
+                    )
+            )
+        }) else {
+            return;
+        };
+
+        let Some(JSXAttributeValue::StringLiteral(src_value)) = &src.value else {
+            return;
+        };
+
+        if src_value.value.as_str().starts_with("https://cdn.polyfill.io/v2/")
+            || src_value.value.as_str().starts_with("https://polyfill.io/v3/")
+        {
+            let Ok(url) = url::Url::parse(src_value.value.as_str()) else {
+                return;
+            };
+            let Some((_, features_value)) = url.query_pairs().find(|(key, _)| key == "features")
+            else {
                 return;
             };
 
-            if let Some(JSXAttributeValue::StringLiteral(src_value)) = &src.value {
-                if src_value.value.as_str().starts_with("https://cdn.polyfill.io/v2/")
-                    || src_value.value.as_str().starts_with("https://polyfill.io/v3/")
-                {
-                    let Ok(url) = url::Url::parse(src_value.value.as_str()) else {
-                        return;
-                    };
-
-                    let Some((_, features_value)) =
-                        url.query_pairs().find(|(key, _)| key == "features")
-                    else {
-                        return;
-                    };
-                    let unwanted_features: Vec<&str> = features_value
-                        .split(',')
-                        .filter(|feature| NEXT_POLYFILLED_FEATURES.contains(feature))
-                        .collect();
-                    if !unwanted_features.is_empty() {
-                        ctx.diagnostic(no_unwanted_polyfillio_diagnostic(
-                            &format!(
-                                "{} {}",
-                                unwanted_features.join(", "),
-                                if unwanted_features.len() > 1 { "are" } else { "is" }
-                            ),
-                            src.span,
-                        ));
-                    }
-                }
+            let unwanted_features: Vec<&str> = features_value
+                .split(',')
+                .filter(|feature| NEXT_POLYFILLED_FEATURES.contains(feature))
+                .collect();
+            if !unwanted_features.is_empty() {
+                ctx.diagnostic(no_unwanted_polyfillio_diagnostic(
+                    &format!(
+                        "{} {}",
+                        unwanted_features.join(", "),
+                        if unwanted_features.len() > 1 { "are" } else { "is" }
+                    ),
+                    src.span,
+                ));
             }
         }
     }

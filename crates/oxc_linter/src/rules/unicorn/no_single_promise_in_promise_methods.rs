@@ -33,8 +33,8 @@ declare_oxc_lint!(
     ///
     /// ### Example
     ///
-    /// Bad
-    /// ```js
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// async function bad() {
     ///     const foo = await Promise.all([promise]);
     ///     const foo = await Promise.any([promise]);
@@ -43,8 +43,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Good
-    /// ```js
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function good() {
     ///     const foo = await promise;
     ///     const promise = Promise.resolve(nonPromise);

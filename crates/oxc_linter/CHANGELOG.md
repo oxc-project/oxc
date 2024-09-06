@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.2] - 2024-09-02
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+### Features
+
+- 180b1a1 ast: Add `Function::name()` (#5361) (DonIsaac)
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+- b103737 linter: Improve no-accumulating-spread (#5302) (camc314)
+- 9c22ce9 linter: Add hyperlinks to diagnostic messages (#5318) (DonIsaac)
+- 1967c67 linter/eslint: Implement no-new-func (#5360) (dalaoshu)
+- b867e5f linter/eslint-plugin-promise: Implement catch-or-return (#5121) (Jelle van der Waa)
+- 8d781e7 linter/oxc: Differentiate between array/object in `no-accumulating-spread` loop diagnostic (#5375) (camc314)
+- db55444 linter/oxc: Add fixer for `double-comparisons` (#5378) (camc314)
+- e5c755a linter/promise: Add `spec-only` rule (#5124) (Jelle van der Waa)
+- 4c0861f linter/unicorn: Add fixer for `prefer-type-error` (#5311) (camc314)
+- 084c2d1 linter/vitest: Implement prefer-to-be-object (#5321) (dalaoshu)
+
+### Bug Fixes
+
+- 11b93af linter/unicorn: Consistent-function-scoping false positive on assignment expression (#5312) (Arian94)
+
+### Performance
+
+- f052a6d linter: `react/jsx_no_undef` faster check for unbound references (#5349) (overlookmotel)
+- 05636b7 linter: Avoid unnecessary work in `jsx_a11y/anchor_is_valid` rule (#5341) (overlookmotel)
+
+### Refactor
+
+- afb038e linter: `react/jsx_no_undef` use loop instead of recursion (#5347) (overlookmotel)
+- fe62687 linter: Simplify skipping JSX elements in `unicorn/consistent_function_scoping` (#5351) (overlookmotel)
+- 381d9fe linter: Shorten code in `react/jsx_no_useless_fragment` (#5350) (overlookmotel)
+- 83b9a82 linter: Fix indentation in `nextjs/no_script_component_in_head` rule (#5338) (overlookmotel)
+- 89f0188 linter: Improve docs for `react/jsx_no_target_blank` rule (#5342) (overlookmotel)
+- 57050ab linter: Shorten code in `jsx_a11y/aria_activedescendant_has_tabindex` rule (#5340) (overlookmotel)
+- ed31d67 linter/jest: Fix indentation in code comment (#5372) (camc314)
+- 2499cb9 linter/oxc: Update rule docs for `erasing-op` (#5376) (camc314)
+- 69493d2 linter/oxc: Improve diagnostic for `no-accumulating-spread` in loops (#5374) (camc314)
+- 024b585 linter/oxc: Improve code comment for `no-accumulating-spread` (#5373) (camc314)
+- 3ae94b8 semantic: Change `build_module_record` to accept &Path instead of PathBuf (Boshen)
+
 ## [0.9.1] - 2024-08-29
 
 - 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)

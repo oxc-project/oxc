@@ -20,23 +20,29 @@ pub struct NoDefaults(Box<NoDefaultsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule reports defaults being used on the relevant portion of `@param` or `@default`.
     /// It also optionally reports the presence of the square-bracketed optional arguments at all.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is intended to prevent the indication of defaults on tags
     /// where this would be redundant with ES6 default parameters.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
+    /// /** @param {number} [foo="7"] */
+    /// function quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// /** @param {number} foo */
     /// function quux (foo) {}
-    /// /** @param foo */
-    /// function quux (foo) {}
     ///
-    /// // Failing
-    /// /** @param {number} [foo="7"] */
+    /// /** @param foo */
     /// function quux (foo) {}
     /// ```
     NoDefaults,

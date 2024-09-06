@@ -17,6 +17,7 @@ mod import {
     // pub mod no_deprecated;
     pub mod max_dependencies;
     pub mod no_duplicates;
+    pub mod no_dynamic_require;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
@@ -38,6 +39,7 @@ mod eslint {
     pub mod max_classes_per_file;
     pub mod max_lines;
     pub mod max_params;
+    pub mod no_alert;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
     pub mod no_await_in_loop;
@@ -123,6 +125,7 @@ mod eslint {
     pub mod require_await;
     pub mod require_yield;
     pub mod sort_imports;
+    pub mod sort_vars;
     pub mod symbol_description;
     pub mod unicode_bom;
     pub mod use_isnan;
@@ -246,6 +249,7 @@ mod react {
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
+    pub mod self_closing_comp;
     pub mod void_dom_elements_no_children;
 }
 
@@ -471,6 +475,10 @@ mod vitest {
     pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
+mod node {
+    pub mod no_exports_assign;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
@@ -488,6 +496,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_ternary,
     eslint::no_this_before_super,
     eslint::no_template_curly_in_string,
+    eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
     eslint::no_bitwise,
@@ -565,6 +574,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::symbol_description,
     eslint::sort_imports,
+    eslint::sort_vars,
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
@@ -770,6 +780,7 @@ oxc_macros::declare_all_lint_rules! {
     react::prefer_es6_class,
     react::require_render_return,
     react::rules_of_hooks,
+    react::self_closing_comp,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,
@@ -787,6 +798,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default_member,
     import::no_self_import,
     // import::no_unused_modules,
+    import::no_dynamic_require,
     import::no_duplicates,
     import::no_default_export,
     import::no_webpack_loader_syntax,
@@ -894,4 +906,5 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_truthy,
     vitest::no_conditional_tests,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    node::no_exports_assign,
 }

@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_ast"
-version                = "0.25.0"
+version                = "0.27.0"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -19,10 +19,11 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_allocator  = { workspace = true }
-oxc_ast_macros = { workspace = true }
-oxc_span       = { workspace = true }
-oxc_syntax     = { workspace = true }
+oxc_allocator          = { workspace = true }
+oxc_ast_macros         = { workspace = true }
+oxc_span               = { workspace = true }
+oxc_syntax             = { workspace = true }
+oxc_regular_expression = { workspace = true }
 
 bitflags   = { workspace = true }
 num-bigint = { workspace = true }
@@ -41,6 +42,7 @@ serialize = [
   "dep:tsify",
   "dep:wasm-bindgen",
   "oxc_allocator/serialize",
+  "oxc_regular_expression/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
   "oxc_syntax/to_js_string",

@@ -77,7 +77,10 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
             ts::check_method_definition(method, ctx);
         }
         AstKind::PropertyDefinition(prop) => ts::check_property_definition(prop, ctx),
-        AstKind::ObjectProperty(prop) => js::check_object_property(prop, ctx),
+        AstKind::ObjectProperty(prop) => {
+            js::check_object_property(prop, ctx);
+            ts::check_object_property(prop, ctx);
+        }
         AstKind::Super(sup) => js::check_super(sup, node, ctx),
 
         AstKind::FormalParameters(params) => {
@@ -97,6 +100,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, node, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
+        AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, ctx),
         AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
         AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),

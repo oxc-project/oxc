@@ -1,8 +1,9 @@
 //! Test cases created by oxc maintainers
 
+use serde_json::json;
+
 use super::NoUnusedVars;
 use crate::{tester::Tester, FixKind, RuleMeta as _};
-use serde_json::json;
 
 #[test]
 fn test_vars_simple() {
@@ -17,6 +18,23 @@ fn test_vars_simple() {
             r"export const rendered = marked(markdown, {
                   renderer: new (class CustomRenderer extends Renderer {})(),
               });",
+            None,
+        ),
+        // https://github.com/oxc-project/oxc/issues/5391
+        (
+            "
+            import styled from 'styled-components';
+
+            import { Prose, ProseProps } from './prose';
+
+            interface Props extends ProseProps {
+              density?: number;
+            }
+
+            export const HandMarkedPaperBallotProse = styled(Prose)<Props>`
+            line-height: ${({ density }) => (density !== 0 ? '1.1' : '1.3')};
+            `;
+            ",
             None,
         ),
     ];
@@ -279,8 +297,8 @@ fn test_vars_destructure() {
                 "caughtErrors": "none",
                 "ignoreRestSiblings": true,
                 "vars": "all"
-            }]))
-        )
+            }])),
+        ),
     ];
     let fail = vec![
         ("const { a, ...rest } = obj", Some(json!( [{ "ignoreRestSiblings": true }] ))),
@@ -476,13 +494,32 @@ fn test_functions() {
             });
         ",
         "const foo = () => function bar() { }\nfoo()",
-        "module.exports.foo = () => function bar() { }"
+        "module.exports.foo = () => function bar() { }",
+        // https://github.com/oxc-project/oxc/issues/5406
+        "
+        export function log(message: string, ...interpolations: unknown[]): void;
+        export function log(message: string, ...interpolations: unknown[]): void {
+            console.log(message, interpolations);
+        }
+        ",
+        "declare function func(strings: any, ...values: any[]): object"
     ];
 
     let fail = vec![
         "function foo() {}",
         "function foo() { foo() }",
         "const foo = () => { function bar() { } }\nfoo()",
+        "
+        export function log(message: string, ...interpolations: unknown[]): void;
+        export function log(message: string, ...interpolations: unknown[]): void {
+            console.log(message);
+        }
+        ",
+        "
+        export function log(...messages: unknown[]): void {
+            return;
+        }
+        ",
     ];
 
     let fix = vec![

@@ -17,6 +17,7 @@ pub struct LintPluginOptions {
     pub nextjs: bool,
     pub react_perf: bool,
     pub promise: bool,
+    pub node: bool,
 }
 
 impl Default for LintPluginOptions {
@@ -34,6 +35,7 @@ impl Default for LintPluginOptions {
             nextjs: false,
             react_perf: false,
             promise: false,
+            node: false,
         }
     }
 }
@@ -55,6 +57,7 @@ impl LintPluginOptions {
             nextjs: false,
             react_perf: false,
             promise: false,
+            node: false,
         }
     }
 
@@ -74,6 +77,7 @@ impl LintPluginOptions {
             nextjs: true,
             react_perf: true,
             promise: true,
+            node: true,
         }
     }
 }
@@ -99,6 +103,7 @@ impl<S: AsRef<str>> FromIterator<(S, bool)> for LintPluginOptions {
                 "nextjs" => options.nextjs = enabled,
                 "react-perf" => options.react_perf = enabled,
                 "promise" => options.promise = enabled,
+                "node" => options.node = enabled,
                 _ => { /* ignored */ }
             }
         }
@@ -129,6 +134,7 @@ mod test {
                 && self.nextjs == other.nextjs
                 && self.react_perf == other.react_perf
                 && self.promise == other.promise
+                && self.node == other.node
         }
     }
 
@@ -160,6 +166,7 @@ mod test {
             nextjs: false,
             react_perf: false,
             promise: false,
+            node: false,
         };
         assert_eq!(plugins, expected);
     }

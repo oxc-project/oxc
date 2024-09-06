@@ -1,5 +1,4 @@
 use bitflags::bitflags;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_diagnostics::{OxcDiagnostic, Result};
@@ -263,6 +262,7 @@ impl ModifierKind {
 }
 impl TryFrom<Kind> for ModifierKind {
     type Error = ();
+
     fn try_from(kind: Kind) -> std::result::Result<Self, Self::Error> {
         match kind {
             Kind::Abstract => Ok(Self::Abstract),

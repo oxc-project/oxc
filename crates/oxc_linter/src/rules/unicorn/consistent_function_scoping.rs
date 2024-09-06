@@ -157,6 +157,7 @@ impl Rule for ConsistentFunctionScoping {
 
         Self(Box::new(configuration))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (function_declaration_symbol_id, function_body, reporter_span) = match node.kind() {
             AstKind::Function(function) => {
@@ -284,6 +285,7 @@ impl<'a> Visit<'a> for ReferencesFinder {
             self.in_function += 1;
         }
     }
+
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if let AstKind::Function(_) = kind {
             self.in_function -= 1;

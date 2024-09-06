@@ -42,15 +42,18 @@ declare_oxc_lint!(
     ///
     /// This rule enforces naming conventions for catch statements.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
-    /// // fail
     /// try { } catch (foo) { }
+    /// ```
     ///
-    /// // pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// try { } catch (error) { }
-    ///
     /// ```
     CatchErrorName,
     style
@@ -141,7 +144,7 @@ impl CatchErrorName {
         ctx: &LintContext,
     ) -> Option<OxcDiagnostic> {
         let expr = arg0.as_expression()?;
-        let expr = expr.without_parenthesized();
+        let expr = expr.without_parentheses();
 
         if let Expression::ArrowFunctionExpression(arrow_expr) = expr {
             if let Some(arg0) = arrow_expr.params.items.first() {

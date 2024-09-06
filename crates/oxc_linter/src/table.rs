@@ -146,9 +146,11 @@ impl RuleTableSection {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use markdown::{to_html_with_options, Options};
     use std::sync::OnceLock;
+
+    use markdown::{to_html_with_options, Options};
+
+    use super::*;
 
     static TABLE: OnceLock<RuleTable> = OnceLock::new();
 

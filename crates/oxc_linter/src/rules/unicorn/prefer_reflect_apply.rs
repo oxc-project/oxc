@@ -28,11 +28,14 @@ declare_oxc_lint!(
     /// it's not safe to assume .apply() exists or is not overridden.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// foo.apply(null, [42]);
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// foo.apply(null, [42]);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// Reflect.apply(foo, null);
     /// ```
     PreferReflectApply,

@@ -119,7 +119,7 @@ impl Rule for JsxBooleanValue {
                 }
                 Some(JSXAttributeValue::ExpressionContainer(container)) => {
                     if let Some(expr) = container.expression.as_expression() {
-                        if let Expression::BooleanLiteral(expr) = expr.without_parenthesized() {
+                        if let Expression::BooleanLiteral(expr) = expr.without_parentheses() {
                             if expr.value && self.is_never(ident.name.as_str()) {
                                 let span = Span::new(ident.span.end, jsx_attr.span.end);
                                 ctx.diagnostic_with_fix(
@@ -146,6 +146,10 @@ impl Rule for JsxBooleanValue {
                 _ => {}
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

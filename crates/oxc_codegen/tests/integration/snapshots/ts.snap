@@ -109,3 +109,6 @@ d = ((x) satisfies y);
 
 export @x declare abstract class C {}
 export @x declare abstract class C {}
+
+div<T>``
+div<T>``;

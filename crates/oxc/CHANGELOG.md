@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- ed8ab6d oxc: Conditional expose `oxc_cfg` in `oxc` crate (#5524) (IWANABETHATGUY)
+
+## [0.26.0] - 2024-09-03
+
+### Features
+
+- be4642f semantic: Transform checker check child scope IDs (#5410) (overlookmotel)
+
+### Refactor
+
+- 3ae94b8 semantic: Change `build_module_record` to accept &Path instead of PathBuf (Boshen)
+
 ## [0.25.0] - 2024-08-23
 
 - ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)

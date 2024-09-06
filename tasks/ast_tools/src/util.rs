@@ -116,8 +116,6 @@ impl<'a> TypeIdentResult<'a> {
     }
 }
 
-// TODO: remove me
-#[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone, Serialize)]
 pub enum TypeWrapper {
     None,

@@ -11,7 +11,7 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use super::ast_operations::GatherNodeParts;
+use super::{ast_operations::GatherNodeParts, identifier::to_identifier};
 use crate::scopes_collector::ChildScopeCollector;
 
 /// Traverse scope context.
@@ -119,6 +119,12 @@ impl TraverseScoping {
     }
 
     fn insert_scope_below(&mut self, child_scope_ids: &[ScopeId], flags: ScopeFlags) -> ScopeId {
+        // Remove these scopes from parent's children
+        if self.scopes.has_child_ids() {
+            let current_child_scope_ids = self.scopes.get_child_ids_mut(self.current_scope_id);
+            current_child_scope_ids.retain(|scope_id| !child_scope_ids.contains(scope_id));
+        }
+
         // Create new scope as child of parent
         let new_scope_id = self.create_child_scope_of_current(flags);
 
@@ -242,7 +248,7 @@ impl TraverseScoping {
             parts.push_str(part);
         });
         let name = if parts.is_empty() { "ref" } else { parts.trim_start_matches('_') };
-        self.generate_uid(name, scope_id, flags)
+        self.generate_uid(&to_identifier(name.get(..20).unwrap_or(name)), scope_id, flags)
     }
 
     /// Generate UID in current scope based on node.

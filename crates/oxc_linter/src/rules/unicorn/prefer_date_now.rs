@@ -39,14 +39,15 @@ declare_oxc_lint!(
     ///
     /// Using `Date.now()` is shorter and nicer than `new Date().getTime()`, and avoids unnecessary instantiation of `Date` objects.
     ///
-    ///
-    /// ### Example
+    /// ### Examples
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// const ts = new Date().getTime();
     /// const ts = new Date().valueOf();
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const ts = Date.now();
     /// ```
     PreferDateNow,

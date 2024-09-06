@@ -5,11 +5,10 @@ use oxc_ast::{ast::Program, Trivias};
 use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_mangler::{MangleOptions, Mangler};
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
-use oxc_span::SourceType;
-
 use oxc_minifier::{CompressOptions, Compressor};
+use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{ScopeTree, SemanticBuilder, SemanticBuilderReturn, SymbolTable};
+use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
 
 #[derive(Default)]
@@ -72,6 +71,10 @@ pub trait CompilerInterface {
 
     fn check_semantic_error(&self) -> bool {
         true
+    }
+
+    fn semantic_child_scope_ids(&self) -> bool {
+        false
     }
 
     fn after_parse(&mut self, _parser_return: &mut ParserReturn) -> ControlFlow<()> {
@@ -186,6 +189,7 @@ pub trait CompilerInterface {
     ) -> SemanticBuilderReturn<'a> {
         SemanticBuilder::new(source_text, source_type)
             .with_check_syntax_error(self.check_semantic_error())
+            .with_scope_tree_child_ids(self.semantic_child_scope_ids())
             .build_module_record(source_path, program)
             .build(program)
     }

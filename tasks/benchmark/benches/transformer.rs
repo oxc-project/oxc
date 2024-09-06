@@ -6,7 +6,7 @@ use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
-use oxc_transformer::{EnvOptions, Targets, TransformOptions, Transformer};
+use oxc_transformer::{TransformOptions, Transformer};
 
 fn bench_transformer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("transformer");
@@ -41,24 +41,13 @@ fn bench_transformer(criterion: &mut Criterion) {
                 let trivias_copy = trivias.clone();
 
                 runner.run(|| {
-                    let env_options = EnvOptions {
-                        // >= ES2016
-                        targets: Targets::from_query("chrome 51"),
-                        ..Default::default()
-                    };
-                    let mut transform_options =
-                        TransformOptions::from_preset_env(&env_options).unwrap();
-
-                    // Enable React related plugins
-                    transform_options.react.development = true;
-
                     let ret = Transformer::new(
                         &allocator,
                         Path::new(&file.file_name),
                         source_type,
                         source_text,
                         trivias,
-                        transform_options,
+                        TransformOptions::enable_all(),
                     )
                     .build_with_symbols_and_scopes(symbols, scopes, program);
 

@@ -5,6 +5,7 @@ use lazy_static::lazy_static;
 use quote::ToTokens;
 use syn::Type;
 
+use super::{define_pass, Pass};
 use crate::{
     codegen::EarlyCtx,
     layout::{KnownLayout, Layout},
@@ -12,8 +13,6 @@ use crate::{
     util::{NormalizeError, TypeAnalysis, TypeExt, TypeWrapper},
     Result,
 };
-
-use super::{define_pass, Pass};
 
 /// We use compiler to infer 64bit type layouts.
 #[cfg(not(target_pointer_width = "64"))]
@@ -104,7 +103,7 @@ fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
         }
     }
 
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value)]
     fn fold_layout(mut acc: KnownLayout, layout: KnownLayout) -> KnownLayout {
         // SAFETY: we are folding valid layouts so it is safe.
         unsafe {

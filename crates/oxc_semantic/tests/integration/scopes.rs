@@ -188,11 +188,8 @@ fn test_enums() {
         .nodes()
         .iter()
         .find_map(|node| {
-            if let AstKind::TSEnumDeclaration(e) = node.kind() {
-                Some((node, e))
-            } else {
-                None
-            }
+            let e = node.kind().as_ts_enum_declaration()?;
+            Some((node, e))
         })
         .expect("Expected TS test case to have an enum declaration for A.");
 
@@ -202,7 +199,11 @@ fn test_enums() {
         "Expected `enum A` to be created in the top-level scope."
     );
     let enum_decl_scope_id = enum_decl.scope_id.get().expect("Enum declaration has no scope id");
-    assert_ne!(enum_node.scope_id(), enum_decl_scope_id, "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in.");
+    assert_ne!(
+        enum_node.scope_id(),
+        enum_decl_scope_id,
+        "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in."
+    );
     assert_eq!(enum_decl.members.len(), 3);
 }
 
@@ -219,4 +220,22 @@ fn var_hoisting() {
     // `e` was hoisted to the top scope so the symbol's scope is also the top scope
     .is_in_scope(ScopeFlags::Top)
     .test();
+}
+
+#[test]
+fn get_child_ids() {
+    let test = SemanticTester::js(
+        "
+            function foo() {
+            }
+        ",
+    )
+    .with_scope_tree_child_ids(true);
+    let semantic = test.build();
+    let (_symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+
+    let child_scope_ids = scopes.get_child_ids(scopes.root_scope_id());
+    assert_eq!(child_scope_ids.len(), 1);
+    let child_scope_ids = scopes.get_child_ids(child_scope_ids[0]);
+    assert!(child_scope_ids.is_empty());
 }

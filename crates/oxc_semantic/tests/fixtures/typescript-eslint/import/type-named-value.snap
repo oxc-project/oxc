@@ -24,7 +24,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/type-nam
         "node": "ImportSpecifier(foo)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type | TSTypeQuery)",
+            "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "foo",
             "node_id": 11

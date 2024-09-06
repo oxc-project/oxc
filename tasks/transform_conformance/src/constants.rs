@@ -56,6 +56,9 @@ pub(crate) const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-development",
     // // Proposal
     // "babel-plugin-proposal-decorators",
+
+    // RegExp tests ported from esbuild + a few additions
+    "regexp",
 ];
 
 pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
