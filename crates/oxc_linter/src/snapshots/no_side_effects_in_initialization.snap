@@ -825,10 +825,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───
    ╰────
 
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling
-   ╭─[no_side_effects_in_initialization.tsx:1:11]
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function
+   ╭─[no_side_effects_in_initialization.tsx:1:34]
  1 │ const X = {Y: ext}; const x = <X.Y />
-   ·           ────────
+   ·                                  ─
    ╰────
 
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
