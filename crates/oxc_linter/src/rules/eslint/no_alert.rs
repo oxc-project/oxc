@@ -56,10 +56,7 @@ const GLOBAL_THIS: &str = "globalThis";
 const GLOBAL_WINDOW: &str = "window";
 
 fn is_prohibited_identifier(value: &str) -> bool {
-    match value {
-        "alert" | "confirm" | "prompt" => true,
-        _ => false,
-    }
+    matches!(value, "alert" | "confirm" | "prompt")
 }
 
 fn is_global_this_ref_or_global_window<'a>(
@@ -92,35 +89,32 @@ fn is_shadowed<'a>(scope_id: ScopeId, name: &'a str, ctx: &LintContext<'a>) -> b
 
 impl Rule for NoAlert {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-        match kind {
-            AstKind::CallExpression(call_expr) => {
-                let scope_id = node.scope_id();
-                let callee = &call_expr.callee;
+        let scope_id = node.scope_id();
+        let callee = &call_expr.callee;
 
-                if let Expression::Identifier(ident) = callee {
-                    let name = ident.name.as_str();
-                    if !is_shadowed(scope_id, name, ctx) && is_prohibited_identifier(name) {
-                        return ctx.diagnostic(no_alert_diagnostic(ident.span));
-                    }
-
-                    return;
-                }
-
-                let Some(member_expr) = callee.get_member_expr() else { return };
-                if !is_global_this_ref_or_global_window(scope_id, ctx, member_expr.object()) {
-                    return;
-                }
-
-                let Some(property_name) = member_expr.static_property_name() else {
-                    return;
-                };
-                if is_prohibited_identifier(property_name) {
-                    return ctx.diagnostic(no_alert_diagnostic(member_expr.span()));
-                }
+        if let Expression::Identifier(ident) = callee {
+            let name = ident.name.as_str();
+            if !is_shadowed(scope_id, name, ctx) && is_prohibited_identifier(name) {
+                return ctx.diagnostic(no_alert_diagnostic(ident.span));
             }
-            _ => {}
+
+            return;
+        }
+
+        let Some(member_expr) = callee.get_member_expr() else { return };
+        if !is_global_this_ref_or_global_window(scope_id, ctx, member_expr.object()) {
+            return;
+        }
+
+        let Some(property_name) = member_expr.static_property_name() else {
+            return;
+        };
+        if is_prohibited_identifier(property_name) {
+            ctx.diagnostic(no_alert_diagnostic(member_expr.span()));
         }
     }
 }
