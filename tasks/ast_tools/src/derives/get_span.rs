@@ -86,7 +86,7 @@ impl Derive for DeriveGetSpanMut {
     }
 }
 
-#[allow(clippy::too_many_arguments)]
+#[expect(clippy::too_many_arguments)]
 fn derive<U, R>(
     trait_name: &str,
     method_name: &str,

@@ -104,7 +104,7 @@ fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
         }
     }
 
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value)]
     fn fold_layout(mut acc: KnownLayout, layout: KnownLayout) -> KnownLayout {
         // SAFETY: we are folding valid layouts so it is safe.
         unsafe {

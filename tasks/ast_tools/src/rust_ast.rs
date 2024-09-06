@@ -191,7 +191,7 @@ impl AstType {
         }
     }
 
-    #[allow(unused)]
+    #[expect(unused)]
     pub fn visitable(&self) -> bool {
         match self {
             AstType::Enum(it) => it.meta.visitable,
@@ -450,7 +450,6 @@ pub fn analyze(ast_ref: &AstRef) -> Result<()> {
         AstType::Macro(_) => None,
     };
 
-    #[allow(clippy::match_same_arms)]
     match ast_attr {
         Some(AstAttr::Visit) => {
             ast_ref.borrow_mut().set_ast(true)?;

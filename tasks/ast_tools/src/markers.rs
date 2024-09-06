@@ -137,7 +137,7 @@ pub fn get_visit_markers<'a, I>(attrs: I) -> crate::Result<VisitMarkers>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
-    #[allow(clippy::trivially_copy_pass_by_ref)]
+    #[expect(clippy::trivially_copy_pass_by_ref)]
     fn predicate(it: &&Attribute) -> bool {
         it.path().is_ident("visit")
     }
@@ -186,7 +186,7 @@ pub fn get_scope_markers<'a, I>(attrs: I) -> crate::Result<ScopeMarkers>
 where
     I: IntoIterator<Item = &'a Attribute>,
 {
-    #[allow(clippy::trivially_copy_pass_by_ref)]
+    #[expect(clippy::trivially_copy_pass_by_ref)]
     fn predicate(it: &&Attribute) -> bool {
         it.path().is_ident("scope")
     }

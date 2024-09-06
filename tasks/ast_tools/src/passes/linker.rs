@@ -10,7 +10,7 @@ pub trait Unresolved {
     fn unresolved(&self) -> bool;
 
     // TODO: remove me
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn resolved(&self) -> bool {
         !self.unresolved()
     }

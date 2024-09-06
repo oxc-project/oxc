@@ -6,7 +6,7 @@ use oxc_sourcemap::ConcatSourceMapBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
 
-#[allow(clippy::cast_possible_truncation)]
+#[expect(clippy::cast_possible_truncation)]
 fn bench_sourcemap(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("sourcemap");
 

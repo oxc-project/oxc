@@ -2,8 +2,7 @@ use std::{collections::HashSet, ops::ControlFlow, path::PathBuf};
 
 use oxc::CompilerInterface;
 
-#[allow(clippy::wildcard_imports)]
-use oxc::ast::{ast::*, Trivias};
+use oxc::ast::{ast::Program, Trivias};
 use oxc::codegen::CodegenOptions;
 use oxc::diagnostics::OxcDiagnostic;
 use oxc::minifier::CompressOptions;
@@ -17,7 +16,7 @@ use oxc::transformer::{TransformOptions, TransformerReturn};
 
 use crate::suite::TestResult;
 
-#[allow(clippy::struct_excessive_bools)]
+#[expect(clippy::struct_excessive_bools)]
 #[derive(Default)]
 pub struct Driver {
     pub path: PathBuf,

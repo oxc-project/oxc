@@ -39,7 +39,7 @@ impl SideEffect {
         Ok(())
     }
 
-    #[allow(clippy::unnecessary_wraps)]
+    #[expect(clippy::unnecessary_wraps)]
     pub fn path(&self) -> Option<String> {
         let Self(path, _) = self;
         let path = path.to_string_lossy();
@@ -63,7 +63,7 @@ impl From<GeneratorOutput> for SideEffect {
 pub trait Runner {
     type Context;
     type Output;
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn name(&self) -> &'static str;
     fn run(&mut self, ctx: &Self::Context) -> Result<Self::Output>;
 }
