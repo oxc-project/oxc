@@ -176,11 +176,8 @@ impl NoUnusedVars {
         // find FormalParameters. Should be the next parent of param, but this
         // is safer.
         let Some((params, params_id)) = symbol.iter_parents().find_map(|p| {
-            if let AstKind::FormalParameters(params) = p.kind() {
-                Some((params, p.id()))
-            } else {
-                None
-            }
+            let params = p.kind().as_formal_parameters()?;
+            Some((params, p.id()))
         }) else {
             debug_assert!(false, "FormalParameter should always have a parent FormalParameters");
             return false;

@@ -430,11 +430,7 @@ pub fn get_function_like_declaration<'b>(
     ctx: &LintContext<'b>,
 ) -> Option<&'b BindingIdentifier<'b>> {
     let parent = outermost_paren_parent(node, ctx)?;
+    let decl = parent.kind().as_variable_declarator()?;
 
-    if let AstKind::VariableDeclarator(decl) = parent.kind() {
-        let ident = decl.id.get_binding_identifier()?;
-        Some(ident)
-    } else {
-        None
-    }
+    decl.id.get_binding_identifier()
 }

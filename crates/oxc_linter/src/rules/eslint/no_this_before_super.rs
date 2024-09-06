@@ -135,15 +135,15 @@ impl Rule for NoThisBeforeSuper {
 impl NoThisBeforeSuper {
     fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
         let parent = ctx.nodes().parent_node(node.id())?;
-        if let AstKind::MethodDefinition(mdef) = parent.kind() {
-            if matches!(mdef.kind, MethodDefinitionKind::Constructor) {
-                let parent_2 = ctx.nodes().parent_node(parent.id())?;
-                let parent_3 = ctx.nodes().parent_node(parent_2.id())?;
-                if let AstKind::Class(c) = parent_3.kind() {
-                    let super_class = c.super_class.as_ref()?;
-                    return Some(!matches!(super_class, Expression::NullLiteral(_)));
-                }
-            }
+        let method_def = parent.kind().as_method_definition()?;
+
+        if matches!(method_def.kind, MethodDefinitionKind::Constructor) {
+            let parent_2 = ctx.nodes().parent_node(parent.id())?;
+            let parent_3 = ctx.nodes().parent_node(parent_2.id())?;
+
+            let class = parent_3.kind().as_class()?;
+            let super_class = class.super_class.as_ref()?;
+            return Some(!matches!(super_class, Expression::NullLiteral(_)));
         }
 
         Some(false)

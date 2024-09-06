@@ -21,9 +21,7 @@ use phf::{phf_set, set::Set};
 pub fn as_endpoint_registration<'a, 'n>(
     node: &'n AstKind<'a>,
 ) -> Option<(Option<Atom<'a>>, &'n [Argument<'a>])> {
-    let AstKind::CallExpression(call) = node else {
-        return None;
-    };
+    let call = node.as_call_expression()?;
     let callee = call.callee.as_member_expression()?;
     let method_name = callee.static_property_name()?;
     if !ROUTER_HANDLER_METHOD_NAMES.contains(method_name) {
