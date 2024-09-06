@@ -32,11 +32,14 @@ declare_oxc_lint!(
     /// Incorrectly using the autocomplete attribute may decrease the accessibility of the website for users.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <input autocomplete="invalid-value" />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <input autocomplete="invalid-value" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <input autocomplete="name" />
     /// ```
     AutocompleteValid,

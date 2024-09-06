@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+- 87c5df2 ast: [**BREAKING**] Rename `Expression::without_parentheses` (#5448) (overlookmotel)
+
+### Features
+
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- c782916 codegen: Print `type_parameters` in `TaggedTemplateExpression` (#5438) (Dunqing)
+
+### Bug Fixes
+
+- 0df1d9d ast, codegen, linter: Panics in fixers. (#5431) (rzvxa)
+
+### Refactor
+
+- d9d7e7c ast: Remove `IdentifierName` from `TSThisParameter` (#5327) (overlookmotel)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 292d162 codegen: Print missing fields for `AccessorProperty` (#5291) (Dunqing)
+
+### Bug Fixes
+
+- 5c4c001 codegen: Print `export @decorator declare abstract class Foo` correctly (#5303) (Boshen)
+- 7b1546b codegen: Do not print comments when `--minify` (Boshen)
+
+### Performance
+
+- 12a7607 codegen: Inline `Codegen::print_list` (#5221) (overlookmotel)
+- fb847bd codegen: Slightly faster `print_list` (#5192) (Boshen)
+
+### Refactor
+
+- d4c3778 codegen: Rename vars (#5222) (overlookmotel)
+- 543cad6 codegen: Remove some pub APIs (Boshen)
+
 ## [0.25.0] - 2024-08-23
 
 - ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)

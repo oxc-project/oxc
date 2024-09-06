@@ -53,7 +53,7 @@ fn get_component_attrs_by_name<'c>(
     for item in components {
         match item {
             CustomComponent::NameOnly(comp_name) if comp_name == name => {
-                return Some(Cow::Owned(vec![]))
+                return Some(Cow::Owned(vec![]));
             }
             CustomComponent::ObjectWithOneAttr { name: comp_name, attribute }
                 if comp_name == name =>

@@ -131,31 +131,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         self.insert_this_var_statement_at_the_top_of_statements(&mut body.statements);
     }
 
-    /// Change <this></this> to <_this></_this>, and mark it as found
-    fn enter_jsx_element_name(&mut self, name: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_inside_arrow_function() {
-            return;
-        }
-
-        let ident = match name {
-            JSXElementName::Identifier(ident) => ident,
-            JSXElementName::MemberExpression(member_expr) => {
-                member_expr.get_object_identifier_mut()
-            }
-            JSXElementName::IdentifierReference(_) | JSXElementName::NamespacedName(_) => return,
-        };
-        if ident.name == "this" {
-            // We can't produce a proper identifier with a `ReferenceId` because `JSXIdentifier`
-            // lacks that field. https://github.com/oxc-project/oxc/issues/3528
-            // So generate a reference and just use its name.
-            // If JSX transform is enabled, that transform runs before this and will have converted
-            // this to a proper `ThisExpression`, and this visitor won't run.
-            // So only a problem if JSX transform is disabled.
-            let new_ident = self.get_this_name(ctx).create_read_reference(ctx);
-            ident.name = new_ident.name;
-        }
-    }
-
     fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::ArrowFunctionExpression(_) => {

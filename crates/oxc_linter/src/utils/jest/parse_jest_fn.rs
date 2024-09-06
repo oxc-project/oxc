@@ -146,8 +146,10 @@ fn parse_jest_expect_fn_call<'a>(
         }
     }
 
+    let kind = if is_type_of { JestFnKind::ExpectTypeOf } else { JestFnKind::Expect };
+
     let parsed_expect_fn = ParsedExpectFnCall {
-        kind: JestFnKind::Expect,
+        kind,
         head,
         members,
         name: Cow::Borrowed(name),
@@ -330,6 +332,7 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
     }
 }
 
+#[derive(Debug)]
 pub enum ParsedJestFnCall<'a> {
     GeneralJest(ParsedGeneralJestFnCall<'a>),
     Expect(ParsedExpectFnCall<'a>),

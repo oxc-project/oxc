@@ -27,14 +27,17 @@ declare_oxc_lint!(
     /// Prefer `.querySelector()` over `.getElementById()`, `.querySelectorAll()` over `.getElementsByClassName()` and `.getElementsByTagName()`.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// document.getElementById('foo');
     /// document.getElementsByClassName('foo bar');
     /// document.getElementsByTagName('main');
     /// document.getElementsByClassName(fn());
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// document.querySelector('#foo');
     /// document.querySelector('.bar');
     /// document.querySelector('main #foo .bar');

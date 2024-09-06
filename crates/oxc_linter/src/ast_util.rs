@@ -1,15 +1,14 @@
-use std::hash::{Hash, Hasher};
+use core::hash::Hasher;
 
-use oxc_ast::ast::BindingIdentifier;
-use oxc_ast::AstKind;
+use oxc_ast::{ast::BindingIdentifier, AstKind};
 use oxc_semantic::{AstNode, AstNodeId, SymbolId};
-use oxc_span::{GetSpan, Span};
+use oxc_span::{hash::ContentHash, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
 
-pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
+pub fn calculate_hash<T: ContentHash>(t: &T) -> u64 {
     let mut hasher = FxHasher::default();
-    t.hash(&mut hasher);
+    t.content_hash(&mut hasher);
     hasher.finish()
 }
 #[allow(clippy::wildcard_imports)]
@@ -325,12 +324,12 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression() else {
+    let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() else {
         return false;
     };
 
     if let Some(objects) = objects {
-        let Expression::Identifier(ident) = member_expr.object().without_parenthesized() else {
+        let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
             return false;
         };
         if !objects.contains(&ident.name.as_str()) {
@@ -367,7 +366,7 @@ pub fn is_new_expression<'a>(
         }
     }
 
-    let Expression::Identifier(ident) = new_expr.callee.without_parenthesized() else {
+    let Expression::Identifier(ident) = new_expr.callee.without_parentheses() else {
         return false;
     };
 
@@ -381,12 +380,12 @@ pub fn is_new_expression<'a>(
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
-    let member_expr = call_expr.callee.without_parenthesized().as_member_expression()?;
+    let member_expr = call_expr.callee.without_parentheses().as_member_expression()?;
     member_expr.static_property_info()
 }
 
 pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'a str> {
-    let Expression::Identifier(ident) = new_expr.callee.without_parenthesized() else {
+    let Expression::Identifier(ident) = new_expr.callee.without_parentheses() else {
         return None;
     };
 
@@ -430,11 +429,7 @@ pub fn get_function_like_declaration<'b>(
     ctx: &LintContext<'b>,
 ) -> Option<&'b BindingIdentifier<'b>> {
     let parent = outermost_paren_parent(node, ctx)?;
+    let decl = parent.kind().as_variable_declarator()?;
 
-    if let AstKind::VariableDeclarator(decl) = parent.kind() {
-        let ident = decl.id.get_binding_identifier()?;
-        Some(ident)
-    } else {
-        None
-    }
+    decl.id.get_binding_identifier()
 }

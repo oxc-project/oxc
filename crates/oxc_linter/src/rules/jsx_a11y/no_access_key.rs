@@ -26,11 +26,14 @@ declare_oxc_lint!(
     /// Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create accessibility complications so to avoid complications, access keys should not be used.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <div accessKey="h" />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <div accessKey="h" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <div />
     /// ```
     NoAccessKey,

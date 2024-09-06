@@ -5,9 +5,9 @@
 //!
 //! ## Example / Overview
 //! ```rust
-//! use index_vec::{IndexVec, IndexSlice, index_vec};
+//! use oxc_index::{IndexVec, IndexSlice, index_vec};
 //!
-//! index_vec::define_index_type! {
+//! oxc_index::define_index_type! {
 //!     // Define StrIdx to use only 32 bits internally (you can use usize, u16,
 //!     // and even u8).
 //!     pub struct StrIdx = u32;
@@ -153,6 +153,10 @@ mod idxslice;
 mod indexing;
 pub use idxslice::{IndexBox, IndexSlice};
 pub use indexing::{IdxRangeBounds, IdxSliceIndex};
+#[cfg(feature = "rayon")]
+pub use rayon_impl::*;
+#[cfg(feature = "rayon")]
+mod rayon_impl;
 
 #[macro_use]
 mod macros;

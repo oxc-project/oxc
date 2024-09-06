@@ -1,4 +1,3 @@
-use super::{NoUnusedVars, Symbol};
 use oxc_ast::{
     ast::{
         ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetMaybeDefault,
@@ -8,6 +7,8 @@ use oxc_ast::{
     AstKind,
 };
 use regex::Regex;
+
+use super::{NoUnusedVars, Symbol};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(super) enum FoundStatus {
@@ -342,10 +343,10 @@ impl NoUnusedVars {
 
 #[cfg(test)]
 mod test {
-    use crate::rule::Rule as _;
+    use oxc_span::Atom;
 
     use super::super::NoUnusedVars;
-    use oxc_span::Atom;
+    use crate::rule::Rule as _;
 
     #[test]
     fn test_ignored() {

@@ -1,23 +1,23 @@
 use std::{collections::HashSet, ops::ControlFlow, path::PathBuf};
 
-use oxc::CompilerInterface;
-
-#[allow(clippy::wildcard_imports)]
-use oxc::ast::{ast::*, Trivias};
-use oxc::codegen::CodegenOptions;
-use oxc::diagnostics::OxcDiagnostic;
-use oxc::minifier::CompressOptions;
-use oxc::parser::{ParseOptions, ParserReturn};
-use oxc::semantic::{
-    post_transform_checker::{check_semantic_after_transform, check_semantic_ids},
-    SemanticBuilderReturn,
+use oxc::{
+    ast::{ast::Program, Trivias},
+    codegen::CodegenOptions,
+    diagnostics::OxcDiagnostic,
+    minifier::CompressOptions,
+    parser::{ParseOptions, ParserReturn},
+    semantic::{
+        post_transform_checker::{check_semantic_after_transform, check_semantic_ids},
+        SemanticBuilderReturn,
+    },
+    span::{SourceType, Span},
+    transformer::{TransformOptions, TransformerReturn},
+    CompilerInterface,
 };
-use oxc::span::{SourceType, Span};
-use oxc::transformer::{TransformOptions, TransformerReturn};
 
 use crate::suite::TestResult;
 
-#[allow(clippy::struct_excessive_bools)]
+#[expect(clippy::struct_excessive_bools)]
 #[derive(Default)]
 pub struct Driver {
     pub path: PathBuf,
@@ -41,6 +41,10 @@ impl CompilerInterface for Driver {
             allow_return_outside_function: self.allow_return_outside_function,
             ..ParseOptions::default()
         }
+    }
+
+    fn semantic_child_scope_ids(&self) -> bool {
+        true
     }
 
     fn transform_options(&self) -> Option<TransformOptions> {

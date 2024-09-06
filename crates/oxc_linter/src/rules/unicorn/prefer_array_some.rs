@@ -37,11 +37,14 @@ declare_oxc_lint!(
     /// Using `.some()` is more idiomatic and easier to read.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// const foo = array.find(fn) ? bar : baz;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const foo = array.find(fn) ? bar : baz;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = array.some(fn) ? bar : baz;
     /// ```
     PreferArraySome,
@@ -100,7 +103,7 @@ impl Rule for PreferArraySome {
                 }
 
                 let Some(left_member_expr) =
-                    bin_expr.left.without_parenthesized().as_member_expression()
+                    bin_expr.left.without_parentheses().as_member_expression()
                 else {
                     return;
                 };
@@ -114,7 +117,7 @@ impl Rule for PreferArraySome {
                 }
 
                 let Expression::CallExpression(left_call_expr) =
-                    &left_member_expr.object().without_parenthesized()
+                    &left_member_expr.object().without_parentheses()
                 else {
                     return;
                 };
@@ -206,7 +209,7 @@ fn is_checking_undefined<'a, 'b>(
         return false;
     };
 
-    let right_without_paren = bin_expr.right.without_parenthesized();
+    let right_without_paren = bin_expr.right.without_parentheses();
 
     if matches!(
         bin_expr.operator,
@@ -214,7 +217,7 @@ fn is_checking_undefined<'a, 'b>(
             | BinaryOperator::Equality
             | BinaryOperator::StrictInequality
             | BinaryOperator::StrictEquality
-    ) && right_without_paren.without_parenthesized().is_undefined()
+    ) && right_without_paren.without_parentheses().is_undefined()
     {
         return true;
     }

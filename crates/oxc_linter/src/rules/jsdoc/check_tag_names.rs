@@ -19,18 +19,18 @@ pub struct CheckTagNames(Box<CheckTagnamesConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Reports invalid block tag names.
     /// Additionally checks for tag names that are redundant when using a type checker such as TypeScript.
     ///
     /// ### Why is this bad?
+    ///
     /// Using invalid tags can lead to confusion and make the documentation harder to read.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @param */
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @Param */
     /// /** @foo */
     ///
@@ -38,6 +38,11 @@ declare_oxc_lint!(
     ///  * This is redundant when typed.
     ///  * @type {string}
     ///  */
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @param */
     /// ```
     CheckTagNames,
     correctness

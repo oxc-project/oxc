@@ -4,8 +4,10 @@
 use std::ops::Not;
 
 use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
-use oxc_syntax::precedence::{GetPrecedence, Precedence};
+use oxc_syntax::{
+    operator::{BinaryOperator, LogicalOperator},
+    precedence::{GetPrecedence, Precedence},
+};
 
 use crate::{
     gen::{Gen, GenExpr},
@@ -21,15 +23,15 @@ pub enum Binaryish<'a> {
 impl<'a> Binaryish<'a> {
     pub fn left(&self) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.left.without_parenthesized(),
-            Self::Logical(e) => e.left.without_parenthesized(),
+            Self::Binary(e) => e.left.without_parentheses(),
+            Self::Logical(e) => e.left.without_parentheses(),
         }
     }
 
     pub fn right(&self) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.right.without_parenthesized(),
-            Self::Logical(e) => e.right.without_parenthesized(),
+            Self::Binary(e) => e.right.without_parentheses(),
+            Self::Logical(e) => e.right.without_parentheses(),
         }
     }
 

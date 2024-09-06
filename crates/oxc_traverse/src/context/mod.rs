@@ -16,6 +16,7 @@ mod ancestry;
 mod ast_operations;
 use ancestry::PopToken;
 pub use ancestry::TraverseAncestry;
+mod identifier;
 mod scoping;
 pub use scoping::TraverseScoping;
 

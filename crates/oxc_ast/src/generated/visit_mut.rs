@@ -2174,7 +2174,6 @@ pub mod walk_mut {
     ) {
         let kind = AstType::TSThisParameter;
         visitor.enter_node(kind);
-        visitor.visit_identifier_name(&mut it.this);
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);
         }
@@ -3465,6 +3464,7 @@ pub mod walk_mut {
             JSXElementName::IdentifierReference(it) => visitor.visit_identifier_reference(it),
             JSXElementName::NamespacedName(it) => visitor.visit_jsx_namespaced_name(it),
             JSXElementName::MemberExpression(it) => visitor.visit_jsx_member_expression(it),
+            JSXElementName::ThisExpression(it) => visitor.visit_this_expression(it),
         }
         visitor.leave_node(kind);
     }
@@ -3508,13 +3508,13 @@ pub mod walk_mut {
         let kind = AstType::JSXMemberExpressionObject;
         visitor.enter_node(kind);
         match it {
-            JSXMemberExpressionObject::Identifier(it) => visitor.visit_jsx_identifier(it),
             JSXMemberExpressionObject::IdentifierReference(it) => {
                 visitor.visit_identifier_reference(it)
             }
             JSXMemberExpressionObject::MemberExpression(it) => {
                 visitor.visit_jsx_member_expression(it)
             }
+            JSXMemberExpressionObject::ThisExpression(it) => visitor.visit_this_expression(it),
         }
         visitor.leave_node(kind);
     }

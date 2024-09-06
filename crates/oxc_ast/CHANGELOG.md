@@ -4,6 +4,77 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+- 87c5df2 ast: [**BREAKING**] Rename `Expression::without_parentheses` (#5448) (overlookmotel)
+
+### Features
+
+- 90facd3 ast: Add `ContentHash` trait; remove noop `Hash` implementation from `Span` (#5451) (rzvxa)
+- 23285f4 ast: Add `ContentEq` trait. (#5427) (rzvxa)
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- 68a1c01 ast_tools: Add dedicated `Derive` trait. (#5278) (rzvxa)
+- 62f7fff semantic: Check for non-declared, non-abstract object accessors without bodies (#5461) (DonIsaac)
+- 5407143 semantic: Check for non-declared, non-abstract class accessors without bodies (#5460) (DonIsaac)
+- cedf7a4 xtask: Impl `as_ast_kind` method for each variant (#5491) (IWANABETHATGUY)
+
+### Bug Fixes
+
+- 0df1d9d ast, codegen, linter: Panics in fixers. (#5431) (rzvxa)- b96bea4 Add back lifetime (#5507) (IWANABETHATGUY)
+
+### Documentation
+
+- 64db1b4 ast: Clarify docs for `RegExpPattern` (#5497) (overlookmotel)
+
+### Refactor
+
+- a43e951 ast: Use loop instead of recursion (#5447) (overlookmotel)
+- 2224cc4 ast: Renumber `JSXMemberExpressionObject` discriminants (#5464) (overlookmotel)
+- a952c47 ast: Use loop not recursion (#5449) (overlookmotel)
+- d9d7e7c ast: Remove `IdentifierName` from `TSThisParameter` (#5327) (overlookmotel)
+- ccc8a27 ast, ast_tools: Use full method path for generated derives trait calls. (#5462) (rzvxa)
+- fdb8857 linter: Use "parsed pattern" in `no_div_regex` rule. (#5417) (rzvxa)
+- b47aca0 syntax: Use `generate_derive` for `CloneIn` in types outside of `oxc_ast` crate. (#5280) (rzvxa)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+- c100826 semantic: [**BREAKING**] Always create a scope for `for` statements (#5110) (overlookmotel)
+
+- d304d6f semantic: [**BREAKING**] Always create a scope for `CatchClause` (#5109) (overlookmotel)
+
+### Features
+
+- 180b1a1 ast: Add `Function::name()` (#5361) (DonIsaac)
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+
+### Bug Fixes
+
+- 8ebc23f ast: Serialize `TSParenthesizedType` with camelCase (#5199) (Kevin Deng 三咲智子)
+- 8a17807 parser: Treat JSX element tags starting with `_` or `$` as `IdentifierReference`s (#5343) (overlookmotel)
+
+### Performance
+
+- 292f217 ast: Optimize `JSXIdentifier::is_reference` (#5344) (overlookmotel)
+
+### Refactor
+
+- c2d8c9e ast: Reduce allocations in `AstBuilder::move_assignment_target` (#5367) (overlookmotel)
+- 946c867 ast: Box `TSThisParameter` (#5325) (overlookmotel)
+- 960e1d5 ast: Rename `IdentifierReference::new_with_reference_id` (#5157) (overlookmotel)
+- f63b568 ast: Remove `#[non_exhaustive]` attr from `AstBuilder` (#5130) (overlookmotel)
+- d236554 parser: Move `JSXIdentifier` conversion code into parser (#5345) (overlookmotel)
+
 ## [0.25.0] - 2024-08-23
 
 - 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)

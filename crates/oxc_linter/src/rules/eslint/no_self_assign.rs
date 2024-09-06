@@ -84,7 +84,7 @@ impl NoSelfAssign {
         match left {
             match_simple_assignment_target!(AssignmentTarget) => {
                 let simple_assignment_target = left.to_simple_assignment_target();
-                if let Expression::Identifier(id2) = right.without_parenthesized() {
+                if let Expression::Identifier(id2) = right.without_parentheses() {
                     let self_assign = matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
@@ -94,7 +94,7 @@ impl NoSelfAssign {
                 }
 
                 if let Some(member_target) = simple_assignment_target.as_member_expression() {
-                    if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
+                    if let Some(member_expr) = right.without_parentheses().get_member_expr() {
                         if self.is_member_expression_same_reference(member_expr, member_target) {
                             ctx.diagnostic(no_self_assign_diagnostic(member_expr.span()));
                         }
@@ -103,7 +103,7 @@ impl NoSelfAssign {
             }
 
             AssignmentTarget::ArrayAssignmentTarget(array_pattern) => {
-                if let Expression::ArrayExpression(array_expr) = right.without_parenthesized() {
+                if let Expression::ArrayExpression(array_expr) = right.without_parentheses() {
                     let end =
                         std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
                     let mut i = 0;
@@ -236,7 +236,7 @@ impl NoSelfAssign {
                         &**obj_prop
                     {
                         if key.static_name().is_some_and(|name| name == id1.binding.name) {
-                            if let Expression::Identifier(id2) = expr.without_parenthesized() {
+                            if let Expression::Identifier(id2) = expr.without_parentheses() {
                                 if id1.binding.name == id2.name {
                                     ctx.diagnostic(no_self_assign_diagnostic(*span));
                                 }

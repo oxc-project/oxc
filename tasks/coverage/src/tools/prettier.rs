@@ -1,8 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use oxc::allocator::Allocator;
-use oxc::parser::{ParseOptions, Parser, ParserReturn};
-use oxc::span::SourceType;
+use oxc::{
+    allocator::Allocator,
+    parser::{ParseOptions, Parser, ParserReturn},
+    span::SourceType,
+};
 use oxc_prettier::{Prettier, PrettierOptions};
 
 use crate::{

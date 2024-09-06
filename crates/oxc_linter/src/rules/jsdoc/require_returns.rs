@@ -35,25 +35,31 @@ pub struct RequireReturns(Box<RequireReturnsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that return statements are documented.
     /// Will also report if multiple `@returns` tags are present.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is intended to prevent the omission of `@returns` tag when necessary.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @returns Foo. */
-    /// function quux () { return foo; }
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** Foo. */
     /// function quux () { return foo; }
+    ///
     /// /**
     ///  * @returns Foo!
     ///  * @returns Foo?
     ///  */
+    /// function quux () { return foo; }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @returns Foo. */
     /// function quux () { return foo; }
     /// ```
     RequireReturns,

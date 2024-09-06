@@ -29,11 +29,14 @@ declare_oxc_lint!(
     /// Passing `length` as the end argument of a `slice` call is unnecessary and can be confusing.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// foo.slice(1, foo.length)
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// foo.slice(1, foo.length)
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// foo.slice(1)
     /// ```
     NoLengthAsSliceEnd,
@@ -60,7 +63,7 @@ impl Rule for NoLengthAsSliceEnd {
         let Some(MemberExpression::StaticMemberExpression(second_argument)) = call_expr.arguments
             [1]
         .as_expression()
-        .map(oxc_ast::ast::Expression::without_parenthesized)
+        .map(oxc_ast::ast::Expression::without_parentheses)
         .and_then(|e| e.get_member_expr()) else {
             return;
         };

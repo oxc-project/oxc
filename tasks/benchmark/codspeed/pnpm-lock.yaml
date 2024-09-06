@@ -10,7 +10,7 @@ importers:
     devDependencies:
       axios:
         specifier: ^1.7.2
-        version: 1.7.5
+        version: 1.7.7
       express:
         specifier: ^4.19.2
         version: 4.19.2
@@ -58,8 +58,8 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
-  axios@1.7.5:
-    resolution: {integrity: sha512-fZu86yCo+svH3uqJ/yTdQ0QHpQu5oL+/QE+QPSv6BZSkDAoky9vytxp7u5qk83OJFS3kEBcesWni9WTZAv3tSw==}
+  axios@1.7.7:
+    resolution: {integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -493,7 +493,7 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  axios@1.7.5:
+  axios@1.7.7:
     dependencies:
       follow-redirects: 1.15.6
       form-data: 4.0.0

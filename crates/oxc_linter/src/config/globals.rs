@@ -1,7 +1,8 @@
+use std::{borrow, fmt, hash};
+
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{de::Visitor, Deserialize};
-use std::{borrow, fmt, hash};
 
 /// Add or remove global variables.
 ///
@@ -122,8 +123,9 @@ impl<'de> Visitor<'de> for GlobalValueVisitor {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use serde_json::json;
+
+    use super::*;
 
     macro_rules! globals {
         ($($json:tt)+) => {

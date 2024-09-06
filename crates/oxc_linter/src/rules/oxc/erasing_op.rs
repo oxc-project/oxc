@@ -31,17 +31,21 @@ declare_oxc_lint!(
     /// The whole expression can be replaced by zero. This is most likely not the intended outcome and should probably be corrected.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// let x = 1;
     /// let y = x * 0;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let x = 1;
     /// let y = 0;
     /// ```
     ErasingOp,
-    correctness
+    correctness,
+    suggestion
 );
 
 impl Rule for ErasingOp {
@@ -67,7 +71,7 @@ impl Rule for ErasingOp {
 }
 
 fn is_number_value(expr: &Expression, value: f64) -> bool {
-    if let Expression::NumericLiteral(number_literal) = expr.without_parenthesized() {
+    if let Expression::NumericLiteral(number_literal) = expr.without_parentheses() {
         (number_literal.value - value).abs() < f64::EPSILON
     } else {
         false
@@ -80,7 +84,9 @@ fn check_op<'a, 'b>(
     ctx: &LintContext<'a>,
 ) {
     if is_number_value(op, 0.0) {
-        ctx.diagnostic(erasing_op_diagnostic(binary_expression.span));
+        ctx.diagnostic_with_suggestion(erasing_op_diagnostic(binary_expression.span), |fixer| {
+            fixer.replace(binary_expression.span, "0")
+        });
     }
 }
 
@@ -92,5 +98,7 @@ fn test() {
 
     let fail = vec!["x * 0;", "0 * x;", "0 & x;", "0 / x;"];
 
-    Tester::new(ErasingOp::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![("x * 0;", "0;"), ("0 * x;", "0;"), ("0 & x;", "0;"), ("0 / x;", "0;")];
+
+    Tester::new(ErasingOp::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

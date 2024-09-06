@@ -98,6 +98,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
     }
+
     fn check_invalid_ts_enum_computed_property(&mut self, property: &Expression<'a>) {
         match property {
             Expression::StringLiteral(_) => {}
@@ -473,10 +474,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.parse_class_element_modifiers(true);
         self.eat_decorators()?;
-        let this = {
-            let (span, name) = self.parse_identifier_kind(Kind::This);
-            self.ast.identifier_name(span, name)
-        };
+
+        let this_span = self.start_span();
+        self.bump_any();
+        let this = self.end_span(this_span);
+
         let type_annotation = self.parse_ts_type_annotation()?;
         Ok(self.ast.ts_this_parameter(self.end_span(span), this, type_annotation))
     }

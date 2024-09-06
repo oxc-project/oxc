@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- 90facd3 ast: Add `ContentHash` trait; remove noop `Hash` implementation from `Span` (#5451) (rzvxa)
+- 23285f4 ast: Add `ContentEq` trait. (#5427) (rzvxa)
+
+### Documentation
+
+- 3f204a9 span: Update docs about `ContentEq` `Vec` comparison speed (#5478) (overlookmotel)
+
+### Refactor
+
+- 9f6e0ed ast: Simplify `ContentEq` trait definition. (#5468) (rzvxa)
+- 94a6ac6 span: Use `Hasher` from `std` (#5476) (overlookmotel)
+
+## [0.26.0] - 2024-09-03
+
+### Features
+
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+- 1b20ceb span: Add `CompactStr::to_compact_string` method (#5385) (Boshen)
+- 5a137f0 span/source-type: Add SourceType factory methods (#5242) (DonIsaac)
+- f5e05db span/source-type: Impl `Display` and `Error` for `UnknownExtension` (#5240) (DonIsaac)
+
+### Bug Fixes
+
+- a6bb3b1 span/source-type: Consider `.cjs` and `.cts` files as `ModuleKind::Script` (#5239) (DonIsaac)
+
+### Refactor
+
+- 94f60e7 span/source-type: Make `SourceType` factories `const` (#5241) (DonIsaac)
+
 ## [0.25.0] - 2024-08-23
 
 ### Refactor

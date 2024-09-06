@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 27/27 (100.00%)
 Positive Passed: 27/27 (100.00%)
-Negative Passed: 16/16 (100.00%)
+Negative Passed: 17/17 (100.00%)
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -236,6 +236,12 @@ Negative Passed: 16/16 (100.00%)
  4 │     accessor x?: Foo
    ·               ─
  5 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[misc/fail/oxc-5355.jsx:1:6]
+ 1 │ <Foo.bar-baz />
+   ·      ───────
    ╰────
 
   × The keyword 'let' is reserved

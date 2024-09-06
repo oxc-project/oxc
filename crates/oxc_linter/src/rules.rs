@@ -17,6 +17,7 @@ mod import {
     // pub mod no_deprecated;
     pub mod max_dependencies;
     pub mod no_duplicates;
+    pub mod no_dynamic_require;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
@@ -246,6 +247,7 @@ mod react {
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
+    pub mod self_closing_comp;
     pub mod void_dom_elements_no_children;
 }
 
@@ -391,6 +393,7 @@ mod oxc {
     pub mod missing_throw;
     pub mod no_accumulating_spread;
     pub mod no_async_await;
+    pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
     pub mod no_const_enum;
     pub mod no_optional_chaining;
@@ -451,6 +454,7 @@ mod tree_shaking {
 
 mod promise {
     pub mod avoid_new;
+    pub mod catch_or_return;
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
@@ -464,8 +468,13 @@ mod vitest {
     pub mod no_import_node_test;
     pub mod prefer_each;
     pub mod prefer_to_be_falsy;
+    pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
+}
+
+mod node {
+    pub mod no_exports_assign;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -767,6 +776,7 @@ oxc_macros::declare_all_lint_rules! {
     react::prefer_es6_class,
     react::require_render_return,
     react::rules_of_hooks,
+    react::self_closing_comp,
     react::void_dom_elements_no_children,
     react_perf::jsx_no_jsx_as_prop,
     react_perf::jsx_no_new_array_as_prop,
@@ -784,6 +794,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default_member,
     import::no_self_import,
     // import::no_unused_modules,
+    import::no_dynamic_require,
     import::no_duplicates,
     import::no_default_export,
     import::no_webpack_loader_syntax,
@@ -835,6 +846,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::number_arg_out_of_range,
     oxc::only_used_in_recursion,
     oxc::no_async_await,
+    oxc::no_async_endpoint_handlers,
     oxc::uninvoked_array_callback,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
@@ -881,11 +893,14 @@ oxc_macros::declare_all_lint_rules! {
     promise::valid_params,
     promise::no_return_in_finally,
     promise::prefer_await_to_then,
+    promise::catch_or_return,
     promise::spec_only,
     vitest::no_import_node_test,
     vitest::prefer_each,
     vitest::prefer_to_be_falsy,
+    vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::no_conditional_tests,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    node::no_exports_assign,
 }

@@ -34,12 +34,15 @@ declare_oxc_lint!(
     /// Using `String#startsWith()` and `String#endsWith()` is more readable and performant as it does not need to parse a regex.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// const foo = "hello";
     /// /^abc/.test(foo);
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = "hello";
     /// foo.startsWith("abc");
     /// ```
@@ -70,23 +73,26 @@ impl Rule for PreferStringStartsEndsWith {
             return;
         }
 
-        let Expression::RegExpLiteral(regex) = &member_expr.object().without_parenthesized() else {
+        let Expression::RegExpLiteral(regex) = &member_expr.object().without_parentheses() else {
             return;
         };
 
-        let Some(err_kind) = check_regex(regex) else {
+        let pattern_text = regex.regex.pattern.source_text(ctx.source_text());
+        let pattern_text = pattern_text.as_ref();
+
+        let Some(err_kind) = check_regex(regex, pattern_text) else {
             return;
         };
 
         match err_kind {
             ErrorKind::StartsWith => {
                 ctx.diagnostic_with_fix(starts_with(member_expr.span()), |fixer| {
-                    do_fix(fixer, err_kind, call_expr, regex)
+                    do_fix(fixer, err_kind, call_expr, pattern_text)
                 });
             }
             ErrorKind::EndsWith => {
                 ctx.diagnostic_with_fix(ends_with(member_expr.span()), |fixer| {
-                    do_fix(fixer, err_kind, call_expr, regex)
+                    do_fix(fixer, err_kind, call_expr, pattern_text)
                 });
             }
         }
@@ -97,13 +103,12 @@ fn do_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     err_kind: ErrorKind,
     call_expr: &CallExpression<'a>,
-    regex: &RegExpLiteral,
+    pattern_text: &str,
 ) -> RuleFix<'a> {
     let Some(target_span) = can_replace(call_expr) else { return fixer.noop() };
-    let pattern = &regex.regex.pattern;
     let (argument, method) = match err_kind {
-        ErrorKind::StartsWith => (pattern.trim_start_matches('^'), "startsWith"),
-        ErrorKind::EndsWith => (pattern.trim_end_matches('$'), "endsWith"),
+        ErrorKind::StartsWith => (pattern_text.trim_start_matches('^'), "startsWith"),
+        ErrorKind::EndsWith => (pattern_text.trim_end_matches('$'), "endsWith"),
     };
     let fix_text = format!(r#"{}.{}("{}")"#, fixer.source_range(target_span), method, argument);
 
@@ -116,7 +121,7 @@ fn can_replace(call_expr: &CallExpression) -> Option<Span> {
 
     let arg = &call_expr.arguments[0];
     let expr = arg.as_expression()?;
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::StringLiteral(s) => Some(s.span),
         Expression::TemplateLiteral(s) => Some(s.span),
         Expression::Identifier(ident) => Some(ident.span),
@@ -133,24 +138,22 @@ enum ErrorKind {
     EndsWith,
 }
 
-fn check_regex(regexp_lit: &RegExpLiteral) -> Option<ErrorKind> {
+fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKind> {
     if regexp_lit.regex.flags.intersects(RegExpFlags::M)
         || (regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M)
-            && is_useless_case_sensitive_regex_flag(regexp_lit))
+            && is_useless_case_sensitive_regex_flag(pattern_text))
     {
         return None;
     }
 
-    if regexp_lit.regex.pattern.starts_with('^')
-        && is_simple_string(&regexp_lit.regex.pattern.as_str()[1..regexp_lit.regex.pattern.len()])
+    if pattern_text.starts_with('^')
+        && is_simple_string(&pattern_text[1..regexp_lit.regex.pattern.len()])
     {
         return Some(ErrorKind::StartsWith);
     }
 
-    if regexp_lit.regex.pattern.ends_with('$')
-        && is_simple_string(
-            &regexp_lit.regex.pattern.as_str()[0..regexp_lit.regex.pattern.len() - 1],
-        )
+    if pattern_text.ends_with('$')
+        && is_simple_string(&pattern_text[0..regexp_lit.regex.pattern.len() - 1])
     {
         return Some(ErrorKind::EndsWith);
     }
@@ -165,9 +168,9 @@ fn is_simple_string(str: &str) -> bool {
 
 // `/^#/i` => `true` (the `i` flag is useless)
 // `/^foo/i` => `false` (the `i` flag is not useless)
-fn is_useless_case_sensitive_regex_flag(regexp_lit: &RegExpLiteral) -> bool {
+fn is_useless_case_sensitive_regex_flag(pattern_text: &str) -> bool {
     // ignore `^` and `$` (start and end of string)
-    let pat = regexp_lit.regex.pattern.trim_start_matches('^').trim_end_matches('$');
+    let pat = pattern_text.trim_start_matches('^').trim_end_matches('$');
     pat.chars().any(|c| c.is_ascii_alphabetic())
 }
 

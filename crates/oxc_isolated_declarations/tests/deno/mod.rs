@@ -223,15 +223,15 @@ export function foo(a: any): number {
         );
 
         transform_dts_test(
-      "export const foo = { str: \"bar\", bool: true, bool2: false, num: 42,   nullish: null } as const;",
-      "export declare const foo: {
+            "export const foo = { str: \"bar\", bool: true, bool2: false, num: 42,   nullish: null } as const;",
+            "export declare const foo: {
   readonly str: \"bar\";
   readonly bool: true;
   readonly bool2: false;
   readonly num: 42;
   readonly nullish: null;
 };",
-    );
+        );
 
         transform_dts_test(
             "export const foo = { str: [1, 2] as const } as const;",

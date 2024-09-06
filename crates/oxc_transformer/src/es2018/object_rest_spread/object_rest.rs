@@ -24,9 +24,8 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
-use crate::context::Ctx;
-
 use super::ObjectRestSpreadOptions;
+use crate::context::Ctx;
 
 pub struct ObjectRest<'a> {
     _ctx: Ctx<'a>,

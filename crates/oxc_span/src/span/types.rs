@@ -1,10 +1,9 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
+use oxc_ast_macros::ast;
 #[cfg(feature = "serialize")]
 use ::{serde::Serialize, tsify::Tsify};
-
-use oxc_ast_macros::ast;
 
 /// Newtype for working with text ranges
 ///
@@ -29,7 +28,7 @@ use oxc_ast_macros::ast;
 /// assert_eq!(first.finish(), second.finish());
 /// ```
 #[ast]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[non_exhaustive] // Disallow struct expression constructor `Span {}`
 pub struct Span {

@@ -1,11 +1,12 @@
 //! Create documentation pages for each rule. Pages are printed as Markdown and
 //! get added to the website.
 
-use oxc_linter::table::RuleTableRow;
 use std::{
     fmt::{self, Write},
     path::PathBuf,
 };
+
+use oxc_linter::table::RuleTableRow;
 
 use super::HtmlWriter;
 
@@ -59,8 +60,9 @@ pub fn render_rule_docs_page(rule: &RuleTableRow) -> Result<String, fmt::Error> 
 }
 
 fn rule_source(rule: &RuleTableRow) -> String {
-    use project_root::get_project_root;
     use std::sync::OnceLock;
+
+    use project_root::get_project_root;
 
     const GITHUB_URL: &str = "https://github.com/oxc-project/oxc/blob/main";
     const LINT_RULES_DIR: &str = "crates/oxc_linter/src/rules";

@@ -3,15 +3,18 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use crate::ast::*;
-
 use std::{
+    borrow::Cow,
     fmt,
     hash::{Hash, Hasher},
 };
 
-use oxc_span::{Atom, Span};
+use oxc_allocator::CloneIn;
+use oxc_regular_expression::ast::Pattern;
+use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
 use oxc_syntax::number::NumberBase;
+
+use crate::ast::*;
 
 impl BooleanLiteral {
     pub fn new(span: Span, value: bool) -> Self {
@@ -34,10 +37,10 @@ impl fmt::Display for BooleanLiteral {
     }
 }
 
-impl Hash for NullLiteral {
+impl ContentHash for NullLiteral {
     #[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        None::<bool>.hash(state);
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(&Option::<bool>::None, state);
     }
 }
 
@@ -87,10 +90,10 @@ impl<'a> NumericLiteral<'a> {
     }
 }
 
-impl<'a> Hash for NumericLiteral<'a> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.base.hash(state);
-        self.raw.hash(state);
+impl<'a> ContentHash for NumericLiteral<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.base, state);
+        ContentHash::content_hash(&self.raw, state);
     }
 }
 
@@ -115,6 +118,78 @@ impl<'a> fmt::Display for BigIntLiteral<'a> {
 impl<'a> fmt::Display for RegExp<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern, self.flags)
+    }
+}
+
+impl<'a> RegExpPattern<'a> {
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Raw(it) | Self::Invalid(it) => it.len(),
+            Self::Pattern(it) => it.span.size() as usize,
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn source_text(&self, source_text: &'a str) -> Cow<str> {
+        match self {
+            Self::Raw(raw) | Self::Invalid(raw) => Cow::Borrowed(raw),
+            Self::Pattern(pat) if pat.span.is_unspanned() => Cow::Owned(pat.to_string()),
+            Self::Pattern(pat) => Cow::Borrowed(pat.span.source_text(source_text)),
+        }
+    }
+
+    /// # Panics
+    /// If `self` is anything but `RegExpPattern::Pattern`.
+    pub fn require_pattern(&self) -> &Pattern<'a> {
+        if let Some(it) = self.as_pattern() {
+            it
+        } else {
+            unreachable!(
+                "Required `{}` to be `{}`",
+                stringify!(RegExpPattern),
+                stringify!(Pattern)
+            );
+        }
+    }
+
+    pub fn as_pattern(&self) -> Option<&Pattern<'a>> {
+        if let Self::Pattern(it) = self {
+            Some(it.as_ref())
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a> fmt::Display for RegExpPattern<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Raw(it) | Self::Invalid(it) => write!(f, "{it}"),
+            Self::Pattern(it) => it.fmt(f),
+        }
+    }
+}
+
+impl ContentEq for RegExpFlags {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentHash for RegExpFlags {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(self, state);
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for RegExpFlags {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
     }
 }
 

@@ -1,7 +1,4 @@
-use std::{
-    hash::{Hash, Hasher},
-    ops::{Index, IndexMut, Range},
-};
+use std::ops::{Index, IndexMut, Range};
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
@@ -316,9 +313,17 @@ impl Span {
     }
 
     /// Create a [`LabeledSpan`] covering this [`Span`] with the given label.
+    ///
+    /// Use [`Span::primary_label`] if this is the primary span for the diagnostic.
     #[must_use]
     pub fn label<S: Into<String>>(self, label: S) -> LabeledSpan {
         LabeledSpan::new_with_span(Some(label.into()), self)
+    }
+
+    /// Creates a primary [`LabeledSpan`] covering this [`Span`] with the given label.
+    #[must_use]
+    pub fn primary_label<S: Into<String>>(self, label: S) -> LabeledSpan {
+        LabeledSpan::new_primary_with_span(Some(label.into()), self)
     }
 }
 
@@ -342,12 +347,6 @@ impl From<Range<u32>> for Span {
     #[inline]
     fn from(range: Range<u32>) -> Self {
         Self::new(range.start, range.end)
-    }
-}
-
-impl Hash for Span {
-    fn hash<H: Hasher>(&self, _state: &mut H) {
-        // hash to nothing so all ast spans can be comparable with hash
     }
 }
 
@@ -389,6 +388,7 @@ impl GetSpanMut for Span {
 
 impl<'a> CloneIn<'a> for Span {
     type Cloned = Self;
+
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self
@@ -405,7 +405,7 @@ mod test {
         let mut first = DefaultHasher::new();
         let mut second = DefaultHasher::new();
         Span::new(0, 5).hash(&mut first);
-        Span::new(10, 20).hash(&mut second);
+        Span::new(0, 5).hash(&mut second);
         assert_eq!(first.finish(), second.finish());
     }
     #[test]

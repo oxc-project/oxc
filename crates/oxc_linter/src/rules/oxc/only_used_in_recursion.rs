@@ -36,9 +36,10 @@ declare_oxc_lint!(
     ///
     /// It increase cognitive complexity and may impact performance.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
-    /// // Bad - the argument `b` is only used in recursive calls
     /// function f(a: number, b: number): number {
     ///     if (a == 0) {
     ///         return 1
@@ -46,8 +47,10 @@ declare_oxc_lint!(
     ///         return f(a - 1, b + 1)
     ///     }
     /// }
+    /// ```
     ///
-    /// // Good - the argument `b` is omitted
+    /// Examples of **correct** code for this rule:
+    /// ```ts
     /// function f(a: number): number {
     ///    if (a == 0) {
     ///        return 1

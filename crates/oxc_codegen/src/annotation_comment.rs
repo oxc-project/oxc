@@ -34,6 +34,7 @@ impl AnnotationComment {
     pub fn span(&self) -> Span {
         self.comment.span
     }
+
     pub fn kind(&self) -> CommentKind {
         self.comment.kind
     }
@@ -54,6 +55,7 @@ impl<'a> Codegen<'a> {
             return vec![];
         }
         let mut latest_comment_start = node_start;
+        let source_text = self.source_text.unwrap_or_default();
         let mut ret = self
             .get_leading_comments(self.latest_consumed_comment_end, node_start)
             .rev()
@@ -61,15 +63,14 @@ impl<'a> Codegen<'a> {
             .take_while(|comment| {
                 let comment_end = comment.real_span_end();
                 let range_content =
-                    &self.source_text[comment_end as usize..latest_comment_start as usize];
+                    &source_text[comment_end as usize..latest_comment_start as usize];
                 let all_whitespace = range_content.chars().all(char::is_whitespace);
                 latest_comment_start = comment.real_span_start();
                 all_whitespace
             })
             .filter_map(|comment| {
-                let source_code = self.source_text;
                 let comment_content =
-                    &source_code[comment.span.start as usize..comment.span.end as usize];
+                    &source_text[comment.span.start as usize..comment.span.end as usize];
                 if let Some(m) = MATCHER.find_iter(&comment_content).next() {
                     let annotation_kind = match m.value() {
                         0 | 1 => AnnotationKind::NO_SIDE_EFFECTS,

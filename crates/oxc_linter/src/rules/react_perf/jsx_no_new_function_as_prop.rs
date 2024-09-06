@@ -14,14 +14,27 @@ pub struct JsxNoNewFunctionAsProp;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent Functions that are local to the current method from being used as values of JSX props
+    /// Prevent Functions that are local to the current method from being used
+    /// as values of JSX props.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using locally defined Functions as values for props can lead to unintentional
+    /// re-renders and performance issues. Every time the parent component renders,
+    /// a new instance of the Function is created, causing unnecessary re-renders
+    /// of child components. This also leads to harder-to-maintain code as the
+    /// component's props are not passed consistently.
+    ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <Item callback={new Function(...)} />
     /// <Item callback={this.props.callback || function() {}} />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <Item callback={this.props.callback} />
     /// ```
     JsxNoNewFunctionAsProp,
@@ -57,7 +70,7 @@ impl ReactPerfRule for JsxNoNewFunctionAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::ArrowFunctionExpression(expr) => Some(expr.span),
         Expression::FunctionExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {

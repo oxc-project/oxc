@@ -6,6 +6,7 @@ use itertools::Itertools;
 use syn::parse_file;
 
 mod codegen;
+mod derives;
 mod fmt;
 mod generators;
 mod layout;
@@ -15,10 +16,10 @@ mod rust_ast;
 mod schema;
 mod util;
 
-use fmt::{cargo_fmt, pretty_print};
+use derives::{DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveGetSpan, DeriveGetSpanMut};
+use fmt::cargo_fmt;
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, DeriveCloneIn, DeriveGetSpan,
-    DeriveGetSpanMut, GeneratedDataStream, GeneratedTokenStream, Generator, GeneratorOutput,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
     VisitGenerator, VisitMutGenerator,
 };
 use passes::{CalcLayout, Linker};
@@ -33,6 +34,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_syntax/src/operator.rs",
     "crates/oxc_span/src/span/types.rs",
     "crates/oxc_span/src/source_type/types.rs",
+    "crates/oxc_regular_expression/src/ast.rs",
 ];
 
 const AST_CRATE: &str = "crates/oxc_ast";
@@ -48,6 +50,8 @@ pub struct CliOptions {
     /// Don't run cargo fmt at the end
     #[bpaf(switch)]
     no_fmt: bool,
+    /// Prints no logs.
+    quiet: bool,
     /// Path of output `schema.json`.
     schema: Option<std::path::PathBuf>,
 }
@@ -55,33 +59,39 @@ pub struct CliOptions {
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let cli_options = cli_options().run();
 
+    if cli_options.quiet {
+        // SAFETY: we haven't started using logger yet!
+        unsafe { logger::quiet() };
+    }
+
     let AstCodegenResult { outputs, schema } = SOURCE_PATHS
         .iter()
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .pass(Linker)
         .pass(CalcLayout)
-        .gen(AssertLayouts)
-        .gen(AstKindGenerator)
-        .gen(AstBuilderGenerator)
-        .gen(DeriveCloneIn)
-        .gen(DeriveGetSpan)
-        .gen(DeriveGetSpanMut)
-        .gen(VisitGenerator)
-        .gen(VisitMutGenerator)
-        .generate()?;
-
-    let (streams, outputs): (Vec<_>, Vec<_>) =
-        outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Stream(_)));
-
-    let (binaries, _): (Vec<_>, Vec<_>) =
-        outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Data(_)));
+        .derive(DeriveCloneIn)
+        .derive(DeriveGetSpan)
+        .derive(DeriveGetSpanMut)
+        .derive(DeriveContentEq)
+        .derive(DeriveContentHash)
+        .generate(AssertLayouts)
+        .generate(AstKindGenerator)
+        .generate(AstBuilderGenerator)
+        .generate(VisitGenerator)
+        .generate(VisitMutGenerator)
+        .run()?;
 
     if !cli_options.dry_run {
-        let side_effects =
-            write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?
-                .into_iter()
-                .chain(write_data_streams(binaries.into_iter().map(|it| it.1.into_data()))?)
-                .collect();
+        let side_effects = outputs
+            .into_iter()
+            .map(|it| {
+                let path = it.path();
+                log!("Writing {path}...");
+                it.apply().unwrap();
+                logln!(" Done!");
+                path
+            })
+            .collect();
         write_ci_filter(SOURCE_PATHS, side_effects, ".github/.generated_ast_watch_list.yml")?;
     }
 
@@ -100,37 +110,6 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
 fn output(krate: &str, path: &str) -> PathBuf {
     std::path::PathBuf::from_iter(vec![krate, "src", "generated", path])
-}
-
-/// Writes all streams and returns a vector pointing to side-effects written on the disk
-fn write_generated_streams(
-    streams: impl IntoIterator<Item = GeneratedTokenStream>,
-) -> std::io::Result<Vec<String>> {
-    streams
-        .into_iter()
-        .map(|(path, stream)| {
-            let path = path.into_os_string();
-            let path = path.to_str().unwrap();
-            let content = pretty_print(&stream);
-            write_all_to(content.as_bytes(), path)?;
-            Ok(path.to_string().replace('\\', "/"))
-        })
-        .collect()
-}
-
-/// Writes all streams and returns a vector pointing to side-effects written on the disk
-fn write_data_streams(
-    streams: impl IntoIterator<Item = GeneratedDataStream>,
-) -> std::io::Result<Vec<String>> {
-    streams
-        .into_iter()
-        .map(|(path, stream)| {
-            let path = path.into_os_string();
-            let path = path.to_str().unwrap();
-            write_all_to(&stream, path)?;
-            Ok(path.to_string().replace('\\', "/"))
-        })
-        .collect()
 }
 
 fn write_ci_filter(
@@ -155,7 +134,44 @@ fn write_ci_filter(
         push_item(side_effect.as_str());
     }
 
-    push_item("tasks/ast_codegen/src/**");
+    push_item("tasks/ast_codegen/src/**/*");
+    push_item(output_path);
 
-    write_all_to(output.as_bytes(), output_path)
+    log!("Writing {output_path}...");
+    write_all_to(output.as_bytes(), output_path)?;
+    logln!(" Done!");
+    Ok(())
 }
+
+#[macro_use]
+mod logger {
+    static mut LOG: bool = true;
+
+    /// Shouldn't be called after first use of the logger macros.
+    pub(super) unsafe fn quiet() {
+        LOG = false;
+    }
+
+    pub(super) fn __internal_log_enable() -> bool {
+        // SAFETY:`LOG` doesn't change from the moment we start using it.
+        unsafe { LOG }
+    }
+
+    macro_rules! log {
+        ($fmt:literal $(, $args:expr)*) => {
+            if $crate::logger::__internal_log_enable() {
+                print!("{}", format!($fmt$(, $args)*));
+            }
+        }
+    }
+
+    macro_rules! logln {
+        ($fmt:literal $(, $args:expr)*) => {
+            $crate::log!("{}\n", format!($fmt $(, $args)*));
+        }
+    }
+
+    pub(super) use {log, logln};
+}
+
+pub(crate) use logger::{log, logln};

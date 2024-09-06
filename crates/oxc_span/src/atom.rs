@@ -5,11 +5,11 @@ use std::{
 };
 
 use compact_str::CompactString;
+use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
-use crate::Span;
-use oxc_allocator::{Allocator, CloneIn, FromIn};
+use crate::{cmp::ContentEq, hash::ContentHash, Span};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -167,9 +167,22 @@ impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
         self.as_ref() == other.as_str()
     }
 }
+
 impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
     fn eq(&self, other: &&Atom<'a>) -> bool {
         self.as_ref() == other.as_str()
+    }
+}
+
+impl<'a> ContentEq for Atom<'a> {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl<'a> ContentHash for Atom<'a> {
+    fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
+        hash::Hash::hash(self, state);
     }
 }
 
@@ -248,6 +261,12 @@ impl CompactStr {
     #[inline]
     pub fn into_string(self) -> String {
         self.0.into_string()
+    }
+
+    /// Convert a [`CompactStr`] into a [`CompactString`].
+    #[inline]
+    pub fn into_compact_string(self) -> CompactString {
+        self.0
     }
 
     /// Get length of [`CompactStr`].
@@ -419,6 +438,8 @@ impl schemars::JsonSchema for CompactStr {
 
 #[cfg(test)]
 mod test {
+    use compact_str::CompactString;
+
     use super::CompactStr;
 
     #[test]
@@ -428,5 +449,6 @@ mod test {
         assert_eq!(&foo, "foo");
         assert_eq!("foo", foo);
         assert_eq!("foo", &foo);
+        assert_eq!(foo.into_compact_string(), CompactString::new("foo"));
     }
 }

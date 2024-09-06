@@ -1,0 +1,23 @@
+{
+  "esbuild-regexp-lookbehind-assertions": {
+    "chrome": "62",
+    "deno": "1.0",
+    "edge": "79",
+    "firefox": "78",
+    "hermes": "0.7",
+    "ios": "16.4",
+    "node": "8.10",
+    "opera": "49",
+    "safari": "16.4"
+  },
+  "esbuild-regexp-match-indices": {
+    "chrome": "90",
+    "deno": "1.8",
+    "edge": "90",
+    "firefox": "88",
+    "ios": "15.0",
+    "node": "16.0",
+    "opera": "76",
+    "safari": "15.0"
+  }
+}

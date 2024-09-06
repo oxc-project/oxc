@@ -1,4 +1,5 @@
 mod config;
+mod express;
 mod jest;
 mod jsdoc;
 mod nextjs;
@@ -12,8 +13,8 @@ mod vitest;
 use std::{io, path::Path};
 
 pub use self::{
-    config::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*, tree_shaking::*,
-    unicorn::*, vitest::*,
+    config::*, express::*, jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*,
+    tree_shaking::*, unicorn::*, vitest::*,
 };
 
 /// Check if the Jest rule is adapted to Vitest.

@@ -547,9 +547,7 @@ fn get_type_only_named_import<'a>(
     source: &str,
 ) -> Option<&'a ImportDeclaration<'a>> {
     let root = ctx.nodes().root_node()?;
-    let AstKind::Program(program) = root.kind() else {
-        return None;
-    };
+    let program = root.kind().as_program()?;
 
     for stmt in &program.body {
         let Statement::ImportDeclaration(import_decl) = stmt else {

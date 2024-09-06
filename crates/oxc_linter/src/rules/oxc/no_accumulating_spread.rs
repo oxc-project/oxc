@@ -44,10 +44,28 @@ fn reduce_unknown(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
         ])
 }
 
-fn loop_spread_diagnostic(spread_span: Span, loop_span: Span) -> OxcDiagnostic {
+fn loop_spread_likely_object_diagnostic(
+    accumulator_decl_span: Span,
+    spread_span: Span,
+    loop_span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not spread accumulators in loops")
-        .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_help("Consider using `Object.assign()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
+            accumulator_decl_span.label("From this accumulator"),
+            spread_span.label("From this spread"),
+            loop_span.label("For this loop")
+        ])
+}
+fn loop_spread_likely_array_diagnostic(
+    accumulator_decl_span: Span,
+    spread_span: Span,
+    loop_span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not spread accumulators in loops")
+        .with_help("Consider using `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
+        .with_labels([
+            accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
             loop_span.label("For this loop")
         ])
@@ -58,9 +76,11 @@ pub struct NoAccumulatingSpread;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevents using object or array spreads on accumulators in `Array.prototype.reduce()` and in loops.
     ///
     /// ### Why is this bad?
+    ///
     /// Object and array spreads create a new object or array on each iteration.
     /// In the worst case, they also cause O(n) copies (both memory and time complexity).
     /// When used on an accumulator, this can lead to `O(n^2)` memory complexity and
@@ -69,9 +89,17 @@ declare_oxc_lint!(
     /// For a more in-depth explanation, see this [blog post](https://prateeksurana.me/blog/why-using-object-spread-with-reduce-bad-idea/)
     /// by Prateek Surana.
     ///
+    /// ### Examples
     ///
-    /// ### Example
-    /// Pass
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// arr.reduce((acc, x) => ({ ...acc, [x]: fn(x) }), {})
+    /// Object.keys(obj).reduce((acc, el) => ({ ...acc, [el]: fn(el) }), {})
+    ///
+    /// let foo = []; for (let i = 0; i < 10; i++) { foo = [...foo, i]; }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
     /// function fn (x) {
     ///   // ...
@@ -89,14 +117,6 @@ declare_oxc_lint!(
     /// }, {})
     ///
     /// let foo = []; for (let i = 0; i < 10; i++) { foo.push(i); }
-    /// ```
-    ///
-    /// Fail
-    /// ```javascript
-    /// arr.reduce((acc, x) => ({ ...acc, [x]: fn(x) }), {})
-    /// Object.keys(obj).reduce((acc, el) => ({ ...acc, [el]: fn(el) }), {})
-    ///
-    /// let foo = []; for (let i = 0; i < 10; i++) { foo = [...foo, i]; }
     /// ```
     NoAccumulatingSpread,
     perf,
@@ -185,14 +205,15 @@ fn check_loop_usage<'a>(
     let AstKind::VariableDeclaration(declaration) = declaration_node.kind() else {
         return;
     };
-
+    // if the accumulator's declaration is not a `let`, then we know it's never
+    // reassigned, hence cannot be a violation of the rule
     if !matches!(declaration.kind, VariableDeclarationKind::Let) {
         return;
     }
 
-    if !matches!(declarator.kind(), AstKind::VariableDeclarator(_)) {
+    let AstKind::VariableDeclarator(declarator) = declarator.kind() else {
         return;
-    }
+    };
 
     let Some(write_reference) =
         ctx.semantic().symbol_references(referenced_symbol_id).find(|r| r.is_write())
@@ -215,7 +236,8 @@ fn check_loop_usage<'a>(
         return;
     };
 
-    match assignment_expression.right.get_inner_expression() {
+    let assignment_expression_right_inner_expr = assignment_expression.right.get_inner_expression();
+    match assignment_expression_right_inner_expr {
         Expression::ArrayExpression(array_expr)
             if array_expr.span.contains_inclusive(spread_span) => {}
         Expression::ObjectExpression(object_expr)
@@ -228,7 +250,24 @@ fn check_loop_usage<'a>(
             if !parent.kind().span().contains_inclusive(declaration.span)
                 && parent.kind().span().contains_inclusive(spread_span)
             {
-                ctx.diagnostic(loop_spread_diagnostic(spread_span, loop_span));
+                match assignment_expression_right_inner_expr {
+                    Expression::ArrayExpression(_) => {
+                        ctx.diagnostic(loop_spread_likely_array_diagnostic(
+                            declarator.id.span(),
+                            spread_span,
+                            loop_span,
+                        ));
+                    }
+                    Expression::ObjectExpression(_) => {
+                        ctx.diagnostic(loop_spread_likely_object_diagnostic(
+                            declarator.id.span(),
+                            spread_span,
+                            loop_span,
+                        ));
+                    }
+                    // we check above that the expression is either an array or object expression
+                    _ => unreachable!(),
+                }
             }
         }
     }
@@ -357,7 +396,7 @@ fn test() {
         "let foo = {}; for (const i in [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (let i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (const i of [1,2,3]) { foo[i] = i; }",
-        "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",        
+        "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",
     ];
 
     let fail = vec![

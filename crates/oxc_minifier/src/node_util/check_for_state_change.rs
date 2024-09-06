@@ -1,5 +1,4 @@
 use oxc_ast::ast::*;
-
 use oxc_syntax::operator::UnaryOperator;
 
 /// A "simple" operator is one whose children are expressions, has no direct side-effects.

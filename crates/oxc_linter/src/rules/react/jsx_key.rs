@@ -36,12 +36,15 @@ declare_oxc_lint!(
     /// Enforce `key` prop for elements in array
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// [1, 2, 3].map(x => <App />);
     /// [1, 2, 3]?.map(x => <BabelEslintApp />)
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// [1, 2, 3].map(x => <App key={x} />);
     /// [1, 2, 3]?.map(x => <BabelEslintApp key={x} />)
     /// ```
@@ -194,7 +197,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 return Some(InsideArrayOrIterator::Array);
             }
             AstKind::CallExpression(v) => {
-                let callee = &v.callee.without_parenthesized();
+                let callee = &v.callee.without_parentheses();
 
                 if let Some(v) = callee.as_member_expression() {
                     if let Some((span, ident)) = v.static_property_info() {

@@ -2,7 +2,8 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
+use ropey::Rope;
 
 use super::utils::get_line_column;
 use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
@@ -19,21 +20,33 @@ const FILE_NAME_VAR: &str = "jsxFileName";
 /// In: `<sometag />`
 /// Out: `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
 pub struct ReactJsxSource<'a> {
-    ctx: Ctx<'a>,
     filename_var: Option<BoundIdentifier<'a>>,
+    source_rope: Option<Rope>,
+    ctx: Ctx<'a>,
 }
 
 impl<'a> ReactJsxSource<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
-        Self { ctx, filename_var: None }
+        Self { filename_var: None, source_rope: None, ctx }
     }
+}
 
-    pub fn transform_jsx_opening_element(
+impl<'a> Traverse<'a> for ReactJsxSource<'a> {
+    fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.add_source_attribute(elem, ctx);
+    }
+}
+
+impl<'a> ReactJsxSource<'a> {
+    pub fn get_line_column(&mut self, offset: u32) -> (usize, usize) {
+        if self.source_rope.is_none() {
+            self.source_rope = Some(Rope::from_str(self.ctx.source_text));
+        }
+        get_line_column(self.source_rope.as_ref().unwrap(), offset, self.ctx.source_text)
     }
 
     pub fn get_object_property_kind_for_jsx_plugin(
@@ -54,9 +67,7 @@ impl<'a> ReactJsxSource<'a> {
         let error = OxcDiagnostic::warn("Duplicate __source prop found.").with_label(span);
         self.ctx.error(error);
     }
-}
 
-impl<'a> ReactJsxSource<'a> {
     /// `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
     ///           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     fn add_source_attribute(
@@ -85,7 +96,7 @@ impl<'a> ReactJsxSource<'a> {
         // TODO: We shouldn't calculate line + column from scratch each time as it's expensive.
         // Build a table of byte indexes of each line's start on first usage, and save it.
         // Then calculate line and column from that.
-        let (line, column) = get_line_column(elem.span.start, self.ctx.source_text);
+        let (line, column) = self.get_line_column(elem.span.start);
         let object = self.get_source_object(line, column, ctx);
         let value = self
             .ctx

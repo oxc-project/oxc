@@ -156,7 +156,7 @@ fn test() {
         "class C { static { a; let a; } }",
         "class C { static { function a() {} a; } }",
         "class C { static { a; function a() {} } }",
-        "String;Array;Boolean;"
+        "String;Array;Boolean;",
     ];
 
     let fail = vec![

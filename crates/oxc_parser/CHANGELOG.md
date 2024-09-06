@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+### Features
+
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- 10279f5 parser: Add syntax error for hyphen in `JSXMemberExpression` `<Foo.bar-baz />` (#5440) (Boshen)
+
+### Refactor
+
+- d9d7e7c ast: Remove `IdentifierName` from `TSThisParameter` (#5327) (overlookmotel)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+- 7dfd51a parser: Report class properties that are both definite and optional (#5181) (DonIsaac)
+- a563968 parser: Report errors on optional accessor properties (#5180) (DonIsaac)
+
+### Bug Fixes
+
+- d4c06ef parser: Revert "check for `@flow` with recoverable errors as well" (#5297) (overlookmotel)
+- e1d8b92 parser: Check for `@flow` with recoverable errors as well (Boshen)
+- e6fd52e parser: Change unterminated regex error to be non-recoverable (#5285) (Boshen)
+- 1686920 parser: Span for invalid regex flags (#5225) (leaysgur)
+
+### Refactor
+
+- d236554 parser: Move `JSXIdentifier` conversion code into parser (#5345) (overlookmotel)
+- bc59dd2 parser: Improve example for `byte_search!` macro usage (#5234) (overlookmotel)
+- a3ddfdd parser: Improve lexer pointer maths (#5233) (overlookmotel)
+
+### Testing
+
+- 7009177 parser: Fix incorrect flow error test (Boshen)
+
 ## [0.25.0] - 2024-08-23
 
 - b2ff2df parser: [**BREAKING**] Remove builder pattern from `Parser` struct (#5000) (Boshen)

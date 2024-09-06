@@ -212,115 +212,114 @@ pub(crate) enum AncestorType {
     JSXAttributeValue = 184,
     JSXSpreadAttributeArgument = 185,
     JSXSpreadChildExpression = 186,
-    TSThisParameterThis = 187,
-    TSThisParameterTypeAnnotation = 188,
-    TSEnumDeclarationId = 189,
-    TSEnumDeclarationMembers = 190,
-    TSEnumMemberId = 191,
-    TSEnumMemberInitializer = 192,
-    TSTypeAnnotationTypeAnnotation = 193,
-    TSLiteralTypeLiteral = 194,
-    TSConditionalTypeCheckType = 195,
-    TSConditionalTypeExtendsType = 196,
-    TSConditionalTypeTrueType = 197,
-    TSConditionalTypeFalseType = 198,
-    TSUnionTypeTypes = 199,
-    TSIntersectionTypeTypes = 200,
-    TSParenthesizedTypeTypeAnnotation = 201,
-    TSTypeOperatorTypeAnnotation = 202,
-    TSArrayTypeElementType = 203,
-    TSIndexedAccessTypeObjectType = 204,
-    TSIndexedAccessTypeIndexType = 205,
-    TSTupleTypeElementTypes = 206,
-    TSNamedTupleMemberElementType = 207,
-    TSNamedTupleMemberLabel = 208,
-    TSOptionalTypeTypeAnnotation = 209,
-    TSRestTypeTypeAnnotation = 210,
-    TSTypeReferenceTypeName = 211,
-    TSTypeReferenceTypeParameters = 212,
-    TSQualifiedNameLeft = 213,
-    TSQualifiedNameRight = 214,
-    TSTypeParameterInstantiationParams = 215,
-    TSTypeParameterName = 216,
-    TSTypeParameterConstraint = 217,
-    TSTypeParameterDefault = 218,
-    TSTypeParameterDeclarationParams = 219,
-    TSTypeAliasDeclarationId = 220,
-    TSTypeAliasDeclarationTypeParameters = 221,
-    TSTypeAliasDeclarationTypeAnnotation = 222,
-    TSClassImplementsExpression = 223,
-    TSClassImplementsTypeParameters = 224,
-    TSInterfaceDeclarationId = 225,
-    TSInterfaceDeclarationExtends = 226,
-    TSInterfaceDeclarationTypeParameters = 227,
-    TSInterfaceDeclarationBody = 228,
-    TSInterfaceBodyBody = 229,
-    TSPropertySignatureKey = 230,
-    TSPropertySignatureTypeAnnotation = 231,
-    TSIndexSignatureParameters = 232,
-    TSIndexSignatureTypeAnnotation = 233,
-    TSCallSignatureDeclarationThisParam = 234,
-    TSCallSignatureDeclarationParams = 235,
-    TSCallSignatureDeclarationReturnType = 236,
-    TSCallSignatureDeclarationTypeParameters = 237,
-    TSMethodSignatureKey = 238,
-    TSMethodSignatureThisParam = 239,
-    TSMethodSignatureParams = 240,
-    TSMethodSignatureReturnType = 241,
-    TSMethodSignatureTypeParameters = 242,
-    TSConstructSignatureDeclarationParams = 243,
-    TSConstructSignatureDeclarationReturnType = 244,
-    TSConstructSignatureDeclarationTypeParameters = 245,
-    TSIndexSignatureNameTypeAnnotation = 246,
-    TSInterfaceHeritageExpression = 247,
-    TSInterfaceHeritageTypeParameters = 248,
-    TSTypePredicateParameterName = 249,
-    TSTypePredicateTypeAnnotation = 250,
-    TSModuleDeclarationId = 251,
-    TSModuleDeclarationBody = 252,
-    TSModuleBlockDirectives = 253,
-    TSModuleBlockBody = 254,
-    TSTypeLiteralMembers = 255,
-    TSInferTypeTypeParameter = 256,
-    TSTypeQueryExprName = 257,
-    TSTypeQueryTypeParameters = 258,
-    TSImportTypeParameter = 259,
-    TSImportTypeQualifier = 260,
-    TSImportTypeAttributes = 261,
-    TSImportTypeTypeParameters = 262,
-    TSImportAttributesAttributesKeyword = 263,
-    TSImportAttributesElements = 264,
-    TSImportAttributeName = 265,
-    TSImportAttributeValue = 266,
-    TSFunctionTypeThisParam = 267,
-    TSFunctionTypeParams = 268,
-    TSFunctionTypeReturnType = 269,
-    TSFunctionTypeTypeParameters = 270,
-    TSConstructorTypeParams = 271,
-    TSConstructorTypeReturnType = 272,
-    TSConstructorTypeTypeParameters = 273,
-    TSMappedTypeTypeParameter = 274,
-    TSMappedTypeNameType = 275,
-    TSMappedTypeTypeAnnotation = 276,
-    TSTemplateLiteralTypeQuasis = 277,
-    TSTemplateLiteralTypeTypes = 278,
-    TSAsExpressionExpression = 279,
-    TSAsExpressionTypeAnnotation = 280,
-    TSSatisfiesExpressionExpression = 281,
-    TSSatisfiesExpressionTypeAnnotation = 282,
-    TSTypeAssertionExpression = 283,
-    TSTypeAssertionTypeAnnotation = 284,
-    TSImportEqualsDeclarationId = 285,
-    TSImportEqualsDeclarationModuleReference = 286,
-    TSExternalModuleReferenceExpression = 287,
-    TSNonNullExpressionExpression = 288,
-    DecoratorExpression = 289,
-    TSExportAssignmentExpression = 290,
-    TSNamespaceExportDeclarationId = 291,
-    TSInstantiationExpressionExpression = 292,
-    TSInstantiationExpressionTypeParameters = 293,
-    JSDocNullableTypeTypeAnnotation = 294,
-    JSDocNonNullableTypeTypeAnnotation = 295,
+    TSThisParameterTypeAnnotation = 187,
+    TSEnumDeclarationId = 188,
+    TSEnumDeclarationMembers = 189,
+    TSEnumMemberId = 190,
+    TSEnumMemberInitializer = 191,
+    TSTypeAnnotationTypeAnnotation = 192,
+    TSLiteralTypeLiteral = 193,
+    TSConditionalTypeCheckType = 194,
+    TSConditionalTypeExtendsType = 195,
+    TSConditionalTypeTrueType = 196,
+    TSConditionalTypeFalseType = 197,
+    TSUnionTypeTypes = 198,
+    TSIntersectionTypeTypes = 199,
+    TSParenthesizedTypeTypeAnnotation = 200,
+    TSTypeOperatorTypeAnnotation = 201,
+    TSArrayTypeElementType = 202,
+    TSIndexedAccessTypeObjectType = 203,
+    TSIndexedAccessTypeIndexType = 204,
+    TSTupleTypeElementTypes = 205,
+    TSNamedTupleMemberElementType = 206,
+    TSNamedTupleMemberLabel = 207,
+    TSOptionalTypeTypeAnnotation = 208,
+    TSRestTypeTypeAnnotation = 209,
+    TSTypeReferenceTypeName = 210,
+    TSTypeReferenceTypeParameters = 211,
+    TSQualifiedNameLeft = 212,
+    TSQualifiedNameRight = 213,
+    TSTypeParameterInstantiationParams = 214,
+    TSTypeParameterName = 215,
+    TSTypeParameterConstraint = 216,
+    TSTypeParameterDefault = 217,
+    TSTypeParameterDeclarationParams = 218,
+    TSTypeAliasDeclarationId = 219,
+    TSTypeAliasDeclarationTypeParameters = 220,
+    TSTypeAliasDeclarationTypeAnnotation = 221,
+    TSClassImplementsExpression = 222,
+    TSClassImplementsTypeParameters = 223,
+    TSInterfaceDeclarationId = 224,
+    TSInterfaceDeclarationExtends = 225,
+    TSInterfaceDeclarationTypeParameters = 226,
+    TSInterfaceDeclarationBody = 227,
+    TSInterfaceBodyBody = 228,
+    TSPropertySignatureKey = 229,
+    TSPropertySignatureTypeAnnotation = 230,
+    TSIndexSignatureParameters = 231,
+    TSIndexSignatureTypeAnnotation = 232,
+    TSCallSignatureDeclarationThisParam = 233,
+    TSCallSignatureDeclarationParams = 234,
+    TSCallSignatureDeclarationReturnType = 235,
+    TSCallSignatureDeclarationTypeParameters = 236,
+    TSMethodSignatureKey = 237,
+    TSMethodSignatureThisParam = 238,
+    TSMethodSignatureParams = 239,
+    TSMethodSignatureReturnType = 240,
+    TSMethodSignatureTypeParameters = 241,
+    TSConstructSignatureDeclarationParams = 242,
+    TSConstructSignatureDeclarationReturnType = 243,
+    TSConstructSignatureDeclarationTypeParameters = 244,
+    TSIndexSignatureNameTypeAnnotation = 245,
+    TSInterfaceHeritageExpression = 246,
+    TSInterfaceHeritageTypeParameters = 247,
+    TSTypePredicateParameterName = 248,
+    TSTypePredicateTypeAnnotation = 249,
+    TSModuleDeclarationId = 250,
+    TSModuleDeclarationBody = 251,
+    TSModuleBlockDirectives = 252,
+    TSModuleBlockBody = 253,
+    TSTypeLiteralMembers = 254,
+    TSInferTypeTypeParameter = 255,
+    TSTypeQueryExprName = 256,
+    TSTypeQueryTypeParameters = 257,
+    TSImportTypeParameter = 258,
+    TSImportTypeQualifier = 259,
+    TSImportTypeAttributes = 260,
+    TSImportTypeTypeParameters = 261,
+    TSImportAttributesAttributesKeyword = 262,
+    TSImportAttributesElements = 263,
+    TSImportAttributeName = 264,
+    TSImportAttributeValue = 265,
+    TSFunctionTypeThisParam = 266,
+    TSFunctionTypeParams = 267,
+    TSFunctionTypeReturnType = 268,
+    TSFunctionTypeTypeParameters = 269,
+    TSConstructorTypeParams = 270,
+    TSConstructorTypeReturnType = 271,
+    TSConstructorTypeTypeParameters = 272,
+    TSMappedTypeTypeParameter = 273,
+    TSMappedTypeNameType = 274,
+    TSMappedTypeTypeAnnotation = 275,
+    TSTemplateLiteralTypeQuasis = 276,
+    TSTemplateLiteralTypeTypes = 277,
+    TSAsExpressionExpression = 278,
+    TSAsExpressionTypeAnnotation = 279,
+    TSSatisfiesExpressionExpression = 280,
+    TSSatisfiesExpressionTypeAnnotation = 281,
+    TSTypeAssertionExpression = 282,
+    TSTypeAssertionTypeAnnotation = 283,
+    TSImportEqualsDeclarationId = 284,
+    TSImportEqualsDeclarationModuleReference = 285,
+    TSExternalModuleReferenceExpression = 286,
+    TSNonNullExpressionExpression = 287,
+    DecoratorExpression = 288,
+    TSExportAssignmentExpression = 289,
+    TSNamespaceExportDeclarationId = 290,
+    TSInstantiationExpressionExpression = 291,
+    TSInstantiationExpressionTypeParameters = 292,
+    JSDocNullableTypeTypeAnnotation = 293,
+    JSDocNonNullableTypeTypeAnnotation = 294,
 }
 
 /// Ancestor type used in AST traversal.
@@ -675,8 +674,6 @@ pub enum Ancestor<'a, 't> {
         AncestorType::JSXSpreadAttributeArgument as u16,
     JSXSpreadChildExpression(JSXSpreadChildWithoutExpression<'a, 't>) =
         AncestorType::JSXSpreadChildExpression as u16,
-    TSThisParameterThis(TSThisParameterWithoutThis<'a, 't>) =
-        AncestorType::TSThisParameterThis as u16,
     TSThisParameterTypeAnnotation(TSThisParameterWithoutTypeAnnotation<'a, 't>) =
         AncestorType::TSThisParameterTypeAnnotation as u16,
     TSEnumDeclarationId(TSEnumDeclarationWithoutId<'a, 't>) =
@@ -1493,7 +1490,7 @@ impl<'a, 't> Ancestor<'a, 't> {
 
     #[inline]
     pub fn is_ts_this_parameter(self) -> bool {
-        matches!(self, Self::TSThisParameterThis(_) | Self::TSThisParameterTypeAnnotation(_))
+        matches!(self, Self::TSThisParameterTypeAnnotation(_))
     }
 
     #[inline]
@@ -9288,31 +9285,9 @@ impl<'a, 't> JSXSpreadChildWithoutExpression<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_THIS_PARAMETER_SPAN: usize = offset_of!(TSThisParameter, span);
-pub(crate) const OFFSET_TS_THIS_PARAMETER_THIS: usize = offset_of!(TSThisParameter, this);
+pub(crate) const OFFSET_TS_THIS_PARAMETER_THIS_SPAN: usize = offset_of!(TSThisParameter, this_span);
 pub(crate) const OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION: usize =
     offset_of!(TSThisParameter, type_annotation);
-
-#[repr(transparent)]
-#[derive(Clone, Copy, Debug)]
-pub struct TSThisParameterWithoutThis<'a, 't>(
-    pub(crate) *const TSThisParameter<'a>,
-    pub(crate) PhantomData<&'t ()>,
-);
-
-impl<'a, 't> TSThisParameterWithoutThis<'a, 't> {
-    #[inline]
-    pub fn span(self) -> &'t Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn type_annotation(self) -> &'t Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -9328,11 +9303,8 @@ impl<'a, 't> TSThisParameterWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn this(self) -> &'t IdentifierName<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_THIS)
-                as *const IdentifierName<'a>)
-        }
+    pub fn this_span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_THIS_PARAMETER_THIS_SPAN) as *const Span) }
     }
 }
 

@@ -1,7 +1,8 @@
+use std::{borrow::Borrow, hash::Hash};
+
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use std::{borrow::Borrow, hash::Hash};
 
 /// Predefine global variables.
 ///

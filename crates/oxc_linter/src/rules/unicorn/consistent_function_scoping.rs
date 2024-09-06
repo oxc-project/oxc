@@ -157,9 +157,14 @@ impl Rule for ConsistentFunctionScoping {
 
         Self(Box::new(configuration))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (function_declaration_symbol_id, function_body, reporter_span) = match node.kind() {
             AstKind::Function(function) => {
+                if let Some(AstKind::AssignmentExpression(_)) = ctx.nodes().parent_kind(node.id()) {
+                    return;
+                }
+
                 if function.is_typescript_syntax() {
                     return;
                 }
@@ -172,8 +177,12 @@ impl Rule for ConsistentFunctionScoping {
                     (
                         binding_ident.symbol_id.get().unwrap(),
                         function_body,
-                        // 8 for "function"
-                        Span::sized(function.span.start, 8),
+                        function
+                            .id
+                            .as_ref()
+                            .map_or(Span::sized(function.span.start, 8), |func_binding_ident| {
+                                func_binding_ident.span
+                            }),
                     )
                 } else if let Some(function_id) = &function.id {
                     (function_id.symbol_id.get().unwrap(), function_body, function_id.span())
@@ -276,6 +285,7 @@ impl<'a> Visit<'a> for ReferencesFinder {
             self.in_function += 1;
         }
     }
+
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if let AstKind::Function(_) = kind {
             self.in_function -= 1;
@@ -573,6 +583,9 @@ fn test() {
         ("t.throws(() => receiveString(function a() {}), {})", None),
         ("function test () { t.throws(() => receiveString(function a() {}), {}) }", None),
         ("function foo() { let x = new Bar(function b() {}) }", None),
+        ("module.exports = function foo() {};", None),
+        ("module.exports.foo = function foo() {};", None),
+        ("foo.bar.func = function foo() {};", None),
     ];
 
     let fail = vec![
@@ -804,6 +817,7 @@ fn test() {
         // ("const doFoo = () => bar => bar;", None),
         ("function foo() { const bar = async () => {} }", None),
         ("function doFoo() { const doBar = function(bar) { return bar; }; }", None),
+        ("function outer() { const inner = function inner() {}; }", None),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, pass, fail).test_and_snapshot();

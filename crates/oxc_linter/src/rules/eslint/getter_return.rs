@@ -95,7 +95,7 @@ impl GetterReturn {
     }
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
-        match callee.without_parenthesized() {
+        match callee.without_parentheses() {
             expr @ match_member_expression!(Expression) => {
                 Self::handle_member_expression(expr.to_member_expression())
             }
@@ -112,7 +112,7 @@ impl GetterReturn {
     }
 
     fn handle_paren_expr<'a>(expr: &'a Expression<'a>) -> bool {
-        match expr.without_parenthesized() {
+        match expr.without_parentheses() {
             Expression::CallExpression(ce) => Self::handle_actual_expression(&ce.callee),
             _ => false,
         }
@@ -257,6 +257,7 @@ impl GetterReturn {
                                 e.weight(),
                                 EdgeType::Jump
                                     | EdgeType::Normal
+                                    | EdgeType::Backedge
                                     | EdgeType::Error(ErrorEdgeKind::Explicit)
                             )
                         }) {
@@ -351,6 +352,45 @@ fn test() {
             }
         };
         ", None),
+        // adapted from: https://github.com/1024pix/pix/blob/1352bd8d7f6070f1ff8da79867f543c1c1926e59/mon-pix/app/components/progress-bar.js#L29-L43
+        ("
+        export default class ProgressBar extends Component {
+            get steps() {
+                const steps = [];
+
+                for (let i = 0; i < this.maxStepsNumber; i++) {
+                    steps.push({
+                        stepnum: i + 1,
+                    });
+                }
+
+                return steps;
+            }
+        }", None),
+        ("
+        var foo = {
+            get bar() {
+                for (let i = 0; i<10; i++) {
+                    if (i === 5) {
+                        return i;
+                    }
+                }
+                return 0;
+            }
+        }", None),
+        ("
+        var foo = {
+            get bar() {
+                let i = 0;
+                while (i < 10) {
+                    if (i === 5) {
+                        return i;
+                    }
+                    i++;
+                }
+                return 0;
+            }
+        }", None),
     ];
 
     let fail = vec![
@@ -426,6 +466,29 @@ fn test() {
         ),
         ("var foo = { get bar() { try { return a(); } catch {} } };", None),
         ("var foo = { get bar() { try { return a(); } catch {  } finally {  } } };", None),
+        (
+            "
+        var foo = {
+            get bar() {
+                for (let i = 0; i<10; i++) {
+                    return i;
+                }
+            }
+        }",
+            None,
+        ),
+        (
+            "
+        var foo = {
+            get bar() {
+                let i = 0;
+                while (i < 10) {
+                    return i;
+                }
+            }
+        }",
+            None,
+        ),
     ];
 
     Tester::new(GetterReturn::NAME, pass, fail)

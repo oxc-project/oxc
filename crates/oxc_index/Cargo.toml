@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_index"
-version                = "0.25.0"
+version                = "0.27.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -21,6 +21,8 @@ doctest = false
 
 [dependencies]
 serde = { workspace = true, optional = true }
+rayon = { workspace = true, optional = true }
 
 [features]
 serialize = ["dep:serde"]
+rayon     = ["dep:rayon"]

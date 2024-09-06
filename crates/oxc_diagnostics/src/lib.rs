@@ -9,7 +9,7 @@ mod service;
 use std::{
     borrow::Cow,
     fmt::{self, Display},
-    ops::Deref,
+    ops::{Deref, DerefMut},
 };
 
 pub use crate::{
@@ -39,6 +39,12 @@ impl Deref for OxcDiagnostic {
 
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+
+impl DerefMut for OxcDiagnostic {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
     }
 }
 
@@ -102,6 +108,7 @@ impl Diagnostic for OxcDiagnostic {
     fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
     }
+
     fn url<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.url.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
     }

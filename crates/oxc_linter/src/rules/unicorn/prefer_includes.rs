@@ -25,19 +25,21 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Prefer `includes()` over `indexOf()` when checking for existence or non-existence.
-    ///
     /// All built-ins have `.includes()` in addition to `.indexOf()`.
     ///
     /// ### Why is this bad?
     ///
     /// The `.includes()` method is more readable and less error-prone than `.indexOf()`.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// if (str.indexOf('foo') !== -1) { }
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// if (str.indexOf('foo') !== -1) { }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// if (str.includes('foo')) { }
     /// ```
     PreferIncludes,
@@ -50,7 +52,7 @@ impl Rule for PreferIncludes {
             return;
         };
 
-        let Expression::CallExpression(left_call_expr) = &bin_expr.left.without_parenthesized()
+        let Expression::CallExpression(left_call_expr) = &bin_expr.left.without_parentheses()
         else {
             return;
         };
@@ -67,7 +69,7 @@ impl Rule for PreferIncludes {
                 | BinaryOperator::StrictEquality
                 | BinaryOperator::Equality
         ) {
-            if !is_negative_one(bin_expr.right.without_parenthesized()) {
+            if !is_negative_one(bin_expr.right.without_parentheses()) {
                 return;
             }
 
@@ -78,7 +80,7 @@ impl Rule for PreferIncludes {
 
         if matches!(bin_expr.operator, BinaryOperator::GreaterEqualThan | BinaryOperator::LessThan)
         {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parenthesized() else {
+            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
                 return;
             };
 
@@ -101,7 +103,7 @@ fn is_negative_one(expr: &Expression) -> bool {
         return false;
     }
 
-    let Expression::NumericLiteral(num_lit) = unary_expr.argument.without_parenthesized() else {
+    let Expression::NumericLiteral(num_lit) = unary_expr.argument.without_parentheses() else {
         return false;
     };
 

@@ -26,14 +26,13 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
-use crate::context::Ctx;
-
 use oxc_ast::ast::*;
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use super::ObjectRestSpreadOptions;
+use crate::context::Ctx;
 
 pub struct ObjectSpread<'a> {
     _ctx: Ctx<'a>,

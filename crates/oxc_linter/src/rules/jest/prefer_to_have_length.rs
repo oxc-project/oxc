@@ -216,13 +216,15 @@ fn tests() {
         ("expect(files.length).toStrictEqual(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", None),
         (
-            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);", 
-            None
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);",
+            None,
         ),
         (
             "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
           0,
-        );", None)
+        );",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -249,19 +251,19 @@ fn tests() {
         ("expect(files.length).toStrictEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", "expect(files).not.toHaveLength(1);", None),
         (
-            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);", 
-            "expect((meta.get('pages') as YArray<unknown>)).toHaveLength((originalMeta.get('pages') as YArray<unknown>).length);", 
-            None
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);",
+            "expect((meta.get('pages') as YArray<unknown>)).toHaveLength((originalMeta.get('pages') as YArray<unknown>).length);",
+            None,
         ),
         (
             "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
           0,
-        );", 
+        );",
             "expect(assetTypeContainer.getElementsByTagName('time')).toHaveLength(
           0,
-        );", 
-            None
-        )
+        );",
+            None,
+        ),
     ];
 
     Tester::new(PreferToHaveLength::NAME, pass, fail)
