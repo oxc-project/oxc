@@ -225,39 +225,30 @@ struct InternConfig<'a> {
 }
 
 impl InternConfig<'_> {
-    fn try_node<'a>(
-        node: &'a AstNode<'a>,
-        parent_node: &'a AstNode<'a>,
-    ) -> Result<InternConfig<'a>, OxcDiagnostic> {
+    pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
+        let AstKind::NumericLiteral(numeric) = node.kind() else {
+            unreachable!("expected AstKind BingIntLiteral or NumericLiteral, got {:?}", node.kind().debug_name());
+        };
+
         let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
         let is_negative = matches!(parent_node.kind(), AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation);
 
-        let AstKind::NumericLiteral(numeric) = node.kind() else {
-            return Err(OxcDiagnostic::warn(format!(
-                "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
-                node.kind().debug_name()
-            )));
-        };
-
         if is_negative {
-            Ok(InternConfig {
+            InternConfig {
                 node: parent_node,
                 value: 0.0 - numeric.value,
                 raw: format!("-{}", numeric.raw),
-            })
+            }
         } else {
-            Ok(InternConfig {
+            InternConfig {
                 node: if is_unary { parent_node } else { node },
                 value: numeric.value,
                 raw: numeric.raw.into(),
-            })
+            }
         }
     }
-
-    pub fn from<'a>(node: &'a AstNode<'a>, parent: &'a AstNode<'a>) -> InternConfig<'a> {
-        return InternConfig::try_node(node, parent).unwrap();
-    }
 }
+
 impl Rule for NoMagicNumbers {
     fn from_configuration(value: serde_json::Value) -> Self {
         Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
@@ -307,7 +298,7 @@ fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
         return false;
     };
 
-    let callee = expression.callee.without_parenthesized();
+    let callee = expression.callee.without_parentheses();
 
     callee.is_specific_id("parseInt") || callee.is_specific_member_access("Number", "parseInt")
 }
