@@ -6,16 +6,16 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unnecessary_type_constraint_diagnostic(
-    x0: &str,
-    x1: &str,
-    span2: Span,
-    span3: Span,
+    generic_type: &str,
+    constraint: &str,
+    span: Span,
+    constraint_span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "constraining the generic type {x0:?} to {x1:?} does nothing and is unnecessary"
+        "constraining the generic type {generic_type:?} to {constraint:?} does nothing and is unnecessary"
     ))
-    .with_help(format!("Remove the unnecessary {x1:?} constraint"))
-    .with_labels([span2, span3])
+    .with_help(format!("Remove the unnecessary {constraint:?} constraint"))
+    .with_labels([span, constraint_span])
 }
 
 #[derive(Debug, Default, Clone)]

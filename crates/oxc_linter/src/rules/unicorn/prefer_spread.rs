@@ -9,8 +9,8 @@ use phf::phf_set;
 
 use crate::{ast_util, context::LintContext, rule::Rule, AstNode};
 
-fn prefer_spread_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {x1}"))
+fn prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {bad_method}"))
         .with_help("The spread operator (`...`) is more concise and readable.")
         .with_label(span)
 }

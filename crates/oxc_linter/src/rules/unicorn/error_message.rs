@@ -8,8 +8,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn missing_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Pass a message to the {x0:1} constructor.")).with_label(span1)
+fn missing_message(ctor_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Pass a message to the {ctor_name:1} constructor."))
+        .with_label(span)
 }
 
 fn empty_message(span: Span) -> OxcDiagnostic {

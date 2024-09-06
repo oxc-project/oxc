@@ -8,10 +8,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_non_null_asserted_optional_chain_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+fn no_non_null_asserted_optional_chain_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("non-null assertions after an optional chain expression")
         .with_help("Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.")
-        .with_labels([span0, span1])
+        .with_labels([span, span1])
 }
 
 #[derive(Debug, Default, Clone)]

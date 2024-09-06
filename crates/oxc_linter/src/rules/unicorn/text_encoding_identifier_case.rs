@@ -9,8 +9,12 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn text_encoding_identifier_case_diagnostic(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`.")).with_label(span)
+fn text_encoding_identifier_case_diagnostic(
+    span: Span,
+    good_encoding: &str,
+    bad_encoding: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{good_encoding}` over `{bad_encoding}`.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

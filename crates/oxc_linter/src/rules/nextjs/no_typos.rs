@@ -9,10 +9,10 @@ use phf::phf_set;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_typos_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0} may be a typo. Did you mean {x1}?"))
+fn no_typos_diagnostic(typo: &str, suggestion: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{typo} may be a typo. Did you mean {suggestion}?"))
         .with_help("Prevent common typos in Next.js's data fetching functions")
-        .with_label(span2)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,7 +33,8 @@ declare_oxc_lint!(
     /// export async function getServurSideProps(){};
     /// ```
     NoTypos,
-    correctness
+    correctness,
+    pending
 );
 
 const NEXTJS_DATA_FETCHING_FUNCTIONS: phf::Set<&'static str> = phf_set! {

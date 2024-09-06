@@ -8,10 +8,11 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-fn prefer_function_type_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnostic {
+    // FIXME: use imperative message phrasing
     OxcDiagnostic::warn("Enforce using function types instead of interfaces with call signatures.")
-        .with_help(format!("The function type form `{x0}` is generally preferred when possible for being more succinct."))
-        .with_label(span1)
+        .with_help(format!("The function type form `{suggestion}` is generally preferred when possible for being more succinct."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

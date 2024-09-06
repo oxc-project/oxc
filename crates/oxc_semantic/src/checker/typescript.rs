@@ -13,8 +13,8 @@ fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDi
     OxcDiagnostic::error(message).with_error_code("TS", code)
 }
 
-fn empty_type_parameter_list(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span0)
+fn empty_type_parameter_list(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span)
 }
 
 pub fn check_ts_type_parameter_declaration(
@@ -41,8 +41,8 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     }
 }
 
-fn unexpected_optional(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected `?` operator").with_label(span0)
+fn unexpected_optional(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected `?` operator").with_label(span)
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -55,14 +55,14 @@ pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilde
     }
 }
 
-fn required_parameter_after_optional_parameter(span0: Span) -> OxcDiagnostic {
+fn required_parameter_after_optional_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A required parameter cannot follow an optional parameter.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn parameter_property_outside_constructor(span0: Span) -> OxcDiagnostic {
+fn parameter_property_outside_constructor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A parameter property is only allowed in a constructor implementation.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
@@ -99,11 +99,11 @@ fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &Sem
     });
 }
 
-fn unexpected_assignment(span0: Span) -> OxcDiagnostic {
+fn unexpected_assignment(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "The left-hand side of an assignment expression must be a variable or a property access.",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 pub fn check_simple_assignment_target<'a>(
@@ -122,8 +122,8 @@ pub fn check_simple_assignment_target<'a>(
     }
 }
 
-fn unexpected_type_annotation(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Unexpected type annotation").with_label(span0)
+fn unexpected_type_annotation(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected type annotation").with_label(span)
 }
 
 pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
@@ -137,12 +137,12 @@ pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder
 }
 
 /// An interface can only extend an identifier/qualified-name with optional type arguments.(2499)
-fn invalid_interface_extend(span0: Span) -> OxcDiagnostic {
+fn invalid_interface_extend(span: Span) -> OxcDiagnostic {
     ts_error(
         "2499",
         "An interface can only extend an identifier/qualified-name with optional type arguments.",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 pub fn check_ts_interface_declaration<'a>(
@@ -161,11 +161,11 @@ pub fn check_ts_interface_declaration<'a>(
     }
 }
 
-fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {
+fn not_allowed_namespace_declaration(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "A namespace declaration is only allowed at the top level of a namespace or module.",
     )
-    .with_label(span0)
+    .with_label(span)
 }
 
 pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
@@ -187,8 +187,8 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
     }
 }
 
-fn enum_member_must_have_initializer(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Enum member must have initializer.").with_label(span0)
+fn enum_member_must_have_initializer(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Enum member must have initializer.").with_label(span)
 }
 
 pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {

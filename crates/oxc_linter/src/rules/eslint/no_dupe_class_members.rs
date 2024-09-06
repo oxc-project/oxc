@@ -6,15 +6,15 @@ use rustc_hash::FxHashMap;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_dupe_class_members_diagnostic(
-    x0: &str, /*Class member name */
-    span1: Span,
-    span2: Span,
+    member_name: &str, /*Class member name */
+    decl_span: Span,
+    re_decl_span: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Duplicate class member: {x0:?}"))
+    OxcDiagnostic::warn(format!("Duplicate class member: {member_name:?}"))
         .with_help("The last declaration overwrites previous ones, remove one of them or rename if both should be retained")
         .with_labels([
-            span1.label(format!("{x0:?} is previously declared here")),
-            span2.label(format!("{x0:?} is re-declared here")),
+            decl_span.label(format!("{member_name:?} is previously declared here")),
+            re_decl_span.label(format!("{member_name:?} is re-declared here")),
         ])
 }
 

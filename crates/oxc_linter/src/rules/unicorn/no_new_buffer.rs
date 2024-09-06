@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// const buffer = Buffer.alloc(10);
     /// ```
     NoNewBuffer,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoNewBuffer {

@@ -9,9 +9,11 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_first_parameter_name, AstNode};
 
-fn function(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The function is equivalent to `{x1}`. Call `{x1}` directly."))
-        .with_label(span)
+fn function(span: Span, called_fn: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The function is equivalent to `{called_fn}`. Call `{called_fn}` directly."
+    ))
+    .with_label(span)
 }
 
 fn array_callback(span: Span) -> OxcDiagnostic {

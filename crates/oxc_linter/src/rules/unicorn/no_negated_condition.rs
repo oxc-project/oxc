@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// a ? doSomethingB() : doSomethingC()
     /// ```
     NoNegatedCondition,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoNegatedCondition {

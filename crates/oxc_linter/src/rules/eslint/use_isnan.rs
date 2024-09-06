@@ -29,10 +29,10 @@ fn case_na_n(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn index_of_na_n(x0: &str, span1: Span) -> OxcDiagnostic {
+fn index_of_na_n(method_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
-        .with_help(format!("Array prototype method '{x0}' cannot find NaN."))
-        .with_label(span1)
+        .with_help(format!("Array prototype method '{method_name}' cannot find NaN."))
+        .with_label(span)
 }
 
 #[derive(Debug, Clone)]

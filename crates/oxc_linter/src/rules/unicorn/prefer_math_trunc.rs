@@ -6,8 +6,9 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_math_trunc_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{x1} 0`.")).with_label(span)
+fn prefer_math_trunc_diagnostic(span: Span, bad_op: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Math.trunc()` over instead of `{bad_op} 0`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,7 +42,8 @@ declare_oxc_lint!(
     /// const foo = Math.trunc(1.1);
     /// ```
     PreferMathTrunc,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferMathTrunc {

@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// ```
     NoConfusingNonNullAssertion,
     suspicious,
-    // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    pending
 );
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {

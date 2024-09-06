@@ -5,10 +5,16 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_enum_initializers_diagnostic(x0: &str, x1: usize, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The value of the member {x0:?} should be explicitly defined."))
-        .with_help(format!("Can be fixed to {x0:?} = {x1:?}."))
-        .with_label(span2)
+fn prefer_enum_initializers_diagnostic(
+    member_name: &str,
+    init: usize,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The value of the member {member_name:?} should be explicitly defined."
+    ))
+    .with_help(format!("Can be fixed to {member_name:?} = {init:?}."))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,7 +36,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferEnumInitializers,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferEnumInitializers {

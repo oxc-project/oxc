@@ -48,6 +48,7 @@ declare_oxc_lint!(
     /// ```
     NoArrayForEach,
     restriction,
+    pending
 );
 
 impl Rule for NoArrayForEach {

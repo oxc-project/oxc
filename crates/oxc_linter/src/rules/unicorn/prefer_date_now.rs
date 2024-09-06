@@ -15,8 +15,8 @@ fn prefer_date_now(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn prefer_date_now_over_methods(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Date.now()` over `new Date().{x1}()`"))
+fn prefer_date_now_over_methods(span: Span, bad_method: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Date.now()` over `new Date().{bad_method}()`"))
         .with_help("Change to `Date.now()`.")
         .with_label(span)
 }
