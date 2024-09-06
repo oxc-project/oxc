@@ -39,6 +39,7 @@ mod eslint {
     pub mod max_classes_per_file;
     pub mod max_lines;
     pub mod max_params;
+    pub mod no_alert;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
     pub mod no_await_in_loop;
@@ -493,6 +494,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_ternary,
     eslint::no_this_before_super,
     eslint::no_template_curly_in_string,
+    eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
     eslint::no_bitwise,
