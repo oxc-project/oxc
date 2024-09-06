@@ -29,7 +29,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                 let ParserReturn { trivias, program, .. } =
                     Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(program);
-                let (symbols, scopes) = SemanticBuilder::new(source_text, source_type)
+                let (symbols, scopes) = SemanticBuilder::new(source_text)
                     .build(program)
                     .semantic
                     .into_symbol_table_and_scope_tree();

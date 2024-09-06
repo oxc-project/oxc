@@ -99,7 +99,7 @@ pub fn transform(
 }
 
 fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
-    let (symbols, scopes) = SemanticBuilder::new(ctx.source_text(), ctx.source_type())
+    let (symbols, scopes) = SemanticBuilder::new(ctx.source_text())
         .build(&ctx.program())
         .semantic
         .into_symbol_table_and_scope_tree();

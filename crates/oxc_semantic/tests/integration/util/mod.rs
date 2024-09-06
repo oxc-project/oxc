@@ -167,7 +167,7 @@ impl<'a> SemanticTester<'a> {
         );
 
         let program = self.allocator.alloc(parse.program);
-        SemanticBuilder::new(self.source_text, self.source_type)
+        SemanticBuilder::new(self.source_text)
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
             .with_cfg(self.cfg)
