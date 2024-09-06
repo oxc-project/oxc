@@ -88,7 +88,7 @@ declare_oxc_lint!(
 impl Rule for SortKeys {
     fn from_configuration(value: serde_json::Value) -> Self {
         let Some(config_array) = value.as_array() else {
-            return Self(Box::default());
+            return Self::default();
         };
 
         let sort_order = if config_array.is_empty() {
@@ -212,28 +212,26 @@ fn alphanumeric_cmp(a: &str, b: &str) -> Ordering {
     }
 
     let len = a.len().min(b.len());
-    let a_chars: Vec<char> = a.chars().take(len).collect();
-    let b_chars: Vec<char> = b.chars().take(len).collect();
 
-    for (a_char, b_char) in a_chars.iter().zip(b_chars.iter()) {
+    for (a_char, b_char) in a.chars().take(len).zip(b.chars().take(len)) {
         if a_char == b_char {
             continue;
         }
         /* JS sorting apparently places _ after uppercase alphanumerics and before lowercase ones */
-        if a_char.is_uppercase() && *b_char == '_' {
+        if a_char.is_uppercase() && b_char == '_' {
             return Ordering::Less;
         }
 
-        if *a_char == '_' && b_char.is_uppercase() {
+        if a_char == '_' && b_char.is_uppercase() {
             return Ordering::Greater;
         }
 
         /* computed properties should come before alpha numeric chars */
-        if *a_char == '[' && b_char.is_alphanumeric() {
+        if a_char == '[' && b_char.is_alphanumeric() {
             return Ordering::Less;
         }
 
-        if a_char.is_alphanumeric() && *b_char == '[' {
+        if a_char.is_alphanumeric() && b_char == '[' {
             return Ordering::Greater;
         }
 
@@ -245,7 +243,7 @@ fn alphanumeric_cmp(a: &str, b: &str) -> Ordering {
             return Ordering::Less;
         }
 
-        return a_char.cmp(b_char);
+        return a_char.cmp(&b_char);
     }
 
     a.cmp(b)
