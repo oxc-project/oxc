@@ -227,7 +227,10 @@ struct InternConfig<'a> {
 impl InternConfig<'_> {
     pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
         let AstKind::NumericLiteral(numeric) = node.kind() else {
-            unreachable!("expected AstKind BingIntLiteral or NumericLiteral, got {:?}", node.kind().debug_name());
+            unreachable!(
+                "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
+                node.kind().debug_name()
+            );
         };
 
         let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
