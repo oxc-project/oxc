@@ -59,7 +59,6 @@ pub(crate) const PLUGINS: &[&str] = &[
 
     // RegExp tests ported from esbuild + a few additions
     "regexp",
-    
     // CommonJS formats should be supported, but needs manually opening the option
     "transform-modules-commonjs",
 ];

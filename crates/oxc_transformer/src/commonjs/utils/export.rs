@@ -113,7 +113,7 @@ pub fn create_declared_named_exports<'a>(
     match declaration {
         Declaration::VariableDeclaration(decls) => {
             let mut result = builder.vec();
-            for decl in decls.declarations.iter() {
+            for decl in &decls.declarations {
                 match &decl.id.kind {
                     BindingPatternKind::BindingIdentifier(id) => {
                         result.push(builder.statement_expression(
@@ -134,10 +134,8 @@ pub fn create_declared_named_exports<'a>(
                                 SPAN,
                                 assignment.clone_in(builder.allocator),
                             ));
-                            result.extend(create_object_pattern_recursive_exports(
-                                pattern.clone_in(builder.allocator),
-                                builder,
-                            ));
+                            result
+                                .extend(create_object_pattern_recursive_exports(pattern, builder));
                         }
                     }
                     BindingPatternKind::ArrayPattern(pattern) => {
@@ -146,13 +144,11 @@ pub fn create_declared_named_exports<'a>(
                                 SPAN,
                                 assignment.clone_in(builder.allocator),
                             ));
-                            result.extend(create_array_pattern_recursive_exports(
-                                pattern.clone_in(builder.allocator),
-                                builder,
-                            ));
+                            result.extend(create_array_pattern_recursive_exports(pattern, builder));
                         }
                     }
-                    _ => unimplemented!(),
+                    // TODO
+                    BindingPatternKind::AssignmentPattern(_) => unreachable!(),
                 }
             }
             result
@@ -206,11 +202,11 @@ pub fn create_declared_named_exports<'a>(
 }
 
 fn create_object_pattern_recursive_exports<'a>(
-    pattern: Box<ObjectPattern<'a>>,
+    pattern: &Box<ObjectPattern<'a>>,
     builder: &'a AstBuilder,
 ) -> Vec<'a, Statement<'a>> {
     let mut result = builder.vec();
-    for prop in pattern.properties.iter() {
+    for prop in &pattern.properties {
         match &prop.value.kind {
             BindingPatternKind::BindingIdentifier(id) => {
                 result.push(builder.statement_expression(
@@ -223,55 +219,42 @@ fn create_object_pattern_recursive_exports<'a>(
                 ));
             }
             BindingPatternKind::ObjectPattern(pattern) => {
-                result.extend(create_object_pattern_recursive_exports(
-                    pattern.clone_in(builder.allocator),
-                    builder,
-                ));
+                result.extend(create_object_pattern_recursive_exports(pattern, builder));
             }
             BindingPatternKind::ArrayPattern(pattern) => {
-                result.extend(create_array_pattern_recursive_exports(
-                    pattern.clone_in(builder.allocator),
-                    builder,
-                ));
+                result.extend(create_array_pattern_recursive_exports(pattern, builder));
             }
-            _ => unimplemented!(),
+            BindingPatternKind::AssignmentPattern(_) => unreachable!(),
         }
     }
     result
 }
 
 fn create_array_pattern_recursive_exports<'a>(
-    pattern: Box<ArrayPattern<'a>>,
+    pattern: &Box<ArrayPattern<'a>>,
     builder: &'a AstBuilder,
 ) -> Vec<'a, Statement<'a>> {
     let mut result = builder.vec();
-    for pattern in pattern.elements.iter() {
-        if let Some(element) = pattern {
-            match &element.kind {
-                BindingPatternKind::BindingIdentifier(id) => {
-                    result.push(builder.statement_expression(
-                        SPAN,
-                        create_exports(
-                            builder.module_export_name_identifier_name(SPAN, id.name.as_str()),
-                            builder.expression_identifier_reference(SPAN, id.name.as_str()),
-                            builder,
-                        ),
-                    ));
-                }
-                BindingPatternKind::ObjectPattern(pattern) => {
-                    result.extend(create_object_pattern_recursive_exports(
-                        pattern.clone_in(builder.allocator),
+    for element in pattern.elements.iter().flatten() {
+        match &element.kind {
+            BindingPatternKind::BindingIdentifier(id) => {
+                result.push(builder.statement_expression(
+                    SPAN,
+                    create_exports(
+                        builder.module_export_name_identifier_name(SPAN, id.name.as_str()),
+                        builder.expression_identifier_reference(SPAN, id.name.as_str()),
                         builder,
-                    ));
-                }
-                BindingPatternKind::ArrayPattern(pattern) => {
-                    result.extend(create_array_pattern_recursive_exports(
-                        pattern.clone_in(builder.allocator),
-                        builder,
-                    ));
-                }
-                _ => unimplemented!(),
+                    ),
+                ));
             }
+            BindingPatternKind::ObjectPattern(pattern) => {
+                result.extend(create_object_pattern_recursive_exports(pattern, builder));
+            }
+            BindingPatternKind::ArrayPattern(pattern) => {
+                result.extend(create_array_pattern_recursive_exports(pattern, builder));
+            }
+            // TODO: handle AssignmentPattern
+            BindingPatternKind::AssignmentPattern(_) => unreachable!(),
         }
     }
     result
