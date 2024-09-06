@@ -10,12 +10,12 @@ use phf::{phf_set, Set};
 
 use crate::{context::LintContext, rule::Rule, utils::get_next_script_import_local_name};
 
-fn no_unwanted_polyfillio_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn no_unwanted_polyfillio_diagnostic(polyfill_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "No duplicate polyfills from Polyfill.io are allowed. {x0} already shipped with Next.js."
+        "No duplicate polyfills from Polyfill.io are allowed. {polyfill_name} already shipped with Next.js."
     ))
     .with_help("See https://nextjs.org/docs/messages/no-unwanted-polyfillio")
-    .with_label(span1)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -5,9 +5,13 @@ use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_as_default_diagnostic(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Module {x2:?} has named export {x1:?}"))
-        .with_help(format!("Using default import as {x1:?} can be confusing. Use another name for default import to avoid confusion."))
+fn no_named_as_default_diagnostic(
+    span: Span,
+    module_name: &str,
+    export_name: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Module {export_name:?} has named export {module_name:?}"))
+        .with_help(format!("Using default import as {module_name:?} can be confusing. Use another name for default import to avoid confusion."))
         .with_label(span)
 }
 

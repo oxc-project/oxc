@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -5,8 +7,11 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn max_dependencies_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0:?}"))
+fn max_dependencies_diagnostic<S: Into<Cow<'static, str>>>(
+    message: S,
+    span1: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(message)
         .with_help("Reduce the number of dependencies in this file")
         .with_label(span1)
 }
@@ -106,7 +111,7 @@ impl Rule for MaxDependencies {
             "File has too many dependencies ({}). Maximum allowed is {}.",
             module_count, self.max,
         );
-        ctx.diagnostic(max_dependencies_diagnostic(&error, entry.module_request.span()));
+        ctx.diagnostic(max_dependencies_diagnostic(error, entry.module_request.span()));
     }
 }
 

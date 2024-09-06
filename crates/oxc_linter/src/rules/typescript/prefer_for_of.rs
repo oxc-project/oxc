@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferForOf,
-    style
+    style,
+    pending
 );
 
 trait SpanExt {

@@ -5,8 +5,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
 
-fn static_promise_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Disallow calling `new` on a `Promise.{x0}`")).with_label(span)
+fn static_promise_diagnostic(static_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Disallow calling `new` on a `Promise.{static_name}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

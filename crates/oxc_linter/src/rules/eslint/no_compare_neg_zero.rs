@@ -6,10 +6,10 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_compare_neg_zero_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not use the {x0} operator to compare against -0."))
+fn no_compare_neg_zero_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use the {operator} operator to compare against -0."))
         .with_help("Use Object.is(x, -0) to test equality with -0 and use 0 for other cases")
-        .with_label(span1)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

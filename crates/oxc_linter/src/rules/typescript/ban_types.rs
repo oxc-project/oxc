@@ -5,9 +5,11 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn type_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not use {x0:?} as a type. Use \"{x1}\" instead"))
-        .with_label(span2)
+fn type_diagnostic(banned_type: &str, suggested_type: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Do not use {banned_type:?} as a type. Use \"{suggested_type}\" instead"
+    ))
+    .with_label(span2)
 }
 
 fn type_literal(span: Span) -> OxcDiagnostic {
@@ -46,7 +48,8 @@ declare_oxc_lint!(
     /// let bar: Boolean = true;
     /// ```
     BanTypes,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for BanTypes {

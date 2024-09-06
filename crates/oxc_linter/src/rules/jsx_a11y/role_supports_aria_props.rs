@@ -50,15 +50,15 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone)]
 pub struct RoleSupportsAriaProps;
 
-fn default(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}."))
-        .with_help(format!("Try to remove invalid attribute {x1}."))
+fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}."))
+        .with_help(format!("Try to remove invalid attribute {attr_name}."))
         .with_label(span)
 }
 
-fn is_implicit_diagnostic(span: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}. This role is implicit on the element {x3}."))
-        .with_help(format!("Try to remove invalid attribute {x1}."))
+fn is_implicit_diagnostic(span: Span, attr_name: &str, role: &str, el_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}. This role is implicit on the element {el_name}."))
+        .with_help(format!("Try to remove invalid attribute {attr_name}."))
         .with_label(span)
 }
 

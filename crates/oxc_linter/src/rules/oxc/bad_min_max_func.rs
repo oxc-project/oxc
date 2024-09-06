@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn bad_min_max_func_diagnostic(x0: f64, span1: Span) -> OxcDiagnostic {
+fn bad_min_max_func_diagnostic(constant_result: f64, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Math.min and Math.max combination leads to constant result")
         .with_help(format!(
-            "This evaluates to {x0:?} because of the incorrect `Math.min`/`Math.max` combination"
+            "This evaluates to {constant_result:?} because of the incorrect `Math.min`/`Math.max` combination"
         ))
         .with_label(span1)
 }

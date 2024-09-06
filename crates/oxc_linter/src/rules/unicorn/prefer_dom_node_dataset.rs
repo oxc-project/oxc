@@ -5,29 +5,35 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn set(span: Span, x1: &str) -> OxcDiagnostic {
+fn set(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `setAttribute`.")
-        .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1} = ...;`"))
-        .with_label(span)
-}
-
-fn get(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer using `dataset` over `getAttribute`.")
-        .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1}`"))
-        .with_label(span)
-}
-
-fn has(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer using `dataset` over `hasAttribute`.")
         .with_help(format!(
-            "Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{x1}')"
+            "Access the `.dataset` object directly: `element.dataset.{method_name} = ...;`"
         ))
         .with_label(span)
 }
 
-fn remove(span: Span, x1: &str) -> OxcDiagnostic {
+fn get(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer using `dataset` over `getAttribute`.")
+        .with_help(format!(
+            "Access the `.dataset` object directly: `element.dataset.{method_name}`"
+        ))
+        .with_label(span)
+}
+
+fn has(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer using `dataset` over `hasAttribute`.")
+        .with_help(format!(
+            "Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{method_name}')"
+        ))
+        .with_label(span)
+}
+
+fn remove(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `removeAttribute`.")
-        .with_help(format!("Access the `.dataset` object directly: `delete element.dataset.{x1};"))
+        .with_help(format!(
+            "Access the `.dataset` object directly: `delete element.dataset.{method_name};"
+        ))
         .with_label(span)
 }
 
@@ -55,7 +61,8 @@ declare_oxc_lint!(
     /// element.dataset.unicorn = '🦄';
     /// ```
     PreferDomNodeDataset,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferDomNodeDataset {

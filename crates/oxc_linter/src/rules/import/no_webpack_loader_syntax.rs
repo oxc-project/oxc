@@ -9,8 +9,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_as_default_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected `!` in `{x0}`."))
+fn no_named_as_default_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected `!` in `{name}`."))
         .with_help("Do not use import syntax to configure webpack loaders")
         .with_label(span)
 }

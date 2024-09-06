@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// if (str.includes('foo')) { }
     /// ```
     PreferIncludes,
-    style
+    style,
+    pending
 );
 
 impl Rule for PreferIncludes {

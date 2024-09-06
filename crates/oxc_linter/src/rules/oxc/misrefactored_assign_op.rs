@@ -15,11 +15,11 @@ use crate::{
     AstNode,
 };
 
-fn misrefactored_assign_op_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn misrefactored_assign_op_diagnostic(span: Span, suggestion: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Misrefactored assign op. Variable appears on both sides of an assignment operation",
     )
-    .with_help(format!("Did you mean `{x1}`?"))
+    .with_help(format!("Did you mean `{suggestion}`?"))
     .with_label(span)
 }
 
@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// ```
     MisrefactoredAssignOp,
     suspicious,
+    pending
 );
 
 impl Rule for MisrefactoredAssignOp {

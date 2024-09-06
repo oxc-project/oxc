@@ -6,8 +6,8 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn filename_case_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Filename should not be in {x1} case")).with_label(span)
+fn filename_case_diagnostic(span: Span, case_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Filename should not be in {case_name} case")).with_label(span)
 }
 
 #[derive(Debug, Clone)]

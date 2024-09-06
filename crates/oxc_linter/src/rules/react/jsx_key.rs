@@ -12,12 +12,12 @@ fn missing_key_prop_for_element_in_array(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span)
 }
 
-fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiagnostic {
+fn missing_key_prop_for_element_in_iterator(iter_span: Span, el_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"Missing "key" prop for element in iterator."#)
         .with_help(r#"Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."#)
         .with_labels([
-            span0.label("Iterator starts here."),
-            span1.label("Element generated here."),
+            iter_span.label("Iterator starts here."),
+            el_span.label("Element generated here."),
         ])
 }
 

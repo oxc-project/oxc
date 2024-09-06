@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// ```
     NoNegationInEqualityCheck,
     pedantic,
+    pending
 );
 
 impl Rule for NoNegationInEqualityCheck {

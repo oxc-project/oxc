@@ -5,9 +5,15 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_blob_reading_methods_diagnostic(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Blob#{x1}()` over `FileReader#{x2}(blob)`."))
-        .with_label(span)
+fn prefer_blob_reading_methods_diagnostic(
+    span: Span,
+    good_method: &str,
+    bad_method: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Prefer `Blob#{good_method}()` over `FileReader#{bad_method}(blob)`."
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -42,7 +48,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     PreferBlobReadingMethods,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferBlobReadingMethods {

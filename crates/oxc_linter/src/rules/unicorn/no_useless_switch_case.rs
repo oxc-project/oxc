@@ -45,7 +45,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUselessSwitchCase,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoUselessSwitchCase {

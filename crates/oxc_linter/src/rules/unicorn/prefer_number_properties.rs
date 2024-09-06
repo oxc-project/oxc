@@ -8,9 +8,9 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
 
-fn prefer_number_properties_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use `Number.{x1}` instead of the global `{x1}`"))
-        .with_help(format!("Replace it with `Number.{x1}`"))
+fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use `Number.{method_name}` instead of the global `{method_name}`"))
+        .with_help(format!("Replace it with `Number.{method_name}`"))
         .with_label(span)
 }
 
@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// ```
     PreferNumberProperties,
     restriction,
+    pending
 );
 
 impl Rule for PreferNumberProperties {

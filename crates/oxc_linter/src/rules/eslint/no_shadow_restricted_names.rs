@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
-fn no_shadow_restricted_names_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn no_shadow_restricted_names_diagnostic(shadowed_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Shadowing of global properties such as 'undefined' is not allowed.")
-        .with_help(format!("Shadowing of global properties '{x0}'."))
-        .with_label(span1)
+        .with_help(format!("Shadowing of global properties '{shadowed_name}'."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

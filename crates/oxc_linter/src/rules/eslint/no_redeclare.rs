@@ -9,18 +9,20 @@ use oxc_syntax::symbol::SymbolId;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_redeclare_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{x0}' is already defined.")).with_labels([
-        span1.label(format!("'{x0}' is already defined.")),
-        span2.label("It can not be redeclare here."),
+fn no_redeclare_diagnostic(id_name: &str, decl_span: Span, re_decl_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{id_name}' is already defined.")).with_labels([
+        decl_span.label(format!("'{id_name}' is already defined.")),
+        re_decl_span.label("It can not be redeclare here."),
     ])
 }
 
-fn no_redeclare_as_builti_in_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{x0}' is already defined as a built-in global variable."))
-        .with_label(
-            span1.label(format!("'{x0}' is already defined as a built-in global variable.")),
-        )
+fn no_redeclare_as_builtin_in_diagnostic(builtin_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "'{builtin_name}' is already defined as a built-in global variable."
+    ))
+    .with_label(
+        span.label(format!("'{builtin_name}' is already defined as a built-in global variable.")),
+    )
 }
 
 #[derive(Debug, Default, Clone)]
@@ -89,7 +91,7 @@ impl Rule for NoRedeclare {
 impl NoRedeclare {
     fn report_diagnostic(&self, ctx: &LintContext, span: Span, ident: &BindingIdentifier) {
         if self.built_in_globals && ctx.env_contains_var(&ident.name) {
-            ctx.diagnostic(no_redeclare_as_builti_in_diagnostic(ident.name.as_str(), ident.span));
+            ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(ident.name.as_str(), ident.span));
         } else {
             ctx.diagnostic(no_redeclare_diagnostic(ident.name.as_str(), ident.span, span));
         }

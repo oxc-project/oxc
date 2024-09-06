@@ -16,16 +16,16 @@ use crate::{
     AstNode,
 };
 
-fn label_has_associated_control_diagnostic(span0: Span) -> OxcDiagnostic {
+fn label_has_associated_control_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("A form label must be associated with a control.")
         .with_help("Either give the label a `htmlFor` attribute with the id of the associated control, or wrap the label around the control.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn label_has_associated_control_diagnostic_no_label(span0: Span) -> OxcDiagnostic {
+fn label_has_associated_control_diagnostic_no_label(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("A form label must have accessible text.")
         .with_help("Ensure the label either has text inside it or is accessibly labelled using an attribute such as `aria-label`, or `aria-labelledby`. You can mark more attributes as accessible labels by configuring the `labelAttributes` option.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

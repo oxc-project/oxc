@@ -16,17 +16,17 @@ use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
 
-fn invalid_prop_on_tag(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+fn invalid_prop_on_tag(span: Span, prop: &str, tag: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid property found")
-        .with_help(format!("Property '{x1}' is only allowed on: {x2}"))
+        .with_help(format!("Property '{prop}' is only allowed on: {tag}"))
         .with_label(span)
 }
 
-fn data_lowercase_required(span: Span, x1: &str) -> OxcDiagnostic {
+fn data_lowercase_required(span: Span, suggested_prop: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "React does not recognize data-* props with uppercase characters on a DOM element",
     )
-    .with_help(format!("Use '{x1}' instead"))
+    .with_help(format!("Use '{suggested_prop}' instead"))
     .with_label(span)
 }
 
@@ -71,7 +71,8 @@ declare_oxc_lint!(
     ///  const IconButton = <div aria-foo="bar" />;
     /// ```
     NoUnknownProperty,
-    restriction
+    restriction,
+    pending
 );
 
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
