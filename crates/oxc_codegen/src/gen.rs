@@ -1442,7 +1442,7 @@ impl<'a> Gen for ArrayExpressionElement<'a> {
                 self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
             }
             Self::SpreadElement(elem) => elem.gen(p, ctx),
-            Self::Elision(_span) => {}
+            Self::Elision(_span) => p.print_comma(),
         }
     }
 }
@@ -1459,9 +1459,14 @@ impl<'a> Gen for ArrayExpression<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'[');
-        p.print_list(&self.elements, ctx);
-        if self.trailing_comma.is_some() {
-            p.print_comma();
+        for (index, item) in self.elements.iter().enumerate() {
+            item.gen(p, ctx);
+            if index != self.elements.len() - 1 {
+                if !matches!(item, ArrayExpressionElement::Elision(_)) {
+                    p.print_comma();
+                }
+                p.print_soft_space();
+            }
         }
         p.print_char(b']');
         p.add_source_mapping(self.span.end);
