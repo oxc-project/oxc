@@ -11,7 +11,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use super::{diagnostics, utils::get_line_column};
+use super::diagnostics;
 pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
@@ -560,7 +560,7 @@ impl<'a> ReactJsx<'a> {
                 if let Some(span) = source_attr_span {
                     self.jsx_source.report_error(span);
                 } else {
-                    let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
+                    let (line, column) = self.jsx_source.get_line_column(e.span().start);
                     properties.push(
                         self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
                     );
@@ -614,7 +614,7 @@ impl<'a> ReactJsx<'a> {
                     if let Some(span) = source_attr_span {
                         self.jsx_source.report_error(span);
                     } else {
-                        let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
+                        let (line, column) = self.jsx_source.get_line_column(e.span().start);
                         let expr = self.jsx_source.get_source_object(line, column, ctx);
                         arguments.push(Argument::from(expr));
                     }
