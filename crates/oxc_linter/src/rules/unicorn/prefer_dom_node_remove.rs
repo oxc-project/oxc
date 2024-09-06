@@ -28,12 +28,15 @@ declare_oxc_lint!(
     ///
     /// The DOM function [`Node#remove()`](https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove) is preferred over the indirect removal of an object with [`Node#removeChild()`](https://developer.mozilla.org/en-US/docs/Web/API/Node/removeChild).
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// parentNode.removeChild(childNode);
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// parentNode.removeChild(childNode);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// childNode.remove();
     /// ```
     PreferDomNodeRemove,

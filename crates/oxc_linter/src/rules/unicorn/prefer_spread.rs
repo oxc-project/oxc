@@ -27,14 +27,18 @@ declare_oxc_lint!(
     ///
     /// Using the spread operator is more concise and readable.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// const foo = Array.from(set);
     /// const foo = Array.from(new Set([1, 2]));
+    /// ```
     ///
-    /// // good
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// [...set].map(() => {});
+    /// Array.from(...argumentsArray);
     /// ```
     PreferSpread,
     style,

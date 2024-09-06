@@ -25,6 +25,7 @@ pub struct CheckAccess;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Checks that `@access` tags use one of the following values:
     /// - "package", "private", "protected", "public"
     ///
@@ -33,19 +34,23 @@ declare_oxc_lint!(
     /// - Use of multiple instances of `@access` (or the `@public`, etc) on the same doc block.
     ///
     /// ### Why is this bad?
+    ///
     /// It is important to have a consistent way of specifying access levels.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
-    /// /** @access private */
-    ///
-    /// /** @private */
-    ///
-    /// // Failing
     /// /** @access private @public */
     ///
     /// /** @access invalidlevel */
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @access private */
+    ///
+    /// /** @private */
     /// ```
     CheckAccess,
     restriction

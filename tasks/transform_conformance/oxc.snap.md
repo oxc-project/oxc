@@ -6,7 +6,7 @@ Passed: 21/49
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-typescript
-* esbuild-tests
+* regexp
 
 
 # babel-plugin-transform-arrow-functions (1/2)

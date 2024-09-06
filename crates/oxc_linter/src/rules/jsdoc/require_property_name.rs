@@ -19,23 +19,28 @@ pub struct RequirePropertyName;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that all `@property` tags have names.
     ///
     /// ### Why is this bad?
+    ///
     /// The name of a property type should be documented.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /**
-    ///  * @typedef {SomeType} SomeTypedef
-    ///  * @property {number} foo
-    ///  */
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /**
     ///  * @typedef {SomeType} SomeTypedef
     ///  * @property {number}
+    ///  */
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /**
+    ///  * @typedef {SomeType} SomeTypedef
+    ///  * @property {number} foo
     ///  */
     /// ```
     RequirePropertyName,

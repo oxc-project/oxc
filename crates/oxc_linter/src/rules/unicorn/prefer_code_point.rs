@@ -26,13 +26,16 @@ declare_oxc_lint!(
     ///
     /// [Difference between `String.fromCodePoint()` and `String.fromCharCode()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCodePoint#compared_to_fromcharcode)
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// '🦄'.charCodeAt(0);
     /// String.fromCharCode(0x1f984);
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// '🦄'.codePointAt(0);
     /// String.fromCodePoint(0x1f984);
     /// ```

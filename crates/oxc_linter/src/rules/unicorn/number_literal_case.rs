@@ -38,14 +38,17 @@ pub struct NumberLiteralCase;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule enforces proper case for numeric literals.
     ///
     /// ### Why is this bad?
+    ///
     /// When both an identifier and a number literal are in lower case, it can be hard to differentiate between them.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Fail
     /// const foo = 0XFF;
     /// const foo = 0xff;
     /// const foo = 0Xff;
@@ -58,8 +61,10 @@ declare_oxc_lint!(
     /// const foo = 0O76n;
     ///
     /// const foo = 2E-5;
+    /// ```
     ///
-    /// // Pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = 0xFF;
     /// const foo = 0b10;
     /// const foo = 0o76;
