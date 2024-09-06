@@ -1,9 +1,8 @@
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
-
-use oxc_index::Idx;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ScopeId(NonMaxU32);

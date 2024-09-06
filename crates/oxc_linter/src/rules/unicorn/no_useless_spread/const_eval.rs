@@ -37,6 +37,7 @@ impl ValueHint {
 
 impl std::ops::BitAnd for ValueHint {
     type Output = Self;
+
     fn bitand(self, rhs: Self) -> Self::Output {
         // NOTE: what about (NewArray, NewIterable), e.g. in
         // `foo ? new Set() : []`

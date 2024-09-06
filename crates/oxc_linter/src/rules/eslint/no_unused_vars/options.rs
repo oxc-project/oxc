@@ -257,10 +257,12 @@ impl ArgsOption {
     pub const fn is_after_used(&self) -> bool {
         matches!(self, Self::AfterUsed)
     }
+
     #[inline]
     pub const fn is_all(&self) -> bool {
         matches!(self, Self::All)
     }
+
     #[inline]
     pub const fn is_none(&self) -> bool {
         matches!(self, Self::None)
@@ -281,6 +283,7 @@ impl CaughtErrors {
     pub const fn all() -> Self {
         Self(true)
     }
+
     pub const fn none() -> Self {
         Self(false)
     }
@@ -407,18 +410,14 @@ impl From<Value> for NoUnusedVarsOptions {
         let Some(config) = value.get(0) else { return Self::default() };
         match config {
             Value::String(vars) => {
-                let vars: VarsOption = vars
-                    .try_into()
-                    .unwrap();
+                let vars: VarsOption = vars.try_into().unwrap();
                 Self { vars, ..Default::default() }
             }
             Value::Object(config) => {
                 let vars = config
                     .get("vars")
                     .map(|vars| {
-                        let vars: VarsOption = vars
-                            .try_into()
-                            .unwrap();
+                        let vars: VarsOption = vars.try_into().unwrap();
                         vars
                     })
                     .unwrap_or_default();
@@ -432,9 +431,7 @@ impl From<Value> for NoUnusedVarsOptions {
                 let args: ArgsOption = config
                     .get("args")
                     .map(|args| {
-                        let args: ArgsOption = args
-                            .try_into()
-                            .unwrap();
+                        let args: ArgsOption = args.try_into().unwrap();
                         args
                     })
                     .unwrap_or_default();
@@ -445,9 +442,7 @@ impl From<Value> for NoUnusedVarsOptions {
                 let caught_errors: CaughtErrors = config
                     .get("caughtErrors")
                     .map(|caught_errors| {
-                        let caught_errors: CaughtErrors = caught_errors
-                            .try_into()
-                            .unwrap();
+                        let caught_errors: CaughtErrors = caught_errors.try_into().unwrap();
                         caught_errors
                     })
                     .unwrap_or_default();
@@ -487,7 +482,7 @@ impl From<Value> for NoUnusedVarsOptions {
                     caught_errors_ignore_pattern,
                     destructured_array_ignore_pattern,
                     ignore_class_with_static_init_block,
-                    report_used_ignore_pattern
+                    report_used_ignore_pattern,
                 }
             }
             Value::Null => Self::default(),

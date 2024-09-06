@@ -2,11 +2,13 @@
 
 use std::{collections::HashMap, fs, path::Path, sync::Arc};
 
-use oxc::allocator::Allocator;
-use oxc::codegen::CodeGenerator;
-use oxc::diagnostics::{NamedSource, OxcDiagnostic};
-use oxc::parser::Parser;
-use oxc::span::SourceType;
+use oxc::{
+    allocator::Allocator,
+    codegen::CodeGenerator,
+    diagnostics::{NamedSource, OxcDiagnostic},
+    parser::Parser,
+    span::SourceType,
+};
 use regex::Regex;
 
 use crate::workspace_root;

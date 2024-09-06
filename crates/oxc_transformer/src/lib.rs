@@ -165,6 +165,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_class_body(body, ctx);
     }
+
     fn enter_ts_module_declaration(
         &mut self,
         decl: &mut TSModuleDeclaration<'a>,
@@ -296,7 +297,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         if arrow.expression && arrow.body.statements.len() > 1 {
             let Statement::ExpressionStatement(statement) = arrow.body.statements.pop().unwrap()
             else {
-                unreachable!("The last statement in an ArrowFunctionExpression should always be an ExpressionStatement.")
+                unreachable!(
+                    "The last statement in an ArrowFunctionExpression should always be an ExpressionStatement."
+                )
             };
             arrow
                 .body

@@ -1,5 +1,6 @@
 mod const_eval;
 
+use const_eval::{is_array_from, is_new_typed_array, ConstEval};
 use oxc_ast::{
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
@@ -20,7 +21,6 @@ use crate::{
     rule::Rule,
     AstNode,
 };
-use const_eval::{is_array_from, is_new_typed_array, ConstEval};
 
 fn spread_in_list(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Using a spread operator here creates a new {x1} unnecessarily."))

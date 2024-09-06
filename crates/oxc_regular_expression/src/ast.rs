@@ -8,7 +8,6 @@
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
-
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]

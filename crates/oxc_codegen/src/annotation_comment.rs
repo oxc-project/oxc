@@ -34,6 +34,7 @@ impl AnnotationComment {
     pub fn span(&self) -> Span {
         self.comment.span
     }
+
     pub fn kind(&self) -> CommentKind {
         self.comment.kind
     }

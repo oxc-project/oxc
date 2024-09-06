@@ -30,13 +30,12 @@
 
 use std::cell::Cell;
 
-use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
-
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::*;
+use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::context::Ctx;
 

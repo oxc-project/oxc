@@ -155,6 +155,7 @@ impl<'a> Traverse<'a> for TypeScriptAnnotations<'a> {
             program.body.push(self.ctx.ast.statement_module_declaration(export_decl));
         }
     }
+
     fn enter_arrow_function_expression(
         &mut self,
         expr: &mut ArrowFunctionExpression<'a>,

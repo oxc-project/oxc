@@ -4,8 +4,10 @@
 use std::ops::Not;
 
 use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
-use oxc_syntax::precedence::{GetPrecedence, Precedence};
+use oxc_syntax::{
+    operator::{BinaryOperator, LogicalOperator},
+    precedence::{GetPrecedence, Precedence},
+};
 
 use crate::{
     gen::{Gen, GenExpr},

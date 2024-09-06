@@ -1,5 +1,3 @@
-use crate::ast::*;
-
 use std::{borrow::Cow, cell::Cell, fmt};
 
 use oxc_allocator::{Box, FromIn, Vec};
@@ -7,6 +5,8 @@ use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
 };
+
+use crate::ast::*;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -1079,6 +1079,7 @@ impl<'a> FormalParameters<'a> {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
+
     pub fn has_parameter(&self) -> bool {
         !self.is_empty() || self.rest.is_some()
     }
@@ -1427,6 +1428,7 @@ impl<'a> ImportDeclarationSpecifier<'a> {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
     }
+
     pub fn name(&self) -> Cow<'a, str> {
         Cow::Borrowed(self.local().name.as_str())
     }

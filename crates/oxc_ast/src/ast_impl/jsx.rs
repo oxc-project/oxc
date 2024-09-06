@@ -1,8 +1,10 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use crate::ast::*;
-use oxc_span::{Atom, Span};
 use std::fmt;
+
+use oxc_span::{Atom, Span};
+
+use crate::ast::*;
 
 // 1.2 JSX Elements
 
@@ -91,6 +93,7 @@ impl<'a> JSXAttributeName<'a> {
             Self::NamespacedName(_) => None,
         }
     }
+
     pub fn get_identifier(&self) -> &JSXIdentifier<'a> {
         match self {
             Self::Identifier(ident) => ident.as_ref(),

@@ -1,11 +1,9 @@
-use rustc_hash::FxHashMap;
-
+use itertools::Itertools;
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
-
-use itertools::Itertools;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,

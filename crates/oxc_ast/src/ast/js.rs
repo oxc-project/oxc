@@ -18,14 +18,12 @@ use oxc_syntax::{
     scope::ScopeId,
     symbol::SymbolId,
 };
-
-use super::macros::inherit_variants;
-use super::*;
-
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
+
+use super::{macros::inherit_variants, *};
 
 /// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source, directives, top-level statements, and scope information.
 #[ast(visit)]

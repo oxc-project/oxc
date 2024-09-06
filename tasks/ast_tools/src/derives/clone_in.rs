@@ -3,13 +3,12 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::Ident;
 
+use super::{define_derive, Derive, DeriveOutput};
 use crate::{
     codegen::LateCtx,
     markers::CloneInAttribute,
     schema::{EnumDef, GetIdent, StructDef, TypeDef},
 };
-
-use super::{define_derive, Derive, DeriveOutput};
 
 define_derive! {
     pub struct DeriveCloneIn;

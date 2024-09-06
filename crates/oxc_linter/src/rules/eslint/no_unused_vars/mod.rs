@@ -11,15 +11,14 @@ mod usage;
 
 use std::ops::Deref;
 
+use options::NoUnusedVarsOptions;
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::GetSpan;
+use symbol::Symbol;
 
 use crate::{context::LintContext, rule::Rule};
-use options::NoUnusedVarsOptions;
-
-use symbol::Symbol;
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedVars(Box<NoUnusedVarsOptions>);

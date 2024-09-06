@@ -9,6 +9,7 @@ pub struct UnknownExtension(/* msg */ pub(crate) Cow<'static, str>);
 
 impl Deref for UnknownExtension {
     type Target = str;
+
     fn deref(&self) -> &str {
         &self.0
     }

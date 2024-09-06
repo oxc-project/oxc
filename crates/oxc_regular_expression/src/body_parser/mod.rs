@@ -9,8 +9,9 @@ pub use parser::PatternParser;
 
 #[cfg(test)]
 mod test {
-    use crate::{ParserOptions, PatternParser};
     use oxc_allocator::Allocator;
+
+    use crate::{ParserOptions, PatternParser};
 
     #[test]
     fn should_pass() {

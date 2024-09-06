@@ -641,7 +641,7 @@ fn test() {
             { let x = () => {}; }
             let x = ext 
             export {/* tree-shaking no-side-effects-when-called */ x}
-        ", 
+        ",
         // ExpressionStatement
         "ext()",
         // ForInStatement

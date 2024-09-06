@@ -2,9 +2,9 @@ mod fix_imports;
 mod fix_symbol;
 mod fix_vars;
 
-use super::{NoUnusedVars, Symbol};
-
 use fix_symbol::BindingInfo;
+
+use super::{NoUnusedVars, Symbol};
 
 // source text will never be large enough for this usize to be truncated when
 // getting cast to a u32

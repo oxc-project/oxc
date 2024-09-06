@@ -1,7 +1,6 @@
 use core::hash::Hasher;
 
-use oxc_ast::ast::BindingIdentifier;
-use oxc_ast::AstKind;
+use oxc_ast::{ast::BindingIdentifier, AstKind};
 use oxc_semantic::{AstNode, AstNodeId, SymbolId};
 use oxc_span::{hash::ContentHash, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};

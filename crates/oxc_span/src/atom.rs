@@ -5,11 +5,11 @@ use std::{
 };
 
 use compact_str::CompactString;
+use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
 use crate::{cmp::ContentEq, hash::ContentHash, Span};
-use oxc_allocator::{Allocator, CloneIn, FromIn};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -438,8 +438,9 @@ impl schemars::JsonSchema for CompactStr {
 
 #[cfg(test)]
 mod test {
-    use super::CompactStr;
     use compact_str::CompactString;
+
+    use super::CompactStr;
 
     #[test]
     fn test_compactstr_eq() {

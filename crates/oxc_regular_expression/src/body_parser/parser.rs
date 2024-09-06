@@ -562,6 +562,7 @@ impl<'a> PatternParser<'a> {
             kind,
         })
     }
+
     // ```
     // CharacterClassEscape[UnicodeMode] ::
     //   [+UnicodeMode] p{ UnicodePropertyValueExpression }

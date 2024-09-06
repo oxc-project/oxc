@@ -9,12 +9,11 @@ use syn::{
     Variant, Visibility,
 };
 
+use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result};
 use crate::{
     layout::Layout,
     util::{unexpanded_macro_err, NormalizeError},
 };
-
-use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result};
 
 pub type AstRef = Rc<RefCell<AstType>>;
 
@@ -459,7 +458,12 @@ pub fn analyze(ast_ref: &AstRef) -> Result<()> {
             // AST without visit!
             ast_ref.borrow_mut().set_ast(true)?;
         }
-        Some(AstAttr::None) => return Err(format!("All `enums` and `structs` defined in the source of truth should be marked with an `#[ast]` attribute(missing `#[ast]` on '{:?}')", ast_ref.borrow().ident())),
+        Some(AstAttr::None) => {
+            return Err(format!(
+                "All `enums` and `structs` defined in the source of truth should be marked with an `#[ast]` attribute(missing `#[ast]` on '{:?}')",
+                ast_ref.borrow().ident()
+            ));
+        }
         None => { /* unrelated items like `use`, `type` and `macro` definitions */ }
     }
 

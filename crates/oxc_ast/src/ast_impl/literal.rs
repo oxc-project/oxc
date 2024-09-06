@@ -3,8 +3,6 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use crate::ast::*;
-
 use std::{
     borrow::Cow,
     fmt,
@@ -15,6 +13,8 @@ use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
 use oxc_syntax::number::NumberBase;
+
+use crate::ast::*;
 
 impl BooleanLiteral {
     pub fn new(span: Span, value: bool) -> Self {
@@ -187,6 +187,7 @@ impl ContentHash for RegExpFlags {
 
 impl<'alloc> CloneIn<'alloc> for RegExpFlags {
     type Cloned = Self;
+
     fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
         *self
     }

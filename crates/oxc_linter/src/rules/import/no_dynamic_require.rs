@@ -89,8 +89,9 @@ fn is_static_value(expr: &Expression) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (r#"import _ from "lodash""#, None),

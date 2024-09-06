@@ -10,8 +10,10 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
-use oxc::diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
-use oxc::span::SourceType;
+use oxc::{
+    diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
+    span::SourceType,
+};
 use oxc_tasks_common::{normalize_path, Snapshot};
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};

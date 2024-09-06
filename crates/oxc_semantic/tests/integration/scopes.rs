@@ -199,7 +199,11 @@ fn test_enums() {
         "Expected `enum A` to be created in the top-level scope."
     );
     let enum_decl_scope_id = enum_decl.scope_id.get().expect("Enum declaration has no scope id");
-    assert_ne!(enum_node.scope_id(), enum_decl_scope_id, "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in.");
+    assert_ne!(
+        enum_node.scope_id(),
+        enum_decl_scope_id,
+        "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in."
+    );
     assert_eq!(enum_decl.members.len(), 3);
 }
 

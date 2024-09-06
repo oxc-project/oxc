@@ -1,5 +1,6 @@
-use proc_macro2::TokenStream;
 use std::path::PathBuf;
+
+use proc_macro2::TokenStream;
 
 use crate::{codegen::LateCtx, schema::TypeDef};
 

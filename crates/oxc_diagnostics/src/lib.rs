@@ -108,6 +108,7 @@ impl Diagnostic for OxcDiagnostic {
     fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
     }
+
     fn url<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.url.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
     }

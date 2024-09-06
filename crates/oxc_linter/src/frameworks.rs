@@ -1,6 +1,7 @@
+use std::{hash, path::Path};
+
 use bitflags::bitflags;
 use oxc_semantic::ModuleRecord;
-use std::{hash, path::Path};
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]

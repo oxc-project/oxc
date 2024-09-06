@@ -466,15 +466,19 @@ fn test() {
         ),
         ("var foo = { get bar() { try { return a(); } catch {} } };", None),
         ("var foo = { get bar() { try { return a(); } catch {  } finally {  } } };", None),
-        ("
+        (
+            "
         var foo = {
             get bar() {
                 for (let i = 0; i<10; i++) {
                     return i;
                 }
             }
-        }", None),
-        ("
+        }",
+            None,
+        ),
+        (
+            "
         var foo = {
             get bar() {
                 let i = 0;
@@ -482,7 +486,9 @@ fn test() {
                     return i;
                 }
             }
-        }", None),
+        }",
+            None,
+        ),
     ];
 
     Tester::new(GetterReturn::NAME, pass, fail)

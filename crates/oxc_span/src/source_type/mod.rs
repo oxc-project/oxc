@@ -1,9 +1,10 @@
 mod error;
 mod types;
 
+use std::{hash::Hash, path::Path};
+
 pub use error::UnknownExtension;
 use oxc_allocator::{Allocator, CloneIn};
-use std::{hash::Hash, path::Path};
 pub use types::*;
 
 use crate::{cmp::ContentEq, hash::ContentHash};
@@ -17,6 +18,7 @@ impl Default for SourceType {
 
 impl<'a> CloneIn<'a> for SourceType {
     type Cloned = Self;
+
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self

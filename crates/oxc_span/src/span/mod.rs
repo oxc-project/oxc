@@ -388,6 +388,7 @@ impl GetSpanMut for Span {
 
 impl<'a> CloneIn<'a> for Span {
     type Cloned = Self;
+
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self

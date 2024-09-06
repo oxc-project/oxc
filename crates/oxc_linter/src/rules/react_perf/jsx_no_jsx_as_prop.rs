@@ -1,8 +1,9 @@
-use crate::utils::ReactPerfRule;
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+
+use crate::utils::ReactPerfRule;
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoJsxAsProp;

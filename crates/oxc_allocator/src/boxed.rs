@@ -130,9 +130,8 @@ impl<'a, T> Box<'a, T> {
 mod test {
     use std::hash::{DefaultHasher, Hash, Hasher};
 
-    use crate::Allocator;
-
     use super::Box;
+    use crate::Allocator;
 
     #[test]
     fn box_deref_mut() {

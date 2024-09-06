@@ -1,5 +1,4 @@
-use std::stringify;
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, stringify};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
@@ -8,9 +7,9 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
-use crate::codegen::generated_header;
+use super::define_generator;
 use crate::{
-    codegen::LateCtx,
+    codegen::{generated_header, LateCtx},
     output,
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
@@ -18,8 +17,6 @@ use crate::{
     util::{TypeAnalysis, TypeWrapper},
     Generator, GeneratorOutput,
 };
-
-use super::define_generator;
 
 define_generator! {
     pub struct AstBuilderGenerator;

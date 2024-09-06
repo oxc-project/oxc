@@ -116,7 +116,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
                 }
                 // handles "let a = globalThis.JSON; let b = a; a();"
                 Some(parent_expr) if parent_expr.is_member_expression() => {
-                    return global_this_member(parent_expr.to_member_expression())
+                    return global_this_member(parent_expr.to_member_expression());
                 }
                 _ => None,
             }

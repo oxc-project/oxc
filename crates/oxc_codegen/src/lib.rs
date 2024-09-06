@@ -25,6 +25,7 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashMap;
 
+use self::annotation_comment::AnnotationComment;
 use crate::{
     binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
     sourcemap_builder::SourcemapBuilder,
@@ -33,8 +34,6 @@ pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
 };
-
-use self::annotation_comment::AnnotationComment;
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a>;
@@ -563,6 +562,7 @@ impl<'a> Codegen<'a> {
     ) -> impl DoubleEndedIterator<Item = &'_ Comment> + '_ {
         self.trivias.comments_range(start..end)
     }
+
     /// In some scenario, we want to move the comment that should be codegened to another position.
     /// ```js
     ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {

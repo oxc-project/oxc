@@ -3,16 +3,15 @@ mod plugins;
 
 use std::{convert::From, path::PathBuf};
 
+pub use allow_warn_deny::AllowWarnDeny;
 use oxc_diagnostics::Error;
+pub use plugins::LintPluginOptions;
 use rustc_hash::FxHashSet;
 
 use crate::{
     config::OxlintConfig, fixer::FixKind, rules::RULES, utils::is_jest_rule_adapted_to_vitest,
     FrameworkFlags, RuleCategory, RuleEnum, RuleWithSeverity,
 };
-
-pub use allow_warn_deny::AllowWarnDeny;
-pub use plugins::LintPluginOptions;
 
 #[derive(Debug)]
 pub struct LintOptions {

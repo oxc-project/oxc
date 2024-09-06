@@ -3,6 +3,7 @@ use itertools::Itertools;
 use quote::{format_ident, quote};
 use syn::{parse_quote, Arm, Ident, ImplItemFn, Type, Variant};
 
+use super::define_generator;
 use crate::{
     codegen::{generated_header, LateCtx},
     output,
@@ -10,8 +11,6 @@ use crate::{
     util::ToIdent,
     Generator, GeneratorOutput,
 };
-
-use super::define_generator;
 
 define_generator! {
     pub struct AstKindGenerator;

@@ -38,8 +38,9 @@ impl Parse for VisitArg {
 pub struct VisitArgs(Punctuated<VisitArg, Token![,]>);
 
 impl IntoIterator for VisitArgs {
-    type Item = VisitArg;
     type IntoIter = syn::punctuated::IntoIter<Self::Item>;
+    type Item = VisitArg;
+
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }

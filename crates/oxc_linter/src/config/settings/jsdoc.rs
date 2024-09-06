@@ -1,9 +1,10 @@
 use std::borrow::Cow;
 
-use crate::utils::default_true;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
+
+use crate::utils::default_true;
 
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -196,8 +197,9 @@ enum TagNamePreference {
 
 #[cfg(test)]
 mod test {
-    use serde::Deserialize;
     use std::borrow::Cow;
+
+    use serde::Deserialize;
 
     use super::JSDocPluginSettings;
 

@@ -62,6 +62,7 @@ pub struct LintContext<'a> {
 
 impl<'a> LintContext<'a> {
     const WEBSITE_BASE_URL: &'static str = "https://oxc.rs/docs/guide/usage/linter/rules";
+
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {

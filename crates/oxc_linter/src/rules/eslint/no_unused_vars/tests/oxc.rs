@@ -1,8 +1,9 @@
 //! Test cases created by oxc maintainers
 
+use serde_json::json;
+
 use super::NoUnusedVars;
 use crate::{tester::Tester, FixKind, RuleMeta as _};
-use serde_json::json;
 
 #[test]
 fn test_vars_simple() {
@@ -296,8 +297,8 @@ fn test_vars_destructure() {
                 "caughtErrors": "none",
                 "ignoreRestSiblings": true,
                 "vars": "all"
-            }]))
-        )
+            }])),
+        ),
     ];
     let fail = vec![
         ("const { a, ...rest } = obj", Some(json!( [{ "ignoreRestSiblings": true }] ))),
@@ -493,7 +494,7 @@ fn test_functions() {
             });
         ",
         "const foo = () => function bar() { }\nfoo()",
-        "module.exports.foo = () => function bar() { }"
+        "module.exports.foo = () => function bar() { }",
     ];
 
     let fail = vec![
