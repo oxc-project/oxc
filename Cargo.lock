@@ -1395,6 +1395,7 @@ version = "0.26.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
+ "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_index",
