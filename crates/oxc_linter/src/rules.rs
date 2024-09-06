@@ -125,6 +125,7 @@ mod eslint {
     pub mod require_await;
     pub mod require_yield;
     pub mod sort_imports;
+    pub mod sort_vars;
     pub mod symbol_description;
     pub mod unicode_bom;
     pub mod use_isnan;
@@ -572,6 +573,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::symbol_description,
     eslint::sort_imports,
+    eslint::sort_vars,
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
