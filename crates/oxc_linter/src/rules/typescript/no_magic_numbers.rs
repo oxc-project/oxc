@@ -59,7 +59,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
             return Ok(NoMagicNumbersConfig::default());
         }
 
-        raw.as_array().unwrap().first().map_or_else(
+        raw.get(0).map_or_else(
             || {
                 Err(OxcDiagnostic::warn(
                     "Expecting object for typescript/no-magic-numbers configuration",
@@ -67,11 +67,7 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
             },
             |object| {
                 fn get_bool_property(object: &serde_json::Value, index: &str) -> bool {
-                    object
-                        .get(index)
-                        .unwrap_or_else(|| &serde_json::Value::Bool(false))
-                        .as_bool()
-                        .unwrap()
+                    object.get(index).and_then(serde_json::Value::as_bool).unwrap_or_default()
                 }
                 Ok(Self {
                     ignore: object
@@ -113,21 +109,23 @@ declare_oxc_lint!(
     ///
     /// ‘Magic numbers’ are numbers that occur multiple times in code without an explicit meaning. They should preferably be replaced by named constants.
     ///
-    /// ### Example bad
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     ///
     /// var dutyFreePrice = 100;
     /// var finalPrice = dutyFreePrice + (dutyFreePrice * 0.25);
     /// ```
     ///
-    /// ### Example good with "ignore"
+    /// Examples of **correct** code for this rule with option "ignore":
     /// ```javascript
     /// /*typescript no-magic-numbers: ["error", { "ignore": [1] }]*/
     /// var data = ['foo', 'bar', 'baz'];
     /// var dataLast = data.length && data[data.length - 1];
     /// ```
     ///
-    /// ### Example good with "ignoreArrayIndexes"
+    /// Examples of **correct** code for this rule with option "ignoreArrayIndexes":
     /// ```javascript
     /// /*typescript no-magic-numbers: ["error", { "ignoreArrayIndexes": true }]*/
     /// var item = data[2];
@@ -139,14 +137,14 @@ declare_oxc_lint!(
     /// a = data[4294967294]; // max array index
     /// ```
     ///
-    /// ### Example good with "ignoreDefaultValues"
+    /// Examples of **correct** code for this rule with option "ignoreDefaultValues":
     /// ```javascript
     /// /*typescript no-magic-numbers: ["error", { "ignoreDefaultValues": true }]*/
     /// const { tax = 0.25 } = accountancy;
     /// function mapParallel(concurrency = 3) { /***/ }
     /// ```
     ///
-    /// ### Example good with "ignoreClassFieldInitialValues"
+    /// Examples of **correct** code for this rule with option "ignoreClassFieldInitialValues":
     /// ```javascript
     /// /*typescript no-magic-numbers: ["error", { "ignoreClassFieldInitialValues": true }]*/
     /// class C {
@@ -157,13 +155,13 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// ### Example bad with "enforceConst"
+    /// Examples of **incorrect** code for this rule with option "enforceConst":
     /// ```javascript
     /// /*typescript no-magic-numbers: ["error", { "enforceConst": true }]*/
     /// var TAX = 0.25;
     /// ```
     ///
-    /// ### Example bad with "detectObjects"
+    /// Examples of **incorrect** code for this rule with option "detectObjects":
     /// ```javascript
     /// /*typescript no-magic-numbers: ["error", { "detectObjects": true }]*/
     /// var magic = {
@@ -171,7 +169,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// ### Example good with "detectObjects"
+    /// Examples of **correct** code for this rule with option "detectObjects":
     /// ```javascript
     /// /*typescript no-magic-numbers: ["error", { "detectObjects": true }]*/
     /// var TAX = 0.25;
@@ -181,7 +179,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// ### Example good with "ignoreEnums"
+    /// Examples of **correct** code for this rule with option "ignoreEnums":
     /// ```typescript
     /// /*typescript no-magic-numbers: ["error", { "ignoreEnums": true }]*/
     /// enum foo {
@@ -189,13 +187,13 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// ### Example good with "ignoreNumericLiteralTypes"
+    /// Examples of **correct** code for this rule with option "ignoreNumericLiteralTypes":
     /// ```typescript
     /// /*typescript no-magic-numbers: ["error", { "ignoreNumericLiteralTypes": true }]*/
     /// type SmallPrimes = 2 | 3 | 5 | 7 | 11;
     /// ```
     ///
-    /// ### Example good with "ignoreReadonlyClassProperties"
+    /// Examples of **correct** code for this rule with option "ignoreReadonlyClassProperties":
     /// ```typescript
     /// /*typescript no-magic-numbers: ["error", { "ignoreReadonlyClassProperties": true }]*/
     /// class Foo {
@@ -206,9 +204,9 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// ### Example good with "ignoreTypeIndexes"
+    /// Examples of **correct** code for this rule with option "ignoreTypeIndexes":
     /// ```typescript
-    /// /*typescript no-magic-numbers: ["error", { "ignoreReadonlyClassProperties": true }]*/
+    /// /*typescript no-magic-numbers: ["error", { "ignoreTypeIndexes": true }]*/
     /// type Foo = Bar[0];
     /// type Baz = Parameters<Foo>[2];
     /// ```
@@ -227,7 +225,10 @@ struct InternConfig<'a> {
 impl InternConfig<'_> {
     pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
         let AstKind::NumericLiteral(numeric) = node.kind() else {
-            unreachable!("expected AstKind BingIntLiteral or NumericLiteral, got {:?}", node.kind().debug_name());
+            unreachable!(
+                "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
+                node.kind().debug_name()
+            );
         };
 
         let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
