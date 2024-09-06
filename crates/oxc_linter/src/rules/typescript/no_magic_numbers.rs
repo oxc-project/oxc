@@ -37,11 +37,10 @@ impl std::ops::Deref for NoMagicNumbers {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum NoMagicNumbersNumber {
     Float(f64),
-    BigInt(String)
+    BigInt(String),
 }
 
 #[derive(Debug, Default, Clone)]
@@ -80,11 +79,17 @@ impl TryFrom<&serde_json::Value> for NoMagicNumbersConfig {
                     ignore: object
                         .get("ignore")
                         .and_then(serde_json::Value::as_array)
-                        .map(|v| v.iter().map(|v| if v.is_number() {
-                            NoMagicNumbersNumber::Float(v.as_f64().unwrap())
-                        } else {
-                            NoMagicNumbersNumber::BigInt(v.as_str().unwrap().to_owned())
-                        }).collect())
+                        .map(|v| {
+                            v.iter()
+                                .map(|v| {
+                                    if v.is_number() {
+                                        NoMagicNumbersNumber::Float(v.as_f64().unwrap())
+                                    } else {
+                                        NoMagicNumbersNumber::BigInt(v.as_str().unwrap().to_owned())
+                                    }
+                                })
+                                .collect()
+                        })
                         .unwrap_or_default(),
                     ignore_array_indexes: get_bool_property(object, "ignoreArrayIndexes"),
                     ignore_default_values: get_bool_property(object, "ignoreDefaultValues"),
@@ -253,7 +258,7 @@ impl InternConfig<'_> {
                         raw: numeric.raw.into(),
                     }
                 }
-            },
+            }
             AstKind::BigIntLiteral(bigint) => {
                 let big_int_string = bigint.raw.clone().into_string();
                 if is_negative {
@@ -276,13 +281,9 @@ impl InternConfig<'_> {
                 unreachable!(
                     "expected AstKind BingIntLiteral or NumericLiteral, got {:?}",
                     node.kind().debug_name()
-                )    
+                )
             }
         }
-
-        
-
-        
     }
 }
 
