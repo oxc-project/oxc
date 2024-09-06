@@ -98,6 +98,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
     }
+
     fn check_invalid_ts_enum_computed_property(&mut self, property: &Expression<'a>) {
         match property {
             Expression::StringLiteral(_) => {}

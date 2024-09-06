@@ -3,17 +3,18 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use crate::ast::*;
-
 use std::{
+    borrow::Cow,
     fmt,
     hash::{Hash, Hasher},
 };
 
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, Atom, Span};
+use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
 use oxc_syntax::number::NumberBase;
+
+use crate::ast::*;
 
 impl BooleanLiteral {
     pub fn new(span: Span, value: bool) -> Self {
@@ -36,10 +37,10 @@ impl fmt::Display for BooleanLiteral {
     }
 }
 
-impl Hash for NullLiteral {
+impl ContentHash for NullLiteral {
     #[inline]
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        None::<bool>.hash(state);
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(&Option::<bool>::None, state);
     }
 }
 
@@ -89,10 +90,10 @@ impl<'a> NumericLiteral<'a> {
     }
 }
 
-impl<'a> Hash for NumericLiteral<'a> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.base.hash(state);
-        self.raw.hash(state);
+impl<'a> ContentHash for NumericLiteral<'a> {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        ContentHash::content_hash(&self.base, state);
+        ContentHash::content_hash(&self.raw, state);
     }
 }
 
@@ -132,10 +133,11 @@ impl<'a> RegExpPattern<'a> {
         self.len() == 0
     }
 
-    pub fn source_text(&self, source_text: &'a str) -> &'a str {
+    pub fn source_text(&self, source_text: &'a str) -> Cow<str> {
         match self {
-            Self::Raw(raw) | Self::Invalid(raw) => raw,
-            Self::Pattern(pat) => pat.span.source_text(source_text),
+            Self::Raw(raw) | Self::Invalid(raw) => Cow::Borrowed(raw),
+            Self::Pattern(pat) if pat.span.is_unspanned() => Cow::Owned(pat.to_string()),
+            Self::Pattern(pat) => Cow::Borrowed(pat.span.source_text(source_text)),
         }
     }
 
@@ -177,8 +179,15 @@ impl ContentEq for RegExpFlags {
     }
 }
 
+impl ContentHash for RegExpFlags {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(self, state);
+    }
+}
+
 impl<'alloc> CloneIn<'alloc> for RegExpFlags {
     type Cloned = Self;
+
     fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
         *self
     }

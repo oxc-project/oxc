@@ -5,11 +5,11 @@ use std::{
 };
 
 use compact_str::CompactString;
+use oxc_allocator::{Allocator, CloneIn, FromIn};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
-use crate::{cmp::ContentEq, Span};
-use oxc_allocator::{Allocator, CloneIn, FromIn};
+use crate::{cmp::ContentEq, hash::ContentHash, Span};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -180,27 +180,9 @@ impl<'a> ContentEq for Atom<'a> {
     }
 }
 
-impl<'a> ContentEq<Atom<'a>> for &str {
-    fn content_eq(&self, other: &Atom<'a>) -> bool {
-        self == other
-    }
-}
-
-impl<'a> ContentEq<str> for Atom<'a> {
-    fn content_eq(&self, other: &str) -> bool {
-        self == other
-    }
-}
-
-impl<'a> ContentEq<Atom<'a>> for Cow<'_, str> {
-    fn content_eq(&self, other: &Atom<'a>) -> bool {
-        self == other
-    }
-}
-
-impl<'a> ContentEq<&Atom<'a>> for Cow<'_, str> {
-    fn content_eq(&self, other: &&Atom<'a>) -> bool {
-        self == other
+impl<'a> ContentHash for Atom<'a> {
+    fn content_hash<H: hash::Hasher>(&self, state: &mut H) {
+        hash::Hash::hash(self, state);
     }
 }
 
@@ -456,8 +438,9 @@ impl schemars::JsonSchema for CompactStr {
 
 #[cfg(test)]
 mod test {
-    use super::CompactStr;
     use compact_str::CompactString;
+
+    use super::CompactStr;
 
     #[test]
     fn test_compactstr_eq() {

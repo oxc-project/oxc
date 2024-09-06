@@ -258,7 +258,12 @@ fn abstract_element_cannot_have_initializer(
     span: Span,
     init_or_impl: &str,
 ) -> OxcDiagnostic {
-    ts_error(code, format!("{elem_name} '{prop_name}' cannot have an {init_or_impl} because it is marked abstract."))
+    ts_error(
+        code,
+        format!(
+            "{elem_name} '{prop_name}' cannot have an {init_or_impl} because it is marked abstract."
+        ),
+    )
     .with_label(span)
 }
 

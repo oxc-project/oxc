@@ -16,7 +16,7 @@ mod rust_ast;
 mod schema;
 mod util;
 
-use derives::{DeriveCloneIn, DeriveContentEq, DeriveGetSpan, DeriveGetSpanMut};
+use derives::{DeriveCloneIn, DeriveContentEq, DeriveContentHash, DeriveGetSpan, DeriveGetSpanMut};
 use fmt::cargo_fmt;
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
@@ -50,12 +50,19 @@ pub struct CliOptions {
     /// Don't run cargo fmt at the end
     #[bpaf(switch)]
     no_fmt: bool,
+    /// Prints no logs.
+    quiet: bool,
     /// Path of output `schema.json`.
     schema: Option<std::path::PathBuf>,
 }
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let cli_options = cli_options().run();
+
+    if cli_options.quiet {
+        // SAFETY: we haven't started using logger yet!
+        unsafe { logger::quiet() };
+    }
 
     let AstCodegenResult { outputs, schema } = SOURCE_PATHS
         .iter()
@@ -66,6 +73,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .derive(DeriveGetSpan)
         .derive(DeriveGetSpanMut)
         .derive(DeriveContentEq)
+        .derive(DeriveContentHash)
         .generate(AssertLayouts)
         .generate(AstKindGenerator)
         .generate(AstBuilderGenerator)
@@ -76,9 +84,11 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     if !cli_options.dry_run {
         let side_effects = outputs
             .into_iter()
-            .filter_map(|it| {
+            .map(|it| {
                 let path = it.path();
+                log!("Writing {path}...");
                 it.apply().unwrap();
+                logln!(" Done!");
                 path
             })
             .collect();
@@ -124,7 +134,44 @@ fn write_ci_filter(
         push_item(side_effect.as_str());
     }
 
-    push_item("tasks/ast_codegen/src/**");
+    push_item("tasks/ast_codegen/src/**/*");
+    push_item(output_path);
 
-    write_all_to(output.as_bytes(), output_path)
+    log!("Writing {output_path}...");
+    write_all_to(output.as_bytes(), output_path)?;
+    logln!(" Done!");
+    Ok(())
 }
+
+#[macro_use]
+mod logger {
+    static mut LOG: bool = true;
+
+    /// Shouldn't be called after first use of the logger macros.
+    pub(super) unsafe fn quiet() {
+        LOG = false;
+    }
+
+    pub(super) fn __internal_log_enable() -> bool {
+        // SAFETY:`LOG` doesn't change from the moment we start using it.
+        unsafe { LOG }
+    }
+
+    macro_rules! log {
+        ($fmt:literal $(, $args:expr)*) => {
+            if $crate::logger::__internal_log_enable() {
+                print!("{}", format!($fmt$(, $args)*));
+            }
+        }
+    }
+
+    macro_rules! logln {
+        ($fmt:literal $(, $args:expr)*) => {
+            $crate::log!("{}\n", format!($fmt $(, $args)*));
+        }
+    }
+
+    pub(super) use {log, logln};
+}
+
+pub(crate) use logger::{log, logln};

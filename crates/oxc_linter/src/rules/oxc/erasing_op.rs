@@ -34,7 +34,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// let x = 1;
     /// let y = x * 0;
     /// ```

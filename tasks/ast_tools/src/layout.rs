@@ -55,7 +55,7 @@ impl KnownLayout {
         self.niches
     }
 
-    #[allow(unused)]
+    #[expect(unused)]
     #[inline]
     pub fn offsets(&self) -> Option<&Vec<usize>> {
         self.offsets.as_ref()

@@ -1,11 +1,9 @@
-use rustc_hash::FxHashMap;
-
+use itertools::Itertools;
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
-
-use itertools::Itertools;
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -42,11 +40,14 @@ declare_oxc_lint!(
     /// Even when that is not the case this will lead to unnecessary computations being performed.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <App {...props} myAttr="1" {...props} />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <App {...props} myAttr="1" {...props} />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <App myAttr="1" {...props} />
     /// <App {...props} myAttr="1" />
     /// ```

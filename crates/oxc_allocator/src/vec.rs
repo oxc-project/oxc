@@ -123,9 +123,8 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
 
 #[cfg(test)]
 mod test {
-    use crate::Allocator;
-
     use super::Vec;
+    use crate::Allocator;
 
     #[test]
     fn vec_debug() {

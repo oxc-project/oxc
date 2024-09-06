@@ -1,12 +1,13 @@
 mod logical_assignment_operators;
 mod options;
 
+use std::rc::Rc;
+
 pub use logical_assignment_operators::LogicalAssignmentOperators;
 pub use options::ES2021Options;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
-use std::rc::Rc;
 
 use crate::context::Ctx;
 

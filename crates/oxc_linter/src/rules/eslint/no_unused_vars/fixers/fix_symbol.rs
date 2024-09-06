@@ -1,8 +1,9 @@
-use super::Symbol;
-use crate::fixer::{Fix, RuleFix, RuleFixer};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::{CompactStr, GetSpan, Span};
+
+use super::Symbol;
+use crate::fixer::{Fix, RuleFix, RuleFixer};
 
 impl<'s, 'a> Symbol<'s, 'a> {
     /// Delete a single declarator from a [`VariableDeclaration`] list with more

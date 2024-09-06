@@ -15,7 +15,7 @@ pub use ast_kind::AstKindGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
 /// Inserts a newline in the `TokenStream`.
-#[allow(unused)]
+#[expect(unused)]
 macro_rules! endl {
     () => {
         /* only works in the context of `quote` macro family! */
@@ -51,12 +51,12 @@ pub(crate) use define_generator;
 /// Similar to how `insert` macro works in the context of `quote` macro family, But this one can be
 /// used outside and accepts expressions.
 /// Wraps the result of the given expression in `insert!({value here});` and outputs it as `TokenStream`.
-#[allow(unused)]
+#[expect(unused)]
 macro_rules! insert {
     ($fmt:literal $(, $args:expr)*) => {{
         let txt = format!($fmt, $($args)*);
         format!(r#"insert!("{}");"#, txt).parse::<proc_macro2::TokenStream>().unwrap()
     }};
 }
-#[allow(unused_imports)]
+#[expect(unused_imports)]
 pub(crate) use insert;

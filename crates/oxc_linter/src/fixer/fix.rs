@@ -261,6 +261,7 @@ impl GetSpan for RuleFix<'_> {
 
 impl<'a> Deref for RuleFix<'a> {
     type Target = CompositeFix<'a>;
+
     fn deref(&self) -> &Self::Target {
         &self.fix
     }
@@ -407,7 +408,10 @@ impl<'a> CompositeFix<'a> {
             Self::None => 0,
             Self::Single(_) => 1,
             Self::Multiple(fs) => {
-                debug_assert!(fs.len() > 1, "Single-element or empty composite fix vecs should have been turned into CompositeFix::None or CompositeFix::Single");
+                debug_assert!(
+                    fs.len() > 1,
+                    "Single-element or empty composite fix vecs should have been turned into CompositeFix::None or CompositeFix::Single"
+                );
                 fs.len()
             }
         }
@@ -427,6 +431,7 @@ impl<'a> CompositeFix<'a> {
             }
         }
     }
+
     // TODO: do we want this?
     // pub fn extend(&mut self, fix: CompositeFix<'a>) {
     //     match self {
@@ -460,6 +465,7 @@ impl<'a> CompositeFix<'a> {
             CompositeFix::None => Fix::empty(),
         }
     }
+
     /// Merges multiple fixes to one, returns an [`Fix::empty`] (which will not fix anything) if:
     ///
     /// 1. `fixes` is empty

@@ -82,7 +82,7 @@ impl TestRunner {
     }
 
     /// # Panics
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     pub fn run(mut self) {
         let fixture_root = &self.fixtures_root;
         // Read the first level of directories that contain `__snapshots__`

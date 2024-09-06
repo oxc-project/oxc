@@ -40,8 +40,9 @@ declare_oxc_lint!(
     /// This rule aims to standardize the use of `Array#flat()` over legacy techniques to flatten arrays.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// const foo = array.flatMap(x => x);
     /// const foo = array.reduce((a, b) => a.concat(b), []);
     /// const foo = array.reduce((a, b) => [...a, ...b], []);
@@ -51,8 +52,10 @@ declare_oxc_lint!(
     /// const foo = Array.prototype.concat.apply([], array);
     /// const foo = Array.prototype.concat.call([], maybeArray);
     /// const foo = Array.prototype.concat.call([], ...array);
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = array.flat();
     /// const foo = [maybeArray].flat();
     /// ```

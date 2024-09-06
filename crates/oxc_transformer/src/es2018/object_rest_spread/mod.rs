@@ -26,14 +26,15 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
-use crate::context::Ctx;
+use std::rc::Rc;
 
 use object_rest::ObjectRest;
 use object_spread::ObjectSpread;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 use serde::Deserialize;
-use std::rc::Rc;
+
+use crate::context::Ctx;
 mod object_rest;
 mod object_spread;
 

@@ -73,7 +73,9 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::modifier_cannot_be_used_here(&modifier));
                 } else {
                     #[cfg(debug_assertions)]
-                    panic!("Kind::is_modifier_kind() is true but the token could not be converted to a Modifier.")
+                    panic!(
+                        "Kind::is_modifier_kind() is true but the token could not be converted to a Modifier."
+                    )
                 }
                 // re-parse
                 self.bump_any();

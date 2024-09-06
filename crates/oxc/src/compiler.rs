@@ -5,11 +5,10 @@ use oxc_ast::{ast::Program, Trivias};
 use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_mangler::{MangleOptions, Mangler};
-use oxc_parser::{ParseOptions, Parser, ParserReturn};
-use oxc_span::SourceType;
-
 use oxc_minifier::{CompressOptions, Compressor};
+use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_semantic::{ScopeTree, SemanticBuilder, SemanticBuilderReturn, SymbolTable};
+use oxc_span::SourceType;
 use oxc_transformer::{TransformOptions, Transformer, TransformerReturn};
 
 #[derive(Default)]

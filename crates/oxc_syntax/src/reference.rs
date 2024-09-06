@@ -1,10 +1,9 @@
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
 use oxc_allocator::CloneIn;
+use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
-
-use oxc_index::Idx;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ReferenceId(NonMaxU32);
@@ -165,6 +164,7 @@ impl ReferenceFlags {
 
 impl<'alloc> CloneIn<'alloc> for ReferenceFlags {
     type Cloned = Self;
+
     fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
         *self
     }

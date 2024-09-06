@@ -44,11 +44,14 @@ declare_oxc_lint!(
     /// The `dataset` property is a map of strings that contains all the `data-*` attributes from the element. It is a convenient way to access all of them at once.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// element.setAttribute('data-unicorn', '🦄');
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// element.setAttribute('data-unicorn', '🦄');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// element.dataset.unicorn = '🦄';
     /// ```
     PreferDomNodeDataset,

@@ -24,15 +24,18 @@ declare_oxc_lint!(
     /// It can be confusing to have an `if` statement without an `else` clause as the only statement in an `if` block.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// if (foo) {
     ///         if (bar) {
     ///     }
     /// }
     /// if (foo) if (bar) baz();
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// if (foo && bar) {
     /// }
     /// if (foo && bar) baz();

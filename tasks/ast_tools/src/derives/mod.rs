@@ -1,14 +1,17 @@
-use proc_macro2::TokenStream;
 use std::path::PathBuf;
+
+use proc_macro2::TokenStream;
 
 use crate::{codegen::LateCtx, schema::TypeDef};
 
 mod clone_in;
 mod content_eq;
+mod content_hash;
 mod get_span;
 
 pub use clone_in::DeriveCloneIn;
 pub use content_eq::DeriveContentEq;
+pub use content_hash::DeriveContentHash;
 pub use get_span::{DeriveGetSpan, DeriveGetSpanMut};
 
 pub trait Derive {

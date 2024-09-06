@@ -4,9 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
-
-use oxc_span::GetSpan;
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
@@ -127,6 +125,7 @@ fn get_pattern_replacement<'a>(
     }
 
     let pattern_text = reg_exp_literal.regex.pattern.source_text(ctx.source_text());
+    let pattern_text = pattern_text.as_ref();
     if !is_simple_string(pattern_text) {
         return None;
     }

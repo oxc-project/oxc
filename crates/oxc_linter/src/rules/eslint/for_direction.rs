@@ -83,68 +83,74 @@ declare_oxc_lint!(
 
 impl Rule for ForDirection {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ForStatement(for_loop) = node.kind() {
-            if let Some(Expression::BinaryExpression(test)) = &for_loop.test {
-                let (counter, counter_position) = match (&test.left, &test.right) {
-                    (Expression::Identifier(counter), _) => (counter, LEFT),
-                    (_, Expression::Identifier(counter)) => (counter, RIGHT),
-                    _ => return,
-                };
-                let test_operator = &test.operator;
-                let wrong_direction = match (test_operator, counter_position) {
-                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, RIGHT)
-                    | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => {
-                        FORWARD
+        let AstKind::ForStatement(for_loop) = node.kind() else {
+            return;
+        };
+
+        let Some(Expression::BinaryExpression(test)) = &for_loop.test else {
+            return;
+        };
+
+        let (counter, counter_position) = match (&test.left, &test.right) {
+            (Expression::Identifier(counter), _) => (counter, LEFT),
+            (_, Expression::Identifier(counter)) => (counter, RIGHT),
+            _ => return,
+        };
+
+        let test_operator = &test.operator;
+        let wrong_direction = match (test_operator, counter_position) {
+            (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, RIGHT)
+            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, LEFT) => FORWARD,
+            (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, LEFT)
+            | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => BACKWARD,
+            _ => return,
+        };
+
+        let Some(update) = &for_loop.update else {
+            return;
+        };
+
+        let update_direction = get_update_direction(update, counter);
+        if update_direction == wrong_direction {
+            ctx.diagnostic_with_dangerous_fix(
+                for_direction_diagnostic(test.span, get_update_span(update)),
+                |fixer| {
+                    let mut span = Span::new(0, 0);
+
+                    let mut new_operator_str = "";
+
+                    match update {
+                        Expression::UpdateExpression(update) => {
+                            if update.span().start == update.argument.span().start {
+                                span.start = update.argument.span().end;
+                                span.end = update.span().end;
+                            } else {
+                                span.start = update.span().start;
+                                span.end = update.argument.span().start;
+                            }
+
+                            if let UpdateOperator::Increment = update.operator {
+                                new_operator_str = "--";
+                            } else if let UpdateOperator::Decrement = update.operator {
+                                new_operator_str = "++";
+                            }
+                        }
+                        Expression::AssignmentExpression(update) => {
+                            span.start = update.left.span().end;
+                            span.end = update.right.span().start;
+
+                            if let AssignmentOperator::Addition = update.operator {
+                                new_operator_str = "-=";
+                            } else if let AssignmentOperator::Subtraction = update.operator {
+                                new_operator_str = "+=";
+                            }
+                        }
+                        _ => {}
                     }
-                    (BinaryOperator::LessEqualThan | BinaryOperator::LessThan, LEFT)
-                    | (BinaryOperator::GreaterEqualThan | BinaryOperator::GreaterThan, RIGHT) => {
-                        BACKWARD
-                    }
-                    _ => return,
-                };
-                if let Some(update) = &for_loop.update {
-                    let update_direction = get_update_direction(update, counter);
-                    if update_direction == wrong_direction {
-                        let update_span = get_update_span(update);
-                        ctx.diagnostic_with_dangerous_fix(
-                            for_direction_diagnostic(test.span, update_span),
-                            |fixer| {
-                                let mut start = 0;
-                                let mut end = 0;
-                                if let Expression::UpdateExpression(update) = update {
-                                    if update.span().start == update.argument.span().start {
-                                        start = update.argument.span().end;
-                                        end = update.span().end;
-                                    } else {
-                                        start = update.span().start;
-                                        end = update.argument.span().start;
-                                    }
-                                } else if let Expression::AssignmentExpression(update) = update {
-                                    start = update.left.span().end;
-                                    end = update.right.span().start;
-                                }
-                                let span = Span::new(start, end);
-                                let mut new_operator_str = "";
-                                if let Expression::UpdateExpression(update) = update {
-                                    if let UpdateOperator::Increment = update.operator {
-                                        new_operator_str = "--";
-                                    } else if let UpdateOperator::Decrement = update.operator {
-                                        new_operator_str = "++";
-                                    }
-                                } else if let Expression::AssignmentExpression(update) = update {
-                                    if let AssignmentOperator::Addition = update.operator {
-                                        new_operator_str = "-=";
-                                    } else if let AssignmentOperator::Subtraction = update.operator
-                                    {
-                                        new_operator_str = "+=";
-                                    }
-                                }
-                                fixer.replace(span, new_operator_str)
-                            },
-                        );
-                    }
-                }
-            }
+
+                    fixer.replace(span, new_operator_str)
+                },
+            );
         }
     }
 }

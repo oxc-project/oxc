@@ -394,7 +394,7 @@ fn test() {
         "let foo = {}; for (const i in [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (let i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (const i of [1,2,3]) { foo[i] = i; }",
-        "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",        
+        "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",
     ];
 
     let fail = vec![

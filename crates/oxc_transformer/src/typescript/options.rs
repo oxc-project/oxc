@@ -159,7 +159,9 @@ where
             match value {
                 "rewrite" => Ok(Some(RewriteExtensionsMode::Rewrite)),
                 "remove" => Ok(Some(RewriteExtensionsMode::Remove)),
-                _ => Err(E::custom(format!("Expected RewriteExtensionsMode is either \"rewrite\" or \"remove\" but found: {value}"))),
+                _ => Err(E::custom(format!(
+                    "Expected RewriteExtensionsMode is either \"rewrite\" or \"remove\" but found: {value}"
+                ))),
             }
         }
     }

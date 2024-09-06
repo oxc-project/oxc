@@ -27,12 +27,15 @@ declare_oxc_lint!(
     /// Magic numbers are hard to understand and maintain. When calling `Array.prototype.flat`, it is usually called with `1` or infinity. If you are using a different number, it is better to add a comment explaining the depth.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// array.flat(2);
     /// array.flat(20);
-    /// //
-    /// // Good
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// array.flat(2 /* explanation */);
     /// array.flat(1);
     /// array.flat();

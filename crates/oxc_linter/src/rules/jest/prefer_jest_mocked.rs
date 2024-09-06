@@ -136,8 +136,9 @@ fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("foo();", None, None, None),

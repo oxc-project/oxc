@@ -26,9 +26,9 @@ declare_oxc_lint!(
     /// mistake.
     ///
     /// ### Example
-    /// Bad
     ///
-    /// ```js
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// async function foo() {
     ///     Promise.all([await promise, anotherPromise]);
     ///     Promise.allSettled([await promise, anotherPromise]);
@@ -37,9 +37,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Good
-    ///
-    /// ```js
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function foo() {
     ///     Promise.all([promise, anotherPromise]);
     ///     Promise.allSettled([promise, anotherPromise]);

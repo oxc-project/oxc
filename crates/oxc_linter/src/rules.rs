@@ -17,6 +17,7 @@ mod import {
     // pub mod no_deprecated;
     pub mod max_dependencies;
     pub mod no_duplicates;
+    pub mod no_dynamic_require;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
@@ -791,6 +792,7 @@ oxc_macros::declare_all_lint_rules! {
     import::no_named_as_default_member,
     import::no_self_import,
     // import::no_unused_modules,
+    import::no_dynamic_require,
     import::no_duplicates,
     import::no_default_export,
     import::no_webpack_loader_syntax,

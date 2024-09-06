@@ -214,42 +214,32 @@ fn check_deep_namespace_for_node(
     namespaces: &[String],
     module: &Arc<ModuleRecord>,
     ctx: &LintContext<'_>,
-) {
-    if let AstKind::MemberExpression(expr) = node.kind() {
-        let Some((span, name)) = expr.static_property_info() else {
-            return;
-        };
+) -> Option<()> {
+    let expr = node.kind().as_member_expression()?;
+    let (span, name) = expr.static_property_info()?;
 
-        if let Some(module_source) = get_module_request_name(name, module) {
-            let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-                return;
-            };
-            if let Some(module_record) = module.loaded_modules.get(module_source.as_str()) {
-                let mut namespaces = namespaces.to_owned();
-                namespaces.push(name.into());
-                check_deep_namespace_for_node(
-                    parent_node,
-                    source,
-                    &namespaces,
-                    module_record.value(),
-                    ctx,
-                );
-            }
-        } else {
-            check_binding_exported(
-                name,
-                || {
-                    if namespaces.len() > 1 {
-                        no_export_in_deeply_imported_namespace(span, name, &namespaces.join("."))
-                    } else {
-                        no_export(span, name, source)
-                    }
-                },
-                module,
-                ctx,
-            );
-        }
+    if let Some(module_source) = get_module_request_name(name, module) {
+        let parent_node = ctx.nodes().parent_node(node.id())?;
+        let module_record = module.loaded_modules.get(module_source.as_str())?;
+        let mut namespaces = namespaces.to_owned();
+        namespaces.push(name.into());
+        check_deep_namespace_for_node(parent_node, source, &namespaces, module_record.value(), ctx);
+    } else {
+        check_binding_exported(
+            name,
+            || {
+                if namespaces.len() > 1 {
+                    no_export_in_deeply_imported_namespace(span, name, &namespaces.join("."))
+                } else {
+                    no_export(span, name, source)
+                }
+            },
+            module,
+            ctx,
+        );
     }
+
+    None
 }
 
 fn check_deep_namespace_for_object_pattern(

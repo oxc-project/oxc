@@ -562,6 +562,7 @@ impl<'a> PatternParser<'a> {
             kind,
         })
     }
+
     // ```
     // CharacterClassEscape[UnicodeMode] ::
     //   [+UnicodeMode] p{ UnicodePropertyValueExpression }
@@ -771,7 +772,10 @@ impl<'a> PatternParser<'a> {
         &mut self,
     ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
         // [empty]
-        if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+        if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some()
+            // Unterminated
+            || self.reader.peek().is_none()
+        {
             return Ok((ast::CharacterClassContentsKind::Union, Vec::new_in(self.allocator)));
         }
 

@@ -70,6 +70,12 @@ impl<'alloc, T: ?Sized> AsRef<T> for Box<'alloc, T> {
     }
 }
 
+impl<'alloc, T: ?Sized> AsMut<T> for Box<'alloc, T> {
+    fn as_mut(&mut self) -> &mut T {
+        self
+    }
+}
+
 impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.deref().fmt(f)
@@ -124,9 +130,8 @@ impl<'a, T> Box<'a, T> {
 mod test {
     use std::hash::{DefaultHasher, Hash, Hasher};
 
-    use crate::Allocator;
-
     use super::Box;
+    use crate::Allocator;
 
     #[test]
     fn box_deref_mut() {

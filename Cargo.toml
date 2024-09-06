@@ -25,11 +25,12 @@ unexpected_cfgs                        = { level = "warn", check-cfg = ['cfg(cov
 all        = { level = "warn", priority = -1 }
 empty_docs = { level = "allow", priority = 1 } # From `Tsify`
 # restriction
-dbg_macro     = "warn"
-todo          = "warn"
-unimplemented = "warn"
-print_stdout  = "warn" # Must be opt-in
-print_stderr  = "warn" # Must be opt-in
+dbg_macro        = "warn"
+todo             = "warn"
+unimplemented    = "warn"
+print_stdout     = "warn" # Must be opt-in
+print_stderr     = "warn" # Must be opt-in
+allow_attributes = "warn"
 # I like the explicitness of this rule as it removes confusion around `clone`.
 # This increases readability, avoids `clone` mindlessly and heap allocating by accident.
 clone_on_ref_ptr = "warn"

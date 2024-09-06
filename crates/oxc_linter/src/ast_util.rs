@@ -1,15 +1,14 @@
-use std::hash::{Hash, Hasher};
+use core::hash::Hasher;
 
-use oxc_ast::ast::BindingIdentifier;
-use oxc_ast::AstKind;
+use oxc_ast::{ast::BindingIdentifier, AstKind};
 use oxc_semantic::{AstNode, AstNodeId, SymbolId};
-use oxc_span::{GetSpan, Span};
+use oxc_span::{hash::ContentHash, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
 
-pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
+pub fn calculate_hash<T: ContentHash>(t: &T) -> u64 {
     let mut hasher = FxHasher::default();
-    t.hash(&mut hasher);
+    t.content_hash(&mut hasher);
     hasher.finish()
 }
 #[allow(clippy::wildcard_imports)]
@@ -430,11 +429,7 @@ pub fn get_function_like_declaration<'b>(
     ctx: &LintContext<'b>,
 ) -> Option<&'b BindingIdentifier<'b>> {
     let parent = outermost_paren_parent(node, ctx)?;
+    let decl = parent.kind().as_variable_declarator()?;
 
-    if let AstKind::VariableDeclarator(decl) = parent.kind() {
-        let ident = decl.id.get_binding_identifier()?;
-        Some(ident)
-    } else {
-        None
-    }
+    decl.id.get_binding_identifier()
 }

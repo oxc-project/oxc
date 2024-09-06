@@ -25,6 +25,7 @@ impl<'a> Visit<'a> for Counter {
     fn enter_node(&mut self, _: AstKind<'a>) {
         self.nodes_count += 1;
     }
+
     #[inline]
     fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.scopes_count += 1;

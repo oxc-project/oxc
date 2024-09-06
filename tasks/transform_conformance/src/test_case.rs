@@ -3,12 +3,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc::allocator::Allocator;
-use oxc::codegen::CodeGenerator;
-use oxc::diagnostics::{Error, NamedSource, OxcDiagnostic};
-use oxc::parser::Parser;
-use oxc::span::{SourceType, VALID_EXTENSIONS};
-use oxc::transformer::{BabelOptions, TransformOptions};
+use oxc::{
+    allocator::Allocator,
+    codegen::CodeGenerator,
+    diagnostics::{Error, NamedSource, OxcDiagnostic},
+    parser::Parser,
+    span::{SourceType, VALID_EXTENSIONS},
+    transformer::{BabelOptions, TransformOptions},
+};
 use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{

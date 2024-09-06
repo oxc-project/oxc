@@ -1,4 +1,3 @@
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression, VariableDeclarationKind},
     AstKind,
@@ -6,6 +5,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn warn() -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use useless `undefined`.")
@@ -149,6 +150,7 @@ impl Rule for NoUselessUndefined {
             .unwrap_or(true);
         Self { check_arguments, check_arrow_function_body }
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::IdentifierReference(undefined_literal)

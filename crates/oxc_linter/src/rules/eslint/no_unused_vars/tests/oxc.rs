@@ -1,8 +1,9 @@
 //! Test cases created by oxc maintainers
 
+use serde_json::json;
+
 use super::NoUnusedVars;
 use crate::{tester::Tester, FixKind, RuleMeta as _};
-use serde_json::json;
 
 #[test]
 fn test_vars_simple() {
@@ -17,6 +18,23 @@ fn test_vars_simple() {
             r"export const rendered = marked(markdown, {
                   renderer: new (class CustomRenderer extends Renderer {})(),
               });",
+            None,
+        ),
+        // https://github.com/oxc-project/oxc/issues/5391
+        (
+            "
+            import styled from 'styled-components';
+
+            import { Prose, ProseProps } from './prose';
+
+            interface Props extends ProseProps {
+              density?: number;
+            }
+
+            export const HandMarkedPaperBallotProse = styled(Prose)<Props>`
+            line-height: ${({ density }) => (density !== 0 ? '1.1' : '1.3')};
+            `;
+            ",
             None,
         ),
     ];
@@ -279,8 +297,8 @@ fn test_vars_destructure() {
                 "caughtErrors": "none",
                 "ignoreRestSiblings": true,
                 "vars": "all"
-            }]))
-        )
+            }])),
+        ),
     ];
     let fail = vec![
         ("const { a, ...rest } = obj", Some(json!( [{ "ignoreRestSiblings": true }] ))),

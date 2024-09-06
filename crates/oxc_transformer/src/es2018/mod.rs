@@ -1,11 +1,12 @@
 mod object_rest_spread;
 mod options;
 
+use std::rc::Rc;
+
 pub use object_rest_spread::{ObjectRestSpread, ObjectRestSpreadOptions};
 pub use options::ES2018Options;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
-use std::rc::Rc;
 
 use crate::context::Ctx;
 

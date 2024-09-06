@@ -1,15 +1,15 @@
 use std::ops::Deref;
 
+use oxc_ast::{
+    ast::{Argument, ArrowFunctionExpression, Expression, Function},
+    AstKind,
+};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, utils, AstNode};
-use oxc_ast::{
-    ast::{Argument, ArrowFunctionExpression, Expression, Function},
-    AstKind,
-};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAsyncEndpointHandlers(Box<NoAsyncEndpointHandlersConfig>);
@@ -296,8 +296,9 @@ impl NoAsyncEndpointHandlers {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("app.get('/', fooController)", None),

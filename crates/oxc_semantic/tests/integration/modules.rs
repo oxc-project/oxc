@@ -231,7 +231,10 @@ fn test_export_in_invalid_scope() {
     .expect_errors(true);
     test.has_some_symbol("x").contains_flags(SymbolFlags::Export).test();
     let SemanticBuilderReturn { semantic, errors } = test.build_with_errors();
-    assert!(!errors.is_empty(), "expected an export within a function to produce a check error, but no errors were produced");
+    assert!(
+        !errors.is_empty(),
+        "expected an export within a function to produce a check error, but no errors were produced"
+    );
     assert!(semantic.module_record().exported_bindings.is_empty());
 }
 

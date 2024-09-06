@@ -5,9 +5,8 @@ use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, AstNodeId, Semantic};
 use oxc_span::GetSpan;
 
-use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
-
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
+use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
 
 impl<'s, 'a> Symbol<'s, 'a> {
     /// Returns `true` if this function is use.
@@ -87,7 +86,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                         return b
                             .body
                             .first()
-                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)))
+                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)));
                     }
                     _ => return false,
                 },
@@ -176,11 +175,8 @@ impl NoUnusedVars {
         // find FormalParameters. Should be the next parent of param, but this
         // is safer.
         let Some((params, params_id)) = symbol.iter_parents().find_map(|p| {
-            if let AstKind::FormalParameters(params) = p.kind() {
-                Some((params, p.id()))
-            } else {
-                None
-            }
+            let params = p.kind().as_formal_parameters()?;
+            Some((params, p.id()))
         }) else {
             debug_assert!(false, "FormalParameter should always have a parent FormalParameters");
             return false;

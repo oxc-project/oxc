@@ -139,8 +139,8 @@ pub struct ResolveTask {
 
 #[napi]
 impl Task for ResolveTask {
-    type Output = ParseResult;
     type JsValue = ParseResult;
+    type Output = ParseResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
         Ok(parse_with_return(&self.source_text, &self.options))

@@ -40,12 +40,15 @@ declare_oxc_lint!(
     ///  - Prefer `Math.hypot(…)` over alternatives
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// Math.log(x) * Math.LOG10E;
     /// Math.sqrt(a * a + b * b);
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// Math.log10(x);
     /// Math.hypot(a, b);
     /// ```

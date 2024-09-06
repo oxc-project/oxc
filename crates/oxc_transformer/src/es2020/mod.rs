@@ -1,12 +1,13 @@
 mod nullish_coalescing_operator;
 mod options;
 
+use std::rc::Rc;
+
 pub use nullish_coalescing_operator::NullishCoalescingOperator;
 pub use options::ES2020Options;
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
-use std::rc::Rc;
 
 use crate::context::Ctx;
 

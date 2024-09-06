@@ -1,5 +1,4 @@
-use std::stringify;
-use std::{borrow::Cow, collections::HashMap};
+use std::{borrow::Cow, collections::HashMap, stringify};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
@@ -8,9 +7,9 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
-use crate::codegen::generated_header;
+use super::define_generator;
 use crate::{
-    codegen::LateCtx,
+    codegen::{generated_header, LateCtx},
     output,
     schema::{
         EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
@@ -18,8 +17,6 @@ use crate::{
     util::{TypeAnalysis, TypeWrapper},
     Generator, GeneratorOutput,
 };
-
-use super::define_generator;
 
 define_generator! {
     pub struct AstBuilderGenerator;
@@ -150,7 +147,6 @@ fn generate_enum_variant_builder_fn(
         .or_else(|| var_type.transparent_type_id())
         .and_then(|id| ctx.type_def(id))
         .expect("type not found!");
-    #[allow(clippy::single_match_else)]
     let (params, inner_builder) = match ty {
         TypeDef::Struct(it) => (get_struct_params(it, ctx), struct_builder_name(it)),
         TypeDef::Enum(_) => panic!("Unsupported!"),
@@ -306,7 +302,7 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
 }
 
 // TODO: remove me
-#[allow(dead_code)]
+#[expect(dead_code)]
 #[derive(Debug)]
 struct Param {
     is_default: bool,
@@ -415,7 +411,7 @@ impl<'p> DocComment<'p> {
     ///
     /// Each line will be turned into its own paragraph.
     // TODO: remove me
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub fn with_description_lines<L, S>(mut self, description: L) -> Self
     where
         S: Into<Cow<'static, str>>,

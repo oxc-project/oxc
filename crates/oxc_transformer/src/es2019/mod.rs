@@ -1,11 +1,12 @@
 mod optional_catch_binding;
 mod options;
 
+use std::rc::Rc;
+
 pub use optional_catch_binding::OptionalCatchBinding;
 pub use options::ES2019Options;
 use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
-use std::rc::Rc;
 
 use crate::context::Ctx;
 

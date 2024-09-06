@@ -94,8 +94,8 @@ impl Schema {
 }
 
 impl<'a> IntoIterator for &'a Schema {
-    type Item = &'a TypeDef;
     type IntoIter = std::slice::Iter<'a, TypeDef>;
+    type Item = &'a TypeDef;
 
     fn into_iter(self) -> Self::IntoIter {
         self.defs.iter()

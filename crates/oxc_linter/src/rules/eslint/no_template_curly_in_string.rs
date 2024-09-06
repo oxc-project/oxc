@@ -34,36 +34,38 @@ declare_oxc_lint!(
 
 impl Rule for NoTemplateCurlyInString {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::StringLiteral(literal) = node.kind() {
-            let text = literal.value.as_str();
-            if let Some(start_index) = text.find("${") {
-                let mut open_braces_count = 0;
-                let mut end_index = None;
+        let AstKind::StringLiteral(literal) = node.kind() else {
+            return;
+        };
 
-                for (i, c) in text[start_index..].char_indices() {
-                    let real_index = start_index + i;
-                    if c == '{' {
-                        open_braces_count += 1;
-                    } else if c == '}' && open_braces_count > 0 {
-                        open_braces_count -= 1;
-                        if open_braces_count == 0 {
-                            end_index = Some(real_index);
-                            break;
-                        }
+        let text = literal.value.as_str();
+        if let Some(start_index) = text.find("${") {
+            let mut open_braces_count = 0;
+            let mut end_index = None;
+
+            for (i, c) in text[start_index..].char_indices() {
+                let real_index = start_index + i;
+                if c == '{' {
+                    open_braces_count += 1;
+                } else if c == '}' && open_braces_count > 0 {
+                    open_braces_count -= 1;
+                    if open_braces_count == 0 {
+                        end_index = Some(real_index);
+                        break;
                     }
                 }
+            }
 
-                if let Some(end_index) = end_index {
-                    let literal_span_start = literal.span.start + 1;
-                    let match_start = u32::try_from(start_index)
-                        .expect("Conversion from usize to u32 failed for match_start");
-                    let match_end = u32::try_from(end_index + 1)
-                        .expect("Conversion from usize to u32 failed for match_end");
-                    ctx.diagnostic(no_template_curly_in_string_diagnostic(Span::new(
-                        literal_span_start + match_start,
-                        literal_span_start + match_end,
-                    )));
-                }
+            if let Some(end_index) = end_index {
+                let literal_span_start = literal.span.start + 1;
+                let match_start = u32::try_from(start_index)
+                    .expect("Conversion from usize to u32 failed for match_start");
+                let match_end = u32::try_from(end_index + 1)
+                    .expect("Conversion from usize to u32 failed for match_end");
+                ctx.diagnostic(no_template_curly_in_string_diagnostic(Span::new(
+                    literal_span_start + match_start,
+                    literal_span_start + match_end,
+                )));
             }
         }
     }

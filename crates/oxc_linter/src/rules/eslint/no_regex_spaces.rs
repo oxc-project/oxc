@@ -69,6 +69,7 @@ impl Rule for NoRegexSpaces {
 impl NoRegexSpaces {
     fn find_literal_to_report(literal: &RegExpLiteral, ctx: &LintContext) -> Option<Span> {
         let pattern_text = literal.regex.pattern.source_text(ctx.source_text());
+        let pattern_text = pattern_text.as_ref();
         if Self::has_exempted_char_class(pattern_text) {
             return None;
         }

@@ -45,11 +45,14 @@ declare_oxc_lint!(
     /// - Both `DOMString` and DOM node objects can be manipulated.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// oldChildNode.replaceWith(newChildNode);
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// oldChildNode.replaceWith(newChildNode);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// parentNode.replaceChild(newChildNode, oldChildNode);
     /// ```
     PreferModernDomApis,

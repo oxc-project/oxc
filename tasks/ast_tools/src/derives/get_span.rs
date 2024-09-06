@@ -2,13 +2,12 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::Ident;
 
+use super::{define_derive, Derive, DeriveOutput};
 use crate::{
     codegen::LateCtx,
     schema::{EnumDef, GetGenerics, StructDef, ToType, TypeDef},
-    util::ToIdent,
+    util::{ToIdent, TypeWrapper},
 };
-
-use super::{define_derive, Derive, DeriveOutput};
 
 define_derive! {
     pub struct DeriveGetSpan;
@@ -23,8 +22,19 @@ impl Derive for DeriveGetSpan {
         let self_type = quote!(&self);
         let result_type = quote!(Span);
         let result_expr = quote!(self.span);
+        let unbox = |it| quote!(#it.as_ref());
+        let reference = |it| quote!(&#it);
 
-        derive(Self::trait_name(), "span", &self_type, &result_type, &result_expr, def)
+        derive(
+            Self::trait_name(),
+            "span",
+            &self_type,
+            &result_type,
+            &result_expr,
+            def,
+            unbox,
+            reference,
+        )
     }
 
     fn prelude() -> TokenStream {
@@ -50,8 +60,19 @@ impl Derive for DeriveGetSpanMut {
         let self_type = quote!(&mut self);
         let result_type = quote!(&mut Span);
         let result_expr = quote!(&mut self.span);
+        let unbox = |it| quote!(&mut **#it);
+        let reference = |it| quote!(&mut #it);
 
-        derive(Self::trait_name(), "span_mut", &self_type, &result_type, &result_expr, def)
+        derive(
+            Self::trait_name(),
+            "span_mut",
+            &self_type,
+            &result_type,
+            &result_expr,
+            def,
+            unbox,
+            reference,
+        )
     }
 
     fn prelude() -> TokenStream {
@@ -64,37 +85,60 @@ impl Derive for DeriveGetSpanMut {
     }
 }
 
-fn derive(
+#[expect(clippy::too_many_arguments)]
+fn derive<U, R>(
     trait_name: &str,
     method_name: &str,
     self_type: &TokenStream,
     result_type: &TokenStream,
     result_expr: &TokenStream,
     def: &TypeDef,
-) -> TokenStream {
+    unbox: U,
+    reference: R,
+) -> TokenStream
+where
+    U: Fn(TokenStream) -> TokenStream,
+    R: Fn(TokenStream) -> TokenStream,
+{
     let trait_ident = trait_name.to_ident();
     let method_ident = method_name.to_ident();
     match &def {
-        TypeDef::Enum(def) => derive_enum(def, &trait_ident, &method_ident, self_type, result_type),
-        TypeDef::Struct(def) => {
-            derive_struct(def, &trait_ident, &method_ident, self_type, result_type, result_expr)
+        TypeDef::Enum(def) => {
+            derive_enum(def, &trait_ident, &method_ident, self_type, result_type, unbox)
         }
+        TypeDef::Struct(def) => derive_struct(
+            def,
+            &trait_ident,
+            &method_ident,
+            self_type,
+            result_type,
+            result_expr,
+            reference,
+        ),
     }
 }
 
-fn derive_enum(
+fn derive_enum<U>(
     def: &EnumDef,
     trait_name: &Ident,
     method_name: &Ident,
     self_type: &TokenStream,
     result_type: &TokenStream,
-) -> TokenStream {
+    unbox: U,
+) -> TokenStream
+where
+    U: Fn(TokenStream) -> TokenStream,
+{
     let target_type = def.to_type();
     let generics = def.generics();
 
     let matches = def.all_variants().map(|var| {
         let ident = var.ident();
-        quote!(Self :: #ident(it) => it.#method_name())
+        let mut it = quote!(it);
+        if var.fields.first().is_some_and(|it| it.typ.analysis().wrapper == TypeWrapper::Box) {
+            it = unbox(it);
+        }
+        quote!(Self :: #ident(it) => #trait_name :: #method_name(#it))
     });
 
     quote! {
@@ -108,21 +152,26 @@ fn derive_enum(
     }
 }
 
-fn derive_struct(
+fn derive_struct<R>(
     def: &StructDef,
     trait_name: &Ident,
     method_name: &Ident,
     self_type: &TokenStream,
     result_type: &TokenStream,
     result_expr: &TokenStream,
-) -> TokenStream {
+    reference: R,
+) -> TokenStream
+where
+    R: Fn(TokenStream) -> TokenStream,
+{
     let target_type = def.to_type();
     let generics = def.generics();
 
     let span_field = def.fields.iter().find(|field| field.markers.span);
     let result_expr = if let Some(span_field) = span_field {
         let ident = span_field.name.as_ref().map(ToIdent::to_ident).unwrap();
-        quote!(self.#ident.#method_name())
+        let reference = reference(quote!(self.#ident));
+        quote!(#trait_name :: #method_name (#reference))
     } else {
         result_expr.clone()
     };

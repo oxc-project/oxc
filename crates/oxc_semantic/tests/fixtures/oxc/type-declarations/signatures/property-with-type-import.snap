@@ -18,6 +18,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/type-declarations/signatures/
         "id": 2,
         "node": "TSInterfaceDeclaration",
         "symbols": []
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
       }
     ],
     "flags": "ScopeFlags(StrictMode | Top)",
@@ -35,6 +42,12 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/type-declarations/signatures/
             "id": 0,
             "name": "X",
             "node_id": 15
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 2,
+            "name": "X",
+            "node_id": 27
           }
         ]
       },
@@ -49,6 +62,12 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/type-declarations/signatures/
             "id": 1,
             "name": "B",
             "node_id": 19
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 3,
+            "name": "B",
+            "node_id": 32
           }
         ]
       },

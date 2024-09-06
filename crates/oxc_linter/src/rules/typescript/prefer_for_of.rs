@@ -33,13 +33,16 @@ declare_oxc_lint!(
     /// eliminate the need for an index variable and manual array access.
     ///
     /// ### Example
-    /// ```ts
-    /// // Bad
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```typescript
     /// for (let i = 0; i < arr.length; i++) {
     ///   console.log(arr[i]);
     /// }
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```typescript
     /// for (const item of arr) {
     ///   console.log(item);
     /// }

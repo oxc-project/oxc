@@ -182,9 +182,6 @@ pub(crate) mod macros;
 pub(crate) mod ts;
 
 use macros::inherit_variants;
-
-pub use self::{js::*, jsx::*, literal::*, ts::*};
-
 // Re-export AST types from other crates
 pub use oxc_span::{Atom, Language, LanguageVariant, ModuleKind, SourceType, Span};
 pub use oxc_syntax::{
@@ -193,3 +190,5 @@ pub use oxc_syntax::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
 };
+
+pub use self::{js::*, jsx::*, literal::*, ts::*};

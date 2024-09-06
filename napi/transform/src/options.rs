@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use napi::Either;
 use napi_derive::napi;
-
 use oxc_transformer::{
     ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, RewriteExtensionsMode,
     TypeScriptOptions,

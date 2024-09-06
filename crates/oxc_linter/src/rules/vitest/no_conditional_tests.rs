@@ -66,30 +66,29 @@ impl Rule for NoConditionalTests {
     }
 }
 
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) -> Option<()> {
     let node = possible_jest_node.node;
-    if let AstKind::CallExpression(call_expr) = node.kind() {
-        if is_type_of_jest_fn_call(
-            call_expr,
-            possible_jest_node,
-            ctx,
-            &[
-                JestFnKind::General(JestGeneralFnKind::Describe),
-                JestFnKind::General(JestGeneralFnKind::Test),
-            ],
-        ) {
-            let if_statement_node = ctx
-                .nodes()
-                .iter_parents(node.id())
-                .find(|node| matches!(node.kind(), AstKind::IfStatement(_)));
+    let call_expr = node.kind().as_call_expression()?;
 
-            let Some(node) = if_statement_node else { return };
+    if is_type_of_jest_fn_call(
+        call_expr,
+        possible_jest_node,
+        ctx,
+        &[
+            JestFnKind::General(JestGeneralFnKind::Describe),
+            JestFnKind::General(JestGeneralFnKind::Test),
+        ],
+    ) {
+        let if_statement_node = ctx
+            .nodes()
+            .iter_parents(node.id())
+            .find(|node| matches!(node.kind(), AstKind::IfStatement(_)))?;
 
-            if let AstKind::IfStatement(if_statement) = node.kind() {
-                ctx.diagnostic(no_conditional_tests(if_statement.span));
-            }
-        }
+        let if_statement = if_statement_node.kind().as_if_statement()?;
+        ctx.diagnostic(no_conditional_tests(if_statement.span));
     }
+
+    None
 }
 
 #[test]
