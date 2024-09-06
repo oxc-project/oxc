@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+### Features
+
+- 32d4bbb transformer: Add `TransformOptions::enable_all` method (#5495) (Boshen)
+- c59d8b3 transformer: Support all /regex/ to `new RegExp` transforms (#5387) (Dunqing)
+
+### Bug Fixes
+
+- 8f9627d transformer: RegExp transform do not transform invalid regexps (#5494) (overlookmotel)
+- 2060efc transformer: RegExp transform don't transform all RegExps (#5486) (overlookmotel)
+- cfe5497 transformer: Do not create double reference in JSX transform (#5414) (overlookmotel)
+- 0617249 transformer/nullish-coalescing-operator: Incorrect reference flags (#5408) (Dunqing)
+
+### Performance
+
+- ed8937e transformer: Memoize rope instance (#5518) (Dunqing)
+- bfab091 transformer: Store needed options only on `RegExp` (#5484) (overlookmotel)
+- b4765af transformer: Pre-calculate if unsupported patterns in RegExp transform (#5483) (overlookmotel)
+- 182ab91 transformer: Pre-calculate unsupported flags in RegExp transform (#5482) (overlookmotel)
+
+### Refactor
+
+- a96866d transformer: Re-order imports (#5499) (overlookmotel)
+- 6abde0a transformer: Clarify match in RegExp transform (#5498) (overlookmotel)
+- 09c522a transformer: RegExp transform report pattern parsing errors (#5496) (overlookmotel)
+- dd19823 transformer: RegExp transform do not take ownership of `Pattern` then reallocate it (#5492) (overlookmotel)
+- 2514cc9 transformer/react: Move all entry points to implementation of Traverse trait (#5473) (Dunqing)
+- c984219 transformer/typescript: Move all entry points to implementation of Traverse trait (#5422) (Dunqing)
+
 ## [0.26.0] - 2024-09-03
 
 - 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
