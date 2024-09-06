@@ -112,8 +112,8 @@ pub fn create_object_define_property<'a>(
     )
 }
 
-/// Port from `rolldown`: https://github.com/rolldown/rolldown/blob/main/crates/rolldown_utils/src/ecma_script.rs#L16-L51.
-pub fn legitimize_identifier_name(name: &str) -> Cow<str> {
+/// Port from `rolldown`: <https://github.com/rolldown/rolldown/blob/main/crates/rolldown_utils/src/ecma_script.rs#L16-L51>.
+fn legitimize_identifier_name(name: &str) -> Cow<str> {
     let mut legitimized = String::new();
     let mut chars_indices = name.char_indices();
 
