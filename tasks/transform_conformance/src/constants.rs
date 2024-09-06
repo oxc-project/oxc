@@ -57,8 +57,8 @@ pub(crate) const PLUGINS: &[&str] = &[
     // // Proposal
     // "babel-plugin-proposal-decorators",
 
-    // Tests port from esbuild
-    "esbuild-tests",
+    // RegExp tests ported from esbuild + a few additions
+    "regexp",
 ];
 
 pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
