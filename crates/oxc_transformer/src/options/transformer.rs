@@ -84,10 +84,7 @@ impl TransformOptions {
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
-            commonjs: CommonjsOptions {
-                transform_import_and_export: false,
-                ..Default::default()
-            }
+            commonjs: CommonjsOptions { transform_import_and_export: false, ..Default::default() },
         }
     }
 
