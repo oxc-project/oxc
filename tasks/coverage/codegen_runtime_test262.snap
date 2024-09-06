@@ -2,31 +2,7 @@ commit: d62fa93c
 
 codegen_runtime_test262 Summary:
 AST Parsed     : 18456/18456 (100.00%)
-Positive Passed: 17978/18456 (97.41%)
-tasks/coverage/test262/test/annexB/language/global-code/block-decl-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
-tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-a-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
-tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-decl-b-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
-tasks/coverage/test262/test/annexB/language/global-code/if-decl-else-stmt-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
-tasks/coverage/test262/test/annexB/language/global-code/if-decl-no-else-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
-tasks/coverage/test262/test/annexB/language/global-code/if-stmt-else-decl-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
-tasks/coverage/test262/test/annexB/language/global-code/switch-case-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
-tasks/coverage/test262/test/annexB/language/global-code/switch-dflt-global-init.js
-runtime error: Test262Error: descriptor should be enumerable
-
+Positive Passed: 17987/18456 (97.46%)
 tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 runtime error: Test262Error: descriptor value should be ; object value should be 
 
@@ -1054,10 +1030,7 @@ tasks/coverage/test262/test/language/expressions/prefix-increment/operator-prefi
 runtime error: Test262Error: Expected a ReferenceError but got a TypeError
 
 tasks/coverage/test262/test/language/global-code/decl-func.js
-runtime error: Test262Error: descriptor should be enumerable; descriptor should not be configurable
-
-tasks/coverage/test262/test/language/global-code/decl-var.js
-runtime error: Test262Error: descriptor should be enumerable
+runtime error: Test262Error: descriptor should not be configurable
 
 tasks/coverage/test262/test/language/literals/regexp/u-surrogate-pairs-atom-escape-decimal.js
 runtime error: Test262Error: Expected SameValue(«true», «false») to be true

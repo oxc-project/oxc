@@ -244,7 +244,7 @@ mod test {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new(source_text, source_type)
+        let semantic = SemanticBuilder::new(source_text)
             .with_trivias(ret.trivias)
             .with_build_jsdoc(true)
             .build(program)

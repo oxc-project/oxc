@@ -66,7 +66,6 @@ impl SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::Script,
             variant: LanguageVariant::Standard,
-            always_strict: false,
         }
     }
 
@@ -110,7 +109,6 @@ impl SourceType {
             language: Language::TypeScript,
             module_kind: ModuleKind::Module,
             variant: LanguageVariant::Standard,
-            always_strict: false,
         }
     }
 
@@ -150,7 +148,6 @@ impl SourceType {
             language: Language::TypeScriptDefinition,
             module_kind: ModuleKind::Module,
             variant: LanguageVariant::Standard,
-            always_strict: false,
         }
     }
 
@@ -185,12 +182,8 @@ impl SourceType {
         self.variant == LanguageVariant::Jsx
     }
 
-    pub fn always_strict(self) -> bool {
-        self.always_strict
-    }
-
     pub fn is_strict(self) -> bool {
-        self.is_module() || self.always_strict
+        self.is_module()
     }
 
     #[must_use]
@@ -232,12 +225,6 @@ impl SourceType {
         if yes {
             self.variant = LanguageVariant::Jsx;
         }
-        self
-    }
-
-    #[must_use]
-    pub const fn with_always_strict(mut self, yes: bool) -> Self {
-        self.always_strict = yes;
         self
     }
 
@@ -329,7 +316,7 @@ impl SourceType {
             _ => LanguageVariant::Standard,
         };
 
-        Ok(Self { language, module_kind, variant, always_strict: false })
+        Ok(Self { language, module_kind, variant })
     }
 }
 

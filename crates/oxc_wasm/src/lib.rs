@@ -189,7 +189,7 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         self.ast = program.serialize(&self.serializer)?;
 
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+        let semantic_ret = SemanticBuilder::new(source_text)
             .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
             .build_module_record(&path, &program)
@@ -201,7 +201,7 @@ impl Oxc {
             );
         }
 
-        self.run_linter(&run_options, source_text, source_type, &path, &trivias, &program);
+        self.run_linter(&run_options, source_text, &path, &trivias, &program);
 
         self.run_prettier(&run_options, source_text, source_type);
 
@@ -280,14 +280,13 @@ impl Oxc {
         &mut self,
         run_options: &OxcRunOptions,
         source_text: &str,
-        source_type: SourceType,
         path: &Path,
         trivias: &Trivias,
         program: &Program,
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-            let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            let semantic_ret = SemanticBuilder::new(source_text)
                 .with_cfg(true)
                 .with_trivias(trivias.clone())
                 .build_module_record(path, program)

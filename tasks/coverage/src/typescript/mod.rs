@@ -102,6 +102,10 @@ impl Case for TypeScriptCase {
         !self.error_files.is_empty()
     }
 
+    fn always_strict(&self) -> bool {
+        self.settings.always_strict
+    }
+
     fn run(&mut self) {
         let units = self.units.clone();
         for unit in units {
