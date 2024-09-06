@@ -1,6 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -35,40 +36,28 @@ impl Rule for NoAsyncAwait {
         match node.kind() {
             AstKind::Function(func_decl) => {
                 if func_decl.r#async {
-                    if let Some(AstKind::ObjectProperty(obj_prop)) =
-                        ctx.nodes().parent_kind(node.id())
-                    {
-                        ctx.diagnostic(no_async_await_diagnostic(Span::new(
-                            obj_prop.span.start,
-                            obj_prop.span.start + 5, // "async".len()
-                        )));
-                    } else {
-                        ctx.diagnostic(no_async_await_diagnostic(Span::new(
-                            func_decl.span.start,
-                            func_decl.span.start + 5,
-                        )));
-                    }
+                    report(node.id(), func_decl.span, ctx);
                 }
             }
             AstKind::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async {
-                    if let Some(AstKind::ObjectProperty(obj_prop)) =
-                        ctx.nodes().parent_kind(node.id())
-                    {
-                        ctx.diagnostic(no_async_await_diagnostic(Span::new(
-                            obj_prop.span.start,
-                            obj_prop.span.start + 5,
-                        )));
-                    } else {
-                        ctx.diagnostic(no_async_await_diagnostic(Span::new(
-                            arrow_expr.span.start,
-                            arrow_expr.span.start + 5,
-                        )));
-                    };
+                    report(node.id(), arrow_expr.span, ctx);
                 }
             }
             _ => {}
         }
+    }
+}
+
+fn report(node_id: AstNodeId, func_span: Span, ctx: &LintContext<'_>) {
+    /// "async".len()
+    const ASYNC_LEN: u32 = 5;
+
+    let parent = ctx.nodes().parent_kind(node_id);
+    if let Some(AstKind::ObjectProperty(obj_prop)) = parent {
+        ctx.diagnostic(no_async_await_diagnostic(Span::sized(obj_prop.span.start, ASYNC_LEN)));
+    } else {
+        ctx.diagnostic(no_async_await_diagnostic(Span::sized(func_span.start, ASYNC_LEN)));
     }
 }
 
