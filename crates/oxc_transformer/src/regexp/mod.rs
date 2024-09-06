@@ -113,9 +113,10 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut oxc_traverse::TraverseCtx<'a>,
     ) {
-        let Expression::RegExpLiteral(ref mut regexp) = expr else {
+        let Expression::RegExpLiteral(regexp) = expr else {
             return;
         };
+        let regexp = regexp.as_mut();
 
         let flags = regexp.regex.flags;
         let has_unsupported_flags = flags.intersects(self.unsupported_flags);
