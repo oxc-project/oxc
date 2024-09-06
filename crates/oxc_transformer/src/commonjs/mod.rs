@@ -21,12 +21,12 @@ use utils::import;
 
 pub struct Commonjs<'a> {
     ctx: Ctx<'a>,
-    _options: CommonjsOptions,
+    options: CommonjsOptions,
 }
 
 impl<'a> Commonjs<'a> {
     pub fn new(options: CommonjsOptions, ctx: Ctx<'a>) -> Self {
-        Self { ctx, _options: options }
+        Self { ctx, options }
     }
 }
 
@@ -167,6 +167,9 @@ impl<'a> Commonjs<'a> {
 
 impl<'a> Traverse<'a> for Commonjs<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if !self.options.transform_import_and_export {
+            return;
+        }
         let mut latest = self.ctx.ast.vec();
 
         for stmt in self.ctx.ast.move_vec(&mut program.body) {

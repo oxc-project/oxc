@@ -10,4 +10,6 @@ pub struct CommonjsOptions {
     pub loose: bool,
     #[serde(skip)]
     pub strict: bool,
+    #[serde(skip)]
+    pub transform_import_and_export: bool,
 }

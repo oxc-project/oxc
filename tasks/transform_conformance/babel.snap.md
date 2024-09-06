@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 321/1021
+Passed: 321/1024
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -2072,7 +2072,7 @@ failed to resolve query: failed to parse the rest of input: ...''
 
 
 
-# babel-plugin-transform-typescript (41/152)
+# babel-plugin-transform-typescript (41/154)
 * cast/as-expression/input.ts
   x Unresolved references mismatch:
   | after transform: ["T", "x"]
@@ -2788,6 +2788,16 @@ TS(18010)
    `----
 
 
+* exports/export=-to-cjs/input.ts
+  ! `export = <value>;` is only supported when compiling modules to CommonJS.
+  | Please consider using `export default <value>;`, or add @babel/plugin-
+  | transform-modules-commonjs to your Babel config.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/exports/export=-to-cjs/input.ts:1:1]
+ 1 | export = 0;
+   : ^^^^^^^^^^^
+   `----
+
+
 * exports/imported-types/input.ts
   x Bindings mismatch:
   | after transform: ScopeId(0): ["A", "B", "C"]
@@ -3041,6 +3051,19 @@ TS(18010)
   | --allowSyntheticDefaultImports option, or add @babel/plugin-transform-
   | modules-commonjs to your Babel config.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/import=-module/input.ts:1:1]
+ 1 | import lib = require("lib");
+   : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 2 | lib();
+   `----
+
+
+* imports/import=-module-to-cjs/input.ts
+  ! `import lib = require(...);` is only supported when compiling modules
+  | to CommonJS.
+  | Please consider using `import lib from '...';` alongside Typescript's
+  | --allowSyntheticDefaultImports option, or add @babel/plugin-transform-
+  | modules-commonjs to your Babel config.
+   ,-[tasks/coverage/babel/packages/babel-plugin-transform-typescript/test/fixtures/imports/import=-module-to-cjs/input.ts:1:1]
  1 | import lib = require("lib");
    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
  2 | lib();
@@ -4906,7 +4929,10 @@ TS(18010)
 
 
 
-# babel-plugin-transform-react-jsx (123/144)
+# babel-plugin-transform-react-jsx (123/145)
+* autoImport/after-polyfills-compiled-to-cjs/input.mjs
+
+
 * react/dont-coerce-expression-containers/input.js
   x Unresolved reference IDs mismatch for "Text":
   | after transform: [ReferenceId(0), ReferenceId(1)]

@@ -1,9 +1,9 @@
 use crate::commonjs::utils::define::{create_object_define_property, legitimize_identifier_name};
 use crate::commonjs::utils::import::create_require;
-use oxc_allocator::{CloneIn, Vec};
+use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast::ast::{
-    BindingPatternKind, BindingRestElement, Declaration, ExportSpecifier, Expression,
-    FormalParameterKind, FunctionType, ModuleExportName, Statement, TSAccessibility,
+    ArrayPattern, BindingPatternKind, BindingRestElement, Declaration, ExportSpecifier, Expression,
+    FormalParameterKind, FunctionType, ModuleExportName, ObjectPattern, Statement, TSAccessibility,
     TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration, TSTypeParameterInstantiation,
     VariableDeclarationKind,
 };
@@ -128,7 +128,31 @@ pub fn create_declared_named_exports<'a>(
                             ),
                         ));
                     }
-                    _ => unreachable!(),
+                    BindingPatternKind::ObjectPattern(pattern) => {
+                        if let Some(assignment) = &decl.init {
+                            result.push(builder.statement_expression(
+                                SPAN,
+                                assignment.clone_in(builder.allocator),
+                            ));
+                            result.extend(create_object_pattern_recursive_exports(
+                                pattern.clone_in(builder.allocator),
+                                builder,
+                            ));
+                        }
+                    }
+                    BindingPatternKind::ArrayPattern(pattern) => {
+                        if let Some(assignment) = &decl.init {
+                            result.push(builder.statement_expression(
+                                SPAN,
+                                assignment.clone_in(builder.allocator),
+                            ));
+                            result.extend(create_array_pattern_recursive_exports(
+                                pattern.clone_in(builder.allocator),
+                                builder,
+                            ));
+                        }
+                    }
+                    _ => unimplemented!(),
                 }
             }
             result
@@ -179,6 +203,78 @@ pub fn create_declared_named_exports<'a>(
         }
         _ => unreachable!(),
     }
+}
+
+fn create_object_pattern_recursive_exports<'a>(
+    pattern: Box<ObjectPattern<'a>>,
+    builder: &'a AstBuilder,
+) -> Vec<'a, Statement<'a>> {
+    let mut result = builder.vec();
+    for prop in pattern.properties.iter() {
+        match &prop.value.kind {
+            BindingPatternKind::BindingIdentifier(id) => {
+                result.push(builder.statement_expression(
+                    SPAN,
+                    create_exports(
+                        builder.module_export_name_identifier_name(SPAN, id.name.as_str()),
+                        builder.expression_identifier_reference(SPAN, id.name.as_str()),
+                        builder,
+                    ),
+                ));
+            }
+            BindingPatternKind::ObjectPattern(pattern) => {
+                result.extend(create_object_pattern_recursive_exports(
+                    pattern.clone_in(builder.allocator),
+                    builder,
+                ));
+            }
+            BindingPatternKind::ArrayPattern(pattern) => {
+                result.extend(create_array_pattern_recursive_exports(
+                    pattern.clone_in(builder.allocator),
+                    builder,
+                ));
+            }
+            _ => unimplemented!(),
+        }
+    }
+    result
+}
+
+fn create_array_pattern_recursive_exports<'a>(
+    pattern: Box<ArrayPattern<'a>>,
+    builder: &'a AstBuilder,
+) -> Vec<'a, Statement<'a>> {
+    let mut result = builder.vec();
+    for pattern in pattern.elements.iter() {
+        if let Some(element) = pattern {
+            match &element.kind {
+                BindingPatternKind::BindingIdentifier(id) => {
+                    result.push(builder.statement_expression(
+                        SPAN,
+                        create_exports(
+                            builder.module_export_name_identifier_name(SPAN, id.name.as_str()),
+                            builder.expression_identifier_reference(SPAN, id.name.as_str()),
+                            builder,
+                        ),
+                    ));
+                }
+                BindingPatternKind::ObjectPattern(pattern) => {
+                    result.extend(create_object_pattern_recursive_exports(
+                        pattern.clone_in(builder.allocator),
+                        builder,
+                    ));
+                }
+                BindingPatternKind::ArrayPattern(pattern) => {
+                    result.extend(create_array_pattern_recursive_exports(
+                        pattern.clone_in(builder.allocator),
+                        builder,
+                    ));
+                }
+                _ => unimplemented!(),
+            }
+        }
+    }
+    result
 }
 
 /// Generate the `exports` bond for all listed exports, which uses `export { foo, bar, bar_foo as foobar }`.

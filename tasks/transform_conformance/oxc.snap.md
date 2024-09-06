@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 21/49
+Passed: 21/50
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -231,7 +231,7 @@ Passed: 21/49
 
 
 
-# babel-plugin-transform-react-jsx (6/27)
+# babel-plugin-transform-react-jsx (6/28)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
   x Symbol reference IDs mismatch:
   | after transform: SymbolId(9): [ReferenceId(23), ReferenceId(24),
@@ -604,6 +604,37 @@ Passed: 21/49
   x Unresolved references mismatch:
   | after transform: ["React"]
   | rebuilt        : ["$RefreshReg$", "$RefreshSig$", "React"]
+
+
+* refresh/includes-custom-hooks-into-the-signatures-when-commonjs-target-is-used/input.jsx
+  x Output mismatch
+  x Missing ScopeId
+
+  x Scope children mismatch:
+  | after transform: ScopeId(0): [ScopeId(1)]
+  | rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(5): [ReferenceId(6), ReferenceId(7),
+  | ReferenceId(9)]
+  | rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(5)]
+
+  x Symbol reference IDs mismatch:
+  | after transform: SymbolId(3): [ReferenceId(2), ReferenceId(10),
+  | ReferenceId(11)]
+  | rebuilt        : SymbolId(5): [ReferenceId(8), ReferenceId(11)]
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(6): Some("_s")
+  | rebuilt        : ReferenceId(0): None
+
+  x Reference symbol mismatch:
+  | after transform: ReferenceId(10): Some("_c")
+  | rebuilt        : ReferenceId(10): None
+
+  x Unresolved references mismatch:
+  | after transform: []
+  | rebuilt        : ["$RefreshReg$", "$RefreshSig$"]
 
 
 * refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
