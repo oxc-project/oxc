@@ -1891,9 +1891,9 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::MemberExpression(_) => {
-                if !self.current_reference_flags.is_type() {
-                    self.current_reference_flags = ReferenceFlags::Read;
-                }
+                // A.B = 1;
+                // ^^^ we can't treat A as Write reference, because it's the property(B) of A that change
+                self.current_reference_flags -= ReferenceFlags::Write;
             }
             AstKind::AssignmentTarget(_) => {
                 self.current_reference_flags |= ReferenceFlags::Write;
@@ -1966,8 +1966,7 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flags -= ReferenceFlags::Read;
                 }
             }
-            AstKind::MemberExpression(_)
-            | AstKind::ExportNamedDeclaration(_)
+            AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {

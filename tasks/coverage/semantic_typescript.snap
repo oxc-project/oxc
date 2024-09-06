@@ -16756,6 +16756,9 @@ rebuilt        : SymbolId(20): [ReferenceId(14), ReferenceId(15), ReferenceId(17
 Symbol reference IDs mismatch:
 after transform: SymbolId(25): [ReferenceId(13)]
 rebuilt        : SymbolId(21): []
+Reference flags mismatch:
+after transform: ReferenceId(12): ReferenceFlags(Write)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | Write)
 
 tasks/coverage/typescript/tests/cases/compiler/missingSemicolonInModuleSpecifier.ts
 semantic error: Bindings mismatch:
