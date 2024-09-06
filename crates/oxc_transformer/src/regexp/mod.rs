@@ -177,9 +177,10 @@ impl<'a> Traverse<'a> for RegExp<'a> {
             ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, pattern_source)),
         );
 
-        let flags = regexp.regex.flags.to_string();
-        let flags = ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags));
-        arguments.push(flags);
+        let flags_str = flags.to_string();
+        let flags_str =
+            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags_str));
+        arguments.push(flags_str);
 
         *expr = ctx.ast.expression_new(
             regexp.span,
