@@ -39,6 +39,10 @@
 //! #### Set notation + properties of strings (`v`)
 //! - @babel/plugin-transform-unicode-sets-regex: <https://babeljs.io/docs/en/babel-plugin-proposal-unicode-sets-regex>
 //! - TC39 Proposal: <https://github.com/tc39/proposal-regexp-set-notation>
+//!
+//! TODO(improve-on-babel): We could convert to plain `RegExp(...)` instead of `new RegExp(...)`.
+//! TODO(improve-on-babel): When flags is empty, we could output `RegExp("(?<=x)")` instead of `RegExp("(?<=x)", "")`.
+//! (actually these would be improvements on ESBuild, not Babel)
 
 use std::borrow::Cow;
 
