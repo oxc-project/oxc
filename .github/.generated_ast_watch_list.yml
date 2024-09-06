@@ -27,4 +27,5 @@ src:
   - 'crates/oxc_ast/src/generated/derive_content_hash.rs'
   - 'crates/oxc_regular_expression/src/generated/derive_content_hash.rs'
   - 'crates/oxc_syntax/src/generated/derive_content_hash.rs'
-  - 'tasks/ast_codegen/src/**'
+  - 'tasks/ast_codegen/src/**/*'
+  - '.github/.generated_ast_watch_list.yml'

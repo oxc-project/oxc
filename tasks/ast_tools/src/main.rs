@@ -125,7 +125,8 @@ fn write_ci_filter(
         push_item(side_effect.as_str());
     }
 
-    push_item("tasks/ast_codegen/src/**");
+    push_item("tasks/ast_codegen/src/**/*");
+    push_item(output_path);
 
     write_all_to(output.as_bytes(), output_path)
 }
