@@ -18,21 +18,18 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad1.js
-    ///
-    /// // There is a default export.
-    /// export const foo = 'foo';
-    /// const bar = 'bar';
     /// export default 'bar';
-    /// ```
     ///
-    /// ```javascript
-    /// // bad2.js
-    ///
-    /// // There is a default export.
     /// const foo = 'foo';
     /// export { foo as default }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// export const foo = 'foo';
+    /// export const bar = 'bar';
     /// ```
     ///
     NoDefaultExport,

@@ -24,10 +24,10 @@ declare_oxc_lint!(
     ///
     /// Private class members that are declared and not used anywhere in the code are most likely an error due to incomplete refactoring. Such class members take up space in the code and can lead to confusion by readers.
     ///
-    /// ### Example
-    /// ```javascript
+    /// ### Examples
     ///
-    /// /// bad
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// class A {
     ///		#unusedMember = 5;
     ///	}
@@ -54,15 +54,17 @@ declare_oxc_lint!(
     ///			get #unusedAccessor() {}
     ///			set #unusedAccessor(value) {}
     ///	}
+    /// ```
     ///
-    /// /// Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// class A {
     ///		#usedMember = 42;
     ///		method() {
     ///				return this.#usedMember;
     ///		}
     ///	}
-
+    ///
     ///	class B {
     ///			#usedMethod() {
     ///					return 42;
@@ -71,7 +73,7 @@ declare_oxc_lint!(
     ///					return this.#usedMethod();
     ///			}
     ///	}
-
+    ///
     ///	class C {
     ///			get #usedAccessor() {}
     ///			set #usedAccessor(value) {}

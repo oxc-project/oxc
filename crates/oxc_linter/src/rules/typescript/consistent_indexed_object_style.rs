@@ -28,28 +28,27 @@ enum ConsistentIndexedObjectStyleConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Require or disallow the `Record` type.
     ///
     /// ### Why is this bad?
+    ///
     /// Inconsistent style for indexed object types can harm readability in a project.
     ///
-    /// ### Example
-    /// With "record":
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
-    /// // bad
     /// interface Foo {
     ///  [key: string]: unknown;
-    ///}
+    /// }
     /// type Foo = {
     ///  [key: string]: unknown;
-    ///};
+    /// };
     /// ```
     ///
-    /// With "index-signature":
-    ///
+    /// Examples of **correct** code for this rule:
     /// ```ts
-    /// // bad
     /// type Foo = Record<string, unknown>;
     /// ```
     ConsistentIndexedObjectStyle,

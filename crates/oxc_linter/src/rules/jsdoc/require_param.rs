@@ -23,20 +23,25 @@ pub struct RequireParam(Box<RequireParamConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that all function parameters are documented with JSDoc `@param` tags.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is aimed at enforcing code quality and maintainability by requiring that all function parameters are documented.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @param foo */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @param foo */
     /// function quux (foo, bar) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @param foo */
+    /// function quux (foo) {}
     /// ```
     RequireParam,
     pedantic,

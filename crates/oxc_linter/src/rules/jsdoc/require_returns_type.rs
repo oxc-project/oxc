@@ -21,19 +21,24 @@ pub struct RequireReturnsType;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that `@returns` tag has a type value (in curly brackets).
     ///
     /// ### Why is this bad?
+    ///
     /// A `@returns` tag should have a type value.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @returns {string} */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @returns */
+    /// function quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @returns {string} */
     /// function quux (foo) {}
     /// ```
     RequireReturnsType,

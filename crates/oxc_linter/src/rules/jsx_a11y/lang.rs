@@ -36,19 +36,19 @@ declare_oxc_lint!(
     /// and access website in more than one language.
     ///
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// // good
-    /// ```jsx
-    /// <html lang="en">
-    /// <html lang="en-US">
-    /// ```
-    ///
-    /// // bad
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <html>
     /// <html lang="foo">
     /// ````
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <html lang="en">
+    /// <html lang="en-US">
+    /// ```
     ///
     /// ### Resources
     /// - [eslint-plugin-jsx-a11y/lang](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/lang.md)

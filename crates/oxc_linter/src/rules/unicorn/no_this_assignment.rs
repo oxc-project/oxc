@@ -26,9 +26,10 @@ declare_oxc_lint!(
     ///
     /// Assigning `this` to a variable is unnecessary and confusing.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // fail
     /// const foo = this;
     /// class Bar {
     /// 	method() {
@@ -37,8 +38,10 @@ declare_oxc_lint!(
     /// }
     ///
     /// new Bar().method();
+    /// ```
     ///
-    /// // pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// class Bar {
     /// 	constructor(fooInstance) {
     /// 		this.fooInstance = fooInstance;

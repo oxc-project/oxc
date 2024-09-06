@@ -34,12 +34,15 @@ declare_oxc_lint!(
     ///
     /// The `replaceAll` method replaces all occurrences of a string with another string. If the global flag (g) is not used in the regular expression, only the first occurrence of the string will be replaced.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Bad: The global flag (g) is missing in the regular expression.
-    /// withSpaces.replaceAll(/\s+/, ',');
+    /// ### Examples
     ///
-    /// // Good: The global flag (g) is used in the regular expression.
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// withSpaces.replaceAll(/\s+/, ',');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// withSpaces.replaceAll(/\s+/g, ',');
     /// ```
     BadReplaceAllArg,
