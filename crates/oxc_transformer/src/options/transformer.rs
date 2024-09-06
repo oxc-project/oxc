@@ -55,6 +55,35 @@ pub struct TransformOptions {
 }
 
 impl TransformOptions {
+    /// Explicitly enable all plugins that are ready, mainly for testing purposes.
+    pub fn enable_all() -> Self {
+        Self {
+            cwd: PathBuf::new(),
+            assumptions: CompilerAssumptions::default(),
+            typescript: TypeScriptOptions::default(),
+            react: ReactOptions { development: true, ..ReactOptions::default() },
+            regexp: RegExpOptions {
+                sticky_flag: true,
+                unicode_flag: true,
+                dot_all_flag: true,
+                look_behind_assertions: true,
+                named_capture_groups: true,
+                unicode_property_escapes: true,
+                match_indices: true,
+                set_notation: true,
+            },
+            es2015: ES2015Options {
+                // Turned off because it is not ready.
+                arrow_function: None,
+            },
+            es2016: ES2016Options { exponentiation_operator: true },
+            es2018: ES2018Options { object_rest_spread: Some(ObjectRestSpreadOptions::default()) },
+            es2019: ES2019Options { optional_catch_binding: true },
+            es2020: ES2020Options { nullish_coalescing_operator: true },
+            es2021: ES2021Options { logical_assignment_operators: true },
+        }
+    }
+
     fn from_targets_and_bugfixes(targets: Option<&Versions>, bugfixes: bool) -> Self {
         Self {
             es2015: ES2015Options::from_targets_and_bugfixes(targets, bugfixes),
