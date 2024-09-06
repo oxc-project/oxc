@@ -150,6 +150,7 @@ mod typescript {
     pub mod no_extra_non_null_assertion;
     pub mod no_extraneous_class;
     pub mod no_import_type_side_effects;
+    pub mod no_magic_numbers;
     pub mod no_misused_new;
     pub mod no_namespace;
     pub mod no_non_null_asserted_nullish_coalescing;
@@ -502,7 +503,6 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
-    eslint::no_multi_str,
     eslint::no_label_var,
     eslint::require_await,
     eslint::no_compare_neg_zero,
@@ -537,6 +537,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_irregular_whitespace,
     eslint::no_iterator,
     eslint::no_loss_of_precision,
+    eslint::no_multi_str,
     eslint::no_new,
     eslint::no_new_func,
     eslint::no_new_wrappers,
@@ -597,6 +598,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_explicit_any,
     typescript::no_extra_non_null_assertion,
     typescript::no_import_type_side_effects,
+    typescript::no_magic_numbers,
     typescript::no_misused_new,
     typescript::no_namespace,
     typescript::no_non_null_asserted_optional_chain,
