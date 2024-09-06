@@ -7,6 +7,7 @@ use crate::{
     derives::{Derive, DeriveOutput},
     fmt::pretty_print,
     generators::{Generator, GeneratorOutput},
+    log, logln,
     passes::Pass,
     rust_ast::{self, AstRef},
     schema::{lower_ast_types, Schema, TypeDef},
@@ -39,11 +40,10 @@ impl SideEffect {
         Ok(())
     }
 
-    #[expect(clippy::unnecessary_wraps)]
-    pub fn path(&self) -> Option<String> {
+    pub fn path(&self) -> String {
         let Self(path, _) = self;
         let path = path.to_string_lossy();
-        Some(path.replace('\\', "/"))
+        path.replace('\\', "/")
     }
 }
 
@@ -63,7 +63,6 @@ impl From<GeneratorOutput> for SideEffect {
 pub trait Runner {
     type Context;
     type Output;
-    #[expect(dead_code)]
     fn name(&self) -> &'static str;
     fn run(&mut self, ctx: &Self::Context) -> Result<Self::Output>;
 }
@@ -185,28 +184,49 @@ impl AstCodegen {
         // early passes
         let ctx = {
             let ctx = EarlyCtx::new(modules);
-            _ = self
-                .passes
-                .into_iter()
-                .map(|mut runner| runner.run(&ctx))
-                .collect::<Result<Vec<_>>>()?;
+            for mut runner in self.passes {
+                let name = runner.name();
+                log!("Pass {name}... ");
+                runner.run(&ctx)?;
+                logln!("Done!");
+            }
             ctx.into_late_ctx()
         };
 
         let derives = self
             .derives
             .into_iter()
-            .map(|mut runner| runner.run(&ctx))
+            .map(|mut runner| {
+                let name = runner.name();
+                log!("Derive {name}... ");
+                let result = runner.run(&ctx);
+                if result.is_ok() {
+                    logln!("Done!");
+                } else {
+                    logln!("Fail!");
+                }
+                result
+            })
             .map_ok(|output| output.0.into_iter().map(SideEffect::from))
             .flatten_ok();
 
         let outputs = self
             .generators
             .into_iter()
-            .map(|mut runner| runner.run(&ctx))
-            .map_ok(SideEffect::from)
-            .chain(derives)
-            .collect::<Result<Vec<_>>>()?;
+            .map(|mut runner| {
+                let name = runner.name();
+                log!("Generate {name}... ");
+                let result = runner.run(&ctx);
+                if result.is_ok() {
+                    logln!("Done!");
+                } else {
+                    logln!("Fail!");
+                }
+                result
+            })
+            .map_ok(SideEffect::from);
+
+        let outputs = derives.chain(outputs).collect::<Result<Vec<_>>>()?;
 
         Ok(AstCodegenResult { outputs, schema: ctx.schema })
     }
