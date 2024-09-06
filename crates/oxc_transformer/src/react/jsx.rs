@@ -371,19 +371,13 @@ impl<'a> Traverse<'a> for ReactJsx<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_expr = match expr {
-            Expression::JSXElement(e) => {
-                Some(self.transform_jsx(&JSXElementOrFragment::Element(e), ctx))
-            }
+        *expr = match expr {
+            Expression::JSXElement(e) => self.transform_jsx(&JSXElementOrFragment::Element(e), ctx),
             Expression::JSXFragment(e) => {
-                Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx))
+                self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
             }
-            _ => None,
+            _ => return,
         };
-
-        if let Some(new_expr) = new_expr {
-            *expr = new_expr;
-        }
     }
 }
 
