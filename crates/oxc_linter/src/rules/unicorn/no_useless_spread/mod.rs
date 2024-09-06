@@ -1,5 +1,6 @@
 mod const_eval;
 
+use const_eval::{is_array_from, is_new_typed_array, ConstEval};
 use oxc_ast::{
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
@@ -20,7 +21,6 @@ use crate::{
     rule::Rule,
     AstNode,
 };
-use const_eval::{is_array_from, is_new_typed_array, ConstEval};
 
 fn spread_in_list(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Using a spread operator here creates a new {x1} unnecessarily."))
@@ -307,7 +307,7 @@ fn check_useless_iterable_to_array<'a>(
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
-            if for_of_stmt.right.without_parenthesized().span() == array_expr.span {
+            if for_of_stmt.right.without_parentheses().span() == array_expr.span {
                 ctx.diagnostic(iterable_to_array_in_for_of(span));
                 return true;
             }

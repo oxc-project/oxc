@@ -7878,19 +7878,23 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - this
+    /// - this_span
     /// - type_annotation
     #[inline]
     pub fn ts_this_parameter<T1>(
         self,
         span: Span,
-        this: IdentifierName<'a>,
+        this_span: Span,
         type_annotation: T1,
     ) -> TSThisParameter<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
-        TSThisParameter { span, this, type_annotation: type_annotation.into_in(self.allocator) }
+        TSThisParameter {
+            span,
+            this_span,
+            type_annotation: type_annotation.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`TSThisParameter`] and stores it in the memory arena.
@@ -7899,19 +7903,19 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - this
+    /// - this_span
     /// - type_annotation
     #[inline]
     pub fn alloc_ts_this_parameter<T1>(
         self,
         span: Span,
-        this: IdentifierName<'a>,
+        this_span: Span,
         type_annotation: T1,
     ) -> Box<'a, TSThisParameter<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(self.ts_this_parameter(span, this, type_annotation), self.allocator)
+        Box::new_in(self.ts_this_parameter(span, this_span, type_annotation), self.allocator)
     }
 
     /// Builds a [`TSEnumDeclaration`]
@@ -12899,6 +12903,26 @@ impl<'a> AstBuilder<'a> {
         JSXElementName::MemberExpression(inner.into_in(self.allocator))
     }
 
+    /// Build a [`JSXElementName::ThisExpression`]
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn jsx_element_name_this_expression(self, span: Span) -> JSXElementName<'a> {
+        JSXElementName::ThisExpression(self.alloc(self.this_expression(span)))
+    }
+
+    /// Convert a [`ThisExpression`] into a [`JSXElementName::ThisExpression`]
+    #[inline]
+    pub fn jsx_element_name_from_this_expression<T>(self, inner: T) -> JSXElementName<'a>
+    where
+        T: IntoIn<'a, Box<'a, ThisExpression>>,
+    {
+        JSXElementName::ThisExpression(inner.into_in(self.allocator))
+    }
+
     /// Builds a [`JSXNamespacedName`]
     ///
     /// If you want the built node to be allocated in the memory arena, use [`AstBuilder::alloc_jsx_namespaced_name`] instead.
@@ -13034,6 +13058,32 @@ impl<'a> AstBuilder<'a> {
         T: IntoIn<'a, Box<'a, JSXMemberExpression<'a>>>,
     {
         JSXMemberExpressionObject::MemberExpression(inner.into_in(self.allocator))
+    }
+
+    /// Build a [`JSXMemberExpressionObject::ThisExpression`]
+    ///
+    /// This node contains a [`ThisExpression`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    #[inline]
+    pub fn jsx_member_expression_object_this_expression(
+        self,
+        span: Span,
+    ) -> JSXMemberExpressionObject<'a> {
+        JSXMemberExpressionObject::ThisExpression(self.alloc(self.this_expression(span)))
+    }
+
+    /// Convert a [`ThisExpression`] into a [`JSXMemberExpressionObject::ThisExpression`]
+    #[inline]
+    pub fn jsx_member_expression_object_from_this_expression<T>(
+        self,
+        inner: T,
+    ) -> JSXMemberExpressionObject<'a>
+    where
+        T: IntoIn<'a, Box<'a, ThisExpression>>,
+    {
+        JSXMemberExpressionObject::ThisExpression(inner.into_in(self.allocator))
     }
 
     /// Builds a [`JSXExpressionContainer`]

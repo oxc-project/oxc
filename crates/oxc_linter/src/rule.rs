@@ -203,6 +203,7 @@ impl RuleFixMeta {
             }
         }
     }
+
     pub fn emoji(self) -> Option<&'static str> {
         match self {
             Self::None => None,
@@ -254,8 +255,9 @@ impl RuleWithSeverity {
 
 #[cfg(test)]
 mod test {
-    use crate::rules::RULES;
     use markdown::{to_html_with_options, Options};
+
+    use crate::rules::RULES;
 
     #[test]
     fn ensure_documentation() {

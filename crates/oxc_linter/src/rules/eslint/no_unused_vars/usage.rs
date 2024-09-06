@@ -163,7 +163,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                         return b
                             .body
                             .first()
-                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)))
+                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)));
                     }
                     _ => return false,
                 },
@@ -603,7 +603,8 @@ impl<'s, 'a> Symbol<'s, 'a> {
         let decl_scope_id = self.scope_id();
         let call_scope_id = self.get_ref_scope(reference);
         let Some(container_id) = self.declaration().kind().get_container_scope_id() else {
-            debug_assert!(false,
+            debug_assert!(
+                false,
                 "Found a function call or or new expr reference on a node flagged as a function or class, but the symbol's declaration node has no scope id. It should always be a container."
             );
             return false;
@@ -667,7 +668,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                     continue;
                 }
                 AstKind::VariableDeclarator(decl) if needs_variable_identifier => {
-                    return decl.id.get_binding_identifier().and_then(|id| id.symbol_id.get())
+                    return decl.id.get_binding_identifier().and_then(|id| id.symbol_id.get());
                 }
                 AstKind::AssignmentTarget(target) if needs_variable_identifier => {
                     return match target {
@@ -676,7 +677,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                             .get()
                             .and_then(|rid| self.symbols().get_reference(rid).symbol_id()),
                         _ => None,
-                    }
+                    };
                 }
                 AstKind::Program(_) => {
                     return None;

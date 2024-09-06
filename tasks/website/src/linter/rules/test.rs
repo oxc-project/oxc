@@ -1,12 +1,12 @@
-use markdown::{to_html_with_options, Options};
-use oxc_diagnostics::NamedSource;
-use scraper::{ElementRef, Html, Selector};
 use std::sync::{Arc, OnceLock};
 
+use markdown::{to_html_with_options, Options};
 use oxc_allocator::Allocator;
+use oxc_diagnostics::NamedSource;
 use oxc_linter::table::RuleTable;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use scraper::{ElementRef, Html, Selector};
 
 use super::{render_rule_docs_page, render_rules_table};
 

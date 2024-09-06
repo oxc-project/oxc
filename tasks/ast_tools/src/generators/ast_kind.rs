@@ -1,7 +1,9 @@
+use convert_case::{Case, Casing};
 use itertools::Itertools;
-use quote::quote;
-use syn::{parse_quote, Arm, Ident, Type, Variant};
+use quote::{format_ident, quote};
+use syn::{parse_quote, Arm, Ident, ImplItemFn, Type, Variant};
 
+use super::define_generator;
 use crate::{
     codegen::{generated_header, LateCtx},
     output,
@@ -9,8 +11,6 @@ use crate::{
     util::ToIdent,
     Generator, GeneratorOutput,
 };
-
-use super::define_generator;
 
 define_generator! {
     pub struct AstKindGenerator;
@@ -154,6 +154,25 @@ impl Generator for AstKindGenerator {
             .map(|(ident, _)| parse_quote!(Self :: #ident(it) => it.span()))
             .collect_vec();
 
+        let as_ast_kind_impls: Vec<ImplItemFn> = have_kinds
+            .iter()
+            .map(|(ident, typ)| {
+                let snake_case_name =
+                    format_ident!("as_{}", ident.to_string().to_case(Case::Snake));
+                parse_quote!(
+                    ///@@line_break
+                    #[inline]
+                    pub fn #snake_case_name(&self) -> Option<&'a #typ> {
+                        if let Self::#ident(v) = self {
+                            Some(*v)
+                        } else {
+                            None
+                        }
+                    }
+                )
+            })
+            .collect_vec();
+
         let header = generated_header!();
 
         GeneratorOutput(
@@ -188,6 +207,11 @@ impl Generator for AstKindGenerator {
                             #(#span_matches),*,
                         }
                     }
+                }
+
+                ///@@line_break
+                impl<'a> AstKind<'a> {
+                    #(#as_ast_kind_impls)*
                 }
             },
         )

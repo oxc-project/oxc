@@ -1,12 +1,11 @@
 use serde::Serialize;
 
+use super::{with_either, TypeName};
 use crate::{
     markers::{DeriveAttributes, ScopeAttribute, ScopeMarkers, VisitMarkers},
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
-
-use super::{with_either, TypeName};
 
 #[derive(Debug, Serialize)]
 #[serde(untagged)]

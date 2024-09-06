@@ -69,7 +69,7 @@ lazy_static! {
 ///
 /// We use this when inserting outer attributes (`#![allow(unused)]`) or plain comments (`//` not `///`).
 /// `quote!` macro ignores plain comments, so it's not possible to produce them otherwise.
-#[allow(dead_code)] // `insert!` macro is not currently used
+#[expect(dead_code)] // `insert!` macro is not currently used
 struct InsertReplacer;
 
 impl Replacer for InsertReplacer {
@@ -109,7 +109,7 @@ lazy_static! {
 ///
 /// We use `endl!();` because `quote!` macro ignores whitespace,
 /// so we have to use another means to generate line breaks.
-#[allow(dead_code)] // `endl!` macro is not currently used
+#[expect(dead_code)] // `endl!` macro is not currently used
 struct EndlReplacer;
 
 impl Replacer for EndlReplacer {

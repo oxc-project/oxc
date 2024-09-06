@@ -2,13 +2,12 @@ mod fix;
 
 use std::borrow::Cow;
 
+pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
 use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
 use crate::LintContext;
-
-pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -171,6 +170,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     #[allow(clippy::unused_self)]
     pub fn codegen(self) -> CodeGenerator<'a> {
         CodeGenerator::new()
+            .with_source_text(self.source_text())
             .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
     }
 

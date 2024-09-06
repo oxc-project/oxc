@@ -9,9 +9,9 @@ use oxc_syntax::{
     symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 
-use super::{diagnostics, utils::get_line_column};
+use super::diagnostics;
 pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
@@ -291,7 +291,6 @@ impl<'a> Pragma<'a> {
     }
 }
 
-// Transforms
 impl<'a> ReactJsx<'a> {
     pub fn new(options: ReactOptions, ctx: Ctx<'a>) -> Self {
         let bindings = match options.runtime {
@@ -364,31 +363,31 @@ impl<'a> ReactJsx<'a> {
             bindings,
         }
     }
+}
 
-    pub fn transform_program_on_exit(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+impl<'a> Traverse<'a> for ReactJsx<'a> {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.add_runtime_imports(program, ctx);
     }
 
-    pub fn transform_jsx_element(
-        &mut self,
-        e: &JSXElement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        self.transform_jsx(&JSXElementOrFragment::Element(e), ctx)
-    }
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let new_expr = match expr {
+            Expression::JSXElement(e) => {
+                Some(self.transform_jsx(&JSXElementOrFragment::Element(e), ctx))
+            }
+            Expression::JSXFragment(e) => {
+                Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx))
+            }
+            _ => None,
+        };
 
-    pub fn transform_jsx_fragment(
-        &mut self,
-        e: &JSXFragment<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
+        if let Some(new_expr) = new_expr {
+            *expr = new_expr;
+        }
     }
+}
 
+impl<'a> ReactJsx<'a> {
     fn is_script(&self) -> bool {
         self.ctx.source_type.is_script()
     }
@@ -396,11 +395,8 @@ impl<'a> ReactJsx<'a> {
     fn ast(&self) -> AstBuilder<'a> {
         self.ctx.ast
     }
-}
 
-// Add imports
-impl<'a> ReactJsx<'a> {
-    pub fn add_runtime_imports(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn add_runtime_imports(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.bindings.is_classic() {
             if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
                 program.body.insert(0, stmt);
@@ -426,50 +422,7 @@ impl<'a> ReactJsx<'a> {
 
         program.body.splice(index..index, imports);
     }
-}
 
-enum JSXElementOrFragment<'a, 'b> {
-    Element(&'b JSXElement<'a>),
-    Fragment(&'b JSXFragment<'a>),
-}
-
-impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Element(e) => e.span,
-            Self::Fragment(e) => e.span,
-        }
-    }
-
-    fn children(&self) -> &'b Vec<'a, JSXChild<'a>> {
-        match self {
-            Self::Element(e) => &e.children,
-            Self::Fragment(e) => &e.children,
-        }
-    }
-
-    fn is_fragment(&self) -> bool {
-        matches!(self, Self::Fragment(_))
-    }
-
-    /// The react jsx/jsxs transform falls back to `createElement` when an explicit `key` argument comes after a spread
-    /// <https://github.com/microsoft/TypeScript/blob/6134091642f57c32f50e7b5604635e4d37dd19e8/src/compiler/transformers/jsx.ts#L264-L278>
-    fn has_key_after_props_spread(&self) -> bool {
-        let Self::Element(e) = self else { return false };
-        let mut spread = false;
-        for attr in &e.opening_element.attributes {
-            if matches!(attr, JSXAttributeItem::SpreadAttribute(_)) {
-                spread = true;
-            } else if spread && matches!(attr, JSXAttributeItem::Attribute(a) if a.is_key()) {
-                return true;
-            }
-        }
-        false
-    }
-}
-
-// Transform jsx
-impl<'a> ReactJsx<'a> {
     /// ## Automatic
     /// ### Element
     /// Builds JSX into:
@@ -607,7 +560,7 @@ impl<'a> ReactJsx<'a> {
                 if let Some(span) = source_attr_span {
                     self.jsx_source.report_error(span);
                 } else {
-                    let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
+                    let (line, column) = self.jsx_source.get_line_column(e.span().start);
                     properties.push(
                         self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
                     );
@@ -661,7 +614,7 @@ impl<'a> ReactJsx<'a> {
                     if let Some(span) = source_attr_span {
                         self.jsx_source.report_error(span);
                     } else {
-                        let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
+                        let (line, column) = self.jsx_source.get_line_column(e.span().start);
                         let expr = self.jsx_source.get_source_object(line, column, ctx);
                         arguments.push(Argument::from(expr));
                     }
@@ -700,11 +653,7 @@ impl<'a> ReactJsx<'a> {
     fn transform_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(ident) => {
-                if ident.name == "this" {
-                    self.ast().expression_this(ident.span)
-                } else {
-                    self.ast().expression_string_literal(ident.span, &ident.name)
-                }
+                self.ast().expression_string_literal(ident.span, ident.name.clone())
             }
             JSXElementName::IdentifierReference(ident) => {
                 self.ast().expression_from_identifier_reference(ident.as_ref().clone())
@@ -718,6 +667,7 @@ impl<'a> ReactJsx<'a> {
                 }
                 self.ast().expression_string_literal(namespaced.span, namespaced.to_string())
             }
+            JSXElementName::ThisExpression(expr) => self.ast().expression_this(expr.span),
         }
     }
 
@@ -775,14 +725,13 @@ impl<'a> ReactJsx<'a> {
     fn transform_jsx_member_expression(&self, expr: &JSXMemberExpression<'a>) -> Expression<'a> {
         let object = match &expr.object {
             JSXMemberExpressionObject::IdentifierReference(ident) => {
-                if ident.name == "this" {
-                    self.ast().expression_this(ident.span)
-                } else {
-                    self.ast().expression_from_identifier_reference(ident.as_ref().clone())
-                }
+                self.ast().expression_from_identifier_reference(ident.as_ref().clone())
             }
             JSXMemberExpressionObject::MemberExpression(expr) => {
                 self.transform_jsx_member_expression(expr)
+            }
+            JSXMemberExpressionObject::ThisExpression(expr) => {
+                self.ast().expression_this(expr.span)
             }
         };
         let property = IdentifierName::new(expr.property.span, expr.property.name.clone());
@@ -999,6 +948,46 @@ impl<'a> ReactJsx<'a> {
         }
         buffer.push_str(&s[prev..]);
         buffer
+    }
+}
+
+enum JSXElementOrFragment<'a, 'b> {
+    Element(&'b JSXElement<'a>),
+    Fragment(&'b JSXFragment<'a>),
+}
+
+impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Element(e) => e.span,
+            Self::Fragment(e) => e.span,
+        }
+    }
+
+    fn children(&self) -> &'b Vec<'a, JSXChild<'a>> {
+        match self {
+            Self::Element(e) => &e.children,
+            Self::Fragment(e) => &e.children,
+        }
+    }
+
+    fn is_fragment(&self) -> bool {
+        matches!(self, Self::Fragment(_))
+    }
+
+    /// The react jsx/jsxs transform falls back to `createElement` when an explicit `key` argument comes after a spread
+    /// <https://github.com/microsoft/TypeScript/blob/6134091642f57c32f50e7b5604635e4d37dd19e8/src/compiler/transformers/jsx.ts#L264-L278>
+    fn has_key_after_props_spread(&self) -> bool {
+        let Self::Element(e) = self else { return false };
+        let mut spread = false;
+        for attr in &e.opening_element.attributes {
+            if matches!(attr, JSXAttributeItem::SpreadAttribute(_)) {
+                spread = true;
+            } else if spread && matches!(attr, JSXAttributeItem::Attribute(a) if a.is_key()) {
+                return true;
+            }
+        }
+        false
     }
 }
 

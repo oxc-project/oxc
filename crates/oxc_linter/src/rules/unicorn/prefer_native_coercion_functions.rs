@@ -32,15 +32,18 @@ declare_oxc_lint!(
     /// If a function is equivalent to [`String`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String), [`Number`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number), [`BigInt`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt), [`Boolean`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean), or [`Symbol`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol), you should use the built-in one directly.
     /// Wrapping the built-in in a function is moot.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// const foo = v => String(v);
     /// foo(1);
     /// const foo = v => Number(v);
     /// array.some((v, ) => /* comment */ v)
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// String(1);
     /// Number(1);
     /// array.some(Boolean);
@@ -130,7 +133,7 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
         if let Statement::ExpressionStatement(expr_stmt) = &stmt {
             return expr_stmt
                 .expression
-                .without_parenthesized()
+                .without_parentheses()
                 .get_identifier_reference()
                 .map(|v| v.name.as_str());
         }
@@ -145,7 +148,7 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str
     if let Statement::ReturnStatement(return_statement) = &stmt {
         if let Some(return_expr) = &return_statement.argument {
             return return_expr
-                .without_parenthesized()
+                .without_parentheses()
                 .get_identifier_reference()
                 .map(|v| v.name.as_str());
         }

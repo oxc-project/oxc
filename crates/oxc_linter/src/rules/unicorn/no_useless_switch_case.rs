@@ -23,16 +23,20 @@ declare_oxc_lint!(
     ///
     /// An empty case before the last default case is useless.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// switch (foo) {
     /// 	case 1:
     /// 	default:
     /// 		handleDefaultCase();
     /// 		break;
     /// }
-    /// // good:
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// switch (foo) {
     ///	case 1:
     ///	case 2:

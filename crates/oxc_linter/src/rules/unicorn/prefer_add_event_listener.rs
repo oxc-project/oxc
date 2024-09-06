@@ -24,12 +24,15 @@ declare_oxc_lint!(
     ///
     /// There are [numerous advantages of using `addEventListener`](https://stackoverflow.com/questions/6348494/addeventlistener-vs-onclick/35093997#35093997). Some of these advantages include registering unlimited event handlers and optionally having the event handler invoked only once.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// foo.onclick = () => {};
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// foo.onclick = () => {};
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// foo.addEventListener('click', () => {});
     /// ```
     PreferAddEventListener,

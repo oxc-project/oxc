@@ -28,16 +28,20 @@ declare_oxc_lint!(
     /// This rule prefers borrowing methods from the prototype instead of the instance.
     ///
     /// ### Why is this bad?
+    ///
     /// “Borrowing” a method from an instance of `Array` or `Object` is less clear than getting it from the corresponding prototype.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Fail
     /// const array = [].slice.apply(bar);
     /// const type = {}.toString.call(foo);
     /// Reflect.apply([].forEach, arrayLike, [callback]);
+    /// ```
     ///
-    /// // Pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const array = Array.prototype.slice.apply(bar);
     /// const type = Object.prototype.toString.call(foo);
     /// Reflect.apply(Array.prototype.forEach, arrayLike, [callback]);
@@ -57,7 +61,7 @@ impl Rule for PreferPrototypeMethods {
         if call_expr.optional {
             return;
         }
-        match call_expr.callee.without_parenthesized() {
+        match call_expr.callee.without_parentheses() {
             Expression::StaticMemberExpression(member_expr) if !member_expr.optional => {}
             Expression::PrivateFieldExpression(member_expr) if !member_expr.optional => {}
             _ => return,
@@ -69,7 +73,7 @@ impl Rule for PreferPrototypeMethods {
         // `Reflect.apply({}.foo, …)`
         if is_method_call(call_expr, Some(&["Reflect"]), Some(&["apply"]), Some(1), None) {
             if let Some(argument_expr) = call_expr.arguments[0].as_expression() {
-                method_expr = Some(argument_expr.without_parenthesized());
+                method_expr = Some(argument_expr.without_parentheses());
             }
         }
         // `[].foo.{apply,bind,call}(…)`
@@ -78,7 +82,7 @@ impl Rule for PreferPrototypeMethods {
             method_expr = call_expr
                 .callee
                 .get_member_expr()
-                .map(|member_expr| member_expr.object().without_parenthesized());
+                .map(|member_expr| member_expr.object().without_parentheses());
         }
 
         let Some(method_expr) = method_expr else {
@@ -87,7 +91,7 @@ impl Rule for PreferPrototypeMethods {
         let Some(method_expr) = method_expr.as_member_expression() else {
             return;
         };
-        let object_expr = method_expr.object().without_parenthesized();
+        let object_expr = method_expr.object().without_parentheses();
 
         if !is_empty_array_expression(object_expr) && !is_empty_object_expression(object_expr) {
             return;

@@ -1,0 +1,160 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ alert(foo)
+   · ─────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ window.alert(foo)
+   · ────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ window['alert'](foo)
+   · ───────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ confirm(foo)
+   · ───────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ window.confirm(foo)
+   · ──────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ window['confirm'](foo)
+   · ─────────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ prompt(foo)
+   · ──────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ window.prompt(foo)
+   · ─────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ window['prompt'](foo)
+   · ────────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:21]
+ 1 │ function alert() {} window.alert(foo)
+   ·                     ────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:2:10]
+ 1 │ var alert = function() {};
+ 2 │             window.alert(foo)
+   ·             ────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:23]
+ 1 │ function foo(alert) { window.alert(); }
+   ·                       ────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:18]
+ 1 │ function foo() { alert(); }
+   ·                  ─────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:2:10]
+ 1 │ function foo() { var alert = function() {}; }
+ 2 │             alert();
+   ·             ─────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ this.alert(foo)
+   · ──────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ this['alert'](foo)
+   · ─────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:2:10]
+ 1 │ function foo() { var window = bar; window.alert(); }
+ 2 │             window.alert();
+   ·             ────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ globalThis['alert'](foo)
+   · ───────────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ globalThis.alert();
+   · ────────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:2:10]
+ 1 │ function foo() { var globalThis = bar; globalThis.alert(); }
+ 2 │             globalThis.alert();
+   ·             ────────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:1]
+ 1 │ window?.alert(foo)
+   · ─────────────
+   ╰────
+  help: Use a custom UI instead
+
+  ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
+   ╭─[no_alert.tsx:1:2]
+ 1 │ (window?.alert)(foo)
+   ·  ─────────────
+   ╰────
+  help: Use a custom UI instead

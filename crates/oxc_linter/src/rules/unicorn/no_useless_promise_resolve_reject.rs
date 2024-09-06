@@ -38,12 +38,15 @@ declare_oxc_lint!(
     ///
     /// Wrapping a return value in `Promise.resolve` in an async function or a `Promise#then`/`catch`/`finally` callback is unnecessary as all return values in async functions and promise callback functions are already wrapped in a `Promise`. Similarly, returning an error wrapped in `Promise.reject` is equivalent to simply `throw`ing the error. This is the same for `yield`ing in async generators as well.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// async () => Promise.resolve(bar);
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// async () => Promise.resolve(bar);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async () => bar;
     /// ```
     NoUselessPromiseResolveReject,

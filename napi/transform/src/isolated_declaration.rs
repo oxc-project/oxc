@@ -1,5 +1,4 @@
 use napi_derive::napi;
-
 use oxc_allocator::Allocator;
 use oxc_codegen::CodegenReturn;
 use oxc_isolated_declarations::IsolatedDeclarations;

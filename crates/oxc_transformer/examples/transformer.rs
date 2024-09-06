@@ -7,6 +7,7 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::{EnvOptions, Targets, TransformOptions, Transformer};
+use pico_args::Arguments;
 
 // Instruction:
 // create a `test.tsx`,
@@ -14,7 +15,10 @@ use oxc_transformer::{EnvOptions, Targets, TransformOptions, Transformer};
 // or `just watch "run -p oxc_transformer --example transformer"`
 
 fn main() {
-    let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
+    let mut args = Arguments::from_env();
+    let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
+    let targets: Option<String> = args.opt_value_from_str("--targets").unwrap_or(None);
+
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let allocator = Allocator::default();
@@ -34,16 +38,21 @@ fn main() {
     println!("{source_text}\n");
 
     let mut program = ret.program;
-    let transform_options = TransformOptions::from_preset_env(&EnvOptions {
-        targets: Targets::from_query("chrome 51"),
-        ..EnvOptions::default()
-    })
-    .unwrap();
 
     let (symbols, scopes) = SemanticBuilder::new(&source_text, source_type)
         .build(&program)
         .semantic
         .into_symbol_table_and_scope_tree();
+
+    let transform_options = if let Some(targets) = &targets {
+        TransformOptions::from_preset_env(&EnvOptions {
+            targets: Targets::from_query(targets),
+            ..EnvOptions::default()
+        })
+        .unwrap()
+    } else {
+        TransformOptions::enable_all()
+    };
 
     let _ = Transformer::new(
         &allocator,

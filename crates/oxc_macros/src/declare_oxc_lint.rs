@@ -126,22 +126,24 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
         "none" => {
             return quote! { RuleFixMeta::None };
         }
-        "pending" => { return quote! { RuleFixMeta::FixPending }; }
-        "fix" => {
-            return quote! { RuleFixMeta::Fixable(FixKind::SafeFix) }
-        },
-        "suggestion" => {
-            return quote! { RuleFixMeta::Fixable(FixKind::Suggestion) }
-        },
+        "pending" => {
+            return quote! { RuleFixMeta::FixPending };
+        }
+        "fix" => return quote! { RuleFixMeta::Fixable(FixKind::SafeFix) },
+        "suggestion" => return quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
         // "fix-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Fix.union(FixKind::Dangerous)) },
         // "suggestion" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
         // "suggestion-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion.union(FixKind::Dangerous)) },
-        "conditional" => panic!("Invalid fix capabilities: missing a fix kind. Did you mean 'fix-conditional'?"),
+        "conditional" => {
+            panic!("Invalid fix capabilities: missing a fix kind. Did you mean 'fix-conditional'?")
+        }
         "None" => panic!("Invalid fix capabilities. Did you mean 'none'?"),
         "Pending" => panic!("Invalid fix capabilities. Did you mean 'pending'?"),
         "Fix" => panic!("Invalid fix capabilities. Did you mean 'fix'?"),
         "Suggestion" => panic!("Invalid fix capabilities. Did you mean 'suggestion'?"),
-        invalid if !invalid.contains(SEP) => panic!("invalid fix capabilities: {invalid}. Valid capabilities are none, pending, fix, suggestion, or [fix|suggestion]_[conditional?]_[dangerous?]."),
+        invalid if !invalid.contains(SEP) => panic!(
+            "invalid fix capabilities: {invalid}. Valid capabilities are none, pending, fix, suggestion, or [fix|suggestion]_[conditional?]_[dangerous?]."
+        ),
         _ => {}
     }
 

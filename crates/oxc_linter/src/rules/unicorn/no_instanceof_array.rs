@@ -41,7 +41,7 @@ impl Rule for NoInstanceofArray {
             return;
         }
 
-        match &expr.right.without_parenthesized() {
+        match &expr.right.without_parentheses() {
             Expression::Identifier(identifier) if identifier.name == "Array" => {
                 ctx.diagnostic_with_fix(no_instanceof_array_diagnostic(expr.span), |fixer| {
                     let modified_code = {

@@ -40,12 +40,15 @@ declare_oxc_lint!(
     ///  - Prefer `Math.hypot(…)` over alternatives
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// Math.log(x) * Math.LOG10E;
     /// Math.sqrt(a * a + b * b);
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// Math.log10(x);
     /// Math.hypot(a, b);
     /// ```
@@ -217,7 +220,7 @@ fn check_multiplication<'a, 'b>(
 fn flat_plus_expression<'a>(expression: &'a Expression<'a>) -> Vec<&'a Expression<'a>> {
     let mut expressions = Vec::new();
 
-    match expression.without_parenthesized() {
+    match expression.without_parentheses() {
         Expression::BinaryExpression(bin_expr) => {
             if matches!(bin_expr.operator, BinaryOperator::Addition) {
                 expressions.append(&mut flat_plus_expression(&bin_expr.left));
@@ -233,11 +236,11 @@ fn flat_plus_expression<'a>(expression: &'a Expression<'a>) -> Vec<&'a Expressio
 }
 
 fn is_pow_2_expression(expression: &Expression, ctx: &LintContext<'_>) -> bool {
-    if let Expression::BinaryExpression(bin_expr) = expression.without_parenthesized() {
+    if let Expression::BinaryExpression(bin_expr) = expression.without_parentheses() {
         match bin_expr.operator {
             BinaryOperator::Exponential => {
                 if let Expression::NumericLiteral(number_lit) =
-                    &bin_expr.right.without_parenthesized()
+                    &bin_expr.right.without_parentheses()
                 {
                     (number_lit.value - 2_f64).abs() < f64::EPSILON
                 } else {

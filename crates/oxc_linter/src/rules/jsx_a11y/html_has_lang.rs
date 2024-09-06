@@ -41,11 +41,14 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <html />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <html />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <html lang="en" />
     /// ```
     HtmlHasLang,

@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_traverse::TraverseCtx;
+use oxc_traverse::{Traverse, TraverseCtx};
 use refresh::ReactRefresh;
 
 pub use self::{
@@ -68,105 +68,76 @@ impl<'a> React<'a> {
     }
 }
 
-// Transforms
-impl<'a> React<'a> {
-    pub fn transform_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+impl<'a> Traverse<'a> for React<'a> {
+    fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.refresh_plugin {
-            self.refresh.transform_program(program, ctx);
+            self.refresh.enter_program(program, ctx);
         }
     }
 
-    pub fn transform_program_on_exit(
-        &mut self,
-        program: &mut Program<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.refresh_plugin {
-            self.refresh.transform_program_on_exit(program, ctx);
+            self.refresh.exit_program(program, ctx);
         }
         if self.jsx_plugin {
-            self.jsx.transform_program_on_exit(program, ctx);
+            self.jsx.exit_program(program, ctx);
         }
     }
 
-    pub fn transform_statements(
-        &mut self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if self.refresh_plugin {
-            self.refresh.transform_statements(stmts, ctx);
+            self.refresh.enter_statements(stmts, ctx);
         }
     }
 
-    pub fn transform_statements_on_exit(
-        &mut self,
-        stmts: &mut Vec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if self.refresh_plugin {
-            self.refresh.transform_statements_on_exit(stmts, ctx);
+            self.refresh.exit_statements(stmts, ctx);
         }
     }
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.jsx_plugin {
-            match expr {
-                Expression::JSXElement(e) => {
-                    *expr = self.jsx.transform_jsx_element(e, ctx);
-                }
-                Expression::JSXFragment(e) => {
-                    *expr = self.jsx.transform_jsx_fragment(e, ctx);
-                }
-                _ => {}
-            }
+            self.jsx.enter_expression(expr, ctx);
         }
     }
 
-    pub fn transform_call_expression(
+    fn enter_call_expression(
         &mut self,
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.display_name_plugin {
-            self.display_name.transform_call_expression(call_expr, ctx);
+            self.display_name.enter_call_expression(call_expr, ctx);
         }
 
         if self.refresh_plugin {
-            self.refresh.transform_call_expression(call_expr, ctx);
+            self.refresh.enter_call_expression(call_expr, ctx);
         }
     }
 
-    pub fn transform_jsx_opening_element(
+    fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if self.jsx_self_plugin && self.jsx.jsx_self.can_add_self_attribute(ctx) {
-            self.jsx.jsx_self.transform_jsx_opening_element(elem);
+            self.jsx.jsx_self.enter_jsx_opening_element(elem, ctx);
         }
         if self.jsx_source_plugin {
-            self.jsx.jsx_source.transform_jsx_opening_element(elem, ctx);
+            self.jsx.jsx_source.enter_jsx_opening_element(elem, ctx);
         }
     }
 
-    pub fn transform_expression_on_exit(
-        &mut self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.refresh_plugin {
-            self.refresh.transform_expression_on_exit(expr, ctx);
+            self.refresh.exit_expression(expr, ctx);
         }
     }
 
-    pub fn transform_function_on_exit(
-        &mut self,
-        func: &mut Function<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.refresh_plugin {
-            self.refresh.transform_function_on_exit(func, ctx);
+            self.refresh.exit_function(func, ctx);
         }
     }
 }

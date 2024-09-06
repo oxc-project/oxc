@@ -93,6 +93,11 @@ impl CompressOptions {
     }
 
     pub fn dead_code_elimination() -> Self {
-        Self { fold_constants: true, remove_dead_code: true, ..Self::all_false() }
+        Self {
+            remove_syntax: true,
+            fold_constants: true,
+            remove_dead_code: true,
+            ..Self::all_false()
+        }
     }
 }

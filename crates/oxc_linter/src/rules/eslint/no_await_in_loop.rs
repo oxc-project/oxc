@@ -26,7 +26,8 @@ declare_oxc_lint!(
     /// Instead, they are being run in series, which can lead to poorer performance.
     ///
     /// ### Example
-    /// Bad:
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// async function bad() {
     ///     for (const user of users) {
@@ -35,7 +36,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Good:
+    /// Examples of **correct** code for this rule:
     /// ```javascript
     /// async function good() {
     ///     await Promise.all(users.map(user => getUserRecord(user)));

@@ -29,16 +29,19 @@ declare_oxc_lint!(
     /// This rule checks that children are not passed to void DOM elements.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <br>Children</br>
     /// <br children='Children' />
     /// <br dangerouslySetInnerHTML={{ __html: 'HTML' }} />
     /// React.createElement('br', undefined, 'Children')
     /// React.createElement('br', { children: 'Children' })
     /// React.createElement('br', { dangerouslySetInnerHTML: { __html: 'HTML' } })
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <div>Children</div>
     /// <div children='Children' />
     /// <div dangerouslySetInnerHTML={{ __html: 'HTML' }} />

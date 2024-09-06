@@ -32,16 +32,19 @@ declare_oxc_lint!(
     /// This rule checks for marquee and blink element.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <marquee />
     /// <marquee {...props} />
     /// <marquee lang={undefined} />
     /// <blink />
     /// <blink {...props} />
     /// <blink foo={undefined} />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <div />
     /// <Marquee />
     /// <Blink />

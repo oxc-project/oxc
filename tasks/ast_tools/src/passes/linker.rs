@@ -2,15 +2,14 @@ use std::borrow::Cow;
 
 use syn::parse_quote;
 
-use crate::{codegen::EarlyCtx, rust_ast::Inherit, util::NormalizeError};
-
 use super::{define_pass, AstType, Pass, Result};
+use crate::{codegen::EarlyCtx, rust_ast::Inherit, util::NormalizeError};
 
 pub trait Unresolved {
     fn unresolved(&self) -> bool;
 
     // TODO: remove me
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn resolved(&self) -> bool {
         !self.unresolved()
     }
@@ -68,7 +67,9 @@ impl Pass for Linker {
                             })
                         }
                         _ => {
-                            panic!("invalid inheritance, you can only inherit from enums and in enums.")
+                            panic!(
+                                "invalid inheritance, you can only inherit from enums and in enums."
+                            )
                         }
                     };
                     ty.item.variants.extend(variants.clone());
@@ -79,7 +80,7 @@ impl Pass for Linker {
                 }
                 Inherit::Linked { .. } => Ok(Ok(it)),
             })
-        .collect::<Result<Vec<std::result::Result<Inherit, Inherit>>>>()?;
+            .collect::<Result<Vec<std::result::Result<Inherit, Inherit>>>>()?;
         let unresolved = inherits.iter().any(std::result::Result::is_err);
 
         ty.meta.inherits = inherits.into_iter().map(|it| it.unwrap_or_else(|it| it)).collect();

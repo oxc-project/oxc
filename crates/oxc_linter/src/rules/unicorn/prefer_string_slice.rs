@@ -47,19 +47,15 @@ impl Rule for PreferStringSlice {
             return;
         };
 
-        let (span, name) = match member_expr {
-            MemberExpression::StaticMemberExpression(v) => {
-                if !matches!(v.property.name.as_str(), "substr" | "substring") {
-                    return;
-                }
-                (v.property.span, &v.property.name)
+        if let MemberExpression::StaticMemberExpression(v) = member_expr {
+            if !matches!(v.property.name.as_str(), "substr" | "substring") {
+                return;
             }
-            _ => return,
-        };
-
-        ctx.diagnostic_with_fix(prefer_string_slice_diagnostic(span, name.as_str()), |fixer| {
-            fixer.replace(span, "slice")
-        });
+            ctx.diagnostic_with_fix(
+                prefer_string_slice_diagnostic(v.property.span, v.property.name.as_str()),
+                |fixer| fixer.replace(v.property.span, "slice"),
+            );
+        }
     }
 }
 

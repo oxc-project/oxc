@@ -11,12 +11,11 @@ use oxc_syntax::{
 use oxc_traverse::{Traverse, TraverseCtx};
 use rustc_hash::FxHashSet;
 
-use crate::context::Ctx;
-
 use super::{
     diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
     TypeScriptOptions,
 };
+use crate::context::Ctx;
 
 pub struct TypeScriptNamespace<'a> {
     ctx: Ctx<'a>,

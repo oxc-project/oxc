@@ -14,19 +14,30 @@ pub struct JsxNoNewArrayAsProp;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prevent Arrays that are local to the current method from being used as values of JSX props
+    /// Prevent Arrays that are local to the current method from being used
+    /// as values of JSX props.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using locally defined Arrays as values for props can lead to unintentional
+    /// re-renders and performance issues. Every time the parent component renders,
+    /// a new instance of the Array is created, causing unnecessary re-renders of
+    /// child components. This also leads to harder-to-maintain code as the
+    /// component's props are not passed consistently.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <Item list={[]} />
     ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <Item list={[]} />
     /// <Item list={new Array()} />
     /// <Item list={Array()} />
     /// <Item list={this.props.list || []} />
     /// <Item list={this.props.list ? this.props.list : []} />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <Item list={this.props.list} />
     /// ```
     JsxNoNewArrayAsProp,
@@ -64,7 +75,7 @@ impl ReactPerfRule for JsxNoNewArrayAsProp {
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
-    match expr.without_parenthesized() {
+    match expr.without_parentheses() {
         Expression::ArrayExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
             if is_constructor_matching_name(&expr.callee, "Array")

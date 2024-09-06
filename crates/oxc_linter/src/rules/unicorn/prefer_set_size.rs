@@ -29,14 +29,16 @@ declare_oxc_lint!(
     ///
     /// Using `Set#size` is more readable and performant.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// const length = [...new Set([1, 2, 3])].length;
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const size = new Set([1, 2, 3]).size;
-    ///
     /// ```
     PreferSetSize,
     correctness,
@@ -57,7 +59,7 @@ impl Rule for PreferSetSize {
             return;
         }
 
-        let Expression::ArrayExpression(array_expr) = member_expr.object().without_parenthesized()
+        let Expression::ArrayExpression(array_expr) = member_expr.object().without_parentheses()
         else {
             return;
         };

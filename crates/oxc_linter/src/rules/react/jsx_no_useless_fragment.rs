@@ -36,12 +36,15 @@ declare_oxc_lint!(
     /// Fragments are a useful tool when you need to group multiple children without adding a node to the DOM tree. However, sometimes you might end up with a fragment with a single child. When this child is an element, string, or expression, it's not necessary to use a fragment.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <>foo</>
     /// <div><>foo</></div>
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <>foo <div></div></>
     /// <div>foo</div>
     /// ```
@@ -172,7 +175,9 @@ fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
                 false
             }
         }
-        JSXElementName::NamespacedName(_) | JSXElementName::Identifier(_) => false,
+        JSXElementName::NamespacedName(_)
+        | JSXElementName::Identifier(_)
+        | JSXElementName::ThisExpression(_) => false,
     }
 }
 

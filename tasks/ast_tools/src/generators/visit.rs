@@ -6,6 +6,7 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident};
 
+use super::define_generator;
 use crate::{
     codegen::{generated_header, LateCtx},
     generators::ast_kind::BLACK_LIST as KIND_BLACK_LIST,
@@ -15,8 +16,6 @@ use crate::{
     util::{StrExt, ToIdent, TokenStreamExt, TypeWrapper},
     Generator, GeneratorOutput,
 };
-
-use super::define_generator;
 
 define_generator! {
     pub struct VisitGenerator;
@@ -534,7 +533,7 @@ impl<'a> VisitBuilder<'a> {
                     enter_scope_at = ix;
                 }
 
-                #[allow(unreachable_code)]
+                #[expect(unreachable_code)]
                 if have_enter_node {
                     // NOTE: this is disabled intentionally <https://github.com/oxc-project/oxc/pull/4147#issuecomment-2220216905>
                     unreachable!("`#[visit(enter_before)]` attribute is disabled!");

@@ -3,7 +3,7 @@ commit: a709f989
 parser_typescript Summary:
 AST Parsed     : 6470/6479 (99.86%)
 Positive Passed: 6445/6479 (99.48%)
-Negative Passed: 1193/5715 (20.87%)
+Negative Passed: 1208/5715 (21.14%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -22,8 +22,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDecl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/InterfaceDeclaration8.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ParameterList7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ParameterList8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractClassInLocalScopeIsAbstract.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractClassUnionInstantiation.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/abstractPropertyInConstructor.ts
@@ -33,8 +31,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorAcci
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorDeclarationEmitVisibilityErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorInferredReturnTypeErrorInReturnStatement.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorWithInitializer.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorWithoutBody1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorWithoutBody2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorsInAmbientContext.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessors_spec_section-4.5_error-cases.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/addMoreOverloadsToBaseSignature.ts
@@ -59,7 +55,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/alwaysStrict
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/alwaysStrictModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/alwaysStrictNoImplicitUseStrict.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientEnum1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientErrors1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExportDefaultErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleInAnotherExternalModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithRelativeExternalImportDeclaration.ts
@@ -419,7 +414,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclara
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-access5.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constDeclarations-useBeforeDefinition2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constEnumBadPropertyNames.ts
@@ -854,7 +848,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendPrivat
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendedInterfacesWithDuplicateTypeParameters.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendsClauseAlreadySeen.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendsClauseAlreadySeen2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSemantics.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleExportingGenericClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleImmutableBindings.ts
@@ -1669,11 +1662,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsWit
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overloadsWithProvisionalErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overridingPrivateStaticMembers.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overshifts.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/paramPropertiesInSignatures.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterListAsTupleType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterNamesInTypeParameterList.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/paramsOnlyHaveLiteralTypesWhenAppropriatelyContextualized.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/paramterDestrcuturingDeclaration.ts
@@ -2285,7 +2275,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration_superClass.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/useUnknownInCatchVariables01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varAndFunctionShareName.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varBlock.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/varNameConflictsWithImportInDifferentPartOfModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/vararg.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/variableDeclaratorResolvedDuringContextualTyping.ts
@@ -2309,7 +2298,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/a
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_merging3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientDeclarationsPatterns_tooManyAsterisks.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbient.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/async/asyncFunctionDeclarationParameterEvaluation.ts
@@ -3773,7 +3761,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserCommaInTypeMemberList2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnPropertySignature1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ExportAssignments/parserExportAssignment1.ts
@@ -3850,8 +3837,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList16.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList17.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Protected/Protected7.ts
@@ -4976,6 +4961,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │   }
    ╰────
 
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList7.ts:2:14]
+ 1 │ class C1 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList7.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any) {} // OK
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList8.ts:2:14]
+ 1 │ declare class C2 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList8.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/ParameterList8.ts:4:14]
+ 3 │  constructor(private p2:number); // ERROR
+ 4 │  constructor(public p3:any); // ERROR
+   ·              ─────────────
+ 5 │ }
+   ╰────
+
   × Invalid Character `؆`
    ╭─[typescript/tests/cases/compiler/TransportStream.ts:1:387]
  1 │ 䁇鈄ЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄЄ䁇鈅ԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅԅ䁇鈆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆؆
@@ -4988,6 +5013,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·                                                                                                                                                                                                     ▲
    ╰────
   help: Try insert a semicolon here
+
+  × Getters and setters must have an implementation.
+    ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
+ 15 │     abstract notAllowed: string;
+ 16 │     get concreteWithNoBody(): string;
+    ·         ──────────────────
+ 17 │ }
+    ╰────
 
   × TS(1253): Abstract properties can only appear within an abstract class.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:15:14]
@@ -5037,6 +5070,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  4 │ }
    ╰────
 
+  × Getters and setters must have an implementation.
+   ╭─[typescript/tests/cases/compiler/accessorWithoutBody1.ts:1:15]
+ 1 │ var v = { get foo() }
+   ·               ───
+   ╰────
+
+  × Getters and setters must have an implementation.
+   ╭─[typescript/tests/cases/compiler/accessorWithoutBody2.ts:1:15]
+ 1 │ var v = { set foo(a) }
+   ·               ───
+   ╰────
+
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/aliasErrors.ts:13:12]
  12 │ import m2 = no.mod;
@@ -5051,6 +5096,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │         var arguments = [];
    ·             ─────────
  4 │     }
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/ambientErrors1.ts:1:17]
+ 1 │ declare var x = 4;
+   ·                 ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -6435,6 +6486,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  22 │ }
     ╰────
 
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:2:29]
+ 1 │ // error: no intialization expected in ambient declarations
+ 2 │ declare const c1: boolean = true;
+   ·                             ────
+ 3 │ declare const c2: number = 0;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:3:28]
+ 2 │ declare const c1: boolean = true;
+ 3 │ declare const c2: number = 0;
+   ·                            ─
+ 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:20]
+ 3 │ declare const c2: number = 0;
+ 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
+   ·                    ────
+ 5 │ 
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:39]
+ 3 │ declare const c2: number = 0;
+ 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
+   ·                                       ──
+ 5 │ 
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/constDeclarations-ambient-errors.ts:4:53]
+ 3 │ declare const c2: number = 0;
+ 4 │ declare const c3 = null, c4 :string = "", c5: any = 0;
+   ·                                                     ─
+ 5 │ 
+   ╰────
+
   × Missing initializer in const declaration
    ╭─[typescript/tests/cases/compiler/constDeclarations-errors.ts:2:7]
  1 │ // error, missing intialicer
@@ -7775,6 +7866,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │     export class XDate {
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/externSemantics.ts:1:15]
+ 1 │ declare var x=10;
+   ·               ──
+ 2 │ declare var v;
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/externSemantics.ts:3:22]
+ 2 │ declare var v;
+ 3 │ declare var y:number=3;
+   ·                      ─
+   ╰────
 
   × Expected `,` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
@@ -9984,6 +10089,62 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·            ─────┬────
    ·                 ╰── It can not be redeclared here
  6 │  
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:2:14]
+ 1 │ class C1 {
+ 2 │     constructor(public p1:string); // ERROR
+   ·                 ────────────────
+ 3 │     constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:3:14]
+ 2 │     constructor(public p1:string); // ERROR
+ 3 │     constructor(private p2:number); // ERROR
+   ·                 ─────────────────
+ 4 │     constructor(public p3:any) {} // OK
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:8:14]
+ 7 │ declare class C2 {
+ 8 │     constructor(public p1:string); // ERROR
+   ·                 ────────────────
+ 9 │     constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:9:14]
+  8 │     constructor(public p1:string); // ERROR
+  9 │     constructor(private p2:number); // ERROR
+    ·                 ─────────────────
+ 10 │     constructor(public p3:any); // ERROR
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/compiler/paramPropertiesInSignatures.ts:10:14]
+  9 │     constructor(private p2:number); // ERROR
+ 10 │     constructor(public p3:any); // ERROR
+    ·                 ─────────────
+ 11 │ }
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/parameterPropertyInConstructor1.ts:3:17]
+ 2 │   class Customers {
+ 3 │     constructor(public names: string);
+   ·                 ────────────────────
+ 4 │   }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/compiler/parameterPropertyInConstructor2.ts:3:17]
+ 2 │   class Customers {
+ 3 │     constructor(public names: string);
+   ·                 ────────────────────
+ 4 │     constructor(public names: string, public ages: number) {
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
@@ -12558,6 +12719,93 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·                ─
    ╰────
 
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:11:22]
+ 10 │     class C {
+ 11 │         constructor (public c = 10);
+    ·                      ─────────────
+ 12 │     }
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:15:17]
+ 14 │ 
+ 15 │ declare var b = 10;
+    ·                 ──
+ 16 │ 
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:21:18]
+ 20 │ 
+ 21 │ declare var da = 10;
+    ·                  ──
+ 22 │ declare var d3, d4 = 10;
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:22:22]
+ 21 │ declare var da = 10;
+ 22 │ declare var d3, d4 = 10;
+    ·                      ──
+ 23 │ 
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:25:21]
+ 24 │ module m3 {
+ 25 │     declare var d = 10;
+    ·                     ──
+ 26 │     declare var d2, d3 = 10, d4 = 10;
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:26:26]
+ 25 │     declare var d = 10;
+ 26 │     declare var d2, d3 = 10, d4 = 10;
+    ·                          ──
+ 27 │     export declare var dE = 10;
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:26:35]
+ 25 │     declare var d = 10;
+ 26 │     declare var d2, d3 = 10, d4 = 10;
+    ·                                   ──
+ 27 │     export declare var dE = 10;
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:27:29]
+ 26 │     declare var d2, d3 = 10, d4 = 10;
+ 27 │     export declare var dE = 10;
+    ·                             ──
+ 28 │     export declare var d2E, d3E = 10, d4E = 10;
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:28:35]
+ 27 │     export declare var dE = 10;
+ 28 │     export declare var d2E, d3E = 10, d4E = 10;
+    ·                                   ──
+ 29 │ }
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:28:45]
+ 27 │     export declare var dE = 10;
+ 28 │     export declare var d2E, d3E = 10, d4E = 10;
+    ·                                             ──
+ 29 │ }
+    ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/varBlock.ts:39:17]
+ 38 │ declare var c;
+ 39 │ declare var c = 10;
+    ·                 ──
+    ╰────
+
   × Cannot assign to 'eval' in strict mode
    ╭─[typescript/tests/cases/compiler/variableDeclarationInStrictMode1.ts:2:5]
  1 │ "use strict";
@@ -12611,6 +12859,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │     yield 'literal';
    ·     ─────
  3 │ }
+   ╰────
+
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:2:17]
+ 1 │ // Ambient variable with an initializer 
+ 2 │ declare var x = 4;
+   ·                 ─
+ 3 │ 
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -19854,6 +20110,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  5 │             return this.doWhile((item, i) => filter(item, i) ? test(item, index++) : true);
    ╰────
 
+  × TS(1039): Initializers are not allowed in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts:2:20]
+ 1 │ {
+ 2 │    declare var x = this;
+   ·                    ────
+ 3 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserPublicBreak1.ts:1:7]
  1 │ public break;
@@ -20426,6 +20690,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │   constructor(C: (public A) => any) {
    ·                   ────────
  3 │   }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts:2:14]
+ 1 │ class C1 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any) {} // OK
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts:2:14]
+ 1 │ declare class C2 {
+ 2 │  constructor(public p1:string); // ERROR
+   ·              ────────────────
+ 3 │  constructor(private p2:number); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts:3:14]
+ 2 │  constructor(public p1:string); // ERROR
+ 3 │  constructor(private p2:number); // ERROR
+   ·              ─────────────────
+ 4 │  constructor(public p3:any); // ERROR
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts:4:14]
+ 3 │  constructor(private p2:number); // ERROR
+ 4 │  constructor(public p3:any); // ERROR
+   ·              ─────────────
+ 5 │ }
    ╰────
 
   × A rest parameter cannot be optional
@@ -23203,6 +23507,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  28 │     new (private x);
     ·          ─────────
  29 │ }
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:4:17]
+ 3 │ class C {
+ 4 │     constructor(public x, private y);
+   ·                 ────────
+ 5 │     constructor(public x, private y) { }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+   ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:4:27]
+ 3 │ class C {
+ 4 │     constructor(public x, private y);
+   ·                           ─────────
+ 5 │     constructor(public x, private y) { }
+   ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:9:17]
+  8 │ class C2 {
+  9 │     constructor(private x);
+    ·                 ─────────
+ 10 │     constructor(public x) { }
+    ╰────
+
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
+    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts:14:17]
+ 13 │ class C3 {
+ 14 │     constructor(private x);
+    ·                 ─────────
+ 15 │     constructor(private y) { }
     ╰────
 
   × A parameter property is only allowed in a constructor implementation.

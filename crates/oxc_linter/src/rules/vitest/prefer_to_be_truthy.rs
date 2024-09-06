@@ -12,16 +12,25 @@ pub struct PreferToBeTruthy;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule warns when `toBe(true)` is used with `expect` or `expectTypeOf`. With `--fix`, it will be replaced with `toBeTruthy()`.
+    /// This rule warns when `toBe(true)` is used with `expect` or `expectTypeOf`.
+    /// With `--fix`, it will be replaced with `toBeTruthy()`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Using `toBe(true)` is less flexible and may not account for other truthy
+    /// values like non-empty strings or objects. `toBeTruthy()` checks for any
+    /// truthy value, which makes the tests more comprehensive and robust.
     ///
     /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// expect(foo).toBe(true)
     /// expectTypeOf(foo).toBe(true)
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// expect(foo).toBeTruthy()
     /// expectTypeOf(foo).toBeTruthy()
     /// ```

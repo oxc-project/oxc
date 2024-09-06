@@ -1,7 +1,4 @@
-use std::{
-    hash::{Hash, Hasher},
-    ops::{Index, IndexMut, Range},
-};
+use std::ops::{Index, IndexMut, Range};
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
@@ -353,12 +350,6 @@ impl From<Range<u32>> for Span {
     }
 }
 
-impl Hash for Span {
-    fn hash<H: Hasher>(&self, _state: &mut H) {
-        // hash to nothing so all ast spans can be comparable with hash
-    }
-}
-
 impl From<Span> for SourceSpan {
     fn from(val: Span) -> Self {
         Self::new(SourceOffset::from(val.start as usize), val.size() as usize)
@@ -397,6 +388,7 @@ impl GetSpanMut for Span {
 
 impl<'a> CloneIn<'a> for Span {
     type Cloned = Self;
+
     #[inline]
     fn clone_in(&self, _: &'a Allocator) -> Self {
         *self
@@ -413,7 +405,7 @@ mod test {
         let mut first = DefaultHasher::new();
         let mut second = DefaultHasher::new();
         Span::new(0, 5).hash(&mut first);
-        Span::new(10, 20).hash(&mut second);
+        Span::new(0, 5).hash(&mut second);
         assert_eq!(first.finish(), second.finish());
     }
     #[test]

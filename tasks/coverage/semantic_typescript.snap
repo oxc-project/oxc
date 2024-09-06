@@ -2,7 +2,7 @@ commit: a709f989
 
 semantic_typescript Summary:
 AST Parsed     : 6479/6479 (100.00%)
-Positive Passed: 3256/6479 (50.25%)
+Positive Passed: 3259/6479 (50.30%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -12996,9 +12996,6 @@ rebuilt        : ScopeId(0): ["A", "B"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-Reference flags mismatch:
-after transform: ReferenceId(12): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read)
 Unresolved references mismatch:
 after transform: ["Extract", "Parameters"]
 rebuilt        : []
@@ -14600,15 +14597,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(6), Sc
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-Reference flags mismatch:
-after transform: ReferenceId(1): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(2): ReferenceFlags(Type)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(3): ReferenceFlags(Type)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/compiler/interfaceImplementation5.ts
 semantic error: Bindings mismatch:
@@ -16768,6 +16756,9 @@ rebuilt        : SymbolId(20): [ReferenceId(14), ReferenceId(15), ReferenceId(17
 Symbol reference IDs mismatch:
 after transform: SymbolId(25): [ReferenceId(13)]
 rebuilt        : SymbolId(21): []
+Reference flags mismatch:
+after transform: ReferenceId(12): ReferenceFlags(Write)
+rebuilt        : ReferenceId(16): ReferenceFlags(Read | Write)
 
 tasks/coverage/typescript/tests/cases/compiler/missingSemicolonInModuleSpecifier.ts
 semantic error: Bindings mismatch:
@@ -31028,12 +31019,6 @@ rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(4): [ReferenceId(12)]
 rebuilt        : SymbolId(3): []
-Reference flags mismatch:
-after transform: ReferenceId(1): ReferenceFlags(Type)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read)
-Reference flags mismatch:
-after transform: ReferenceId(3): ReferenceFlags(Type)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read)
 
 tasks/coverage/typescript/tests/cases/conformance/classes/classExpression.ts
 semantic error: Missing SymbolId: M
@@ -40705,11 +40690,6 @@ Symbol reference IDs mismatch:
 after transform: SymbolId(3): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(2): [ReferenceId(2)]
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName5.tsx
-semantic error: Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName6.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "_jsxFileName", "_reactJsxRuntime", "foo", "t"]
@@ -40717,16 +40697,6 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime", "foo", "t"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName8.tsx
-semantic error: Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
-
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName9.tsx
-semantic error: Unresolved references mismatch:
-after transform: ["this"]
-rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxElementResolution.tsx
 semantic error: Missing SymbolId: Dotted

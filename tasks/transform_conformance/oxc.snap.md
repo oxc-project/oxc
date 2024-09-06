@@ -1,18 +1,16 @@
 commit: 3bcfee23
 
-Passed: 13/41
+Passed: 21/49
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
 * babel-preset-typescript
+* regexp
 
 
 # babel-plugin-transform-arrow-functions (1/2)
 * with-this-member-expression/input.jsx
-  x Unresolved references mismatch:
-  | after transform: ["this"]
-  | rebuilt        : []
 
 
 

@@ -9,8 +9,9 @@ pub use parser::PatternParser;
 
 #[cfg(test)]
 mod test {
-    use crate::{ParserOptions, PatternParser};
     use oxc_allocator::Allocator;
+
+    use crate::{ParserOptions, PatternParser};
 
     #[test]
     fn should_pass() {
@@ -171,6 +172,10 @@ mod test {
             ("(?=a){1}", ParserOptions::default().with_unicode_mode()),
             ("(?!a){1}", ParserOptions::default().with_unicode_mode()),
             (r"[\d-\D]", ParserOptions::default().with_unicode_mode()),
+            ("[", ParserOptions::default()),
+            ("[", ParserOptions::default().with_unicode_sets_mode()),
+            ("[[", ParserOptions::default().with_unicode_sets_mode()),
+            ("[[]", ParserOptions::default().with_unicode_sets_mode()),
             ("[z-a]", ParserOptions::default()),
             (r"[a-c]]", ParserOptions::default().with_unicode_mode()),
             (

@@ -5,7 +5,6 @@
 use std::cmp::Ordering;
 
 use num_bigint::BigInt;
-
 use oxc_ast::{ast::*, AstBuilder, Visit};
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{

@@ -10,9 +10,8 @@ use std::ops::{Deref, DerefMut};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-use self::version::Version;
-
 pub use self::query::Targets;
+use self::version::Version;
 pub mod query;
 pub mod version;
 

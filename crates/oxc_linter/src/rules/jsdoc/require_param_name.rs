@@ -21,19 +21,24 @@ pub struct RequireParamName;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that all `@param` tags have names.
     ///
     /// ### Why is this bad?
+    ///
     /// The name of a param should be documented.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @param {SomeType} foo */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @param {SomeType} */
+    /// function quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @param {SomeType} foo */
     /// function quux (foo) {}
     /// ```
     RequireParamName,

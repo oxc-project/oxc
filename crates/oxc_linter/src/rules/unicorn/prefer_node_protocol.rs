@@ -24,10 +24,14 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// import fs from "fs";
-    /// // Good
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,

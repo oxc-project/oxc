@@ -27,7 +27,7 @@ impl TypeScriptRewriteExtensions {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let value = source.value.as_str();
-        if !value.contains(|c| c == '/' || c == '\\') {
+        if !value.contains(['/', '\\']) {
             return;
         }
 

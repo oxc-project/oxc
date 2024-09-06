@@ -12,9 +12,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegularExpression<'old_allo
     type Cloned = RegularExpression<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         RegularExpression {
-            span: self.span.clone_in(allocator),
-            pattern: self.pattern.clone_in(allocator),
-            flags: self.flags.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            pattern: CloneIn::clone_in(&self.pattern, allocator),
+            flags: CloneIn::clone_in(&self.flags, allocator),
         }
     }
 }
@@ -23,15 +23,15 @@ impl<'alloc> CloneIn<'alloc> for Flags {
     type Cloned = Flags;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         Flags {
-            span: self.span.clone_in(allocator),
-            global: self.global.clone_in(allocator),
-            ignore_case: self.ignore_case.clone_in(allocator),
-            multiline: self.multiline.clone_in(allocator),
-            unicode: self.unicode.clone_in(allocator),
-            sticky: self.sticky.clone_in(allocator),
-            dot_all: self.dot_all.clone_in(allocator),
-            has_indices: self.has_indices.clone_in(allocator),
-            unicode_sets: self.unicode_sets.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            global: CloneIn::clone_in(&self.global, allocator),
+            ignore_case: CloneIn::clone_in(&self.ignore_case, allocator),
+            multiline: CloneIn::clone_in(&self.multiline, allocator),
+            unicode: CloneIn::clone_in(&self.unicode, allocator),
+            sticky: CloneIn::clone_in(&self.sticky, allocator),
+            dot_all: CloneIn::clone_in(&self.dot_all, allocator),
+            has_indices: CloneIn::clone_in(&self.has_indices, allocator),
+            unicode_sets: CloneIn::clone_in(&self.unicode_sets, allocator),
         }
     }
 }
@@ -39,21 +39,30 @@ impl<'alloc> CloneIn<'alloc> for Flags {
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Pattern<'old_alloc> {
     type Cloned = Pattern<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Pattern { span: self.span.clone_in(allocator), body: self.body.clone_in(allocator) }
+        Pattern {
+            span: CloneIn::clone_in(&self.span, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
+        }
     }
 }
 
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Disjunction<'old_alloc> {
     type Cloned = Disjunction<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Disjunction { span: self.span.clone_in(allocator), body: self.body.clone_in(allocator) }
+        Disjunction {
+            span: CloneIn::clone_in(&self.span, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
+        }
     }
 }
 
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Alternative<'old_alloc> {
     type Cloned = Alternative<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Alternative { span: self.span.clone_in(allocator), body: self.body.clone_in(allocator) }
+        Alternative {
+            span: CloneIn::clone_in(&self.span, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
+        }
     }
 }
 
@@ -61,18 +70,26 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Term<'old_alloc> {
     type Cloned = Term<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::BoundaryAssertion(it) => Term::BoundaryAssertion(it.clone_in(allocator)),
-            Self::LookAroundAssertion(it) => Term::LookAroundAssertion(it.clone_in(allocator)),
-            Self::Quantifier(it) => Term::Quantifier(it.clone_in(allocator)),
-            Self::Character(it) => Term::Character(it.clone_in(allocator)),
-            Self::Dot(it) => Term::Dot(it.clone_in(allocator)),
-            Self::CharacterClassEscape(it) => Term::CharacterClassEscape(it.clone_in(allocator)),
-            Self::UnicodePropertyEscape(it) => Term::UnicodePropertyEscape(it.clone_in(allocator)),
-            Self::CharacterClass(it) => Term::CharacterClass(it.clone_in(allocator)),
-            Self::CapturingGroup(it) => Term::CapturingGroup(it.clone_in(allocator)),
-            Self::IgnoreGroup(it) => Term::IgnoreGroup(it.clone_in(allocator)),
-            Self::IndexedReference(it) => Term::IndexedReference(it.clone_in(allocator)),
-            Self::NamedReference(it) => Term::NamedReference(it.clone_in(allocator)),
+            Self::BoundaryAssertion(it) => {
+                Term::BoundaryAssertion(CloneIn::clone_in(it, allocator))
+            }
+            Self::LookAroundAssertion(it) => {
+                Term::LookAroundAssertion(CloneIn::clone_in(it, allocator))
+            }
+            Self::Quantifier(it) => Term::Quantifier(CloneIn::clone_in(it, allocator)),
+            Self::Character(it) => Term::Character(CloneIn::clone_in(it, allocator)),
+            Self::Dot(it) => Term::Dot(CloneIn::clone_in(it, allocator)),
+            Self::CharacterClassEscape(it) => {
+                Term::CharacterClassEscape(CloneIn::clone_in(it, allocator))
+            }
+            Self::UnicodePropertyEscape(it) => {
+                Term::UnicodePropertyEscape(CloneIn::clone_in(it, allocator))
+            }
+            Self::CharacterClass(it) => Term::CharacterClass(CloneIn::clone_in(it, allocator)),
+            Self::CapturingGroup(it) => Term::CapturingGroup(CloneIn::clone_in(it, allocator)),
+            Self::IgnoreGroup(it) => Term::IgnoreGroup(CloneIn::clone_in(it, allocator)),
+            Self::IndexedReference(it) => Term::IndexedReference(CloneIn::clone_in(it, allocator)),
+            Self::NamedReference(it) => Term::NamedReference(CloneIn::clone_in(it, allocator)),
         }
     }
 }
@@ -81,8 +98,8 @@ impl<'alloc> CloneIn<'alloc> for BoundaryAssertion {
     type Cloned = BoundaryAssertion;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         BoundaryAssertion {
-            span: self.span.clone_in(allocator),
-            kind: self.kind.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            kind: CloneIn::clone_in(&self.kind, allocator),
         }
     }
 }
@@ -103,9 +120,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for LookAroundAssertion<'old_al
     type Cloned = LookAroundAssertion<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         LookAroundAssertion {
-            span: self.span.clone_in(allocator),
-            kind: self.kind.clone_in(allocator),
-            body: self.body.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            kind: CloneIn::clone_in(&self.kind, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
@@ -126,11 +143,11 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Quantifier<'old_alloc> {
     type Cloned = Quantifier<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         Quantifier {
-            span: self.span.clone_in(allocator),
-            min: self.min.clone_in(allocator),
-            max: self.max.clone_in(allocator),
-            greedy: self.greedy.clone_in(allocator),
-            body: self.body.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            min: CloneIn::clone_in(&self.min, allocator),
+            max: CloneIn::clone_in(&self.max, allocator),
+            greedy: CloneIn::clone_in(&self.greedy, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
@@ -139,9 +156,9 @@ impl<'alloc> CloneIn<'alloc> for Character {
     type Cloned = Character;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         Character {
-            span: self.span.clone_in(allocator),
-            kind: self.kind.clone_in(allocator),
-            value: self.value.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            kind: CloneIn::clone_in(&self.kind, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
         }
     }
 }
@@ -166,8 +183,8 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassEscape {
     type Cloned = CharacterClassEscape;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         CharacterClassEscape {
-            span: self.span.clone_in(allocator),
-            kind: self.kind.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            kind: CloneIn::clone_in(&self.kind, allocator),
         }
     }
 }
@@ -190,11 +207,11 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for UnicodePropertyEscape<'old_
     type Cloned = UnicodePropertyEscape<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         UnicodePropertyEscape {
-            span: self.span.clone_in(allocator),
-            negative: self.negative.clone_in(allocator),
-            strings: self.strings.clone_in(allocator),
-            name: self.name.clone_in(allocator),
-            value: self.value.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            negative: CloneIn::clone_in(&self.negative, allocator),
+            strings: CloneIn::clone_in(&self.strings, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+            value: CloneIn::clone_in(&self.value, allocator),
         }
     }
 }
@@ -202,7 +219,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for UnicodePropertyEscape<'old_
 impl<'alloc> CloneIn<'alloc> for Dot {
     type Cloned = Dot;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        Dot { span: self.span.clone_in(allocator) }
+        Dot { span: CloneIn::clone_in(&self.span, allocator) }
     }
 }
 
@@ -210,10 +227,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CharacterClass<'old_alloc> 
     type Cloned = CharacterClass<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CharacterClass {
-            span: self.span.clone_in(allocator),
-            negative: self.negative.clone_in(allocator),
-            kind: self.kind.clone_in(allocator),
-            body: self.body.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            negative: CloneIn::clone_in(&self.negative, allocator),
+            kind: CloneIn::clone_in(&self.kind, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
@@ -234,20 +251,22 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CharacterClassContents<'old
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::CharacterClassRange(it) => {
-                CharacterClassContents::CharacterClassRange(it.clone_in(allocator))
+                CharacterClassContents::CharacterClassRange(CloneIn::clone_in(it, allocator))
             }
             Self::CharacterClassEscape(it) => {
-                CharacterClassContents::CharacterClassEscape(it.clone_in(allocator))
+                CharacterClassContents::CharacterClassEscape(CloneIn::clone_in(it, allocator))
             }
             Self::UnicodePropertyEscape(it) => {
-                CharacterClassContents::UnicodePropertyEscape(it.clone_in(allocator))
+                CharacterClassContents::UnicodePropertyEscape(CloneIn::clone_in(it, allocator))
             }
-            Self::Character(it) => CharacterClassContents::Character(it.clone_in(allocator)),
+            Self::Character(it) => {
+                CharacterClassContents::Character(CloneIn::clone_in(it, allocator))
+            }
             Self::NestedCharacterClass(it) => {
-                CharacterClassContents::NestedCharacterClass(it.clone_in(allocator))
+                CharacterClassContents::NestedCharacterClass(CloneIn::clone_in(it, allocator))
             }
             Self::ClassStringDisjunction(it) => {
-                CharacterClassContents::ClassStringDisjunction(it.clone_in(allocator))
+                CharacterClassContents::ClassStringDisjunction(CloneIn::clone_in(it, allocator))
             }
         }
     }
@@ -257,9 +276,9 @@ impl<'alloc> CloneIn<'alloc> for CharacterClassRange {
     type Cloned = CharacterClassRange;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         CharacterClassRange {
-            span: self.span.clone_in(allocator),
-            min: self.min.clone_in(allocator),
-            max: self.max.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            min: CloneIn::clone_in(&self.min, allocator),
+            max: CloneIn::clone_in(&self.max, allocator),
         }
     }
 }
@@ -268,9 +287,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ClassStringDisjunction<'old
     type Cloned = ClassStringDisjunction<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ClassStringDisjunction {
-            span: self.span.clone_in(allocator),
-            strings: self.strings.clone_in(allocator),
-            body: self.body.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            strings: CloneIn::clone_in(&self.strings, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
@@ -279,9 +298,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ClassString<'old_alloc> {
     type Cloned = ClassString<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         ClassString {
-            span: self.span.clone_in(allocator),
-            strings: self.strings.clone_in(allocator),
-            body: self.body.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            strings: CloneIn::clone_in(&self.strings, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
@@ -290,9 +309,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CapturingGroup<'old_alloc> 
     type Cloned = CapturingGroup<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         CapturingGroup {
-            span: self.span.clone_in(allocator),
-            name: self.name.clone_in(allocator),
-            body: self.body.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
@@ -301,10 +320,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for IgnoreGroup<'old_alloc> {
     type Cloned = IgnoreGroup<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         IgnoreGroup {
-            span: self.span.clone_in(allocator),
-            enabling_modifiers: self.enabling_modifiers.clone_in(allocator),
-            disabling_modifiers: self.disabling_modifiers.clone_in(allocator),
-            body: self.body.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            enabling_modifiers: CloneIn::clone_in(&self.enabling_modifiers, allocator),
+            disabling_modifiers: CloneIn::clone_in(&self.disabling_modifiers, allocator),
+            body: CloneIn::clone_in(&self.body, allocator),
         }
     }
 }
@@ -313,9 +332,9 @@ impl<'alloc> CloneIn<'alloc> for ModifierFlags {
     type Cloned = ModifierFlags;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         ModifierFlags {
-            ignore_case: self.ignore_case.clone_in(allocator),
-            sticky: self.sticky.clone_in(allocator),
-            multiline: self.multiline.clone_in(allocator),
+            ignore_case: CloneIn::clone_in(&self.ignore_case, allocator),
+            sticky: CloneIn::clone_in(&self.sticky, allocator),
+            multiline: CloneIn::clone_in(&self.multiline, allocator),
         }
     }
 }
@@ -324,8 +343,8 @@ impl<'alloc> CloneIn<'alloc> for IndexedReference {
     type Cloned = IndexedReference;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
         IndexedReference {
-            span: self.span.clone_in(allocator),
-            index: self.index.clone_in(allocator),
+            span: CloneIn::clone_in(&self.span, allocator),
+            index: CloneIn::clone_in(&self.index, allocator),
         }
     }
 }
@@ -333,6 +352,9 @@ impl<'alloc> CloneIn<'alloc> for IndexedReference {
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for NamedReference<'old_alloc> {
     type Cloned = NamedReference<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        NamedReference { span: self.span.clone_in(allocator), name: self.name.clone_in(allocator) }
+        NamedReference {
+            span: CloneIn::clone_in(&self.span, allocator),
+            name: CloneIn::clone_in(&self.name, allocator),
+        }
     }
 }

@@ -1,6 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::ast::{CharacterKind, Term};
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -36,7 +37,14 @@ declare_oxc_lint!(
 impl Rule for NoDivRegex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            if lit.regex.pattern.source_text(ctx.source_text()).starts_with('=') {
+            let Some(pattern) = lit.regex.pattern.as_pattern() else { return };
+            if pattern
+                .body
+                .body
+                .first()
+                .and_then(|it| it.body.first())
+                .is_some_and(|it| matches!(it, Term::Character(ch) if ch.kind == CharacterKind::Symbol && ch.value == '=' as u32))
+            {
                 ctx.diagnostic_with_fix(no_div_regex_diagnostic(lit.span), |fixer| {
                     let span = Span::sized(lit.span.start + 1, 1);
                     fixer.replace(span, "[=]")

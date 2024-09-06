@@ -37,8 +37,9 @@ declare_oxc_lint!(
     /// It also warns when checked and defaultChecked properties are used together.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <input type="checkbox" checked />
     /// <input type="checkbox" checked defaultChecked />
     /// <input type="radio" checked defaultChecked />
@@ -46,8 +47,10 @@ declare_oxc_lint!(
     /// React.createElement('input', { checked: false });
     /// React.createElement('input', { type: 'checkbox', checked: true });
     /// React.createElement('input', { type: 'checkbox', checked: true, defaultChecked: true });
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <input type="checkbox" checked onChange={() => {}} />
     /// <input type="checkbox" checked readOnly />
     /// <input type="checkbox" checked onChange readOnly />

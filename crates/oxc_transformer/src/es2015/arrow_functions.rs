@@ -131,40 +131,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         self.insert_this_var_statement_at_the_top_of_statements(&mut body.statements);
     }
 
-    /// Change <this></this> to <_this></_this>, and mark it as found
-    fn enter_jsx_element_name(&mut self, name: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !self.is_inside_arrow_function() {
-            return;
-        }
-
-        if let JSXElementName::Identifier(ident) = name {
-            if ident.name == "this" {
-                let mut new_ident = self.get_this_name(ctx).create_read_reference(ctx);
-                new_ident.span = ident.span;
-                *name = self.ctx.ast.jsx_element_name_from_identifier_reference(new_ident);
-            }
-        }
-    }
-
-    /// Change <this.foo></this.foo> to <_this.foo></_this.foo>, and mark it as found
-    fn enter_jsx_member_expression_object(
-        &mut self,
-        node: &mut JSXMemberExpressionObject<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !self.is_inside_arrow_function() {
-            return;
-        }
-
-        if let JSXMemberExpressionObject::IdentifierReference(ident) = node {
-            if ident.name == "this" {
-                let new_ident = self.get_this_name(ctx).create_read_reference(ctx);
-                ident.name = new_ident.name;
-                ident.reference_id = new_ident.reference_id;
-            }
-        }
-    }
-
     fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::ArrowFunctionExpression(_) => {

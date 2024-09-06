@@ -80,13 +80,16 @@ declare_oxc_lint!(
     /// `<img>` and the components which you define in options.components with the exception of components which is hidden from screen reader.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <img src="foo" alt="Photo of foo being weird." />
     /// <img src="bar" alt="Image of me at a bar!" />
     /// <img src="baz" alt="Picture of baz fixing a bug." />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <img src="foo" alt="Foo eating a sandwich." />
     /// <img src="bar" aria-hidden alt="Picture of me taking a photo of an image" /> // Will pass because it is hidden.
     /// <img src="baz" alt={`Baz taking a ${photo}`} /> // This is valid since photo is a variable name.

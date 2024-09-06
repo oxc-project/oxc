@@ -84,3 +84,9 @@ pub mod sourcemap {
     #[doc(inline)]
     pub use oxc_sourcemap::*;
 }
+
+#[cfg(feature = "cfg")]
+pub mod cfg {
+    #[doc(inline)]
+    pub use oxc_cfg::*;
+}

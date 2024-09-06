@@ -53,12 +53,15 @@ declare_oxc_lint!(
     /// unexpected page reloads.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <button />
     /// <button type="foo" />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <button type="button" />
     /// <button type="submit" />
     /// ```
@@ -172,7 +175,7 @@ impl ButtonHasType {
     }
 
     fn is_valid_button_type_prop_expression(&self, expr: &Expression) -> bool {
-        match expr.without_parenthesized() {
+        match expr.without_parentheses() {
             Expression::StringLiteral(str) => {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }

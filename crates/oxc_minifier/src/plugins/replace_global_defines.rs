@@ -1,5 +1,4 @@
-use std::cmp::Ordering;
-use std::sync::Arc;
+use std::{cmp::Ordering, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};

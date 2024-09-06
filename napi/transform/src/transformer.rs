@@ -1,11 +1,11 @@
 use napi_derive::napi;
-
-use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
 use oxc_allocator::Allocator;
 use oxc_codegen::CodegenReturn;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::Transformer;
+
+use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
 
 // NOTE: Use JSDoc syntax for all doc comments, not rustdoc.
 // NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/babel__core/index.d.ts).

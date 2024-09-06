@@ -1,8 +1,10 @@
-use oxc_ast::ast::{ImportDeclarationSpecifier, VariableDeclarator};
 use std::{cell::OnceCell, fmt};
 
 use oxc_ast::{
-    ast::{AssignmentTarget, BindingIdentifier, BindingPattern, IdentifierReference},
+    ast::{
+        AssignmentTarget, BindingIdentifier, BindingPattern, IdentifierReference,
+        ImportDeclarationSpecifier, VariableDeclarator,
+    },
     AstKind,
 };
 use oxc_semantic::{

@@ -3,19 +3,21 @@
 #![allow(clippy::manual_assert)]
 /// Disabled lint since we copy code from https://github.com/rayon-rs/rayon/blob/97c1133c2366a301a2d4ab35cf686bca7f74830f/src/vec.rs#L1-L284
 use alloc::vec::Vec;
-use core::iter;
-use core::mem;
-use core::ops::{Range, RangeBounds};
-use core::ptr;
-use core::slice;
-use rayon::iter::plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer};
-use rayon::iter::{
-    IndexedParallelIterator, IntoParallelIterator, ParallelDrainRange, ParallelIterator,
+use core::{
+    iter, mem,
+    ops::{Range, RangeBounds},
+    ptr, slice,
 };
-use rayon::slice::{Iter, IterMut};
 
-use crate::Idx;
-use crate::IndexVec;
+use rayon::{
+    iter::{
+        plumbing::{bridge, Consumer, Producer, ProducerCallback, UnindexedConsumer},
+        IndexedParallelIterator, IntoParallelIterator, ParallelDrainRange, ParallelIterator,
+    },
+    slice::{Iter, IterMut},
+};
+
+use crate::{Idx, IndexVec};
 
 impl<'data, I: Idx, T: Sync + 'data> IntoParallelIterator for &'data IndexVec<I, T> {
     type Item = &'data T;
@@ -87,8 +89,8 @@ impl<T: Send> IndexedParallelIterator for IntoIter<T> {
 }
 
 impl<'data, I: Idx, T: Send> ParallelDrainRange<usize> for &'data mut IndexVec<I, T> {
-    type Iter = Drain<'data, T>;
     type Item = T;
+    type Iter = Drain<'data, T>;
 
     fn par_drain<R: RangeBounds<usize>>(self, range: R) -> Self::Iter {
         Drain { orig_len: self.len(), range: simplify_range(range, self.len()), vec: &mut self.raw }
@@ -202,8 +204,8 @@ impl<T: Send> DrainProducer<'_, T> {
 }
 
 impl<'data, T: 'data + Send> Producer for DrainProducer<'data, T> {
-    type Item = T;
     type IntoIter = SliceDrain<'data, T>;
+    type Item = T;
 
     fn into_iter(mut self) -> Self::IntoIter {
         // replace the slice so we don't drop it twice

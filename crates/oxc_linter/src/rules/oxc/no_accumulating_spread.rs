@@ -76,9 +76,11 @@ pub struct NoAccumulatingSpread;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Prevents using object or array spreads on accumulators in `Array.prototype.reduce()` and in loops.
     ///
     /// ### Why is this bad?
+    ///
     /// Object and array spreads create a new object or array on each iteration.
     /// In the worst case, they also cause O(n) copies (both memory and time complexity).
     /// When used on an accumulator, this can lead to `O(n^2)` memory complexity and
@@ -87,9 +89,17 @@ declare_oxc_lint!(
     /// For a more in-depth explanation, see this [blog post](https://prateeksurana.me/blog/why-using-object-spread-with-reduce-bad-idea/)
     /// by Prateek Surana.
     ///
+    /// ### Examples
     ///
-    /// ### Example
-    /// Pass
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// arr.reduce((acc, x) => ({ ...acc, [x]: fn(x) }), {})
+    /// Object.keys(obj).reduce((acc, el) => ({ ...acc, [el]: fn(el) }), {})
+    ///
+    /// let foo = []; for (let i = 0; i < 10; i++) { foo = [...foo, i]; }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
     /// ```javascript
     /// function fn (x) {
     ///   // ...
@@ -107,14 +117,6 @@ declare_oxc_lint!(
     /// }, {})
     ///
     /// let foo = []; for (let i = 0; i < 10; i++) { foo.push(i); }
-    /// ```
-    ///
-    /// Fail
-    /// ```javascript
-    /// arr.reduce((acc, x) => ({ ...acc, [x]: fn(x) }), {})
-    /// Object.keys(obj).reduce((acc, el) => ({ ...acc, [el]: fn(el) }), {})
-    ///
-    /// let foo = []; for (let i = 0; i < 10; i++) { foo = [...foo, i]; }
     /// ```
     NoAccumulatingSpread,
     perf,
@@ -394,7 +396,7 @@ fn test() {
         "let foo = {}; for (const i in [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (let i of [1,2,3]) { foo[i] = i; }",
         "let foo = {}; for (const i of [1,2,3]) { foo[i] = i; }",
-        "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",        
+        "let foo = {}; while (Object.keys(foo).length < 10) { foo[Object.keys(foo).length] = Object.keys(foo).length; }",
     ];
 
     let fail = vec![

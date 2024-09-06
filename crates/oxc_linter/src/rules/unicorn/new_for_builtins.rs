@@ -35,13 +35,16 @@ declare_oxc_lint!(
     /// They work the same, but `new` should be preferred for consistency with other constructors.
     ///
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// const foo = new String('hello world');
     /// const bar = Array(1, 2, 3);
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = String('hello world');
     /// const bar = new Array(1, 2, 3);
     /// ```
@@ -53,7 +56,7 @@ impl Rule for NewForBuiltins {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NewExpression(new_expr) => {
-                let callee = new_expr.callee.without_parenthesized();
+                let callee = new_expr.callee.without_parentheses();
 
                 let Some(builtin_name) = is_expr_global_builtin(callee, ctx) else {
                     return;
@@ -65,7 +68,7 @@ impl Rule for NewForBuiltins {
             }
             AstKind::CallExpression(call_expr) => {
                 let Some(builtin_name) =
-                    is_expr_global_builtin(call_expr.callee.without_parenthesized(), ctx)
+                    is_expr_global_builtin(call_expr.callee.without_parentheses(), ctx)
                 else {
                     return;
                 };
