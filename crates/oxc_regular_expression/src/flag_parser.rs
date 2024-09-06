@@ -1,8 +1,8 @@
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::Result;
 use rustc_hash::FxHashSet;
 
-use crate::{ast, options::ParserOptions, span::SpanFactory};
+use crate::{ast, diagnostics, options::ParserOptions, span::SpanFactory};
 
 pub struct FlagsParser<'a> {
     source_text: &'a str,
@@ -20,8 +20,7 @@ impl<'a> FlagsParser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<ast::Flags> {
-        let mut existing_flags = FxHashSet::default();
-
+        let span = self.span_factory.create(0, self.source_text.len());
         let mut global = false;
         let mut ignore_case = false;
         let mut multiline = false;
@@ -31,9 +30,10 @@ impl<'a> FlagsParser<'a> {
         let mut has_indices = false;
         let mut unicode_sets = false;
 
-        for c in self.source_text.chars() {
+        let mut existing_flags = FxHashSet::default();
+        for (idx, c) in self.source_text.char_indices() {
             if !existing_flags.insert(c) {
-                return Err(OxcDiagnostic::error(format!("Duplicated flag `{c}`")));
+                return Err(diagnostics::duplicated_flag(self.span_factory.create(idx, idx)));
             }
 
             match c {
@@ -45,17 +45,16 @@ impl<'a> FlagsParser<'a> {
                 's' => dot_all = true,
                 'd' => has_indices = true,
                 'v' => unicode_sets = true,
-                _ => return Err(OxcDiagnostic::error(format!("Invalid flag `{c}`"))),
+                _ => return Err(diagnostics::unknown_flag(self.span_factory.create(idx, idx))),
             }
         }
 
-        // This should be a `SyntaxError`
         if unicode && unicode_sets {
-            return Err(OxcDiagnostic::error("Invalid regular expression flags"));
+            return Err(diagnostics::invalid_unicode_flags(span));
         }
 
         Ok(ast::Flags {
-            span: self.span_factory.create(0, self.source_text.len()),
+            span,
             global,
             ignore_case,
             multiline,

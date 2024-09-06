@@ -2,6 +2,7 @@
 
 pub mod ast;
 mod body_parser;
+mod diagnostics;
 mod display;
 mod flag_parser;
 mod literal_parser;
