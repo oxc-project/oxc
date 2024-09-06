@@ -2,7 +2,7 @@ commit: 3bcfee23
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1736/2101 (82.63%)
+Positive Passed: 1735/2101 (82.58%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -26,6 +26,9 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-ca
 semantic error: Scope children mismatch:
 after transform: ScopeId(3): [ScopeId(4)]
 rebuilt        : ScopeId(3): [ScopeId(4)]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/import-meta/input.js
+semantic error: Unexpected import.meta expression
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/230/input.js
 semantic error: Binding symbols mismatch:
@@ -769,8 +772,9 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-unambiguous/input.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Unresolved references mismatch:
+after transform: ["f"]
+rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
 semantic error: Bindings mismatch:
@@ -894,8 +898,14 @@ semantic error: `import lib = require(...);` is only supported when compiling mo
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: a
+Missing ReferenceId: require
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
 semantic error: Missing SymbolId: A

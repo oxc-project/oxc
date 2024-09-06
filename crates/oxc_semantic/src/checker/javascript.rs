@@ -404,6 +404,7 @@ pub fn check_module_declaration<'a>(
     let start = decl.span().start;
     let span = Span::new(start, start + 6);
     match ctx.source_type.module_kind() {
+        ModuleKind::Unambiguous => {}
         ModuleKind::Script => {
             ctx.error(module_code(text, span));
         }

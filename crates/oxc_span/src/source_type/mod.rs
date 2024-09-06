@@ -162,6 +162,10 @@ impl SourceType {
         self.module_kind == ModuleKind::Module
     }
 
+    pub fn is_unambiguous(self) -> bool {
+        self.module_kind == ModuleKind::Unambiguous
+    }
+
     pub fn module_kind(self) -> ModuleKind {
         self.module_kind
     }
@@ -207,6 +211,14 @@ impl SourceType {
             self.module_kind = ModuleKind::Module;
         } else {
             self.module_kind = ModuleKind::Script;
+        }
+        self
+    }
+
+    #[must_use]
+    pub const fn with_unambiguous(mut self, yes: bool) -> Self {
+        if yes {
+            self.module_kind = ModuleKind::Unambiguous;
         }
         self
     }

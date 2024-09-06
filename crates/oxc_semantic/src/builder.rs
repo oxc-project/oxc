@@ -219,6 +219,15 @@ impl<'a> SemanticBuilder<'a> {
             let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
+            // Upgrade "script" to "module`.
+            if self.source_type.is_unambiguous() {
+                self.source_type = if program.body.iter().any(Statement::is_module_declaration) {
+                    self.source_type.with_module(true)
+                } else {
+                    self.source_type.with_script(true)
+                }
+            }
+
             // Count the number of nodes, scopes, symbols, and references.
             // Use these counts to reserve sufficient capacity in `AstNodes`, `ScopeTree`
             // and `SymbolTable` to store them.

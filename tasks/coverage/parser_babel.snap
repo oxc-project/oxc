@@ -2,7 +2,7 @@ commit: 3bcfee23
 
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
-Positive Passed: 2083/2101 (99.14%)
+Positive Passed: 2082/2101 (99.10%)
 Negative Passed: 1382/1493 (92.57%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/categorized/invalid-fn-decl-labeled-inside-if/input.js
@@ -132,6 +132,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/import-meta/input.js
+
+  × Unexpected import.meta expression
+   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/import-meta/input.js:1:13]
+ 1 │ console.log(import.meta);
+   ·             ───────────
+   ╰────
+  help: import.meta is only allowed in module code
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx-babel-7/input.ts
 
   × Expected `<` but found `EOF`

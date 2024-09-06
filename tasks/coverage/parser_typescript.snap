@@ -1,9 +1,9 @@
 commit: a709f989
 
 parser_typescript Summary:
-AST Parsed     : 6470/6479 (99.86%)
-Positive Passed: 6445/6479 (99.48%)
-Negative Passed: 1208/5715 (21.14%)
+AST Parsed     : 6469/6479 (99.85%)
+Positive Passed: 6455/6479 (99.63%)
+Negative Passed: 1216/5715 (21.28%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration10.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration11.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ClassDeclaration13.ts
@@ -80,9 +80,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsObj
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsObjectIterator02_ES5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsObjectIterator03_ES5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsPropertyNameInJsMode1.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInConstructor4_Js.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInFunction1_Js.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInMethod4_Js.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsReferenceInObjectLiteral_Js.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/argumentsSpreadRestIterables.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/arithAssignTyping.ts
@@ -508,7 +506,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameEnum3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameSymbol1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitComputedPropertyNameSymbol2.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuring2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringObjectLiteralPattern.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringObjectLiteralPattern1.ts
@@ -525,7 +522,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredTypeAlias5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredTypeAlias6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInferredTypeAlias7.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInterfaceWithNonEntityNameExpressionHeritage.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInvalidReference2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInvalidReferenceAllowJs.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitIsolatedDeclarationErrorNotEmittedForNonEmittedFile.ts
@@ -1272,6 +1268,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompil
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithOutFileNameSameAsInputJsFile.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationWithoutOut.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileFunctionParametersAsOptional2.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFileMethodOverloads3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsFunctionWithPrototypeNoErrorTruncationNoCrash.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsNoImplicitAnyNoCascadingReferenceErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsPropertyAssignedAfterMethodDeclaration.ts
@@ -1292,6 +1289,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocRestPar
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeCast.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypeNongenericInstantiationAttempt.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefMissingType.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxAttributeWithoutExpressionReact.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxCallElaborationCheckNoCrash1.tsx
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildWrongType.tsx
@@ -1332,7 +1330,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/largeControl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lastPropertyInLiteralWins.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lateBoundConstraintTypeChecksCorrectly.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/lateBoundDestructuringImplicitAnyError.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letAsIdentifier.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letConstInCaseClauses.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes-duplicates2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations-scopes-duplicates3.ts
@@ -1868,6 +1865,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferenc
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferencingFile2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferencingFile3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferencingSpreadInLoop.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/selfReferentialDefaultNoStackOverflow.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/semicolonsInModuleDeclarations.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/separate1-1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/setMethods.ts
@@ -1922,7 +1920,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictModeIn
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictModeReservedWordInModuleDeclaration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictNullEmptyDestructuring.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictNullNotNullIndexTypeNoLib.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictOptionalProperties1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictOptionalProperties3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/strictSubtypeAndNarrowing.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/stringIndexerAndConstructor.ts
@@ -2496,7 +2493,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/m
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateWriteOnlyAccessorRead.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAbstractClasses.2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAccessModifiers.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/abstractPropertyInitializer.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideMethod.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty2.ts
@@ -3224,7 +3220,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault5.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/relativePathMustResolve.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelFileModuleMissing.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelModuleDeclarationAndFile.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/typeOnly/allowsImportingTsExtension.ts
@@ -3396,6 +3391,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/che
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag6.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag7.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag8.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag9.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocTypeTag1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocTypeTag2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkJsdocTypeTag4.ts
@@ -3407,14 +3403,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/che
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/checkOtherObjectAssignProperty.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/constructorTagOnObjectLiteralMethod.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassLikeHeuristic.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassesErr.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsCrossfileMerge.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsDefaultsErr.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsEnums.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportAssignedConstructorFunctionWithSub.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsExportFormsErr.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsImportAliasExposedWithinNamespace.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsInterfaces.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReassignmentFromDeclaration2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences4.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/enumTag.ts
@@ -3476,6 +3469,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsd
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTagCast.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTagParameterType.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocTypeTagRequiredParameters.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/noAssertForUnparseableTypedefs.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/noDuplicateJsdoc1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/overloadTag1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/overloadTag2.ts
@@ -3499,7 +3493,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typ
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefDuplicateTypeDeclaration.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefInnerNamepaths.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefMultipleTypeParameters.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefOnStatements.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefScope1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefTagTypeResolution.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/jsdoc/typedefTagWrapping.ts
@@ -3611,9 +3604,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/moduleRes
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeAllowJsPackageSelfName.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJs1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsConditionalPackageExports.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsExportAssignment.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsGeneratedNameCollisions.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportHelpersCollisions3.ts
@@ -3623,7 +3614,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allo
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsPackagePatternExports.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsPackagePatternExportsExclude.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsPackagePatternExportsTrailers.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsTopLevelAwait.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModules1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesCJSEmit1.ts
@@ -4000,6 +3990,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/con
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/constructorFunctionsStrict.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/enumMergeWithExpando.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/expandoOnAlias.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/exportDefaultInJsFile01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/exportDefaultInJsFile02.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/exportNestedNamespaces2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/exportPropertyAssignmentNameResolution.ts
@@ -4028,6 +4019,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/nam
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/nestedDestructuringOfRequire.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSGrammarErrors3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSTypeErrors.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignmentOnUnresolvedImportedSymbol.ts
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/propertyAssignmentUseParentType2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergeAcrossFiles2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/prototypePropertyAssignmentMergeWithInterfaceMethod.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/salsa/requireOfESWithPropertyAccess.ts
@@ -4302,7 +4295,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/spr
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadUnion2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/spread/spreadUnion3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesAndLogicalOrExpressions01.ts
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesInVariableDeclarations01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability01.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloadAssignability02.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesOverloads05.ts
@@ -4511,6 +4503,16 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/t
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestion2.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun1.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/typings/typingsSuggestionBun2.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
+
+  × Expected `(` but found `await`
+    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:22:5]
+ 21 │ const arr : number[] = [];
+ 22 │ for await (const v of asyncGen(4)) {
+    ·     ──┬──
+    ·       ╰── `(` expected
+ 23 │   arr.push(v);
+    ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/bom-utf16be.ts
 
   × Invalid Character `￾`
@@ -4527,38 +4529,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedSt
     · ────
  24 │     const enum H {}
     ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileClassSelfReferencedProperty.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/jsFileClassSelfReferencedProperty.ts:1:1]
- 1 │ export class StackOverflowTest {
-   · ──────
- 2 │   constructor () {
-   ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileCompilationRestParamJsDocFunction.ts
-
-  × Cannot use export statement outside a module
-    ╭─[typescript/tests/cases/compiler/jsFileCompilationRestParamJsDocFunction.ts:22:1]
- 21 │ 
- 22 │ export default apply;
-    · ──────
-    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsFileESModuleWithEnumTag.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/jsFileESModuleWithEnumTag.ts:1:1]
- 1 │ export {}; // mark as module
-   · ──────
- 2 │ /** @enum {number} */
-   ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/jsdocTypedefNoCrash.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash.ts:5:1]
- 4 │  */
- 5 │ export const foo = 5;
-   · ──────
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationNoNewNames.ts
 
   × Missing initializer in destructuring declaration
@@ -4612,14 +4582,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidat
     ·       ───
  19 │     }
     ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/thisInObjectJs.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/thisInObjectJs.ts:1:1]
- 1 │ export { }
-   · ──────
- 2 │ let obj = {
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unreachableDeclarations.ts
 
   × A namespace declaration is only allowed at the top level of a namespace or module.
@@ -4637,30 +4599,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/unreachableDecla
     ·     ───────────────────────────────────────────
  85 │ }
     ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/usedImportNotElidedInJs.ts
-
-  × Cannot use import statement outside a module
-   ╭─[typescript/tests/cases/compiler/usedImportNotElidedInJs.ts:4:1]
- 3 │ 
- 4 │ import * as moment from 'moment';
-   · ──────
- 5 │ import rollupMoment__default from 'moment';
-   ╰────
-
-  × Cannot use import statement outside a module
-   ╭─[typescript/tests/cases/compiler/usedImportNotElidedInJs.ts:5:1]
- 4 │ import * as moment from 'moment';
- 5 │ import rollupMoment__default from 'moment';
-   · ──────
- 6 │ export const moment = rollupMoment__default || moment;
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/usedImportNotElidedInJs.ts:6:1]
- 5 │ import rollupMoment__default from 'moment';
- 6 │ export const moment = rollupMoment__default || moment;
-   · ──────
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
 
   × 'with' statements are not allowed
@@ -4731,14 +4669,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/classes/prope
      ·                ─────────
  291 │         prototype() {} // ok
      ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/controlFlow/assertionTypePredicates2.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/constEnums/constEnum1.ts
 
-  × Cannot use export statement outside a module
-    ╭─[typescript/tests/cases/conformance/controlFlow/assertionTypePredicates2.ts:18:1]
- 17 │ 
- 18 │ export const main = () => {
-    · ──────
- 19 │     /** @type { A } */
+  × Enum member must have initializer.
+    ╭─[typescript/tests/cases/conformance/constEnums/constEnum1.ts:9:5]
+  8 │     c = (a+1),
+  9 │     e,
+    ·     ─
+ 10 │     d = ~e,
     ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
 
@@ -4764,6 +4702,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/import
  3 │ export let z = import.import.import.malkovich;
    ·                ─────────────
    ╰────
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts
+
+  × Unexpected import.meta expression
+   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts:3:5]
+ 2 │ 
+ 3 │ if (import.meta.foo) {
+   ·     ───────────
+ 4 │   import.meta.foo();
+   ╰────
+  help: import.meta is only allowed in module code
+
+  × Unexpected import.meta expression
+   ╭─[typescript/tests/cases/conformance/es2019/importMeta/importMetaNarrowing.ts:4:3]
+ 3 │ if (import.meta.foo) {
+ 4 │   import.meta.foo();
+   ·   ───────────
+ 5 │ }
+   ╰────
+  help: import.meta is only allowed in module code
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts
 
   × Expected `,` but found `string`
@@ -4793,63 +4750,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/esDecorators/
  14 │ 
     ╰────
   help: Try insert a semicolon here
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts:4:8]
- 3 │ // await allowed in import=namespace when not a module
- 4 │ import await = foo.await;
-   ·        ─────
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwait.2.ts:4:8]
- 3 │ // await allowed in import=namespace when not a module
- 4 │ import await = foo.await;
-   ·        ─────
-   ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/constructorTagOnClassConstructor.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/jsdoc/constructorTagOnClassConstructor.ts:1:1]
- 1 │ export class Alpha { }
-   · ──────
- 2 │ export class Beta {
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/jsdoc/constructorTagOnClassConstructor.ts:2:1]
- 1 │ export class Alpha { }
- 2 │ export class Beta {
-   · ──────
- 3 │   /**
-   ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/inferThis.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/jsdoc/inferThis.ts:1:1]
- 1 │ export class C {
-   · ──────
- 2 │     /**
-   ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/jsdocParseMatchingBackticks.ts
-
-  × Cannot use export statement outside a module
-    ╭─[typescript/tests/cases/conformance/jsdoc/jsdocParseMatchingBackticks.ts:12:1]
- 11 │  */
- 12 │ export function f(x, y, z, alpha, beta, gamma) {
-    · ──────
- 13 │     return x + y + z + alpha + beta + gamma
-    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/jsdoc/overloadTag3.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/jsdoc/overloadTag3.ts:4:1]
- 3 │  */
- 4 │ export class Foo {
-   · ──────
- 5 │     /**
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/untypedModuleImport.ts
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4868,15 +4768,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/moduleResolut
    ·     ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts:5:1]
- 4 │ 
- 5 │ export class C {
-   · ──────
- 6 │     constructor() {
-   ╰────
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJSRedeclare3.ts
 
   × Identifier `orbitol` has already been declared
@@ -4889,14 +4780,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/plainJS
    ·        ╰── It can not be redeclared here
  3 │ orbitol.toExponential()
    ╰────
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFromPropertyAssignmentWithExport.ts
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/privateIdentifierExpando.ts
 
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/typeFromPropertyAssignmentWithExport.ts:3:1]
- 2 │ 
- 3 │ export const Adapter = {};
-   · ──────
- 4 │ 
+  × Private identifier '#bar' is not allowed outside class bodies
+   ╭─[typescript/tests/cases/conformance/salsa/privateIdentifierExpando.ts:2:3]
+ 1 │ const x = {};
+ 2 │ x.#bar.baz = 20;
+   ·   ────
    ╰────
 
   × A parameter property is only allowed in a constructor implementation.
@@ -5161,6 +5051,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │     export var foo = 1;
    ╰────
   help: Try insert a semicolon here
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/argumentsReferenceInConstructor4_Js.ts:18:9]
+ 17 │          */
+ 18 │         const arguments = this.arguments;
+    ·               ─────────
+ 19 │ 
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/tests/cases/compiler/argumentsReferenceInMethod4_Js.ts:16:9]
+ 15 │          */
+ 16 │         const arguments = this.arguments;
+    ·               ─────────
+ 17 │ 
+    ╰────
 
   × 'arguments' is not allowed in class field initializer
    ╭─[typescript/tests/cases/compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:3:10]
@@ -6882,6 +6788,43 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │ 
    ╰────
 
+  × Identifier `a` has already been declared
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuring2.ts:3:13]
+ 2 │ function g([a, b, c, d] = [1, 2, 3, 4]) { }
+ 3 │ function h([a, [b], [[c]], {x = 10, y: [a, b, c], z: {a1, b1}}]){ }
+   ·             ┬                           ┬
+   ·             │                           ╰── It can not be redeclared here
+   ·             ╰── `a` has already been declared here
+ 4 │ function h1([a, [b], [[c]], {x = 10, y = [1, 2, 3], z: {a1, b1}}]){ }
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuring2.ts:3:17]
+ 2 │ function g([a, b, c, d] = [1, 2, 3, 4]) { }
+ 3 │ function h([a, [b], [[c]], {x = 10, y: [a, b, c], z: {a1, b1}}]){ }
+   ·                 ┬                          ┬
+   ·                 │                          ╰── It can not be redeclared here
+   ·                 ╰── `b` has already been declared here
+ 4 │ function h1([a, [b], [[c]], {x = 10, y = [1, 2, 3], z: {a1, b1}}]){ }
+   ╰────
+
+  × Identifier `c` has already been declared
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuring2.ts:3:23]
+ 2 │ function g([a, b, c, d] = [1, 2, 3, 4]) { }
+ 3 │ function h([a, [b], [[c]], {x = 10, y: [a, b, c], z: {a1, b1}}]){ }
+   ·                       ┬                       ┬
+   ·                       │                       ╰── It can not be redeclared here
+   ·                       ╰── `c` has already been declared here
+ 4 │ function h1([a, [b], [[c]], {x = 10, y = [1, 2, 3], z: {a1, b1}}]){ }
+   ╰────
+
+  × TS(2499): An interface can only extend an identifier/qualified-name with optional type arguments.
+   ╭─[typescript/tests/cases/compiler/declarationEmitInterfaceWithNonEntityNameExpressionHeritage.ts:2:25]
+ 1 │ class A { }
+ 2 │ interface Class extends (typeof A) { }
+   ·                         ──────────
+   ╰────
+
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/declarationEmitInvalidExport.ts:5:1]
  4 │ export type MyClass = typeof myClass;
@@ -8592,35 +8535,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ╰────
   help: Try insert a semicolon here
 
-  × Cannot use export statement outside a module
-    ╭─[typescript/tests/cases/compiler/jsFileMethodOverloads3.ts:19:1]
- 18 │ 
- 19 │ export let a = id(123);
-    · ──────
- 20 │ export let b = id("hello");
-    ╰────
-
-  × Cannot use export statement outside a module
-    ╭─[typescript/tests/cases/compiler/jsFileMethodOverloads3.ts:20:1]
- 19 │ export let a = id(123);
- 20 │ export let b = id("hello");
-    · ──────
-    ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts:1:1]
- 1 │ export type foo = 5;
-   · ──────
- 2 │ /**
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/jsdocTypedefNoCrash2.ts:6:1]
- 5 │  */
- 6 │ export const foo = 5;
-   · ──────
-   ╰────
-
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/jsxAttributeMissingInitializer.tsx:1:21]
  1 │ const x = <div foo= ></div>;
@@ -8778,6 +8692,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
     ·               ╰── It can not be redeclared here
  50 │     }
     ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[typescript/tests/cases/compiler/letAsIdentifier.ts:2:5]
+ 1 │ var let = 10;
+ 2 │ var a = 10;
+   ·     ┬
+   ·     ╰── `a` has already been declared here
+ 3 │ let = 30;
+ 4 │ let
+ 5 │ a;
+   · ┬
+   · ╰── It can not be redeclared here
+   ╰────
 
   × The keyword 'let' is reserved
    ╭─[typescript/tests/cases/compiler/letAsIdentifierInStrictMode.ts:2:5]
@@ -11097,21 +11024,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  4 │ 
    ╰────
 
-  × Cannot use import statement outside a module
-   ╭─[typescript/tests/cases/compiler/selfReferentialDefaultNoStackOverflow.ts:1:1]
- 1 │ import DefaultSpinner from './QSpinner'
-   · ──────
- 2 │ 
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/compiler/selfReferentialDefaultNoStackOverflow.ts:3:1]
- 2 │ 
- 3 │ export default {
-   · ──────
- 4 │   mixins: [DefaultSpinner],
-   ╰────
-
   × Identifier `v` has already been declared
    ╭─[typescript/tests/cases/compiler/shadowedFunctionScopedVariablesByBlockScopedOnes.ts:4:14]
  3 │ function test1() {
@@ -11898,6 +11810,33 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  4 │ import public from "./1"
    ·        ──────
    ╰────
+
+  × Identifier `e` has already been declared
+     ╭─[typescript/tests/cases/compiler/strictOptionalProperties1.ts:190:15]
+ 189 │ }
+ 190 │ declare const e: string | boolean | undefined
+     ·               ───────────────┬───────────────
+     ·                              ╰── `e` has already been declared here
+ 191 │ declare const u1: U1
+ 192 │ declare let u2: U2
+ 193 │ u1.email = e // error, but only because boolean isn't in email's type
+ 194 │ u2.email = e // error, and suggest adding undefined
+ 195 │ u2 = {
+ 196 │     name: 'hi',
+ 197 │     email: undefined
+ 198 │ }
+ 199 │ 
+ 200 │ // Repro from #44437
+ 201 │ 
+ 202 │ declare var a: {[x: string]: number | string }
+ 203 │ declare var b: {a: number, b: string}
+ 204 │ declare var c: {a: number, b?: string}
+ 205 │ declare var d: {a: number, b: string | undefined }
+ 206 │ declare var e: {a: number, b?: string | undefined }
+     ·             ───────────────────┬───────────────────
+     ·                                ╰── It can not be redeclared here
+ 207 │ 
+     ╰────
 
   × Unterminated string
    ╭─[typescript/tests/cases/compiler/stringLiteralsErrors.ts:2:11]
@@ -14695,6 +14634,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  6 │     }
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1267): Property 'prop' cannot have an initializer because it is marked abstract.
+   ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/abstractPropertyInitializer.ts:2:14]
+ 1 │ abstract class C {
+ 2 │     abstract prop = 1
+   ·              ────
+ 3 │ }
+   ╰────
 
   × TS(1030): public' modifier already seen.
     ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:42:12]
@@ -18591,14 +18538,109 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·                      ─
    ╰────
 
-  × Expected `)` but found `,`
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:9]
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:1]
  3 │ // reparse call as invalid await should error
  4 │ await (1,);
-   ·         ┬
-   ·         ╰── `)` expected
+   · ─────
  5 │ await <number, string>(1);
    ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:5:1]
+ 4 │ await (1,);
+ 5 │ await <number, string>(1);
+   · ─────
+ 6 │ 
+   ╰────
+
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:8:1]
+ 7 │ // reparse tagged template as invalid await should error
+ 8 │ await <number, string> ``;
+   · ─────
+ 9 │ 
+   ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:11:17]
+ 10 │ // reparse class extends clause should fail
+ 11 │ class C extends await<string> {
+    ·                 ─────
+ 12 │ }
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:15:3]
+ 14 │ // await in class decorators should fail
+ 15 │ @(await)
+    ·   ─────
+ 16 │ class C1 {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:18:2]
+ 17 │ 
+ 18 │ @await(x)
+    ·  ─────
+ 19 │ class C2 {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:21:2]
+ 20 │ 
+ 21 │ @await
+    ·  ─────
+ 22 │ class C3 {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:26:6]
+ 25 │ class C4 {
+ 26 │     @await
+    ·      ─────
+ 27 │     ["foo"]() {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:30:6]
+ 29 │ class C5 {
+ 30 │     @await(1)
+    ·      ─────
+ 31 │     ["foo"]() {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:34:7]
+ 33 │ class C6 {
+ 34 │     @(await)
+    ·       ─────
+ 35 │     ["foo"]() {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:40:14]
+ 39 │ class C7 {
+ 40 │     method1(@await [x]) {}
+    ·              ─────
+ 41 │     method2(@await(1) [x]) {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:41:14]
+ 40 │     method1(@await [x]) {}
+ 41 │     method2(@await(1) [x]) {}
+    ·              ─────
+ 42 │     method3(@(await) [x]) {}
+    ╰────
+
+  × The keyword 'await' is reserved
+    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:42:15]
+ 41 │     method2(@await(1) [x]) {}
+ 42 │     method3(@(await) [x]) {}
+    ·               ─────
+ 43 │ }
+    ╰────
 
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.10.ts:2:19]
@@ -18621,25 +18663,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·        ─────
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
- 4 │ // await disallowed in import=namespace when in a module
- 5 │ import await = foo.await;
-   ·        ─────
-   ╰────
-
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
  5 │ import await = foo.await;
    ·        ─────
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
- 3 │ // reparse variable name as await should fail
- 4 │ var await = 1;
-   ·     ─────
    ╰────
 
   × The keyword 'await' is reserved
@@ -18656,13 +18684,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·      ─────
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
- 3 │ // reparse binding pattern as await should fail
- 4 │ var [await] = [1];
-   ·      ─────
-   ╰────
-
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
  3 │ // reparse binding pattern as await should fail
@@ -18670,27 +18691,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·      ─────
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
- 1 │ // await in exported class name should fail
- 2 │ export class await {
-   ·              ─────
- 3 │ }
-   ╰────
-
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.5.ts:2:14]
  1 │ // await in exported class name should fail
  2 │ export class await {
    ·              ─────
- 3 │ }
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.6.ts:2:17]
- 1 │ // await in exported function name should fail
- 2 │ export function await() {
-   ·                 ─────
  3 │ }
    ╰────
 
@@ -18735,6 +18740,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  1 │ // await disallowed in un-alised named import
  2 │ import { await } from "./other";
    ·          ─────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:1:1]
+ 1 │ await x;
+   · ─────
+ 2 │ 
+   ╰────
+
+  × Expected `(` but found `await`
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:5:5]
+ 4 │ 
+ 5 │ for await (const item of arr) {
+   ·     ──┬──
+   ·       ╰── `(` expected
+ 6 │   item;
    ╰────
 
   × Expected `=` but found `;`
@@ -19167,13 +19188,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  4 │ }
    ╰────
 
-  × Cannot use export statement outside a module
-    ╭─[typescript/tests/cases/conformance/jsdoc/checkJsdocSatisfiesTag9.ts:9:1]
-  8 │ // All of these should be Colors, but I only use some of them here.
-  9 │ export const Palette = /** @satisfies {Record<string, Color>} */ ({
-    · ──────
- 10 │     white: { r: 255, g: 255, b: 255 },
+  × Expected `{` but found `<`
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsClassesErr.ts:4:15]
+ 3 │ 
+ 4 │ export class M<T> {
+   ·               ┬
+   ·               ╰── `{` expected
+ 5 │     field: T;
+   ╰────
+
+  × Unexpected token
+    ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsEnums.ts:10:1]
+  9 │ 
+ 10 │ enum C {}
+    · ────
+ 11 │ 
     ╰────
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/jsdoc/declarations/jsDeclarationsInterfaces.ts:7:8]
+ 6 │ export interface B {
+ 7 │     cat: string;
+   ·        ─
+ 8 │ }
+   ╰────
 
   × Identifier `err` has already been declared
     ╭─[typescript/tests/cases/conformance/jsdoc/jsdocCatchClauseWithTypeAnnotation.ts:33:9]
@@ -19203,12 +19241,23 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·                           ─
    ╰────
 
-  × Cannot use import statement outside a module
-   ╭─[typescript/tests/cases/conformance/jsdoc/noAssertForUnparseableTypedefs.ts:2:1]
- 1 │ /** @typedef {module:locale} hi */
- 2 │ import { nope } from 'nope';
-   · ──────
-   ╰────
+  × Illegal break statement
+    ╭─[typescript/tests/cases/conformance/jsdoc/typedefOnStatements.ts:26:1]
+ 25 │ /** @typedef {{ j: string }} J */
+ 26 │ break;
+    · ──────
+ 27 │ /** @typedef {{ k: string }} K */
+    ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[typescript/tests/cases/conformance/jsdoc/typedefOnStatements.ts:31:1]
+ 30 │ /** @typedef {{ l: string }} L */
+ 31 │ continue;
+    · ─────────
+ 32 │ /** @typedef {{ m: string }} M */
+    ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
   × Unexpected token
     ╭─[typescript/tests/cases/conformance/jsx/checkJsxNamespaceNamesQuestionableForms.tsx:12:5]
@@ -19405,6 +19454,31 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
    ·     ▲
    ╰────
   help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsExportAssignment.ts:3:8]
+ 2 │ const a = {};
+ 3 │ export = a;
+   ·        ─
+   ╰────
+
+  × Expected `from` but found `=`
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsImportAssignment.ts:2:11]
+ 1 │ // cjs format file
+ 2 │ import fs = require("fs");
+   ·           ┬
+   ·           ╰── `from` expected
+ 3 │ fs.readFile;
+   ╰────
+
+  × Expected `from` but found `=`
+   ╭─[typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsSynchronousCallErrors.ts:3:12]
+ 2 │ import {h} from "../index.js";
+ 3 │ import mod = require("../index.js");
+   ·            ┬
+   ·            ╰── `from` expected
+ 4 │ import {f as _f} from "./index.js";
+   ╰────
 
   × TS(1030): override' modifier already seen.
     ╭─[typescript/tests/cases/conformance/override/override5.ts:22:14]
@@ -21886,12 +21960,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │ }
    ╰────
 
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/exportDefaultInJsFile01.ts:1:1]
- 1 │ export default "hello";
-   · ──────
-   ╰────
-
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:6:11]
  5 │ async function f() {
@@ -21916,19 +21984,20 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  13 │     deleted() {
     ╰────
 
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:1:1]
- 1 │ export default 12
-   · ──────
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:3:7]
  2 │ export default 13
+ 3 │ const await = 1
+   ·       ─────
+ 4 │ const yield = 2
    ╰────
 
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:2:1]
- 1 │ export default 12
- 2 │ export default 13
-   · ──────
- 3 │ const await = 1
+  × The keyword 'await' is reserved
+   ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:6:11]
+ 5 │ async function f() {
+ 6 │     const await = 3
+   ·           ─────
+ 7 │ }
    ╰────
 
   × Delete of an unqualified identifier in strict mode.
@@ -22051,37 +22120,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │ const arguments = 2
    ·       ─────────
    ╰────
-
-  × Cannot use import statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/propertyAssignmentOnUnresolvedImportedSymbol.ts:1:1]
- 1 │ import x from 'arglebaz'
-   · ──────
- 2 │ {
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/propertyAssignmentUseParentType2.ts:2:1]
- 1 │ /** @type {{ (): boolean; nuo: 789 }} */
- 2 │ export const inlined = () => true
-   · ──────
- 3 │ inlined.nuo = 789
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[typescript/tests/cases/conformance/salsa/propertyAssignmentUseParentType2.ts:6:1]
- 5 │ /** @type {{ (): boolean; nuo: 789 }} */
- 6 │ export const duplicated = () => true
-   · ──────
- 7 │ /** @type {789} */
-   ╰────
-
-  × Cannot use export statement outside a module
-    ╭─[typescript/tests/cases/conformance/salsa/propertyAssignmentUseParentType2.ts:11:1]
- 10 │ /** @type {{ (): boolean; nuo: 789 }} */
- 11 │ export const conflictingDuplicated = () => true
-    · ──────
- 12 │ /** @type {1000} */
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript3/scannerES3NumericLiteral3.ts:1:3]
@@ -22250,6 +22288,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  2 │ declare await using y: null;
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
+ 1 │ {
+ 2 │     await using [a] = null;
+   ·     ─────
+ 3 │ }
+   ╰────
+
   × Cannot assign to this expression
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
  1 │ {
@@ -22264,6 +22310,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │                 [b] = null,
    ·                 ───
  4 │                 c = null;
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:5]
+ 1 │ {
+ 2 │     await using {a} = null;
+   ·     ─────
+ 3 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -22291,12 +22345,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  3 │ }
    ╰────
 
-  × Expected `;` but found `Identifier`
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:27]
+  × Expected `(` but found `await`
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
  4 │ 
  5 │ for await (await using of x);
-   ·                           ┬
-   ·                           ╰── `;` expected
+   ·     ──┬──
+   ·       ╰── `(` expected
  6 │ 
    ╰────
 
@@ -24013,6 +24067,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/typeFro
  1 │ let o7 = { ...o? };
    ·                  ─
  2 │ let o8 = { ...*o };
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesInVariableDeclarations01.ts:4:7]
+ 3 │ let c: "bar";
+ 4 │ const d: "baz";
+   ·       ────────
+ 5 │ 
    ╰────
 
   × TS(2681): A constructor cannot have a `this` parameter.

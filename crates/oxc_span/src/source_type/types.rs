@@ -3,7 +3,7 @@
 
 use oxc_ast_macros::ast;
 #[cfg(feature = "serialize")]
-use ::{serde::Serialize, tsify::Tsify};
+use {serde::Serialize, tsify::Tsify};
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
@@ -48,6 +48,8 @@ pub enum ModuleKind {
     Script = 0,
     /// ES6 Module
     Module = 1,
+    /// Unambiguous
+    Unambiguous = 2,
 }
 
 /// JSX for JavaScript and TypeScript

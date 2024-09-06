@@ -60,8 +60,9 @@ impl Test262Case {
     }
 
     /// # Panics
-    pub fn read_metadata(code: &str) -> MetaData {
-        let (start, end) = (code.find("/*---").unwrap(), code.find("---*/").unwrap());
+    pub fn read_metadata(path: &Path, code: &str) -> MetaData {
+        let (start, end) =
+            (code.find("/*---").unwrap_or_else(|| panic!("{path:?}")), code.find("---*/").unwrap());
         let s = &code[start + 5..end].replace('\r', "\n");
         MetaData::from_str(s)
     }
@@ -77,7 +78,7 @@ impl Test262Case {
 
 impl Case for Test262Case {
     fn new(path: PathBuf, code: String) -> Self {
-        let meta = Self::read_metadata(&code);
+        let meta = Self::read_metadata(&path, &code);
         let should_fail = Self::compute_should_fail(&meta);
         Self { path, code, meta, should_fail, result: TestResult::ToBeRun }
     }

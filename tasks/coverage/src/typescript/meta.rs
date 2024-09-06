@@ -157,17 +157,11 @@ impl TestCaseContent {
     }
 
     fn get_source_type(path: &Path, options: &CompilerSettings) -> Option<SourceType> {
-        let is_module = ["esnext", "es2022", "es2020", "es2015"]
-            .into_iter()
-            .any(|module| options.modules.contains(&module.to_string()));
-        Some(
-            SourceType::from_path(path)
-                .ok()?
-                .with_script(true)
-                .with_module(is_module)
-                .with_jsx(!options.jsx.is_empty())
-                .with_typescript_definition(options.declaration),
-        )
+        let source_type = SourceType::from_path(path)
+            .ok()?
+            .with_unambiguous(true)
+            .with_jsx(!options.jsx.is_empty());
+        Some(source_type)
     }
 
     // TypeScript error files can be:
