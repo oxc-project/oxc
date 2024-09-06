@@ -553,6 +553,7 @@ fn test() {
         r"[...not.array]",
         r"[...not.array()]",
         r"[...array.unknown()]",
+        r"const arr = [1, 2, 3]; const unique = [...arr];", // valid method to shallow-clone an array
         r"[...Object.notReturningArray(foo)]",
         r"[...NotObject.keys(foo)]",
         // NOTE (@DonIsaac) these are pathological, should really not be done,
@@ -562,6 +563,7 @@ fn test() {
         // r"[...Int8Array.of()]",
         // r"[...new Int8Array(3)]",
         r"[...new Set(iter)]",
+        r"const set = new Set([1, 2, 3]); const unique = [...set];",
         r"[...Promise.all(foo)]",
         r"[...Promise.allSettled(foo)]",
         r"[...await Promise.all(foo, extraArgument)]",
@@ -722,7 +724,6 @@ fn test() {
         ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
         ("[...new Array()]", "new Array()"),
         ("[...new Array(1, 2, 3)]", "new Array(1, 2, 3)"),
-        // usel
         // useless clones - complex
         (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),
         (r"[...Array.from(iterable)]", r"Array.from(iterable)"),
