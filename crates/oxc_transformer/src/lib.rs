@@ -233,6 +233,7 @@ impl<'a, 'ctx> Traverse<'a> for TransformerImpl<'a, 'ctx> {
     fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.exit_function(func, ctx);
         self.x1_react.exit_function(func, ctx);
+        self.x2_es2017.exit_function(func, ctx);
         self.x3_es2015.exit_function(func, ctx);
     }
 

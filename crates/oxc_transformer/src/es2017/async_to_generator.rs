@@ -51,111 +51,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
             stmts.push(async_generator_step(&self.ctx.ast).clone_in(self.ctx.ast.allocator));
             stmts.push(async_to_generator(&self.ctx.ast).clone_in(self.ctx.ast.allocator));
         }
-
-        for stmt in self.ctx.ast.move_vec(&mut program.body) {
-            match stmt {
-                Statement::FunctionDeclaration(mut decl) => {
-                    if !decl.r#async || decl.generator {
-                        stmts.push(
-                            self.ctx.ast.statement_declaration(
-                                self.ctx.ast.declaration_from_function(
-                                    decl.clone_in(self.ctx.ast.allocator),
-                                ),
-                            ),
-                        );
-                    } else {
-                        let mut result = self.ctx.ast.vec();
-                        decl.r#async = false;
-                        decl.generator = true;
-                        // TODO do not clone_in
-                        let fn_name = decl
-                            .id
-                            .clone_in(self.ctx.ast.allocator)
-                            .map_or("ref".to_owned(), |id| id.name.to_string());
-                        let alias_name = "_".to_owned() + fn_name.as_str();
-                        // generates the following code:
-                        // function fn_name() {
-                        //     return alias_name.apply(this, arguments);
-                        // }
-                        result.push(
-                            self.ctx
-                                .ast
-                                .statement_declaration(self.ctx.ast.declaration_function(
-                                    FunctionType::FunctionDeclaration,
-                                    SPAN,
-                                    Some(self.ctx.ast.binding_identifier(SPAN, fn_name.as_str())),
-                                    false,
-                                    false,
-                                    false,
-                                    decl.type_parameters.clone_in(self.ctx.ast.allocator),
-                                    decl.this_param.clone_in(self.ctx.ast.allocator),
-                                    decl.params.clone_in(self.ctx.ast.allocator),
-                                    decl.return_type.clone_in(self.ctx.ast.allocator),
-                                    Some(self.ctx.ast.function_body(
-                                        SPAN,
-                                        self.ctx.ast.vec(),
-                                        self.ctx.ast.vec1(function_apply(
-                                            alias_name.as_str(),
-                                            &self.ctx.ast,
-                                        )),
-                                    )),
-                                ))
-                                .clone_in(self.ctx.ast.allocator),
-                        );
-                        result.push(self.ctx.ast.statement_declaration(self.ctx.ast.declaration_function(
-                            FunctionType::FunctionDeclaration,
-                            SPAN,
-                            Some(self.ctx.ast.binding_identifier(SPAN, alias_name.as_str())),
-                            false,
-                            false,
-                            false,
-                            decl.type_parameters.clone_in(self.ctx.ast.allocator),
-                            decl.this_param.clone_in(self.ctx.ast.allocator),
-                            decl.params.clone_in(self.ctx.ast.allocator),
-                            decl.return_type.clone_in(self.ctx.ast.allocator),
-                            Some(self.ctx.ast.function_body(SPAN, self.ctx.ast.vec(), {
-                                let mut result = self.ctx.ast.vec();
-                                result.push(
-                                    self.ctx.ast.statement_expression(
-                                        SPAN,
-                                        self.ctx.ast.expression_assignment(
-                                            SPAN,
-                                            AssignmentOperator::Assign,
-                                            self.ctx.ast.assignment_target_simple(
-                                                self.ctx.ast.simple_assignment_target_identifier_reference(
-                                                    SPAN,
-                                                    alias_name.as_str(),
-                                                ),
-                                            ),
-                                            self.ctx.ast.expression_call(
-                                                SPAN,
-                                                self.ctx
-                                                    .ast
-                                                    .expression_identifier_reference(SPAN, "_asyncToGenerator"),
-                                                None::<TSTypeParameterInstantiation>,
-                                                self.ctx.ast.vec1(self.ctx.ast.argument_expression(
-                                                    self.ctx.ast.expression_from_function(
-                                                        decl.clone_in(self.ctx.ast.allocator),
-                                                    ),
-                                                )),
-                                                false,
-                                            ),
-                                        ),
-                                    ),
-                                );
-                                result.push(
-                                    function_apply(fn_name.as_str(), &self.ctx.ast)
-                                        .clone_in(self.ctx.ast.allocator),
-                                );
-                                result
-                            })),
-                        )));
-                        stmts.extend(result);
-                    }
-                }
-                _ => stmts.push(stmt),
-            }
-        }
+        stmts.extend(program.body.clone_in(self.ctx.ast.allocator));
         program.body = stmts;
     }
 
@@ -301,6 +197,103 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
         if function.r#async && !function.generator {
             self.inject_helpers = true;
         }
+    }
+
+    fn exit_function(&mut self, decl: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        let fn_name = decl
+            .id
+            .clone_in(self.ctx.ast.allocator)
+            .map_or("ref".to_owned(), |id| id.name.to_string());
+        let alias_name = "_".to_owned() + fn_name.as_str();
+        let inner_function = self.ctx.ast.function(
+            decl.r#type.clone_in(self.ctx.ast.allocator),
+            SPAN,
+            Some(self.ctx.ast.binding_identifier(SPAN, alias_name.as_str())),
+            false,
+            false,
+            false,
+            decl.type_parameters.clone_in(self.ctx.ast.allocator),
+            decl.this_param.clone_in(self.ctx.ast.allocator),
+            decl.params.clone_in(self.ctx.ast.allocator),
+            decl.return_type.clone_in(self.ctx.ast.allocator),
+            Some(self.ctx.ast.function_body(SPAN, self.ctx.ast.vec(), {
+                let mut result = self.ctx.ast.vec();
+                result.push(self.ctx.ast.statement_expression(
+                    SPAN,
+                    self.ctx.ast.expression_assignment(
+                        SPAN,
+                        AssignmentOperator::Assign,
+                        self.ctx.ast.assignment_target_simple(
+                            self.ctx.ast.simple_assignment_target_identifier_reference(
+                                SPAN,
+                                alias_name.as_str(),
+                            ),
+                        ),
+                        self.ctx.ast.expression_call(
+                            SPAN,
+                            self.ctx.ast.expression_identifier_reference(SPAN, "_asyncToGenerator"),
+                            None::<TSTypeParameterInstantiation>,
+                            self.ctx.ast.vec1(self.ctx.ast.argument_expression(
+                                self.ctx.ast.expression_from_function(
+                                    decl.clone_in(self.ctx.ast.allocator),
+                                ),
+                            )),
+                            false,
+                        ),
+                    ),
+                ));
+                result.push(
+                    function_apply(fn_name.as_str(), &self.ctx.ast)
+                        .clone_in(self.ctx.ast.allocator),
+                );
+                result
+            })),
+        );
+        *decl = self.ctx.ast.function(
+            decl.r#type.clone_in(self.ctx.ast.allocator),
+            SPAN,
+            Some(self.ctx.ast.binding_identifier(SPAN, "b")),
+            false,
+            false,
+            false,
+            decl.type_parameters.clone_in(self.ctx.ast.allocator),
+            decl.this_param.clone_in(self.ctx.ast.allocator),
+            decl.params.clone_in(self.ctx.ast.allocator),
+            decl.return_type.clone_in(self.ctx.ast.allocator),
+            Some(self.ctx.ast.function_body(
+                SPAN,
+                self.ctx.ast.vec(),
+                self.ctx.ast.vec1(self.ctx.ast.statement_return(
+                    SPAN,
+                    Some(self.ctx.ast.expression_call(
+                        SPAN,
+                        self.ctx.ast.expression_member(self.ctx.ast.member_expression_static(
+                            SPAN,
+                            self.ctx.ast.expression_parenthesized(
+                                SPAN,
+                                self.ctx.ast.expression_from_function(inner_function),
+                            ),
+                            self.ctx.ast.identifier_name(SPAN, "apply"),
+                            false,
+                        )),
+                        None::<TSTypeParameterInstantiation>,
+                        {
+                            let mut items = self.ctx.ast.vec();
+                            items.push(
+                                self.ctx
+                                    .ast
+                                    .argument_expression(self.ctx.ast.expression_this(SPAN)),
+                            );
+                            items.push(self.ctx.ast.argument_expression(
+                                self.ctx.ast.expression_identifier_reference(SPAN, "arguments"),
+                            ));
+                            items
+                        },
+                        false,
+                    )),
+                )),
+            )),
+        );
     }
 
     fn enter_arrow_function_expression(

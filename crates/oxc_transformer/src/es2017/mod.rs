@@ -49,6 +49,12 @@ impl<'a> Traverse<'a> for ES2017<'a> {
         }
     }
 
+    fn exit_function(&mut self, node: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.async_to_generator {
+            self.async_to_generator.exit_function(node, ctx);
+        }
+    }
+
     fn enter_arrow_function_expression(
         &mut self,
         node: &mut ArrowFunctionExpression<'a>,
