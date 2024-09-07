@@ -425,6 +425,22 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.create_reference_in_current_scope(name, flags)
     }
 
+    /// Delete a reference.
+    ///
+    /// Provided `name` must match `reference_id`.
+    ///
+    /// This is a shortcut for `ctx.scoping.delete_reference`.
+    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: &str) {
+        self.scoping.delete_reference(reference_id, name);
+    }
+
+    /// Delete reference for an `IdentifierReference`.
+    ///
+    /// This is a shortcut for `ctx.scoping.delete_reference_for_identifier`.
+    pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
+        self.scoping.delete_reference_for_identifier(ident);
+    }
+
     /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
     ///
     /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple

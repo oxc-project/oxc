@@ -267,7 +267,7 @@ impl InternConfig<'_> {
                     InternConfig {
                         node: parent_node,
                         value: NoMagicNumbersNumber::BigInt(raw.clone()),
-                        raw: format!("-{raw}"),
+                        raw,
                     }
                 } else {
                     InternConfig {

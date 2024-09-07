@@ -194,6 +194,16 @@ impl SymbolTable {
             .map(|reference_id| &self.references[*reference_id])
     }
 
+    /// Delete a reference to a symbol.
+    ///
+    /// # Panics
+    /// Panics if provided `reference_id` is not a resolved reference for `symbol_id`.
+    pub fn delete_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
+        let reference_ids = &mut self.resolved_references[symbol_id];
+        let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
+        reference_ids.swap_remove(index);
+    }
+
     pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
         self.spans.reserve(additional_symbols);
         self.names.reserve(additional_symbols);

@@ -3,7 +3,7 @@
   "description": "oxc vscode extension",
   "packageManager": "pnpm@9.9.0",
   "license": "MIT",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",

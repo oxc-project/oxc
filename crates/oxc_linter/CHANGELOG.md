@@ -4,6 +4,66 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.3] - 2024-09-07
+
+- b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+- 87c5df2 ast: [**BREAKING**] Rename `Expression::without_parentheses` (#5448) (overlookmotel)
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+### Features
+
+- 90facd3 ast: Add `ContentHash` trait; remove noop `Hash` implementation from `Span` (#5451) (rzvxa)
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- be3a432 linter: Implement typescript/no-magic-numbers (#4745) (Alexander S.)
+- 09aa86d linter/eslint: Implement `sort-vars` rule (#5430) (Jelle van der Waa)
+- 2ec2f7d linter/eslint: Implement no-alert (#5535) (Edwin Lim)
+- a786acf linter/import: Add no-dynamic-require rule (#5389) (Jelle van der Waa)
+- 4473779 linter/node: Implement no-exports-assign (#5370) (dalaoshu)
+- b846432 linter/oxc: Add fixer for `erasing-op` (#5377) (camc314)
+- aff2c71 linter/react: Implement `self-closing-comp` (#5415) (Jelle van der Waa)
+
+### Bug Fixes
+
+- 0df1d9d ast, codegen, linter: Panics in fixers. (#5431) (rzvxa)
+- cdd1a91 linter: Typescript/no-magic-numbers: remove double minus for reporting negative bigint numbers (#5565) (Alexander S.)
+- ff88c1f linter: Don't mark binding rest elements as unused in TS function overloads (#5470) (Cam McHenry)
+- 088733b linter: Handle loops in `getter-return` rule (#5517) (Cam McHenry)
+- 82c0a16 linter: `tree_shaking/no_side_effects_in_initialization` handle JSX correctly (#5450) (overlookmotel)
+- 6285a02 linter: `eslint/radix` rule correctly check for unbound symbols (#5446) (overlookmotel)
+- c8ab353 linter/tree-shaking: Align JSXMemberExpression's report (#5548) (mysteryven)
+- 5187f38 linter/tree-shaking: Detect the correct export symbol resolution (#5467) (mysteryven)
+
+### Performance
+
+- 8170954 linter/react: Add should_run conditions for react rules (#5402) (Jelle van der Waa)
+
+### Documentation
+
+- a540215 linter: Update docs `Examples` for linter rules (#5513) (dalaoshu)
+- 7414190 linter: Update docs `Example` for linter rules (#5479) (heygsc)
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+- 81a394d linter: Deduplicate code in `oxc/no-async-await` (#5549) (DonIsaac)
+- 979c16c linter: Reduce nested if statements in eslint/no_this_before_super (#5485) (IWANABETHATGUY)
+- 1d3e973 linter: Simplify `eslint/radix` rule (#5445) (overlookmotel)
+- fdb8857 linter: Use "parsed pattern" in `no_div_regex` rule. (#5417) (rzvxa)
+- 2ccbd93 linter: `react/jsx_no_undef` rule `get_member_ident` do not return Option (#5411) (overlookmotel)
+
+### Styling
+
+- 2a43fa4 linter: Introduce the writing style from PR #5491 and reduce the if nesting (#5512) (dalaoshu)- d8b29e7 Add trailing line breaks to JSON files (#5544) (overlookmotel)- 694f032 Add trailing line breaks to `package.json` files (#5542) (overlookmotel)
+
+### Testing
+
+- 340b535 linter/no-unused-vars: Arrow functions in tagged templates (#5510) (Don Isaac)
+- af69393 linter/no-useless-spread: Ensure spreads on identifiers pass (#5561) (DonIsaac)- dc92489 Add trailing line breaks to conformance fixtures (#5541) (overlookmotel)
+
 ## [0.9.2] - 2024-09-02
 
 - 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
