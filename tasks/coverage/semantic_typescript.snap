@@ -2,7 +2,7 @@ commit: a709f989
 
 semantic_typescript Summary:
 AST Parsed     : 6479/6479 (100.00%)
-Positive Passed: 3259/6479 (50.30%)
+Positive Passed: 3262/6479 (50.35%)
 tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1440,9 +1440,6 @@ rebuilt        : ScopeId(13): []
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(28), ReferenceId(32), ReferenceId(33), ReferenceId(36), ReferenceId(38), ReferenceId(42), ReferenceId(44), ReferenceId(46)]
 rebuilt        : SymbolId(1): [ReferenceId(24), ReferenceId(28), ReferenceId(31)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(29): [ReferenceId(30), ReferenceId(31)]
-rebuilt        : SymbolId(25): [ReferenceId(25)]
 
 tasks/coverage/typescript/tests/cases/compiler/capturedLetConstInLoop1.ts
 semantic error: Bindings mismatch:
@@ -15197,9 +15194,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(2): [ReferenceId(4)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
 semantic error: Bindings mismatch:
@@ -15228,9 +15222,6 @@ rebuilt        : ScopeId(0): ["NoticeList", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(5)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxElementClassTooManyParams.tsx
 semantic error: Bindings mismatch:
@@ -15312,9 +15303,6 @@ rebuilt        : ScopeId(0): ["Wrapper", "_jsxFileName", "_reactJsxRuntime", "el
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(2): [ReferenceId(5)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactory.tsx
 semantic error: Bindings mismatch:
@@ -15480,11 +15468,6 @@ rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
 after transform: ["Record", "require"]
 rebuilt        : ["require"]
-
-tasks/coverage/typescript/tests/cases/compiler/jsxIntrinsicUnions.tsx
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/compiler/jsxLibraryManagedAttributesUnusedGeneric.tsx
 semantic error: Bindings mismatch:
@@ -26993,9 +26976,6 @@ rebuilt        : SymbolId(1): SymbolFlags(BlockScopedVariable | Function)
 Symbol redeclarations mismatch:
 after transform: SymbolId(2): [Span { start: 243, end: 256 }]
 rebuilt        : SymbolId(1): []
-Symbol reference IDs mismatch:
-after transform: SymbolId(8): [ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(5): [ReferenceId(2)]
 Unresolved references mismatch:
 after transform: ["Date", "React"]
 rebuilt        : ["React"]
@@ -40263,9 +40243,6 @@ rebuilt        : ScopeId(0): ["Comp", "React", "_jsxFileName", "_reactJsxRuntime
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7)]
-rebuilt        : SymbolId(3): [ReferenceId(6), ReferenceId(9), ReferenceId(12)]
 Unresolved references mismatch:
 after transform: ["JSX", "require"]
 rebuilt        : ["require"]
@@ -40280,9 +40257,6 @@ rebuilt        : ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "k1"
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(4): [ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(2): [ReferenceId(19)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty11.tsx
 semantic error: Bindings mismatch:
@@ -40291,9 +40265,6 @@ rebuilt        : ScopeId(0): ["Button", "_jsxFileName", "_reactJsxRuntime", "k1"
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(4): [ReferenceId(1), ReferenceId(2)]
-rebuilt        : SymbolId(2): [ReferenceId(19)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxChildrenProperty12.tsx
 semantic error: Missing SymbolId: React
@@ -40307,9 +40278,6 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(5)]
 Symbol reference IDs mismatch:
 after transform: SymbolId(2): [ReferenceId(0)]
 rebuilt        : SymbolId(3): []
-Symbol reference IDs mismatch:
-after transform: SymbolId(5): [ReferenceId(4), ReferenceId(5), ReferenceId(6)]
-rebuilt        : SymbolId(5): [ReferenceId(5), ReferenceId(8)]
 Reference symbol mismatch:
 after transform: ReferenceId(1): Some("React")
 rebuilt        : ReferenceId(2): Some("React")
@@ -40332,9 +40300,6 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Unresolved references mismatch:
 after transform: ["Foo", "JSX", "require", "true"]
 rebuilt        : ["Foo", "require"]
-Unresolved reference IDs mismatch for "Foo":
-after transform: [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-rebuilt        : [ReferenceId(5), ReferenceId(8), ReferenceId(11), ReferenceId(14)]
 Unresolved reference IDs mismatch for "require":
 after transform: [ReferenceId(19)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]
@@ -40348,9 +40313,6 @@ rebuilt        : ScopeId(0): ["FetchUser", "React", "UserName0", "UserName1", "_
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(7)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(5)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(3): [ReferenceId(4), ReferenceId(10)]
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
 rebuilt        : ReferenceId(2): Some("React")
@@ -40370,9 +40332,6 @@ rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxF
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(5): [ReferenceId(5), ReferenceId(6), ReferenceId(9), ReferenceId(10), ReferenceId(13), ReferenceId(14), ReferenceId(17), ReferenceId(18)]
-rebuilt        : SymbolId(6): [ReferenceId(11), ReferenceId(20), ReferenceId(29), ReferenceId(38)]
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
 rebuilt        : ReferenceId(2): Some("React")
@@ -40392,9 +40351,6 @@ rebuilt        : ScopeId(0): ["AnotherButton", "Button", "Comp", "React", "_jsxF
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(5): [ReferenceId(5), ReferenceId(6), ReferenceId(9), ReferenceId(10), ReferenceId(13), ReferenceId(14), ReferenceId(17), ReferenceId(18)]
-rebuilt        : SymbolId(6): [ReferenceId(11), ReferenceId(20), ReferenceId(29), ReferenceId(38)]
 Reference symbol mismatch:
 after transform: ReferenceId(2): Some("React")
 rebuilt        : ReferenceId(2): Some("React")
@@ -40593,11 +40549,6 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution13.tsx
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxAttributeResolution16.tsx
 semantic error: Missing SymbolId: React
 Missing ReferenceId: require
@@ -40674,11 +40625,6 @@ Unresolved reference IDs mismatch for "require":
 after transform: [ReferenceId(8)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]
 
-tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName1.tsx
-semantic error: Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
-
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName4.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["CustomTag", "JSX", "_jsxFileName", "_reactJsxRuntime"]
@@ -40686,9 +40632,6 @@ rebuilt        : ScopeId(0): ["CustomTag", "_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(0), ReferenceId(1)]
-rebuilt        : SymbolId(2): [ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxDynamicTagName6.tsx
 semantic error: Bindings mismatch:
@@ -40958,15 +40901,6 @@ rebuilt        : ScopeId(3): ["Component"]
 Bindings mismatch:
 after transform: ScopeId(5): ["Component", "T", "U"]
 rebuilt        : ScopeId(5): ["Component"]
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(4): [ReferenceId(3)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(7): [ReferenceId(11), ReferenceId(13)]
-rebuilt        : SymbolId(7): [ReferenceId(7)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(12): [ReferenceId(18), ReferenceId(20)]
-rebuilt        : SymbolId(10): [ReferenceId(11)]
 Unresolved reference IDs mismatch for "require":
 after transform: [ReferenceId(27)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]
@@ -40980,9 +40914,6 @@ rebuilt        : ScopeId(0): [SymbolId(0), SymbolId(1), SymbolId(2), SymbolId(3)
 Bindings mismatch:
 after transform: ScopeId(1): ["Component", "T"]
 rebuilt        : ScopeId(1): ["Component"]
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(4), ReferenceId(6)]
-rebuilt        : SymbolId(4): [ReferenceId(3)]
 Unresolved reference IDs mismatch for "require":
 after transform: [ReferenceId(9)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]
@@ -41167,9 +41098,6 @@ rebuilt        : ScopeId(0): ["_jsxFileName", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
 rebuilt        : ScopeId(0): []
-Unresolved reference IDs mismatch for "A":
-after transform: [ReferenceId(0), ReferenceId(1)]
-rebuilt        : [ReferenceId(2)]
 
 tasks/coverage/typescript/tests/cases/conformance/jsx/tsxParseTests1.tsx
 semantic error: Bindings mismatch:
@@ -41700,9 +41628,6 @@ rebuilt        : ScopeId(0): ["MainButton", "React", "_jsxFileName", "_reactJsxR
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(11): [ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(25), ReferenceId(27), ReferenceId(29), ReferenceId(31), ReferenceId(33), ReferenceId(35), ReferenceId(36), ReferenceId(37), ReferenceId(38), ReferenceId(39), ReferenceId(40), ReferenceId(41), ReferenceId(42)]
-rebuilt        : SymbolId(6): [ReferenceId(7), ReferenceId(10), ReferenceId(13), ReferenceId(17), ReferenceId(21), ReferenceId(25), ReferenceId(29), ReferenceId(33), ReferenceId(37), ReferenceId(40), ReferenceId(43), ReferenceId(46), ReferenceId(49)]
 Unresolved references mismatch:
 after transform: ["JSX", "console", "require"]
 rebuilt        : ["console", "require"]
@@ -41808,9 +41733,6 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Bindings mismatch:
 after transform: ScopeId(3): ["T"]
 rebuilt        : ScopeId(1): []
-Symbol reference IDs mismatch:
-after transform: SymbolId(3): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(24), ReferenceId(25), ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(30), ReferenceId(31), ReferenceId(33)]
-rebuilt        : SymbolId(3): [ReferenceId(5), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(17), ReferenceId(20), ReferenceId(23), ReferenceId(26), ReferenceId(29), ReferenceId(32), ReferenceId(35), ReferenceId(38), ReferenceId(41), ReferenceId(44), ReferenceId(47), ReferenceId(50), ReferenceId(53), ReferenceId(56), ReferenceId(59), ReferenceId(62)]
 Unresolved reference IDs mismatch for "require":
 after transform: [ReferenceId(76)]
 rebuilt        : [ReferenceId(0), ReferenceId(1)]

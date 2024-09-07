@@ -2,7 +2,7 @@ commit: 3bcfee23
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1736/2101 (82.63%)
+Positive Passed: 1737/2101 (82.67%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
@@ -2200,11 +2200,6 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-argumen
 semantic error: Unresolved references mismatch:
 after transform: ["C", "T"]
 rebuilt        : ["C"]
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/tsx/input.ts
-semantic error: Unresolved reference IDs mismatch for "C":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-rebuilt        : [ReferenceId(1), ReferenceId(4)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/whitespace/input.ts
 semantic error: Bindings mismatch:
