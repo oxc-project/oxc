@@ -11,9 +11,9 @@ use oxc_syntax::{
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_cycle_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Dependency cycle detected")
-        .with_help(format!("These paths form a cycle: \n{x1}"))
+        .with_help(format!("These paths form a cycle: \n{paths}"))
         .with_label(span)
 }
 

@@ -10,17 +10,18 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_prop_value, AstNode};
 
-fn boolean_value_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Value must be omitted for boolean attribute {x0:?}"))
+fn boolean_value_diagnostic(attr: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Value must be omitted for boolean attribute {attr:?}"))
         .with_label(span)
 }
 
-fn boolean_value_always_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Value must be set for boolean attribute {x0:?}")).with_label(span)
+fn boolean_value_always_diagnostic(attr: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Value must be set for boolean attribute {attr:?}"))
+        .with_label(span)
 }
 
-fn boolean_value_undefined_false_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Value must be omitted for `false` attribute {x0:?}"))
+fn boolean_value_undefined_false_diagnostic(attr: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Value must be omitted for `false` attribute {attr:?}"))
         .with_label(span)
 }
 

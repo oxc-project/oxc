@@ -5,11 +5,11 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_label_var_diagnostic(x0: &str, span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Found identifier '{x0}' with the same name as a label."))
+fn no_label_var_diagnostic(name: &str, id_span: Span, label_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Found identifier '{name}' with the same name as a label."))
         .with_labels([
-            span0.label(format!("Identifier '{x0}' found here.")),
-            span1.label("Label with the same name."),
+            id_span.label(format!("Identifier '{name}' found here.")),
+            label_span.label("Label with the same name."),
         ])
 }
 

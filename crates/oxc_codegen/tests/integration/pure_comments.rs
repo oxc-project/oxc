@@ -14,7 +14,7 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async function*() {},
     					/* #__NO_SIDE_EFFECTS__ */ async function* y() {},
     				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ function() {}, /* #__NO_SIDE_EFFECTS__ */ function y() {}, /* #__NO_SIDE_EFFECTS__ */ function* () {}, /* #__NO_SIDE_EFFECTS__ */ function* y() {}, /* #__NO_SIDE_EFFECTS__ */ async function() {}, /* #__NO_SIDE_EFFECTS__ */ async function y() {}, /* #__NO_SIDE_EFFECTS__ */ async function* () {}, /* #__NO_SIDE_EFFECTS__ */ async function* y() {},]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ function() {}, /* #__NO_SIDE_EFFECTS__ */ function y() {}, /* #__NO_SIDE_EFFECTS__ */ function* () {}, /* #__NO_SIDE_EFFECTS__ */ function* y() {}, /* #__NO_SIDE_EFFECTS__ */ async function() {}, /* #__NO_SIDE_EFFECTS__ */ async function y() {}, /* #__NO_SIDE_EFFECTS__ */ async function* () {}, /* #__NO_SIDE_EFFECTS__ */ async function* y() {}]);
 ",
     );
 
@@ -28,7 +28,7 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async () => {},
     					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
     				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y]);
 ",
     );
     test(
@@ -41,7 +41,7 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async () => {},
     					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
     				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y]);
 ",
     );
     //

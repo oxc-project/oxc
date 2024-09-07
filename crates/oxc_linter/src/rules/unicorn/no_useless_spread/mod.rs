@@ -22,19 +22,21 @@ use crate::{
     AstNode,
 };
 
-fn spread_in_list(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Using a spread operator here creates a new {x1} unnecessarily."))
-        .with_help("Consider removing the spread operator.")
-        .with_label(span)
+fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Using a spread operator here creates a new {arr_or_obj} unnecessarily."
+    ))
+    .with_help("Consider removing the spread operator.")
+    .with_label(span)
 }
 
 fn spread_in_arguments(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_label(span)
 }
 
-fn iterable_to_array(span: Span, x1: &str) -> OxcDiagnostic {
+fn iterable_to_array(span: Span, ctor_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "`{x1}` accepts an iterable, so it's unnecessary to convert the iterable to an array."
+        "`{ctor_name}` accepts an iterable, so it's unnecessary to convert the iterable to an array."
     ))
     .with_help("Consider removing the spread operator.")
     .with_label(span)
@@ -52,12 +54,12 @@ fn iterable_to_array_in_yield_star(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn clone(span: Span, is_array: bool, x1: Option<&str>) -> OxcDiagnostic {
+fn clone(span: Span, is_array: bool, method_name: Option<&str>) -> OxcDiagnostic {
     let noun = if is_array { "array" } else { "object" };
     OxcDiagnostic::warn(format!("Using a spread operator here creates a new {noun} unnecessarily."))
         .with_help(
-            if let Some(x1) = x1 {
-                format!("`{x1}` returns a new {noun}. Spreading it into an {noun} expression to create a new {noun} is redundant.")
+            if let Some(method_name) = method_name {
+                format!("`{method_name}` returns a new {noun}. Spreading it into an {noun} expression to create a new {noun} is redundant.")
             } else {
 
                 format!("This expression returns a new {noun}. Spreading it into an {noun} expression to create a new {noun} is redundant.")
@@ -553,6 +555,7 @@ fn test() {
         r"[...not.array]",
         r"[...not.array()]",
         r"[...array.unknown()]",
+        r"const arr = [1, 2, 3]; const unique = [...arr];", // valid method to shallow-clone an array
         r"[...Object.notReturningArray(foo)]",
         r"[...NotObject.keys(foo)]",
         // NOTE (@DonIsaac) these are pathological, should really not be done,
@@ -562,6 +565,7 @@ fn test() {
         // r"[...Int8Array.of()]",
         // r"[...new Int8Array(3)]",
         r"[...new Set(iter)]",
+        r"const set = new Set([1, 2, 3]); const unique = [...set];",
         r"[...Promise.all(foo)]",
         r"[...Promise.allSettled(foo)]",
         r"[...await Promise.all(foo, extraArgument)]",
@@ -722,7 +726,6 @@ fn test() {
         ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
         ("[...new Array()]", "new Array()"),
         ("[...new Array(1, 2, 3)]", "new Array(1, 2, 3)"),
-        // usel
         // useless clones - complex
         (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),
         (r"[...Array.from(iterable)]", r"Array.from(iterable)"),

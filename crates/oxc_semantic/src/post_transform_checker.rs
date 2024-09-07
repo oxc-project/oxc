@@ -128,7 +128,7 @@ pub fn check_semantic_after_transform(
     // so the cloned AST will be "clean" of all semantic data, as if it had come fresh from the parser.
     let allocator = Allocator::default();
     let program = program.clone_in(&allocator);
-    let (symbols_rebuilt, scopes_rebuilt) = SemanticBuilder::new("", program.source_type)
+    let (symbols_rebuilt, scopes_rebuilt) = SemanticBuilder::new("")
         .with_scope_tree_child_ids(scopes_after_transform.has_child_ids())
         .build(&program)
         .semantic

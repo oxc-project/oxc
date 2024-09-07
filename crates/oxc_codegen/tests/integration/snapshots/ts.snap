@@ -15,7 +15,7 @@ let x: string[] = ['abc', 'def', 'ghi'];
 let x: string[] = ['abc', 'def', 'ghi'];
 
 let x: Array<string> = ['abc', 'def', 'ghi',];
-let x: Array<string> = ['abc', 'def', 'ghi',];
+let x: Array<string> = ['abc', 'def', 'ghi'];
 
 let x: [string, number] = ['abc', 123];
 let x: [string, number] = ['abc', 123];

@@ -2,11 +2,17 @@ commit: 3bcfee23
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1736/2101 (82.63%)
+Positive Passed: 1733/2101 (82.48%)
+tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close/input.js
+semantic error: Unexpected token
+
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
 semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/html/first-line/input.js
+semantic error: Unexpected token
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings mismatch:
@@ -37,6 +43,12 @@ semantic error: A 'return' statement can only be used within a function body.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/343/input.js
+semantic error: Unexpected token
+
+tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/538/input.js
+semantic error: Unexpected token
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/modules/import-declaration-trailing-comma/input.js
 semantic error: Bindings mismatch:
@@ -769,8 +781,9 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-unambiguous/input.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Unresolved references mismatch:
+after transform: ["f"]
+rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
 semantic error: Bindings mismatch:
@@ -894,8 +907,14 @@ semantic error: `import lib = require(...);` is only supported when compiling mo
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: a
+Missing ReferenceId: require
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
 semantic error: Missing SymbolId: A
@@ -2200,11 +2219,6 @@ tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-argumen
 semantic error: Unresolved references mismatch:
 after transform: ["C", "T"]
 rebuilt        : ["C"]
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/tsx/input.ts
-semantic error: Unresolved reference IDs mismatch for "C":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
-rebuilt        : [ReferenceId(1), ReferenceId(4)]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/whitespace/input.ts
 semantic error: Bindings mismatch:

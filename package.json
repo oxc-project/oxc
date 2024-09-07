@@ -6,8 +6,6 @@
     "node": "22.7.0"
   },
   "devDependencies": {
-    "@napi-rs/cli": "3.0.0-alpha.61",
-    "es-module-lexer": "^1.4.1",
-    "tinybench": "^2.6.0"
+    "@napi-rs/cli": "catalog:"
   }
 }

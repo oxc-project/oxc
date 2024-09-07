@@ -75,7 +75,7 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
     pub fn from_slice(s: &[T]) -> &Self {
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
 
-        unsafe { &*(s as *const [T] as *const Self) }
+        unsafe { &*(core::ptr::from_ref::<[T]>(s) as *const Self) }
     }
 
     /// Construct a new mutable IdxSlice by wrapping an existing mutable slice.
@@ -83,7 +83,7 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
     pub fn from_slice_mut(s: &mut [T]) -> &mut Self {
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
 
-        unsafe { &mut *(s as *mut [T] as *mut Self) }
+        unsafe { &mut *(core::ptr::from_mut::<[T]>(s) as *mut Self) }
     }
 
     /// Copies `self` into a new `IndexVec`.

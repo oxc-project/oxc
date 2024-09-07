@@ -12,27 +12,27 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
+fn redundant_left_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
-        .with_help(x2.to_string())
+        .with_help(help)
         .with_labels([
-            span0.label("If this evaluates to `true`"),
+            span.label("If this evaluates to `true`"),
             span1.label("This will always evaluate to true."),
         ])
 }
 
-fn redundant_right_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
+fn redundant_right_hand_side(span: Span, span1: Span, help: String) -> OxcDiagnostic {
     OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
-        .with_help(x2.to_string())
+        .with_help(help)
         .with_labels([
-            span0.label("If this evaluates to `true`"),
+            span.label("If this evaluates to `true`"),
             span1.label("This will always evaluate to true."),
         ])
 }
 
-fn impossible(span0: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
+fn impossible(span: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant comparison").with_help(x4.to_string()).with_labels([
-        span0.label(format!("Requires that {x2}")),
+        span.label(format!("Requires that {x2}")),
         span1.label(format!("Requires that {x3}")),
     ])
 }
@@ -114,9 +114,9 @@ impl Rule for ConstComparisons {
                 // We already know that either side of `&&` has no effect,
                 // but emit a different error message depending on which side it is
                 if left_side_is_useless(left_cmp_op, ordering) {
-                    ctx.diagnostic(redundant_left_hand_side(left_span, logical_expr.right.span(), &format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")));
+                    ctx.diagnostic(redundant_left_hand_side(left_span, logical_expr.right.span(), format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")));
                 } else {
-                    ctx.diagnostic(redundant_right_hand_side(logical_expr.right.span(), left_span, &format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")));
+                    ctx.diagnostic(redundant_right_hand_side(logical_expr.right.span(), left_span, format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")));
                 }
             } else if !comparison_is_possible(left_cmp_op.direction(), ordering) {
                 let lhs_str = left_const_expr.span.source_text(ctx.source_text());

@@ -3,7 +3,7 @@
 
 use oxc_ast_macros::ast;
 #[cfg(feature = "serialize")]
-use ::{serde::Serialize, tsify::Tsify};
+use {serde::Serialize, tsify::Tsify};
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[ast]
@@ -19,11 +19,6 @@ pub struct SourceType {
 
     /// Support JSX for JavaScript and TypeScript? default without JSX
     pub(super) variant: LanguageVariant,
-
-    /// Mark strict mode as always strict
-    ///
-    /// See <https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode>
-    pub(super) always_strict: bool,
 }
 
 /// JavaScript or TypeScript
@@ -48,6 +43,14 @@ pub enum ModuleKind {
     Script = 0,
     /// ES6 Module
     Module = 1,
+    /// Consider the file a "module" if ESM syntax is present, or else consider it a "script".
+    ///
+    /// ESM syntax includes `import` statement, `export` statement and `import.meta`.
+    ///
+    /// Note: Dynamic import expression is not ESM syntax.
+    ///
+    /// See <https://babel.dev/docs/options#misc-options>
+    Unambiguous = 2,
 }
 
 /// JSX for JavaScript and TypeScript

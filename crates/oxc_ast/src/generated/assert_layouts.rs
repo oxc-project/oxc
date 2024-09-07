@@ -1400,7 +1400,7 @@ const _: () = {
     assert!(offset_of!(Span, start) == 0usize);
     assert!(offset_of!(Span, end) == 4usize);
 
-    assert!(size_of::<SourceType>() == 4usize);
+    assert!(size_of::<SourceType>() == 3usize);
     assert!(align_of::<SourceType>() == 1usize);
 
     assert!(size_of::<Language>() == 1usize);
@@ -2954,7 +2954,7 @@ const _: () = {
     assert!(offset_of!(Span, start) == 0usize);
     assert!(offset_of!(Span, end) == 4usize);
 
-    assert!(size_of::<SourceType>() == 4usize);
+    assert!(size_of::<SourceType>() == 3usize);
     assert!(align_of::<SourceType>() == 1usize);
 
     assert!(size_of::<Language>() == 1usize);

@@ -4,7 +4,8 @@ use oxc_span::Atom as SpanAtom;
 
 use crate::{
     ast,
-    body_parser::{diagnostics, reader::Reader, state::State, unicode, unicode_property},
+    body_parser::{reader::Reader, state::State, unicode, unicode_property},
+    diagnostics,
     options::ParserOptions,
     span::SpanFactory,
     surrogate_pair,

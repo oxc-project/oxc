@@ -350,6 +350,8 @@ impl<'a> ParserImpl<'a> {
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
+        self.set_source_type_to_script_if_unambiguous();
+
         let span = Span::new(0, self.source_text.len() as u32);
         Ok(self.ast.program(span, self.source_type, hashbang, directives, statements))
     }
@@ -415,6 +417,18 @@ impl<'a> ParserImpl<'a> {
 
     fn ts_enabled(&self) -> bool {
         self.source_type.is_typescript()
+    }
+
+    fn set_source_type_to_module_if_unambiguous(&mut self) {
+        if self.source_type.is_unambiguous() {
+            self.source_type = self.source_type.with_module(true);
+        }
+    }
+
+    fn set_source_type_to_script_if_unambiguous(&mut self) {
+        if self.source_type.is_unambiguous() {
+            self.source_type = self.source_type.with_script(true);
+        }
     }
 }
 
@@ -508,6 +522,24 @@ mod test {
             let comments = ret.trivias.comments().collect::<Vec<_>>();
             assert_eq!(comments.len(), 1, "{source}");
             assert_eq!(comments.first().unwrap().kind, kind, "{source}");
+        }
+    }
+
+    #[test]
+    fn unambiguous() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default().with_unambiguous(true);
+        assert!(source_type.is_unambiguous());
+        let sources = ["import x from 'foo';", "export {x} from 'foo';", "import.meta"];
+        for source in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.program.source_type.is_module());
+        }
+
+        let sources = ["", "import('foo')"];
+        for source in sources {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.program.source_type.is_script());
         }
     }
 

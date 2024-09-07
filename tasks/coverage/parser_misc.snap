@@ -1,7 +1,15 @@
 parser_misc Summary:
-AST Parsed     : 27/27 (100.00%)
-Positive Passed: 27/27 (100.00%)
+AST Parsed     : 29/29 (100.00%)
+Positive Passed: 28/29 (96.55%)
 Negative Passed: 17/17 (100.00%)
+Expect to Parse: tasks/coverage/misc/pass/babel-16776-m.js
+
+  × The keyword 'await' is reserved
+   ╭─[misc/pass/babel-16776-m.js:1:1]
+ 1 │ await /x.y/g;
+   · ─────
+ 2 │ 
+   ╰────
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
@@ -245,15 +253,16 @@ Negative Passed: 17/17 (100.00%)
    ╰────
 
   × The keyword 'let' is reserved
-   ╭─[misc/fail/oxc.js:1:1]
- 1 │ let.a = 1;
+   ╭─[misc/fail/oxc.js:3:1]
+ 2 │ 
+ 3 │ let.a = 1;
    · ───
- 2 │ let()[a] = 1;
+ 4 │ let()[a] = 1;
    ╰────
 
   × The keyword 'let' is reserved
-   ╭─[misc/fail/oxc.js:2:1]
- 1 │ let.a = 1;
- 2 │ let()[a] = 1;
+   ╭─[misc/fail/oxc.js:4:1]
+ 3 │ let.a = 1;
+ 4 │ let()[a] = 1;
    · ───
    ╰────

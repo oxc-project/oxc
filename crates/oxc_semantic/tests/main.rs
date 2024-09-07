@@ -100,7 +100,7 @@ fn analyze(path: &Path, source_text: &str) -> String {
     let source_type = SourceType::from_path(path).unwrap();
 
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let semantic = SemanticBuilder::new(source_text, source_type).build(&ret.program).semantic;
+    let semantic = SemanticBuilder::new(source_text).build(&ret.program).semantic;
 
     let scopes = get_scope_snapshot(&semantic, vec![semantic.scopes().root_scope_id()].into_iter());
     let value: serde_json::Value = serde_json::from_str(scopes.as_str()).unwrap();

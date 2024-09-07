@@ -1,8 +1,8 @@
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_diagnostics::Result;
 
 use crate::{
-    ast, body_parser::PatternParser, flag_parser::FlagsParser, options::ParserOptions,
+    ast, body_parser::PatternParser, diagnostics, flag_parser::FlagsParser, options::ParserOptions,
     span::SpanFactory,
 };
 
@@ -28,7 +28,7 @@ impl<'a> Parser<'a> {
         // Precheck if the source text is a valid regular expression literal
         // If valid, parse the pattern and flags with returned span offsets
         let (body_start_offset, body_end_offset, flag_start_offset) =
-            parse_reg_exp_literal(self.source_text)?;
+            parse_reg_exp_literal(self.source_text, &self.span_factory)?;
 
         // Parse flags first to know if unicode mode is enabled or not
         let flags = FlagsParser::new(
@@ -67,12 +67,15 @@ impl<'a> Parser<'a> {
 /// / RegularExpressionBody / RegularExpressionFlags
 /// ```
 /// Returns `(body_start_offset, body_end_offset, flag_start_offset)`.
-fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
+fn parse_reg_exp_literal(
+    source_text: &str,
+    span_factory: &SpanFactory,
+) -> Result<(usize, usize, usize)> {
     let mut offset = 0;
     let mut chars = source_text.chars().peekable();
 
     let Some('/') = chars.next() else {
-        return Err(OxcDiagnostic::error("Invalid regular expression: Unexpected character"));
+        return Err(diagnostics::unexpected_literal_char(span_factory.create(offset, offset)));
     };
     offset += 1; // '/'
 
@@ -84,9 +87,10 @@ fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
         match chars.peek() {
             // Line terminators are not allowed
             Some('\u{a}' | '\u{d}' | '\u{2028}' | '\u{2029}') | None => {
-                let kind =
-                    if in_character_class { "character class" } else { "regular expression" };
-                return Err(OxcDiagnostic::error(format!("Unterminated {kind}")));
+                return Err(diagnostics::unterminated_literal(
+                    span_factory.create(body_start, offset),
+                    if in_character_class { "character class" } else { "regular expression" },
+                ));
             }
             Some(&ch) => {
                 if in_escape {
@@ -112,12 +116,12 @@ fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
     }
 
     let Some('/') = chars.next() else {
-        return Err(OxcDiagnostic::error("Invalid regular expression: Unexpected character"));
+        return Err(diagnostics::unexpected_literal_char(span_factory.create(offset, offset)));
     };
     let body_end = offset;
 
     if body_end == body_start {
-        return Err(OxcDiagnostic::error("Invalid regular expression: Empty"));
+        return Err(diagnostics::empty_literal(span_factory.create(0, body_end + 1)));
     }
 
     Ok((body_start, body_end, body_end + 1))
@@ -141,7 +145,7 @@ mod test {
             "/👈🏻こっち/u",
         ] {
             let (body_start_offset, body_end_offset, flag_start_offset) =
-                parse_reg_exp_literal(literal_text)
+                parse_reg_exp_literal(literal_text, &SpanFactory::new(0))
                     .unwrap_or_else(|_| panic!("{literal_text} should be parsed"));
 
             let body_text = &literal_text[body_start_offset..body_end_offset];
@@ -155,7 +159,7 @@ mod test {
         for literal_text in
             ["", "foo", ":(", "a\nb", "/", "/x", "/y\nz/", "/1[\n]/", "//", "///", "/*abc/", "/\\/"]
         {
-            assert!(parse_reg_exp_literal(literal_text).is_err());
+            assert!(parse_reg_exp_literal(literal_text, &SpanFactory::new(0)).is_err());
         }
     }
 }

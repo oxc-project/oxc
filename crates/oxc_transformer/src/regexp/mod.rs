@@ -39,6 +39,10 @@
 //! #### Set notation + properties of strings (`v`)
 //! - @babel/plugin-transform-unicode-sets-regex: <https://babeljs.io/docs/en/babel-plugin-proposal-unicode-sets-regex>
 //! - TC39 Proposal: <https://github.com/tc39/proposal-regexp-set-notation>
+//!
+//! TODO(improve-on-babel): We could convert to plain `RegExp(...)` instead of `new RegExp(...)`.
+//! TODO(improve-on-babel): When flags is empty, we could output `RegExp("(?<=x)")` instead of `RegExp("(?<=x)", "")`.
+//! (actually these would be improvements on ESBuild, not Babel)
 
 use std::borrow::Cow;
 
@@ -48,7 +52,7 @@ use oxc_regular_expression::ast::{
     CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
 };
 use oxc_semantic::ReferenceFlags;
-use oxc_span::Atom;
+use oxc_span::{Atom, SPAN};
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::context::Ctx;
@@ -113,9 +117,10 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         expr: &mut Expression<'a>,
         ctx: &mut oxc_traverse::TraverseCtx<'a>,
     ) {
-        let Expression::RegExpLiteral(ref mut regexp) = expr else {
+        let Expression::RegExpLiteral(regexp) = expr else {
             return;
         };
+        let regexp = regexp.as_mut();
 
         let flags = regexp.regex.flags;
         let has_unsupported_flags = flags.intersects(self.unsupported_flags);
@@ -163,7 +168,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
         let callee = {
             let symbol_id = ctx.scopes().find_binding(ctx.current_scope_id(), "RegExp");
             let ident = ctx.create_reference_id(
-                regexp.span,
+                SPAN,
                 Atom::from("RegExp"),
                 symbol_id,
                 ReferenceFlags::read(),
@@ -173,15 +178,13 @@ impl<'a> Traverse<'a> for RegExp<'a> {
 
         let mut arguments = ctx.ast.vec_with_capacity(2);
         arguments.push(
-            ctx.ast.argument_expression(
-                ctx.ast.expression_string_literal(regexp.span, pattern_source),
-            ),
+            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, pattern_source)),
         );
 
-        let flags = regexp.regex.flags.to_string();
-        let flags =
-            ctx.ast.argument_expression(ctx.ast.expression_string_literal(regexp.span, flags));
-        arguments.push(flags);
+        let flags_str = flags.to_string();
+        let flags_str =
+            ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags_str));
+        arguments.push(flags_str);
 
         *expr = ctx.ast.expression_new(
             regexp.span,
@@ -197,27 +200,33 @@ impl<'a> RegExp<'a> {
     ///
     /// Based on parsed regular expression pattern.
     fn has_unsupported_regular_expression_pattern(&self, pattern: &Pattern<'a>) -> bool {
-        let terms_contains_unsupported = |terms: &[Term]| {
-            terms.iter().any(|term| match term {
-                Term::CapturingGroup(_) => self.named_capture_groups,
-                Term::UnicodePropertyEscape(_) => self.unicode_property_escapes,
+        pattern.body.body.iter().any(|alternative| {
+            alternative.body.iter().any(|term| self.term_contains_unsupported(term))
+        })
+    }
+
+    fn term_contains_unsupported(&self, mut term: &Term) -> bool {
+        // Loop because `Term::Quantifier` contains a nested `Term`
+        loop {
+            match term {
+                Term::CapturingGroup(_) => return self.named_capture_groups,
+                Term::UnicodePropertyEscape(_) => return self.unicode_property_escapes,
                 Term::CharacterClass(character_class) => {
-                    self.unicode_property_escapes
+                    return self.unicode_property_escapes
                         && character_class_has_unicode_property_escape(character_class)
                 }
                 Term::LookAroundAssertion(assertion) => {
-                    self.look_behind_assertions
+                    return self.look_behind_assertions
                         && matches!(
                             assertion.kind,
                             LookAroundAssertionKind::Lookbehind
                                 | LookAroundAssertionKind::NegativeLookbehind
                         )
                 }
-                _ => false,
-            })
-        };
-
-        pattern.body.body.iter().any(|alternative| terms_contains_unsupported(&alternative.body))
+                Term::Quantifier(quantifier) => term = &quantifier.body,
+                _ => return false,
+            }
+        }
     }
 }
 

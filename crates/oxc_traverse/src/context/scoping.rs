@@ -355,6 +355,25 @@ impl TraverseScoping {
         self.create_reference(name, symbol_id, flags)
     }
 
+    /// Delete a reference.
+    ///
+    /// Provided `name` must match `reference_id`.
+    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: &str) {
+        let symbol_id = self.symbols.get_reference(reference_id).symbol_id();
+        if let Some(symbol_id) = symbol_id {
+            self.symbols.delete_resolved_reference(symbol_id, reference_id);
+        } else {
+            self.scopes.delete_root_unresolved_reference(name, reference_id);
+        }
+    }
+
+    /// Delete reference for an `IdentifierReference`.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
+        // `unwrap` should never panic as `IdentifierReference`s should always have a `ReferenceId`
+        self.delete_reference(ident.reference_id().unwrap(), &ident.name);
+    }
+
     /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
     ///
     /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple

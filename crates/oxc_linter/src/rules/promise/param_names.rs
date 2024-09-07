@@ -9,9 +9,11 @@ use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn param_names_diagnostic(span: Span, x0: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Promise constructor parameters must be named to match `{x0}`"))
-        .with_label(span)
+fn param_names_diagnostic(span: Span, pattern: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Promise constructor parameters must be named to match `{pattern}`"
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

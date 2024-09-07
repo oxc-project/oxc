@@ -12,24 +12,34 @@ use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImport
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_export(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1:?} not found in imported namespace {x2:?}.")).with_label(span)
-}
-
-fn no_export_in_deeply_imported_namespace(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1:?} not found in deeply imported namespace {x2:?}."))
-        .with_label(span)
-}
-
-fn computed_reference(span: Span, x1: &str) -> OxcDiagnostic {
+fn no_export(span: Span, specifier_name: &str, namespace_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Unable to validate computed reference to imported namespace {x1:?}."
+        "{specifier_name:?} not found in imported namespace {namespace_name:?}."
     ))
     .with_label(span)
 }
 
-fn assignment(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Assignment to member of namespace {x1:?}.'")).with_label(span)
+fn no_export_in_deeply_imported_namespace(
+    span: Span,
+    specifier_name: &str,
+    namespace_name: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "{specifier_name:?} not found in deeply imported namespace {namespace_name:?}."
+    ))
+    .with_label(span)
+}
+
+fn computed_reference(span: Span, namespace_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Unable to validate computed reference to imported namespace {namespace_name:?}."
+    ))
+    .with_label(span)
+}
+
+fn assignment(span: Span, namespace_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Assignment to member of namespace {namespace_name:?}.'"))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/namespace.md>

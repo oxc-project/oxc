@@ -117,7 +117,7 @@ pub trait CompilerInterface {
         let mut program = parser_return.program;
         let trivias = parser_return.trivias;
 
-        let mut semantic_return = self.semantic(&program, source_text, source_type, source_path);
+        let mut semantic_return = self.semantic(&program, source_text, source_path);
         if !semantic_return.errors.is_empty() {
             self.handle_errors(semantic_return.errors);
             return;
@@ -184,10 +184,9 @@ pub trait CompilerInterface {
         &self,
         program: &Program<'a>,
         source_text: &'a str,
-        source_type: SourceType,
         source_path: &Path,
     ) -> SemanticBuilderReturn<'a> {
-        SemanticBuilder::new(source_text, source_type)
+        SemanticBuilder::new(source_text)
             .with_check_syntax_error(self.check_semantic_error())
             .with_scope_tree_child_ids(self.semantic_child_scope_ids())
             .build_module_record(source_path, program)

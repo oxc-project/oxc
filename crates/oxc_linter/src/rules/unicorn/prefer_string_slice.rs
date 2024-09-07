@@ -5,8 +5,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_string_slice_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer String#slice() over String#{x1}()")).with_label(span)
+fn prefer_string_slice_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer String#slice() over String#{method_name}()"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

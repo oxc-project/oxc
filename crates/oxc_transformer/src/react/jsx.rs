@@ -371,19 +371,13 @@ impl<'a> Traverse<'a> for ReactJsx<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let new_expr = match expr {
-            Expression::JSXElement(e) => {
-                Some(self.transform_jsx(&JSXElementOrFragment::Element(e), ctx))
-            }
+        *expr = match expr {
+            Expression::JSXElement(e) => self.transform_jsx(&JSXElementOrFragment::Element(e), ctx),
             Expression::JSXFragment(e) => {
-                Some(self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx))
+                self.transform_jsx(&JSXElementOrFragment::Fragment(e), ctx)
             }
-            _ => None,
+            _ => return,
         };
-
-        if let Some(new_expr) = new_expr {
-            *expr = new_expr;
-        }
     }
 }
 
@@ -574,6 +568,12 @@ impl<'a> ReactJsx<'a> {
         // TODO(improve-on-babel): Change this if we can handle differing output in tests.
         let argument_expr = match e {
             JSXElementOrFragment::Element(e) => {
+                if let Some(closing_element) = &e.closing_element {
+                    if let Some(ident) = closing_element.name.get_identifier() {
+                        ctx.delete_reference_for_identifier(ident);
+                    }
+                }
+
                 self.transform_element_name(&e.opening_element.name)
             }
             JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),

@@ -16,7 +16,7 @@ use oxc::{
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
-    semantic::{ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable},
+    semantic::{dot::DebugDot, ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable},
     span::SourceType,
     transformer::{EnvOptions, Targets, TransformOptions, Transformer},
 };
@@ -39,6 +39,9 @@ pub struct Oxc {
 
     #[wasm_bindgen(readonly, skip_typescript)]
     pub ir: String,
+
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "controlFlowGraph")]
+    pub control_flow_graph: String,
 
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "SymbolTable")]
@@ -189,19 +192,23 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         self.ast = program.serialize(&self.serializer)?;
 
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+        let semantic_ret = SemanticBuilder::new(source_text)
             .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
+            .with_cfg(true)
             .build_module_record(&path, &program)
             .build(&program);
 
+        self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
+            cfg.debug_dot(semantic_ret.semantic.nodes().into())
+        });
         if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(
                 errors.into_iter().chain(semantic_ret.errors).map(Error::from).collect::<Vec<_>>(),
             );
         }
 
-        self.run_linter(&run_options, source_text, source_type, &path, &trivias, &program);
+        self.run_linter(&run_options, source_text, &path, &trivias, &program);
 
         self.run_prettier(&run_options, source_text, source_type);
 
@@ -280,14 +287,13 @@ impl Oxc {
         &mut self,
         run_options: &OxcRunOptions,
         source_text: &str,
-        source_type: SourceType,
         path: &Path,
         trivias: &Trivias,
         program: &Program,
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint.unwrap_or_default() && self.diagnostics.borrow().is_empty() {
-            let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            let semantic_ret = SemanticBuilder::new(source_text)
                 .with_cfg(true)
                 .with_trivias(trivias.clone())
                 .build_module_record(path, program)

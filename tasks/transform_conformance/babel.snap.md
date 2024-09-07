@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 321/1021
+Passed: 334/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -4906,38 +4906,7 @@ TS(18010)
 
 
 
-# babel-plugin-transform-react-jsx (123/144)
-* react/dont-coerce-expression-containers/input.js
-  x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/honor-custom-jsx-comment/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/honor-custom-jsx-comment-if-jsx-pragma-option-set/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/honor-custom-jsx-pragma-option/input.js
-  x Unresolved reference IDs mismatch for "Foo":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-  x Unresolved reference IDs mismatch for "Composite":
-  | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
-  | ReferenceId(6)]
-  | rebuilt        : [ReferenceId(6), ReferenceId(9)]
-
-
+# babel-plugin-transform-react-jsx (135/144)
 * react/should-disallow-valueless-key/input.js
   ! Please provide an explicit key value. Using "key" as a shorthand for
   | "key={true}" is not allowed.
@@ -4958,12 +4927,6 @@ TS(18010)
    `----
 
 
-* react/should-have-correct-comma-in-nested-children/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(4)]
-
-
 * react/should-throw-error-namespaces-if-not-flag/input.js
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
@@ -4974,33 +4937,8 @@ TS(18010)
    `----
 
 
-* react/weird-symbols/input.js
-  x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(1), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(2)]
-
-
 * react-automatic/does-not-add-source-self-automatic/input.mjs
 transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
-* react-automatic/dont-coerce-expression-containers/input.js
-  x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(1)]
-
-
-* react-automatic/handle-fragments-with-key/input.js
-  x Symbol reference IDs mismatch:
-  | after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : SymbolId(0): [ReferenceId(1)]
-
-
-* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
-  x Unresolved reference IDs mismatch for "Composite":
-  | after transform: [ReferenceId(2), ReferenceId(3), ReferenceId(5),
-  | ReferenceId(6)]
-  | rebuilt        : [ReferenceId(6), ReferenceId(9)]
-
 
 * react-automatic/should-disallow-valueless-key/input.js
   ! Please provide an explicit key value. Using "key" as a shorthand for
@@ -5022,12 +4960,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    `----
 
 
-* react-automatic/should-have-correct-comma-in-nested-children/input.js
-  x Unresolved reference IDs mismatch for "Component":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(4)]
-
-
 * react-automatic/should-throw-error-namespaces-if-not-flag/input.js
   ! Namespace tags are not supported by default. React's JSX doesn't support
   | namespace tags. You can set `throwIfNamespace: false` to bypass this
@@ -5038,12 +4970,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
    `----
 
 
-* react-automatic/weird-symbols/input.js
-  x Unresolved reference IDs mismatch for "Text":
-  | after transform: [ReferenceId(1), ReferenceId(2)]
-  | rebuilt        : [ReferenceId(2)]
-
-
 * spread-transform/transform-to-babel-extend/input.js
 
 
@@ -5051,7 +4977,7 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
 
 
 
-# babel-plugin-transform-react-jsx-development (6/10)
+# babel-plugin-transform-react-jsx-development (7/10)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
@@ -5066,12 +4992,6 @@ transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `dev
  1 | var x = <div __source={source}></div>;
    :              ^^^^^^^^
    `----
-
-
-* cross-platform/handle-fragments-with-key/input.js
-  x Unresolved reference IDs mismatch for "React":
-  | after transform: [ReferenceId(0), ReferenceId(1)]
-  | rebuilt        : [ReferenceId(2)]
 
 
 * cross-platform/within-ts-module-block/input.ts

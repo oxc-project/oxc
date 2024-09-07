@@ -11,9 +11,14 @@ use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_named_as_default_member_dignostic(span: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1:?} also has a named export {x2:?}"))
-        .with_help(format!("Check if you meant to write `import {{{x2:}}} from {x3:?}`"))
+fn no_named_as_default_member_dignostic(
+    span: Span,
+    module_name: &str,
+    export_name: &str,
+    suggested_module_name: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{module_name:?} also has a named export {export_name:?}"))
+        .with_help(format!("Check if you meant to write `import {{ {export_name} }} from {suggested_module_name:?}`"))
         .with_label(span)
 }
 

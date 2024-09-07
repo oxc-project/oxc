@@ -272,7 +272,7 @@ impl Runtime {
 
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
-        let semantic_builder = SemanticBuilder::new(source_text, source_type)
+        let semantic_builder = SemanticBuilder::new(source_text)
             .with_cfg(true)
             .with_build_jsdoc(true)
             .with_trivias(trivias)

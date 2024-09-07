@@ -52,7 +52,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUselessLengthCheck,
-    correctness
+    correctness,
+    pending
 );
 
 struct ConditionDTO<T: ToString> {

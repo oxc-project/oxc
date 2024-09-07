@@ -16,20 +16,21 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn unexpected_syntax_order_diagnostic(
-    x0: &ImportKind,
-    x1: &ImportKind,
+    curr_kind: &ImportKind,
+    prev_kind: &ImportKind,
     span2: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected '{x0}' syntax before '{x1}' syntax.")).with_label(span2)
+    OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
+        .with_label(span2)
 }
 
 fn sort_imports_alphabetically_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Imports should be sorted alphabetically.").with_label(span)
 }
 
-fn sort_members_alphabetically_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
+fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Member '{x0}' of the import declaration should be sorted alphabetically."
+        "Member '{name}' of the import declaration should be sorted alphabetically."
     ))
     .with_label(span)
 }

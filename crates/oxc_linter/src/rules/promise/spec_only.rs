@@ -1,10 +1,15 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
+
+fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}`"))
+        .with_label(member_span)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct SpecOnly(Box<SpecOnlyConfig>);
@@ -82,10 +87,7 @@ impl Rule for SpecOnly {
             }
         }
 
-        ctx.diagnostic(
-            OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}`"))
-                .with_label(member_expr.span()),
-        );
+        ctx.diagnostic(spec_only(prop_name, member_expr.span()));
     }
 }
 

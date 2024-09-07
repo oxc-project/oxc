@@ -73,25 +73,13 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4.0.0
-        with:
-          package_json_file: ./tasks/benchmark/codspeed/package.json
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache-dependency-path: ./tasks/benchmark/codspeed/package.json
-          cache: pnpm
+      - uses: ./.github/actions/pnpm
 
       - name: Start bench results interceptor server
         working-directory: ./tasks/benchmark/codspeed
         env:
           COMPONENT: ${{ matrix.component }}
-        run: |
-          pnpm install
-          pnpm run start &
+        run: pnpm run start &
 
       - name: Build benchmark
         env:
@@ -188,21 +176,14 @@ jobs:
         with:
           tool: cargo-codspeed
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+      - uses: ./.github/actions/pnpm
 
       - name: Start bench results interceptor server
         working-directory: ./tasks/benchmark/codspeed
         env:
           COMPONENT: linter
           FIXTURE: ${{ matrix.fixture }}
-        run: |
-          corepack enable
-          pnpm install
-          node capture.mjs &
+        run: node capture.mjs &
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v3
@@ -241,18 +222,13 @@ jobs:
         # with:
           # tool: cargo-codspeed
 
-      # - name: Install Node.js
-        # uses: actions/setup-node@v4
-        # with:
-          # node-version-file: .node-version
-          # registry-url: 'https://registry.npmjs.org'
+      # - uses: ./.github/actions/pnpm
 
       # - name: Start bench results interceptor server
         # working-directory: ./tasks/benchmark/codspeed
         # env:
           # COMPONENT: 'parser_napi'
         # run: |
-          # corepack enable
           # pnpm install
           # node capture.mjs &
 
@@ -308,18 +284,11 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+      - uses: ./.github/actions/pnpm
 
       - name: Create temp dir
         working-directory: ./tasks/benchmark/codspeed
-        run: |
-          corepack enable
-          pnpm install
-          node create_temp_dir.mjs
+        run: node create_temp_dir.mjs
 
       - name: Download artefacts
         uses: actions/download-artifact@v4

@@ -6,18 +6,18 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn number_arg_out_of_range_diagnostic(
-    x0: &str,
-    x1: usize,
-    x2: usize,
-    span3: Span,
+    method_name: &str,
+    min: usize,
+    max: usize,
+    span: Span,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Radix or precision arguments of number-related functions should not exceed the limit",
     )
     .with_help(format!(
-        "The first argument of 'Number.prototype.{x0}' should be a number between {x1} and {x2}"
+        "The first argument of 'Number.prototype.{method_name}' should be a number between {min} and {max}"
     ))
-    .with_label(span3)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -7,11 +7,11 @@ use oxc_ast::{
         ConditionalExpression, Declaration, ExportSpecifier, Expression, ForStatementInit,
         FormalParameter, Function, IdentifierReference, JSXAttribute, JSXAttributeItem,
         JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
-        JSXExpressionContainer, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
-        JSXOpeningElement, LogicalExpression, MemberExpression, ModuleExportName, NewExpression,
-        ObjectExpression, ObjectPropertyKind, ParenthesizedExpression, PrivateFieldExpression,
-        Program, PropertyKey, SequenceExpression, SimpleAssignmentTarget, Statement,
-        StaticMemberExpression, SwitchCase, ThisExpression, UnaryExpression, VariableDeclarator,
+        JSXExpressionContainer, JSXFragment, JSXMemberExpression, JSXOpeningElement,
+        LogicalExpression, MemberExpression, ModuleExportName, NewExpression, ObjectExpression,
+        ObjectPropertyKind, ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey,
+        SequenceExpression, SimpleAssignmentTarget, Statement, StaticMemberExpression, SwitchCase,
+        ThisExpression, UnaryExpression, VariableDeclarator,
     },
     AstKind,
 };
@@ -799,17 +799,7 @@ impl<'a> ListenerMap for JSXElementName<'a> {
 
 impl<'a> ListenerMap for JSXMemberExpression<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
-        self.object.report_effects_when_called(options);
-    }
-}
-
-impl<'a> ListenerMap for JSXMemberExpressionObject<'a> {
-    fn report_effects_when_called(&self, options: &NodeListenerOptions) {
-        match self {
-            Self::IdentifierReference(ident) => ident.report_effects_when_called(options),
-            Self::MemberExpression(member) => member.report_effects_when_called(options),
-            Self::ThisExpression(expr) => expr.report_effects_when_called(options),
-        }
+        options.ctx.diagnostic(super::call_member(self.property.span()));
     }
 }
 

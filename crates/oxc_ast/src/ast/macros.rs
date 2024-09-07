@@ -891,10 +891,10 @@ macro_rules! shared_enum_variants {
             #[inline]
             pub fn $as_child(&self) -> Option<&$child<'a>> {
                 if self.$is_child() {
-                    #[allow(unsafe_code, clippy::ptr_as_ptr)]
+                    #[allow(unsafe_code)]
                     // SAFETY: Transmute is safe because discriminants + types are identical between
                     // `$parent` and `$child` for $child variants
-                    Some(unsafe { &*(self as *const _ as *const $child) })
+                    Some(unsafe { &*std::ptr::from_ref(self).cast::<$child>() })
                 } else {
                     None
                 }
@@ -904,10 +904,10 @@ macro_rules! shared_enum_variants {
             #[inline]
             pub fn $as_child_mut(&mut self) -> Option<&mut $child<'a>> {
                 if self.$is_child() {
-                    #[allow(unsafe_code, clippy::ptr_as_ptr)]
+                    #[allow(unsafe_code)]
                     // SAFETY: Transmute is safe because discriminants + types are identical between
                     // `$parent` and `$child` for $child variants
-                    Some(unsafe { &mut *(self as *mut _ as *mut $child) })
+                    Some(unsafe { &mut *std::ptr::from_mut(self).cast::<$child>() })
                 } else {
                     None
                 }

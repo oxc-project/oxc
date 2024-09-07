@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn consistent_function_scoping(x0: Span) -> OxcDiagnostic {
+fn consistent_function_scoping(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Function does not capture any variables from the outer scope.")
         .with_help("Move this function to the outer scope.")
-        .with_label(x0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

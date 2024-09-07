@@ -19,7 +19,7 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+        let semantic_ret = SemanticBuilder::new(source_text)
             .with_trivias(ret.trivias)
             .build_module_record(Path::new(""), program)
             .build(program);

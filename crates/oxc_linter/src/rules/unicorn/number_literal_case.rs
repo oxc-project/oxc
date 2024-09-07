@@ -5,9 +5,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn uppercase_prefix(span: Span, x1: &str) -> OxcDiagnostic {
+fn uppercase_prefix(span: Span, prefix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected number literal prefix in uppercase.")
-        .with_help(format!("Use lowercase for the number literal prefix `{x1}`."))
+        .with_help(format!("Use lowercase for the number literal prefix `{prefix}`."))
         .with_label(span)
 }
 
@@ -23,12 +23,12 @@ fn lowercase_hexadecimal_digits(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn uppercase_prefix_and_lowercase_hexadecimal_digits(span: Span, x1: &str) -> OxcDiagnostic {
+fn uppercase_prefix_and_lowercase_hexadecimal_digits(span: Span, prefix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.",
     )
     .with_help(format!(
-        "Use lowercase for the number literal prefix `{x1}` and uppercase for hexadecimal digits."
+        "Use lowercase for the number literal prefix `{prefix}` and uppercase for hexadecimal digits."
     ))
     .with_label(span)
 }
