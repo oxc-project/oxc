@@ -548,7 +548,10 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Expression<'a>> {
         self.bump_any(); // bump `.`
         let property = match self.cur_kind() {
-            Kind::Meta => self.parse_keyword_identifier(Kind::Meta),
+            Kind::Meta => {
+                self.set_source_type_to_module_if_unambiguous();
+                self.parse_keyword_identifier(Kind::Meta)
+            }
             Kind::Target => self.parse_keyword_identifier(Kind::Target),
             _ => self.parse_identifier_name()?,
         };

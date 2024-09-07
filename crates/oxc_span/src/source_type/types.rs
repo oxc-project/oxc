@@ -43,6 +43,14 @@ pub enum ModuleKind {
     Script = 0,
     /// ES6 Module
     Module = 1,
+    /// Consider the file a "module" if ESM syntax is present, or else consider it a "script".
+    ///
+    /// ESM syntax includes `import` statement, `export` statement and `import.meta`.
+    ///
+    /// Note: Dynamic import expression is not ESM syntax.
+    ///
+    /// See <https://babel.dev/docs/options#misc-options>
+    Unambiguous = 2,
 }
 
 /// JSX for JavaScript and TypeScript

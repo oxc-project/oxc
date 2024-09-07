@@ -64,7 +64,7 @@ impl SourceType {
     pub const fn js() -> Self {
         Self {
             language: Language::JavaScript,
-            module_kind: ModuleKind::Script,
+            module_kind: ModuleKind::Unambiguous,
             variant: LanguageVariant::Standard,
         }
     }
@@ -159,6 +159,10 @@ impl SourceType {
         self.module_kind == ModuleKind::Module
     }
 
+    pub fn is_unambiguous(self) -> bool {
+        self.module_kind == ModuleKind::Unambiguous
+    }
+
     pub fn module_kind(self) -> ModuleKind {
         self.module_kind
     }
@@ -200,6 +204,14 @@ impl SourceType {
             self.module_kind = ModuleKind::Module;
         } else {
             self.module_kind = ModuleKind::Script;
+        }
+        self
+    }
+
+    #[must_use]
+    pub const fn with_unambiguous(mut self, yes: bool) -> Self {
+        if yes {
+            self.module_kind = ModuleKind::Unambiguous;
         }
         self
     }
@@ -290,7 +302,8 @@ impl SourceType {
             })?;
 
         let (language, module_kind) = match extension {
-            "js" | "mjs" | "jsx" => (Language::JavaScript, ModuleKind::Module),
+            "js" => (Language::JavaScript, ModuleKind::Unambiguous),
+            "mjs" | "jsx" => (Language::JavaScript, ModuleKind::Module),
             "cjs" => (Language::JavaScript, ModuleKind::Script),
             "ts" if file_name.ends_with(".d.ts") => {
                 (Language::TypeScriptDefinition, ModuleKind::Module)
@@ -417,15 +430,15 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::js().with_jsx(true).with_module(true), js);
+        assert_eq!(SourceType::js().with_jsx(true).with_unambiguous(true), js);
         assert_eq!(SourceType::jsx().with_module(true), jsx);
 
-        assert!(js.is_module());
+        assert!(js.is_unambiguous());
         assert!(mjs.is_module());
         assert!(cjs.is_script());
         assert!(jsx.is_module());
 
-        assert!(js.is_strict());
+        assert!(!js.is_strict());
         assert!(mjs.is_strict());
         assert!(!cjs.is_strict());
         assert!(jsx.is_strict());
