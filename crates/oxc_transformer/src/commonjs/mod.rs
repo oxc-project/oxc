@@ -9,6 +9,7 @@ use crate::commonjs::utils::export::{
     create_listed_named_exports, create_reexported_named_exports,
     create_renamed_export_star_exports,
 };
+use crate::commonjs::utils::object_define::create_es_module_property;
 use crate::context::Ctx;
 use oxc_allocator::CloneIn;
 use oxc_ast::ast::{
@@ -23,11 +24,25 @@ use utils::import;
 pub struct Commonjs<'a> {
     ctx: Ctx<'a>,
     options: CommonjsOptions,
+
+    // Properties of code
+    pub has_export: bool,
+    pub has_default_export: bool,
+    pub no_incomplete_ns_import_detection: bool,
+    
+    pub export_graph: Vec<&'a str>,
 }
 
 impl<'a> Commonjs<'a> {
     pub fn new(options: CommonjsOptions, ctx: Ctx<'a>) -> Self {
-        Self { ctx, options }
+        Self {
+            ctx,
+            options,
+            has_export: false,
+            has_default_export: false,
+            no_incomplete_ns_import_detection: false,
+            export_graph: vec![]
+        }
     }
 }
 
@@ -171,7 +186,20 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         if !self.options.transform_import_and_export {
             return;
         }
-        let mut latest = self.ctx.ast.vec();
+        let mut latest: oxc_allocator::Vec<Statement<'a>> = self.ctx.ast.vec();
+
+        program.directives.push(self.ctx.ast.directive(
+            SPAN,
+            self.ctx.ast.string_literal(SPAN, "use strict"),
+            "use strict",
+        ));
+
+        if (self.options.strict && self.has_default_export) || self.has_export {
+            latest.push(
+                create_es_module_property(self.options.loose, &self.ctx.ast)
+                    .clone_in(self.ctx.ast.allocator),
+            );
+        }
 
         for stmt in self.ctx.ast.move_vec(&mut program.body) {
             match stmt {
@@ -208,5 +236,30 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
             )
             .clone_in(self.ctx.ast.allocator);
         }
+    }
+
+    fn enter_export_named_declaration(
+        &mut self,
+        _node: &mut ExportNamedDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.has_export = true;
+    }
+
+    fn enter_export_default_declaration(
+        &mut self,
+        _node: &mut ExportDefaultDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.has_export = true;
+        self.has_default_export = true;
+    }
+
+    fn enter_export_all_declaration(
+        &mut self,
+        _node: &mut ExportAllDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.has_export = true;
     }
 }

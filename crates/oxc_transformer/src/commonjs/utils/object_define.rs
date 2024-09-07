@@ -2,12 +2,13 @@
 
 use oxc_ast::ast::{
     BindingRestElement, Expression, FormalParameterKind, FunctionType, ModuleExportName,
-    PropertyKind, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration,
+    PropertyKind, Statement, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration,
     TSTypeParameterInstantiation,
 };
 use oxc_ast::AstBuilder;
 use oxc_span::SPAN;
 use oxc_syntax::identifier;
+use oxc_syntax::operator::AssignmentOperator;
 use std::borrow::Cow;
 
 /// Generates `Object.defineProperty` call for a given target.
@@ -110,6 +111,69 @@ pub fn create_object_define_property<'a>(
         },
         false,
     )
+}
+
+/// `__esModule` is a special property that is used to determine whether a module is an ES module.
+pub fn create_es_module_property<'a>(loose: bool, builder: &'a AstBuilder) -> Statement<'a> {
+    if loose {
+        builder.statement_expression(
+            SPAN,
+            builder.expression_call(
+                SPAN,
+                builder.expression_member(builder.member_expression_static(
+                    SPAN,
+                    builder.expression_identifier_reference(SPAN, "Object"),
+                    builder.identifier_name(SPAN, "defineProperty"),
+                    false,
+                )),
+                None::<TSTypeParameterInstantiation>,
+                {
+                    let mut items = builder.vec();
+                    items.push(builder.argument_expression(
+                        builder.expression_identifier_reference(SPAN, "exports"),
+                    ));
+                    items.push(builder.argument_expression(
+                        builder.expression_string_literal(SPAN, "__esModule"),
+                    ));
+                    items.push(builder.argument_expression(builder.expression_object(
+                        SPAN,
+                        builder.vec1(builder.object_property_kind_object_property(
+                            SPAN,
+                            PropertyKind::Init,
+                            builder.property_key_identifier_name(SPAN, "value"),
+                            builder.expression_boolean_literal(SPAN, true),
+                            None,
+                            false,
+                            false,
+                            false,
+                        )),
+                        None,
+                    )));
+                    items
+                },
+                false,
+            ),
+        )
+    } else {
+        builder.statement_expression(
+            SPAN,
+            builder.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                builder.assignment_target_simple(
+                    builder.simple_assignment_target_member_expression(
+                        builder.member_expression_static(
+                            SPAN,
+                            builder.expression_identifier_reference(SPAN, "exports"),
+                            builder.identifier_name(SPAN, "__esModule"),
+                            false,
+                        ),
+                    ),
+                ),
+                builder.expression_boolean_literal(SPAN, true),
+            ),
+        )
+    }
 }
 
 /// Port from `rolldown`: <https://github.com/rolldown/rolldown/blob/main/crates/rolldown_utils/src/ecma_script.rs#L16-L51>.
