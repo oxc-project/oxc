@@ -1,0 +1,100 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:14]
+ 1 │ var foo = 0; foo++;
+   ·              ─────
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '--' used.
+   ╭─[no_plusplus.tsx:1:14]
+ 1 │ var foo = 0; foo--;
+   ·              ─────
+   ╰────
+  help: Use the assignment operator `-=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '--' used.
+   ╭─[no_plusplus.tsx:1:14]
+ 1 │ var foo = 0; --foo;
+   ·              ─────
+   ╰────
+  help: Use the assignment operator `-=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:14]
+ 1 │ var foo = 0; ++foo;
+   ·              ─────
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:20]
+ 1 │ for (i = 0; i < l; i++) { console.log(i); }
+   ·                    ───
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:25]
+ 1 │ for (i = 0; i < l; foo, i++) { console.log(i); }
+   ·                         ───
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:14]
+ 1 │ var foo = 0; foo++;
+   ·              ─────
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:27]
+ 1 │ for (i = 0; i < l; i++) { v++; }
+   ·                           ───
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:6]
+ 1 │ for (i++;;);
+   ·      ───
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '--' used.
+   ╭─[no_plusplus.tsx:1:7]
+ 1 │ for (;--i;);
+   ·       ───
+   ╰────
+  help: Use the assignment operator `-=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:10]
+ 1 │ for (;;) ++i;
+   ·          ───
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:13]
+ 1 │ for (;; i = j++);
+   ·             ───
+   ╰────
+  help: Use the assignment operator `+=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '--' used.
+   ╭─[no_plusplus.tsx:1:16]
+ 1 │ for (;; i++, f(--j));
+   ·                ───
+   ╰────
+  help: Use the assignment operator `-=` instead.
+
+  ⚠ eslint(no-plusplus): Unary operator '++' used.
+   ╭─[no_plusplus.tsx:1:16]
+ 1 │ for (;; foo + (i++, bar));
+   ·                ───
+   ╰────
+  help: Use the assignment operator `+=` instead.
