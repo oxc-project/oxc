@@ -6,7 +6,7 @@ use crate::es2017::utils::{
 use oxc_allocator::{Box, CloneIn};
 use oxc_ast::ast::{
     ArrowFunctionExpression, AwaitExpression, BindingRestElement, Expression, FormalParameterKind,
-    Function, FunctionType, Program, Statement, TSThisParameter, TSTypeAnnotation,
+    Function, FunctionType, Program, TSThisParameter, TSTypeAnnotation,
     TSTypeParameterDeclaration, TSTypeParameterInstantiation, VariableDeclarationKind,
 };
 use oxc_span::SPAN;
@@ -199,7 +199,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
         }
     }
 
-    fn exit_function(&mut self, decl: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_function(&mut self, decl: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         let fn_name = decl
             .id
             .clone_in(self.ctx.ast.allocator)
