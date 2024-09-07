@@ -192,6 +192,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x1_react.exit_expression(expr, ctx);
+        self.x1_commonjs.exit_expression(expr, ctx);
         self.x3_es2015.exit_expression(expr, ctx);
     }
 

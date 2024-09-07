@@ -3,6 +3,7 @@ mod types;
 mod utils;
 
 use crate::commonjs::options::CommonjsOptions;
+use crate::commonjs::utils::dynamic_import::create_promise_resolve_require;
 use crate::commonjs::utils::export::{
     create_declared_named_exports, create_default_exports, create_export_star_exports,
     create_listed_named_exports, create_reexported_named_exports,
@@ -195,5 +196,17 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         }
 
         program.body = latest;
+    }
+    fn exit_expression(&mut self, node: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if !self.options.transform_import_and_export {
+            return;
+        }
+        if let Expression::ImportExpression(expr) = node {
+            *node = create_promise_resolve_require(
+                expr.source.clone_in(self.ctx.ast.allocator),
+                &self.ctx.ast,
+            )
+            .clone_in(self.ctx.ast.allocator);
+        }
     }
 }
