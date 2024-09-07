@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -92,41 +92,14 @@ impl Rule for NoPlusplus {
             return;
         };
 
-        if self.allow_for_loop_afterthoughts && is_for_loop_afterthought(node, ctx) {
+        if self.allow_for_loop_afterthoughts
+            && is_for_loop_afterthought(node, ctx).unwrap_or_default()
+        {
             return;
         }
 
         ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator.as_str()));
     }
-}
-
-/// Whether the given AST node is a ++ or -- inside of a for-loop update.
-fn is_for_statement_update(node: &AstNode, ctx: &LintContext) -> bool {
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-        return false;
-    };
-    let AstKind::ForStatement(for_stmt) = parent.kind() else {
-        return false;
-    };
-
-    for_stmt.update.as_ref().is_some_and(|update| is_eq_node_expr(node, update))
-}
-
-/// Checks if the given node is equivalent to the given expression (i.e., they have the same span).
-fn is_eq_node_expr(node: &AstNode, expr: &Expression) -> bool {
-    // TODO: This logic should be moved to somewhere more general and shared across rules and expanded
-    // to cover all expressions and node types
-    let node_span = match node.kind() {
-        AstKind::UpdateExpression(expr) => expr.span,
-        AstKind::SequenceExpression(expr) => expr.span,
-        _ => return false,
-    };
-    let expr_span = match expr {
-        Expression::UpdateExpression(expr) => expr.span,
-        Expression::SequenceExpression(expr) => expr.span,
-        _ => return false,
-    };
-    node_span == expr_span
 }
 
 /// Determines whether the given node is considered to be a for loop "afterthought" by the logic of this rule.
@@ -135,17 +108,20 @@ fn is_eq_node_expr(node: &AstNode, expr: &Expression) -> bool {
 ///   - An operand of a sequence expression that is the update node: for (;; foo(), i++) {}
 ///   - An operand of a sequence expression that is child of another sequence expression, etc.,
 ///     up to the sequence expression that is the update node: for (;; foo(), (bar(), (baz(), i++))) {}
-fn is_for_loop_afterthought(node: &AstNode, ctx: &LintContext) -> bool {
-    if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-        match parent.kind() {
+fn is_for_loop_afterthought(node: &AstNode, ctx: &LintContext) -> Option<bool> {
+    let mut cur = ctx.nodes().parent_node(node.id())?;
+    loop {
+        match cur.kind() {
             AstKind::SequenceExpression(_) | AstKind::ParenthesizedExpression(_) => {
-                return is_for_loop_afterthought(parent, ctx)
+                cur = ctx.nodes().parent_node(cur.id())?;
             }
-            _ => (),
+            _ => break,
         }
     }
-
-    is_for_statement_update(node, ctx)
+    match cur.kind() {
+        AstKind::ForStatement(stmt) => Some(stmt.update.is_some()),
+        _ => Some(false),
+    }
 }
 
 #[test]
