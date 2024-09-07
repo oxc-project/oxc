@@ -16,7 +16,7 @@ use oxc::{
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::{ParseOptions, Parser, ParserReturn},
-    semantic::{ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable},
+    semantic::{dot::DebugDot, ScopeFlags, ScopeId, ScopeTree, SemanticBuilder, SymbolTable},
     span::SourceType,
     transformer::{EnvOptions, Targets, TransformOptions, Transformer},
 };
@@ -39,6 +39,9 @@ pub struct Oxc {
 
     #[wasm_bindgen(readonly, skip_typescript)]
     pub ir: String,
+
+    #[wasm_bindgen(readonly, skip_typescript, js_name = "controlFlowGraph")]
+    pub control_flow_graph: String,
 
     #[wasm_bindgen(readonly, skip_typescript)]
     #[tsify(type = "SymbolTable")]
@@ -192,9 +195,13 @@ impl Oxc {
         let semantic_ret = SemanticBuilder::new(source_text)
             .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
+            .with_cfg(true)
             .build_module_record(&path, &program)
             .build(&program);
 
+        self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
+            cfg.debug_dot(semantic_ret.semantic.nodes().into())
+        });
         if run_options.syntax.unwrap_or_default() {
             self.save_diagnostics(
                 errors.into_iter().chain(semantic_ret.errors).map(Error::from).collect::<Vec<_>>(),
