@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # for softprops/action-gh-release@v1
-      id-token: write # for `npm publish --provenance`
+      id-token: write # for `pnpm publish --provenance`
     steps:
       - uses: actions/checkout@v4
         with:
@@ -179,6 +179,9 @@ jobs:
       - name: Untar
         run: ls *.gz | xargs -i tar xf {}
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.0.0
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
@@ -197,7 +200,7 @@ jobs:
         run: |
           for package in npm/oxlint*
           do
-            npm publish $package/ --tag latest --provenance --access public
+            pnpm publish $package/ --tag latest --provenance --access public
             echo '----'
           done
 

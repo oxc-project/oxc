@@ -41,7 +41,7 @@ jobs:
     name: Release WASM
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # for `npm publish --provenance`
+      id-token: write # for `pnpm publish --provenance`
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -72,4 +72,4 @@ jobs:
         working-directory: npm/parser-wasm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --provenance --access public # --tag alpha
+        run: pnpm publish --provenance --access public # --tag alpha

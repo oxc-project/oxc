@@ -160,11 +160,14 @@ jobs:
     name: Publish NAPI
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # for `npm publish --provenance`
+      id-token: write # for `pnpm publish --provenance`
     needs:
       - build
     steps:
       - uses: taiki-e/checkout-action@v1
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.0.0
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -206,7 +209,7 @@ jobs:
           # publish subpackages first
           for package in npm/oxc-transform-*
           do
-            npm publish $package/ --tag latest --provenance --access public
+            pnpm publish $package/ --tag latest --provenance --access public
           done
           # publish root package last
-          npm publish npm/oxc-transform/ --provenance --access public --tag latest
+          pnpm publish npm/oxc-transform/ --provenance --access public --tag latest
