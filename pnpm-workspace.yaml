@@ -1,4 +1,5 @@
 packages:
   - 'napi/**'
   - 'wasm/**'
+  - 'editors/**'
   - 'tasks/benchmark/codspeed'
