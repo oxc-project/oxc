@@ -5,6 +5,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     module_record::ExportLocalName,
@@ -514,7 +515,7 @@ fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
 
 pub fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
     let flags = lit.regex.flags;
-    if flags.contains(RegExpFlags::U | RegExpFlags::V) {
+    if flags.contains(RegularExpressionFlags::U | RegularExpressionFlags::V) {
         ctx.error(reg_exp_flag_u_and_v(lit.span));
     }
 }

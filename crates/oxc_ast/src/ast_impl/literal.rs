@@ -9,9 +9,8 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
-use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
+use oxc_span::{hash::ContentHash, Atom, Span};
 use oxc_syntax::number::NumberBase;
 
 use crate::ast::*;
@@ -170,92 +169,6 @@ impl<'a> fmt::Display for RegExpPattern<'a> {
             Self::Raw(it) | Self::Invalid(it) => write!(f, "{it}"),
             Self::Pattern(it) => it.fmt(f),
         }
-    }
-}
-
-impl ContentEq for RegExpFlags {
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
-impl ContentHash for RegExpFlags {
-    fn content_hash<H: Hasher>(&self, state: &mut H) {
-        Hash::hash(self, state);
-    }
-}
-
-impl<'alloc> CloneIn<'alloc> for RegExpFlags {
-    type Cloned = Self;
-
-    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
-        *self
-    }
-}
-
-impl TryFrom<char> for RegExpFlags {
-    type Error = char;
-
-    fn try_from(value: char) -> Result<Self, Self::Error> {
-        match value {
-            'g' => Ok(Self::G),
-            'i' => Ok(Self::I),
-            'm' => Ok(Self::M),
-            's' => Ok(Self::S),
-            'u' => Ok(Self::U),
-            'y' => Ok(Self::Y),
-            'd' => Ok(Self::D),
-            'v' => Ok(Self::V),
-            _ => Err(value),
-        }
-    }
-}
-
-impl TryFrom<u8> for RegExpFlags {
-    type Error = u8;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
-            b'g' => Ok(Self::G),
-            b'i' => Ok(Self::I),
-            b'm' => Ok(Self::M),
-            b's' => Ok(Self::S),
-            b'u' => Ok(Self::U),
-            b'y' => Ok(Self::Y),
-            b'd' => Ok(Self::D),
-            b'v' => Ok(Self::V),
-            _ => Err(value),
-        }
-    }
-}
-
-impl fmt::Display for RegExpFlags {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.contains(Self::G) {
-            write!(f, "g")?;
-        }
-        if self.contains(Self::I) {
-            write!(f, "i")?;
-        }
-        if self.contains(Self::M) {
-            write!(f, "m")?;
-        }
-        if self.contains(Self::S) {
-            write!(f, "s")?;
-        }
-        if self.contains(Self::U) {
-            write!(f, "u")?;
-        }
-        if self.contains(Self::Y) {
-            write!(f, "y")?;
-        }
-        if self.contains(Self::D) {
-            write!(f, "d")?;
-        }
-        if self.contains(Self::V) {
-            write!(f, "v")?;
-        }
-        Ok(())
     }
 }
 

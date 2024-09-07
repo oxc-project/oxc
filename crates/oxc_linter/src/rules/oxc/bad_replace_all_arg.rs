@@ -1,9 +1,7 @@
-use oxc_ast::{
-    ast::{Expression, RegExpFlags},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_span::Span;
 
 use crate::{
@@ -67,7 +65,7 @@ impl Rule for BadReplaceAllArg {
             return;
         };
 
-        if !flags.contains(RegExpFlags::G) {
+        if !flags.contains(RegularExpressionFlags::G) {
             let Some(call_expr_callee) = call_expr.callee.as_member_expression() else {
                 return;
             };
@@ -83,7 +81,7 @@ impl Rule for BadReplaceAllArg {
 fn resolve_flags<'a>(
     expr: &'a Expression<'a>,
     ctx: &LintContext<'a>,
-) -> Option<(RegExpFlags, Span)> {
+) -> Option<(RegularExpressionFlags, Span)> {
     match expr.without_parentheses() {
         Expression::RegExpLiteral(regexp_literal) => {
             Some((regexp_literal.regex.flags, regexp_literal.span))
@@ -91,7 +89,8 @@ fn resolve_flags<'a>(
         Expression::NewExpression(new_expr) => {
             if new_expr.callee.is_specific_id("RegExp") {
                 Some((
-                    extract_regex_flags(&new_expr.arguments).unwrap_or(RegExpFlags::empty()),
+                    extract_regex_flags(&new_expr.arguments)
+                        .unwrap_or(RegularExpressionFlags::empty()),
                     new_expr.span,
                 ))
             } else {

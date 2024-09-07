@@ -47,10 +47,10 @@ fn main() {
         let ret = parser.parse();
 
         match ret {
-            Ok(ast::RegularExpression { pattern, flags, .. }) => {
+            Ok(ref regex @ ast::RegularExpression { ref pattern, flags, .. }) => {
                 println!("✨ {}", pattern.span.source_text(source_text));
                 println!("{pattern:#?}");
-                println!("✨ {}", flags.span.source_text(source_text));
+                println!("✨ {}", regex.flags_span().source_text(source_text));
                 println!("{flags:?}");
             }
             Err(error) => {

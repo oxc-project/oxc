@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_regular_expression::{FlagsParser, ParserOptions, PatternParser};
+use oxc_regular_expression::{FlagsParser, ParserOptions, PatternParser, PatternParserOptions};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
@@ -131,15 +131,10 @@ impl Rule for NoInvalidRegexp {
         // Pattern check is skipped when 1st argument is NOT a `StringLiteral`
         // e.g. `new RegExp(var)`, `RegExp("str" + var)`
         if let Some((pattern_span_start, pattern_text)) = pattern_arg {
-            let mut options = ParserOptions::default().with_span_offset(pattern_span_start);
-            if let Some(flags) = parsed_flags {
-                if flags.unicode || flags.unicode_sets {
-                    options = options.with_unicode_mode();
-                }
-                if flags.unicode_sets {
-                    options = options.with_unicode_sets_mode();
-                }
-            }
+            let options = parsed_flags.map_or_else(
+                || PatternParserOptions::default().with_span_offset(pattern_span_start),
+                |flags| PatternParserOptions { span_offset: pattern_span_start, flags },
+            );
             match PatternParser::new(&allocator, pattern_text, options).parse() {
                 Ok(_) => {}
                 Err(diagnostic) => ctx.diagnostic(diagnostic),

@@ -4,7 +4,7 @@ use std::{env, fs, path::Path, sync::Arc};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast, AstKind, Visit};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_regular_expression::{FlagsParser, ParserOptions, PatternParser};
+use oxc_regular_expression::{FlagsParser, ParserOptions, PatternParser, PatternParserOptions};
 use oxc_span::SourceType;
 
 // `cargo run -p oxc_parser --example regular_expression`
@@ -86,10 +86,9 @@ impl<'a> Visit<'a> for RegularExpressionVisitor {
                 let parsed = PatternParser::new(
                     &allocator,
                     pattern,
-                    ParserOptions {
+                    PatternParserOptions {
                         span_offset: new_expr.span.start + 12, // = "new RegExp(\"".len()
-                        unicode_mode: flags.unicode || flags.unicode_sets,
-                        unicode_sets_mode: flags.unicode_sets,
+                        flags,
                     },
                 )
                 .parse();

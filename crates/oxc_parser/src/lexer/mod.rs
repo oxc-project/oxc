@@ -30,7 +30,6 @@ mod whitespace;
 use std::collections::VecDeque;
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
 use rustc_hash::FxHashMap;

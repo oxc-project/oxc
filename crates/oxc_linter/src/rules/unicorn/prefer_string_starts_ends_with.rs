@@ -1,9 +1,10 @@
 use oxc_ast::{
-    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
+    ast::{CallExpression, Expression, MemberExpression, RegExpLiteral},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -139,8 +140,11 @@ enum ErrorKind {
 }
 
 fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKind> {
-    if regexp_lit.regex.flags.intersects(RegExpFlags::M)
-        || (regexp_lit.regex.flags.intersects(RegExpFlags::I | RegExpFlags::M)
+    if regexp_lit.regex.flags.intersects(RegularExpressionFlags::M)
+        || (regexp_lit
+            .regex
+            .flags
+            .intersects(RegularExpressionFlags::I | RegularExpressionFlags::M)
             && is_useless_case_sensitive_regex_flag(pattern_text))
     {
         return None;

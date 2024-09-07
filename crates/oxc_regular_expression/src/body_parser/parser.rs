@@ -3,10 +3,10 @@ use oxc_diagnostics::Result;
 use oxc_span::Atom as SpanAtom;
 
 use crate::{
-    ast,
+    ast::{self, RegularExpressionFlags},
     body_parser::{reader::Reader, state::State, unicode, unicode_property},
     diagnostics,
-    options::ParserOptions,
+    options::PatternParserOptions,
     span::SpanFactory,
     surrogate_pair,
 };
@@ -20,7 +20,11 @@ pub struct PatternParser<'a> {
 }
 
 impl<'a> PatternParser<'a> {
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        options: PatternParserOptions,
+    ) -> Self {
         // `RegExp` can not be empty.
         // - Literal `//` means just a single line comment
         // - For `new RegExp("")` or `new RegExp()` (= empty), use a placeholder
@@ -30,8 +34,11 @@ impl<'a> PatternParser<'a> {
             allocator,
             source_text,
             span_factory: SpanFactory::new(options.span_offset),
-            reader: Reader::new(source_text, options.unicode_mode),
-            state: State::new(options.unicode_mode, options.unicode_sets_mode),
+            reader: Reader::new(
+                source_text,
+                options.flags.intersects(RegularExpressionFlags::U | RegularExpressionFlags::V),
+            ),
+            state: State::new(options.flags),
         }
     }
 
@@ -141,7 +148,7 @@ impl<'a> PatternParser<'a> {
         // [+UnicodeMode] Assertion
         // [+UnicodeMode] Atom Quantifier
         // [+UnicodeMode] Atom
-        if self.state.unicode_mode {
+        if self.state.unicode_mode() {
             if let Some(assertion) = self.parse_assertion()? {
                 return Ok(Some(assertion));
             }
@@ -458,7 +465,7 @@ impl<'a> PatternParser<'a> {
 
         // DecimalEscape: \1 means indexed reference
         if let Some(index) = self.consume_decimal_escape()? {
-            if self.state.unicode_mode {
+            if self.state.unicode_mode() {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
                 if self.state.num_of_capturing_groups < index {
@@ -573,7 +580,7 @@ impl<'a> PatternParser<'a> {
         &mut self,
         span_start: usize,
     ) -> Result<Option<ast::UnicodePropertyEscape<'a>>> {
-        if !self.state.unicode_mode {
+        if !self.state.unicode_mode() {
             return Ok(None);
         }
 
@@ -683,7 +690,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // e.g. \u{1f600}
-        if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(self.state.unicode_mode)? {
+        if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(self.state.unicode_mode())? {
             return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::UnicodeEscape,
@@ -692,7 +699,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // e.g. \18
-        if !self.state.unicode_mode {
+        if !self.state.unicode_mode() {
             if let Some(cp) = self.consume_legacy_octal_escape_sequence() {
                 return Ok(Some(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
@@ -781,7 +788,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // [+UnicodeSetsMode] ClassSetExpression
-        if self.state.unicode_sets_mode {
+        if self.state.flags.contains(RegularExpressionFlags::V) {
             return self.parse_class_set_expression();
         }
 
@@ -868,7 +875,7 @@ impl<'a> PatternParser<'a> {
             // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
             // It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
             // (Annex B)
-            if self.state.unicode_mode {
+            if self.state.unicode_mode() {
                 return Err(diagnostics::character_class_range_invalid_atom(
                     self.span_factory.create(range_span_start, self.reader.offset()),
                 ));
@@ -976,7 +983,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // [+UnicodeMode] -
-        if self.state.unicode_mode && self.reader.eat('-') {
+        if self.state.unicode_mode() && self.reader.eat('-') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
                 kind: ast::CharacterKind::Symbol,
@@ -985,7 +992,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // [~UnicodeMode] c ClassControlLetter
-        if !self.state.unicode_mode {
+        if !self.state.unicode_mode() {
             let checkpoint = self.reader.checkpoint();
 
             if self.reader.eat('c') {
@@ -1729,7 +1736,7 @@ impl<'a> PatternParser<'a> {
             // [SS:EE] UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
             // It is a Syntax Error if the enclosing Pattern does not have a [UnicodeSetsMode] parameter and the source text matched by LoneUnicodePropertyNameOrValue is a binary property of strings listed in the “Property name” column of Table 67.
             if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
-                if !self.state.unicode_sets_mode {
+                if !self.state.flags.contains(RegularExpressionFlags::V) {
                     return Err(diagnostics::invalid_unicode_property_of_strings(
                         self.span_factory.create(span_start, self.reader.offset()),
                         name_or_value.as_str(),
@@ -1849,7 +1856,7 @@ impl<'a> PatternParser<'a> {
             ));
         }
 
-        if !self.state.unicode_mode {
+        if !self.state.unicode_mode() {
             let span_start = self.reader.offset();
 
             if let Some(lead_surrogate) =
@@ -1910,7 +1917,7 @@ impl<'a> PatternParser<'a> {
             ));
         }
 
-        if !self.state.unicode_mode {
+        if !self.state.unicode_mode() {
             let span_start = self.reader.offset();
 
             if let Some(lead_surrogate) =
@@ -2019,7 +2026,7 @@ impl<'a> PatternParser<'a> {
                 self.reader.rewind(checkpoint);
             }
 
-            if self.state.unicode_mode {
+            if self.state.unicode_mode() {
                 return Err(diagnostics::invalid_unicode_escape_sequence(
                     self.span_factory.create(span_start, self.reader.offset()),
                 ));
@@ -2094,7 +2101,7 @@ impl<'a> PatternParser<'a> {
     fn consume_identity_escape(&mut self) -> Option<u32> {
         let cp = self.reader.peek()?;
 
-        if self.state.unicode_mode {
+        if self.state.unicode_mode() {
             if unicode::is_syntax_character(cp) || cp == '/' as u32 {
                 self.reader.advance();
                 return Some(cp);

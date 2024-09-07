@@ -28,6 +28,7 @@ oxc_ast_macros  = { workspace = true }
 phf              = { workspace = true, features = ["macros"] }
 rustc-hash       = { workspace = true }
 unicode-id-start = { workspace = true }
+bitflags         = { workspace = true }
 serde            = { workspace = true, features = ["derive"], optional = true }
 
 tsify        = { workspace = true, optional = true }

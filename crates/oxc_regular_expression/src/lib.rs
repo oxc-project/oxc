@@ -17,6 +17,8 @@ mod generated {
 }
 
 pub use crate::{
-    body_parser::PatternParser, flag_parser::FlagsParser, literal_parser::Parser,
-    options::ParserOptions,
+    body_parser::PatternParser,
+    flag_parser::FlagsParser,
+    literal_parser::Parser,
+    options::{ParserOptions, PatternParserOptions},
 };

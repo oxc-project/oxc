@@ -1441,7 +1441,6 @@ dependencies = [
 name = "oxc_ast"
 version = "0.27.0"
 dependencies = [
- "bitflags 2.6.0",
  "num-bigint",
  "oxc_allocator",
  "oxc_ast_macros",
@@ -1779,6 +1778,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
+ "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
  "pico-args",
@@ -1802,6 +1802,7 @@ dependencies = [
 name = "oxc_regular_expression"
 version = "0.27.0"
 dependencies = [
+ "bitflags 2.6.0",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_diagnostics",
@@ -1846,6 +1847,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_index",
  "oxc_parser",
+ "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
  "phf 0.11.2",

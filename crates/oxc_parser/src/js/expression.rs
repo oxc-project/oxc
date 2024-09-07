@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_regular_expression::ast::Pattern;
+use oxc_regular_expression::ast::{Pattern, RegularExpressionFlags};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     number::{BigintBase, NumberBase},
@@ -363,14 +363,10 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span_offset: u32,
         pattern: &'a str,
-        flags: RegExpFlags,
+        flags: RegularExpressionFlags,
     ) -> Option<Box<'a, Pattern<'a>>> {
-        use oxc_regular_expression::{ParserOptions, PatternParser};
-        let options = ParserOptions {
-            span_offset,
-            unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-            unicode_sets_mode: flags.contains(RegExpFlags::V),
-        };
+        use oxc_regular_expression::{PatternParser, PatternParserOptions};
+        let options = PatternParserOptions { span_offset, flags };
         match PatternParser::new(self.ast.allocator, pattern, options).parse() {
             Ok(regular_expression) => Some(self.ast.alloc(regular_expression)),
             Err(diagnostic) => {

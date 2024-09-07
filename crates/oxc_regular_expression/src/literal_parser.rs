@@ -3,7 +3,7 @@ use oxc_diagnostics::Result;
 
 use crate::{
     ast, body_parser::PatternParser, diagnostics, flag_parser::FlagsParser, options::ParserOptions,
-    span::SpanFactory,
+    span::SpanFactory, PatternParserOptions,
 };
 
 /// LiteralParser
@@ -40,17 +40,15 @@ impl<'a> Parser<'a> {
         .parse()?;
 
         // Then parse the pattern with the flags
-        let pattern_options = match (flags.unicode, flags.unicode_sets) {
-            (true, false) => self.options.with_unicode_mode(),
-            (_, true) => self.options.with_unicode_sets_mode(),
-            _ => self.options,
-        };
 
         let pattern = PatternParser::new(
             self.allocator,
             &self.source_text[body_start_offset..body_end_offset],
-            #[allow(clippy::cast_possible_truncation)]
-            pattern_options.with_span_offset(self.options.span_offset + body_start_offset as u32),
+            PatternParserOptions {
+                #[allow(clippy::cast_possible_truncation)]
+                span_offset: self.options.span_offset + body_start_offset as u32,
+                flags,
+            },
         )
         .parse()?;
 

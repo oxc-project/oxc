@@ -1,10 +1,11 @@
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{Argument, RegExpFlags, RegExpPattern},
+    ast::{Argument, RegExpPattern},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_span::{GetSpan, Span};
 use regex::{Matches, Regex};
 
@@ -101,7 +102,7 @@ impl Rule for NoControlRegex {
                     // extract numeric part from \u{00}
                     if numeric_part.starts_with('{') {
                         let has_unicode_flag = match flags {
-                            Some(flags) if flags.contains(RegExpFlags::U) => true,
+                            Some(flags) if flags.contains(RegularExpressionFlags::U) => true,
                             _ => {
                                 continue;
                             }
@@ -161,7 +162,7 @@ struct RegexPatternData<'a> {
     ///
     /// Note that flags are represented by a `u8` and therefore safely clonable
     /// with low performance overhead.
-    flags: Option<RegExpFlags>,
+    flags: Option<RegularExpressionFlags>,
     /// The pattern's span. For [`oxc_ast::ast::Expression::NewExpression`]s
     /// and [`oxc_ast::ast::Expression::CallExpression`]s,
     /// this will match the entire new/call expression.
@@ -176,7 +177,7 @@ struct RegexPatternData<'a> {
 /// * /foo/ -> "foo"
 /// * new RegExp("foo") -> foo
 ///
-/// note: [`RegExpFlags`] and [`Span`]s are both tiny and cloneable.
+/// note: [`RegularExpressionFlags`] and [`Span`]s are both tiny and cloneable.
 fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
     let kind = node.kind();
     match kind {

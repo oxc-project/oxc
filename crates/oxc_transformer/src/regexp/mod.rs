@@ -49,7 +49,8 @@ use std::borrow::Cow;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
-    CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
+    CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern,
+    RegularExpressionFlags, Term,
 };
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
@@ -62,7 +63,7 @@ pub use options::RegExpOptions;
 
 pub struct RegExp<'a> {
     ctx: Ctx<'a>,
-    unsupported_flags: RegExpFlags,
+    unsupported_flags: RegularExpressionFlags,
     some_unsupported_patterns: bool,
     look_behind_assertions: bool,
     named_capture_groups: bool,
@@ -72,21 +73,21 @@ pub struct RegExp<'a> {
 impl<'a> RegExp<'a> {
     pub fn new(options: RegExpOptions, ctx: Ctx<'a>) -> Self {
         // Get unsupported flags
-        let mut unsupported_flags = RegExpFlags::empty();
+        let mut unsupported_flags = RegularExpressionFlags::empty();
         if options.dot_all_flag {
-            unsupported_flags |= RegExpFlags::S;
+            unsupported_flags |= RegularExpressionFlags::S;
         }
         if options.sticky_flag {
-            unsupported_flags |= RegExpFlags::Y;
+            unsupported_flags |= RegularExpressionFlags::Y;
         }
         if options.unicode_flag {
-            unsupported_flags |= RegExpFlags::U;
+            unsupported_flags |= RegularExpressionFlags::U;
         }
         if options.match_indices {
-            unsupported_flags |= RegExpFlags::D;
+            unsupported_flags |= RegularExpressionFlags::D;
         }
         if options.set_notation {
-            unsupported_flags |= RegExpFlags::V;
+            unsupported_flags |= RegularExpressionFlags::V;
         }
 
         // Get if some unsupported patterns
@@ -243,15 +244,14 @@ fn character_class_has_unicode_property_escape(character_class: &CharacterClass)
 fn try_parse_pattern<'a>(
     raw: &'a str,
     span: Span,
-    flags: RegExpFlags,
+    flags: RegularExpressionFlags,
     ctx: &mut TraverseCtx<'a>,
 ) -> Result<Pattern<'a>> {
-    use oxc_regular_expression::{ParserOptions, PatternParser};
+    use oxc_regular_expression::{PatternParser, PatternParserOptions};
 
-    let options = ParserOptions {
+    let options = PatternParserOptions {
         span_offset: span.start + 1, // exclude `/`
-        unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
-        unicode_sets_mode: flags.contains(RegExpFlags::V),
+        flags,
     };
     PatternParser::new(ctx.ast.allocator, raw, options).parse()
 }

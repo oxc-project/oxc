@@ -7,12 +7,9 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use std::hash::Hash;
-
-use bitflags::bitflags;
 use oxc_allocator::{Box, CloneIn};
 use oxc_ast_macros::ast;
-use oxc_regular_expression::ast::Pattern;
+use oxc_regular_expression::ast::{Pattern, RegularExpressionFlags};
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, GetSpan, GetSpanMut, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -111,7 +108,7 @@ pub struct RegExp<'a> {
     /// The regex pattern between the slashes
     pub pattern: RegExpPattern<'a>,
     /// Regex flags after the closing slash
-    pub flags: RegExpFlags,
+    pub flags: RegularExpressionFlags,
 }
 
 /// A regular expression pattern
@@ -152,68 +149,3 @@ pub struct StringLiteral<'a> {
     pub span: Span,
     pub value: Atom<'a>,
 }
-
-bitflags! {
-    /// Regular expression flags.
-    ///
-    /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct RegExpFlags: u8 {
-        /// Global flag
-        ///
-        /// Causes the pattern to match multiple times.
-        const G = 1 << 0;
-        /// Ignore case flag
-        ///
-        /// Causes the pattern to ignore case.
-        const I = 1 << 1;
-        /// Multiline flag
-        ///
-        /// Causes `^` and `$` to match the start/end of each line.
-        const M = 1 << 2;
-        /// DotAll flag
-        ///
-        /// Causes `.` to also match newlines.
-        const S = 1 << 3;
-        /// Unicode flag
-        ///
-        /// Causes the pattern to treat the input as a sequence of Unicode code points.
-        const U = 1 << 4;
-        /// Sticky flag
-        ///
-        /// Perform a "sticky" search that matches starting at the current position in the target string.
-        const Y = 1 << 5;
-        /// Indices flag
-        ///
-        /// Causes the regular expression to generate indices for substring matches.
-        const D = 1 << 6;
-        /// Unicode sets flag
-        ///
-        /// Similar to the `u` flag, but also enables the `\\p{}` and `\\P{}` syntax.
-        /// Added by the [`v` flag proposal](https://github.com/tc39/proposal-regexp-set-notation).
-        const V = 1 << 7;
-    }
-}
-
-#[cfg(feature = "serialize")]
-#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
-const TS_APPEND_CONTENT: &'static str = r#"
-export type RegExpFlags = {
-    /** Global flag */
-    G: 1,
-    /** Ignore case flag */
-    I: 2,
-    /** Multiline flag */
-    M: 4,
-    /** DotAll flag */
-    S: 8,
-    /** Unicode flag */
-    U: 16,
-    /** Sticky flag */
-    Y: 32,
-    /** Indices flag */
-    D: 64,
-    /** Unicode sets flag */
-    V: 128
-};
-"#;

@@ -13,29 +13,26 @@ impl<'a> Display for RegularExpression<'a> {
     }
 }
 
-impl Display for Flags {
+impl Display for RegularExpressionFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut flags = String::with_capacity(8);
-        macro_rules! if_true_append {
+        macro_rules! if_contains_write {
             ($flag:ident, $char:literal) => {
-                if self.$flag {
-                    flags.push($char);
+                if self.contains(Self::$flag) {
+                    write!(f, "{}", $char)?;
                 }
             };
         }
 
-        // write flags in the order they are described in the `MDN`
-        // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
-        if_true_append!(has_indices, 'd');
-        if_true_append!(global, 'g');
-        if_true_append!(ignore_case, 'i');
-        if_true_append!(multiline, 'm');
-        if_true_append!(dot_all, 's');
-        if_true_append!(unicode, 'u');
-        if_true_append!(unicode_sets, 'v');
-        if_true_append!(sticky, 'y');
+        if_contains_write!(G, 'g');
+        if_contains_write!(I, 'i');
+        if_contains_write!(M, 'm');
+        if_contains_write!(S, 's');
+        if_contains_write!(U, 'u');
+        if_contains_write!(Y, 'y');
+        if_contains_write!(D, 'd');
+        if_contains_write!(V, 'v');
 
-        write!(f, "{flags}")
+        Ok(())
     }
 }
 

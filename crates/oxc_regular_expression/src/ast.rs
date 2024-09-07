@@ -5,6 +5,9 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
+use std::hash::{Hash, Hasher};
+
+use bitflags::bitflags;
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast_macros::ast;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
@@ -20,23 +23,16 @@ use tsify::Tsify;
 pub struct RegularExpression<'a> {
     pub span: Span,
     pub pattern: Pattern<'a>,
-    pub flags: Flags,
+    pub flags: RegularExpressionFlags,
 }
 
-#[ast]
-#[derive(Debug, Clone)]
-#[generate_derive(CloneIn, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-pub struct Flags {
-    pub span: Span,
-    pub global: bool,
-    pub ignore_case: bool,
-    pub multiline: bool,
-    pub unicode: bool,
-    pub sticky: bool,
-    pub dot_all: bool,
-    pub has_indices: bool,
-    pub unicode_sets: bool,
+impl<'a> RegularExpression<'a> {
+    pub fn flags_span(&self) -> Span {
+        Span::new(
+            /* + 1 to skip the `/` in the middle */ self.pattern.span.end + 1,
+            self.span.end,
+        )
+    }
 }
 
 /// The root of the `PatternParser` result.
@@ -360,3 +356,98 @@ pub struct NamedReference<'a> {
     pub span: Span,
     pub name: Atom<'a>,
 }
+
+bitflags! {
+    /// Regular expression flags.
+    ///
+    /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct RegularExpressionFlags: u8 {
+        /// Global flag
+        ///
+        /// Causes the pattern to match multiple times.
+        const G = 1 << 0;
+        /// Ignore case flag
+        ///
+        /// Causes the pattern to ignore case.
+        const I = 1 << 1;
+        /// Multiline flag
+        ///
+        /// Causes `^` and `$` to match the start/end of each line.
+        const M = 1 << 2;
+        /// DotAll flag
+        ///
+        /// Causes `.` to also match newlines.
+        const S = 1 << 3;
+        /// Unicode flag
+        ///
+        /// Causes the pattern to treat the input as a sequence of Unicode code points.
+        const U = 1 << 4;
+        /// Sticky flag
+        ///
+        /// Perform a "sticky" search that matches starting at the current position in the target string.
+        const Y = 1 << 5;
+        /// Indices flag
+        ///
+        /// Causes the regular expression to generate indices for substring matches.
+        const D = 1 << 6;
+        /// Unicode sets flag
+        ///
+        /// Similar to the `u` flag, but also enables the `\\p{}` and `\\P{}` syntax.
+        /// Added by the [`v` flag proposal](https://github.com/tc39/proposal-regexp-set-notation).
+        const V = 1 << 7;
+    }
+}
+
+impl ContentEq for RegularExpressionFlags {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentHash for RegularExpressionFlags {
+    fn content_hash<H: Hasher>(&self, state: &mut H) {
+        Hash::hash(self, state);
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for RegularExpressionFlags {
+    type Cloned = Self;
+
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl serde::Serialize for RegularExpressionFlags {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "serialize")]
+#[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+export type RegularExpressionFlags = {
+    /** Global flag */
+    G: 1,
+    /** Ignore case flag */
+    I: 2,
+    /** Multiline flag */
+    M: 4,
+    /** DotAll flag */
+    S: 8,
+    /** Unicode flag */
+    U: 16,
+    /** Sticky flag */
+    Y: 32,
+    /** Indices flag */
+    D: 64,
+    /** Unicode sets flag */
+    V: 128
+};
+"#;

@@ -24,9 +24,7 @@ oxc_ast_macros         = { workspace = true }
 oxc_span               = { workspace = true }
 oxc_syntax             = { workspace = true }
 oxc_regular_expression = { workspace = true }
-
-bitflags   = { workspace = true }
-num-bigint = { workspace = true }
+num-bigint             = { workspace = true }
 
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }

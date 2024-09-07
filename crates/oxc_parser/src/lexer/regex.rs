@@ -1,7 +1,8 @@
 use oxc_diagnostics::Result;
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_syntax::identifier::is_line_terminator;
 
-use super::{Kind, Lexer, RegExpFlags, Token};
+use super::{Kind, Lexer, Token};
 use crate::diagnostics;
 
 impl<'a> Lexer<'a> {
@@ -11,7 +12,10 @@ impl<'a> Lexer<'a> {
     ///   where a `RegularExpressionLiteral` is permitted
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
-    pub(crate) fn next_regex(&mut self, kind: Kind) -> Result<(Token, u32, RegExpFlags)> {
+    pub(crate) fn next_regex(
+        &mut self,
+        kind: Kind,
+    ) -> Result<(Token, u32, RegularExpressionFlags)> {
         self.token.start = self.offset()
             - match kind {
                 Kind::Slash => 1,
@@ -25,14 +29,14 @@ impl<'a> Lexer<'a> {
     }
 
     /// 12.9.5 Regular Expression Literals
-    fn read_regex(&mut self) -> Result<(u32, RegExpFlags)> {
+    fn read_regex(&mut self) -> Result<(u32, RegularExpressionFlags)> {
         let mut in_escape = false;
         let mut in_character_class = false;
         loop {
             match self.next_char() {
                 None => {
                     return Err(diagnostics::unterminated_reg_exp(self.unterminated_range()));
-                    // return (self.offset(), RegExpFlags::empty());
+                    // return (self.offset(), RegularExpressionFlags::empty());
                 }
                 Some(c) if is_line_terminator(c) => {
                     return Err(diagnostics::unterminated_reg_exp(self.unterminated_range()));
@@ -54,13 +58,13 @@ impl<'a> Lexer<'a> {
         }
 
         let pattern_end = self.offset() - 1; // -1 to exclude `/`
-        let mut flags = RegExpFlags::empty();
+        let mut flags = RegularExpressionFlags::empty();
 
         while let Some(b @ (b'$' | b'_' | b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9')) =
             self.peek_byte()
         {
             self.consume_char();
-            let Ok(flag) = RegExpFlags::try_from(b) else {
+            let Ok(flag) = RegularExpressionFlags::try_from(b) else {
                 self.error(diagnostics::reg_exp_flag(
                     b as char,
                     self.current_offset().expand_left(1),

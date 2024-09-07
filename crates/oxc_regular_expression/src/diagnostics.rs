@@ -28,8 +28,8 @@ pub fn duplicated_flag(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn unknown_flag(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{PREFIX} Unknown flag")).with_label(span)
+pub fn unknown_flag() -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("{PREFIX} Unknown flag"))
 }
 
 #[cold]

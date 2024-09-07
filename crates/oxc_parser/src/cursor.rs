@@ -1,8 +1,9 @@
 //! Code related to navigating `Token`s from the lexer
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::{Decorator, RegExpFlags};
+use oxc_ast::ast::Decorator;
 use oxc_diagnostics::Result;
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -223,7 +224,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) -> Result<(u32, RegExpFlags)> {
+    pub(crate) fn read_regex(&mut self) -> Result<(u32, RegularExpressionFlags)> {
         let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind())?;
         self.token = token;
         Ok((pattern_end, flags))

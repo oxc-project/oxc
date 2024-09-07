@@ -28,6 +28,7 @@ use std::borrow::Cow;
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
@@ -2265,7 +2266,7 @@ impl<'a> Format<'a> for AssignmentPattern<'a> {
     }
 }
 
-impl<'a> Format<'a> for RegExpFlags {
+impl<'a> Format<'a> for RegularExpressionFlags {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut string = std::vec::Vec::with_capacity(self.iter().count());
         if self.contains(Self::D) {

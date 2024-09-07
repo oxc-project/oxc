@@ -9,8 +9,8 @@ use crate::ast::{
     ArrayAssignmentTarget, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
     AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement,
     Directive, Elision, FormalParameter, FormalParameterKind, FormalParameters,
-    ObjectAssignmentTarget, ObjectPattern, Program, RegExpFlags, Statement, StringLiteral,
-    TSModuleBlock, TSTypeAnnotation,
+    ObjectAssignmentTarget, ObjectPattern, Program, Statement, StringLiteral, TSModuleBlock,
+    TSTypeAnnotation,
 };
 
 pub struct EcmaFormatter;
@@ -39,15 +39,6 @@ impl<'a> Program<'a> {
         let mut ser = serde_json::Serializer::with_formatter(buf, EcmaFormatter);
         self.serialize(&mut ser).unwrap();
         ser
-    }
-}
-
-impl Serialize for RegExpFlags {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
     }
 }
 

@@ -1,5 +1,7 @@
 use rustc_hash::FxHashSet;
 
+use crate::ast::RegularExpressionFlags;
+
 use super::reader::Reader;
 
 /// Currently all of properties are read only from outside of this module.
@@ -7,8 +9,7 @@ use super::reader::Reader;
 #[derive(Debug)]
 pub struct State<'a> {
     // Mode flags
-    pub unicode_mode: bool,
-    pub unicode_sets_mode: bool,
+    pub flags: RegularExpressionFlags,
     pub named_capture_groups: bool,
     // Other states
     pub num_of_capturing_groups: u32,
@@ -16,10 +17,9 @@ pub struct State<'a> {
 }
 
 impl<'a> State<'a> {
-    pub fn new(unicode_mode: bool, unicode_sets_mode: bool) -> Self {
+    pub fn new(flags: RegularExpressionFlags) -> Self {
         Self {
-            unicode_mode,
-            unicode_sets_mode,
+            flags,
             named_capture_groups: false,
             num_of_capturing_groups: 0,
             capturing_group_names: FxHashSet::default(),
@@ -37,13 +37,17 @@ impl<'a> State<'a> {
         // It is `true`
         // - if `u` or `v` flag is set
         // - or if `GroupName` is found in pattern
-        self.named_capture_groups =
-            self.unicode_mode || self.unicode_sets_mode || !capturing_group_names.is_empty();
+        self.named_capture_groups = self.unicode_mode() || !capturing_group_names.is_empty();
 
         self.num_of_capturing_groups = num_of_left_capturing_parens;
         self.capturing_group_names = capturing_group_names;
 
         duplicated_named_capturing_groups
+    }
+
+    #[inline]
+    pub fn unicode_mode(&self) -> bool {
+        self.flags.intersects(RegularExpressionFlags::U | RegularExpressionFlags::V)
     }
 }
 

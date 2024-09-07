@@ -1,9 +1,10 @@
 use oxc_ast::{
-    ast::{Argument, MemberExpression, RegExpFlags},
+    ast::{Argument, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
@@ -97,7 +98,7 @@ impl Rule for PreferStringReplaceAll {
 
 fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
     if let Argument::RegExpLiteral(reg_exp_literal) = expr {
-        return reg_exp_literal.regex.flags.contains(RegExpFlags::G);
+        return reg_exp_literal.regex.flags.contains(RegularExpressionFlags::G);
     }
 
     if let Argument::NewExpression(new_expr) = expr {
@@ -106,7 +107,7 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
         }
 
         if let Some(flags) = extract_regex_flags(&new_expr.arguments) {
-            return flags.contains(RegExpFlags::G);
+            return flags.contains(RegularExpressionFlags::G);
         }
     }
 
@@ -121,7 +122,7 @@ fn get_pattern_replacement<'a>(
         return None;
     };
 
-    if !reg_exp_literal.regex.flags.contains(RegExpFlags::G) {
+    if !reg_exp_literal.regex.flags.contains(RegularExpressionFlags::G) {
         return None;
     }
 

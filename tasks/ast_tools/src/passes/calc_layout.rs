@@ -359,6 +359,6 @@ lazy_static! {
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
         ReferenceFlags: { _ => Layout::known(1, 1, 0), },
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
-        RegExpFlags: { _ => Layout::known(1, 1, 0), },
+        RegularExpressionFlags: { _ => Layout::known(1, 1, 0), },
     };
 }

@@ -1,6 +1,7 @@
 use core::hash::Hasher;
 
 use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_regular_expression::ast::RegularExpressionFlags;
 use oxc_semantic::{AstNode, AstNodeId, SymbolId};
 use oxc_span::{hash::ContentHash, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
@@ -290,16 +291,16 @@ pub fn get_symbol_id_of_variable(
 
 pub fn extract_regex_flags<'a>(
     args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
-) -> Option<RegExpFlags> {
+) -> Option<RegularExpressionFlags> {
     if args.len() <= 1 {
         return None;
     }
     let Argument::StringLiteral(flag_arg) = &args[1] else {
         return None;
     };
-    let mut flags = RegExpFlags::empty();
+    let mut flags = RegularExpressionFlags::empty();
     for ch in flag_arg.value.chars() {
-        let flag = RegExpFlags::try_from(ch).ok()?;
+        let flag = RegularExpressionFlags::try_from(ch).ok()?;
         flags |= flag;
     }
     Some(flags)
