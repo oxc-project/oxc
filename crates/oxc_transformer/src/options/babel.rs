@@ -102,7 +102,7 @@ impl BabelOptions {
     }
 
     pub fn is_module(&self) -> bool {
-        self.source_type.as_ref().map_or(false, |s| matches!(s.as_str(), "module"))
+        self.source_type.as_ref().map_or(false, |s| s.as_str() == "module")
     }
 
     pub fn is_unambiguous(&self) -> bool {

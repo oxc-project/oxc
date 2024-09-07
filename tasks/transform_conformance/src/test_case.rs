@@ -172,16 +172,13 @@ pub trait TestCase {
 
         // Some babel test cases have a js extension, but contain typescript code.
         // Therefore, if the typescript plugin exists, enable typescript.
-        let mut source_type = SourceType::from_path(path).unwrap();
-        if !source_type.is_typescript()
-            && (self.options().get_plugin("transform-typescript").is_some()
-                || self.options().get_plugin("syntax-typescript").is_some())
-        {
-            source_type = source_type.with_typescript(true);
-        }
+        let source_type = SourceType::from_path(path).unwrap().with_typescript(
+            self.options().get_plugin("transform-typescript").is_some()
+                || self.options().get_plugin("syntax-typescript").is_some(),
+        );
 
         let driver =
-            Driver::new(transform_options.clone()).execute(&source_text, source_type, path);
+            Driver::new(false, transform_options.clone()).execute(&source_text, source_type, path);
         Ok(driver)
     }
 }
@@ -228,25 +225,27 @@ impl TestCase for ConformanceTestCase {
 
         let allocator = Allocator::default();
         let input = fs::read_to_string(&self.path).unwrap();
-        let input_is_js = self.path.extension().and_then(std::ffi::OsStr::to_str) == Some("js");
-        let output_is_js = output_path
-            .as_ref()
-            .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
 
-        let mut source_type = SourceType::from_path(&self.path)
-            .unwrap()
-            .with_script(if self.options.source_type.is_some() {
-                !self.options.is_module()
-            } else {
-                input_is_js && output_is_js
-            })
-            .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
-        if !source_type.is_typescript()
-            && (self.options.get_plugin("transform-typescript").is_some()
-                || self.options.get_plugin("syntax-typescript").is_some())
-        {
-            source_type = source_type.with_typescript(true);
-        }
+        let source_type = {
+            let mut source_type = SourceType::from_path(&self.path)
+                .unwrap()
+                .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
+
+            source_type = match self.options.source_type.as_deref() {
+                Some("unambiguous") => source_type.with_unambiguous(true),
+                Some("script") => source_type.with_script(true),
+                Some("module") => source_type.with_module(true),
+                Some(s) => panic!("Unexpected source type {s}"),
+                None => source_type,
+            };
+
+            source_type = source_type.with_typescript(
+                self.options.get_plugin("transform-typescript").is_some()
+                    || self.options.get_plugin("syntax-typescript").is_some(),
+            );
+
+            source_type
+        };
 
         if filtered {
             println!("input_path: {:?}", &self.path);
@@ -255,14 +254,18 @@ impl TestCase for ConformanceTestCase {
 
         let project_root = project_root();
         let mut transformed_code = String::new();
-        let mut actual_errors = String::new();
+        let mut actual_errors = None;
         let mut transform_options = None;
 
         match self.transform_options() {
+            Err(json_err) => {
+                let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
+                actual_errors.replace(get_babel_error(&error));
+            }
             Ok(options) => {
                 transform_options.replace(options.clone());
                 let mut driver =
-                    Driver::new(options.clone()).execute(&input, source_type, &self.path);
+                    Driver::new(false, options.clone()).execute(&input, source_type, &self.path);
                 transformed_code = driver.printed();
                 let errors = driver.errors();
                 if !errors.is_empty() {
@@ -275,12 +278,8 @@ impl TestCase for ConformanceTestCase {
                         .map(|err| format!("{:?}", err.with_source_code(source.clone())))
                         .collect::<Vec<_>>()
                         .join("\n");
-                    actual_errors = get_babel_error(&error);
+                    actual_errors.replace(get_babel_error(&error));
                 }
-            }
-            Err(json_err) => {
-                let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
-                actual_errors = get_babel_error(&error);
             }
         }
 
@@ -289,7 +288,8 @@ impl TestCase for ConformanceTestCase {
         let output;
         let passed = if let Some(throws) = &babel_options.throws {
             output = throws.to_string().replace(" (1:6)", "");
-            !output.is_empty() && actual_errors.contains(&output)
+            !output.is_empty()
+                && actual_errors.as_ref().is_some_and(|errors| errors.contains(&output))
         } else {
             // Get output.js by using our code gen so code comparison can match.
             output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
@@ -302,10 +302,10 @@ impl TestCase for ConformanceTestCase {
             );
 
             if transformed_code == output {
-                actual_errors.is_empty()
+                actual_errors.is_none()
             } else {
-                if !actual_errors.is_empty() && !transformed_code.is_empty() {
-                    actual_errors.insert_str(0, "  x Output mismatch\n");
+                if actual_errors.is_none() {
+                    actual_errors.replace("x Output mismatch".to_string());
                 }
                 false
             }
@@ -320,10 +320,12 @@ impl TestCase for ConformanceTestCase {
                 println!("Expected Errors:\n");
                 println!("{output}\n");
                 println!("Actual Errors:\n");
-                println!("{actual_errors}\n");
-                if !passed {
-                    println!("Diff:\n");
-                    print_diff_in_terminal(&output, &actual_errors);
+                if let Some(actual_errors) = &actual_errors {
+                    println!("{actual_errors}\n");
+                    if !passed {
+                        println!("Diff:\n");
+                        print_diff_in_terminal(&output, actual_errors);
+                    }
                 }
             } else {
                 println!("Expected:\n");
@@ -331,7 +333,9 @@ impl TestCase for ConformanceTestCase {
                 println!("Transformed:\n");
                 println!("{transformed_code}");
                 println!("Errors:\n");
-                println!("{actual_errors}\n");
+                if let Some(actual_errors) = &actual_errors {
+                    println!("{actual_errors}\n");
+                }
                 if !passed {
                     println!("Diff:\n");
                     print_diff_in_terminal(&output, &transformed_code);
@@ -341,7 +345,15 @@ impl TestCase for ConformanceTestCase {
             println!("Passed: {passed}");
         }
 
-        if !passed {
+        if passed {
+            if let Some(options) = transform_options {
+                let mismatch_errors =
+                    Driver::new(/* check transform mismatch */ true, options)
+                        .execute(&input, source_type, &self.path)
+                        .errors();
+                self.errors.extend(mismatch_errors);
+            }
+        } else if let Some(actual_errors) = actual_errors {
             self.errors.push(OxcDiagnostic::error(actual_errors));
         }
     }
