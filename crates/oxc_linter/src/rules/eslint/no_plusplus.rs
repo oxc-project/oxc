@@ -7,7 +7,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_plusplus_diagnostic(span: Span, operator: &str) -> OxcDiagnostic {
     let diagnostic =
-        OxcDiagnostic::warn(format!("Unary operator '{}' used.", operator)).with_label(span);
+        OxcDiagnostic::warn(format!("Unary operator '{operator}' used.")).with_label(span);
 
     if operator == "++" {
         return diagnostic.with_help("Use the assignment operator `+=` instead.");
@@ -138,8 +138,9 @@ fn is_eq_node_expr(node: &AstNode, expr: &Expression) -> bool {
 fn is_for_loop_afterthought(node: &AstNode, ctx: &LintContext) -> bool {
     if let Some(parent) = ctx.nodes().parent_node(node.id()) {
         match parent.kind() {
-            AstKind::SequenceExpression(_) => return is_for_loop_afterthought(parent, ctx),
-            AstKind::ParenthesizedExpression(_) => return is_for_loop_afterthought(parent, ctx),
+            AstKind::SequenceExpression(_) | AstKind::ParenthesizedExpression(_) => {
+                return is_for_loop_afterthought(parent, ctx)
+            }
             _ => (),
         }
     }
