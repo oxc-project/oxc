@@ -47,16 +47,20 @@ const NEXTJS_DATA_FETCHING_FUNCTIONS: phf::Set<&'static str> = phf_set! {
 const THRESHOLD: i32 = 1;
 
 impl Rule for NoTypos {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn should_run(&self, ctx: &LintContext) -> bool {
         let Some(path) = ctx.file_path().to_str() else {
-            return;
+            return false;
         };
         let Some(path_after_pages) = path.split("pages").nth(1) else {
-            return;
+            return false;
         };
         if path_after_pages.starts_with("/api") {
-            return;
+            return false;
         }
+        true
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(en_decl)) =
             node.kind()
         {
