@@ -64,7 +64,6 @@ too_many_lines         = "allow"
 must_use_candidate = "allow"
 # used_underscore_binding= "allow"
 doc_markdown = "allow"
-ref_as_ptr   = "allow" # FIXME or give a reason
 # nursery
 # `const` functions do not make sense for our project because this is not a `const` library.
 # This rule also confuses newcomers and forces them to add `const` blindlessly without any reason.
