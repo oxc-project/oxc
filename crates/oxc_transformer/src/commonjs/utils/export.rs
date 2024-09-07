@@ -1,5 +1,7 @@
-use crate::commonjs::utils::object_define::{create_object_define_property, legitimize_identifier_name};
 use crate::commonjs::utils::import::create_require;
+use crate::commonjs::utils::object_define::{
+    create_object_define_property, legitimize_identifier_name,
+};
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast::ast::{
     ArrayPattern, BindingPatternKind, BindingRestElement, Declaration, ExportSpecifier, Expression,

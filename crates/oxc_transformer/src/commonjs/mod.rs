@@ -29,7 +29,7 @@ pub struct Commonjs<'a> {
     pub has_export: bool,
     pub has_default_export: bool,
     pub no_incomplete_ns_import_detection: bool,
-    
+
     pub export_graph: Vec<&'a str>,
 }
 
@@ -41,7 +41,7 @@ impl<'a> Commonjs<'a> {
             has_export: false,
             has_default_export: false,
             no_incomplete_ns_import_detection: false,
-            export_graph: vec![]
+            export_graph: vec![],
         }
     }
 }
