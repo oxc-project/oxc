@@ -77,6 +77,7 @@ mod eslint {
     pub mod no_global_assign;
     pub mod no_import_assign;
     pub mod no_inner_declarations;
+    pub mod no_invalid_regexp;
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_label_var;
@@ -568,6 +569,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_useless_concat,
     eslint::no_useless_constructor,
     eslint::no_var,
+    eslint::no_invalid_regexp,
     eslint::no_void,
     eslint::no_with,
     eslint::radix,
