@@ -133,7 +133,7 @@ fn write_ci_filter(
         push_item(side_effect.as_str());
     }
 
-    push_item("tasks/ast_codegen/src/**/*");
+    push_item("tasks/ast_tools/src/**");
     push_item(output_path);
 
     log!("Writing {output_path}...");
