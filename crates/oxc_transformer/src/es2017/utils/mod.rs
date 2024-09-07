@@ -556,7 +556,7 @@ pub fn function_apply<'a>(name: &'a str, builder: &'a AstBuilder) -> Statement<'
 }
 
 pub fn generate_caller_from_arrow<'a>(
-    func: Box<ArrowFunctionExpression>,
+    func: &Box<ArrowFunctionExpression>,
     builder: &'a AstBuilder,
 ) -> Expression<'a> {
     let result = builder.function(

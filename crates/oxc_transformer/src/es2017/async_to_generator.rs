@@ -5,10 +5,9 @@ use crate::es2017::utils::{
 };
 use oxc_allocator::{Box, CloneIn};
 use oxc_ast::ast::{
-    ArrowFunctionExpression, AwaitExpression, BindingRestElement, Expression,
-    FormalParameterKind, Function, FunctionType, Program, Statement, TSThisParameter,
-    TSTypeAnnotation, TSTypeParameterDeclaration, TSTypeParameterInstantiation,
-    VariableDeclarationKind,
+    ArrowFunctionExpression, AwaitExpression, BindingRestElement, Expression, FormalParameterKind,
+    Function, FunctionType, Program, Statement, TSThisParameter, TSTypeAnnotation,
+    TSTypeParameterDeclaration, TSTypeParameterInstantiation, VariableDeclarationKind,
 };
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
@@ -177,7 +176,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
             Expression::ArrowFunctionExpression(func) if func.r#async => {
                 let func = func.clone_in(self.ctx.ast.allocator);
                 if func.params.items.is_empty() {
-                    *expr = generate_caller_from_arrow(func, &self.ctx.ast)
+                    *expr = generate_caller_from_arrow(&func, &self.ctx.ast)
                         .clone_in(self.ctx.ast.allocator);
                 } else {
                     let mut statements = self.ctx.ast.vec();
@@ -198,7 +197,7 @@ impl<'a> Traverse<'a> for AsyncToGenerator<'a> {
                                             false,
                                         ),
                                         Some(
-                                            generate_caller_from_arrow(func, &self.ctx.ast)
+                                            generate_caller_from_arrow(&func, &self.ctx.ast)
                                                 .clone_in(self.ctx.ast.allocator),
                                         ),
                                         false,
