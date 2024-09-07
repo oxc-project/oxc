@@ -337,7 +337,7 @@ source: crates/oxc_linter/src/tester.rs
    ·   ────
    ╰────
 
-  ⚠ typescript-eslint(no-magic-numbers): No magic number: --100n
+  ⚠ typescript-eslint(no-magic-numbers): No magic number: -100n
    ╭─[no_magic_numbers.tsx:1:3]
  1 │ f(-100n)
    ·   ─────
@@ -757,7 +757,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──
    ╰────
 
-  ⚠ typescript-eslint(no-magic-numbers): No magic number: --4n
+  ⚠ typescript-eslint(no-magic-numbers): No magic number: -4n
    ╭─[no_magic_numbers.tsx:1:12]
  1 │ type Foo = -4n;
    ·            ───
