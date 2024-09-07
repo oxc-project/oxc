@@ -60,8 +60,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let cli_options = cli_options().run();
 
     if cli_options.quiet {
-        // SAFETY: we haven't started using logger yet!
-        unsafe { logger::quiet() };
+        logger::quiet().normalize_with("Failed to set logger to `quiet` mode.")?;
     }
 
     let AstCodegenResult { outputs, schema } = SOURCE_PATHS
@@ -145,16 +144,16 @@ fn write_ci_filter(
 
 #[macro_use]
 mod logger {
-    static mut LOG: bool = true;
+    use std::sync::OnceLock;
 
-    /// Shouldn't be called after first use of the logger macros.
-    pub(super) unsafe fn quiet() {
-        LOG = false;
+    static LOG: OnceLock<bool> = OnceLock::new();
+
+    pub(super) fn quiet() -> Result<(), bool> {
+        LOG.set(false)
     }
 
     pub(super) fn __internal_log_enable() -> bool {
-        // SAFETY:`LOG` doesn't change from the moment we start using it.
-        unsafe { LOG }
+        *LOG.get_or_init(|| true)
     }
 
     macro_rules! log {
