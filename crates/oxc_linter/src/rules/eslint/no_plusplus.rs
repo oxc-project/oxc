@@ -1,13 +1,22 @@
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode};
+
+fn no_plusplus_diagnostic(span: Span, operator: &str) -> OxcDiagnostic {
+    let diagnostic =
+        OxcDiagnostic::warn(format!("Unary operator '{}' used.", operator)).with_label(span);
+
+    if operator == "++" {
+        return diagnostic.with_help("Use the assignment expression `+=` instead.");
+    } else if operator == "--" {
+        return diagnostic.with_help("Use the assignment expression `-=` instead.");
+    }
+
+    diagnostic
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoPlusplus;
@@ -15,27 +24,63 @@ pub struct NoPlusplus;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow the unary operators `++`` and `--`.
     ///
     /// ### Why is this bad?
     ///
+    /// Because the unary `++` and `--` operators are subject to automatic semicolon insertion, differences in whitespace
+    /// can change the semantics of source code. For example, these two code blocks are not equivalent:
+    ///
+    /// ```js
+    /// var i = 10;
+    /// var j = 20;
+    ///
+    /// i ++
+    /// j
+    /// // => i = 11, j = 20
+    /// ```
+    ///
+    /// ```js
+    /// var i = 10;
+    /// var j = 20;
+    ///
+    /// i
+    /// ++
+    /// j
+    /// // => i = 10, j = 21
+    /// ```
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// var x = 0; x++;
+    /// var y = 0; y--;
+    /// for (i = 0; i < l; i++) {
+    ///     doSomething(i);
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// var x = 0; x += 1;
+    /// var y = 0; y -= 1;
+    /// for (i = 0; i < l; i += 1) {
+    ///    doSomething(i);
+    /// }
     /// ```
     NoPlusplus,
     restriction,
 );
 
 impl Rule for NoPlusplus {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::UpdateExpression(expr) = node.kind() else {
+            return;
+        };
+
+        ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator.as_str()));
+    }
 }
 
 #[test]
