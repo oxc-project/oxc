@@ -6,8 +6,8 @@ use crate::es2017::utils::{
 use oxc_allocator::{Box, CloneIn};
 use oxc_ast::ast::{
     ArrowFunctionExpression, AwaitExpression, BindingRestElement, Expression, FormalParameterKind,
-    Function, FunctionType, Program, TSThisParameter, TSTypeAnnotation,
-    TSTypeParameterDeclaration, TSTypeParameterInstantiation, VariableDeclarationKind,
+    Function, FunctionType, Program, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration,
+    TSTypeParameterInstantiation, VariableDeclarationKind,
 };
 use oxc_span::SPAN;
 use oxc_syntax::operator::AssignmentOperator;
