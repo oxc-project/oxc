@@ -229,6 +229,7 @@ impl TestCase for ConformanceTestCase {
         let source_type = {
             let mut source_type = SourceType::from_path(&self.path)
                 .unwrap()
+                .with_script(true)
                 .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
 
             source_type = match self.options.source_type.as_deref() {

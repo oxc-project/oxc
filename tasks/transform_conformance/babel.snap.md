@@ -1,9 +1,10 @@
 commit: 3bcfee23
 
-Passed: 316/1021
+Passed: 329/1021
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
+* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
@@ -1952,16 +1953,16 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 * enum/const/input.ts
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -1971,8 +1972,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -1982,14 +1983,14 @@ Bindings mismatch:
 after transform: ScopeId(1): ["Animals", "Cat", "Dog"]
 rebuilt        : ScopeId(1): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animals", "CatDog"]
 rebuilt        : ScopeId(2): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2005,20 +2006,20 @@ Bindings mismatch:
 after transform: ScopeId(1): ["Animals", "Cat"]
 rebuilt        : ScopeId(1): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["Animals", "Dog"]
 rebuilt        : ScopeId(2): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(3): ["Animals", "CatDog"]
 rebuilt        : ScopeId(3): ["Animals"]
 Scope flags mismatch:
-after transform: ScopeId(3): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(3): ScopeFlags(0x0)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
@@ -2057,8 +2058,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "x", "y"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2068,8 +2069,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2082,8 +2083,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "a", "b"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2093,14 +2094,14 @@ Bindings mismatch:
 after transform: ScopeId(1): ["E", "x", "y"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["E", "z"]
 rebuilt        : ScopeId(2): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2113,14 +2114,14 @@ Bindings mismatch:
 after transform: ScopeId(1): ["IPC", "SERVER", "SOCKET", "socketType"]
 rebuilt        : ScopeId(1): ["socketType"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(2): ["IPC", "SERVER", "SOCKET", "UV_READABLE", "UV_WRITABLE", "constants"]
 rebuilt        : ScopeId(2): ["constants"]
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2136,8 +2137,8 @@ x Output mismatch
 
 * enum/scoped/input.ts
 Scope flags mismatch:
-after transform: ScopeId(2): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(2): ScopeFlags(0x0)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -2147,8 +2148,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "A2", "B", "B2", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2158,8 +2159,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -2169,8 +2170,8 @@ Bindings mismatch:
 after transform: ScopeId(1): ["A", "E"]
 rebuilt        : ScopeId(1): ["E"]
 Scope flags mismatch:
-after transform: ScopeId(1): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(1): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(1): ScopeFlags(0x0)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch:
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
@@ -3465,38 +3466,18 @@ after transform: ["T", "f"]
 rebuilt        : ["f"]
 
 
-# babel-preset-react (6/9)
-* preset-options/development-runtime-automatic/input.js
-x Output mismatch
-
-* preset-options/empty-options/input.js
-x Output mismatch
-
-* preset-options/runtime-automatic/input.js
-x Output mismatch
-
-
-# babel-plugin-transform-react-jsx (119/144)
-* pure/false-default-pragma-automatic-runtime/input.js
-x Output mismatch
-
+# babel-plugin-transform-react-jsx (124/144)
 * pure/false-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
 * pure/false-pragma-option-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
-* pure/true-default-pragma-automatic-runtime/input.js
-x Output mismatch
-
 * pure/true-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
 * pure/true-pragma-option-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
-
-* pure/unset-default-pragma-automatic-runtime/input.js
-x Output mismatch
 
 * pure/unset-pragma-comment-automatic-runtime/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
@@ -3582,12 +3563,6 @@ Spread children are not supported in React.
 * react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
 pragma and pragmaFrag cannot be set when runtime is automatic.
 
-* runtime/defaults-to-automatic/input.js
-x Output mismatch
-
-* runtime/runtime-automatic/input.js
-x Output mismatch
-
 * spread-transform/transform-to-babel-extend/input.js
 x Output mismatch
 
@@ -3595,7 +3570,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx-development (2/10)
+# babel-plugin-transform-react-jsx-development (7/10)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
@@ -3611,21 +3586,6 @@ x Output mismatch
    :              ^^^^^^^^
    `----
 
-
-* cross-platform/fragments/input.js
-x Output mismatch
-
-* cross-platform/handle-fragments-with-key/input.js
-x Output mismatch
-
-* cross-platform/handle-nonstatic-children/input.js
-x Output mismatch
-
-* cross-platform/handle-static-children/input.js
-x Output mismatch
-
-* cross-platform/within-derived-classes-constructor/input.js
-x Output mismatch
 
 * cross-platform/within-ts-module-block/input.ts
 x Output mismatch

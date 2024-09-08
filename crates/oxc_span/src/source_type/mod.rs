@@ -380,8 +380,7 @@ impl SourceType {
             })?;
 
         let (language, module_kind) = match extension {
-            "js" => (Language::JavaScript, ModuleKind::Unambiguous),
-            "mjs" | "jsx" => (Language::JavaScript, ModuleKind::Module),
+            "js" | "mjs" | "jsx" => (Language::JavaScript, ModuleKind::Module),
             "cjs" => (Language::JavaScript, ModuleKind::Script),
             "ts" if file_name.ends_with(".d.ts") => {
                 (Language::TypeScriptDefinition, ModuleKind::Module)
@@ -508,15 +507,15 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::jsx().with_unambiguous(true), js);
+        assert_eq!(SourceType::jsx(), js);
         assert_eq!(SourceType::jsx().with_module(true), jsx);
 
-        assert!(js.is_unambiguous());
+        assert!(js.is_module());
         assert!(mjs.is_module());
         assert!(cjs.is_script());
         assert!(jsx.is_module());
 
-        assert!(!js.is_strict());
+        assert!(js.is_strict());
         assert!(mjs.is_strict());
         assert!(!cjs.is_strict());
         assert!(jsx.is_strict());
