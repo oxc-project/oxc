@@ -178,8 +178,7 @@ impl TraverseScoping {
     ///
     /// This function is fairly expensive, because it aims to replicate Babel's output.
     /// `name_is_unique` method below searches through every single binding in the entire program
-    /// and does a string comparison on each. It also searches through every reference in entire program
-    /// (though it will avoid string comparison on most of them).
+    /// and does a string comparison on each.
     /// If the first name tried is already in use, it will repeat that entire search with a new name,
     /// potentially multiple times.
     ///
