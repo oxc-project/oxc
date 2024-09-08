@@ -453,7 +453,7 @@ impl TraverseScoping {
         // `CompactStr`, rather than generating a new string on each attempt.
         // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
 
-        // Try single-digit postfixes (i.e. `_temp1`, `_temp2` ... `_temp9`)
+        // Try single-digit postfixes (i.e. `_temp2`, `_temp3` ... `_temp9`)
         name.push('2');
         if self.name_is_unique(&name) {
             return name;
