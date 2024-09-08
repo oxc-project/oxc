@@ -1,7 +1,7 @@
 use std::{cell::Cell, collections::hash_map::Entry, str};
 
 use compact_str::{format_compact, CompactString};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
@@ -25,7 +25,7 @@ use crate::scopes_collector::ChildScopeCollector;
 pub struct TraverseScoping {
     scopes: ScopeTree,
     symbols: SymbolTable,
-    uid_names: Option<FxHashMap<CompactStr, Vec<CompactStr>>>,
+    uid_names: Option<FxHashMap<CompactStr, FxHashSet<CompactStr>>>,
     current_scope_id: ScopeId,
 }
 
@@ -183,8 +183,8 @@ impl TraverseScoping {
     ///
     /// `init_uid_names` iterates through every single binding and unresolved reference in the entire AST,
     /// and builds a hashmap of `Vec`s of symbols which could clash with UIDs.
-    /// Once that's built, it's cached, but still `find_uid_name` has to do a hashmap lookup, and if the
-    /// base name is in the hash table, it has to iterate through all the existing symbols for that base.
+    /// Once that's built, it's cached, but still `find_uid_name` has to do a hashmap lookup,
+    /// and a hashset insert.
     ///
     /// We could improve this in one of 3 ways:
     ///
@@ -463,12 +463,12 @@ impl TraverseScoping {
         match uid_names.entry(CompactStr::from(base)) {
             Entry::Occupied(mut entry) => {
                 let uid = CompactStr::from(get_unique_name(base, entry.get()));
-                entry.get_mut().push(uid.clone());
+                entry.get_mut().insert(uid.clone());
                 uid
             }
             Entry::Vacant(entry) => {
                 let uid = format_compact_str!("_{base}");
-                entry.insert(vec![uid.clone()]);
+                entry.insert(FxHashSet::from_iter([uid.clone()]));
                 uid
             }
         }
@@ -485,7 +485,7 @@ impl TraverseScoping {
     /// Once this map is created, generating a UID is a relatively quick operation, rather than
     /// iterating over all symbols and unresolved references every time generate a UID.
     fn init_uid_names(&mut self) {
-        let mut uid_names = FxHashMap::<CompactStr, Vec<CompactStr>>::default();
+        let mut uid_names = FxHashMap::<CompactStr, FxHashSet<CompactStr>>::default();
         for name in self.scopes.root_unresolved_references().keys().chain(self.symbols.names.iter())
         {
             if name.as_bytes().first() != Some(&b'_') {
@@ -497,12 +497,12 @@ impl TraverseScoping {
 
             match uid_names.entry(CompactStr::from(base)) {
                 Entry::Occupied(mut entry) => {
-                    if !entry.get().iter().any(|existing_name| existing_name == name) {
-                        entry.get_mut().push(name.clone());
+                    if !entry.get().contains(name) {
+                        entry.get_mut().insert(name.clone());
                     }
                 }
                 Entry::Vacant(entry) => {
-                    entry.insert(vec![name.clone()]);
+                    entry.insert(FxHashSet::from_iter([name.clone()]));
                 }
             }
         }
@@ -528,7 +528,7 @@ fn get_uid_name_base(name: &str) -> &str {
     unsafe { str::from_utf8_unchecked(bytes) }
 }
 
-fn get_unique_name(base: &str, used: &[CompactStr]) -> CompactString {
+fn get_unique_name(base: &str, used: &FxHashSet<CompactStr>) -> CompactString {
     // Create `CompactString` prepending name with `_`, and with 1 byte excess capacity.
     // The extra byte is to avoid reallocation if need to add a digit on the end later,
     // which will not be too uncommon.
@@ -537,7 +537,7 @@ fn get_unique_name(base: &str, used: &[CompactStr]) -> CompactString {
     name.push('_');
     name.push_str(base);
 
-    let name_is_unique = |name: &str| !used.iter().any(|used_name| used_name == name);
+    let name_is_unique = |name: &str| !used.contains(name);
 
     // Try the name without a numerical postfix (i.e. plain `_temp`)
     if name_is_unique(&name) {
