@@ -13,7 +13,9 @@
     "**/tests/**",
     "**/fixtures/**",
     "**/*.snap.*",
-    "**/CHANGELOG.md"
+    "**/CHANGELOG.md",
+    "napi/{parser,transform}/index.js",
+    "napi/{parser,transform}/index.d.ts"
   ],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.91.8.wasm",
