@@ -9,25 +9,29 @@ export interface ArrowFunctionsBindingOptions {
    *
    * @default false
    */
-  spec?: boolean
+  spec?: boolean;
 }
 
 export interface Es2015BindingOptions {
   /** Transform arrow functions into function expressions. */
-  arrowFunction?: ArrowFunctionsBindingOptions
+  arrowFunction?: ArrowFunctionsBindingOptions;
 }
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
-export declare function isolatedDeclaration(filename: string, sourceText: string, options: IsolatedDeclarationsOptions): IsolatedDeclarationsResult
+export declare function isolatedDeclaration(
+  filename: string,
+  sourceText: string,
+  options: IsolatedDeclarationsOptions,
+): IsolatedDeclarationsResult;
 
 export interface IsolatedDeclarationsOptions {
-  sourcemap: boolean
+  sourcemap: boolean;
 }
 
 export interface IsolatedDeclarationsResult {
-  code: string
-  map?: SourceMap
-  errors: Array<string>
+  code: string;
+  map?: SourceMap;
+  errors: Array<string>;
 }
 
 /**
@@ -44,7 +48,7 @@ export interface ReactBindingOptions {
    *
    * @default 'automatic'
    */
-  runtime?: 'classic' | 'automatic'
+  runtime?: 'classic' | 'automatic';
   /**
    * Emit development-specific information, such as `__source` and `__self`.
    *
@@ -52,7 +56,7 @@ export interface ReactBindingOptions {
    *
    * @see [@babel/plugin-transform-react-jsx-development](https://babeljs.io/docs/babel-plugin-transform-react-jsx-development)
    */
-  development?: boolean
+  development?: boolean;
   /**
    * Toggles whether or not to throw an error if an XML namespaced tag name
    * is used.
@@ -62,7 +66,7 @@ export interface ReactBindingOptions {
    *
    * @default true
    */
-  throwIfNamespace?: boolean
+  throwIfNamespace?: boolean;
   /**
    * Enables [@babel/plugin-transform-react-pure-annotations](https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations).
    *
@@ -70,13 +74,13 @@ export interface ReactBindingOptions {
    *
    * @default true
    */
-  pure?: boolean
+  pure?: boolean;
   /**
    * Replaces the import source when importing functions.
    *
    * @default 'react'
    */
-  importSource?: string
+  importSource?: string;
   /**
    * Replace the function used when compiling JSX expressions. It should be a
    * qualified name (e.g. `React.createElement`) or an identifier (e.g.
@@ -86,7 +90,7 @@ export interface ReactBindingOptions {
    *
    * @default 'React.createElement'
    */
-  pragma?: string
+  pragma?: string;
   /**
    * Replace the component used when compiling JSX fragments. It should be a
    * valid JSX tag name.
@@ -95,7 +99,7 @@ export interface ReactBindingOptions {
    *
    * @default 'React.Fragment'
    */
-  pragmaFrag?: string
+  pragmaFrag?: string;
   /**
    * When spreading props, use `Object.assign` directly instead of an extend helper.
    *
@@ -103,7 +107,7 @@ export interface ReactBindingOptions {
    *
    * @default false
    */
-  useBuiltIns?: boolean
+  useBuiltIns?: boolean;
   /**
    * When spreading props, use inline object with spread elements directly
    * instead of an extend helper or Object.assign.
@@ -112,9 +116,9 @@ export interface ReactBindingOptions {
    *
    * @default false
    */
-  useSpread?: boolean
+  useSpread?: boolean;
   /** Enable react fast refresh transform */
-  refresh?: ReactRefreshBindingOptions
+  refresh?: ReactRefreshBindingOptions;
 }
 
 export interface ReactRefreshBindingOptions {
@@ -123,23 +127,23 @@ export interface ReactRefreshBindingOptions {
    *
    * @default `$RefreshReg$`.
    */
-  refreshReg?: string
+  refreshReg?: string;
   /**
    * Specify the identifier of the refresh signature variable.
    *
    * @default `$RefreshSig$`.
    */
-  refreshSig?: string
-  emitFullSignatures?: boolean
+  refreshSig?: string;
+  emitFullSignatures?: boolean;
 }
 
 export interface SourceMap {
-  file?: string
-  mappings?: string
-  sourceRoot?: string
-  sources?: Array<string | undefined | null>
-  sourcesContent?: Array<string | undefined | null>
-  names?: Array<string>
+  file?: string;
+  mappings?: string;
+  sourceRoot?: string;
+  sources?: Array<string | undefined | null>;
+  sourcesContent?: Array<string | undefined | null>;
+  names?: Array<string>;
 }
 
 /**
@@ -154,7 +158,11 @@ export interface SourceMap {
  * @returns an object containing the transformed code, source maps, and any
  * errors that occurred during parsing or transformation.
  */
-export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
+export declare function transform(
+  filename: string,
+  sourceText: string,
+  options?: TransformOptions | undefined | null,
+): TransformResult;
 
 /**
  * Options for transforming a JavaScript or TypeScript file.
@@ -162,24 +170,24 @@ export declare function transform(filename: string, sourceText: string, options?
  * @see {@link transform}
  */
 export interface TransformOptions {
-  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined;
   /**
    * The current working directory. Used to resolve relative paths in other
    * options.
    */
-  cwd?: string
+  cwd?: string;
   /**
    * Force jsx parsing,
    *
    * @default false
    */
-  jsx?: boolean
+  jsx?: boolean;
   /** Configure how TypeScript is transformed. */
-  typescript?: TypeScriptBindingOptions
+  typescript?: TypeScriptBindingOptions;
   /** Configure how TSX and JSX are transformed. */
-  react?: ReactBindingOptions
+  react?: ReactBindingOptions;
   /** Enable ES2015 transformations. */
-  es2015?: Es2015BindingOptions
+  es2015?: Es2015BindingOptions;
   /**
    * Enable source map generation.
    *
@@ -189,7 +197,7 @@ export interface TransformOptions {
    *
    * @see {@link SourceMap}
    */
-  sourcemap?: boolean
+  sourcemap?: boolean;
 }
 
 export interface TransformResult {
@@ -198,13 +206,13 @@ export interface TransformResult {
    *
    * If parsing failed, this will be an empty string.
    */
-  code: string
+  code: string;
   /**
    * The source map for the transformed code.
    *
    * This will be set if {@link TransformOptions#sourcemap} is `true`.
    */
-  map?: SourceMap
+  map?: SourceMap;
   /**
    * The `.d.ts` declaration file for the transformed code. Declarations are
    * only generated if `declaration` is set to `true` and a TypeScript file
@@ -215,13 +223,13 @@ export interface TransformResult {
    * @see {@link TypeScriptBindingOptions#declaration}
    * @see [declaration tsconfig option](https://www.typescriptlang.org/tsconfig/#declaration)
    */
-  declaration?: string
+  declaration?: string;
   /**
    * Declaration source map. Only generated if both
    * {@link TypeScriptBindingOptions#declaration declaration} and
    * {@link TransformOptions#sourcemap sourcemap} are set to `true`.
    */
-  declarationMap?: SourceMap
+  declarationMap?: SourceMap;
   /**
    * Parse and transformation errors.
    *
@@ -229,15 +237,15 @@ export interface TransformResult {
    * transformed code may still be available even if there are errors in this
    * list.
    */
-  errors: Array<string>
+  errors: Array<string>;
 }
 
 export interface TypeScriptBindingOptions {
-  jsxPragma?: string
-  jsxPragmaFrag?: string
-  onlyRemoveTypeImports?: boolean
-  allowNamespaces?: boolean
-  allowDeclareFields?: boolean
+  jsxPragma?: string;
+  jsxPragmaFrag?: string;
+  onlyRemoveTypeImports?: boolean;
+  allowNamespaces?: boolean;
+  allowDeclareFields?: boolean;
   /**
    * Also generate a `.d.ts` declaration file for TypeScript files.
    *
@@ -247,7 +255,7 @@ export interface TypeScriptBindingOptions {
    *
    * @default false
    */
-  declaration?: boolean
+  declaration?: boolean;
   /**
    * Rewrite or remove TypeScript import/export declaration extensions.
    *
@@ -258,6 +266,5 @@ export interface TypeScriptBindingOptions {
    *
    * @default false
    */
-  rewriteImportExtensions?: 'rewrite' | 'remove' | boolean
+  rewriteImportExtensions?: 'rewrite' | 'remove' | boolean;
 }
-

@@ -11,10 +11,8 @@
     "tasks/coverage/misc",
     "**/tests/**",
     "**/fixtures/**",
-    "**/*.snap",
     "**/*.snap.*",
-    "**/CHANGELOG.md",
-    "~"
+    "**/CHANGELOG.md"
   ],
   "plugins": [
     "https://plugins.dprint.dev/typescript-0.91.8.wasm",

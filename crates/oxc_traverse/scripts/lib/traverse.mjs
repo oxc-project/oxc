@@ -1,21 +1,21 @@
-import {camelToSnake} from './utils.mjs';
+import { camelToSnake } from './utils.mjs';
 
 export default function generateTraverseTraitCode(types) {
-    const typesArr = Object.values(types);
-    typesArr.push({name: 'Statements', rawName: "Vec<'a, Statement<'a>>"});
+  const typesArr = Object.values(types);
+  typesArr.push({ name: 'Statements', rawName: "Vec<'a, Statement<'a>>" });
 
-    let traverseMethods = '';
-    for (const type of typesArr) {
-        const snakeName = camelToSnake(type.name);
-        traverseMethods += `
+  let traverseMethods = '';
+  for (const type of typesArr) {
+    const snakeName = camelToSnake(type.name);
+    traverseMethods += `
             #[inline]
             fn enter_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a>) {}
             #[inline]
             fn exit_${snakeName}(&mut self, node: &mut ${type.rawName}, ctx: &mut TraverseCtx<'a>) {}
         `;
-    }
+  }
 
-    return `
+  return `
         use oxc_allocator::Vec;
         #[allow(clippy::wildcard_imports)]
         use oxc_ast::ast::*;

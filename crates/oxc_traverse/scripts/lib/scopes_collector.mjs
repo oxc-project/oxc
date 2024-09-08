@@ -1,20 +1,20 @@
-import {camelToSnake} from './utils.mjs';
+import { camelToSnake } from './utils.mjs';
 
 export default function generateScopesCollectorCode(types) {
-    let methods = '';
-    for (const type of Object.values(types)) {
-        if (type.kind === 'enum' || !type.scopeArgs) continue;
+  let methods = '';
+  for (const type of Object.values(types)) {
+    if (type.kind === 'enum' || !type.scopeArgs) continue;
 
-        const extraParams = type.scopeArgs.flags === 'flags' ? ', _flags: ScopeFlags' : '';
-        methods += `
+    const extraParams = type.scopeArgs.flags === 'flags' ? ', _flags: ScopeFlags' : '';
+    methods += `
             #[inline]
             fn visit_${camelToSnake(type.name)}(&mut self, it: &${type.rawName}${extraParams}) {
                 self.add_scope(&it.scope_id);
             }
         `;
-    }
+  }
 
-    return `
+  return `
         use std::cell::Cell;
 
         #[allow(clippy::wildcard_imports)]

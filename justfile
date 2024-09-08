@@ -63,6 +63,7 @@ ast:
 fmt:
   cargo fmt --all
   taplo format
+  dprint fmt
 
 # Run cargo check
 check:

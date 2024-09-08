@@ -1,15 +1,15 @@
-import oxc from "./index.js";
-import assert from "assert";
+import assert from 'assert';
+import oxc from './index.js';
 
 console.log(`Testing on ${process.platform}-${process.arch}`);
 
-test(oxc.isolatedDeclaration("test.ts", "class A {}", { sourcemap: true }), {
-  code: "declare class A {}\n",
+test(oxc.isolatedDeclaration('test.ts', 'class A {}', { sourcemap: true }), {
+  code: 'declare class A {}\n',
   map: {
-    mappings: "AAAA,cAAM,EAAE,CAAE",
+    mappings: 'AAAA,cAAM,EAAE,CAAE',
     names: [],
-    sources: ["test.ts"],
-    sourcesContent: ["class A {}"],
+    sources: ['test.ts'],
+    sourcesContent: ['class A {}'],
   },
 });
 
