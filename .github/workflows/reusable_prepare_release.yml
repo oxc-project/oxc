@@ -8,7 +8,7 @@ on:
         type: string
         description: "The name defined in oxc_release.toml"
     secrets:
-      OXC_BOT_PAT :
+      OXC_BOT_PAT:
         required: true
     outputs:
       pull-request-number:

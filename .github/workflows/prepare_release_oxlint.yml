@@ -22,7 +22,7 @@ jobs:
     with:
       name: oxlint
     secrets:
-      OXC_BOT_PAT : ${{ secrets.OXC_BOT_PAT }}
+      OXC_BOT_PAT: ${{ secrets.OXC_BOT_PAT }}
 
   ecosystem-ci:
     needs: prepare
