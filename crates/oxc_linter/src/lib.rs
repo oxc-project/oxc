@@ -218,7 +218,7 @@ mod test {
         let schema = schemars::schema_for!(OxlintConfig);
         let json = serde_json::to_string_pretty(&schema).unwrap();
         let existing_json = fs::read_to_string(&path).unwrap_or_default();
-        if existing_json != json {
+        if existing_json.trim() != json.trim() {
             std::fs::write(&path, &json).unwrap();
         }
         insta::with_settings!({ prepend_module_to_snapshot => false }, {

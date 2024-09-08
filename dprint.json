@@ -8,6 +8,7 @@
     "indentWidth": 2
   },
   "excludes": [
+    "npm/oxlint/configuration_schema.json",
     "tasks/coverage/misc",
     "**/tests/**",
     "**/fixtures/**",
