@@ -526,7 +526,6 @@ fn create_uid_name_base(name: &str) -> CompactString {
     }
     // SAFETY: We started with a valid UTF8 `&str` and have only trimmed off ASCII characters,
     // so remainder must still be valid UTF8
-
     let name = unsafe { str::from_utf8_unchecked(bytes) };
 
     // Create `CompactString` prepending name with `_`, and with 1 byte excess capacity.
