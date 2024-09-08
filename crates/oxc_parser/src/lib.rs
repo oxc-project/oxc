@@ -528,7 +528,7 @@ mod test {
     #[test]
     fn unambiguous() {
         let allocator = Allocator::default();
-        let source_type = SourceType::default().with_unambiguous(true);
+        let source_type = SourceType::unambiguous();
         assert!(source_type.is_unambiguous());
         let sources = ["import x from 'foo';", "export {x} from 'foo';", "import.meta"];
         for source in sources {

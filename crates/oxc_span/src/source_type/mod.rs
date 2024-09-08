@@ -74,7 +74,7 @@ pub enum LanguageVariant {
 impl Default for SourceType {
     #[inline]
     fn default() -> Self {
-        Self::js()
+        Self::mjs()
     }
 }
 
@@ -114,7 +114,7 @@ impl SourceType {
     /// ```
     /// # use oxc_span::SourceType;
     ///
-    /// let js = SourceType::js();
+    /// let js = SourceType::cjs();
     /// assert!(js.is_javascript());
     /// assert!(js.is_script()); // not a module
     /// assert!(!js.is_jsx());
@@ -123,7 +123,23 @@ impl SourceType {
     /// [`JavaScript`]: Language::JavaScript
     /// [`module`]: ModuleKind::Module
     /// [`JSX`]: LanguageVariant::Jsx
-    pub const fn js() -> Self {
+    pub const fn cjs() -> Self {
+        Self {
+            language: Language::JavaScript,
+            module_kind: ModuleKind::Script,
+            variant: LanguageVariant::Standard,
+        }
+    }
+
+    pub const fn mjs() -> Self {
+        Self {
+            language: Language::JavaScript,
+            module_kind: ModuleKind::Module,
+            variant: LanguageVariant::Standard,
+        }
+    }
+
+    pub const fn unambiguous() -> Self {
         Self {
             language: Language::JavaScript,
             module_kind: ModuleKind::Unambiguous,
@@ -144,12 +160,12 @@ impl SourceType {
     ///
     /// [`JavaScript`]: Language::JavaScript
     pub const fn jsx() -> Self {
-        Self::js().with_jsx(true)
+        Self::mjs().with_jsx(true)
     }
 
     /// Creates a [`SourceType`] representing a [`TypeScript`] file.
     ///
-    /// Unlike [`SourceType::js`], this method creates [`modules`]. Use
+    /// Unlike [`SourceType::cjs`], this method creates [`modules`]. Use
     /// [`SourceType::tsx`] for TypeScript files with [`JSX`] support.
     ///
     /// ## Example
@@ -325,7 +341,7 @@ impl SourceType {
     /// babel) also do not make a distinction between `.js` and `.jsx`. However,
     /// for TypeScript files, only `.tsx` files are treated as JSX.
     ///
-    /// Note that this behavior deviates from [`SourceType::js`], which produces
+    /// Note that this behavior deviates from [`SourceType::cjs`], which produces
     /// [`scripts`].
     ///
     /// ### Modules vs. Scripts.
@@ -492,7 +508,7 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::js().with_jsx(true).with_unambiguous(true), js);
+        assert_eq!(SourceType::jsx().with_unambiguous(true), js);
         assert_eq!(SourceType::jsx().with_module(true), jsx);
 
         assert!(js.is_unambiguous());

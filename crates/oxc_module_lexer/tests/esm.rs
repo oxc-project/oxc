@@ -67,7 +67,7 @@ pub struct ModuleLexer {
 
 fn parse(source: &str) -> ModuleLexer {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true);
+    let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(ret.errors.is_empty(), "{source} should not produce errors.\n{:?}", ret.errors);
     let module_lexer = oxc_module_lexer::ModuleLexer::new().build(&ret.program);
@@ -1515,7 +1515,7 @@ fn export_default() {
 
 fn expect_parse_error(source: &str) {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true);
+    let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(!ret.errors.is_empty());
 }

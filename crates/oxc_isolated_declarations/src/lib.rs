@@ -55,7 +55,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
-        let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
+        let source_type = SourceType::d_ts();
         let directives = self.ast.vec();
         let stmts = self.transform_program(program);
         let program = self.ast.program(SPAN, source_type, None, directives, stmts);
