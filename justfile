@@ -16,7 +16,7 @@ alias new-typescript-rule := new-ts-rule
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov cargo-shear -y
+  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli cargo-shear -y
 
 # When ready, run the same CI commands
 ready:
@@ -121,6 +121,10 @@ test-transform *args='':
 # Build oxlint in release build
 oxlint:
   cargo oxlint
+
+# Install wasm-pack
+install-wasm:
+  cargo binstall wasm-pack
 
 watch-wasm:
   cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm dev
