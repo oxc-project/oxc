@@ -1,17 +1,17 @@
 [package]
-name                   = "oxc_traverse"
-version                = "0.27.0"
-publish                = true
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxc_traverse"
+version = "0.27.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+publish = true
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
-include                = ["/src"]
+description.workspace = true
 
 [lints]
 workspace = true
@@ -24,10 +24,10 @@ doctest = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast       = { workspace = true }
-oxc_semantic  = { workspace = true }
-oxc_span      = { workspace = true }
-oxc_syntax    = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
 
 compact_str = { workspace = true }
-memoffset   = { workspace = true }
+memoffset = { workspace = true }

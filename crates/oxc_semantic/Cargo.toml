@@ -1,16 +1,16 @@
 [package]
-name                   = "oxc_semantic"
-version                = "0.27.0"
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxc_semantic"
+version = "0.27.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/examples", "/src"]
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
-include                = ["/examples", "/src"]
+description.workspace = true
 
 [lints]
 workspace = true
@@ -19,33 +19,33 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_span        = { workspace = true }
-oxc_ast         = { workspace = true }
-oxc_syntax      = { workspace = true }
-oxc_cfg         = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_cfg = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_index       = { workspace = true }
-oxc_allocator   = { workspace = true }
+oxc_index = { workspace = true }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
 
 assert-unchecked = { workspace = true }
-indexmap         = { workspace = true }
-phf              = { workspace = true, features = ["macros"] }
-rustc-hash       = { workspace = true }
-serde            = { workspace = true, features = ["derive"], optional = true }
-itertools        = { workspace = true }
+indexmap = { workspace = true }
+itertools = { workspace = true }
+phf = { workspace = true, features = ["macros"] }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 
-tsify        = { workspace = true, optional = true }
+tsify = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
-indexmap   = { workspace = true }
-insta      = { workspace = true, features = ["glob"] }
-phf        = { workspace = true, features = ["macros"] }
+indexmap = { workspace = true }
+insta = { workspace = true, features = ["glob"] }
+phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
-default   = []
+default = []
 serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_span/serialize", "oxc_syntax/serialize"]

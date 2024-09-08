@@ -16,7 +16,7 @@ alias new-typescript-rule := new-ts-rule
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli cargo-shear dprint -y
+  cargo binstall cargo-watch cargo-insta typos-cli cargo-shear dprint -y
 
 # When ready, run the same CI commands
 ready:
@@ -61,7 +61,6 @@ ast:
 # Format all files
 fmt:
   cargo shear --fix # remove all unused dependencies
-  taplo format
   cargo fmt --all
   dprint fmt
 

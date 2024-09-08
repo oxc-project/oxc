@@ -19,7 +19,7 @@ jobs:
       - uses: Boshen/setup-rust@main
         with:
           restore-cache: false
-          tools: just,taplo-cli,cargo-shear@1,dprint
+          tools: just,cargo-shear@1,dprint
           components: rustfmt
       - run: just fmt
       - uses: autofix-ci/action@v1.3.1
