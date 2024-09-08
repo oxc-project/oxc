@@ -6,7 +6,7 @@ use std::{
 use ignore::{overrides::OverrideBuilder, DirEntry};
 use oxc_span::VALID_EXTENSIONS;
 
-use crate::IgnoreOptions;
+use crate::cli::IgnoreOptions;
 
 #[derive(Clone)]
 pub struct Extensions(pub Vec<&'static str>);
@@ -142,7 +142,7 @@ mod test {
     use std::{env, ffi::OsString};
 
     use super::{Extensions, Walk};
-    use crate::IgnoreOptions;
+    use crate::cli::IgnoreOptions;
 
     #[test]
     fn test_walk_with_extensions() {
