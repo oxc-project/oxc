@@ -18,3 +18,9 @@ pub use crate::{
     },
     span::{GetSpan, GetSpanMut, Span, SPAN},
 };
+
+#[doc(hidden)]
+pub mod __internal {
+    // Used by `format_compact_str!` macro defined in `compact_str.rs`
+    pub use ::compact_str::format_compact;
+}

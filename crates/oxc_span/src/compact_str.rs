@@ -126,6 +126,12 @@ impl From<String> for CompactStr {
     }
 }
 
+impl From<CompactString> for CompactStr {
+    fn from(s: CompactString) -> Self {
+        Self(s)
+    }
+}
+
 impl<'s> From<&'s CompactStr> for Cow<'s, str> {
     fn from(value: &'s CompactStr) -> Self {
         Self::Borrowed(value.as_str())
@@ -251,9 +257,37 @@ impl schemars::JsonSchema for CompactStr {
     }
 }
 
+/// Creates a `CompactStr` using interpolation of runtime expressions.
+///
+/// The first argument `format_compact_str!` receives is a format string.
+/// This must be a string literal.
+/// The power of the formatting string is in the `{}`s contained.
+///
+/// Additional parameters passed to `format_compact_str!` replace the `{}`s within
+/// the formatting string in the order given unless named or
+/// positional parameters are used; see [`std::fmt`] for more information.
+///
+/// A common use for `format_compact_str!` is concatenation and interpolation
+/// of strings.
+/// The same convention is used with [`print!`] and [`write!`] macros,
+/// depending on the intended destination of the string.
+///
+/// # Panics
+///
+/// `format_compact_str!` panics if a formatting trait implementation returns
+/// an error.
+#[macro_export]
+macro_rules! format_compact_str {
+    ($($arg:tt)*) => {
+        $crate::CompactStr::from($crate::__internal::format_compact!($($arg)*))
+    }
+}
+
 #[cfg(test)]
 mod test {
     use compact_str::CompactString;
+
+    use crate::format_compact_str;
 
     use super::CompactStr;
 
@@ -265,5 +299,10 @@ mod test {
         assert_eq!("foo", foo);
         assert_eq!("foo", &foo);
         assert_eq!(foo.into_compact_string(), CompactString::new("foo"));
+    }
+
+    #[test]
+    fn test_format_compact_str() {
+        assert_eq!(format_compact_str!("foo{}bar", 123), "foo123bar");
     }
 }
