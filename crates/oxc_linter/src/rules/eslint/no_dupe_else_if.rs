@@ -155,7 +155,7 @@ fn is_equal<'a, 'b>(a: &'a Expression<'b>, b: &'a Expression<'b>) -> bool {
                 || (is_equal(&a.left, &b.right) && is_equal(&a.right, &b.left))
         }
 
-        (a, b) => a.content_eq(&b),
+        (a, b) => a.content_eq(b),
     }
 }
 
