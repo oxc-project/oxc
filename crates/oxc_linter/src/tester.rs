@@ -378,7 +378,7 @@ impl Tester {
 
         let cwd = self.current_working_directory.clone();
         let paths = vec![path_to_lint.into_boxed_path()];
-        let options = LintServiceOptions { cwd, paths, tsconfig: None };
+        let options = LintServiceOptions::new(cwd, paths);
         let lint_service = LintService::from_linter(linter, options);
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();

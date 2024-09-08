@@ -25,13 +25,43 @@ use crate::{
 
 pub struct LintServiceOptions {
     /// Current working directory
-    pub cwd: Box<Path>,
+    cwd: Box<Path>,
 
     /// All paths to lint
-    pub paths: Vec<Box<Path>>,
+    paths: Vec<Box<Path>>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
-    pub tsconfig: Option<PathBuf>,
+    tsconfig: Option<PathBuf>,
+}
+
+impl LintServiceOptions {
+    #[must_use]
+    pub fn new<T>(cwd: T, paths: Vec<Box<Path>>) -> Self
+    where
+        T: Into<Box<Path>>,
+    {
+        Self { cwd: cwd.into(), paths, tsconfig: None }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_tsconfig<T>(mut self, tsconfig: T) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        let tsconfig = tsconfig.into();
+        // Should this be canonicalized?
+        let tsconfig = if tsconfig.is_relative() { self.cwd.join(tsconfig) } else { tsconfig };
+        debug_assert!(tsconfig.is_file());
+
+        self.tsconfig = Some(tsconfig);
+        self
+    }
+
+    #[inline]
+    pub fn cwd(&self) -> &Path {
+        &self.cwd
+    }
 }
 
 #[derive(Clone)]

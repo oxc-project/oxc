@@ -89,7 +89,8 @@ impl Runner for LintRunner {
 
         let number_of_files = paths.len();
 
-        let cwd = std::env::current_dir().unwrap().into_boxed_path();
+        let cwd = std::env::current_dir().unwrap();
+        let mut options = LintServiceOptions::new(cwd, paths);
         let lint_options = LintOptions::default()
             .with_filter(filter)
             .with_config_path(basic_options.config)
@@ -122,8 +123,10 @@ impl Runner for LintRunner {
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
-            if !path.is_file() {
-                let path = if path.is_relative() { cwd.join(path) } else { path.clone() };
+            if path.is_file() {
+                options = options.with_tsconfig(path);
+            } else {
+                let path = if path.is_relative() { options.cwd().join(path) } else { path.clone() };
                 return CliRunResult::InvalidOptions {
                     message: format!(
                         "The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.",
@@ -132,7 +135,6 @@ impl Runner for LintRunner {
             }
         }
 
-        let options = LintServiceOptions { cwd, paths, tsconfig };
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
             Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
