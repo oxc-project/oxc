@@ -1,12 +1,12 @@
-use std::{cell::Cell, collections::hash_map::Entry, str};
+use std::{cell::Cell, str};
 
 use compact_str::{format_compact, CompactString};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
-use oxc_span::{format_compact_str, Atom, CompactStr, Span, SPAN};
+use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -25,7 +25,7 @@ use crate::scopes_collector::ChildScopeCollector;
 pub struct TraverseScoping {
     scopes: ScopeTree,
     symbols: SymbolTable,
-    uid_names: Option<FxHashMap<CompactStr, FxHashSet<CompactStr>>>,
+    uid_names: Option<FxHashSet<CompactStr>>,
     current_scope_id: ScopeId,
 }
 
@@ -182,9 +182,9 @@ impl TraverseScoping {
     /// This function is fairly expensive, because it aims to replicate Babel's output.
     ///
     /// `init_uid_names` iterates through every single binding and unresolved reference in the entire AST,
-    /// and builds a hashmap of `Vec`s of symbols which could clash with UIDs.
-    /// Once that's built, it's cached, but still `find_uid_name` has to do a hashmap lookup,
-    /// and a hashset insert.
+    /// and builds a hashset of symbols which could clash with UIDs.
+    /// Once that's built, it's cached, but `find_uid_name` still has to do potentially multiple hashset
+    /// lookups, and a hashset insert.
     ///
     /// We could improve this in one of 3 ways:
     ///
@@ -460,52 +460,32 @@ impl TraverseScoping {
         let uid_names = self.uid_names.as_mut().unwrap();
 
         let base = get_uid_name_base(name);
-        match uid_names.entry(CompactStr::from(base)) {
-            Entry::Occupied(mut entry) => {
-                let uid = CompactStr::from(get_unique_name(base, entry.get()));
-                entry.get_mut().insert(uid.clone());
-                uid
-            }
-            Entry::Vacant(entry) => {
-                let uid = format_compact_str!("_{base}");
-                entry.insert(FxHashSet::from_iter([uid.clone()]));
-                uid
-            }
-        }
+        let uid = CompactStr::from(get_unique_name(base, uid_names));
+        uid_names.insert(uid.clone());
+        uid
     }
 
     /// Initialize `uid_names`.
     ///
     /// Iterate through all symbols and unresolved references in AST and identify any var names
-    /// which could clash with UIDs (start with `_`).
-    ///
-    /// Compile a hashmap mapping var names (without leading `_`s or trailing digits) to any symbols
-    /// used in AST matching `<one or more underscores><name><zero or more digits>`.
+    /// which could clash with UIDs (start with `_`). Build a hash set containing them.
     ///
     /// Once this map is created, generating a UID is a relatively quick operation, rather than
     /// iterating over all symbols and unresolved references every time generate a UID.
     fn init_uid_names(&mut self) {
-        let mut uid_names = FxHashMap::<CompactStr, FxHashSet<CompactStr>>::default();
-        for name in self.scopes.root_unresolved_references().keys().chain(self.symbols.names.iter())
-        {
-            if name.as_bytes().first() != Some(&b'_') {
-                continue;
-            }
-            // SAFETY: We just checked 1st byte is `_`, so safe to trim it off
-            let base = unsafe { str::from_utf8_unchecked(&name.as_bytes()[1..]) };
-            let base = get_uid_name_base(base);
-
-            match uid_names.entry(CompactStr::from(base)) {
-                Entry::Occupied(mut entry) => {
-                    if !entry.get().contains(name) {
-                        entry.get_mut().insert(name.clone());
-                    }
+        let uid_names = self
+            .scopes
+            .root_unresolved_references()
+            .keys()
+            .chain(self.symbols.names.iter())
+            .filter_map(|name| {
+                if name.as_bytes().first() == Some(&b'_') {
+                    Some(name.clone())
+                } else {
+                    None
                 }
-                Entry::Vacant(entry) => {
-                    entry.insert(FxHashSet::from_iter([name.clone()]));
-                }
-            }
-        }
+            })
+            .collect();
         self.uid_names = Some(uid_names);
     }
 }
