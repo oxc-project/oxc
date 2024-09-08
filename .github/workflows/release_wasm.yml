@@ -49,7 +49,7 @@ jobs:
 
       - uses: Boshen/setup-rust@main
         with:
-          cache-key: 'wasm'
+          cache-key: "wasm"
 
       - name: Build
         working-directory: wasm/parser
