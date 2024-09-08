@@ -1,0 +1,24 @@
+{
+  "lineWidth": 120,
+  "typescript": {
+    "quoteStyle": "preferSingle",
+    "binaryExpression.operatorPosition": "sameLine"
+  },
+  "json": {
+    "indentWidth": 2
+  },
+  "excludes": [
+    "tasks/coverage/misc",
+    "**/tests/**",
+    "**/fixtures/**",
+    "**/*.snap",
+    "**/*.snap.*",
+    "**/CHANGELOG.md",
+    "~"
+  ],
+  "plugins": [
+    "https://plugins.dprint.dev/typescript-0.91.8.wasm",
+    "https://plugins.dprint.dev/json-0.19.3.wasm",
+    "https://plugins.dprint.dev/markdown-0.17.8.wasm"
+  ]
+}
