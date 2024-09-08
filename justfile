@@ -28,7 +28,6 @@ ready:
   just lint
   just doc
   just ast
-  cargo shear
   git status
 
 # Clone or update submodules
@@ -61,8 +60,9 @@ ast:
 
 # Format all files
 fmt:
-  cargo fmt --all
+  cargo shear --fix # remove all unused dependencies
   taplo format
+  cargo fmt --all
   dprint fmt
 
 # Run cargo check
@@ -104,10 +104,6 @@ codecov:
 # Run the benchmarks. See `tasks/benchmark`
 benchmark:
   cargo benchmark
-
-# Removed Unused Dependencies
-shear:
-  cargo shear --fix
 
 # Automatically DRY up Cargo.toml manifests in a workspace.
 autoinherit:
