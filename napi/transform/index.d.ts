@@ -113,6 +113,24 @@ export interface ReactBindingOptions {
    * @default false
    */
   useSpread?: boolean
+  /** Enable react fast refresh transform */
+  refresh?: ReactRefreshBindingOptions
+}
+
+export interface ReactRefreshBindingOptions {
+  /**
+   * Specify the identifier of the refresh registration variable.
+   *
+   * @default `$RefreshReg$`.
+   */
+  refreshReg?: string
+  /**
+   * Specify the identifier of the refresh signature variable.
+   *
+   * @default `$RefreshSig$`.
+   */
+  refreshSig?: string
+  emitFullSignatures?: boolean
 }
 
 export interface SourceMap {
