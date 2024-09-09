@@ -57,7 +57,7 @@ impl SymbolTable {
         self.len() == 0
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
