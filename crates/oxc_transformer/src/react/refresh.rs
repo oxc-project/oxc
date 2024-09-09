@@ -315,7 +315,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
             return;
         }
 
-        let name = match &call_expr.callee {
+        let name = match &*call_expr.callee {
             Expression::Identifier(ident) => Some(ident.name.clone()),
             Expression::StaticMemberExpression(ref member) => Some(member.property.name.clone()),
             _ => None,
@@ -330,7 +330,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
         }
 
         if !is_builtin_hook(&hook_name) {
-            let (binding_name, hook_name) = match &call_expr.callee {
+            let (binding_name, hook_name) = match &*call_expr.callee {
                 Expression::Identifier(ident) => (ident.name.clone(), None),
                 callee @ match_member_expression!(Expression) => {
                     let member_expr = callee.to_member_expression();
@@ -446,7 +446,7 @@ impl<'a> ReactRefresh<'a> {
             }
             Expression::CallExpression(ref mut call_expr) => {
                 let allowed_callee = matches!(
-                    call_expr.callee,
+                    &*call_expr.callee,
                     Expression::Identifier(_)
                         | Expression::ComputedMemberExpression(_)
                         | Expression::StaticMemberExpression(_)
@@ -782,7 +782,7 @@ impl<'a> ReactRefresh<'a> {
                 // babel-plugin-styled-components)
             }
             Expression::CallExpression(call_expr) => {
-                if matches!(call_expr.callee, Expression::ImportExpression(_))
+                if matches!(&*call_expr.callee, Expression::ImportExpression(_))
                     || call_expr.is_require_call()
                 {
                     return None;

@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{CallExpression, ConditionalExpression, Expression},
-    AstKind,
-};
+use oxc_ast::{ast::ConditionalExpression, AstKind};
 use oxc_semantic::AstNode;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
@@ -18,14 +15,11 @@ fn is_logic_not_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>
     is_logic_not(&parent.kind())
 }
 pub fn is_boolean_call(kind: &AstKind) -> bool {
-    matches!(
-        kind,
-        AstKind::CallExpression(CallExpression {
-            callee: Expression::Identifier(ident),
-            arguments,
-            ..
-        }) if ident.name == "Boolean" && arguments.len() == 1
-    )
+    kind.as_call_expression()
+        .and_then(|call_expr| {
+            Some(call_expr.arguments.len() == 1 && call_expr.callee_name()? == "Boolean")
+        })
+        .unwrap_or_default()
 }
 pub fn is_boolean_call_argument<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
     let arg_id = ctx.nodes().parent_id(node.id());

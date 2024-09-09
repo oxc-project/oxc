@@ -11,6 +11,7 @@ use crate::number::*;
 #[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
+
 impl<'alloc> CloneIn<'alloc> for NumberBase {
     type Cloned = NumberBase;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {

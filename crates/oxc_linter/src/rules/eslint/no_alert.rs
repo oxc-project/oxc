@@ -94,7 +94,7 @@ impl Rule for NoAlert {
         };
 
         let scope_id = node.scope_id();
-        let callee = &call_expr.callee;
+        let callee = &*call_expr.callee;
 
         if let Expression::Identifier(ident) = callee {
             let name = ident.name.as_str();

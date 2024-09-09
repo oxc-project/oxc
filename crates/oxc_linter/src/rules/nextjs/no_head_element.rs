@@ -37,7 +37,7 @@ impl Rule for NoHeadElement {
             return;
         }
         if let AstKind::JSXOpeningElement(elem) = node.kind() {
-            let JSXElementName::Identifier(id) = &elem.name else {
+            let JSXElementName::Identifier(id) = &*elem.name else {
                 return;
             };
             if id.name == "head" {

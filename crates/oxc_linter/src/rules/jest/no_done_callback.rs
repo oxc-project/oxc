@@ -98,7 +98,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
             let is_jest_each = get_node_name(&call_expr.callee).ends_with("each");
 
-            if is_jest_each && !matches!(call_expr.callee, Expression::TaggedTemplateExpression(_))
+            if is_jest_each && !matches!(&*call_expr.callee, Expression::TaggedTemplateExpression(_))
             {
                 // isJestEach but not a TaggedTemplateExpression, so this must be
                 // the `jest.each([])()` syntax which this rule doesn't support due

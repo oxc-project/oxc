@@ -39,7 +39,7 @@ impl Rule for NoStyledJsxInDocument {
             return;
         };
 
-        if !matches!(&element.name, JSXElementName::Identifier(ident) if ident.name == "style") {
+        if !matches!(&*element.name, JSXElementName::Identifier(ident) if ident.name == "style") {
             return;
         }
 

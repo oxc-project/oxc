@@ -2961,9 +2961,10 @@ impl<'a, 't> CallExpressionWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn callee(self) -> &'t Expression<'a> {
+    pub fn callee(self) -> &'t Box<'a, Expression<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE)
+                as *const Box<'a, Expression<'a>>)
         }
     }
 
@@ -2995,9 +2996,10 @@ impl<'a, 't> CallExpressionWithoutArguments<'a, 't> {
     }
 
     #[inline]
-    pub fn callee(self) -> &'t Expression<'a> {
+    pub fn callee(self) -> &'t Box<'a, Expression<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE)
+                as *const Box<'a, Expression<'a>>)
         }
     }
 
@@ -8974,10 +8976,10 @@ impl<'a, 't> JSXOpeningElementWithoutAttributes<'a, 't> {
     }
 
     #[inline]
-    pub fn name(self) -> &'t JSXElementName<'a> {
+    pub fn name(self) -> &'t Box<'a, JSXElementName<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NAME)
-                as *const JSXElementName<'a>)
+                as *const Box<'a, JSXElementName<'a>>)
         }
     }
 
@@ -9011,10 +9013,10 @@ impl<'a, 't> JSXOpeningElementWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn name(self) -> &'t JSXElementName<'a> {
+    pub fn name(self) -> &'t Box<'a, JSXElementName<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_JSX_OPENING_ELEMENT_NAME)
-                as *const JSXElementName<'a>)
+                as *const Box<'a, JSXElementName<'a>>)
         }
     }
 

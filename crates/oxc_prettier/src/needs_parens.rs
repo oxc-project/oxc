@@ -606,7 +606,7 @@ impl<'a> Prettier<'a> {
                 Self::starts_with_no_lookahead_token(&e.tag, span)
             }
             Expression::CallExpression(e) => {
-                if matches!(e.callee, Expression::FunctionExpression(_)) {
+                if matches!(&*e.callee, Expression::FunctionExpression(_)) {
                     return false;
                 }
                 Self::starts_with_no_lookahead_token(&e.callee, span)

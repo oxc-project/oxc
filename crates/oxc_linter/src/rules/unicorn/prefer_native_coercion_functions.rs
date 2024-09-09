@@ -171,7 +171,7 @@ fn is_matching_native_coercion_function_call(
         return None;
     }
 
-    let Expression::Identifier(callee_ident) = &call_expr.callee else {
+    let Expression::Identifier(callee_ident) = &*call_expr.callee else {
         return None;
     };
 

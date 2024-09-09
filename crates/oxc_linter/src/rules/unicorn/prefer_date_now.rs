@@ -79,7 +79,7 @@ impl Rule for PreferDateNow {
                 }
 
                 // `{Number,BigInt}(new Date())`
-                if let Expression::Identifier(ident) = &call_expr.callee {
+                if let Expression::Identifier(ident) = &*call_expr.callee {
                     if matches!(ident.name.as_str(), "Number" | "BigInt")
                         && call_expr.arguments.len() == 1
                     {

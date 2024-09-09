@@ -185,7 +185,7 @@ fn is_argument_only_used_in_recursion<'a>(
                 if !call_expr.arguments.iter().enumerate().any(|(index, arg)| {
                     index == arg_index
                         && arg.span() == argument.span()
-                        && if let Expression::Identifier(identifier) = &call_expr.callee {
+                        && if let Expression::Identifier(identifier) = &*call_expr.callee {
                             identifier
                                 .reference_id()
                                 .and_then(|id| ctx.symbols().get_reference(id).symbol_id())

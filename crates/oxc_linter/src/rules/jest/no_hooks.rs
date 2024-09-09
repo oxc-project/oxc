@@ -116,7 +116,7 @@ impl NoHooks {
             return;
         }
 
-        if let Expression::Identifier(ident) = &call_expr.callee {
+        if let Expression::Identifier(ident) = &*call_expr.callee {
             if !self.allow.contains(&ident.name.to_string()) {
                 ctx.diagnostic(unexpected_hook_diagonsitc(call_expr.callee.span()));
             }

@@ -246,7 +246,7 @@ impl<'a> Expression<'a> {
     }
 
     pub fn is_super_call_expression(&self) -> bool {
-        matches!(self, Expression::CallExpression(expr) if matches!(&expr.callee, Expression::Super(_)))
+        matches!(self, Expression::CallExpression(expr) if matches!(&*expr.callee, Expression::Super(_)))
     }
 
     pub fn is_call_like_expression(&self) -> bool {
@@ -560,7 +560,7 @@ impl<'a> StaticMemberExpression<'a> {
 
 impl<'a> CallExpression<'a> {
     pub fn callee_name(&self) -> Option<&str> {
-        match &self.callee {
+        match &*self.callee {
             Expression::Identifier(ident) => Some(ident.name.as_str()),
             expr => expr.as_member_expression().and_then(MemberExpression::static_property_name),
         }
@@ -570,7 +570,7 @@ impl<'a> CallExpression<'a> {
         if self.arguments.len() != 1 {
             return false;
         }
-        if let Expression::Identifier(id) = &self.callee {
+        if let Expression::Identifier(id) = &*self.callee {
             id.name == "require"
                 && matches!(
                     self.arguments.first(),
@@ -583,7 +583,7 @@ impl<'a> CallExpression<'a> {
 
     pub fn is_symbol_or_symbol_for_call(&self) -> bool {
         // TODO: is 'Symbol' reference to global object
-        match &self.callee {
+        match &*self.callee {
             Expression::Identifier(id) => id.name == "Symbol",
             expr => match expr.as_member_expression() {
                 Some(member) => {

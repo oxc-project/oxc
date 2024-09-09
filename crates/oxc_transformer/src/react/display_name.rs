@@ -95,7 +95,7 @@ impl<'a> ReactDisplayName<'a> {
     fn get_object_from_create_class<'b>(
         call_expr: &'b mut CallExpression<'a>,
     ) -> Option<&'b mut Box<'a, ObjectExpression<'a>>> {
-        if match &call_expr.callee {
+        if match &*call_expr.callee {
             callee @ match_member_expression!(Expression) => {
                 !callee.to_member_expression().is_specific_member_access("React", "createClass")
             }

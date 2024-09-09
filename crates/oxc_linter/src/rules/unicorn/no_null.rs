@@ -127,14 +127,14 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
     // `Object.create(null)`, `Object.create(null, foo)`
     if is_method_call(call_expr, Some(&["Object"]), Some(&["create"]), Some(1), Some(2))
         && !call_expr.optional
-        && !matches!(&call_expr.callee, Expression::ComputedMemberExpression(_))
+        && !matches!(&*call_expr.callee, Expression::ComputedMemberExpression(_))
         && match_null_arg(call_expr, 0, null_literal.span)
     {
         return true;
     }
 
     // `useRef(null)`
-    if let Expression::Identifier(ident) = &call_expr.callee {
+    if let Expression::Identifier(ident) = &*call_expr.callee {
         if ident.name == "useRef" && call_expr.arguments.len() == 1 && !call_expr.optional {
             return true;
         }
@@ -154,7 +154,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
             .iter()
             .any(|argument| matches!(argument, Argument::SpreadElement(_)))
         && !call_expr.optional
-        && !matches!(&call_expr.callee, Expression::ComputedMemberExpression(_))
+        && !matches!(&*call_expr.callee, Expression::ComputedMemberExpression(_))
         && match_null_arg(call_expr, 1, null_literal.span)
     {
         return true;

@@ -71,7 +71,7 @@ impl Rule for PreferModernDomApis {
             return;
         };
 
-        let Expression::StaticMemberExpression(member_expr) = &call_expr.callee else {
+        let Expression::StaticMemberExpression(member_expr) = &*call_expr.callee else {
             return;
         };
         let method = member_expr.property.name.as_str();

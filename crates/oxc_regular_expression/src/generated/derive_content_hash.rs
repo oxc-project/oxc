@@ -10,6 +10,7 @@ use oxc_span::hash::ContentHash;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
+
 impl<'a> ContentHash for RegularExpression<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.pattern, state);

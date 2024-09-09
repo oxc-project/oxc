@@ -180,13 +180,13 @@ const _: () = {
     assert!(offset_of!(PrivateFieldExpression, field) == 24usize);
     assert!(offset_of!(PrivateFieldExpression, optional) == 48usize);
 
-    assert!(size_of::<CallExpression>() == 72usize);
+    assert!(size_of::<CallExpression>() == 64usize);
     assert!(align_of::<CallExpression>() == 8usize);
     assert!(offset_of!(CallExpression, span) == 0usize);
     assert!(offset_of!(CallExpression, callee) == 8usize);
-    assert!(offset_of!(CallExpression, type_parameters) == 24usize);
-    assert!(offset_of!(CallExpression, arguments) == 32usize);
-    assert!(offset_of!(CallExpression, optional) == 64usize);
+    assert!(offset_of!(CallExpression, type_parameters) == 16usize);
+    assert!(offset_of!(CallExpression, arguments) == 24usize);
+    assert!(offset_of!(CallExpression, optional) == 56usize);
 
     assert!(size_of::<NewExpression>() == 64usize);
     assert!(align_of::<NewExpression>() == 8usize);
@@ -1278,13 +1278,13 @@ const _: () = {
     assert!(offset_of!(JSXElement, closing_element) == 16usize);
     assert!(offset_of!(JSXElement, children) == 24usize);
 
-    assert!(size_of::<JSXOpeningElement>() == 72usize);
+    assert!(size_of::<JSXOpeningElement>() == 64usize);
     assert!(align_of::<JSXOpeningElement>() == 8usize);
     assert!(offset_of!(JSXOpeningElement, span) == 0usize);
     assert!(offset_of!(JSXOpeningElement, self_closing) == 8usize);
     assert!(offset_of!(JSXOpeningElement, name) == 16usize);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 32usize);
-    assert!(offset_of!(JSXOpeningElement, type_parameters) == 64usize);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 24usize);
+    assert!(offset_of!(JSXOpeningElement, type_parameters) == 56usize);
 
     assert!(size_of::<JSXClosingElement>() == 24usize);
     assert!(align_of::<JSXClosingElement>() == 8usize);
@@ -1734,13 +1734,13 @@ const _: () = {
     assert!(offset_of!(PrivateFieldExpression, field) == 16usize);
     assert!(offset_of!(PrivateFieldExpression, optional) == 32usize);
 
-    assert!(size_of::<CallExpression>() == 40usize);
+    assert!(size_of::<CallExpression>() == 36usize);
     assert!(align_of::<CallExpression>() == 4usize);
     assert!(offset_of!(CallExpression, span) == 0usize);
     assert!(offset_of!(CallExpression, callee) == 8usize);
-    assert!(offset_of!(CallExpression, type_parameters) == 16usize);
-    assert!(offset_of!(CallExpression, arguments) == 20usize);
-    assert!(offset_of!(CallExpression, optional) == 36usize);
+    assert!(offset_of!(CallExpression, type_parameters) == 12usize);
+    assert!(offset_of!(CallExpression, arguments) == 16usize);
+    assert!(offset_of!(CallExpression, optional) == 32usize);
 
     assert!(size_of::<NewExpression>() == 36usize);
     assert!(align_of::<NewExpression>() == 4usize);
@@ -2832,13 +2832,13 @@ const _: () = {
     assert!(offset_of!(JSXElement, closing_element) == 12usize);
     assert!(offset_of!(JSXElement, children) == 16usize);
 
-    assert!(size_of::<JSXOpeningElement>() == 40usize);
+    assert!(size_of::<JSXOpeningElement>() == 36usize);
     assert!(align_of::<JSXOpeningElement>() == 4usize);
     assert!(offset_of!(JSXOpeningElement, span) == 0usize);
     assert!(offset_of!(JSXOpeningElement, self_closing) == 8usize);
     assert!(offset_of!(JSXOpeningElement, name) == 12usize);
-    assert!(offset_of!(JSXOpeningElement, attributes) == 20usize);
-    assert!(offset_of!(JSXOpeningElement, type_parameters) == 36usize);
+    assert!(offset_of!(JSXOpeningElement, attributes) == 16usize);
+    assert!(offset_of!(JSXOpeningElement, type_parameters) == 32usize);
 
     assert!(size_of::<JSXClosingElement>() == 16usize);
     assert!(align_of::<JSXClosingElement>() == 4usize);

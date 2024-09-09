@@ -12,7 +12,7 @@ use oxc_semantic::AstNode;
 use crate::{LintContext, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
-    match &call_expr.callee {
+    match &*call_expr.callee {
         Expression::StaticMemberExpression(member_expr) => {
             member_expr.property.name == "createElement"
         }

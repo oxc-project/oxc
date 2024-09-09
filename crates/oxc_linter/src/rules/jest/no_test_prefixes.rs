@@ -86,7 +86,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         return;
     }
 
-    let span = match &call_expr.callee {
+    let span = match &*call_expr.callee {
         Expression::TaggedTemplateExpression(tagged_template_expr) => {
             tagged_template_expr.tag.span()
         }

@@ -111,7 +111,7 @@ impl<'a> SubstituteAlternateSyntax<'a> {
 
         // Use tighter check than `call_expr.callee.is_specific_member_access("Object", "defineProperty")`
         // because we're looking for `Object.defineProperty` specifically, not e.g. `Object['defineProperty']`
-        if let Expression::StaticMemberExpression(callee) = &call_expr.callee {
+        if let Expression::StaticMemberExpression(callee) = &*call_expr.callee {
             if let Expression::Identifier(id) = &callee.object {
                 if id.name == "Object" && callee.property.name == "defineProperty" {
                     return true;

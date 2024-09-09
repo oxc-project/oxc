@@ -647,7 +647,12 @@ pub(crate) unsafe fn walk_call_expression<'a, Tr: Traverse<'a>>(
     ));
     walk_expression(
         traverser,
-        node.cast::<u8>().add(ancestor::OFFSET_CALL_EXPRESSION_CALLEE).cast::<Expression>(),
+        std::ptr::from_mut(
+            &mut **(node
+                .cast::<u8>()
+                .add(ancestor::OFFSET_CALL_EXPRESSION_CALLEE)
+                .cast::<Box<Expression>>()),
+        ),
         ctx,
     );
     if let Some(field) = &mut *(node
@@ -3418,7 +3423,12 @@ pub(crate) unsafe fn walk_jsx_opening_element<'a, Tr: Traverse<'a>>(
     ));
     walk_jsx_element_name(
         traverser,
-        node.cast::<u8>().add(ancestor::OFFSET_JSX_OPENING_ELEMENT_NAME).cast::<JSXElementName>(),
+        std::ptr::from_mut(
+            &mut **(node
+                .cast::<u8>()
+                .add(ancestor::OFFSET_JSX_OPENING_ELEMENT_NAME)
+                .cast::<Box<JSXElementName>>()),
+        ),
         ctx,
     );
     ctx.retag_stack(AncestorType::JSXOpeningElementAttributes);

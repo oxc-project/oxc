@@ -182,7 +182,7 @@ impl PreferSpyOn {
             return call_expr.arguments.first().and_then(Argument::as_expression);
         }
 
-        match &call_expr.callee {
+        match &*call_expr.callee {
             expr if expr.is_member_expression() => {
                 let mem_expr = expr.to_member_expression();
                 if let Some(call_expr) = Self::find_mem_expr(mem_expr) {

@@ -220,7 +220,7 @@ impl<'a> Visit<'a> for TestCase {
                                 if !call_expr.arguments.first().is_some_and(|arg|  matches!(arg, Argument::StringLiteral(string) if string.value == "\n")) {
                                     continue;
                                 }
-                                let Expression::StaticMemberExpression(member) = &call_expr.callee
+                                let Expression::StaticMemberExpression(member) = &*call_expr.callee
                                 else {
                                     continue;
                                 };
@@ -444,7 +444,7 @@ impl<'a> Visit<'a> for State<'a> {
 
     fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
         let mut pushed = false;
-        if let Expression::Identifier(ident) = &expr.callee {
+        if let Expression::Identifier(ident) = &*expr.callee {
             // Add describe's first parameter as part group comment
             // e.g. for `describe('valid', () => { ... })`, the group comment will be "valid"
             if ident.name == "describe" {
@@ -550,7 +550,7 @@ fn find_parser_arguments<'a, 'b>(
 ) -> Option<&'b oxc_allocator::Vec<'a, Argument<'a>>> {
     loop {
         let Expression::CallExpression(call_expr) = expr else { return None };
-        let Expression::StaticMemberExpression(static_member_expr) = &call_expr.callee else {
+        let Expression::StaticMemberExpression(static_member_expr) = &*call_expr.callee else {
             return None;
         };
         let StaticMemberExpression { object, property, .. } = &**static_member_expr;

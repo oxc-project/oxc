@@ -96,7 +96,7 @@ impl MaxExpects {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Expression::Identifier(ident) = &call_expr.callee else {
+        let Expression::Identifier(ident) = &*call_expr.callee else {
             return;
         };
 

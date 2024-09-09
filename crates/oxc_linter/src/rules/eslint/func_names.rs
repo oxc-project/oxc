@@ -390,7 +390,7 @@ impl Rule for FuncNames {
                 // check if the calling function is inside of its own body
                 // when yes remove it from invalid_funcs because recursion are always named
                 AstKind::CallExpression(expression) => {
-                    if let Expression::Identifier(identifier) = &expression.callee {
+                    if let Expression::Identifier(identifier) = &*expression.callee {
                         // check at first if the callee calls an invalid function
                         if !invalid_funcs
                             .iter()

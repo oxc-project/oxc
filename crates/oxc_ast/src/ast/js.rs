@@ -597,7 +597,7 @@ pub struct PrivateFieldExpression<'a> {
 pub struct CallExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub callee: Expression<'a>,
+    pub callee: Box<'a, Expression<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining

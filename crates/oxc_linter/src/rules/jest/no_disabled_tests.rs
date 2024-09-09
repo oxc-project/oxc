@@ -138,7 +138,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 };
                 ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
             }
-        } else if let Expression::Identifier(ident) = &call_expr.callee {
+        } else if let Expression::Identifier(ident) = &*call_expr.callee {
             if ident.name.as_str() == "pending"
                 && ctx.semantic().is_reference_to_global_variable(ident)
             {

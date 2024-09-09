@@ -111,7 +111,7 @@ impl Rule for PreferRegexpTest {
                     return;
                 };
 
-                let Expression::Identifier(ident) = &call_expr.callee else {
+                let Expression::Identifier(ident) = &*call_expr.callee else {
                     return;
                 };
 

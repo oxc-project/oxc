@@ -103,7 +103,7 @@ impl Rule for SelfClosingComp {
         };
 
         let is_comp = matches!(
-            jsx_el.opening_element.name,
+            &*jsx_el.opening_element.name,
             JSXElementName::MemberExpression(_) | JSXElementName::NamespacedName(_)
         );
 

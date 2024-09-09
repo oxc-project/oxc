@@ -684,16 +684,17 @@ impl<'a> AstBuilder<'a> {
     /// - arguments
     /// - optional
     #[inline]
-    pub fn expression_call<T1>(
+    pub fn expression_call<T1, T2>(
         self,
         span: Span,
-        callee: Expression<'a>,
-        type_parameters: T1,
+        callee: T1,
+        type_parameters: T2,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, Expression<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Expression::CallExpression(self.alloc(self.call_expression(
             span,
@@ -2299,20 +2300,21 @@ impl<'a> AstBuilder<'a> {
     /// - arguments
     /// - optional
     #[inline]
-    pub fn call_expression<T1>(
+    pub fn call_expression<T1, T2>(
         self,
         span: Span,
-        callee: Expression<'a>,
-        type_parameters: T1,
+        callee: T1,
+        type_parameters: T2,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> CallExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, Expression<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         CallExpression {
             span,
-            callee,
+            callee: callee.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
             arguments,
             optional,
@@ -2330,16 +2332,17 @@ impl<'a> AstBuilder<'a> {
     /// - arguments
     /// - optional
     #[inline]
-    pub fn alloc_call_expression<T1>(
+    pub fn alloc_call_expression<T1, T2>(
         self,
         span: Span,
-        callee: Expression<'a>,
-        type_parameters: T1,
+        callee: T1,
+        type_parameters: T2,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> Box<'a, CallExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, Expression<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
             self.call_expression(span, callee, type_parameters, arguments, optional),
@@ -3501,16 +3504,17 @@ impl<'a> AstBuilder<'a> {
     /// - arguments
     /// - optional
     #[inline]
-    pub fn chain_element_call_expression<T1>(
+    pub fn chain_element_call_expression<T1, T2>(
         self,
         span: Span,
-        callee: Expression<'a>,
-        type_parameters: T1,
+        callee: T1,
+        type_parameters: T2,
         arguments: Vec<'a, Argument<'a>>,
         optional: bool,
     ) -> ChainElement<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, Expression<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         ChainElement::CallExpression(self.alloc(self.call_expression(
             span,
@@ -12674,21 +12678,22 @@ impl<'a> AstBuilder<'a> {
     /// - attributes: List of JSX attributes. In React-like applications, these become props.
     /// - type_parameters: Type parameters for generic JSX elements.
     #[inline]
-    pub fn jsx_opening_element<T1>(
+    pub fn jsx_opening_element<T1, T2>(
         self,
         span: Span,
         self_closing: bool,
-        name: JSXElementName<'a>,
+        name: T1,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
     ) -> JSXOpeningElement<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, JSXElementName<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         JSXOpeningElement {
             span,
             self_closing,
-            name,
+            name: name.into_in(self.allocator),
             attributes,
             type_parameters: type_parameters.into_in(self.allocator),
         }
@@ -12705,16 +12710,17 @@ impl<'a> AstBuilder<'a> {
     /// - attributes: List of JSX attributes. In React-like applications, these become props.
     /// - type_parameters: Type parameters for generic JSX elements.
     #[inline]
-    pub fn alloc_jsx_opening_element<T1>(
+    pub fn alloc_jsx_opening_element<T1, T2>(
         self,
         span: Span,
         self_closing: bool,
-        name: JSXElementName<'a>,
+        name: T1,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: T1,
+        type_parameters: T2,
     ) -> Box<'a, JSXOpeningElement<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, JSXElementName<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
             self.jsx_opening_element(span, self_closing, name, attributes, type_parameters),

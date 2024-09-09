@@ -13,6 +13,7 @@ use crate::number::*;
 #[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
+
 impl ContentHash for NumberBase {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&discriminant(self), state);

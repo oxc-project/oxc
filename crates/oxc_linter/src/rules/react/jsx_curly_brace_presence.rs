@@ -337,7 +337,7 @@ impl Rule for JsxCurlyBracePresence {
                     self.check_jsx_attribute(ctx, attr, node);
                 });
                 if self.children.is_never()
-                    && matches!(&el.opening_element.name, JSXElementName::Identifier(ident) if ident.name == "script")
+                    && matches!(&*el.opening_element.name, JSXElementName::Identifier(ident) if ident.name == "script")
                 {
                     return;
                 }

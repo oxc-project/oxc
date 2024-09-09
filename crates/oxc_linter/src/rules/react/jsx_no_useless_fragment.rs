@@ -166,7 +166,7 @@ fn is_html_element(elem_name: &JSXElementName) -> bool {
 }
 
 fn is_jsx_fragment(elem: &JSXOpeningElement) -> bool {
-    match &elem.name {
+    match &*elem.name {
         JSXElementName::IdentifierReference(ident) => ident.name == "Fragment",
         JSXElementName::MemberExpression(mem_expr) => {
             if let JSXMemberExpressionObject::IdentifierReference(ident) = &mem_expr.object {

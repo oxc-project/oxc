@@ -8,6 +8,7 @@ use oxc_span::cmp::ContentEq;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
+
 impl<'a> ContentEq for RegularExpression<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.pattern, &other.pattern)
@@ -49,54 +50,94 @@ impl<'a> ContentEq for Alternative<'a> {
 impl<'a> ContentEq for Term<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         match self {
-            Self::BoundaryAssertion(it) => match other {
-                Self::BoundaryAssertion(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::LookAroundAssertion(it) => match other {
-                Self::LookAroundAssertion(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Quantifier(it) => match other {
-                Self::Quantifier(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Character(it) => match other {
-                Self::Character(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Dot(it) => match other {
-                Self::Dot(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CharacterClassEscape(it) => match other {
-                Self::CharacterClassEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::UnicodePropertyEscape(it) => match other {
-                Self::UnicodePropertyEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CharacterClass(it) => match other {
-                Self::CharacterClass(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CapturingGroup(it) => match other {
-                Self::CapturingGroup(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::IgnoreGroup(it) => match other {
-                Self::IgnoreGroup(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::IndexedReference(it) => match other {
-                Self::IndexedReference(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::NamedReference(it) => match other {
-                Self::NamedReference(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
+            Self::BoundaryAssertion(it) => {
+                match other {
+                    Self::BoundaryAssertion(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::LookAroundAssertion(it) => {
+                match other {
+                    Self::LookAroundAssertion(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::Quantifier(it) => {
+                match other {
+                    Self::Quantifier(other) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::Character(it) => {
+                match other {
+                    Self::Character(other) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::Dot(it) => {
+                match other {
+                    Self::Dot(other) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::CharacterClassEscape(it) => {
+                match other {
+                    Self::CharacterClassEscape(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::UnicodePropertyEscape(it) => {
+                match other {
+                    Self::UnicodePropertyEscape(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::CharacterClass(it) => {
+                match other {
+                    Self::CharacterClass(other) if ContentEq::content_eq(it, other) => {
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            Self::CapturingGroup(it) => {
+                match other {
+                    Self::CapturingGroup(other) if ContentEq::content_eq(it, other) => {
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            Self::IgnoreGroup(it) => {
+                match other {
+                    Self::IgnoreGroup(other) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::IndexedReference(it) => {
+                match other {
+                    Self::IndexedReference(other) if ContentEq::content_eq(it, other) => {
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            Self::NamedReference(it) => {
+                match other {
+                    Self::NamedReference(other) if ContentEq::content_eq(it, other) => {
+                        true
+                    }
+                    _ => false,
+                }
+            }
         }
     }
 }
@@ -192,37 +233,60 @@ impl ContentEq for CharacterClassContentsKind {
 impl<'a> ContentEq for CharacterClassContents<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         match self {
-            Self::CharacterClassRange(it) => match other {
-                Self::CharacterClassRange(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::CharacterClassEscape(it) => match other {
-                Self::CharacterClassEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::UnicodePropertyEscape(it) => match other {
-                Self::UnicodePropertyEscape(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::Character(it) => match other {
-                Self::Character(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::NestedCharacterClass(it) => match other {
-                Self::NestedCharacterClass(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
-            Self::ClassStringDisjunction(it) => match other {
-                Self::ClassStringDisjunction(other) if ContentEq::content_eq(it, other) => true,
-                _ => false,
-            },
+            Self::CharacterClassRange(it) => {
+                match other {
+                    Self::CharacterClassRange(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::CharacterClassEscape(it) => {
+                match other {
+                    Self::CharacterClassEscape(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::UnicodePropertyEscape(it) => {
+                match other {
+                    Self::UnicodePropertyEscape(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::Character(it) => {
+                match other {
+                    Self::Character(other) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::NestedCharacterClass(it) => {
+                match other {
+                    Self::NestedCharacterClass(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
+            Self::ClassStringDisjunction(it) => {
+                match other {
+                    Self::ClassStringDisjunction(
+                        other,
+                    ) if ContentEq::content_eq(it, other) => true,
+                    _ => false,
+                }
+            }
         }
     }
 }
 
 impl ContentEq for CharacterClassRange {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.min, &other.min) && ContentEq::content_eq(&self.max, &other.max)
+        ContentEq::content_eq(&self.min, &other.min)
+            && ContentEq::content_eq(&self.max, &other.max)
     }
 }
 
@@ -250,8 +314,10 @@ impl<'a> ContentEq for CapturingGroup<'a> {
 impl<'a> ContentEq for IgnoreGroup<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.enabling_modifiers, &other.enabling_modifiers)
-            && ContentEq::content_eq(&self.disabling_modifiers, &other.disabling_modifiers)
-            && ContentEq::content_eq(&self.body, &other.body)
+            && ContentEq::content_eq(
+                &self.disabling_modifiers,
+                &other.disabling_modifiers,
+            ) && ContentEq::content_eq(&self.body, &other.body)
     }
 }
 

@@ -185,7 +185,7 @@ fn is_single_super_call<'f, 'a: 'f>(body: &'f FunctionBody<'a>) -> Option<&'f Ca
     let Statement::ExpressionStatement(expr) = &body.statements[0] else { return None };
     let Expression::CallExpression(call) = &expr.expression else { return None };
 
-    matches!(call.callee, Expression::Super(_)).then(|| call.as_ref())
+    matches!(&*call.callee, Expression::Super(_)).then(|| call.as_ref())
 }
 
 /// Returns `false` if any parameter is an array/object unpacking binding or an

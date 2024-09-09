@@ -49,7 +49,7 @@ impl Rule for NoWebpackLoaderSyntax {
 
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
-                if let Expression::Identifier(identifier) = &call_expr.callee {
+                if let Expression::Identifier(identifier) = &*call_expr.callee {
                     if identifier.name != "require" {
                         return;
                     }

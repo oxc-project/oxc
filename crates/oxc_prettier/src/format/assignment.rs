@@ -182,7 +182,7 @@ fn choose_layout<'a>(
     }
 
     if let Expression::CallExpression(call_expr) = right_expr {
-        if let Expression::Identifier(ident) = &call_expr.callee {
+        if let Expression::Identifier(ident) = &*call_expr.callee {
             if ident.name == "require" {
                 return Layout::NeverBreakAfterOperator;
             }

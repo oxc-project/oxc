@@ -1035,7 +1035,7 @@ impl<'a> ListenerMap for CallExpression<'a> {
 
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         let ctx = options.ctx;
-        if let Expression::Identifier(ident) = &self.callee {
+        if let Expression::Identifier(ident) = &*self.callee {
             if let Some(node) = get_declaration_of_variable(ident, ctx) {
                 if is_local_variable_a_whitelisted_module(node, ident.name.as_str(), options) {
                     return;

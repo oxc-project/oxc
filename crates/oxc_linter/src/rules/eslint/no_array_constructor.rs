@@ -36,7 +36,7 @@ impl Rule for NoArrayConstructor {
         let (span, callee, arguments, type_parameters, optional) = match node.kind() {
             AstKind::CallExpression(call_expr) => (
                 call_expr.span,
-                &call_expr.callee,
+                &*call_expr.callee,
                 &call_expr.arguments,
                 &call_expr.type_parameters,
                 call_expr.optional,

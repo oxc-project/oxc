@@ -247,8 +247,8 @@ impl NoThisBeforeSuper {
         match arg {
             Argument::Super(_) | Argument::ThisExpression(_) => true,
             Argument::CallExpression(call_expr) => {
-                matches!(&call_expr.callee, Expression::Super(_) | Expression::ThisExpression(_))
-                    || matches!(&call_expr.callee,
+                matches!(&*call_expr.callee, Expression::Super(_) | Expression::ThisExpression(_))
+                    || matches!(&*call_expr.callee,
                     Expression::StaticMemberExpression(static_member) if
                     matches!(static_member.object, Expression::Super(_) | Expression::ThisExpression(_)))
                     || Self::contains_this_or_super_in_args(&call_expr.arguments)

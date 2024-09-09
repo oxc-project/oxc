@@ -82,7 +82,7 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         }
 
-        let (name, span) = match &jsx_opening_el.name {
+        let (name, span) = match &*jsx_opening_el.name {
             JSXElementName::Identifier(id) => (id.name.as_str(), id.span),
             JSXElementName::IdentifierReference(id) => (id.name.as_str(), id.span),
             _ => return,

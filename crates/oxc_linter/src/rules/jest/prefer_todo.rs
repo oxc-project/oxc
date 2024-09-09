@@ -82,7 +82,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                 .as_member_expression()
                 .map_or(call_expr.callee.span(), GetSpan::span);
             ctx.diagnostic_with_fix(un_implemented_test_diagnostic(span), |fixer| {
-                if let Expression::Identifier(ident) = &call_expr.callee {
+                if let Expression::Identifier(ident) = &*call_expr.callee {
                     return fixer.replace(Span::empty(ident.span.end), ".todo");
                 }
                 if let Some(mem_expr) = call_expr.callee.as_member_expression() {
@@ -112,7 +112,7 @@ fn filter_todo_case(expr: &CallExpression) -> bool {
 }
 
 fn should_filter_case(expr: &CallExpression) -> bool {
-    let result = match &expr.callee {
+    let result = match &*expr.callee {
         Expression::Identifier(ident) => ident.name.starts_with('x') || ident.name.starts_with('f'),
         _ => false,
     };
@@ -139,7 +139,7 @@ fn is_empty_function(expr: &CallExpression) -> bool {
 fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFix<'a> {
     let mut formatter = fixer.codegen();
 
-    match &expr.callee {
+    match &*expr.callee {
         Expression::Identifier(ident) => {
             formatter.print_str(ident.name.as_str());
             formatter.print_str(".todo(");

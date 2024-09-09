@@ -34,7 +34,8 @@ impl Rule for NoImgElement {
             return;
         };
 
-        let JSXElementName::Identifier(jsx_opening_element_name) = &jsx_opening_element.name else {
+        let JSXElementName::Identifier(jsx_opening_element_name) = &*jsx_opening_element.name
+        else {
             return;
         };
 
@@ -51,7 +52,7 @@ impl Rule for NoImgElement {
 
         if let AstKind::JSXElement(maybe_picture_jsx_elem) = parent.kind() {
             if let JSXElementName::Identifier(jsx_opening_element_name) =
-                &maybe_picture_jsx_elem.opening_element.name
+                &*maybe_picture_jsx_elem.opening_element.name
             {
                 if jsx_opening_element_name.name.as_str() == "picture" {
                     return;

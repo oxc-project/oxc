@@ -126,7 +126,7 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
         return false;
     }
 
-    match &call_expr.callee {
+    match &*call_expr.callee {
         Expression::Identifier(ident) => {
             TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(ident.name.as_str())
         }

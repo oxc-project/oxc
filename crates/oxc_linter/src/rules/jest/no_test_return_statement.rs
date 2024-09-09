@@ -111,7 +111,7 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
     let Expression::CallExpression(mem_call_expr) = mem_expr.object() else {
         return;
     };
-    let Expression::Identifier(ident) = &mem_call_expr.callee else {
+    let Expression::Identifier(ident) = &*mem_call_expr.callee else {
         return;
     };
 

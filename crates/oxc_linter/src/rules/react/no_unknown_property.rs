@@ -461,7 +461,7 @@ impl Rule for NoUnknownProperty {
         let AstKind::JSXOpeningElement(el) = &node.kind() else {
             return;
         };
-        let JSXElementName::Identifier(ident) = &el.name else {
+        let JSXElementName::Identifier(ident) = &*el.name else {
             return;
         };
         let el_type = ident.name.as_str();

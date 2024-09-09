@@ -130,7 +130,7 @@ impl Rule for NoObjCalls {
         #[allow(clippy::needless_return)]
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),
-            AstKind::CallExpression(expr) => (&expr.callee, expr.span),
+            AstKind::CallExpression(expr) => (&*expr.callee, expr.span),
             _ => return,
         };
 

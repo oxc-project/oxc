@@ -83,7 +83,7 @@ pub struct JSXOpeningElement<'a> {
     /// <Foo>    // <- self_closing = false
     /// ```
     pub self_closing: bool,
-    pub name: JSXElementName<'a>,
+    pub name: Box<'a, JSXElementName<'a>>,
     /// List of JSX attributes. In React-like applications, these become props.
     pub attributes: Vec<'a, JSXAttributeItem<'a>>,
     /// Type parameters for generic JSX elements.

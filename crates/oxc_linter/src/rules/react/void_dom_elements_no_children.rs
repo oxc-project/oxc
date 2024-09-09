@@ -68,7 +68,7 @@ impl Rule for VoidDomElementsNoChildren {
         match node.kind() {
             AstKind::JSXElement(jsx_el) => {
                 let jsx_opening_el = &jsx_el.opening_element;
-                let JSXElementName::Identifier(identifier) = &jsx_opening_el.name else {
+                let JSXElementName::Identifier(identifier) = &*jsx_opening_el.name else {
                     return;
                 };
 

@@ -43,7 +43,7 @@ impl Rule for NoPageCustomFont {
         let AstKind::JSXOpeningElement(element) = node.kind() else {
             return;
         };
-        let JSXElementName::Identifier(ident) = &element.name else { return };
+        let JSXElementName::Identifier(ident) = &*element.name else { return };
 
         if ident.name != "link" {
             return;

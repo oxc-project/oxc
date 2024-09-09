@@ -150,7 +150,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
 
 impl<'a, 'b> IsConstant<'a, 'b> for CallExpression<'a> {
     fn is_constant(&self, _in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
-        if let Expression::Identifier(ident) = &self.callee {
+        if let Expression::Identifier(ident) = &*self.callee {
             if ident.name == "Boolean"
                 && self.arguments.iter().next().map_or(true, |first| first.is_constant(true, ctx))
             {
@@ -408,7 +408,7 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &LintContext) -> 
         return false;
     }
 
-    if let Expression::Identifier(id_ref) = &call_expr.callee {
+    if let Expression::Identifier(id_ref) = &*call_expr.callee {
         id_ref.name == "require" && is_global_reference(id_ref, ctx)
     } else {
         false
