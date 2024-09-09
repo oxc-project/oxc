@@ -68,7 +68,7 @@ function generateWalkForStruct(type, types) {
       assert(
         scopeEnterField,
         `\`ast\` attr says to enter scope before field '${enterFieldName}' ` +
-        `in '${type.name}', but that field is not visited`,
+          `in '${type.name}', but that field is not visited`,
       );
     } else {
       scopeEnterField = visitedFields[0];
@@ -174,7 +174,7 @@ function generateWalkForStruct(type, types) {
       } else {
         let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
           iterModifier = '';
-        console.log(`walkCode: `, walkCode)
+        console.log(`walkCode: `, walkCode);
 
         walkVecCode = `
                     for item in (*(${fieldCode})).iter_mut()${iterModifier} {
