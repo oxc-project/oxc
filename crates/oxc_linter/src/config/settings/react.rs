@@ -4,13 +4,54 @@ use oxc_span::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-// <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
+/// Configure React plugin rules.
+///
+/// Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
 #[derive(Debug, Deserialize, Default, JsonSchema)]
 pub struct ReactPluginSettings {
+    /// Components used as alternatives to `<form>` for forms, such as `<Formik>`.
+    ///
+    /// ## Example
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "formComponents": [
+    ///         "CustomForm",
+    ///         // OtherForm is considered a form component and has an endpoint attribute
+    ///         { "name": "OtherForm", "formAttribute": "endpoint" },
+    ///         // allows specifying multiple properties if necessary
+    ///         { "name": "Form", "formAttribute": ["registerEndpoint", "loginEndpoint"] }
+    ///       ]
+    ///     }
+    ///   }
+    /// }
+    /// ```
     #[serde(default)]
     #[serde(rename = "formComponents")]
     form_components: Vec<CustomComponent>,
 
+    /// Components used as alternatives to `<a>` for linking, such as `<Link>`.
+    ///
+    /// ## Example
+    ///
+    /// ```jsonc
+    /// {
+    ///   "settings": {
+    ///     "react": {
+    ///       "linkComponents": [
+    ///         "HyperLink",
+    ///         // Use `linkAttribute` for components that use a different prop name
+    ///         // than `href`.
+    ///         { "name": "MyLink", "linkAttribute": "to" },
+    ///         // allows specifying multiple properties if necessary
+    ///         { "name": "Link", "linkAttribute": ["to", "href"] }
+    ///       ]
+    ///     }
+    ///   }
+    /// }
+    /// ```
     #[serde(default)]
     #[serde(rename = "linkComponents")]
     link_components: Vec<CustomComponent>,

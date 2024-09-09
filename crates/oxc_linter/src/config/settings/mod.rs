@@ -11,7 +11,35 @@ use self::{
     react::ReactPluginSettings,
 };
 
-/// Shared settings for plugins
+/// # Oxlint Plugin Settings
+///
+/// Configure the behavior of linter plugins.
+///
+/// ## Example
+///
+/// Here's an example if you're using Next.js in a monorepo:
+///
+/// ```jsonc
+/// {
+///   "settings": {
+///     "next": {
+///       "rootDir": "apps/dashboard/"
+///     },
+///     "react": {
+///       "linkComponents": [
+///         // support next/link
+///         { "name": "Link", "linkAttribute": "to" }
+///       ]
+///     },
+///     "jsx-a11y": {
+///       "components": {
+///         "Link": "a",
+///         "Button": "button"
+///       }
+///     }
+///   }
+/// }
+/// ```
 #[derive(Debug, Deserialize, Default, JsonSchema)]
 pub struct OxlintSettings {
     #[serde(default)]

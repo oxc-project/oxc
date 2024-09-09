@@ -3,8 +3,25 @@ use std::borrow::Cow;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+/// Configure Next.js plugin rules.
 #[derive(Debug, Deserialize, Default, JsonSchema)]
 pub struct NextPluginSettings {
+    /// The root directory of the Next.js project.
+    ///
+    /// This is particularly useful when you have a monorepo and your Next.js
+    /// project is in a subfolder.
+    ///
+    /// ## Example
+    ///
+    /// ```json
+    /// {
+    ///   "settings": {
+    ///     "next": {
+    ///       "rootDir": "apps/dashboard/"
+    ///     }
+    ///   }
+    /// }
+    /// ```
     #[serde(default)]
     #[serde(rename = "rootDir")]
     root_dir: OneOrMany<String>,
