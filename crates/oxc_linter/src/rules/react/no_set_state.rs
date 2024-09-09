@@ -3,12 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_parent_es5_component, get_parent_es6_component},
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, utils::get_parent_component, AstNode};
 
 fn no_set_state_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use setState").with_label(span)
@@ -63,8 +58,7 @@ impl Rule for NoSetState {
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
             || !member_expr.static_property_name().is_some_and(|str| str == "setState")
-            || !(get_parent_es5_component(node, ctx).is_some()
-                || get_parent_es6_component(node, ctx).is_some())
+            || get_parent_component(node, ctx).is_none()
         {
             return;
         }

@@ -190,22 +190,17 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     false
 }
 
-pub fn get_parent_es5_component<'a, 'b>(
+pub fn get_parent_component<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    ctx.nodes().ancestors(node.id()).skip(1).find_map(|node_id| {
-        is_es5_component(ctx.nodes().get_node(node_id)).then(|| ctx.nodes().get_node(node_id))
-    })
-}
-
-pub fn get_parent_es6_component<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
-    ctx.nodes().ancestors(node.id()).find_map(|node_id| {
-        is_es6_component(ctx.nodes().get_node(node_id)).then(|| ctx.nodes().get_node(node_id))
-    })
+    for node_id in ctx.nodes().ancestors(node.id()) {
+        let node = ctx.nodes().get_node(node_id);
+        if is_es5_component(node) || is_es6_component(node) {
+            return Some(node);
+        }
+    }
+    None
 }
 
 /// Resolve element type(name) using jsx-a11y settings
