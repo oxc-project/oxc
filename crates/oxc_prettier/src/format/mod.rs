@@ -26,6 +26,7 @@ mod ternary;
 
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
