@@ -11,7 +11,6 @@ use crate::number::*;
 #[allow(clippy::wildcard_imports)]
 use crate::operator::*;
 
-
 impl ContentEq for NumberBase {
     fn content_eq(&self, other: &Self) -> bool {
         self == other

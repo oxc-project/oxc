@@ -39,7 +39,8 @@ impl Rule for GoogleFontPreconnect {
             return;
         };
 
-        let JSXElementName::Identifier(jsx_opening_element_name) = &*jsx_opening_element.name else {
+        let JSXElementName::Identifier(jsx_opening_element_name) = &*jsx_opening_element.name
+        else {
             return;
         };
 

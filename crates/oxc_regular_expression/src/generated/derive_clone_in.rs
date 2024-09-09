@@ -8,7 +8,6 @@ use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-
 impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for RegularExpression<'old_alloc> {
     type Cloned = RegularExpression<'new_alloc>;
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
@@ -86,19 +85,11 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Term<'old_alloc> {
             Self::UnicodePropertyEscape(it) => {
                 Term::UnicodePropertyEscape(CloneIn::clone_in(it, allocator))
             }
-            Self::CharacterClass(it) => {
-                Term::CharacterClass(CloneIn::clone_in(it, allocator))
-            }
-            Self::CapturingGroup(it) => {
-                Term::CapturingGroup(CloneIn::clone_in(it, allocator))
-            }
+            Self::CharacterClass(it) => Term::CharacterClass(CloneIn::clone_in(it, allocator)),
+            Self::CapturingGroup(it) => Term::CapturingGroup(CloneIn::clone_in(it, allocator)),
             Self::IgnoreGroup(it) => Term::IgnoreGroup(CloneIn::clone_in(it, allocator)),
-            Self::IndexedReference(it) => {
-                Term::IndexedReference(CloneIn::clone_in(it, allocator))
-            }
-            Self::NamedReference(it) => {
-                Term::NamedReference(CloneIn::clone_in(it, allocator))
-            }
+            Self::IndexedReference(it) => Term::IndexedReference(CloneIn::clone_in(it, allocator)),
+            Self::NamedReference(it) => Term::NamedReference(CloneIn::clone_in(it, allocator)),
         }
     }
 }
@@ -228,9 +219,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for UnicodePropertyEscape<'old_
 impl<'alloc> CloneIn<'alloc> for Dot {
     type Cloned = Dot;
     fn clone_in(&self, allocator: &'alloc Allocator) -> Self::Cloned {
-        Dot {
-            span: CloneIn::clone_in(&self.span, allocator),
-        }
+        Dot { span: CloneIn::clone_in(&self.span, allocator) }
     }
 }
 
@@ -262,32 +251,22 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CharacterClassContents<'old
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::CharacterClassRange(it) => {
-                CharacterClassContents::CharacterClassRange(
-                    CloneIn::clone_in(it, allocator),
-                )
+                CharacterClassContents::CharacterClassRange(CloneIn::clone_in(it, allocator))
             }
             Self::CharacterClassEscape(it) => {
-                CharacterClassContents::CharacterClassEscape(
-                    CloneIn::clone_in(it, allocator),
-                )
+                CharacterClassContents::CharacterClassEscape(CloneIn::clone_in(it, allocator))
             }
             Self::UnicodePropertyEscape(it) => {
-                CharacterClassContents::UnicodePropertyEscape(
-                    CloneIn::clone_in(it, allocator),
-                )
+                CharacterClassContents::UnicodePropertyEscape(CloneIn::clone_in(it, allocator))
             }
             Self::Character(it) => {
                 CharacterClassContents::Character(CloneIn::clone_in(it, allocator))
             }
             Self::NestedCharacterClass(it) => {
-                CharacterClassContents::NestedCharacterClass(
-                    CloneIn::clone_in(it, allocator),
-                )
+                CharacterClassContents::NestedCharacterClass(CloneIn::clone_in(it, allocator))
             }
             Self::ClassStringDisjunction(it) => {
-                CharacterClassContents::ClassStringDisjunction(
-                    CloneIn::clone_in(it, allocator),
-                )
+                CharacterClassContents::ClassStringDisjunction(CloneIn::clone_in(it, allocator))
             }
         }
     }

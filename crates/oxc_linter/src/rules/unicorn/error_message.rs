@@ -56,21 +56,14 @@ impl Rule for ErrorMessage {
                 span,
                 arguments,
                 ..
-            }) => {
-             (id, *span, arguments)
-            }
-            AstKind::CallExpression(CallExpression {
-                callee,
-                span,
-                arguments,
-                ..
-            }) => {
+            }) => (id, *span, arguments),
+            AstKind::CallExpression(CallExpression { callee, span, arguments, .. }) => {
                 if let Expression::Identifier(id) = &**callee {
                     (id, *span, arguments)
                 } else {
                     return;
                 }
-            },
+            }
             _ => return,
         };
 
