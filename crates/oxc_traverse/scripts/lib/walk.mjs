@@ -174,7 +174,6 @@ function generateWalkForStruct(type, types) {
       } else {
         let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
           iterModifier = '';
-        console.log(`walkCode: `, walkCode);
 
         walkVecCode = `
                     for item in (*(${fieldCode})).iter_mut()${iterModifier} {
