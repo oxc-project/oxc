@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use cow_utils::CowUtils;
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -235,7 +236,7 @@ fn is_jest_call(name: &str) -> bool {
     //
     // import { jest as Jest } from "@jest/globals";
     // Jest.setTimeout
-    name.to_ascii_lowercase().eq_ignore_ascii_case("jest")
+    name.cow_to_ascii_lowercase().eq_ignore_ascii_case("jest")
 }
 
 #[test]
