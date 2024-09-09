@@ -189,12 +189,13 @@ impl<'a> Display for UnicodePropertyEscape<'a> {
             write!(f, r"\p")?;
         }
 
-        if let Some(value) = &self.value {
-            let name = &self.name;
-            write!(f, "{{{name}={value}}}")
-        } else {
-            write!(f, "{{{}}}", self.name)
+        write!(f, r"{{")?;
+        match (&self.name, &self.value) {
+            (name, Some(value)) if name == "General_Category" => write!(f, r"{value}")?,
+            (name, Some(value)) => write!(f, r"{name}={value}")?,
+            _ => write!(f, r"{}", self.name)?,
         }
+        write!(f, r"}}")
     }
 }
 
@@ -390,8 +391,7 @@ fn character_to_string(
         CharacterKind::Symbol => format!("{ch}"),
         CharacterKind::Null => String::from(r"\0"),
         CharacterKind::UnicodeEscape => {
-            // we remove the leading `0x` of our 4 digit hex number.
-            let hex = &format!("{cp:#4X}")[2..];
+            let hex = &format!("{cp:04X}");
             if hex.len() <= 4 {
                 format!(r"\u{hex}")
             } else {
@@ -399,8 +399,7 @@ fn character_to_string(
             }
         }
         CharacterKind::HexadecimalEscape => {
-            // we remove the leading `0x` of our 2 digit hex number.
-            let hex = &format!("{cp:#2X}")[2..];
+            let hex = &format!("{cp:02X}");
             format!(r"\x{hex}")
         }
         CharacterKind::Octal => {
@@ -488,13 +487,15 @@ mod test {
         (r"/\s+/gu", None),
         (r"/\t\n\v\f\r/", None),
         (r"/\t\n\v\f\r/u", None),
-        // we lose the flags ordering
-        ("/abcd/igv", Some("/abcd/giv")),
+        (r"/\p{L}/u", None),
         (r"/\d/g", None),
-        // we lose the flags ordering
+        // Lose the flags ordering --
+        ("/abcd/igv", Some("/abcd/giv")),
         (r"/\d/ug", Some(r"/\d/gu")),
+        // --
         // we capitalize hex unicodes.
         (r"/\n\cM\0\x41\u{1f600}\./u", Some(r"/\n\cM\0\x41\u{1F600}\./u")),
+        (r"/\u02c1/u", Some(r"/\u02C1/u")),
         (r"/c]/", None),
         // Octal tests from: <https://github.com/tc39/test262/blob/d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60/test/annexB/language/literals/regexp/legacy-octal-escape.js>
         (r"/\1/", None),
@@ -504,20 +505,19 @@ mod test {
         (r"/\5/", None),
         (r"/\6/", None),
         (r"/\7/", None),
-        // NOTE: we remove leading zeroes
+        // Remove leading zeroes --
         (r"/\00/", Some(r"/\0/")),
-        // NOTE: we remove leading zeroes
         (r"/\07/", Some(r"/\7/")),
+        // --
         (r"/\40/", None),
         (r"/\47/", None),
         (r"/\70/", None),
         (r"/\77/", None),
-        // NOTE: we remove leading zeroes
+        // Remove leading zeroes --
         (r"/\000/", Some(r"/\0/")),
-        // NOTE: we remove leading zeroes
         (r"/\007/", Some(r"/\7/")),
-        // NOTE: we remove leading zeroes
         (r"/\070/", Some(r"/\70/")),
+        // --
         (r"/\300/", None),
         (r"/\307/", None),
         (r"/\370/", None),
@@ -540,14 +540,12 @@ mod test {
         (r"/[\c8]/", None),
         (r"/[\c80]+/", None),
         (r"/\c_/", None),
-        // we capitalize hex unicodes.
+        // Capitalize hex unicodes --
         (r"/^|\udf06/gu", Some(r"/^|\uDF06/gu")),
-        // we capitalize hex unicodes.
         (r"/\udf06/", Some(r"/\uDF06/")),
-        // we capitalize hex unicodes.
         (r"/\udf06/u", Some(r"/\uDF06/u")),
-        // we capitalize hex unicodes.
         (r"/^|\udf06/g", Some(r"/^|\uDF06/g")),
+        // --
         (r"/[\-]/", None),
         (r"/[\-]/u", None),
         (r"/[\-]/v", None),
