@@ -183,16 +183,9 @@ impl<'a> RawNum<'a> {
 }
 
 impl NoLossOfPrecision {
-    fn get_raw<'a>(node: &'a NumericLiteral) -> Cow<'a, str> {
-        if node.raw.contains('_') {
-            node.raw.cow_replace('_', "")
-        } else {
-            Cow::Borrowed(node.raw)
-        }
-    }
-
     fn not_base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
-        let raw = Self::get_raw(node).to_uppercase();
+        let raw = node.raw.cow_replace('_', "");
+        let raw = raw.cow_to_uppercase();
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         // AST always store number as f64, need a cast to format in bin/oct/hex
         let value = node.value as u64;
@@ -207,7 +200,7 @@ impl NoLossOfPrecision {
     }
 
     fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
-        let raw = Self::get_raw(node);
+        let raw = node.raw.cow_replace('_', "");
         let Some(raw) = Self::normalize(&raw) else {
             return true;
         };
