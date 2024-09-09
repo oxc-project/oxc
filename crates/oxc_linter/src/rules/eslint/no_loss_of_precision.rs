@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use oxc_ast::{ast::NumericLiteral, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -184,7 +185,7 @@ impl<'a> RawNum<'a> {
 impl NoLossOfPrecision {
     fn get_raw<'a>(node: &'a NumericLiteral) -> Cow<'a, str> {
         if node.raw.contains('_') {
-            Cow::Owned(node.raw.replace('_', ""))
+            node.raw.cow_replace('_', "")
         } else {
             Cow::Borrowed(node.raw)
         }
