@@ -17,14 +17,17 @@ pub trait Rule: Sized + Default + fmt::Debug {
 
     /// Visit each AST Node
     #[expect(unused_variables)]
+    #[inline]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
 
     /// Visit each symbol
     #[expect(unused_variables)]
+    #[inline]
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
     #[expect(unused_variables)]
+    #[inline]
     fn run_once(&self, ctx: &LintContext) {}
 
     /// Check if a rule should be run at all.
@@ -35,6 +38,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
     ///
     /// [`linter`]: crate::Linter
     #[expect(unused_variables)]
+    #[inline]
     fn should_run(&self, ctx: &LintContext) -> bool {
         true
     }
