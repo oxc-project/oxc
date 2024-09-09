@@ -64,7 +64,7 @@ impl Rule for NoSetState {
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
             || !member_expr.static_property_name().is_some_and(|str| str == "setState")
             || !(get_parent_es5_component(node, ctx).is_some()
-                || get_parent_es6_component(ctx).is_some())
+                || get_parent_es6_component(node, ctx).is_some())
         {
             return;
         }
@@ -104,6 +104,26 @@ fn test() {
 			            return <div>Hello {this.props.name}</div>;
 			          }
 			        });
+			      ",
+        "
+			        var Hello = function() {
+			          this.setState({})
+			        };
+			        createReactClass({
+			          render: function() {
+			            let x;
+			          }
+			        });
+			      ",
+        "
+			        var Hello = function() {
+			          this.setState({})
+			        };
+			        class Other extends React.Component {
+			          render() {
+			            let x;
+			          }
+			        };
 			      ",
     ];
 
