@@ -26,7 +26,6 @@ mod ternary;
 
 use std::borrow::Cow;
 
-use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
@@ -1400,12 +1399,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
 impl<'a> Format<'a> for BigIntLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let text = self.span.source_text(p.source_text);
-        // Perf: avoid a memory allocation from `to_ascii_lowercase`.
-        if text.contains(|c: char| c.is_lowercase()) {
-            p.str(&text.cow_to_ascii_lowercase())
-        } else {
-            Doc::Str(text)
-        }
+        Doc::Str(text)
     }
 }
 

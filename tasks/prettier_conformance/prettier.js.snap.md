@@ -1,4 +1,4 @@
-js compatibility: 263/593 (44.35%)
+js compatibility: 262/593 (44.18%)
 
 # Failed
 
@@ -56,6 +56,9 @@ js compatibility: 263/593 (44.35%)
 ### async
 * async/inline-await.js
 * async/nested.js
+
+### big-int
+* big-int/literal.js
 
 ### binary-expressions
 * binary-expressions/arrow.js

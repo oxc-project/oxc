@@ -1783,7 +1783,6 @@ name = "oxc_prettier"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.6.0",
- "cow-utils",
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
