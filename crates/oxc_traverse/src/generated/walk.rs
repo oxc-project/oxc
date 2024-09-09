@@ -2379,7 +2379,7 @@ pub(crate) unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
         as *mut Box<Vec<Directive>>))
         .iter_mut()
     {
-        walk_directive(traverser, std::ptr::from_mut(item), ctx);
+        walk_directive(traverser, item as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::FunctionBodyStatements);
     walk_statements(

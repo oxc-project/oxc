@@ -135,7 +135,6 @@ function generateWalkForStruct(type, types) {
         }
       `;
     }
-    console.log('field', field)
 
     if (field.wrappers[0] === 'Vec') {
       let walkVecCode;
@@ -145,7 +144,6 @@ function generateWalkForStruct(type, types) {
       } else {
         let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
           iterModifier = '';
-        console.log(`walkCode: `, walkCode)
 
         if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
           iterModifier = '.flatten()';
@@ -174,7 +172,7 @@ function generateWalkForStruct(type, types) {
         // Special case for `Vec<Statement>`
         walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`;
       } else {
-        let walkCode = `${fieldWalkName}(traverser, std::ptr::from_mut(item), ctx);`,
+        let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
           iterModifier = '';
         console.log(`walkCode: `, walkCode)
 
