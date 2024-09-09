@@ -1,1 +1,6 @@
 ignore-interior-mutability = ["oxc_linter::rule::RuleWithSeverity"]
+
+disallowed-methods = [
+  "str::to_ascii_uppercase",
+  "str::to_ascii_lowercase",
+]

@@ -26,6 +26,7 @@ mod ternary;
 
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
@@ -1341,7 +1342,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
             let mut string = Cow::Borrowed(raw);
 
             if string.contains(|c: char| c.is_ascii_uppercase()) {
-                string = Cow::Owned(string.to_ascii_lowercase());
+                string.cow_to_ascii_lowercase();
             }
 
             // Remove unnecessary plus and zeroes from scientific notation.
@@ -1405,7 +1406,7 @@ impl<'a> Format<'a> for BigIntLiteral<'a> {
         let text = self.span.source_text(p.source_text);
         // Perf: avoid a memory allocation from `to_ascii_lowercase`.
         if text.contains(|c: char| c.is_lowercase()) {
-            p.str(&text.to_ascii_lowercase())
+            p.str(&text.cow_to_ascii_lowercase())
         } else {
             Doc::Str(text)
         }
