@@ -54,7 +54,7 @@ impl SymbolTable {
 
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.spans.is_empty()
     }
 
     pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
