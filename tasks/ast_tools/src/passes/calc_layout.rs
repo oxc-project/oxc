@@ -144,7 +144,7 @@ fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
 
 fn calc_struct_layout(ty: &mut Struct, ctx: &EarlyCtx) -> Result<PlatformLayout> {
     fn collect_field_layouts(ty: &Struct, ctx: &EarlyCtx) -> Result<Vec<PlatformLayout>> {
-        let ret = if ty.item.fields.is_empty() {
+        if ty.item.fields.is_empty() {
             Ok(vec![PlatformLayout::zero()])
         } else {
             ty.item
@@ -155,13 +155,7 @@ fn calc_struct_layout(ty: &mut Struct, ctx: &EarlyCtx) -> Result<PlatformLayout>
                     calc_type_layout(&typ, ctx)
                 })
                 .collect()
-        };
-
-        if (ty.item.ident.to_string() == "FunctionBody") {
-            dbg!(&ty.meta.module_path, ty.item.ident.to_string());
-            dbg!(&ret);
         }
-        ret
     }
 
     fn with_padding(
