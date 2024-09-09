@@ -1627,6 +1627,7 @@ version = "0.9.3"
 dependencies = [
  "bitflags 2.6.0",
  "convert_case",
+ "cow-utils",
  "dashmap 6.0.1",
  "globset",
  "insta",

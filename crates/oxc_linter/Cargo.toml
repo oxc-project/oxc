@@ -36,6 +36,7 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 convert_case = { workspace = true }
+cow-utils = { workspace = true }
 dashmap = { workspace = true }
 globset = { workspace = true }
 itertools = { workspace = true }
@@ -55,7 +56,6 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 url = { workspace = true }
-cow-utils = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
