@@ -1341,10 +1341,6 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
             let raw = self.span.source_text(p.source_text);
             let mut string = Cow::Borrowed(raw);
 
-            if string.contains(|c: char| c.is_ascii_uppercase()) {
-                string.cow_to_ascii_lowercase();
-            }
-
             // Remove unnecessary plus and zeroes from scientific notation.
             if let Some((head, tail)) = string.split_once('e') {
                 let negative = if tail.starts_with('-') { "-" } else { "" };
