@@ -66,7 +66,7 @@ impl Rule for NoUselessSwitchCase {
         let default_case = default_cases[0];
 
         // Check if the `default` case is the last case
-        if std::ptr::from_ref(default_case) != std::ptr::from_ref(cases.last().unwrap()) {
+        if !std::ptr::eq(default_case, cases.last().unwrap()) {
             return;
         }
 
