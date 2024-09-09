@@ -12,38 +12,38 @@ export default function generateWalkFunctionsCode(types) {
   }
 
   return `
-        #![allow(
-            unsafe_code,
-            clippy::missing_safety_doc,
-            clippy::missing_panics_doc,
-            clippy::undocumented_unsafe_blocks,
-            clippy::semicolon_if_nothing_returned,
-            clippy::cast_ptr_alignment
-        )]
+    #![allow(
+      unsafe_code,
+      clippy::missing_safety_doc,
+      clippy::missing_panics_doc,
+      clippy::undocumented_unsafe_blocks,
+      clippy::semicolon_if_nothing_returned,
+      clippy::cast_ptr_alignment
+    )]
 
-        use std::{cell::Cell, marker::PhantomData};
+    use std::{cell::Cell, marker::PhantomData};
 
-        use oxc_allocator::Vec;
-        #[allow(clippy::wildcard_imports)]
-        use oxc_ast::ast::*;
-        use oxc_syntax::scope::ScopeId;
+    use oxc_allocator::Vec;
+    #[allow(clippy::wildcard_imports)]
+    use oxc_ast::ast::*;
+    use oxc_syntax::scope::ScopeId;
 
-        use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
+    use crate::{ancestor::{self, AncestorType}, Ancestor, Traverse, TraverseCtx};
 
-        ${walkMethods}
+    ${walkMethods}
 
-        pub(crate) unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
-            traverser: &mut Tr,
-            stmts: *mut Vec<'a, Statement<'a>>,
-            ctx: &mut TraverseCtx<'a>
-        ) {
-            traverser.enter_statements(&mut *stmts, ctx);
-            for stmt in (*stmts).iter_mut() {
-                walk_statement(traverser, stmt, ctx);
-            }
-            traverser.exit_statements(&mut *stmts, ctx);
-        }
-    `;
+    pub(crate) unsafe fn walk_statements<'a, Tr: Traverse<'a>>(
+      traverser: &mut Tr,
+      stmts: *mut Vec<'a, Statement<'a>>,
+      ctx: &mut TraverseCtx<'a>
+    ) {
+      traverser.enter_statements(&mut *stmts, ctx);
+      for stmt in (*stmts).iter_mut() {
+        walk_statement(traverser, stmt, ctx);
+      }
+      traverser.exit_statements(&mut *stmts, ctx);
+    }
+  `;
 }
 
 function generateWalkForStruct(type, types) {
@@ -77,9 +77,9 @@ function generateWalkForStruct(type, types) {
     // Visitor should not do that though, so maybe it's OK.
     // In final version, we should not make `scope_id` fields `Cell`s to prevent this.
     enterScopeCode = `
-            let previous_scope_id = ctx.current_scope_id();
-            ctx.set_current_scope_id((*(${makeFieldCode(scopeIdField)})).get().unwrap());
-        `;
+      let previous_scope_id = ctx.current_scope_id();
+      ctx.set_current_scope_id((*(${makeFieldCode(scopeIdField)})).get().unwrap());
+    `;
     exitScopeCode = `ctx.set_current_scope_id(previous_scope_id);`;
   }
 
@@ -91,12 +91,12 @@ function generateWalkForStruct(type, types) {
     let tagCode = '', retagCode = '';
     if (index === 0) {
       tagCode = `
-                let pop_token = ctx.push_stack(
-                    Ancestor::${type.name}${fieldCamelName}(
-                        ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
-                    )
-                );
-            `;
+        let pop_token = ctx.push_stack(
+            Ancestor::${type.name}${fieldCamelName}(
+                ancestor::${type.name}Without${fieldCamelName}(node, PhantomData)
+            )
+        );
+      `;
     } else {
       retagCode = `ctx.retag_stack(AncestorType::${type.name}${fieldCamelName});`;
     }
@@ -111,10 +111,10 @@ function generateWalkForStruct(type, types) {
           walkCode = `walk_statements(traverser, std::ptr::from_mut(field), ctx);`;
         } else {
           walkCode = `
-                        for item in field.iter_mut() {
-                            ${fieldWalkName}(traverser, std::ptr::from_mut(item), ctx);
-                        }
-                    `.trim();
+            for item in field.iter_mut() {
+              ${fieldWalkName}(traverser, std::ptr::from_mut(item), ctx);
+            }
+          `.trim();
         }
       } else if (field.wrappers.length === 2 && field.wrappers[1] === 'Box') {
         walkCode = `${fieldWalkName}(traverser, std::ptr::from_mut(&mut **field), ctx);`;
@@ -124,13 +124,13 @@ function generateWalkForStruct(type, types) {
       }
 
       return `
-                ${scopeCode}
-                ${tagCode}
-                if let Some(field) = &mut *(${fieldCode}) {
-                    ${retagCode}
-                    ${walkCode}
-                }
-            `;
+        ${scopeCode}
+        ${tagCode}
+        if let Some(field) = &mut *(${fieldCode}) {
+          ${retagCode}
+          ${walkCode}
+        }
+      `;
     }
 
     if (field.wrappers[0] === 'Vec') {
@@ -150,51 +150,51 @@ function generateWalkForStruct(type, types) {
           );
         }
         walkVecCode = `
-                    for item in (*(${fieldCode})).iter_mut()${iterModifier} {
-                        ${walkCode}
-                    }
-                `.trim();
+          for item in (*(${fieldCode})).iter_mut()${iterModifier} {
+            ${walkCode}
+          }
+        `.trim();
       }
 
       return `
-                ${scopeCode}
-                ${tagCode || retagCode}
-                ${walkVecCode}
-            `;
+        ${scopeCode}
+        ${tagCode || retagCode}
+        ${walkVecCode}
+      `;
     }
 
     if (field.wrappers.length === 1 && field.wrappers[0] === 'Box') {
       return `
-                ${scopeCode}
-                ${tagCode || retagCode}
-                ${fieldWalkName}(traverser, std::ptr::from_mut(&mut **(${fieldCode})), ctx);
-            `;
+        ${scopeCode}
+        ${tagCode || retagCode}
+        ${fieldWalkName}(traverser, std::ptr::from_mut(&mut **(${fieldCode})), ctx);
+      `;
     }
 
     assert(field.wrappers.length === 0, `Cannot handle struct field with type: ${field.type}`);
 
     return `
-            ${scopeCode}
-            ${tagCode || retagCode}
-            ${fieldWalkName}(traverser, ${fieldCode}, ctx);
-        `;
+      ${scopeCode}
+      ${tagCode || retagCode}
+      ${fieldWalkName}(traverser, ${fieldCode}, ctx);
+    `;
   });
 
   if (visitedFields.length > 0) fieldsCodes.push('ctx.pop_stack(pop_token);');
 
   const typeSnakeName = camelToSnake(type.name);
   return `
-        pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
-            traverser: &mut Tr,
-            node: *mut ${type.rawName},
-            ctx: &mut TraverseCtx<'a>
-        ) {
-            traverser.enter_${typeSnakeName}(&mut *node, ctx);
-            ${fieldsCodes.join('\n')}
-            ${exitScopeCode}
-            traverser.exit_${typeSnakeName}(&mut *node, ctx);
-        }
-    `.replace(/\n\s*\n+/g, '\n');
+    pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
+      traverser: &mut Tr,
+      node: *mut ${type.rawName},
+      ctx: &mut TraverseCtx<'a>
+    ) {
+      traverser.enter_${typeSnakeName}(&mut *node, ctx);
+      ${fieldsCodes.join('\n')}
+      ${exitScopeCode}
+      traverser.exit_${typeSnakeName}(&mut *node, ctx);
+    }
+  `.replace(/\n\s*\n+/g, '\n');
 }
 
 function makeFieldCode(field) {
@@ -245,16 +245,16 @@ function generateWalkForEnum(type, types) {
 
   const typeSnakeName = camelToSnake(type.name);
   return `
-        pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
-            traverser: &mut Tr,
-            node: *mut ${type.rawName},
-            ctx: &mut TraverseCtx<'a>
-        ) {
-            traverser.enter_${typeSnakeName}(&mut *node, ctx);
-            match &mut *node {
-                ${variantCodes.join('\n')}
-            }
-            traverser.exit_${typeSnakeName}(&mut *node, ctx);
-        }
-    `;
+    pub(crate) unsafe fn walk_${typeSnakeName}<'a, Tr: Traverse<'a>>(
+      traverser: &mut Tr,
+      node: *mut ${type.rawName},
+      ctx: &mut TraverseCtx<'a>
+    ) {
+      traverser.enter_${typeSnakeName}(&mut *node, ctx);
+      match &mut *node {
+        ${variantCodes.join('\n')}
+      }
+      traverser.exit_${typeSnakeName}(&mut *node, ctx);
+    }
+  `;
 }
