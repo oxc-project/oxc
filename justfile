@@ -96,6 +96,14 @@ coverage:
 conformance *args='':
   cargo coverage -- {{args}}
 
+# Watch oxlint
+watch-oxlint *args='':
+  just watch 'run -p oxlint -- {{args}}'
+
+# Build oxlint in release build
+oxlint:
+  cargo oxlint
+
 # Get code coverage
 codecov:
   cargo codecov --html
@@ -113,10 +121,6 @@ autoinherit:
 test-transform *args='':
   cargo run -p oxc_transform_conformance -- {{args}}
   cargo run -p oxc_transform_conformance -- --exec  {{args}}
-
-# Build oxlint in release build
-oxlint:
-  cargo oxlint
 
 # Install wasm-pack
 install-wasm:
