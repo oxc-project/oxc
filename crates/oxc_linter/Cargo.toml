@@ -36,6 +36,7 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 convert_case = { workspace = true }
+cow-utils = { workspace = true }
 dashmap = { workspace = true }
 globset = { workspace = true }
 itertools = { workspace = true }

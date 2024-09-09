@@ -328,6 +328,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cow-utils"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "417bef24afe1460300965a25ff4a24b8b45ad011948302ec221e8a0a81eb2c79"
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1621,6 +1627,7 @@ version = "0.9.3"
 dependencies = [
  "bitflags 2.6.0",
  "convert_case",
+ "cow-utils",
  "dashmap 6.0.1",
  "globset",
  "insta",
