@@ -8,7 +8,7 @@ use std::path::Path;
 use oxc_diagnostics::OxcDiagnostic;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub use self::{
     env::OxlintEnv,
@@ -53,7 +53,7 @@ use crate::{
 ///   }
 ///  }
 /// ```
-#[derive(Debug, Default, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
 pub struct OxlintConfig {
     /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).

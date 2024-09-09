@@ -19,6 +19,14 @@ impl AllowWarnDeny {
     pub fn is_allow(self) -> bool {
         self == Self::Allow
     }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Allow => "allow",
+            Self::Warn => "warn",
+            Self::Deny => "deny",
+        }
+    }
 }
 
 impl TryFrom<&str> for AllowWarnDeny {

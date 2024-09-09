@@ -6,6 +6,9 @@
   "properties": {
     "env": {
       "description": "Environments enable and disable collections of global variables.",
+      "default": {
+        "builtin": true
+      },
       "allOf": [
         {
           "$ref": "#/definitions/OxlintEnv"
@@ -14,6 +17,7 @@
     },
     "globals": {
       "description": "Enabled or disabled specific global variables.",
+      "default": {},
       "allOf": [
         {
           "$ref": "#/definitions/OxlintGlobals"
@@ -22,6 +26,7 @@
     },
     "rules": {
       "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).",
+      "default": {},
       "allOf": [
         {
           "$ref": "#/definitions/OxlintRules"
@@ -29,7 +34,34 @@
       ]
     },
     "settings": {
-      "$ref": "#/definitions/OxlintSettings"
+      "default": {
+        "jsx-a11y": {
+          "polymorphicPropName": null,
+          "components": {}
+        },
+        "next": {
+          "rootDir": []
+        },
+        "react": {
+          "formComponents": [],
+          "linkComponents": []
+        },
+        "jsdoc": {
+          "ignorePrivate": false,
+          "ignoreInternal": false,
+          "ignoreReplacesDocs": true,
+          "overrideReplacesDocs": true,
+          "augmentsExtendsReplacesDocs": false,
+          "implementsReplacesDocs": false,
+          "exemptDestructuredRootsFromChecks": false,
+          "tagNamePreference": {}
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintSettings"
+        }
+      ]
     }
   },
   "definitions": {
@@ -160,6 +192,7 @@
           "type": "boolean"
         },
         "tagNamePreference": {
+          "default": {},
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/TagNamePreference"
@@ -189,7 +222,12 @@
       "type": "object",
       "properties": {
         "rootDir": {
-          "$ref": "#/definitions/OneOrMany_for_String"
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneOrMany_for_String"
+            }
+          ]
         }
       }
     },
@@ -228,16 +266,53 @@
       "type": "object",
       "properties": {
         "jsdoc": {
-          "$ref": "#/definitions/JSDocPluginSettings"
+          "default": {
+            "ignorePrivate": false,
+            "ignoreInternal": false,
+            "ignoreReplacesDocs": true,
+            "overrideReplacesDocs": true,
+            "augmentsExtendsReplacesDocs": false,
+            "implementsReplacesDocs": false,
+            "exemptDestructuredRootsFromChecks": false,
+            "tagNamePreference": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSDocPluginSettings"
+            }
+          ]
         },
         "jsx-a11y": {
-          "$ref": "#/definitions/JSXA11yPluginSettings"
+          "default": {
+            "polymorphicPropName": null,
+            "components": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSXA11yPluginSettings"
+            }
+          ]
         },
         "next": {
-          "$ref": "#/definitions/NextPluginSettings"
+          "default": {
+            "rootDir": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NextPluginSettings"
+            }
+          ]
         },
         "react": {
-          "$ref": "#/definitions/ReactPluginSettings"
+          "default": {
+            "formComponents": [],
+            "linkComponents": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReactPluginSettings"
+            }
+          ]
         }
       }
     },
@@ -245,12 +320,14 @@
       "type": "object",
       "properties": {
         "formComponents": {
+          "default": [],
           "type": "array",
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
         },
         "linkComponents": {
+          "default": [],
           "type": "array",
           "items": {
             "$ref": "#/definitions/CustomComponent"
