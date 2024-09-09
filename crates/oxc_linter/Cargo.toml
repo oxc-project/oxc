@@ -55,6 +55,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 url = { workspace = true }
+cow-utils = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
