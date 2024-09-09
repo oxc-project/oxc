@@ -17,7 +17,7 @@ description.workspace = true
 workspace = true
 
 [lib]
-test = false
+test = true
 # Doctests must be enabled for this crate as they are used to run tests
 # which check the soundness of its code
 doctest = true
