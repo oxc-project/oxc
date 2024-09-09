@@ -1339,6 +1339,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
             // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
             let raw = self.span.source_text(p.source_text);
             let mut string = Cow::Borrowed(raw);
+            string.cow_to_ascii_lowercase();
 
             // Remove unnecessary plus and zeroes from scientific notation.
             if let Some((head, tail)) = string.split_once('e') {
