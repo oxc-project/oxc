@@ -548,6 +548,10 @@ mod test {
         (r"/\udf06/u", Some(r"/\uDF06/u")),
         // we capitalize hex unicodes.
         (r"/^|\udf06/g", Some(r"/^|\uDF06/g")),
+        (r"/[\-]/", None),
+        (r"/[\-]/u", None),
+        (r"/[\-]/v", None),
+        (r"/([\-a-z]{0,31})/iu", None),
     ];
 
     fn test_display(allocator: &Allocator, (source, expect): &Case) {

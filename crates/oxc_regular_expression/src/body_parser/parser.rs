@@ -979,7 +979,7 @@ impl<'a> PatternParser<'a> {
         if self.state.unicode_mode && self.reader.eat('-') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
-                kind: ast::CharacterKind::Symbol,
+                kind: ast::CharacterKind::SingleEscape,
                 value: '-' as u32,
             })));
         }
