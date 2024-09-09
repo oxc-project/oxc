@@ -18,6 +18,9 @@ export default function generateWalkFunctionsCode(types) {
       clippy::missing_panics_doc,
       clippy::undocumented_unsafe_blocks,
       clippy::semicolon_if_nothing_returned,
+      clippy::ptr_as_ptr,
+      clippy::ref_as_ptr,
+      clippy::borrow_as_ptr,
       clippy::cast_ptr_alignment
     )]
 
@@ -108,19 +111,19 @@ function generateWalkForStruct(type, types) {
       if (field.wrappers.length === 2 && field.wrappers[1] === 'Vec') {
         if (field.typeNameInner === 'Statement') {
           // Special case for `Option<Vec<Statement>>`
-          walkCode = `walk_statements(traverser, std::ptr::from_mut(field), ctx);`;
+          walkCode = `walk_statements(traverser, field as *mut _, ctx);`;
         } else {
           walkCode = `
             for item in field.iter_mut() {
-              ${fieldWalkName}(traverser, std::ptr::from_mut(item), ctx);
+              ${fieldWalkName}(traverser, item as *mut _, ctx);
             }
           `.trim();
         }
       } else if (field.wrappers.length === 2 && field.wrappers[1] === 'Box') {
-        walkCode = `${fieldWalkName}(traverser, std::ptr::from_mut(&mut **field), ctx);`;
+        walkCode = `${fieldWalkName}(traverser, (&mut **field) as *mut _, ctx);`;
       } else {
         assert(field.wrappers.length === 1, `Cannot handle struct field with type ${field.typeName}`);
-        walkCode = `${fieldWalkName}(traverser, std::ptr::from_mut(field), ctx);`;
+        walkCode = `${fieldWalkName}(traverser, field as *mut _, ctx);`;
       }
 
       return `
@@ -139,7 +142,7 @@ function generateWalkForStruct(type, types) {
         // Special case for `Vec<Statement>`
         walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`;
       } else {
-        let walkCode = `${fieldWalkName}(traverser, std::ptr::from_mut(item), ctx);`,
+        let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
           iterModifier = '';
         if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
           iterModifier = '.flatten()';
@@ -167,7 +170,7 @@ function generateWalkForStruct(type, types) {
       return `
         ${scopeCode}
         ${tagCode || retagCode}
-        ${fieldWalkName}(traverser, std::ptr::from_mut(&mut **(${fieldCode})), ctx);
+        ${fieldWalkName}(traverser, (&mut **(${fieldCode})) as *mut _, ctx);
       `;
     }
 
@@ -198,7 +201,7 @@ function generateWalkForStruct(type, types) {
 }
 
 function makeFieldCode(field) {
-  return `node.cast::<u8>().add(ancestor::${field.offsetVarName}).cast::<${field.typeName}>()`;
+  return `(node as *mut u8).add(ancestor::${field.offsetVarName}) as *mut ${field.typeName}`;
 }
 
 function generateWalkForEnum(type, types) {
@@ -206,7 +209,7 @@ function generateWalkForEnum(type, types) {
     const variantType = types[variant.innerTypeName];
     assert(variantType, `Cannot handle enum variant with type: ${variant.type}`);
 
-    let nodeCode = '(node)';
+    let nodeCode = 'node';
     if (variant.wrappers.length === 1 && variant.wrappers[0] === 'Box') {
       nodeCode = '(&mut **node)';
     } else {
@@ -214,7 +217,7 @@ function generateWalkForEnum(type, types) {
     }
 
     return `${type.name}::${variant.name}(node) => ` +
-      `walk_${camelToSnake(variant.innerTypeName)}(traverser, std::ptr::from_mut${nodeCode}, ctx),`;
+      `walk_${camelToSnake(variant.innerTypeName)}(traverser, ${nodeCode} as *mut _, ctx),`;
   });
 
   const missingVariants = [];
@@ -237,7 +240,7 @@ function generateWalkForEnum(type, types) {
 
     variantCodes.push(
       `${variantMatches.join(' | ')} => ` +
-        `walk_${camelToSnake(inheritedTypeName)}(traverser, node.cast(), ctx),`,
+        `walk_${camelToSnake(inheritedTypeName)}(traverser, node as *mut _, ctx),`,
     );
   }
 
