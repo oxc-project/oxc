@@ -1,6 +1,6 @@
 ignore-interior-mutability = ["oxc_linter::rule::RuleWithSeverity"]
 
 disallowed-methods = [
-  "str::to_ascii_uppercase",
-  "str::to_ascii_lowercase",
+  { path = "str::to_ascii_lowercase", reason = "avoid a memory allocation from `to_ascii_lowercase`" },
+  { path = "str::to_ascii_uppercase", reason = "avoid a memory allocation from `to_ascii_uppercase`" },
 ]

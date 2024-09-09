@@ -1,4 +1,4 @@
-js compatibility: 265/593 (44.69%)
+js compatibility: 263/593 (44.35%)
 
 # Failed
 
@@ -298,6 +298,12 @@ js compatibility: 265/593 (44.69%)
 
 ### line-suffix-boundary
 * line-suffix-boundary/boundary.js
+
+### literal
+* literal/number.js
+
+### literal-numeric-separator
+* literal-numeric-separator/test.js
 
 ### logical_expressions
 * logical_expressions/issue-7024.js
