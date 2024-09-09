@@ -61,10 +61,6 @@ impl SymbolTable {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
-    pub fn iter_rev(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.spans.iter_enumerated().rev().map(|(symbol_id, _)| symbol_id)
-    }
-
     pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
         self.spans
             .iter_enumerated()
