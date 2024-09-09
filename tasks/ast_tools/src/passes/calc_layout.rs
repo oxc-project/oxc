@@ -144,7 +144,7 @@ fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
 
 fn calc_struct_layout(ty: &mut Struct, ctx: &EarlyCtx) -> Result<PlatformLayout> {
     fn collect_field_layouts(ty: &Struct, ctx: &EarlyCtx) -> Result<Vec<PlatformLayout>> {
-        if ty.item.fields.is_empty() {
+        let ret = if ty.item.fields.is_empty() {
             Ok(vec![PlatformLayout::zero()])
         } else {
             ty.item
@@ -155,7 +155,13 @@ fn calc_struct_layout(ty: &mut Struct, ctx: &EarlyCtx) -> Result<PlatformLayout>
                     calc_type_layout(&typ, ctx)
                 })
                 .collect()
+        };
+
+        if (ty.item.ident.to_string() == "FunctionBody") {
+            dbg!(&ty.meta.module_path, ty.item.ident.to_string());
+            dbg!(&ret);
         }
+        ret
     }
 
     fn with_padding(
@@ -261,7 +267,9 @@ fn calc_type_layout(ty: &TypeAnalysis, ctx: &EarlyCtx) -> Result<PlatformLayout>
             pl
         }
         TypeWrapper::Ref if is_slice(ty) => PlatformLayout::wide_ptr(),
-        TypeWrapper::Ref | TypeWrapper::Box | TypeWrapper::OptBox => PlatformLayout::ptr(),
+        TypeWrapper::Ref | TypeWrapper::Box | TypeWrapper::OptBox | TypeWrapper::BoxVec => {
+            PlatformLayout::ptr()
+        }
         TypeWrapper::None => get_layout(ty.type_id.map(|id| ctx.ast_ref(id)).as_ref())?,
         TypeWrapper::Opt => {
             let PlatformLayout(x64, x32) =

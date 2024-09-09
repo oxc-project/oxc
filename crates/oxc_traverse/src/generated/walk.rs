@@ -2376,10 +2376,10 @@ pub(crate) unsafe fn walk_function_body<'a, Tr: Traverse<'a>>(
         ancestor::FunctionBodyWithoutDirectives(node, PhantomData),
     ));
     for item in (*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY_DIRECTIVES)
-        as *mut Vec<Directive>))
+        as *mut Box<Vec<Directive>>))
         .iter_mut()
     {
-        walk_directive(traverser, item as *mut _, ctx);
+        walk_directive(traverser, std::ptr::from_mut(item), ctx);
     }
     ctx.retag_stack(AncestorType::FunctionBodyStatements);
     walk_statements(

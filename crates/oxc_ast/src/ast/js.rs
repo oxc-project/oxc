@@ -1790,7 +1790,7 @@ pub enum FormalParameterKind {
 pub struct FunctionBody<'a> {
     #[serde(flatten)]
     pub span: Span,
-    pub directives: Vec<'a, Directive<'a>>,
+    pub directives: Box<'a, Vec<'a, Directive<'a>>>,
     pub statements: Vec<'a, Statement<'a>>,
 }
 

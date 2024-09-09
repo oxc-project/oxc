@@ -5928,13 +5928,16 @@ impl<'a> AstBuilder<'a> {
     /// - directives
     /// - statements
     #[inline]
-    pub fn function_body(
+    pub fn function_body<T1>(
         self,
         span: Span,
-        directives: Vec<'a, Directive<'a>>,
+        directives: T1,
         statements: Vec<'a, Statement<'a>>,
-    ) -> FunctionBody<'a> {
-        FunctionBody { span, directives, statements }
+    ) -> FunctionBody<'a>
+    where
+        T1: IntoIn<'a, Box<'a, Vec<'a, Directive<'a>>>>,
+    {
+        FunctionBody { span, directives: directives.into_in(self.allocator), statements }
     }
 
     /// Builds a [`FunctionBody`] and stores it in the memory arena.
@@ -5946,12 +5949,15 @@ impl<'a> AstBuilder<'a> {
     /// - directives
     /// - statements
     #[inline]
-    pub fn alloc_function_body(
+    pub fn alloc_function_body<T1>(
         self,
         span: Span,
-        directives: Vec<'a, Directive<'a>>,
+        directives: T1,
         statements: Vec<'a, Statement<'a>>,
-    ) -> Box<'a, FunctionBody<'a>> {
+    ) -> Box<'a, FunctionBody<'a>>
+    where
+        T1: IntoIn<'a, Box<'a, Vec<'a, Directive<'a>>>>,
+    {
         Box::new_in(self.function_body(span, directives, statements), self.allocator)
     }
 

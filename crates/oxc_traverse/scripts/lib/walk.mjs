@@ -68,7 +68,7 @@ function generateWalkForStruct(type, types) {
       assert(
         scopeEnterField,
         `\`ast\` attr says to enter scope before field '${enterFieldName}' ` +
-          `in '${type.name}', but that field is not visited`,
+        `in '${type.name}', but that field is not visited`,
       );
     } else {
       scopeEnterField = visitedFields[0];
@@ -135,6 +135,7 @@ function generateWalkForStruct(type, types) {
         }
       `;
     }
+    console.log('field', field)
 
     if (field.wrappers[0] === 'Vec') {
       let walkVecCode;
@@ -144,6 +145,8 @@ function generateWalkForStruct(type, types) {
       } else {
         let walkCode = `${fieldWalkName}(traverser, item as *mut _, ctx);`,
           iterModifier = '';
+        console.log(`walkCode: `, walkCode)
+
         if (field.wrappers.length === 2 && field.wrappers[1] === 'Option') {
           iterModifier = '.flatten()';
         } else {
@@ -164,6 +167,29 @@ function generateWalkForStruct(type, types) {
         ${tagCode || retagCode}
         ${walkVecCode}
       `;
+    }
+    if (field.wrappers.length === 2 && field.wrappers[0] === 'Box' && field.wrappers[1] === 'Vec') {
+      let walkVecCode;
+      if (field.innerTypeName === 'Statement') {
+        // Special case for `Vec<Statement>`
+        walkVecCode = `walk_statements(traverser, ${fieldCode}, ctx);`;
+      } else {
+        let walkCode = `${fieldWalkName}(traverser, std::ptr::from_mut(item), ctx);`,
+          iterModifier = '';
+        console.log(`walkCode: `, walkCode)
+
+        walkVecCode = `
+                    for item in (*(${fieldCode})).iter_mut()${iterModifier} {
+                        ${walkCode}
+                    }
+                `.trim();
+      }
+
+      return `
+                ${scopeCode}
+                ${tagCode || retagCode}
+                ${walkVecCode}
+            `;
     }
 
     if (field.wrappers.length === 1 && field.wrappers[0] === 'Box') {

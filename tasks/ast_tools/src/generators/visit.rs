@@ -497,7 +497,10 @@ impl<'a> VisitBuilder<'a> {
                     def,
                     matches!(
                         typ_wrapper,
-                        TypeWrapper::Vec | TypeWrapper::VecBox | TypeWrapper::OptVec
+                        TypeWrapper::Vec
+                            | TypeWrapper::VecBox
+                            | TypeWrapper::OptVec
+                            | TypeWrapper::BoxVec
                     ),
                     visit_as,
                 );

@@ -665,7 +665,7 @@ impl<'a> Gen for Function<'a> {
 impl<'a> Gen for FunctionBody<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.is_empty(), |p| {
-            for directive in &self.directives {
+            for directive in &*self.directives {
                 directive.gen(p, ctx);
             }
             for stmt in &self.statements {

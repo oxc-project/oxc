@@ -531,6 +531,11 @@ fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
                 let typ = def.to_type();
                 (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Box<'a, #typ>>), t)))
             }
+            (TypeWrapper::BoxVec, Some(def)) => {
+                let t = t_param();
+                let typ = def.to_type();
+                (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Box<'a, Vec<'a, #typ>>>), t)))
+            }
             (TypeWrapper::OptBox, Some(def)) => {
                 let t = t_param();
                 let typ = def.to_type();

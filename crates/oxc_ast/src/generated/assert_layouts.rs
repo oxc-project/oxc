@@ -581,11 +581,11 @@ const _: () = {
     assert!(size_of::<FormalParameterKind>() == 1usize);
     assert!(align_of::<FormalParameterKind>() == 1usize);
 
-    assert!(size_of::<FunctionBody>() == 72usize);
+    assert!(size_of::<FunctionBody>() == 48usize);
     assert!(align_of::<FunctionBody>() == 8usize);
     assert!(offset_of!(FunctionBody, span) == 0usize);
     assert!(offset_of!(FunctionBody, directives) == 8usize);
-    assert!(offset_of!(FunctionBody, statements) == 40usize);
+    assert!(offset_of!(FunctionBody, statements) == 16usize);
 
     assert!(size_of::<ArrowFunctionExpression>() == 56usize);
     assert!(align_of::<ArrowFunctionExpression>() == 8usize);
@@ -2136,11 +2136,11 @@ const _: () = {
     assert!(size_of::<FormalParameterKind>() == 1usize);
     assert!(align_of::<FormalParameterKind>() == 1usize);
 
-    assert!(size_of::<FunctionBody>() == 40usize);
+    assert!(size_of::<FunctionBody>() == 28usize);
     assert!(align_of::<FunctionBody>() == 4usize);
     assert!(offset_of!(FunctionBody, span) == 0usize);
     assert!(offset_of!(FunctionBody, directives) == 8usize);
-    assert!(offset_of!(FunctionBody, statements) == 24usize);
+    assert!(offset_of!(FunctionBody, statements) == 12usize);
 
     assert!(size_of::<ArrowFunctionExpression>() == 32usize);
     assert!(align_of::<ArrowFunctionExpression>() == 4usize);

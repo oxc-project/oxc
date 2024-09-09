@@ -6182,10 +6182,10 @@ impl<'a, 't> FunctionBodyWithoutStatements<'a, 't> {
     }
 
     #[inline]
-    pub fn directives(self) -> &'t Vec<'a, Directive<'a>> {
+    pub fn directives(self) -> &'t Box<'a, Vec<'a, Directive<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY_DIRECTIVES)
-                as *const Vec<'a, Directive<'a>>)
+                as *const Box<'a, Vec<'a, Directive<'a>>>)
         }
     }
 }

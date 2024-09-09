@@ -126,6 +126,7 @@ pub enum TypeWrapper {
     VecOpt,
     OptBox,
     OptVec,
+    BoxVec,
     Ref,
     /// We bailed on detecting the type wrapper
     Complex,
@@ -200,7 +201,11 @@ impl TypeExt for Type {
                 TypeIdentResult::Box(inner) => {
                     wrapper = TypeWrapper::Box;
                     let (inner, inner_kind) = analyze(inner)?;
-                    assert!(inner_kind == TypeWrapper::None,);
+                    if inner_kind == TypeWrapper::Vec {
+                        wrapper = TypeWrapper::BoxVec;
+                    } else {
+                        assert!(inner_kind == TypeWrapper::None,);
+                    }
                     inner
                 }
                 TypeIdentResult::Vec(inner) => {
