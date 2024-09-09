@@ -1,16 +1,8 @@
-use core::hash::Hasher;
-
 use oxc_ast::{ast::BindingIdentifier, AstKind};
 use oxc_semantic::{AstNode, AstNodeId, SymbolId};
-use oxc_span::{hash::ContentHash, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
-use rustc_hash::FxHasher;
 
-pub fn calculate_hash<T: ContentHash>(t: &T) -> u64 {
-    let mut hasher = FxHasher::default();
-    t.content_hash(&mut hasher);
-    hasher.finish()
-}
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
