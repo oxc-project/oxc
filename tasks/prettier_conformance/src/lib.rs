@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, clippy::print_stderr)]
+#![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
 mod ignore_list;
 mod spec;
 

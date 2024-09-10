@@ -232,9 +232,7 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
         _ => return false,
     };
 
-    if ident.starts_with(|c: char| c.is_ascii_uppercase())
-        && ident.cow_to_ascii_uppercase() != ident
-    {
+    if ident.cow_to_ascii_uppercase() != ident {
         return true;
     }
 
