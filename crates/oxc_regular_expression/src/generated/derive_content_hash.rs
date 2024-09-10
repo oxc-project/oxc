@@ -144,6 +144,7 @@ impl<'a> ContentHash for CharacterClass<'a> {
     fn content_hash<H: Hasher>(&self, state: &mut H) {
         ContentHash::content_hash(&self.negative, state);
         ContentHash::content_hash(&self.kind, state);
+        ContentHash::content_hash(&self.strings, state);
         ContentHash::content_hash(&self.body, state);
     }
 }

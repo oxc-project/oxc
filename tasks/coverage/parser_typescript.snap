@@ -10957,6 +10957,46 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/salsa/private
  43 │     /[^\p{Emoji}[[\p{RGI_Emoji}]]][^\p{Emoji}--[[\p{RGI_Emoji}]]][^\p{Emoji}&&[[\p{RGI_Emoji}]]]/v,
     ╰────
 
+  × Invalid regular expression: Invalid character class with strings unicode property
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:43:3]
+ 42 │     /[^\p{RGI_Emoji}\q{foo}][^\p{RGI_Emoji}--\q{foo}][^\p{RGI_Emoji}&&\q{foo}]/v,
+ 43 │     /[^\p{Emoji}[[\p{RGI_Emoji}]]][^\p{Emoji}--[[\p{RGI_Emoji}]]][^\p{Emoji}&&[[\p{RGI_Emoji}]]]/v,
+    ·      ─────────────────────────────
+ 44 │     /[^[[\p{RGI_Emoji}]]\p{Emoji}][^[[\p{RGI_Emoji}]]--\p{Emoji}][^[[\p{RGI_Emoji}]]&&\p{Emoji}]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid character class with strings unicode property
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:44:3]
+ 43 │     /[^\p{Emoji}[[\p{RGI_Emoji}]]][^\p{Emoji}--[[\p{RGI_Emoji}]]][^\p{Emoji}&&[[\p{RGI_Emoji}]]]/v,
+ 44 │     /[^[[\p{RGI_Emoji}]]\p{Emoji}][^[[\p{RGI_Emoji}]]--\p{Emoji}][^[[\p{RGI_Emoji}]]&&\p{Emoji}]/v,
+    ·      ─────────────────────────────
+ 45 │     /[^[[\p{RGI_Emoji}]]\q{foo}][^[[\p{RGI_Emoji}]]--\q{foo}][^[[\p{RGI_Emoji}]]&&\q{foo}]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid character class with strings unicode property
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:45:3]
+ 44 │     /[^[[\p{RGI_Emoji}]]\p{Emoji}][^[[\p{RGI_Emoji}]]--\p{Emoji}][^[[\p{RGI_Emoji}]]&&\p{Emoji}]/v,
+ 45 │     /[^[[\p{RGI_Emoji}]]\q{foo}][^[[\p{RGI_Emoji}]]--\q{foo}][^[[\p{RGI_Emoji}]]&&\q{foo}]/v,
+    ·      ───────────────────────────
+ 46 │     /[^\q{foo|bar|baz}--\q{foo}--\q{bar}--\q{baz}][^\p{L}--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid character class with strings unicode property
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:46:3]
+ 45 │     /[^[[\p{RGI_Emoji}]]\q{foo}][^[[\p{RGI_Emoji}]]--\q{foo}][^[[\p{RGI_Emoji}]]&&\q{foo}]/v,
+ 46 │     /[^\q{foo|bar|baz}--\q{foo}--\q{bar}--\q{baz}][^\p{L}--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
+    ·      ─────────────────────────────────────────────
+ 47 │     /[^[[\q{foo|bar|baz}]]--\q{foo}--\q{bar}--\q{baz}][^[^[^\p{L}]]--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
+    ╰────
+
+  × Invalid regular expression: Invalid character class with strings unicode property
+    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:47:3]
+ 46 │     /[^\q{foo|bar|baz}--\q{foo}--\q{bar}--\q{baz}][^\p{L}--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
+ 47 │     /[^[[\q{foo|bar|baz}]]--\q{foo}--\q{bar}--\q{baz}][^[^[^\p{L}]]--\q{foo}--[\q{bar}]--[^[\q{baz}]]]/v,
+    ·      ─────────────────────────────────────────────────
+ 48 │ ];
+    ╰────
+
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:2]
  2 │     // Flags

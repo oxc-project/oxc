@@ -230,6 +230,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CharacterClass<'old_alloc> 
             span: CloneIn::clone_in(&self.span, allocator),
             negative: CloneIn::clone_in(&self.negative, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
+            strings: CloneIn::clone_in(&self.strings, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
         }
     }

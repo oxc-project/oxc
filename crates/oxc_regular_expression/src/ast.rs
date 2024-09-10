@@ -238,6 +238,7 @@ pub struct CharacterClass<'a> {
     pub span: Span,
     pub negative: bool,
     pub kind: CharacterClassContentsKind,
+    pub strings: bool,
     pub body: Vec<'a, CharacterClassContents<'a>>,
 }
 
