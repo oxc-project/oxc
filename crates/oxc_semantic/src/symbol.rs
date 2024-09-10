@@ -62,7 +62,7 @@ impl SymbolTable {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
-    // Symbol are created in dfs order, so we make tow assumptions:
+    // Symbol are created in dfs order, so we make two assumptions:
     // 1. The start of [SymbolTable.spans] is strictly monotonically increasing.
     // 2. There are no two symbols with the same span.
     // So we could use binary search to find the symbol id.
