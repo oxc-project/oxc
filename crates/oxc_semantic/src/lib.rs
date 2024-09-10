@@ -40,7 +40,7 @@ pub use oxc_syntax::{
 pub use crate::{
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::ScopeTree,
-    symbol::SymbolTable,
+    symbol::{IsGlobalReference, SymbolTable},
 };
 
 /// Semantic analysis of a JavaScript/TypeScript program.

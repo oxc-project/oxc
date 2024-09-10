@@ -1,19 +1,13 @@
-use oxc_ast::{ast::IdentifierReference, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_new_func(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The Function constructor is eval.").with_label(span)
-}
-
-fn is_global_function_reference(ctx: &LintContext, id: &IdentifierReference) -> bool {
-    if let Some(reference_id) = id.reference_id() {
-        return id.name == "Function" && ctx.symbols().is_global_reference(reference_id);
-    }
-    false
 }
 
 #[derive(Debug, Default, Clone)]
@@ -99,7 +93,7 @@ impl Rule for NoNewFunc {
         };
 
         if let Some((id, span)) = id_and_span {
-            if is_global_function_reference(ctx, id) {
+            if id.is_global_reference_name("Function", ctx.symbols()) {
                 ctx.diagnostic(no_new_func(span));
             }
         }

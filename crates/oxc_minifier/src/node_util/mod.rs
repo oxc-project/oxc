@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 use oxc_ast::ast::*;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 pub use self::{
@@ -34,7 +34,7 @@ pub trait NodeUtil {
     }
 
     fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
-        if ident.name == "undefined" && self.symbols().is_global_identifier_reference(ident) {
+        if ident.name == "undefined" && ident.is_global_reference(self.symbols()) {
             return true;
         }
         false
