@@ -9,8 +9,8 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, options::LintPluginOptions, rules::RULES, AllowWarnDeny, Fixer, LintOptions,
-    LintService, LintServiceOptions, Linter, OxlintConfig, RuleEnum, RuleWithSeverity,
+    fixer::FixKind, options::LintPluginOptions, rules::RULES, AllowWarnDeny, Fixer, LintService,
+    LintServiceOptions, Linter, OxlintConfig, OxlintOptions, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -349,7 +349,7 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
-        let options = LintOptions::default()
+        let options = OxlintOptions::default()
             .with_fix(fix.into())
             .with_import_plugin(self.plugins.import)
             .with_jest_plugin(self.plugins.jest)

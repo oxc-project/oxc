@@ -3,7 +3,7 @@ use std::{env, io::BufWriter, time::Instant};
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, LintServiceOptions, Linter,
+    partial_loader::LINT_PARTIAL_LOADER_EXT, LintService, LintServiceOptions, Linter, OxlintOptions,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -93,7 +93,7 @@ impl Runner for LintRunner {
 
         let cwd = std::env::current_dir().unwrap();
         let mut options = LintServiceOptions::new(cwd, paths);
-        let lint_options = LintOptions::default()
+        let lint_options = OxlintOptions::default()
             .with_filter(filter)
             .with_config_path(basic_options.config)
             .with_fix(fix_options.fix_kind())
