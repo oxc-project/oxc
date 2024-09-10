@@ -49,6 +49,7 @@ impl<'a> FoldConstants<'a> {
     }
 
     // [optimizeSubtree](https://github.com/google/closure-compiler/blob/75335a5138dde05030747abfd3c852cd34ea7429/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L72)
+    // TODO: tryReduceOperandsForOp
     pub fn fold_expression(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => self.try_fold_binary_operator(e, ctx),
@@ -166,6 +167,17 @@ impl<'a> FoldConstants<'a> {
     ) -> Option<Expression<'a>> {
         match expr.operator {
             UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
+            UnaryOperator::LogicalNot => {
+                expr.argument.to_boolean().map(|b| self.ast.expression_boolean_literal(SPAN, !b))
+            }
+            // `-NaN` -> `NaN`
+            UnaryOperator::UnaryNegation if expr.argument.is_nan() => {
+                Some(ctx.ast.move_expression(&mut expr.argument))
+            }
+            // `+1` -> `1`
+            UnaryOperator::UnaryPlus if expr.argument.is_number() => {
+                Some(ctx.ast.move_expression(&mut expr.argument))
+            }
             _ => None,
         }
     }
@@ -191,12 +203,7 @@ impl<'a> FoldConstants<'a> {
             | Expression::ArrayExpression(_) => "object",
             Expression::UnaryExpression(e) if e.operator == UnaryOperator::Void => "undefined",
             Expression::BigIntLiteral(_) => "bigint",
-            Expression::Identifier(ident)
-                if ident.name == "undefined"
-                    && ctx.symbols().is_global_identifier_reference(ident) =>
-            {
-                "undefined"
-            }
+            Expression::Identifier(ident) if ctx.is_identifier_undefined(ident) => "undefined",
             _ => return None,
         };
         Some(self.ast.expression_string_literal(SPAN, s))

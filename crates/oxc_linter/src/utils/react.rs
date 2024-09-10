@@ -81,7 +81,7 @@ pub fn is_hidden_from_screen_reader<'a>(
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
             if let Some(expr) = container.expression.as_expression() {
-                expr.get_boolean_value().unwrap_or(false)
+                expr.to_boolean().unwrap_or(false)
             } else {
                 false
             }

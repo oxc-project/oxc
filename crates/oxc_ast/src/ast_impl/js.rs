@@ -132,12 +132,16 @@ impl<'a> Expression<'a> {
         }
     }
 
+    pub fn is_number(&self) -> bool {
+        matches!(self, Self::NumericLiteral(_))
+    }
+
     /// Determines whether the given expr is a `0`
     pub fn is_number_0(&self) -> bool {
         matches!(self, Self::NumericLiteral(lit) if lit.value == 0.0)
     }
 
-    pub fn is_number(&self, val: f64) -> bool {
+    pub fn is_number_value(&self, val: f64) -> bool {
         matches!(self, Self::NumericLiteral(lit) if (lit.value - val).abs() < f64::EPSILON)
     }
 
@@ -260,7 +264,10 @@ impl<'a> Expression<'a> {
 
     /// Returns literal's value converted to the Boolean type
     /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
-    pub fn get_boolean_value(&self) -> Option<bool> {
+    /// <https://tc39.es/ecma262/#sec-toboolean>
+    /// 1. If argument is a Boolean, return argument.
+    /// 2. If argument is one of undefined, null, +0𝔽, -0𝔽, NaN, 0ℤ, or the empty String, return false.
+    pub fn to_boolean(&self) -> Option<bool> {
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),

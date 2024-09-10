@@ -26,6 +26,20 @@ pub trait NodeUtil {
     #[allow(unused)]
     fn scopes(&self) -> &ScopeTree;
 
+    fn is_expression_undefined(&self, expr: &Expression) -> bool {
+        if let Expression::Identifier(ident) = expr {
+            return self.is_identifier_undefined(ident);
+        };
+        false
+    }
+
+    fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
+        if ident.name == "undefined" && self.symbols().is_global_identifier_reference(ident) {
+            return true;
+        }
+        false
+    }
+
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L104-L114)
     /// Returns the number value of the node if it has one and it cannot have side effects.
     fn get_side_free_number_value(&self, expr: &Expression) -> Option<NumberValue> {
@@ -101,7 +115,7 @@ pub trait NodeUtil {
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "NaN" => Some(false),
                 "Infinity" => Some(true),
-                "undefined" if self.symbols().is_global_identifier_reference(ident) => Some(false),
+                "undefined" if self.is_identifier_undefined(ident) => Some(false),
                 _ => None,
             },
             Expression::AssignmentExpression(assign_expr) => {

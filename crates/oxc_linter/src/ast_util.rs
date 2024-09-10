@@ -29,7 +29,7 @@ pub fn is_static_boolean<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bo
 fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
     match expr {
         expr if expr.is_literal() => {
-            let boolean_value = expr.get_boolean_value();
+            let boolean_value = expr.to_boolean();
             (op == LogicalOperator::Or && boolean_value == Some(true))
                 || (op == LogicalOperator::And && boolean_value == Some(false))
         }
