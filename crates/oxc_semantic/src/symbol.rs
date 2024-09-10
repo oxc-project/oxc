@@ -1,7 +1,7 @@
 #![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 
 use oxc_ast::ast::{Expression, IdentifierReference};
-use oxc_index::IndexVec;
+use oxc_index::{Idx, IndexVec};
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
@@ -62,10 +62,13 @@ impl SymbolTable {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
+    // Symbol are created in dfs order, so we make tow assumptions:
+    // 1. The symbol id is monotonically increasing.
+    // 2. There are no two symbols with the same span.
+    // So we could use binary search to find the symbol id.
     pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
-        self.spans
-            .iter_enumerated()
-            .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
+        let index = self.spans.raw.binary_search_by(|a| a.start.cmp(&span.start)).ok()?;
+        Some(SymbolId::from_usize(index))
     }
 
     #[inline]
