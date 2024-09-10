@@ -146,7 +146,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::TSModuleDeclaration(decl) => {
-                            if decl.kind.is_global() {
+                            // declare global { ... } or declare module "foo" { ... }
+                            // We need to emit it anyway
+                            if decl.kind.is_global() || decl.id.is_string_literal() {
+                                // We need to visit the module declaration to collect all references
                                 self.scope.visit_ts_module_declaration(decl);
                                 transformed_indexes.insert(new_stmts.len());
                             }
@@ -291,11 +294,6 @@ impl<'a> IsolatedDeclarations<'a> {
                         new_ast_stmts.push(Statement::ImportDeclaration(decl));
                     } else if let Some(decl) = self.transform_import_declaration(&decl) {
                         new_ast_stmts.push(Statement::ImportDeclaration(decl));
-                    }
-                }
-                Statement::TSModuleDeclaration(decl) => {
-                    if decl.kind.is_global() || decl.id.is_string_literal() {
-                        new_ast_stmts.push(Statement::TSModuleDeclaration(decl));
                     }
                 }
                 _ => {}
