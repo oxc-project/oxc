@@ -5139,10 +5139,10 @@ pub(crate) unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
         walk_ts_type_name(traverser, field as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-        as *mut Option<TSImportAttributes>)
+        as *mut Option<Box<TSImportAttributes>>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeAttributes);
-        walk_ts_import_attributes(traverser, field as *mut _, ctx);
+        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)

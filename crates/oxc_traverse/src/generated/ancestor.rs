@@ -11914,10 +11914,10 @@ impl<'a, 't> TSImportTypeWithoutParameter<'a, 't> {
     }
 
     #[inline]
-    pub fn attributes(self) -> &'t Option<TSImportAttributes<'a>> {
+    pub fn attributes(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-                as *const Option<TSImportAttributes<'a>>)
+                as *const Option<Box<'a, TSImportAttributes<'a>>>)
         }
     }
 
@@ -11956,10 +11956,10 @@ impl<'a, 't> TSImportTypeWithoutQualifier<'a, 't> {
     }
 
     #[inline]
-    pub fn attributes(self) -> &'t Option<TSImportAttributes<'a>> {
+    pub fn attributes(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-                as *const Option<TSImportAttributes<'a>>)
+                as *const Option<Box<'a, TSImportAttributes<'a>>>)
         }
     }
 
@@ -12048,10 +12048,10 @@ impl<'a, 't> TSImportTypeWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn attributes(self) -> &'t Option<TSImportAttributes<'a>> {
+    pub fn attributes(self) -> &'t Option<Box<'a, TSImportAttributes<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-                as *const Option<TSImportAttributes<'a>>)
+                as *const Option<Box<'a, TSImportAttributes<'a>>>)
         }
     }
 }

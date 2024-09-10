@@ -8845,17 +8845,18 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn ts_type_import_type<T1>(
+    pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSImportType(self.alloc(self.ts_import_type(
             span,
@@ -11696,17 +11697,18 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn ts_type_query_expr_name_import_type<T1>(
+    pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> TSTypeQueryExprName<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeQueryExprName::TSImportType(self.alloc(self.ts_import_type(
             span,
@@ -11747,24 +11749,25 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn ts_import_type<T1>(
+    pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> TSImportType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSImportType {
             span,
             is_type_of,
             parameter,
             qualifier,
-            attributes,
+            attributes: attributes.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
         }
     }
@@ -11781,17 +11784,18 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn alloc_ts_import_type<T1>(
+    pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> Box<'a, TSImportType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
             self.ts_import_type(
