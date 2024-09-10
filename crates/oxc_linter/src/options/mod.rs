@@ -6,6 +6,7 @@ use std::{convert::From, path::PathBuf};
 pub use allow_warn_deny::AllowWarnDeny;
 use oxc_diagnostics::Error;
 pub use plugins::LintPluginOptions;
+use plugins::LintPlugins;
 use rustc_hash::FxHashSet;
 
 use crate::{
@@ -26,7 +27,7 @@ use crate::{
 pub(crate) struct LintOptions {
     pub fix: FixKind,
     pub framework_hints: FrameworkFlags,
-    pub plugins: LintPluginOptions,
+    pub plugins: LintPlugins,
 }
 
 impl From<OxlintOptions> for LintOptions {
@@ -34,7 +35,7 @@ impl From<OxlintOptions> for LintOptions {
         Self {
             fix: options.fix,
             framework_hints: options.framework_hints,
-            plugins: options.plugins,
+            plugins: options.plugins.into(),
         }
     }
 }

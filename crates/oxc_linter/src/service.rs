@@ -165,7 +165,7 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().plugins.import.then(|| {
+        let resolver = linter.options().plugins.has_import().then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
@@ -310,7 +310,7 @@ impl Runtime {
             .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
-        if self.linter.options().plugins.import {
+        if self.linter.options().plugins.has_import() {
             self.module_map.insert(
                 path.to_path_buf().into_boxed_path(),
                 ModuleState::Resolved(Arc::clone(&module_record)),
@@ -392,7 +392,7 @@ impl Runtime {
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {
-        if !self.linter.options().plugins.import {
+        if !self.linter.options().plugins.has_import() {
             return false;
         }
 
@@ -447,7 +447,7 @@ impl Runtime {
     }
 
     fn ignore_path(&self, path: &Path) {
-        if self.linter.options().plugins.import {
+        if self.linter.options().plugins.has_import() {
             self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
             self.update_cache_state(path);
         }
