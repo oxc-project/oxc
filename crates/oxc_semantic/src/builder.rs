@@ -37,7 +37,7 @@ use crate::{
 
 macro_rules! control_flow {
     ($self:ident, |$cfg:tt| $body:expr) => {
-        if let Some(ref mut $cfg) = $self.cfg {
+        if let Some($cfg) = $self.cfg.cfg_mut() {
             $body
         } else {
             Default::default()
@@ -104,11 +104,9 @@ pub struct SemanticBuilder<'a> {
     /// See: [`crate::checker::check`]
     check_syntax_error: bool,
 
-    pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
+    pub(crate) cfg: MaybeCfg<'a>,
 
     pub(crate) class_table_builder: ClassTableBuilder,
-
-    ast_node_records: Vec<NodeId>,
 }
 
 /// Data returned by [`SemanticBuilder::build`].
@@ -145,9 +143,8 @@ impl<'a> SemanticBuilder<'a> {
             build_jsdoc: false,
             jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
-            cfg: None,
+            cfg: MaybeCfg::new_disabled(),
             class_table_builder: ClassTableBuilder::new(),
-            ast_node_records: Vec::new(),
         }
     }
 
@@ -183,7 +180,7 @@ impl<'a> SemanticBuilder<'a> {
     /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     #[must_use]
     pub fn with_cfg(mut self, cfg: bool) -> Self {
-        self.cfg = if cfg { Some(ControlFlowGraphBuilder::default()) } else { None };
+        self.cfg = if cfg { MaybeCfg::new_enabled() } else { MaybeCfg::new_disabled() };
         self
     }
 
@@ -279,7 +276,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: Arc::clone(&self.module_record),
             jsdoc,
             unused_labels: self.unused_labels.labels,
-            cfg: self.cfg.map(ControlFlowGraphBuilder::build),
+            cfg: self.cfg.into_cfg().map(ControlFlowGraphBuilder::build),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -305,39 +302,27 @@ impl<'a> SemanticBuilder<'a> {
         self.record_ast_node();
     }
 
-    fn pop_ast_node(&mut self) {
+    fn pop_node_id(&mut self) {
         if let Some(parent_id) = self.nodes.parent_id(self.current_node_id) {
             self.current_node_id = parent_id;
         }
     }
 
     #[inline]
-    fn record_ast_nodes(&mut self) {
-        if self.cfg.is_some() {
-            self.ast_node_records.push(NodeId::DUMMY);
-        }
+    fn record_ast_nodes(&mut self) -> CfgPopToken {
+        self.cfg.push_node_id()
     }
 
     #[inline]
-    #[allow(clippy::unnecessary_wraps)]
-    fn retrieve_recorded_ast_node(&mut self) -> Option<NodeId> {
-        if self.cfg.is_some() {
-            Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
-        } else {
-            None
-        }
+    fn retrieve_recorded_ast_node(&mut self, token: CfgPopToken) -> Option<NodeId> {
+        self.cfg.pop_node_id(token)
     }
 
     #[inline]
     fn record_ast_node(&mut self) {
-        // The `self.cfg.is_some()` check here could be removed, since `ast_node_records` is empty
-        // if CFG is disabled. But benchmarks showed removing the extra check is a perf regression.
-        // <https://github.com/oxc-project/oxc/pull/4273>
-        if self.cfg.is_some() {
-            if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == NodeId::DUMMY {
-                    *record = self.current_node_id;
-                }
+        if let Some(record) = self.cfg.last_node_id_mut() {
+            if *record == NodeId::DUMMY {
+                *record = self.current_node_id;
             }
         }
     }
@@ -590,7 +575,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             checker::check(node, self);
         }
         self.leave_kind(kind);
-        self.pop_ast_node();
+        self.pop_node_id();
     }
 
     fn visit_program(&mut self, program: &Program<'a>) {
@@ -772,9 +757,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.record_ast_nodes();
+        let retrieve_token = self.record_ast_nodes();
         self.visit_expression(&stmt.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
+        let test_node_id = self.retrieve_recorded_ast_node(retrieve_token);
 
         /* cfg */
         control_flow!(self, |cfg| {
@@ -891,9 +876,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             });
         /* cfg */
 
-        self.record_ast_nodes();
+        let retrieve_token = self.record_ast_nodes();
         self.visit_expression(&expr.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
+        let test_node_id = self.retrieve_recorded_ast_node(retrieve_token);
 
         /* cfg */
         let (after_condition_graph_ix, before_consequent_expr_graph_ix) =
@@ -962,9 +947,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
 
         if let Some(test) = &stmt.test {
-            self.record_ast_nodes();
+            let retrieve_token = self.record_ast_nodes();
             self.visit_expression(test);
-            let test_node_id = self.retrieve_recorded_ast_node();
+            let test_node_id = self.retrieve_recorded_ast_node(retrieve_token);
 
             /* cfg */
             control_flow!(self, |cfg| cfg.append_condition_to(test_graph_ix, test_node_id));
@@ -1023,9 +1008,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
         /* cfg */
 
-        self.record_ast_nodes();
+        let retrieve_token = self.record_ast_nodes();
         self.visit_expression(&stmt.right);
-        let right_node_id = self.retrieve_recorded_ast_node();
+        let right_node_id = self.retrieve_recorded_ast_node(retrieve_token);
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
@@ -1082,9 +1067,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
-        self.record_ast_nodes();
+        let retrieve_token = self.record_ast_nodes();
         self.visit_expression(&stmt.right);
-        let right_node_id = self.retrieve_recorded_ast_node();
+        let right_node_id = self.retrieve_recorded_ast_node(retrieve_token);
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
@@ -1137,9 +1122,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
         /* cfg */
 
-        self.record_ast_nodes();
+        let retrieve_token = self.record_ast_nodes();
         self.visit_expression(&stmt.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
+        let test_node_id = self.retrieve_recorded_ast_node(retrieve_token);
 
         /* cfg */
         let (after_test_graph_ix, before_consequent_stmt_graph_ix) = control_flow!(self, |cfg| {
@@ -1329,9 +1314,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         if let Some(expr) = &case.test {
-            self.record_ast_nodes();
+            let retrieve_token = self.record_ast_nodes();
             self.visit_expression(expr);
-            let test_node_id = self.retrieve_recorded_ast_node();
+            let test_node_id = self.retrieve_recorded_ast_node(retrieve_token);
             control_flow!(self, |cfg| cfg.append_condition_to(cfg.current_node_ix, test_node_id));
         }
 
@@ -1507,9 +1492,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
-        self.record_ast_nodes();
+        let retrieve_token = self.record_ast_nodes();
         self.visit_expression(&stmt.test);
-        let test_node_id = self.retrieve_recorded_ast_node();
+        let test_node_id = self.retrieve_recorded_ast_node(retrieve_token);
 
         /* cfg - body basic block */
         let body_graph_ix = control_flow!(self, |cfg| {
@@ -2027,3 +2012,91 @@ impl<'a> SemanticBuilder<'a> {
         false
     }
 }
+
+mod cfg_builder {
+    use super::{ControlFlowGraphBuilder, NodeId};
+
+    /// Store for CFG in `SemanticBuilder`.
+    /// CFG can be enabled or disabled.
+    /// When enabled, this stores the `ControlFlowGraphBuilder` itself, and a stack of `NodeId`s.
+    ///
+    /// This type is within a module, and has private fields, to ensure the structure cannot be modified
+    /// from outside. This guarantees the invariants relied on by `pop_node_id` and `last_ast_node_mut`
+    /// are upheld.
+    pub struct MaybeCfg<'a>(Option<(ControlFlowGraphBuilder<'a>, Vec<NodeId>)>);
+
+    /// Token for popping from `NodeId`s stack.
+    /// See `MaybeCfgBuilder::pop_node_id` below.
+    pub struct CfgPopToken(());
+
+    impl<'a> MaybeCfg<'a> {
+        pub fn new_disabled() -> Self {
+            Self(None)
+        }
+
+        pub fn new_enabled() -> Self {
+            let cfg_builder = ControlFlowGraphBuilder::default();
+
+            // Initialize `NodeId`s stack with 1 entry
+            let mut node_ids = Vec::with_capacity(16);
+            node_ids.push(NodeId::DUMMY);
+
+            Self(Some((cfg_builder, node_ids)))
+        }
+
+        #[inline]
+        pub fn cfg_mut(&mut self) -> Option<&mut ControlFlowGraphBuilder<'a>> {
+            self.0.as_mut().map(|(cfg, _)| cfg)
+        }
+
+        pub fn into_cfg(self) -> Option<ControlFlowGraphBuilder<'a>> {
+            self.0.map(|(cfg, _)| cfg)
+        }
+
+        #[inline]
+        fn node_ids_mut(&mut self) -> Option<&mut Vec<NodeId>> {
+            self.0.as_mut().map(|(_, node_ids)| node_ids)
+        }
+
+        /// Push a dummy `NodeId` to `NodeId`s stack.
+        ///
+        /// Returns a `CfgPopToken` which can be used to call `pop_node_id`.
+        #[inline]
+        pub fn push_node_id(&mut self) -> CfgPopToken {
+            if let Some(node_ids) = self.node_ids_mut() {
+                node_ids.push(NodeId::DUMMY);
+            }
+            CfgPopToken(())
+        }
+
+        /// Pop last `NodeId` from `NodeId`s stack.
+        ///
+        /// Requires a `CfgPopToken` which can only be obtained from `push_node_id`,
+        /// to ensure a pop can only follow a successful push, so the stack can never be emptied.
+        #[inline]
+        #[expect(unused_variables, clippy::needless_pass_by_value)]
+        pub fn pop_node_id(&mut self, token: CfgPopToken) -> Option<NodeId> {
+            self.node_ids_mut().map(|node_ids| {
+                debug_assert!(!node_ids.is_empty());
+                // SAFETY: This method receives and consumes a `CfgPopToken`.
+                // `CfgPopToken`s are only created in `push_node_id` when it pushes to `node_ids`.
+                // Therefore the fact that caller passes in a `CfgPopToken` guarantees that there have
+                // been more pushes than pops. So there must be an entry to pop.
+                unsafe { node_ids.pop().unwrap_unchecked() }
+            })
+        }
+
+        /// Get `&mut` ref to last `NodeId` on the `NodeId`s stack.
+        #[inline]
+        pub fn last_node_id_mut(&mut self) -> Option<&mut NodeId> {
+            self.node_ids_mut().map(|node_ids| {
+                debug_assert!(!node_ids.is_empty());
+                // SAFETY: When enabled `MaybeCfg` is created, `node_ids` is initialized with 1 entry.
+                // `push_node_id` and `pop_node_id` ensure that each pop from `node_ids` follows a `push`,
+                // therefore it can never be empty.
+                unsafe { node_ids.last_mut().unwrap_unchecked() }
+            })
+        }
+    }
+}
+use cfg_builder::{CfgPopToken, MaybeCfg};
