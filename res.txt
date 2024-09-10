@@ -1,0 +1,52 @@
+rust.vim Global Variables:
+
+let g:ftplugin_rust_source_path = v:null
+let g:loaded_syntastic_rust_cargo_checker = v:null
+let g:loaded_syntastic_rust_filetype = v:null
+let g:loaded_syntastic_rust_rustc_checker = v:null
+let g:rust_bang_comment_leader = v:null
+let g:rust_cargo_avoid_whole_workspace = v:null
+let g:rust_clip_command = v:null
+let g:rust_conceal = v:null
+let g:rust_conceal_mod_path = v:null
+let g:rust_conceal_pub = v:null
+let g:rust_fold = v:null
+let g:rust_last_args = v:null
+let b:rust_last_args = []
+let g:rust_last_rustc_args = v:null
+let b:rust_last_rustc_args = []
+let g:rust_original_delimitMate_excluded_regions = v:null
+let g:rust_playpen_url = v:null
+let g:rust_prev_delimitMate_quotes = v:null
+let g:rust_recent_nearest_cargo_tol = v:null
+let g:rust_recent_root_cargo_toml = v:null
+let g:rust_recommended_style = v:null
+let g:rust_set_conceallevel = v:null
+let g:rust_set_conceallevel=1 = v:null
+let g:rust_set_foldmethod = v:null
+let g:rust_set_foldmethod=1 = v:null
+let g:rust_shortener_url = v:null
+let g:rustc_makeprg_no_percent = v:null
+let g:rustc_path = v:null
+let g:rustfmt_autosave = 0
+let g:rustfmt_autosave_if_config_present = v:null
+let g:rustfmt_command = 'rustfmt'
+let g:rustfmt_emit_files = 1
+let g:rustfmt_fail_silently = 0
+let g:rustfmt_options = ''
+let g:syntastic_extra_filetypes = v:null
+let g:syntastic_rust_cargo_fname = v:null
+Using Node v22.7.0
+rustfmt 1.7.1-stable (eeb90cd 2024-09-04)
+
+Using Node v22.7.0
+rustc 1.81.0 (eeb90cda1 2024-09-04)
+
+Using Node v22.7.0
+cargo 1.81.0 (2dbb1af80 2024-08-20)
+
+
+NVIM v0.11.0-dev-3451+g5a8a34daf
+Build type: RelWithDebInfo
+LuaJIT 2.1.1716656478
+Run ":verbose version" for more info
