@@ -161,12 +161,20 @@ impl Rule for ConsistentFunctionScoping {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (function_declaration_symbol_id, function_body, reporter_span) = match node.kind() {
             AstKind::Function(function) => {
-                if let Some(AstKind::AssignmentExpression(_)) = ctx.nodes().parent_kind(node.id()) {
+                if function.is_typescript_syntax() {
                     return;
                 }
 
-                if function.is_typescript_syntax() {
-                    return;
+                if let Some(parent_scope_id) =
+                    ctx.scopes().get_parent_id(function.scope_id.get().unwrap())
+                {
+                    // Example: const foo = function bar() {};
+                    // The bar function scope id is 1. In order to ignore this rule,
+                    // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
+                    // should be considered.
+                    if parent_scope_id == ctx.scopes().root_scope_id() {
+                        return;
+                    }
                 }
 
                 // NOTE: function.body will always be some here because of
@@ -586,6 +594,17 @@ fn test() {
         ("module.exports = function foo() {};", None),
         ("module.exports.foo = function foo() {};", None),
         ("foo.bar.func = function foo() {};", None),
+        (
+            "let inner;
+
+            function foo1() {
+                inner = function() {}
+            }
+            function foo2() {
+                inner = function() {}
+            }",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -623,6 +642,14 @@ fn test() {
         ),
         ("function foo() { function bar() { return <JSX/>; } }", None),
         ("function doFoo(Foo) { const doBar = () => arguments; return doBar(); };", None),
+        (
+            "let inner;
+
+            function outer() {
+                inner = function inner() {}
+            }", 
+            None,
+        ),
         // end of cases that eslint-plugin-unicorn passes, but we fail.
         (
             "function doFoo(foo) {
