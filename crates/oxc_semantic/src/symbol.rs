@@ -63,7 +63,7 @@ impl SymbolTable {
     }
 
     // Symbol are created in dfs order, so we make tow assumptions:
-    // 1. The symbol id is monotonically increasing.
+    // 1. The start of [SymbolTable.spans] is strictly monotonically increasing.
     // 2. There are no two symbols with the same span.
     // So we could use binary search to find the symbol id.
     pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
