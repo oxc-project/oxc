@@ -1,6 +1,7 @@
 ignore-interior-mutability = ["oxc_linter::rule::RuleWithSeverity"]
 
 disallowed-methods = [
+  { path = "str::replacen", reason = "Avoid memory allocation. Use `cow_utils::CowUtils::cow_replacen` instead." },
   { path = "str::to_ascii_lowercase", reason = "Avoid memory allocation. Use `cow_utils::CowUtils::cow_to_ascii_lowercase` instead." },
   { path = "str::to_ascii_uppercase", reason = "Avoid memory allocation. Use `cow_utils::CowUtils::cow_to_ascii_uppercase` instead." },
 ]

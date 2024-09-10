@@ -18,6 +18,7 @@ doctest = false
 
 [dependencies]
 bpaf = { workspace = true, features = ["docgen"] }
+cow-utils = { workspace = true }
 handlebars = { workspace = true }
 oxc_linter = { workspace = true }
 oxlint = { path = "../../apps/oxlint" }

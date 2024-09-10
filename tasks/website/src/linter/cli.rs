@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxlint::cli::lint_command;
 
 #[test]
@@ -27,7 +28,7 @@ fn generate_cli() -> String {
     let markdown = markdown.trim_start_matches("# oxlint\n");
 
     // Hack usage line
-    let markdown = markdown.replacen("**Usage**:", "## Usage\n", 1);
+    let markdown = markdown.cow_replacen("**Usage**:", "## Usage\n", 1);
 
     let markdown = markdown
         .split('\n')

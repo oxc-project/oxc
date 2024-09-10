@@ -3364,6 +3364,7 @@ name = "website"
 version = "0.0.0"
 dependencies = [
  "bpaf",
+ "cow-utils",
  "handlebars",
  "insta",
  "markdown",
