@@ -1980,6 +1980,7 @@ name = "oxc_traverse"
 version = "0.27.0"
 dependencies = [
  "compact_str",
+ "itoa",
  "memoffset",
  "oxc_allocator",
  "oxc_ast",

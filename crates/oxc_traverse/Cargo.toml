@@ -30,5 +30,6 @@ oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 
 compact_str = { workspace = true }
+itoa = { workspace = true }
 memoffset = { workspace = true }
 rustc-hash = { workspace = true }

@@ -1,6 +1,7 @@
 use std::{cell::Cell, str};
 
-use compact_str::{format_compact, CompactString};
+use compact_str::CompactString;
+use itoa::Buffer as ItoaBuffer;
 use rustc_hash::FxHashSet;
 
 #[allow(clippy::wildcard_imports)]
@@ -513,6 +514,14 @@ fn get_unique_name(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactStr 
     CompactStr::from(get_unique_name_impl(base, uid_names))
 }
 
+// TODO: We could make this function more performant, especially when it checks a lot of names
+// before it reaches one that is unused.
+// This function repeatedly creates strings which have only differ from each other by digits added on end,
+// and then hashes each of those strings to test them against the hash set `uid_names`.
+// Hashing strings is fairly expensive. As here only the end of the string changes on each iteration,
+// we could calculate an "unfinished" hash not including the last block, and then just add the final
+// block to "finish" the hash on each iteration. With `FxHash` this would be straight line code and only
+// a few operations.
 fn get_unique_name_impl(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactString {
     // Create `CompactString` prepending name with `_`, and with 1 byte excess capacity.
     // The extra byte is to avoid reallocation if need to add a digit on the end later,
@@ -522,63 +531,218 @@ fn get_unique_name_impl(base: &str, uid_names: &FxHashSet<CompactStr>) -> Compac
     name.push('_');
     name.push_str(base);
 
-    let name_is_unique = |name: &str| !uid_names.contains(name);
-
-    // Try the name without a numerical postfix (i.e. plain `_temp`)
-    if name_is_unique(&name) {
-        return name;
-    }
-
     // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
-    // operations to a minimum for postfixes up to 99 - using `replace_range` on a single
-    // `CompactStr`, rather than generating a new string on each attempt.
+    // operations to a minimum for postfixes up to 99 - reusing a single `CompactString`,
+    // rather than generating a new string on each attempt.
+    // For speed we manipulate the string as bytes.
     // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
+    //
+    // SAFETY: Only modifications to string are replacing last byte/last 2 bytes with ASCII digits.
+    // These bytes are already ASCII chars, so cannot produce an invalid UTF-8 string.
+    // Writes are always in bounds (`bytes` is redefined after string grows due to `push`).
+    unsafe {
+        let name_is_unique = |bytes: &[u8]| {
+            let name = str::from_utf8_unchecked(bytes);
+            !uid_names.contains(name)
+        };
 
-    // Try single-digit postfixes (i.e. `_temp2`, `_temp3` ... `_temp9`)
-    name.push('2');
-    if name_is_unique(&name) {
-        return name;
-    }
-    for c in b'3'..=b'9' {
-        name.replace_range(name.len() - 1.., str::from_utf8(&[c]).unwrap());
-        if name_is_unique(&name) {
+        // Try the name without a numerical postfix (i.e. plain `_temp`)
+        let bytes = name.as_bytes_mut();
+        if name_is_unique(bytes) {
             return name;
         }
-    }
 
-    // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
-    name.replace_range(name.len() - 1.., "1");
-    name.push('0');
-    let mut c1 = b'1';
-    loop {
-        if name_is_unique(&name) {
+        // Try single-digit postfixes (i.e. `_temp2`, `_temp3` ... `_temp9`)
+        name.push('2');
+        let bytes = name.as_bytes_mut();
+        if name_is_unique(bytes) {
             return name;
         }
-        for c2 in b'1'..=b'9' {
-            name.replace_range(name.len() - 1.., str::from_utf8(&[c2]).unwrap());
-            if name_is_unique(&name) {
+
+        let last_index = bytes.len() - 1;
+        for c in b'3'..=b'9' {
+            *bytes.get_unchecked_mut(last_index) = c;
+            if name_is_unique(bytes) {
                 return name;
             }
         }
-        if c1 == b'9' {
-            break;
+
+        // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
+        *bytes.get_unchecked_mut(last_index) = b'1';
+        name.push('0');
+        let bytes = name.as_bytes_mut();
+        let last_index = last_index + 1;
+
+        let mut c1 = b'1';
+        loop {
+            if name_is_unique(bytes) {
+                return name;
+            }
+            for c2 in b'1'..=b'9' {
+                *bytes.get_unchecked_mut(last_index) = c2;
+                if name_is_unique(bytes) {
+                    return name;
+                }
+            }
+            if c1 == b'9' {
+                break;
+            }
+            c1 += 1;
+
+            let last_two: &mut [u8; 2] =
+                bytes.get_unchecked_mut(last_index - 1..=last_index).try_into().unwrap();
+            *last_two = [c1, b'0'];
         }
-        c1 += 1;
-        name.replace_range(name.len() - 2.., str::from_utf8(&[c1, b'0']).unwrap());
     }
 
     // Try longer postfixes (`_temp100` upwards)
-    let name_base = {
-        name.pop();
-        name.pop();
-        &*name
-    };
-    for n in 100..=usize::MAX {
-        let name = format_compact!("{}{}", name_base, n);
-        if name_is_unique(&name) {
+
+    // Reserve space for 1 more byte for the additional 3rd digit.
+    // Do this here so that `name.push_str(digits)` will never need to grow the string until it reaches
+    // `n == 1000`, which makes the branch on "is there sufficient capacity to push?" in the loop below
+    // completely predictable for `n < 1000`.
+    name.reserve(1);
+
+    // At this point, `name` has had 2 digits added on end. `base_len` is length without those 2 digits.
+    let base_len = name.len() - 2;
+
+    let mut buffer = ItoaBuffer::new();
+    for n in 100..=u32::MAX {
+        let digits = buffer.format(n);
+        // SAFETY: `base_len` is always shorter than current `name.len()`, on a UTF-8 char boundary,
+        // and `name` contains at least `base_len` initialized bytes
+        unsafe { name.set_len(base_len) };
+        name.push_str(digits);
+        if !uid_names.contains(name.as_str()) {
             return name;
         }
     }
 
-    panic!("Cannot generate UID");
+    // Limit for size of source text is `u32::MAX` bytes, so there cannot be `u32::MAX`
+    // identifier names in the AST. So loop above cannot fail to find an unused name.
+    unreachable!();
+}
+
+#[cfg(test)]
+#[test]
+fn test_get_unique_name() {
+    let cases: &[(&[&str], &str, &str)] = &[
+        (&[], "foo", "_foo"),
+        (&["_foo"], "foo", "_foo2"),
+        (&["_foo0", "_foo1"], "foo", "_foo"),
+        (&["_foo2", "_foo3", "_foo4"], "foo", "_foo"),
+        (&["_foo", "_foo2"], "foo", "_foo3"),
+        (&["_foo", "_foo2", "_foo4"], "foo", "_foo3"),
+        (&["_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8"], "foo", "_foo9"),
+        (
+            &["_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9"],
+            "foo",
+            "_foo10",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10",
+            ],
+            "foo",
+            "_foo11",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11",
+            ],
+            "foo",
+            "_foo12",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18",
+            ],
+            "foo",
+            "_foo19",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19",
+            ],
+            "foo",
+            "_foo20",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20",
+            ],
+            "foo",
+            "_foo21",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20", "_foo21", "_foo22", "_foo23", "_foo24", "_foo25",
+                "_foo26", "_foo27", "_foo28", "_foo29", "_foo30", "_foo31", "_foo32", "_foo33",
+                "_foo34", "_foo35", "_foo36", "_foo37", "_foo38", "_foo39", "_foo40", "_foo41",
+                "_foo42", "_foo43", "_foo44", "_foo45", "_foo46", "_foo47", "_foo48", "_foo49",
+                "_foo50", "_foo51", "_foo52", "_foo53", "_foo54", "_foo55", "_foo56", "_foo57",
+                "_foo58", "_foo59", "_foo60", "_foo61", "_foo62", "_foo63", "_foo64", "_foo65",
+                "_foo66", "_foo67", "_foo68", "_foo69", "_foo70", "_foo71", "_foo72", "_foo73",
+                "_foo74", "_foo75", "_foo76", "_foo77", "_foo78", "_foo79", "_foo80", "_foo81",
+                "_foo82", "_foo83", "_foo84", "_foo85", "_foo86", "_foo87", "_foo88", "_foo89",
+                "_foo90", "_foo91", "_foo92", "_foo93", "_foo94", "_foo95", "_foo96", "_foo97",
+                "_foo98",
+            ],
+            "foo",
+            "_foo99",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20", "_foo21", "_foo22", "_foo23", "_foo24", "_foo25",
+                "_foo26", "_foo27", "_foo28", "_foo29", "_foo30", "_foo31", "_foo32", "_foo33",
+                "_foo34", "_foo35", "_foo36", "_foo37", "_foo38", "_foo39", "_foo40", "_foo41",
+                "_foo42", "_foo43", "_foo44", "_foo45", "_foo46", "_foo47", "_foo48", "_foo49",
+                "_foo50", "_foo51", "_foo52", "_foo53", "_foo54", "_foo55", "_foo56", "_foo57",
+                "_foo58", "_foo59", "_foo60", "_foo61", "_foo62", "_foo63", "_foo64", "_foo65",
+                "_foo66", "_foo67", "_foo68", "_foo69", "_foo70", "_foo71", "_foo72", "_foo73",
+                "_foo74", "_foo75", "_foo76", "_foo77", "_foo78", "_foo79", "_foo80", "_foo81",
+                "_foo82", "_foo83", "_foo84", "_foo85", "_foo86", "_foo87", "_foo88", "_foo89",
+                "_foo90", "_foo91", "_foo92", "_foo93", "_foo94", "_foo95", "_foo96", "_foo97",
+                "_foo98", "_foo99",
+            ],
+            "foo",
+            "_foo100",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20", "_foo21", "_foo22", "_foo23", "_foo24", "_foo25",
+                "_foo26", "_foo27", "_foo28", "_foo29", "_foo30", "_foo31", "_foo32", "_foo33",
+                "_foo34", "_foo35", "_foo36", "_foo37", "_foo38", "_foo39", "_foo40", "_foo41",
+                "_foo42", "_foo43", "_foo44", "_foo45", "_foo46", "_foo47", "_foo48", "_foo49",
+                "_foo50", "_foo51", "_foo52", "_foo53", "_foo54", "_foo55", "_foo56", "_foo57",
+                "_foo58", "_foo59", "_foo60", "_foo61", "_foo62", "_foo63", "_foo64", "_foo65",
+                "_foo66", "_foo67", "_foo68", "_foo69", "_foo70", "_foo71", "_foo72", "_foo73",
+                "_foo74", "_foo75", "_foo76", "_foo77", "_foo78", "_foo79", "_foo80", "_foo81",
+                "_foo82", "_foo83", "_foo84", "_foo85", "_foo86", "_foo87", "_foo88", "_foo89",
+                "_foo90", "_foo91", "_foo92", "_foo93", "_foo94", "_foo95", "_foo96", "_foo97",
+                "_foo98", "_foo99", "_foo100",
+            ],
+            "foo",
+            "_foo101",
+        ),
+    ];
+
+    for (used, name, expected) in cases {
+        let used = used.iter().map(|name| CompactStr::from(*name)).collect();
+        assert_eq!(get_unique_name(name, &used), expected);
+    }
 }
