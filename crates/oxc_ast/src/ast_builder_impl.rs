@@ -174,7 +174,7 @@ impl<'a> AstBuilder<'a> {
             self.vec(),
             None,
             ImportOrExportKind::Value,
-            None,
+            None::<WithClause>,
         ))
     }
 
@@ -191,7 +191,7 @@ impl<'a> AstBuilder<'a> {
             specifiers,
             source,
             ImportOrExportKind::Value,
-            None,
+            None::<WithClause>,
         ))
     }
 

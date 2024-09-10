@@ -309,8 +309,14 @@ impl<'a> IsolatedDeclarations<'a> {
         if need_empty_export_marker {
             let specifiers = self.ast.vec();
             let kind = ImportOrExportKind::Value;
-            let empty_export =
-                self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, None);
+            let empty_export = self.ast.alloc_export_named_declaration(
+                SPAN,
+                None,
+                specifiers,
+                None,
+                kind,
+                None::<WithClause>,
+            );
             new_ast_stmts
                 .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         }

@@ -8064,10 +8064,10 @@ impl<'a, 't> ImportDeclarationWithoutSpecifiers<'a, 't> {
     }
 
     #[inline]
-    pub fn with_clause(self) -> &'t Option<WithClause<'a>> {
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
-                as *const Option<WithClause<'a>>)
+                as *const Option<Box<'a, WithClause<'a>>>)
         }
     }
 
@@ -8102,10 +8102,10 @@ impl<'a, 't> ImportDeclarationWithoutSource<'a, 't> {
     }
 
     #[inline]
-    pub fn with_clause(self) -> &'t Option<WithClause<'a>> {
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
-                as *const Option<WithClause<'a>>)
+                as *const Option<Box<'a, WithClause<'a>>>)
         }
     }
 
@@ -8413,10 +8413,10 @@ impl<'a, 't> ExportNamedDeclarationWithoutDeclaration<'a, 't> {
     }
 
     #[inline]
-    pub fn with_clause(self) -> &'t Option<WithClause<'a>> {
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
-                as *const Option<WithClause<'a>>)
+                as *const Option<Box<'a, WithClause<'a>>>)
         }
     }
 }
@@ -8461,10 +8461,10 @@ impl<'a, 't> ExportNamedDeclarationWithoutSpecifiers<'a, 't> {
     }
 
     #[inline]
-    pub fn with_clause(self) -> &'t Option<WithClause<'a>> {
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
-                as *const Option<WithClause<'a>>)
+                as *const Option<Box<'a, WithClause<'a>>>)
         }
     }
 }
@@ -8509,10 +8509,10 @@ impl<'a, 't> ExportNamedDeclarationWithoutSource<'a, 't> {
     }
 
     #[inline]
-    pub fn with_clause(self) -> &'t Option<WithClause<'a>> {
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
-                as *const Option<WithClause<'a>>)
+                as *const Option<Box<'a, WithClause<'a>>>)
         }
     }
 }
@@ -8652,10 +8652,10 @@ impl<'a, 't> ExportAllDeclarationWithoutExported<'a, 't> {
     }
 
     #[inline]
-    pub fn with_clause(self) -> &'t Option<WithClause<'a>> {
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
-                as *const Option<WithClause<'a>>)
+                as *const Option<Box<'a, WithClause<'a>>>)
         }
     }
 
@@ -8690,10 +8690,10 @@ impl<'a, 't> ExportAllDeclarationWithoutSource<'a, 't> {
     }
 
     #[inline]
-    pub fn with_clause(self) -> &'t Option<WithClause<'a>> {
+    pub fn with_clause(self) -> &'t Option<Box<'a, WithClause<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
-                as *const Option<WithClause<'a>>)
+                as *const Option<Box<'a, WithClause<'a>>>)
         }
     }
 

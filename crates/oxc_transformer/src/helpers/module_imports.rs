@@ -108,7 +108,7 @@ impl<'a> ModuleImports<'a> {
             SPAN,
             Some(specifiers),
             StringLiteral::new(SPAN, source),
-            None,
+            None::<WithClause>,
             ImportOrExportKind::Value,
         );
         self.ast.statement_module_declaration(import_stmt)

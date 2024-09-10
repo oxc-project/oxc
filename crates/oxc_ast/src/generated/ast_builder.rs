@@ -6740,14 +6740,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
-    pub fn module_declaration_import_declaration(
+    pub fn module_declaration_import_declaration<T1>(
         self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> ModuleDeclaration<'a> {
+    ) -> ModuleDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         ModuleDeclaration::ImportDeclaration(self.alloc(self.import_declaration(
             span,
             specifiers,
@@ -6777,14 +6780,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Will be `Some(vec![])` for empty assertion
     /// - export_kind
     #[inline]
-    pub fn module_declaration_export_all_declaration(
+    pub fn module_declaration_export_all_declaration<T1>(
         self,
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> ModuleDeclaration<'a> {
+    ) -> ModuleDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         ModuleDeclaration::ExportAllDeclaration(self.alloc(self.export_all_declaration(
             span,
             exported,
@@ -6852,15 +6858,18 @@ impl<'a> AstBuilder<'a> {
     /// - export_kind: `export type { foo }`
     /// - with_clause: Some(vec![]) for empty assertion
     #[inline]
-    pub fn module_declaration_export_named_declaration(
+    pub fn module_declaration_export_named_declaration<T1>(
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<WithClause<'a>>,
-    ) -> ModuleDeclaration<'a> {
+        with_clause: T1,
+    ) -> ModuleDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         ModuleDeclaration::ExportNamedDeclaration(self.alloc(self.export_named_declaration(
             span,
             declaration,
@@ -7082,15 +7091,24 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
-    pub fn import_declaration(
+    pub fn import_declaration<T1>(
         self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> ImportDeclaration<'a> {
-        ImportDeclaration { span, specifiers, source, with_clause, import_kind }
+    ) -> ImportDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
+        ImportDeclaration {
+            span,
+            specifiers,
+            source,
+            with_clause: with_clause.into_in(self.allocator),
+            import_kind,
+        }
     }
 
     /// Builds a [`ImportDeclaration`] and stores it in the memory arena.
@@ -7104,14 +7122,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
-    pub fn alloc_import_declaration(
+    pub fn alloc_import_declaration<T1>(
         self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> Box<'a, ImportDeclaration<'a>> {
+    ) -> Box<'a, ImportDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         Box::new_in(
             self.import_declaration(span, specifiers, source, with_clause, import_kind),
             self.allocator,
@@ -7455,16 +7476,26 @@ impl<'a> AstBuilder<'a> {
     /// - export_kind: `export type { foo }`
     /// - with_clause: Some(vec![]) for empty assertion
     #[inline]
-    pub fn export_named_declaration(
+    pub fn export_named_declaration<T1>(
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<WithClause<'a>>,
-    ) -> ExportNamedDeclaration<'a> {
-        ExportNamedDeclaration { span, declaration, specifiers, source, export_kind, with_clause }
+        with_clause: T1,
+    ) -> ExportNamedDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
+        ExportNamedDeclaration {
+            span,
+            declaration,
+            specifiers,
+            source,
+            export_kind,
+            with_clause: with_clause.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`ExportNamedDeclaration`] and stores it in the memory arena.
@@ -7479,15 +7510,18 @@ impl<'a> AstBuilder<'a> {
     /// - export_kind: `export type { foo }`
     /// - with_clause: Some(vec![]) for empty assertion
     #[inline]
-    pub fn alloc_export_named_declaration(
+    pub fn alloc_export_named_declaration<T1>(
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<WithClause<'a>>,
-    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        with_clause: T1,
+    ) -> Box<'a, ExportNamedDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         Box::new_in(
             self.export_named_declaration(
                 span,
@@ -7548,15 +7582,24 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Will be `Some(vec![])` for empty assertion
     /// - export_kind
     #[inline]
-    pub fn export_all_declaration(
+    pub fn export_all_declaration<T1>(
         self,
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> ExportAllDeclaration<'a> {
-        ExportAllDeclaration { span, exported, source, with_clause, export_kind }
+    ) -> ExportAllDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
+        ExportAllDeclaration {
+            span,
+            exported,
+            source,
+            with_clause: with_clause.into_in(self.allocator),
+            export_kind,
+        }
     }
 
     /// Builds a [`ExportAllDeclaration`] and stores it in the memory arena.
@@ -7570,14 +7613,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Will be `Some(vec![])` for empty assertion
     /// - export_kind
     #[inline]
-    pub fn alloc_export_all_declaration(
+    pub fn alloc_export_all_declaration<T1>(
         self,
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> Box<'a, ExportAllDeclaration<'a>> {
+    ) -> Box<'a, ExportAllDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         Box::new_in(
             self.export_all_declaration(span, exported, source, with_clause, export_kind),
             self.allocator,

@@ -2785,10 +2785,10 @@ pub(crate) unsafe fn walk_import_declaration<'a, Tr: Traverse<'a>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
-        as *mut Option<WithClause>)
+        as *mut Option<Box<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ImportDeclarationWithClause);
-        walk_with_clause(traverser, field as *mut _, ctx);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_import_declaration(&mut *node, ctx);
@@ -2974,10 +2974,10 @@ pub(crate) unsafe fn walk_export_named_declaration<'a, Tr: Traverse<'a>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
-        as *mut Option<WithClause>)
+        as *mut Option<Box<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ExportNamedDeclarationWithClause);
-        walk_with_clause(traverser, field as *mut _, ctx);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_export_named_declaration(&mut *node, ctx);
@@ -3032,10 +3032,10 @@ pub(crate) unsafe fn walk_export_all_declaration<'a, Tr: Traverse<'a>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
-        as *mut Option<WithClause>)
+        as *mut Option<Box<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ExportAllDeclarationWithClause);
-        walk_with_clause(traverser, field as *mut _, ctx);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_export_all_declaration(&mut *node, ctx);

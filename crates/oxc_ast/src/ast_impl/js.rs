@@ -1409,7 +1409,7 @@ impl<'a> ModuleDeclaration<'a> {
         }
     }
 
-    pub fn with_clause(&self) -> Option<&WithClause<'a>> {
+    pub fn with_clause(&self) -> Option<&Box<'a, WithClause<'a>>> {
         match self {
             Self::ImportDeclaration(decl) => decl.with_clause.as_ref(),
             Self::ExportAllDeclaration(decl) => decl.with_clause.as_ref(),

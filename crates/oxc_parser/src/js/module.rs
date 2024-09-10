@@ -347,7 +347,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.vec(),
             None,
             ImportOrExportKind::Value,
-            None,
+            None::<WithClause>,
         ))
     }
 
