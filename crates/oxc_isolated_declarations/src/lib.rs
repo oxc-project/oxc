@@ -16,6 +16,7 @@ mod literal;
 mod module;
 mod return_type;
 mod scope;
+mod signatures;
 mod types;
 
 use std::{cell::RefCell, collections::VecDeque, mem};
