@@ -1338,9 +1338,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
         wrap!(p, self, NumericLiteral, {
             // See https://github.com/prettier/prettier/blob/main/src/utils/print-number.js
             // Perf: the regexes from prettier code above are ported to manual search for performance reasons.
-            let raw = self.span.source_text(p.source_text);
-            let mut string = Cow::Borrowed(raw);
-            string.cow_to_ascii_lowercase();
+            let mut string = self.span.source_text(p.source_text).cow_to_ascii_lowercase();
 
             // Remove unnecessary plus and zeroes from scientific notation.
             if let Some((head, tail)) = string.split_once('e') {
@@ -1400,8 +1398,10 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
 
 impl<'a> Format<'a> for BigIntLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let text = self.span.source_text(p.source_text);
-        Doc::Str(text)
+        match self.span.source_text(p.source_text).cow_to_ascii_lowercase() {
+            Cow::Borrowed(s) => Doc::Str(s),
+            Cow::Owned(s) => p.str(&s),
+        }
     }
 }
 

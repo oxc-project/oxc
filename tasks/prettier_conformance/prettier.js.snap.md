@@ -1,4 +1,4 @@
-js compatibility: 262/593 (44.18%)
+js compatibility: 265/593 (44.69%)
 
 # Failed
 
@@ -56,9 +56,6 @@ js compatibility: 262/593 (44.18%)
 ### async
 * async/inline-await.js
 * async/nested.js
-
-### big-int
-* big-int/literal.js
 
 ### binary-expressions
 * binary-expressions/arrow.js
@@ -301,12 +298,6 @@ js compatibility: 262/593 (44.18%)
 
 ### line-suffix-boundary
 * line-suffix-boundary/boundary.js
-
-### literal
-* literal/number.js
-
-### literal-numeric-separator
-* literal-numeric-separator/test.js
 
 ### logical_expressions
 * logical_expressions/issue-7024.js
