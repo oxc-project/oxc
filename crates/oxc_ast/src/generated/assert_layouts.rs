@@ -1506,8 +1506,8 @@ const _: () = {
     assert!(align_of::<CharacterClass>() == 8usize);
     assert!(offset_of!(CharacterClass, span) == 0usize);
     assert!(offset_of!(CharacterClass, negative) == 8usize);
-    assert!(offset_of!(CharacterClass, kind) == 9usize);
-    assert!(offset_of!(CharacterClass, strings) == 10usize);
+    assert!(offset_of!(CharacterClass, strings) == 9usize);
+    assert!(offset_of!(CharacterClass, kind) == 10usize);
     assert!(offset_of!(CharacterClass, body) == 16usize);
 
     assert!(size_of::<CharacterClassContentsKind>() == 1usize);
@@ -3061,8 +3061,8 @@ const _: () = {
     assert!(align_of::<CharacterClass>() == 4usize);
     assert!(offset_of!(CharacterClass, span) == 0usize);
     assert!(offset_of!(CharacterClass, negative) == 8usize);
-    assert!(offset_of!(CharacterClass, kind) == 9usize);
-    assert!(offset_of!(CharacterClass, strings) == 10usize);
+    assert!(offset_of!(CharacterClass, strings) == 9usize);
+    assert!(offset_of!(CharacterClass, kind) == 10usize);
     assert!(offset_of!(CharacterClass, body) == 12usize);
 
     assert!(size_of::<CharacterClassContentsKind>() == 1usize);
