@@ -486,8 +486,8 @@ pub(crate) unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
     ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
     walk_template_literal(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
-            as *mut TemplateLiteral,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+            as *mut Box<TemplateLiteral>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
