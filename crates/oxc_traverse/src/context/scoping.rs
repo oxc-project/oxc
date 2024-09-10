@@ -1,6 +1,8 @@
 use std::{cell::Cell, str};
 
 use compact_str::{format_compact, CompactString};
+use rustc_hash::FxHashSet;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
@@ -23,6 +25,7 @@ use crate::scopes_collector::ChildScopeCollector;
 pub struct TraverseScoping {
     scopes: ScopeTree,
     symbols: SymbolTable,
+    uid_names: Option<FxHashSet<CompactStr>>,
     current_scope_id: ScopeId,
 }
 
@@ -174,20 +177,19 @@ impl TraverseScoping {
     ///
     /// # Potential improvements
     ///
-    /// TODO(improve-on-babel)
+    /// TODO(improve-on-babel):
     ///
     /// This function is fairly expensive, because it aims to replicate Babel's output.
-    /// `name_is_unique` method below searches through every single binding in the entire program
-    /// and does a string comparison on each.
-    /// If the first name tried is already in use, it will repeat that entire search with a new name,
-    /// potentially multiple times.
     ///
-    /// We could improve this in one of 2 ways:
+    /// `init_uid_names` iterates through every single binding and unresolved reference in the entire AST,
+    /// and builds a hashset of symbols which could clash with UIDs.
+    /// Once that's built, it's cached, but `find_uid_name` still has to do at least one hashset lookup,
+    /// and a hashset insert. If the first name tried is already in use, it will do another hashset lookup,
+    /// potentially multiple times until a name which isn't taken is found.
     ///
-    /// 1. Semantic generate a hash set of all identifier names used in program.
-    ///    Check for uniqueness would then be just 1 x hashset lookup for each name that's tried.
-    ///    This would maintain output parity with Babel.
-    ///    But building the hash set would add some overhead to semantic.
+    /// We could improve this in one of 3 ways:
+    ///
+    /// 1. Build the hashset in `SemanticBuilder` instead of iterating through all symbols again here.
     ///
     /// 2. Use a much simpler method:
     ///
@@ -201,11 +203,21 @@ impl TraverseScoping {
     ///
     /// Minimal cost in semantic, and generating UIDs extremely cheap.
     ///
-    /// This is a slightly different method from Babel, but hopefully close enough that output will
-    /// match Babel for most (or maybe all) test cases.
+    /// This is a slightly different method from Babel, and unfortunately produces UID names
+    /// which differ from Babel for some of its test cases.
+    ///
+    /// 3. If output is being minified anyway, use a method which produces less debuggable output,
+    /// but is even simpler:
+    ///
+    /// * During initial semantic pass, check for any existing identifiers starting with `_`.
+    /// * Find the highest number of leading `_`s for any existing symbol.
+    /// * Generate UIDs with a counter starting at 0, prefixed with number of `_`s one greater than
+    ///   what was found in AST.
+    /// i.e. if source contains identifiers `_foo` and `__bar`, create UIDs names `___0`, `___1`,
+    /// `___2` etc. They'll all be unique within the program.
     pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
         // Get name for UID
-        let name = CompactStr::new(&self.find_uid_name(name));
+        let name = self.find_uid_name(name);
 
         // Add binding to scope
         let symbol_id =
@@ -428,6 +440,7 @@ impl TraverseScoping {
         Self {
             scopes,
             symbols,
+            uid_names: None,
             // Dummy value. Immediately overwritten in `walk_program`.
             current_scope_id: ScopeId::new(0),
         }
@@ -440,82 +453,50 @@ impl TraverseScoping {
     }
 
     /// Find a variable name which can be used as a UID
-    fn find_uid_name(&self, name: &str) -> CompactString {
-        let mut name = create_uid_name_base(name);
-
-        // Try the name without a numerical postfix (i.e. plain `_temp`)
-        if self.name_is_unique(&name) {
-            return name;
+    fn find_uid_name(&mut self, name: &str) -> CompactStr {
+        // If `uid_names` is not already populated, initialize it
+        if self.uid_names.is_none() {
+            self.init_uid_names();
         }
+        let uid_names = self.uid_names.as_mut().unwrap();
 
-        // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
-        // operations to a minimum for postfixes up to 99 - using `replace_range` on a single
-        // `CompactStr`, rather than generating a new string on each attempt.
-        // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
-
-        // Try single-digit postfixes (i.e. `_temp2`, `_temp3` ... `_temp9`)
-        name.push('2');
-        if self.name_is_unique(&name) {
-            return name;
-        }
-        for c in b'3'..=b'9' {
-            name.replace_range(name.len() - 1.., str::from_utf8(&[c]).unwrap());
-            if self.name_is_unique(&name) {
-                return name;
-            }
-        }
-
-        // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
-        name.replace_range(name.len() - 1.., "1");
-        name.push('0');
-        let mut c1 = b'1';
-        loop {
-            if self.name_is_unique(&name) {
-                return name;
-            }
-            for c2 in b'1'..=b'9' {
-                name.replace_range(name.len() - 1.., str::from_utf8(&[c2]).unwrap());
-                if self.name_is_unique(&name) {
-                    return name;
-                }
-            }
-            if c1 == b'9' {
-                break;
-            }
-            c1 += 1;
-            name.replace_range(name.len() - 2.., str::from_utf8(&[c1, b'0']).unwrap());
-        }
-
-        // Try longer postfixes (`_temp100` upwards)
-        let name_base = {
-            name.pop();
-            name.pop();
-            &*name
-        };
-        for n in 100..=usize::MAX {
-            let name = format_compact!("{}{}", name_base, n);
-            if self.name_is_unique(&name) {
-                return name;
-            }
-        }
-
-        panic!("Cannot generate UID");
+        let base = get_uid_name_base(name);
+        let uid = get_unique_name(base, uid_names);
+        uid_names.insert(uid.clone());
+        uid
     }
 
-    fn name_is_unique(&self, name: &str) -> bool {
-        !self.scopes.root_unresolved_references().contains_key(name)
-            && !self.symbols.names.iter().any(|n| n.as_str() == name)
+    /// Initialize `uid_names`.
+    ///
+    /// Iterate through all symbols and unresolved references in AST and identify any var names
+    /// which could clash with UIDs (start with `_`). Build a hash set containing them.
+    ///
+    /// Once this map is created, generating a UID is a relatively quick operation, rather than
+    /// iterating over all symbols and unresolved references every time generate a UID.
+    fn init_uid_names(&mut self) {
+        let uid_names = self
+            .scopes
+            .root_unresolved_references()
+            .keys()
+            .chain(self.symbols.names.iter())
+            .filter_map(|name| {
+                if name.as_bytes().first() == Some(&b'_') {
+                    Some(name.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        self.uid_names = Some(uid_names);
     }
 }
 
 /// Create base for UID name based on provided `name`.
-/// i.e. if `name` is "foo", returns "_foo".
-/// We use `CompactString` to avoid any allocations where `name` is less than 22 bytes (the common case).
-fn create_uid_name_base(name: &str) -> CompactString {
-    // Trim `_`s from start, and `0-9`s from end.
-    // Code below is equivalent to
-    // `let name = name.trim_start_matches('_').trim_end_matches(|c: char| c.is_ascii_digit());`
-    // but more efficient as operates on bytes not chars.
+/// Trim `_`s from start and digits from end.
+/// i.e. `__foo123` -> `foo`
+fn get_uid_name_base(name: &str) -> &str {
+    // Equivalent to `name.trim_start_matches('_').trim_end_matches(|c: char| c.is_ascii_digit())`
+    // but more efficient as operates on bytes not chars
     let mut bytes = name.as_bytes();
     while bytes.first() == Some(&b'_') {
         bytes = &bytes[1..];
@@ -525,14 +506,79 @@ fn create_uid_name_base(name: &str) -> CompactString {
     }
     // SAFETY: We started with a valid UTF8 `&str` and have only trimmed off ASCII characters,
     // so remainder must still be valid UTF8
-    let name = unsafe { str::from_utf8_unchecked(bytes) };
+    unsafe { str::from_utf8_unchecked(bytes) }
+}
 
+fn get_unique_name(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactStr {
+    CompactStr::from(get_unique_name_impl(base, uid_names))
+}
+
+fn get_unique_name_impl(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactString {
     // Create `CompactString` prepending name with `_`, and with 1 byte excess capacity.
     // The extra byte is to avoid reallocation if need to add a digit on the end later,
     // which will not be too uncommon.
     // Having to add 2 digits will be uncommon, so we don't allocate 2 extra bytes for 2 digits.
-    let mut str = CompactString::with_capacity(name.len() + 2);
-    str.push('_');
-    str.push_str(name);
-    str
+    let mut name = CompactString::with_capacity(base.len() + 2);
+    name.push('_');
+    name.push_str(base);
+
+    let name_is_unique = |name: &str| !uid_names.contains(name);
+
+    // Try the name without a numerical postfix (i.e. plain `_temp`)
+    if name_is_unique(&name) {
+        return name;
+    }
+
+    // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
+    // operations to a minimum for postfixes up to 99 - using `replace_range` on a single
+    // `CompactStr`, rather than generating a new string on each attempt.
+    // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
+
+    // Try single-digit postfixes (i.e. `_temp2`, `_temp3` ... `_temp9`)
+    name.push('2');
+    if name_is_unique(&name) {
+        return name;
+    }
+    for c in b'3'..=b'9' {
+        name.replace_range(name.len() - 1.., str::from_utf8(&[c]).unwrap());
+        if name_is_unique(&name) {
+            return name;
+        }
+    }
+
+    // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
+    name.replace_range(name.len() - 1.., "1");
+    name.push('0');
+    let mut c1 = b'1';
+    loop {
+        if name_is_unique(&name) {
+            return name;
+        }
+        for c2 in b'1'..=b'9' {
+            name.replace_range(name.len() - 1.., str::from_utf8(&[c2]).unwrap());
+            if name_is_unique(&name) {
+                return name;
+            }
+        }
+        if c1 == b'9' {
+            break;
+        }
+        c1 += 1;
+        name.replace_range(name.len() - 2.., str::from_utf8(&[c1, b'0']).unwrap());
+    }
+
+    // Try longer postfixes (`_temp100` upwards)
+    let name_base = {
+        name.pop();
+        name.pop();
+        &*name
+    };
+    for n in 100..=usize::MAX {
+        let name = format_compact!("{}{}", name_base, n);
+        if name_is_unique(&name) {
+            return name;
+        }
+    }
+
+    panic!("Cannot generate UID");
 }

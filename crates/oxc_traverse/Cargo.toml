@@ -31,3 +31,4 @@ oxc_syntax = { workspace = true }
 
 compact_str = { workspace = true }
 memoffset = { workspace = true }
+rustc-hash = { workspace = true }
