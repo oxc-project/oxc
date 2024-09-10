@@ -1,5 +1,6 @@
 #![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 
+use oxc_ast::ast::IdentifierReference;
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::{
@@ -174,6 +175,10 @@ impl SymbolTable {
     #[inline]
     pub fn is_global_reference(&self, reference_id: ReferenceId) -> bool {
         self.references[reference_id].symbol_id().is_none()
+    }
+
+    pub fn is_global_identifier_reference(&self, ident: &IdentifierReference<'_>) -> bool {
+        ident.reference_id.get().is_some_and(|reference_id| self.is_global_reference(reference_id))
     }
 
     #[inline]

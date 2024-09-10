@@ -15,7 +15,7 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{
     keep_var::KeepVar,
-    node_util::{is_exact_int64, MayHaveSideEffects, NodeUtil, NumberValue},
+    node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue},
     tri::Tri,
     ty::Ty,
     CompressorPass,
@@ -35,7 +35,6 @@ impl<'a> Traverse<'a> for FoldConstants<'a> {
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.fold_expression(expr, ctx);
-        self.fold_conditional_expression(expr, ctx);
     }
 }
 
@@ -49,8 +48,64 @@ impl<'a> FoldConstants<'a> {
         self
     }
 
+    // [optimizeSubtree](https://github.com/google/closure-compiler/blob/75335a5138dde05030747abfd3c852cd34ea7429/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L72)
+    pub fn fold_expression(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Some(folded_expr) = match expr {
+            Expression::BinaryExpression(e) => self.try_fold_binary_operator(e, ctx),
+            Expression::LogicalExpression(e) => self.try_fold_logical_expression(e, ctx),
+            // TODO: move to `PeepholeMinimizeConditions`
+            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
+            Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
+            _ => None,
+        } {
+            *expr = folded_expr;
+        };
+    }
+
+    fn try_fold_binary_operator(
+        &self,
+        binary_expr: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        match binary_expr.operator {
+            BinaryOperator::Equality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::StrictInequality
+            | BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+            | BinaryOperator::GreaterThan
+            | BinaryOperator::GreaterEqualThan => self.try_fold_comparison(
+                binary_expr.span,
+                binary_expr.operator,
+                &binary_expr.left,
+                &binary_expr.right,
+                ctx,
+            ),
+            BinaryOperator::ShiftLeft
+            | BinaryOperator::ShiftRight
+            | BinaryOperator::ShiftRightZeroFill => self.try_fold_shift(
+                binary_expr.span,
+                binary_expr.operator,
+                &binary_expr.left,
+                &binary_expr.right,
+                ctx,
+            ),
+            // NOTE: string concat folding breaks our current evaluation of Test262 tests. The
+            // minifier is tested by comparing output of running the minifier once and twice,
+            // respectively. Since Test262Error messages include string concats, the outputs
+            // don't match (even though the produced code is valid). Additionally, We'll likely
+            // want to add `evaluate` checks for all constant folding, not just additions, but
+            // we're adding this here until a decision is made.
+            BinaryOperator::Addition if self.evaluate => {
+                self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right, ctx)
+            }
+            _ => None,
+        }
+    }
+
     fn fold_expression_and_get_boolean_value(
-        &mut self,
+        &self,
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<bool> {
@@ -58,7 +113,7 @@ impl<'a> FoldConstants<'a> {
         ctx.get_boolean_value(expr)
     }
 
-    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn fold_if_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let Statement::IfStatement(if_stmt) = stmt else { return };
 
         // Descend and remove `else` blocks first.
@@ -89,80 +144,66 @@ impl<'a> FoldConstants<'a> {
         }
     }
 
-    fn fold_conditional_expression(
-        &mut self,
-        expr: &mut Expression<'a>,
+    fn try_fold_conditional_expression(
+        &self,
+        expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
-    ) {
-        let Expression::ConditionalExpression(conditional_expr) = expr else {
-            return;
-        };
+    ) -> Option<Expression<'a>> {
         if ctx.ancestry.parent().is_tagged_template_expression() {
-            return;
+            return None;
         }
-        match self.fold_expression_and_get_boolean_value(&mut conditional_expr.test, ctx) {
-            Some(true) => {
-                *expr = self.ast.move_expression(&mut conditional_expr.consequent);
-            }
-            Some(false) => {
-                *expr = self.ast.move_expression(&mut conditional_expr.alternate);
-            }
-            _ => {}
+        match self.fold_expression_and_get_boolean_value(&mut expr.test, ctx) {
+            Some(true) => Some(self.ast.move_expression(&mut expr.consequent)),
+            Some(false) => Some(self.ast.move_expression(&mut expr.alternate)),
+            _ => None,
         }
     }
 
-    pub fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let folded_expr = match expr {
-            Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
-                BinaryOperator::Equality
-                | BinaryOperator::Inequality
-                | BinaryOperator::StrictEquality
-                | BinaryOperator::StrictInequality
-                | BinaryOperator::LessThan
-                | BinaryOperator::LessEqualThan
-                | BinaryOperator::GreaterThan
-                | BinaryOperator::GreaterEqualThan => self.try_fold_comparison(
-                    binary_expr.span,
-                    binary_expr.operator,
-                    &binary_expr.left,
-                    &binary_expr.right,
-                    ctx,
-                ),
-                BinaryOperator::ShiftLeft
-                | BinaryOperator::ShiftRight
-                | BinaryOperator::ShiftRightZeroFill => self.try_fold_shift(
-                    binary_expr.span,
-                    binary_expr.operator,
-                    &binary_expr.left,
-                    &binary_expr.right,
-                    ctx,
-                ),
-                // NOTE: string concat folding breaks our current evaluation of Test262 tests. The
-                // minifier is tested by comparing output of running the minifier once and twice,
-                // respectively. Since Test262Error messages include string concats, the outputs
-                // don't match (even though the produced code is valid). Additionally, We'll likely
-                // want to add `evaluate` checks for all constant folding, not just additions, but
-                // we're adding this here until a decision is made.
-                BinaryOperator::Addition if self.evaluate => self.try_fold_addition(
-                    binary_expr.span,
-                    &binary_expr.left,
-                    &binary_expr.right,
-                    ctx,
-                ),
-                _ => None,
-            },
-            Expression::LogicalExpression(logic_expr) => {
-                self.try_fold_logical_expression(logic_expr, ctx)
-            }
+    fn try_fold_unary_expression(
+        &self,
+        expr: &mut UnaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        match expr.operator {
+            UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
             _ => None,
-        };
-        if let Some(folded_expr) = folded_expr {
-            *expr = folded_expr;
         }
+    }
+
+    /// Folds 'typeof(foo)' if foo is a literal, e.g.
+    /// `typeof("bar") --> "string"`
+    /// `typeof(6) --> "number"`
+    fn try_fold_type_of(
+        &self,
+        expr: &mut UnaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if !expr.argument.is_literal_value(/* include_function */ true) {
+            return None;
+        }
+        let s = match &mut expr.argument {
+            Expression::FunctionExpression(_) => "function",
+            Expression::StringLiteral(_) => "string",
+            Expression::NumericLiteral(_) => "number",
+            Expression::BooleanLiteral(_) => "boolean",
+            Expression::NullLiteral(_)
+            | Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_) => "object",
+            Expression::UnaryExpression(e) if e.operator == UnaryOperator::Void => "undefined",
+            Expression::BigIntLiteral(_) => "bigint",
+            Expression::Identifier(ident)
+                if ident.name == "undefined"
+                    && ctx.symbols().is_global_identifier_reference(ident) =>
+            {
+                "undefined"
+            }
+            _ => return None,
+        };
+        Some(self.ast.expression_string_literal(SPAN, s))
     }
 
     fn try_fold_addition<'b>(
-        &mut self,
+        &self,
         span: Span,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
@@ -206,7 +247,7 @@ impl<'a> FoldConstants<'a> {
     }
 
     fn try_fold_comparison<'b>(
-        &mut self,
+        &self,
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
@@ -222,7 +263,7 @@ impl<'a> FoldConstants<'a> {
     }
 
     fn evaluate_comparison<'b>(
-        &mut self,
+        &self,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
@@ -231,7 +272,6 @@ impl<'a> FoldConstants<'a> {
         if left.may_have_side_effects() || right.may_have_side_effects() {
             return Tri::Unknown;
         }
-
         match op {
             BinaryOperator::Equality => self.try_abstract_equality_comparison(left, right, ctx),
             BinaryOperator::Inequality => {
@@ -261,7 +301,7 @@ impl<'a> FoldConstants<'a> {
 
     /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
     fn try_abstract_equality_comparison<'b>(
-        &mut self,
+        &self,
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
@@ -526,7 +566,7 @@ impl<'a> FoldConstants<'a> {
     /// ported from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1114-L1162)
     #[allow(clippy::cast_possible_truncation)]
     fn try_fold_shift<'b>(
-        &mut self,
+        &self,
         span: Span,
         op: BinaryOperator,
         left: &'b Expression<'a>,
@@ -580,7 +620,7 @@ impl<'a> FoldConstants<'a> {
     ///
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
     pub fn try_fold_logical_expression(
-        &mut self,
+        &self,
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
@@ -654,7 +694,7 @@ impl<'a> FoldConstants<'a> {
     }
 
     pub(crate) fn fold_condition<'b>(
-        &mut self,
+        &self,
         stmt: &'b mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -684,10 +724,7 @@ impl<'a> FoldConstants<'a> {
         };
     }
 
-    fn fold_expression_in_condition(
-        &mut self,
-        expr: &mut Expression<'a>,
-    ) -> Option<Expression<'a>> {
+    fn fold_expression_in_condition(&self, expr: &mut Expression<'a>) -> Option<Expression<'a>> {
         let folded_expr = match expr {
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::LogicalNot => {

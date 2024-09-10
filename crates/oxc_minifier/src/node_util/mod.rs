@@ -11,7 +11,10 @@ use oxc_ast::ast::*;
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
-pub use self::{may_have_side_effects::MayHaveSideEffects, number_value::NumberValue};
+pub use self::{
+    is_literal_value::IsLiteralValue, may_have_side_effects::MayHaveSideEffects,
+    number_value::NumberValue,
+};
 
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
@@ -98,14 +101,7 @@ pub trait NodeUtil {
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "NaN" => Some(false),
                 "Infinity" => Some(true),
-                "undefined"
-                    if ident
-                        .reference_id
-                        .get()
-                        .is_some_and(|id| self.symbols().is_global_reference(id)) =>
-                {
-                    Some(false)
-                }
+                "undefined" if self.symbols().is_global_identifier_reference(ident) => Some(false),
                 _ => None,
             },
             Expression::AssignmentExpression(assign_expr) => {
