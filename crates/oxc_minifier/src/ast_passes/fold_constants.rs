@@ -2,7 +2,7 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, mem};
 
 use num_bigint::BigInt;
 use oxc_ast::{ast::*, AstBuilder, Visit};
@@ -166,6 +166,7 @@ impl<'a> FoldConstants<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         match expr.operator {
+            UnaryOperator::Void => Self::try_reduce_void(expr, ctx),
             UnaryOperator::Typeof => self.try_fold_type_of(expr, ctx),
             UnaryOperator::LogicalNot => {
                 expr.argument.to_boolean().map(|b| self.ast.expression_boolean_literal(SPAN, !b))
@@ -180,6 +181,19 @@ impl<'a> FoldConstants<'a> {
             }
             _ => None,
         }
+    }
+
+    /// `void 1` -> `void 0`
+    fn try_reduce_void(
+        expr: &mut UnaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        if (!expr.argument.is_number() || !expr.argument.is_number_0())
+            && !expr.may_have_side_effects()
+        {
+            let _ = mem::replace(&mut expr.argument, ctx.ast.number_0());
+        }
+        None
     }
 
     /// Folds 'typeof(foo)' if foo is a literal, e.g.

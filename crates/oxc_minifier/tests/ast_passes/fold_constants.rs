@@ -626,7 +626,6 @@ fn test_fold_logical_op2() {
 }
 
 #[test]
-#[ignore]
 fn test_fold_void() {
     test_same("void 0");
     test("void 1", "void 0");

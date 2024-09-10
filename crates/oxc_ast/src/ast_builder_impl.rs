@@ -108,10 +108,16 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Constructors ---------- */
 
+    /// `0`
+    #[inline]
+    pub fn number_0(self) -> Expression<'a> {
+        self.expression_numeric_literal(Span::default(), 0.0, "0", NumberBase::Decimal)
+    }
+
     /// `void 0`
     #[inline]
     pub fn void_0(self) -> Expression<'a> {
-        let num = self.expression_numeric_literal(Span::default(), 0.0, "0", NumberBase::Decimal);
+        let num = self.number_0();
         Expression::UnaryExpression(self.alloc(self.unary_expression(
             Span::default(),
             UnaryOperator::Void,
