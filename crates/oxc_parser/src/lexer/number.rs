@@ -5,6 +5,7 @@
 
 use std::borrow::Cow;
 
+use cow_utils::CowUtils;
 use num_bigint::BigInt;
 use num_traits::Num;
 
@@ -40,7 +41,7 @@ pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str
 }
 
 pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
-    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
     s.parse::<f64>().map_err(|_| "invalid float")
 }
@@ -93,7 +94,7 @@ fn parse_decimal_with_underscores(s: &str) -> f64 {
 
     debug_assert!(!s.is_empty());
     if s.len() > MAX_FAST_DECIMAL_LEN {
-        return parse_decimal_slow(&s.replace('_', ""));
+        return parse_decimal_slow(&s.cow_replace('_', ""));
     }
 
     let mut result = 0_u64;
@@ -391,7 +392,7 @@ fn parse_hex_with_underscores_slow(s: &str) -> f64 {
 // ==================================== BIGINT ====================================
 
 pub fn parse_big_int(s: &str, kind: Kind, has_sep: bool) -> Result<BigInt, &'static str> {
-    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    let s = if has_sep { s.cow_replace('_', "") } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
     parse_big_int_without_underscores(&s, kind)
 }

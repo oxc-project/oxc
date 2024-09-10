@@ -21,6 +21,7 @@ doctest = false
 [dependencies]
 base64-simd = { workspace = true }
 cfg-if = { workspace = true }
+cow-utils = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

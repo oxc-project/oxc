@@ -1525,6 +1525,7 @@ version = "0.27.0"
 dependencies = [
  "base64",
  "bitflags 2.6.0",
+ "cow-utils",
  "daachorse",
  "insta",
  "nonmax",
@@ -1738,6 +1739,7 @@ version = "0.27.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
+ "cow-utils",
  "memchr",
  "num-bigint",
  "num-traits",
@@ -1871,6 +1873,7 @@ version = "0.27.0"
 dependencies = [
  "base64-simd",
  "cfg-if",
+ "cow-utils",
  "rayon",
  "rustc-hash",
  "serde",
