@@ -8,5 +8,6 @@
         }
       }
     ]
-  ]
+  ],
+  "sourceType": "module"
 }

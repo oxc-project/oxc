@@ -9,5 +9,6 @@
     [
       "transform-modules-commonjs"
     ]
-  ]
+  ],
+  "sourceType": "module"
 }
