@@ -2,7 +2,7 @@ use std::{cell::Cell, iter::once};
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use oxc_allocator::CloneIn;
-use oxc_ast::{ast::*, match_expression, match_member_expression};
+use oxc_ast::{ast::*, match_expression, match_member_expression, AstBuilder};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
@@ -13,6 +13,79 @@ use sha1::{Digest, Sha1};
 use super::options::ReactRefreshOptions;
 use crate::context::Ctx;
 
+/// Parse a string into a `RefreshIdentifierResolver` and convert it into an `Expression`
+#[derive(Debug)]
+enum RefreshIdentifierResolver<'a> {
+    /// Simple IdentifierReference (e.g. `$RefreshReg$`)
+    Identifier(IdentifierReference<'a>),
+    /// StaticMemberExpression  (object, property) (e.g. `window.$RefreshReg$`)
+    Member((IdentifierReference<'a>, IdentifierName<'a>)),
+    /// Used for `import.meta` expression (e.g. `import.meta.$RefreshReg$`)
+    Expression(Expression<'a>),
+}
+
+impl<'a> RefreshIdentifierResolver<'a> {
+    /// Parses a string into a RefreshIdentifierResolver
+    pub fn parse(input: &str, ast: AstBuilder<'a>) -> Self {
+        if !input.contains('.') {
+            // Handle simple identifier reference
+            return Self::Identifier(ast.identifier_reference(SPAN, input));
+        }
+
+        let mut parts = input.split('.');
+        let first_part = parts.next().unwrap();
+
+        if first_part == "import" {
+            // Handle import.meta.$RefreshReg$ expression
+            let mut expr = ast.expression_meta_property(
+                SPAN,
+                ast.identifier_name(SPAN, "import"),
+                ast.identifier_name(SPAN, parts.next().unwrap()),
+            );
+            if let Some(property) = parts.next() {
+                expr = Expression::from(ast.member_expression_static(
+                    SPAN,
+                    expr,
+                    ast.identifier_name(SPAN, property),
+                    false,
+                ));
+            }
+            return Self::Expression(expr);
+        }
+
+        // Handle `window.$RefreshReg$` member expression
+        let object = ast.identifier_reference(SPAN, first_part);
+        let property = ast.identifier_name(SPAN, parts.next().unwrap());
+        Self::Member((object, property))
+    }
+
+    /// Converts the RefreshIdentifierResolver into an Expression
+    pub fn to_expression(&self, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+        match self {
+            Self::Identifier(ident) => {
+                let ident = ident.clone();
+                let reference_id =
+                    ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
+                ident.reference_id.set(Some(reference_id));
+                ctx.ast.expression_from_identifier_reference(ident)
+            }
+            Self::Member((ident, property)) => {
+                let ident = ident.clone();
+                let reference_id =
+                    ctx.create_unbound_reference(ident.name.to_compact_str(), ReferenceFlags::Read);
+                ident.reference_id.set(Some(reference_id));
+                Expression::from(ctx.ast.member_expression_static(
+                    SPAN,
+                    ctx.ast.expression_from_identifier_reference(ident),
+                    property.clone(),
+                    false,
+                ))
+            }
+            Self::Expression(expr) => expr.clone_in(ctx.ast.allocator),
+        }
+    }
+}
+
 /// React Fast Refresh
 ///
 /// Transform React functional components to integrate Fast Refresh.
@@ -22,11 +95,12 @@ use crate::context::Ctx;
 /// * <https://github.com/facebook/react/issues/16604#issuecomment-528663101>
 /// * <https://github.com/facebook/react/blob/main/packages/react-refresh/src/ReactFreshBabelPlugin.js>
 pub struct ReactRefresh<'a> {
-    refresh_reg: Atom<'a>,
-    refresh_sig: Atom<'a>,
+    refresh_reg: RefreshIdentifierResolver<'a>,
+    refresh_sig: RefreshIdentifierResolver<'a>,
     emit_full_signatures: bool,
-    registrations: Vec<(SymbolId, Atom<'a>)>,
     ctx: Ctx<'a>,
+    // States
+    registrations: Vec<(SymbolId, Atom<'a>)>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
     /// Used to wrap call expression with signature.
     /// (eg: hoc(() => {}) -> _s1(hoc(_s1(() => {}))))
@@ -39,10 +113,9 @@ pub struct ReactRefresh<'a> {
 
 impl<'a> ReactRefresh<'a> {
     pub fn new(options: &ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
-        // TODO: refresh_reg and refresh_sig need to support MemberExpression
         Self {
-            refresh_reg: ctx.ast.atom(&options.refresh_reg),
-            refresh_sig: ctx.ast.atom(&options.refresh_sig),
+            refresh_reg: RefreshIdentifierResolver::parse(&options.refresh_reg, ctx.ast),
+            refresh_sig: RefreshIdentifierResolver::parse(&options.refresh_sig, ctx.ast),
             emit_full_signatures: options.emit_full_signatures,
             signature_declarator_items: Vec::new(),
             registrations: Vec::default(),
@@ -99,13 +172,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
                 ),
             );
 
-            let refresh_reg_ident = ctx.create_reference_id(
-                SPAN,
-                self.refresh_reg.clone(),
-                Some(symbol_id),
-                ReferenceFlags::Read,
-            );
-            let callee = ctx.ast.expression_from_identifier_reference(refresh_reg_ident);
+            let callee = self.refresh_reg.to_expression(ctx);
             let mut arguments = ctx.ast.vec_with_capacity(2);
             arguments.push(ctx.ast.argument_expression(
                 Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
@@ -628,13 +695,6 @@ impl<'a> ReactRefresh<'a> {
             symbol_id: Cell::new(Some(symbol_id)),
         };
 
-        let sig_identifier_reference = ctx.create_reference_id(
-            SPAN,
-            self.refresh_sig.clone(),
-            Some(symbol_id),
-            ReferenceFlags::Read,
-        );
-
         // _s();
         let call_expression = ctx.ast.statement_expression(
             SPAN,
@@ -660,7 +720,7 @@ impl<'a> ReactRefresh<'a> {
             ),
             Some(ctx.ast.expression_call(
                 SPAN,
-                ctx.ast.expression_from_identifier_reference(sig_identifier_reference.clone()),
+                self.refresh_sig.to_expression(ctx),
                 Option::<TSTypeParameterInstantiation>::None,
                 ctx.ast.vec(),
                 false,

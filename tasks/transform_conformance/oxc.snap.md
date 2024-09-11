@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 17/51
+Passed: 18/51
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -167,80 +167,11 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (3/29)
+# babel-plugin-transform-react-jsx (4/29)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
-Symbol reference IDs mismatch:
-after transform: SymbolId(9): [ReferenceId(23), ReferenceId(24), ReferenceId(25)]
-rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(10): [ReferenceId(26), ReferenceId(27), ReferenceId(29)]
-rebuilt        : SymbolId(1): [ReferenceId(10), ReferenceId(13)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(11): [ReferenceId(30), ReferenceId(31), ReferenceId(32)]
-rebuilt        : SymbolId(2): [ReferenceId(18), ReferenceId(19)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(12): [ReferenceId(33), ReferenceId(34), ReferenceId(36)]
-rebuilt        : SymbolId(3): [ReferenceId(22), ReferenceId(25)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(13): [ReferenceId(37), ReferenceId(38), ReferenceId(39), ReferenceId(40)]
-rebuilt        : SymbolId(4): [ReferenceId(29), ReferenceId(32), ReferenceId(33)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(14): [ReferenceId(41), ReferenceId(42), ReferenceId(44)]
-rebuilt        : SymbolId(5): [ReferenceId(38), ReferenceId(41)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(4): [ReferenceId(14), ReferenceId(45), ReferenceId(46)]
-rebuilt        : SymbolId(10): [ReferenceId(15), ReferenceId(46)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(5): [ReferenceId(16), ReferenceId(47), ReferenceId(48)]
-rebuilt        : SymbolId(11): [ReferenceId(27), ReferenceId(48)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(6): [ReferenceId(18), ReferenceId(49), ReferenceId(50)]
-rebuilt        : SymbolId(12): [ReferenceId(31), ReferenceId(50)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(7): [ReferenceId(19), ReferenceId(51), ReferenceId(52)]
-rebuilt        : SymbolId(13): [ReferenceId(36), ReferenceId(52)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(8): [ReferenceId(21), ReferenceId(53), ReferenceId(54)]
-rebuilt        : SymbolId(14): [ReferenceId(43), ReferenceId(54)]
-Reference symbol mismatch:
-after transform: ReferenceId(23): Some("_s")
-rebuilt        : ReferenceId(0): None
-Reference symbol mismatch:
-after transform: ReferenceId(26): Some("_s2")
-rebuilt        : ReferenceId(1): None
-Reference symbol mismatch:
-after transform: ReferenceId(30): Some("_s3")
-rebuilt        : ReferenceId(2): None
-Reference symbol mismatch:
-after transform: ReferenceId(33): Some("_s4")
-rebuilt        : ReferenceId(3): None
-Reference symbol mismatch:
-after transform: ReferenceId(37): Some("_s5")
-rebuilt        : ReferenceId(4): None
-Reference symbol mismatch:
-after transform: ReferenceId(41): Some("_s6")
-rebuilt        : ReferenceId(5): None
 Reference flags mismatch:
 after transform: ReferenceId(18): ReferenceFlags(Write)
 rebuilt        : ReferenceId(31): ReferenceFlags(Read | Write)
-Reference symbol mismatch:
-after transform: ReferenceId(45): Some("_c")
-rebuilt        : ReferenceId(45): None
-Reference symbol mismatch:
-after transform: ReferenceId(47): Some("_c2")
-rebuilt        : ReferenceId(47): None
-Reference symbol mismatch:
-after transform: ReferenceId(49): Some("_c3")
-rebuilt        : ReferenceId(49): None
-Reference symbol mismatch:
-after transform: ReferenceId(51): Some("_c4")
-rebuilt        : ReferenceId(51): None
-Reference symbol mismatch:
-after transform: ReferenceId(53): Some("_c5")
-rebuilt        : ReferenceId(53): None
-Unresolved references mismatch:
-after transform: ["X", "memo", "module", "useContext"]
-rebuilt        : ["$RefreshReg$", "$RefreshSig$", "X", "memo", "module", "useContext"]
 
 * refresh/does-not-consider-require-like-methods-to-be-hocs/input.jsx
 x Output mismatch
@@ -255,15 +186,6 @@ rebuilt        : ScopeId(1): []
 Symbol scope ID mismatch:
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(0): ScopeId(0)
-Symbol reference IDs mismatch:
-after transform: SymbolId(1): [ReferenceId(3), ReferenceId(4), ReferenceId(5)]
-rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(3)]
-Reference symbol mismatch:
-after transform: ReferenceId(3): Some("_s")
-rebuilt        : ReferenceId(1): None
-Unresolved references mismatch:
-after transform: ["item", "useFoo"]
-rebuilt        : ["$RefreshSig$", "item", "useFoo"]
 
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
@@ -294,53 +216,6 @@ x Output mismatch
 
 * refresh/registers-identifiers-used-in-jsx-at-definition-site/input.jsx
 x Output mismatch
-
-* refresh/registers-identifiers-used-in-react-create-element-at-definition-site/input.jsx
-Symbol reference IDs mismatch:
-after transform: SymbolId(13): [ReferenceId(33), ReferenceId(47), ReferenceId(48)]
-rebuilt        : SymbolId(13): [ReferenceId(2), ReferenceId(48)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(14): [ReferenceId(35), ReferenceId(49), ReferenceId(50)]
-rebuilt        : SymbolId(14): [ReferenceId(5), ReferenceId(50)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(15): [ReferenceId(37), ReferenceId(51), ReferenceId(52)]
-rebuilt        : SymbolId(15): [ReferenceId(8), ReferenceId(52)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(16): [ReferenceId(39), ReferenceId(53), ReferenceId(54)]
-rebuilt        : SymbolId(16): [ReferenceId(12), ReferenceId(54)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(17): [ReferenceId(41), ReferenceId(55), ReferenceId(56)]
-rebuilt        : SymbolId(17): [ReferenceId(35), ReferenceId(56)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(18): [ReferenceId(43), ReferenceId(57), ReferenceId(58)]
-rebuilt        : SymbolId(18): [ReferenceId(41), ReferenceId(58)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(19): [ReferenceId(45), ReferenceId(59), ReferenceId(60)]
-rebuilt        : SymbolId(19): [ReferenceId(45), ReferenceId(60)]
-Reference symbol mismatch:
-after transform: ReferenceId(47): Some("_c")
-rebuilt        : ReferenceId(47): None
-Reference symbol mismatch:
-after transform: ReferenceId(49): Some("_c2")
-rebuilt        : ReferenceId(49): None
-Reference symbol mismatch:
-after transform: ReferenceId(51): Some("_c3")
-rebuilt        : ReferenceId(51): None
-Reference symbol mismatch:
-after transform: ReferenceId(53): Some("_c4")
-rebuilt        : ReferenceId(53): None
-Reference symbol mismatch:
-after transform: ReferenceId(55): Some("_c5")
-rebuilt        : ReferenceId(55): None
-Reference symbol mismatch:
-after transform: ReferenceId(57): Some("_c6")
-rebuilt        : ReferenceId(57): None
-Reference symbol mismatch:
-after transform: ReferenceId(59): Some("_c7")
-rebuilt        : ReferenceId(59): None
-Unresolved references mismatch:
-after transform: ["React", "funny", "hoc", "jsx", "styled", "wow"]
-rebuilt        : ["$RefreshReg$", "React", "funny", "hoc", "jsx", "styled", "wow"]
 
 * refresh/registers-likely-hocs-with-inline-functions-1/input.jsx
 x Output mismatch
