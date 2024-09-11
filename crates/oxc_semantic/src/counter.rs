@@ -11,49 +11,48 @@ use oxc_ast::{
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-#[allow(clippy::struct_field_names)]
 #[derive(Default, Debug)]
-pub(crate) struct Counter {
-    pub nodes_count: usize,
-    pub scopes_count: usize,
-    pub symbols_count: usize,
-    pub references_count: usize,
+pub(crate) struct Counts {
+    pub nodes: usize,
+    pub scopes: usize,
+    pub symbols: usize,
+    pub references: usize,
 }
 
-impl<'a> Visit<'a> for Counter {
+impl<'a> Visit<'a> for Counts {
     #[inline]
     fn enter_node(&mut self, _: AstKind<'a>) {
-        self.nodes_count += 1;
+        self.nodes += 1;
     }
 
     #[inline]
     fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
-        self.scopes_count += 1;
+        self.scopes += 1;
     }
 
     #[inline]
     fn visit_binding_identifier(&mut self, _: &BindingIdentifier<'a>) {
-        self.nodes_count += 1;
-        self.symbols_count += 1;
+        self.nodes += 1;
+        self.symbols += 1;
     }
 
     #[inline]
     fn visit_identifier_reference(&mut self, _: &IdentifierReference<'a>) {
-        self.nodes_count += 1;
-        self.references_count += 1;
+        self.nodes += 1;
+        self.references += 1;
     }
 
     #[inline]
     fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
         if !it.is_expression() {
-            self.symbols_count += 1;
+            self.symbols += 1;
         }
         walk_ts_enum_member_name(self, it);
     }
 
     #[inline]
     fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
-        self.symbols_count += 1;
+        self.symbols += 1;
         walk_ts_module_declaration_name(self, it);
     }
 }
