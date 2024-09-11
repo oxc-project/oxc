@@ -1,5 +1,6 @@
 use std::{borrow::Cow, cmp::Ordering};
 
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{BindingPatternKind, VariableDeclarator},
     AstKind,
@@ -93,7 +94,7 @@ impl SortVars {
         };
 
         if self.ignore_case {
-            return Cow::Owned(ident.name.to_lowercase());
+            return ident.name.as_str().cow_to_lowercase();
         }
 
         Cow::Borrowed(ident.name.as_str()) // avoid string allocs in the default case

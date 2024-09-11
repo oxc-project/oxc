@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use cow_utils::CowUtils;
 use oxc::{
     allocator::Allocator,
     codegen::CodeGenerator,
@@ -288,7 +289,7 @@ impl TestCase for ConformanceTestCase {
 
         let output;
         let passed = if let Some(throws) = &babel_options.throws {
-            output = throws.to_string().replace(" (1:6)", "");
+            output = throws.cow_replace(" (1:6)", "").into_owned();
             !output.is_empty()
                 && actual_errors.as_ref().is_some_and(|errors| errors.contains(&output))
         } else {

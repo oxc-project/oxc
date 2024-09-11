@@ -1693,6 +1693,7 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.27.0"
 dependencies = [
+ "cow-utils",
  "insta",
  "num-bigint",
  "num-traits",
@@ -1930,6 +1931,7 @@ dependencies = [
 name = "oxc_transform_conformance"
 version = "0.0.0"
 dependencies = [
+ "cow-utils",
  "indexmap",
  "oxc",
  "oxc_tasks_common",

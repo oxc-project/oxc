@@ -186,7 +186,8 @@ impl Tester {
         expect_pass: Vec<T>,
         expect_fail: Vec<T>,
     ) -> Self {
-        let rule_path = PathBuf::from(rule_name.cow_replace('-', "_")).with_extension("tsx");
+        let rule_path =
+            PathBuf::from(rule_name.cow_replace('-', "_").into_owned()).with_extension("tsx");
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
         let current_working_directory =
@@ -305,7 +306,7 @@ impl Tester {
         }
 
         settings.bind(|| {
-            insta::assert_snapshot!(name, self.snapshot);
+            insta::assert_snapshot!(name.as_ref(), self.snapshot);
         });
     }
 

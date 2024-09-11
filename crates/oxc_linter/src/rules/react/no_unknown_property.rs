@@ -1,5 +1,6 @@
 use std::{borrow::Cow, collections::hash_map::HashMap};
 
+use cow_utils::CowUtils;
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use oxc_ast::{
@@ -421,7 +422,10 @@ const DOM_PROPERTIES_IGNORE_CASE: [&str; 5] = [
 ];
 
 static DOM_PROPERTIES_LOWER_MAP: Lazy<HashMap<String, &'static str>> = Lazy::new(|| {
-    DOM_PROPERTIES_NAMES.iter().map(|it| (it.to_lowercase(), *it)).collect::<HashMap<_, _>>()
+    DOM_PROPERTIES_NAMES
+        .iter()
+        .map(|it| (it.cow_to_lowercase().into_owned(), *it))
+        .collect::<HashMap<_, _>>()
 });
 
 ///
@@ -433,7 +437,7 @@ static DOM_PROPERTIES_LOWER_MAP: Lazy<HashMap<String, &'static str>> = Lazy::new
 fn is_valid_data_attr(name: &str) -> bool {
     static DATA_ATTR_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^data(-?[^:]*)$").unwrap());
 
-    !name.to_lowercase().starts_with("data-xml") && DATA_ATTR_REGEX.is_match(name)
+    !name.cow_to_lowercase().starts_with("data-xml") && DATA_ATTR_REGEX.is_match(name)
 }
 
 fn normalize_attribute_case(name: &str) -> &str {
@@ -496,7 +500,10 @@ impl Rule for NoUnknownProperty {
                 };
                 if is_valid_data_attr(&actual_name) {
                     if self.0.require_data_lowercase && has_uppercase(&actual_name) {
-                        ctx.diagnostic(data_lowercase_required(span, &actual_name.to_lowercase()));
+                        ctx.diagnostic(data_lowercase_required(
+                            span,
+                            &actual_name.cow_to_lowercase(),
+                        ));
                     }
                     return;
                 };
@@ -520,7 +527,7 @@ impl Rule for NoUnknownProperty {
                 }
 
                 DOM_PROPERTIES_LOWER_MAP
-                    .get(&name.to_lowercase())
+                    .get(&name.cow_to_lowercase().into_owned())
                     .or_else(|| DOM_ATTRIBUTES_TO_CAMEL.get(name))
                     .map_or_else(
                         || {

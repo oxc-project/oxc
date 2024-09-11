@@ -436,7 +436,7 @@ mod test {
             format!(
                 "{}{}{}",
                 INSERT_AT_START.content,
-                TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *")),
+                TEST_CODE.cow_replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *")),
                 INSERT_AT_END.content
             )
         );
@@ -453,7 +453,7 @@ mod test {
     #[test]
     fn replace_at_the_start() {
         let result = get_fix_result(vec![create_message(replace_var(), Some(REPLACE_VAR))]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("var", "let"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var", "let"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -461,7 +461,7 @@ mod test {
     #[test]
     fn replace_at_the_middle() {
         let result = get_fix_result(vec![create_message(replace_id(), Some(REPLACE_ID))]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -469,7 +469,7 @@ mod test {
     #[test]
     fn replace_at_the_end() {
         let result = get_fix_result(vec![create_message(replace_num(), Some(REPLACE_NUM))]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace('6', "5"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace('6', "5"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -490,7 +490,7 @@ mod test {
     #[test]
     fn remove_at_the_start() {
         let result = get_fix_result(vec![create_message(remove_start(), Some(REMOVE_START))]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("var ", ""));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var ", ""));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -501,7 +501,7 @@ mod test {
             remove_middle(Span::default()),
             Some(REMOVE_MIDDLE),
         )]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "a"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "a"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -509,7 +509,7 @@ mod test {
     #[test]
     fn remove_at_the_end() {
         let result = get_fix_result(vec![create_message(remove_end(), Some(REMOVE_END))]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace(" * 7", ""));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace(" * 7", ""));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -532,7 +532,7 @@ mod test {
             create_message(remove_middle(Span::default()), Some(REMOVE_MIDDLE)),
             create_message(replace_id(), Some(REPLACE_ID)),
         ]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 1);
         assert_eq!(result.messages[0].error.to_string(), "removemiddle");
         assert!(result.fixed);
@@ -544,7 +544,7 @@ mod test {
             create_message(remove_start(), Some(REMOVE_START)),
             create_message(replace_id(), Some(REPLACE_ID)),
         ]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("var answer", "foo"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("var answer", "foo"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -556,7 +556,7 @@ mod test {
             create_message(replace_id(), Some(REPLACE_ID)),
             create_message(no_fix(Span::default()), None),
         ]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
         assert_eq!(result.messages[0].error.to_string(), "nofix");
         assert_eq!(result.messages[1].error.to_string(), "removemiddle");
@@ -592,7 +592,7 @@ mod test {
             Message::new(no_fix_2(Span::new(1, 7)), None),
             Message::new(no_fix_1(Span::new(1, 3)), None),
         ]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.fixed_code, TEST_CODE.cow_replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
         assert_eq!(result.messages[0].error.to_string(), "nofix1");
         assert_eq!(result.messages[1].error.to_string(), "nofix2");

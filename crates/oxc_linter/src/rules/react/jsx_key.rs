@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
@@ -91,7 +92,7 @@ pub fn import_matcher<'a>(
     actual_local_name: &'a str,
     expected_module_name: &'a str,
 ) -> bool {
-    let expected_module_name = expected_module_name.to_lowercase();
+    let expected_module_name = expected_module_name.cow_to_lowercase();
     ctx.semantic().module_record().import_entries.iter().any(|import| {
         import.module_request.name().as_str() == expected_module_name
             && import.local_name.name().as_str() == actual_local_name
