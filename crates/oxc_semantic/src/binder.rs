@@ -1,6 +1,6 @@
 //! Declare symbol for `BindingIdentifier`s
 
-use std::borrow::Cow;
+use std::{borrow::Cow, ptr};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -146,12 +146,12 @@ fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuild
         return false;
     };
     if let Statement::FunctionDeclaration(func) = &stmt.consequent {
-        if func.span == function.span {
+        if ptr::eq(func.as_ref(), function) {
             return true;
         }
     }
     if let Some(Statement::FunctionDeclaration(func)) = &stmt.alternate {
-        if func.span == function.span {
+        if ptr::eq(func.as_ref(), function) {
             return true;
         }
     }
