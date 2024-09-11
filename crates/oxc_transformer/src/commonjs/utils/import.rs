@@ -18,13 +18,11 @@ pub fn create_require<'a>(target: &str, builder: &'a AstBuilder) -> Expression<'
 /// Generate the `require` bond for a given target.
 /// e.g. for `fs`:
 /// ```js
-/// require('fs')
-/// ```
-///
-/// It can be transformed from:
-///
-/// ```js
 /// import 'fs'
+/// ```
+/// It can be transformed to:
+/// ```js
+/// require('fs')
 /// ```
 pub fn create_empty_require<'a>(target: &str, builder: &'a AstBuilder) -> Statement<'a> {
     builder.statement_expression(SPAN, create_require(target, builder))
@@ -33,13 +31,11 @@ pub fn create_empty_require<'a>(target: &str, builder: &'a AstBuilder) -> Statem
 /// Generate a namespaced `require` bond for a given target and assignee.
 /// e.g. for `fs`:
 /// ```js
-/// const fs = require('fs')
-/// ```
-///
-/// It can be transformed from:
-///
-/// ```js
 /// import * as fs from 'fs'
+/// ```
+/// It can be transformed to:
+/// ```js
+/// const fs = require('fs')
 /// ```
 pub fn create_namespaced_require<'a>(
     target: &str,

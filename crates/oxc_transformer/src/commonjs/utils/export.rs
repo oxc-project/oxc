@@ -2,16 +2,16 @@ use crate::commonjs::utils::define::{create_object_define_property, legitimize_i
 use crate::commonjs::utils::import::create_require;
 use oxc_allocator::{Box, CloneIn, Vec};
 use oxc_ast::ast::{
-    ArrayPattern, BindingPatternKind, BindingRestElement, Declaration, ExportSpecifier, Expression,
-    FormalParameterKind, FunctionType, ModuleExportName, ObjectPattern, Statement, TSAccessibility,
-    TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration, TSTypeParameterInstantiation,
-    VariableDeclarationKind,
+    ArrayPattern, AssignmentPattern, BindingPatternKind, BindingRestElement, Declaration,
+    ExportSpecifier, Expression, FormalParameterKind, FunctionType, ModuleExportName,
+    ObjectPattern, Statement, TSAccessibility, TSThisParameter, TSTypeAnnotation,
+    TSTypeParameterDeclaration, TSTypeParameterInstantiation, VariableDeclarationKind,
 };
 use oxc_ast::AstBuilder;
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-fn create_exports<'a>(
+pub fn create_exports<'a>(
     target: ModuleExportName<'a>,
     declaration: Expression<'a>,
     builder: &'a AstBuilder,
@@ -155,23 +155,21 @@ pub fn create_declared_named_exports<'a>(
         }
         Declaration::FunctionDeclaration(decls) => {
             let mut result = builder.vec();
-            // 1. append the function declaration without export
+            // 1. append the function declaration without export (hoist the function)
             result.push(builder.statement_expression(
                 SPAN,
                 builder.expression_from_function(decls.clone_in(builder.allocator)),
             ));
             // 2. append the export statement
-            let identifier = &decls.id;
-            match identifier {
-                Some(id) => result.push(builder.statement_expression(
+            if let Some(id) = &decls.id {
+                result.push(builder.statement_expression(
                     SPAN,
                     create_exports(
                         builder.module_export_name_identifier_reference(SPAN, id.name.as_str()),
                         builder.expression_identifier_reference(SPAN, id.name.as_str()),
                         builder,
                     ),
-                )),
-                None => unreachable!(),
+                ));
             }
             result
         }
@@ -184,20 +182,19 @@ pub fn create_declared_named_exports<'a>(
             ));
             // 2. append the export statement
             let identifier = &decls.id;
-            match identifier {
-                Some(id) => result.push(builder.statement_expression(
+            if let Some(id) = identifier {
+                result.push(builder.statement_expression(
                     SPAN,
                     create_exports(
                         builder.module_export_name_identifier_reference(SPAN, id.name.as_str()),
                         builder.expression_identifier_reference(SPAN, id.name.as_str()),
                         builder,
                     ),
-                )),
-                None => unreachable!(),
+                ));
             }
             result
         }
-        _ => unreachable!(),
+        _ => unreachable!("This transformation is later than TypeScript, so it should not include other types of declarations"),
     }
 }
 
@@ -514,4 +511,130 @@ pub fn create_renamed_export_star_exports<'a>(
         SPAN,
         create_exports(specifier, create_require(source, builder), builder),
     ))
+}
+
+pub fn create_declared_named_export_graph<'a>(
+    declaration: &'a Declaration<'a>,
+    builder: &'a AstBuilder,
+) -> Vec<'a, ModuleExportName<'a>> {
+    match declaration {
+        Declaration::VariableDeclaration(decls) => {
+            let mut result = builder.vec();
+            for decl in &decls.declarations {
+                match &decl.id.kind {
+                    BindingPatternKind::BindingIdentifier(id) => {
+                        result.push(
+                            builder.module_export_name_identifier_name(SPAN, id.name.as_str()),
+                        );
+                    }
+                    BindingPatternKind::ObjectPattern(pattern) => {
+                        result.extend(create_object_pattern_export_graph(pattern, builder));
+                    }
+                    BindingPatternKind::ArrayPattern(pattern) => {
+                        result.extend(create_array_pattern_export_graph(pattern, builder));
+                    }
+                    BindingPatternKind::AssignmentPattern(pattern) => {
+                        create_assignment_pattern_export_graph(pattern, builder);
+                    }
+                }
+            }
+            result
+        }
+        Declaration::FunctionDeclaration(decls) => {
+            if let Some(id) = &decls.id {
+                builder
+                    .vec1(builder.module_export_name_identifier_reference(SPAN, id.name.as_str()))
+            } else {
+                builder.vec()
+            }
+        }
+        Declaration::ClassDeclaration(decls) => {
+            if let Some(id) = &decls.id {
+                builder
+                    .vec1(builder.module_export_name_identifier_reference(SPAN, id.name.as_str()))
+            } else {
+                builder.vec()
+            }
+        }
+        _ => builder.vec(),
+    }
+}
+
+fn create_object_pattern_export_graph<'a>(
+    pattern: &Box<ObjectPattern<'a>>,
+    builder: &'a AstBuilder,
+) -> Vec<'a, ModuleExportName<'a>> {
+    let mut result = builder.vec();
+    for prop in &pattern.properties {
+        match &prop.value.kind {
+            BindingPatternKind::BindingIdentifier(id) => {
+                result.push(builder.module_export_name_identifier_name(SPAN, id.name.as_str()));
+            }
+            BindingPatternKind::ObjectPattern(pattern) => {
+                result.extend(create_object_pattern_export_graph(pattern, builder));
+            }
+            BindingPatternKind::ArrayPattern(pattern) => {
+                result.extend(create_array_pattern_export_graph(pattern, builder));
+            }
+            BindingPatternKind::AssignmentPattern(pattern) => {
+                create_assignment_pattern_export_graph(pattern, builder);
+            }
+        }
+    }
+    result
+}
+
+fn create_assignment_pattern_export_graph<'a>(
+    pattern: &Box<AssignmentPattern<'a>>,
+    builder: &'a AstBuilder,
+) -> Vec<'a, ModuleExportName<'a>> {
+    let mut result = builder.vec();
+    match &pattern.left.kind {
+        BindingPatternKind::BindingIdentifier(id) => {
+            result.push(builder.module_export_name_identifier_name(SPAN, id.name.as_str()));
+        }
+        BindingPatternKind::ObjectPattern(pattern) => {
+            result.extend(create_object_pattern_export_graph(pattern, builder));
+        }
+        BindingPatternKind::ArrayPattern(pattern) => {
+            result.extend(create_array_pattern_export_graph(pattern, builder));
+        }
+        BindingPatternKind::AssignmentPattern(_) => unreachable!(),
+    }
+    result
+}
+
+fn create_array_pattern_export_graph<'a>(
+    pattern: &Box<ArrayPattern<'a>>,
+    builder: &'a AstBuilder,
+) -> Vec<'a, ModuleExportName<'a>> {
+    let mut result = builder.vec();
+    for element in pattern.elements.iter().flatten() {
+        match &element.kind {
+            BindingPatternKind::BindingIdentifier(id) => {
+                result.push(builder.module_export_name_identifier_name(SPAN, id.name.as_str()));
+            }
+            BindingPatternKind::ObjectPattern(pattern) => {
+                result.extend(create_object_pattern_export_graph(pattern, builder));
+            }
+            BindingPatternKind::ArrayPattern(pattern) => {
+                result.extend(create_array_pattern_export_graph(pattern, builder));
+            }
+            BindingPatternKind::AssignmentPattern(pattern) => {
+                create_assignment_pattern_export_graph(pattern, builder);
+            }
+        }
+    }
+    result
+}
+
+pub fn create_listed_export_graph<'a>(
+    specifiers: &'a Vec<'a, ExportSpecifier<'a>>,
+    builder: &'a AstBuilder,
+) -> Vec<'a, ModuleExportName<'a>> {
+    let mut result = builder.vec();
+    for specifier in specifiers {
+        result.push(specifier.exported.clone_in(builder.allocator));
+    }
+    result
 }

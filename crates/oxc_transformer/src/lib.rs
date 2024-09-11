@@ -405,6 +405,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.enter_export_named_declaration(node, ctx);
+        self.x1_commonjs.enter_export_named_declaration(node, ctx);
     }
 
     fn enter_ts_export_assignment(

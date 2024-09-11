@@ -4,12 +4,13 @@ mod utils;
 
 use crate::commonjs::options::CommonjsOptions;
 use crate::commonjs::utils::export::{
-    create_declared_named_exports, create_default_exports, create_export_star_exports,
+    create_declared_named_export_graph, create_declared_named_exports, create_default_exports,
+    create_export_star_exports, create_exports, create_listed_export_graph,
     create_listed_named_exports, create_reexported_named_exports,
     create_renamed_export_star_exports,
 };
 use crate::context::Ctx;
-use oxc_allocator::CloneIn;
+use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::{
     BindingPattern, ExportAllDeclaration, ExportDefaultDeclaration, ExportDefaultDeclarationKind,
     ExportNamedDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
@@ -22,11 +23,13 @@ use utils::import;
 pub struct Commonjs<'a> {
     ctx: Ctx<'a>,
     options: CommonjsOptions,
+
+    exports: Vec<'a, ModuleExportName<'a>>,
 }
 
 impl<'a> Commonjs<'a> {
     pub fn new(options: CommonjsOptions, ctx: Ctx<'a>) -> Self {
-        Self { ctx, options }
+        Self { exports: ctx.ast.vec(), ctx, options }
     }
 }
 
@@ -57,49 +60,51 @@ impl<'a> Commonjs<'a> {
                     )
                     .clone_in(self.ctx.ast.allocator)
                 } else {
-                    let assignees: Vec<(PropertyKey<'a>, BindingPattern<'a>)> = specifiers
-                        .iter()
-                        .map(|specifier| match specifier {
-                            ImportDeclarationSpecifier::ImportDefaultSpecifier(decl) => (
-                                self.ctx.ast.property_key_identifier_name(SPAN, "default"),
-                                self.ctx.ast.binding_pattern(
-                                    self.ctx.ast.binding_pattern_kind_binding_identifier(
-                                        SPAN,
-                                        &decl.local.name,
+                    let assignees: std::vec::Vec<(PropertyKey<'a>, BindingPattern<'a>)> =
+                        specifiers
+                            .iter()
+                            .map(|specifier| match specifier {
+                                ImportDeclarationSpecifier::ImportDefaultSpecifier(decl) => (
+                                    self.ctx.ast.property_key_identifier_name(SPAN, "default"),
+                                    self.ctx.ast.binding_pattern(
+                                        self.ctx.ast.binding_pattern_kind_binding_identifier(
+                                            SPAN,
+                                            &decl.local.name,
+                                        ),
+                                        None::<TSTypeAnnotation>,
+                                        false,
                                     ),
-                                    None::<TSTypeAnnotation>,
-                                    false,
                                 ),
-                            ),
-                            ImportDeclarationSpecifier::ImportSpecifier(decl) => (
-                                match &decl.imported {
-                                    ModuleExportName::IdentifierName(name) => self
-                                        .ctx
-                                        .ast
-                                        .property_key_identifier_name(SPAN, name.name.as_str()),
-                                    ModuleExportName::StringLiteral(literal) => {
-                                        self.ctx.ast.property_key_expression(
-                                            self.ctx
-                                                .ast
-                                                .expression_string_literal(SPAN, &literal.value),
-                                        )
-                                    }
-                                    ModuleExportName::IdentifierReference(_) => unreachable!(),
-                                },
-                                self.ctx.ast.binding_pattern(
-                                    self.ctx.ast.binding_pattern_kind_binding_identifier(
-                                        SPAN,
-                                        &decl.local.name,
+                                ImportDeclarationSpecifier::ImportSpecifier(decl) => (
+                                    match &decl.imported {
+                                        ModuleExportName::IdentifierName(name) => self
+                                            .ctx
+                                            .ast
+                                            .property_key_identifier_name(SPAN, name.name.as_str()),
+                                        ModuleExportName::StringLiteral(literal) => {
+                                            self.ctx.ast.property_key_expression(
+                                                self.ctx.ast.expression_string_literal(
+                                                    SPAN,
+                                                    &literal.value,
+                                                ),
+                                            )
+                                        }
+                                        ModuleExportName::IdentifierReference(_) => unreachable!(),
+                                    },
+                                    self.ctx.ast.binding_pattern(
+                                        self.ctx.ast.binding_pattern_kind_binding_identifier(
+                                            SPAN,
+                                            &decl.local.name,
+                                        ),
+                                        None::<TSTypeAnnotation>,
+                                        false,
                                     ),
-                                    None::<TSTypeAnnotation>,
-                                    false,
                                 ),
-                            ),
-                            ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                                unreachable!()
-                            }
-                        })
-                        .collect();
+                                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                                    unreachable!()
+                                }
+                            })
+                            .collect();
                     import::create_named_require(
                         &node.source.value,
                         assignees,
@@ -172,6 +177,20 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         }
         let mut latest = self.ctx.ast.vec();
 
+        for export in &self.exports {
+            latest.push(
+                self.ctx.ast.statement_expression(
+                    SPAN,
+                    create_exports(
+                        export.clone_in(self.ctx.ast.allocator),
+                        self.ctx.ast.void_0(),
+                        &self.ctx.ast,
+                    )
+                    .clone_in(self.ctx.ast.allocator),
+                ),
+            );
+        }
+
         for stmt in self.ctx.ast.move_vec(&mut program.body) {
             match stmt {
                 Statement::ImportDeclaration(s) => {
@@ -195,5 +214,25 @@ impl<'a> Traverse<'a> for Commonjs<'a> {
         }
 
         program.body = latest;
+    }
+
+    fn enter_export_named_declaration(
+        &mut self,
+        node: &mut ExportNamedDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(decl) = &node.declaration {
+            let graph = create_declared_named_export_graph(decl, &self.ctx.ast)
+                .clone_in(self.ctx.ast.allocator);
+            for dep in graph {
+                self.exports.push(dep);
+            }
+        } else if !&node.specifiers.is_empty() {
+            for dep in create_listed_export_graph(&node.specifiers, &self.ctx.ast)
+                .clone_in(self.ctx.ast.allocator)
+            {
+                self.exports.push(dep);
+            }
+        }
     }
 }
