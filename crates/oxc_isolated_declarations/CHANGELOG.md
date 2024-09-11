@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+### Features
+
+
+### Bug Fixes
+
+- b9bf544 isolated-declarations: False positive for setter method in `interface` (#5681) (Dunqing)
+- 6e8409a isolated-declarations: Bindings referenced in `TSModuleDeclaration` are removed incorrectly (#5680) (Dunqing)
+
+### Performance
+
+
+### Testing
+- dc92489 Add trailing line breaks to conformance fixtures (#5541) (overlookmotel)
+
 ## [0.26.0] - 2024-09-03
 
 - 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)

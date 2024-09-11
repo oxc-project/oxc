@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.28.0] - 2024-09-11
+
+### Bug Fixes
+
+- 304ce25 regular_expression: Keep LegacyOctalEscape raw digits for `to_string` (#5692) (leaysgur)
+- 0511d55 regular_expression: Report more MayContainStrings error in (nested)class (#5661) (leaysgur)
+- 41582ea regular_expression: Improve RegExp `to_string()` results (#5635) (leaysgur)
+- 28aad28 regular_expression: Handle `-` in `/[\-]/u` as escaped character (#5631) (leaysgur)
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+- 2da42ef regular_expression: Improve AST docs with refactoring may_contain_strings (#5665) (leaysgur)
+- dec1395 regular_expression: Align diagnostics (#5543) (leaysgur)
+
 ## [0.27.0] - 2024-09-06
 
 ### Features
