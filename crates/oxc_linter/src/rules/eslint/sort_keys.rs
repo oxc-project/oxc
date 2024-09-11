@@ -167,7 +167,6 @@ impl Rule for SortKeys {
 
             if !self.case_sensitive {
                 for group in &mut property_groups {
-
                     *group = group.iter().map(|s| s.to_lowercase()).collect::<Vec<String>>();
                 }
             }
