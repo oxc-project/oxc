@@ -74,6 +74,7 @@ declare_oxc_lint!(
     /// ```
     NoPlusplus,
     restriction,
+    pending
 );
 
 impl Rule for NoPlusplus {
