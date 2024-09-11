@@ -161,7 +161,7 @@ impl From<ReactBindingOptions> for ReactOptions {
             pragma_frag: options.pragma_frag,
             use_built_ins: options.use_built_ins,
             use_spread: options.use_spread,
-            refresh: ops.refresh.map(Into::into),
+            refresh: options.refresh.map(Into::into),
             ..Default::default()
         }
     }

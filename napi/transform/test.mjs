@@ -35,3 +35,35 @@ test(oxc.transform('test.ts', 'class A<T> {}', { sourcemap: true }), {
     version: 3,
   },
 });
+
+// Test react refresh plugin
+test(
+  oxc.transform(
+    'test.tsx',
+    `
+  import { useState } from "react";
+  export const App = () => {
+    const [count, setCount] = useState(0);
+    return <button onClick={() => setCount(count + 1)}>count is {count}</button>;
+  };
+`,
+    { react: { refresh: {} } },
+  ),
+  {
+    code: 'var _s = $RefreshSig$();\n' +
+      'import { useState } from "react";\n' +
+      'import { jsxs as _jsxs } from "react/jsx-runtime";\n' +
+      'export const App = () => {\n' +
+      '\t_s();\n' +
+      '\tconst [count, setCount] = useState(0);\n' +
+      '\treturn _jsxs("button", {\n' +
+      '\t\tonClick: () => setCount(count + 1),\n' +
+      '\t\tchildren: ["count is ", count]\n' +
+      '\t});\n' +
+      '};\n' +
+      '_s(App, "oDgYfYHkD9Wkv4hrAPCkI/ev3YU=");\n' +
+      '_c = App;\n' +
+      'var _c;\n' +
+      '$RefreshReg$(_c, "App");\n',
+  },
+);
