@@ -379,6 +379,7 @@ mod unicorn {
 
 mod jsx_a11y {
     pub mod alt_text;
+    pub mod anchor_ambiguous_text;
     pub mod anchor_has_content;
     pub mod anchor_is_valid;
     pub mod aria_activedescendant_has_tabindex;
@@ -741,6 +742,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::role_supports_aria_props,
     jsx_a11y::scope,
     jsx_a11y::tabindex_no_positive,
+    jsx_a11y::anchor_ambiguous_text,
     nextjs::google_font_display,
     nextjs::google_font_preconnect,
     nextjs::inline_script_id,
