@@ -1957,6 +1957,7 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.27.0"
 dependencies = [
+ "base64",
  "dashmap 6.0.1",
  "indexmap",
  "oxc-browserslist",
@@ -1975,6 +1976,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "sha1",
 ]
 
 [[package]]
@@ -2699,6 +2701,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d036d71a959e00c77a63538b90a6c2390969f9772b096ea837205c6bd0491a44"
 dependencies = [
  "stable_deref_trait",
+]
+
+[[package]]
+name = "sha1"
+version = "0.10.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3bf829a2d51ab4a5ddf1352d8470c140cadc8301b2ae1789db023f01cedd6ba"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest",
 ]
 
 [[package]]

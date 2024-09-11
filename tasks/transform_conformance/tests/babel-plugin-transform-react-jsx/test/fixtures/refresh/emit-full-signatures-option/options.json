@@ -4,7 +4,7 @@
       "transform-react-jsx",
       {
         "refresh": {
-          "emitFullSignatures": true
+          "emitFullSignatures": false
         }
       }
     ]

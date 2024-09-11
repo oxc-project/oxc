@@ -1,8 +1,14 @@
 {
-  "plugins": [["transform-react-jsx", {
-    "refresh": {
-      "refreshReg": "import.meta.refreshReg",
-      "refreshSig": "import.meta.refreshSig"
-    }
-  }]]
+  "plugins": [
+    [
+      "transform-react-jsx",
+      {
+        "refresh": {
+          "refreshReg": "import.meta.refreshReg",
+          "refreshSig": "import.meta.refreshSig",
+          "emitFullSignatures": true
+        }
+      }
+    ]
+  ]
 }

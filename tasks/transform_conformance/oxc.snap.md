@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 17/50
+Passed: 17/51
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -167,7 +167,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (3/28)
+# babel-plugin-transform-react-jsx (3/29)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
 Symbol reference IDs mismatch:
 after transform: SymbolId(9): [ReferenceId(23), ReferenceId(24), ReferenceId(25)]
@@ -266,6 +266,9 @@ after transform: ["item", "useFoo"]
 rebuilt        : ["$RefreshSig$", "item", "useFoo"]
 
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
+x Output mismatch
+
+* refresh/emit-full-signatures-option/input.jsx
 x Output mismatch
 
 * refresh/generates-signatures-for-function-declarations-calling-hooks/input.jsx

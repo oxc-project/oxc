@@ -1,5 +1,6 @@
 use std::{cell::Cell, iter::once};
 
+use base64::prelude::{Engine, BASE64_STANDARD};
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, match_expression, match_member_expression};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeId, SymbolFlags, SymbolId};
@@ -7,6 +8,7 @@ use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use rustc_hash::FxHashMap;
+use sha1::{Digest, Sha1};
 
 use super::options::ReactRefreshOptions;
 use crate::context::Ctx;
@@ -22,7 +24,7 @@ use crate::context::Ctx;
 pub struct ReactRefresh<'a> {
     refresh_reg: Atom<'a>,
     refresh_sig: Atom<'a>,
-    _emit_full_signatures: bool,
+    emit_full_signatures: bool,
     registrations: Vec<(SymbolId, Atom<'a>)>,
     ctx: Ctx<'a>,
     signature_declarator_items: Vec<oxc_allocator::Vec<'a, VariableDeclarator<'a>>>,
@@ -41,7 +43,7 @@ impl<'a> ReactRefresh<'a> {
         Self {
             refresh_reg: ctx.ast.atom(&options.refresh_reg),
             refresh_sig: ctx.ast.atom(&options.refresh_sig),
-            _emit_full_signatures: options.emit_full_signatures,
+            emit_full_signatures: options.emit_full_signatures,
             signature_declarator_items: Vec::new(),
             registrations: Vec::default(),
             ctx,
@@ -542,11 +544,22 @@ impl<'a> ReactRefresh<'a> {
     ) -> Option<(BindingIdentifier<'a>, oxc_allocator::Vec<'a, Argument<'a>>)> {
         let fn_hook_calls = self.hook_calls.remove(&scope_id)?;
 
-        let key = fn_hook_calls
+        let mut key = fn_hook_calls
             .into_iter()
             .map(|(hook_name, hook_key)| format!("{hook_name}{{{hook_key}}}"))
             .collect::<Vec<_>>()
             .join("\\n");
+
+        if !self.emit_full_signatures {
+            // Prefer to hash when we can (e.g. outside of ASTExplorer).
+            // This makes it deterministically compact, even if there's
+            // e.g. a useState initializer with some code inside.
+            // We also need it for www that has transforms like cx()
+            // that don't understand if something is part of a string.
+            let mut hasher = Sha1::new();
+            hasher.update(key);
+            key = BASE64_STANDARD.encode(hasher.finalize());
+        }
 
         let callee_list = self.non_builtin_hooks_callee.remove(&scope_id).unwrap_or_default();
         let callee_len = callee_list.len();
