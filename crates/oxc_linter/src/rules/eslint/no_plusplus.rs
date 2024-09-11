@@ -59,7 +59,7 @@ declare_oxc_lint!(
     /// ```js
     /// var x = 0; x++;
     /// var y = 0; y--;
-    /// for (i = 0; i < l; i++) {
+    /// for (let i = 0; i < l; i++) {
     ///     doSomething(i);
     /// }
     /// ```
