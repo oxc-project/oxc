@@ -231,8 +231,7 @@ impl<'a> SemanticBuilder<'a> {
             // Avoiding this growth produces up to 30% perf boost on our benchmarks.
             // TODO: It would be even more efficient to calculate counts in parser to avoid
             // this extra AST traversal.
-            let mut counts = Counts::default();
-            counts.visit_program(program);
+            let counts = Counts::count(program);
             self.nodes.reserve(counts.nodes);
             self.scope.reserve(counts.scopes);
             self.symbols.reserve(counts.symbols, counts.references);
@@ -241,16 +240,16 @@ impl<'a> SemanticBuilder<'a> {
             self.visit_program(program);
 
             // Check that estimated counts accurately
-            debug_assert_eq!(self.nodes.len(), counts.nodes);
-            debug_assert_eq!(self.scope.len(), counts.scopes);
-            debug_assert_eq!(self.symbols.references.len(), counts.references);
-            // `Counts` may overestimate number of symbols, because multiple `BindingIdentifier`s
-            // can result in only a single symbol.
-            // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
-            // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
-            // It's allocating with *not enough* capacity which is costly, as then the `Vec`
-            // will grow and reallocate.
-            debug_assert!(self.symbols.len() <= counts.symbols);
+            #[cfg(debug_assertions)]
+            {
+                let actual_counts = Counts {
+                    nodes: self.nodes.len(),
+                    scopes: self.scope.len(),
+                    symbols: self.symbols.len(),
+                    references: self.symbols.references.len(),
+                };
+                Counts::assert_accurate(&actual_counts, &counts);
+            }
 
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {

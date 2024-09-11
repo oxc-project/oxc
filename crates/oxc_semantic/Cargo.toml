@@ -30,6 +30,7 @@ oxc_syntax = { workspace = true }
 assert-unchecked = { workspace = true }
 indexmap = { workspace = true }
 itertools = { workspace = true }
+more-asserts = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }

@@ -4,8 +4,12 @@
 
 use std::cell::Cell;
 
+use more_asserts::assert_le;
+
 use oxc_ast::{
-    ast::{BindingIdentifier, IdentifierReference, TSEnumMemberName, TSModuleDeclarationName},
+    ast::{
+        BindingIdentifier, IdentifierReference, Program, TSEnumMemberName, TSModuleDeclarationName,
+    },
     visit::walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name},
     AstKind, Visit,
 };
@@ -17,6 +21,27 @@ pub(crate) struct Counts {
     pub scopes: usize,
     pub symbols: usize,
     pub references: usize,
+}
+
+impl Counts {
+    pub fn count(program: &Program) -> Self {
+        let mut counts = Counts::default();
+        counts.visit_program(program);
+        counts
+    }
+
+    pub fn assert_accurate(actual: &Self, estimated: &Self) {
+        assert_eq!(actual.nodes, estimated.nodes, "nodes count mismatch");
+        assert_eq!(actual.scopes, estimated.scopes, "scopes count mismatch");
+        assert_eq!(actual.references, estimated.references, "references count mismatch");
+        // `Counts` may overestimate number of symbols, because multiple `BindingIdentifier`s
+        // can result in only a single symbol.
+        // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
+        // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
+        // It's allocating with *not enough* capacity which is costly, as then the `Vec`
+        // will grow and reallocate.
+        assert_le!(actual.symbols, estimated.symbols, "symbols count mismatch");
+    }
 }
 
 impl<'a> Visit<'a> for Counts {
