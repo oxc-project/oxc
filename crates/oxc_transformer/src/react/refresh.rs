@@ -2,7 +2,7 @@ use std::{cell::Cell, iter::once};
 
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, match_expression, match_member_expression};
-use oxc_semantic::{ReferenceFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{Reference, ReferenceFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -491,12 +491,14 @@ impl<'a> ReactRefresh<'a> {
             }
         }
 
-        *expr = ctx.ast.expression_assignment(
-            SPAN,
-            AssignmentOperator::Assign,
-            self.create_registration(ctx.ast.atom(inferred_name), ctx),
-            ctx.ast.move_expression(expr),
-        );
+        if !is_variable_declarator {
+            *expr = ctx.ast.expression_assignment(
+                SPAN,
+                AssignmentOperator::Assign,
+                self.create_registration(ctx.ast.atom(inferred_name), ctx),
+                ctx.ast.move_expression(expr),
+            );
+        }
 
         true
     }
@@ -756,6 +758,7 @@ impl<'a> ReactRefresh<'a> {
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
         let init = declarator.init.as_mut()?;
         let id = declarator.id.get_binding_identifier()?;
+        let symbol_id = id.symbol_id.get()?;
 
         if !is_componentish_name(&id.name) {
             return None;
@@ -782,29 +785,35 @@ impl<'a> ReactRefresh<'a> {
                 // babel-plugin-styled-components)
             }
             Expression::CallExpression(call_expr) => {
-                if matches!(call_expr.callee, Expression::ImportExpression(_))
-                    || call_expr.is_require_call()
-                {
+                let is_import_expression =  match call_expr.callee.get_inner_expression() {
+                     Expression::ImportExpression(_) => {
+                        true
+                     }
+                    Expression::Identifier(ident) => {
+                        ident.name.starts_with("require")
+                    },
+                    _ => false
+                };
+
+                if is_import_expression {
                     return None;
                 }
-
-                // Maybe a HOC.
-                // Try to determine if this is some form of import.
-                let found_inside = self.replace_inner_components(
-                    &id.name,
-                    init,
-                    /* is_variable_declarator */ true,
-                    ctx,
-                );
-                if !found_inside {
-                    return None;
-                }
-
-                // See if this identifier is used in JSX. Then it's a component.
-                // TODO:
-                // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
             }
             _ => {
+                return None;
+            }
+        }
+
+        // Maybe a HOC.
+        // Try to determine if this is some form of import.
+        let found_inside = self
+            .replace_inner_components(&id.name, init, /* is_variable_declarator */ true, ctx);
+
+        if !found_inside {
+            // See if this identifier is used in JSX. Then it's a component.
+            // TODO: Here we should check if the variable is used in JSX. But now we only check if it has value references.
+            // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
+            if !ctx.symbols().get_resolved_references(symbol_id).any(Reference::is_value) {
                 return None;
             }
         }
