@@ -12,11 +12,11 @@ pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefin
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    let (mut symbols, _scopes) = SemanticBuilder::new(source_text)
+    let (symbols, scopes) = SemanticBuilder::new(source_text)
         .build(program)
         .semantic
         .into_symbol_table_and_scope_tree();
-    ReplaceGlobalDefines::new(&allocator, &mut symbols, config).build(program);
+    let _ = ReplaceGlobalDefines::new(&allocator, config).build(symbols, scopes, program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
