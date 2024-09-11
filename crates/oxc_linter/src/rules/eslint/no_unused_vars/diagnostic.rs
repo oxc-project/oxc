@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolFlags;
 use oxc_span::{GetSpan, Span};
@@ -32,7 +33,7 @@ pub fn used_ignored(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
 
     OxcDiagnostic::warn(format!("{pronoun} '{name}' is marked as ignored but is used."))
         .with_label(symbol.span().label(format!("'{name}' is declared here")))
-        .with_help(format!("Consider renaming this {}.", pronoun.to_lowercase()))
+        .with_help(format!("Consider renaming this {}.", pronoun.cow_to_lowercase()))
 }
 /// Variable 'x' is declared but never used.
 pub fn declared(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {

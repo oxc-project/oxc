@@ -1,5 +1,6 @@
 use std::{collections::HashMap, hash::Hash};
 
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
     AstKind,
@@ -281,7 +282,7 @@ fn validate_title(
     if !valid_title.disallowed_words.is_empty() {
         let Ok(disallowed_words_reg) = regex::Regex::new(&format!(
             r#"(?iu)\b(?:{})\b"#,
-            valid_title.disallowed_words.join("|").replace('.', r"\.")
+            valid_title.disallowed_words.join("|").cow_replace('.', r"\.")
         )) else {
             return;
         };

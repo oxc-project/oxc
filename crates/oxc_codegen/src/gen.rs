@@ -1,5 +1,6 @@
 use std::{borrow::Cow, ops::Not};
 
+use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -1232,7 +1233,7 @@ impl<'a> Gen for RegExpLiteral<'a> {
         );
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
-            || (Some('<') == last && pattern_text.to_lowercase().starts_with("script"))
+            || (Some('<') == last && pattern_text.cow_to_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }

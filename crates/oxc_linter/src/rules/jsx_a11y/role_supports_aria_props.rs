@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXOpeningElement},
     AstKind,
@@ -84,8 +85,9 @@ impl Rule for RoleSupportsAriaProps {
             let invalid_props = get_invalid_aria_props_for_role(role_value);
             for attr in &jsx_el.attributes {
                 if let JSXAttributeItem::Attribute(attr) = attr {
-                    let name = get_jsx_attribute_name(&attr.name).to_lowercase();
-                    if invalid_props.contains(&&name.as_str()) {
+                    let name = get_jsx_attribute_name(&attr.name);
+                    let name = name.cow_to_lowercase();
+                    if invalid_props.contains(&&name.as_ref()) {
                         ctx.diagnostic(if is_implicit {
                             is_implicit_diagnostic(attr.span, &name, role_value, &el_type)
                         } else {

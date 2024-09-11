@@ -1525,6 +1525,7 @@ version = "0.28.0"
 dependencies = [
  "base64",
  "bitflags 2.6.0",
+ "cow-utils",
  "daachorse",
  "insta",
  "nonmax",
@@ -1692,6 +1693,7 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.28.0"
 dependencies = [
+ "cow-utils",
  "insta",
  "num-bigint",
  "num-traits",
@@ -1738,6 +1740,7 @@ version = "0.28.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
+ "cow-utils",
  "memchr",
  "num-bigint",
  "num-traits",
@@ -1871,6 +1874,7 @@ version = "0.28.0"
 dependencies = [
  "base64-simd",
  "cfg-if",
+ "cow-utils",
  "rayon",
  "rustc-hash",
  "serde",
@@ -1927,6 +1931,7 @@ dependencies = [
 name = "oxc_transform_conformance"
 version = "0.0.0"
 dependencies = [
+ "cow-utils",
  "indexmap",
  "oxc",
  "oxc_tasks_common",

@@ -25,6 +25,7 @@ doctest = false
 oxc = { workspace = true, features = ["full"] }
 oxc_tasks_common = { workspace = true }
 
+cow-utils = { workspace = true }
 indexmap = { workspace = true }
 pico-args = { workspace = true }
 walkdir = { workspace = true }

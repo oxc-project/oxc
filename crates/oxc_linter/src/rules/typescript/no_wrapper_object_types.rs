@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{Expression, TSTypeName},
     AstKind,
@@ -91,7 +92,7 @@ impl Rule for NoWrapperObjectTypes {
 
             if can_fix {
                 ctx.diagnostic_with_fix(no_wrapper_object_types(ident_span), |fixer| {
-                    fixer.replace(ident_span, ident_name.to_lowercase())
+                    fixer.replace(ident_span, ident_name.cow_to_lowercase())
                 });
             } else {
                 ctx.diagnostic(no_wrapper_object_types(ident_span));

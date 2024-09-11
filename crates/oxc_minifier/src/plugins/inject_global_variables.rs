@@ -1,9 +1,9 @@
-use std::sync::Arc;
-
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
+use std::sync::Arc;
 
 use super::replace_global_defines::{DotDefine, ReplaceGlobalDefines};
 
@@ -58,7 +58,7 @@ impl InjectImport {
     fn replace_name(local: &str) -> Option<CompactStr> {
         local
             .contains('.')
-            .then(|| CompactStr::from(format!("$inject_{}", local.replace('.', "_"))))
+            .then(|| CompactStr::from(format!("$inject_{}", local.cow_replace('.', "_"))))
     }
 }
 

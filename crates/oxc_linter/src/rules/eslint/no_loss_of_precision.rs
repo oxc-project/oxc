@@ -196,7 +196,7 @@ impl NoLossOfPrecision {
         } else {
             format!("{value:o}")
         };
-        !raw.ends_with(&suffix.to_uppercase())
+        !raw.ends_with(&suffix.cow_to_uppercase().as_ref())
     }
 
     fn base_ten_loses_precision(node: &'_ NumericLiteral) -> bool {
