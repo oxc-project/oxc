@@ -29,12 +29,12 @@ extend-ignore-re = [
 ]
 
 [default.extend-words]
-trivias   = "trivias"
-trivia    = "trivia"
+trivias = "trivias"
+trivia = "trivia"
 xdescribe = "xdescribe"
-seeked    = "seeked"
+seeked = "seeked"
 labeledby = "labeledby"
 
 [default.extend-identifiers]
-IIFEs      = "IIFEs"
+IIFEs = "IIFEs"
 allowIIFEs = "allowIIFEs"

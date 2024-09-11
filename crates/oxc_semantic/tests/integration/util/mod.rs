@@ -38,7 +38,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// Use [`SemanticTester::js`] for JavaScript test cases.
     pub fn ts(source_text: &'static str) -> Self {
-        Self::new(source_text, SourceType::default().with_module(true).with_typescript(true))
+        Self::new(source_text, SourceType::ts())
     }
 
     /// Create a new tester for a TypeScript test case with JSX.
@@ -52,7 +52,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases.
     pub fn js(source_text: &'static str) -> Self {
-        Self::new(source_text, SourceType::default().with_module(true))
+        Self::new(source_text, SourceType::mjs())
     }
 
     /// Create a new tester for some source text.

@@ -81,6 +81,15 @@ fn dce_if_statement() {
 
     // parenthesized
     test("if (!!(false)) { REMOVE; } else { KEEP; }", "{ KEEP }");
+
+    // typeof
+    test("if (typeof 1 !== 'number') { REMOVE; }", "");
+    test("if (typeof false !== 'boolean') { REMOVE; }", "");
+    test(
+        "if (typeof 1 === 'string') { REMOVE;
+}",
+        "",
+    );
 }
 
 #[test]

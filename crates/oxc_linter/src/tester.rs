@@ -3,14 +3,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler, GraphicalTheme, NamedSource};
 use serde::Deserialize;
 use serde_json::Value;
 
 use crate::{
-    fixer::FixKind, options::LintPluginOptions, rules::RULES, AllowWarnDeny, Fixer, LintOptions,
-    LintService, LintServiceOptions, Linter, OxlintConfig, RuleEnum, RuleWithSeverity,
+    fixer::FixKind, options::LintPluginOptions, rules::RULES, AllowWarnDeny, Fixer, LintService,
+    LintServiceOptions, Linter, OxlintConfig, OxlintOptions, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -185,7 +186,8 @@ impl Tester {
         expect_pass: Vec<T>,
         expect_fail: Vec<T>,
     ) -> Self {
-        let rule_path = PathBuf::from(rule_name.replace('-', "_")).with_extension("tsx");
+        let rule_path =
+            PathBuf::from(rule_name.cow_replace('-', "_").into_owned()).with_extension("tsx");
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
         let current_working_directory =
@@ -294,7 +296,7 @@ impl Tester {
     }
 
     fn snapshot(&self) {
-        let name = self.rule_name.replace('-', "_");
+        let name = self.rule_name.cow_replace('-', "_");
         let mut settings = insta::Settings::clone_current();
 
         settings.set_prepend_module_to_snapshot(false);
@@ -304,7 +306,7 @@ impl Tester {
         }
 
         settings.bind(|| {
-            insta::assert_snapshot!(name, self.snapshot);
+            insta::assert_snapshot!(name.as_ref(), self.snapshot);
         });
     }
 
@@ -349,7 +351,7 @@ impl Tester {
     ) -> TestResult {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
-        let options = LintOptions::default()
+        let options = OxlintOptions::default()
             .with_fix(fix.into())
             .with_import_plugin(self.plugins.import)
             .with_jest_plugin(self.plugins.jest)
@@ -364,7 +366,7 @@ impl Tester {
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])
-            .with_eslint_config(eslint_config);
+            .with_eslint_config(eslint_config.into());
         let path_to_lint = if self.plugins.import {
             assert!(path.is_none(), "import plugin does not support path");
             self.current_working_directory.join(&self.rule_path)
@@ -378,7 +380,7 @@ impl Tester {
 
         let cwd = self.current_working_directory.clone();
         let paths = vec![path_to_lint.into_boxed_path()];
-        let options = LintServiceOptions { cwd, paths, tsconfig: None };
+        let options = LintServiceOptions::new(cwd, paths);
         let lint_service = LintService::from_linter(linter, options);
         let diagnostic_service = DiagnosticService::default();
         let tx_error = diagnostic_service.sender();

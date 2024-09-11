@@ -25,16 +25,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          requireScope: true
+          disallowScopes: |
+            build
+            chore
+            ci
+            release
+            revert
           types: |
+            build
+            chore
+            ci
+            docs
             feat
             fix
-            docs
-            style
-            refactor
             perf
-            test
-            build
-            ci
-            chore
-            revert
+            refactor
             release
+            revert
+            style
+            test

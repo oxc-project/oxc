@@ -1,34 +1,29 @@
 import {
-  ExtensionContext,
-  window,
   commands,
-  workspace,
-  StatusBarItem,
-  StatusBarAlignment,
   ConfigurationTarget,
+  ExtensionContext,
+  StatusBarAlignment,
+  StatusBarItem,
   ThemeColor,
-} from "vscode";
+  window,
+  workspace,
+} from 'vscode';
 
-import {
-  Executable,
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
-} from "vscode-languageclient/node";
+import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
 
-import { join } from "node:path";
+import { join } from 'node:path';
 
-const languageClientId = "oxc-vscode";
-const languageClientName = "oxc";
-const outputChannelName = "oxc_language_server";
-const traceOutputChannelName = "oxc_language_server.trace";
+const languageClientId = 'oxc-vscode';
+const languageClientName = 'oxc';
+const outputChannelName = 'oxc_language_server';
+const traceOutputChannelName = 'oxc_language_server.trace';
 
 const enum OxcCommands {
-  RestartServer = "oxc.restartServer",
-  ApplyAllFixes = "oxc.applyAllFixes",
-  ShowOutputChannel = "oxc.showOutputChannel",
-  ShowTraceOutputChannel = "oxc.showTraceOutputChannel",
-  ToggleEnable = "oxc.toggleEnable",
+  RestartServer = 'oxc.restartServer',
+  ApplyAllFixes = 'oxc.applyAllFixes',
+  ShowOutputChannel = 'oxc.showOutputChannel',
+  ShowTraceOutputChannel = 'oxc.showTraceOutputChannel',
+  ToggleEnable = 'oxc.toggleEnable',
 }
 
 let client: LanguageClient;
@@ -40,7 +35,7 @@ export async function activate(context: ExtensionContext) {
     OxcCommands.RestartServer,
     async () => {
       if (!client) {
-        window.showErrorMessage("oxc client not found");
+        window.showErrorMessage('oxc client not found');
         return;
       }
 
@@ -48,12 +43,12 @@ export async function activate(context: ExtensionContext) {
         if (client.isRunning()) {
           await client.restart();
 
-          window.showInformationMessage("oxc server restarted.");
+          window.showInformationMessage('oxc server restarted.');
         } else {
           await client.start();
         }
       } catch (err) {
-        client.error("Restarting client failed", err, "force");
+        client.error('Restarting client failed', err, 'force');
       }
     },
   );
@@ -76,12 +71,12 @@ export async function activate(context: ExtensionContext) {
     OxcCommands.ToggleEnable,
     () => {
       let enabled = workspace
-        .getConfiguration("oxc_language_server")
-        .get("enable");
+        .getConfiguration('oxc_language_server')
+        .get('enable');
       let nextState = !enabled;
       workspace
-        .getConfiguration("oxc_language_server")
-        .update("enable", nextState, ConfigurationTarget.Global);
+        .getConfiguration('oxc_language_server')
+        .update('enable', nextState, ConfigurationTarget.Global);
     },
   );
 
@@ -95,17 +90,16 @@ export async function activate(context: ExtensionContext) {
   const outputChannel = window.createOutputChannel(outputChannelName);
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
-  const ext = process.platform === "win32" ? ".exe" : "";
+  const ext = process.platform === 'win32' ? '.exe' : '';
   // NOTE: The `./target/release` path is aligned with the path defined in .github/workflows/release_vscode.yml
-  const command =
-    process.env.SERVER_PATH_DEV ??
+  const command = process.env.SERVER_PATH_DEV ??
     join(context.extensionPath, `./target/release/oxc_language_server${ext}`);
   const run: Executable = {
     command: command!,
     options: {
       env: {
         ...process.env,
-        RUST_LOG: process.env.RUST_LOG || "info",
+        RUST_LOG: process.env.RUST_LOG || 'info',
       },
     },
   };
@@ -117,24 +111,24 @@ export async function activate(context: ExtensionContext) {
   // Otherwise the run options are used
   // Options to control the language client
   let clientConfig: any = JSON.parse(
-    JSON.stringify(workspace.getConfiguration("oxc_language_server")),
+    JSON.stringify(workspace.getConfiguration('oxc_language_server')),
   );
   let clientOptions: LanguageClientOptions = {
     // Register the server for plain text documents
     documentSelector: [
-      "typescript",
-      "javascript",
-      "typescriptreact",
-      "javascriptreact",
-      "vue",
-      "svelte",
+      'typescript',
+      'javascript',
+      'typescriptreact',
+      'javascriptreact',
+      'vue',
+      'svelte',
     ].map((lang) => ({
       language: lang,
-      scheme: "file",
+      scheme: 'file',
     })),
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+      fileEvents: workspace.createFileSystemWatcher('**/.clientrc'),
     },
     initializationOptions: {
       settings: clientConfig,
@@ -151,15 +145,15 @@ export async function activate(context: ExtensionContext) {
     clientOptions,
   );
   workspace.onDidChangeConfiguration((e) => {
-    let isAffected = e.affectsConfiguration("oxc_language_server");
+    let isAffected = e.affectsConfiguration('oxc_language_server');
     if (!isAffected) {
       return;
     }
     let settings: any = JSON.parse(
-      JSON.stringify(workspace.getConfiguration("oxc_language_server")),
+      JSON.stringify(workspace.getConfiguration('oxc_language_server')),
     );
     updateStatsBar(settings.enable);
-    client.sendNotification("workspace/didChangeConfiguration", { settings });
+    client.sendNotification('workspace/didChangeConfiguration', { settings });
   });
 
   function updateStatsBar(enable: boolean) {
@@ -174,12 +168,10 @@ export async function activate(context: ExtensionContext) {
     }
     let bgColor = new ThemeColor(
       enable
-        ? "statusBarItem.activeBackground"
-        : "statusBarItem.errorBackground",
+        ? 'statusBarItem.activeBackground'
+        : 'statusBarItem.errorBackground',
     );
-    myStatusBarItem.text = `oxc: ${
-      enable ? "$(check-all)" : "$(circle-slash)"
-    }`;
+    myStatusBarItem.text = `oxc: ${enable ? '$(check-all)' : '$(circle-slash)'}`;
 
     myStatusBarItem.backgroundColor = bgColor;
   }

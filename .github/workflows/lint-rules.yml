@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'crates/oxc_linter/src/rules.rs'
-      - 'tasks/lint_rules/**'
+      - "crates/oxc_linter/src/rules.rs"
+      - "tasks/lint_rules/**"
 
 jobs:
   lint_rules:

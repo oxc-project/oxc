@@ -5,19 +5,19 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths-ignore:
-      - '**/*.md'
-      - '**/*.yml'
-      - '!.github/workflows/ci.yml'
-      - '!.github/actions/clone-submodules/action.yml'
+      - "**/*.md"
+      - "**/*.yml"
+      - "!.github/workflows/ci.yml"
+      - "!.github/actions/clone-submodules/action.yml"
   push:
     branches:
       - main
       - "renovate/**"
     paths-ignore:
-      - '**/*.md'
-      - '**/*.yml'
-      - '!.github/workflows/ci.yml'
-      - '!.github/actions/clone-submodules/action.yml'
+      - "**/*.md"
+      - "**/*.yml"
+      - "!.github/workflows/ci.yml"
+      - "!.github/actions/clone-submodules/action.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -141,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.24.3
+      - uses: crate-ci/typos@v1.24.5
         with:
           files: .
 
@@ -235,7 +235,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: '.github/.generated_ast_watch_list.yml'
+          filters: ".github/.generated_ast_watch_list.yml"
 
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'

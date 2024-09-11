@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods)]
 use std::{cell::RefCell, io::Read, path::PathBuf, rc::Rc};
 
 use bpaf::{Bpaf, Parser};
@@ -33,7 +34,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",
     "crates/oxc_span/src/span/types.rs",
-    "crates/oxc_span/src/source_type/types.rs",
+    "crates/oxc_span/src/source_type/mod.rs",
     "crates/oxc_regular_expression/src/ast.rs",
 ];
 

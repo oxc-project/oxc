@@ -33,6 +33,7 @@ impl<'a> Scope<'a> {
 }
 
 /// Linear tree of declaration scopes.
+#[derive(Debug)]
 pub struct ScopeTree<'a> {
     levels: Vec<'a, Scope<'a>>,
 }

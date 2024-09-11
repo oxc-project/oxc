@@ -2,17 +2,14 @@ commit: 3bcfee23
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1733/2101 (82.48%)
-tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close/input.js
-semantic error: Unexpected token
-
+Positive Passed: 1739/2101 (82.77%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/html/first-line/input.js
-semantic error: Unexpected token
+semantic error: Symbol scope ID mismatch:
+after transform: SymbolId(0): ScopeId(4294967294)
+rebuilt        : SymbolId(0): ScopeId(4294967294)
+Symbol scope ID mismatch:
+after transform: SymbolId(1): ScopeId(4294967294)
+rebuilt        : SymbolId(1): ScopeId(4294967294)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings mismatch:
@@ -29,26 +26,15 @@ semantic error: Unexpected new.target expression
 Unexpected new.target expression
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-hang-func/input.js
-semantic error: Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/230/input.js
-semantic error: Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
+semantic error: Symbol scope ID mismatch:
+after transform: SymbolId(1): ScopeId(4294967294)
+rebuilt        : SymbolId(1): ScopeId(4294967294)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/327/input.js
 semantic error: A 'return' statement can only be used within a function body.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/328/input.js
 semantic error: A 'return' statement can only be used within a function body.
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/343/input.js
-semantic error: Unexpected token
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/538/input.js
-semantic error: Unexpected token
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/modules/import-declaration-trailing-comma/input.js
 semantic error: Bindings mismatch:
@@ -150,15 +136,10 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["nil"]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0002/input.js
-semantic error: Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+semantic error: Symbol scope ID mismatch:
+after transform: SymbolId(0): ScopeId(4294967294)
+rebuilt        : SymbolId(0): ScopeId(4294967294)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 semantic error: Unresolved references mismatch:

@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods)]
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::lexer::{Kind, Lexer};

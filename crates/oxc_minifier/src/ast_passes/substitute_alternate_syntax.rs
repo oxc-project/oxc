@@ -6,7 +6,7 @@ use oxc_syntax::{
 };
 use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{CompressOptions, CompressorPass};
+use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -67,8 +67,8 @@ impl<'a> Traverse<'a> for SubstituteAlternateSyntax<'a> {
         self.in_define_export = false;
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if !self.compress_undefined(expr) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.compress_undefined(expr, ctx) {
             self.compress_boolean(expr);
         }
     }
@@ -90,15 +90,11 @@ impl<'a> SubstituteAlternateSyntax<'a> {
     /* Utilities */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined(&self, expr: &mut Expression<'a>) -> bool {
-        let Expression::Identifier(ident) = expr else { return false };
-        if ident.name == "undefined" {
-            // if let Some(reference_id) = ident.reference_id.get() {
-            // && self.semantic.symbols().is_global_reference(reference_id)
+    fn compress_undefined(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        if ctx.is_expression_undefined(expr) {
             *expr = self.ast.void_0();
             return true;
-            // }
-        }
+        };
         false
     }
 

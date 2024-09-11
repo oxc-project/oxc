@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName},
     AstKind,
@@ -88,7 +89,7 @@ fn get_replacement(node: &str) -> Option<&'static str> {
         return None;
     }
 
-    let node_lower = node.to_ascii_lowercase();
+    let node_lower = node.cow_to_ascii_lowercase();
 
     if node_lower == "utf-8" || node_lower == "utf8" {
         return Some("utf8");

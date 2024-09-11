@@ -10,7 +10,7 @@ bitflags! {
     /// These are also used by the `LintService` to decide which kinds of
     /// changes to apply.
     ///
-    /// [`FixKind`] is designed to be interopable with [`bool`]. `true` turns
+    /// [`FixKind`] is designed to be interoperable with [`bool`]. `true` turns
     /// into [`FixKind::Fix`] (applies only safe fixes) and `false` turns into
     /// [`FixKind::None`] (do not apply any fixes or suggestions).
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -201,7 +201,7 @@ impl<'a> RuleFix<'a> {
     ///   fixer.delete(bad_node).dangerously()
     /// }
     ///
-    /// is_dangerous(bad_node: &Expression<'_>) -> bool {
+    /// fn is_dangerous(bad_node: &Expression<'_>) -> bool {
     ///   // some check on bad_node
     /// #  true
     /// }

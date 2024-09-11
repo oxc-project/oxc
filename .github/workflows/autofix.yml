@@ -4,10 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths-ignore:
-      - '**/*.md'
-      - '**/*.yml'
-      - '!.github/workflows/ci.yml'
-      - '!.github/actions/clone-submodules/action.yml'
+      - "!.github/workflows/ci.yml"
+      - "!.github/actions/clone-submodules/action.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -21,11 +19,9 @@ jobs:
       - uses: Boshen/setup-rust@main
         with:
           restore-cache: false
-          tools: taplo-cli,cargo-shear@1
+          tools: just,cargo-shear@1,dprint
           components: rustfmt
-      - run: cargo shear --fix
-      - run: taplo fmt
-      - run: cargo fmt --all
+      - run: just fmt
       - uses: autofix-ci/action@v1.3.1
         with:
           fail-fast: false

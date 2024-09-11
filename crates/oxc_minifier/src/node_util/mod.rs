@@ -8,10 +8,13 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 use oxc_ast::ast::*;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
-pub use self::{may_have_side_effects::MayHaveSideEffects, number_value::NumberValue};
+pub use self::{
+    is_literal_value::IsLiteralValue, may_have_side_effects::MayHaveSideEffects,
+    number_value::NumberValue,
+};
 
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
@@ -22,6 +25,20 @@ pub trait NodeUtil {
 
     #[allow(unused)]
     fn scopes(&self) -> &ScopeTree;
+
+    fn is_expression_undefined(&self, expr: &Expression) -> bool {
+        if let Expression::Identifier(ident) = expr {
+            return self.is_identifier_undefined(ident);
+        };
+        false
+    }
+
+    fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
+        if ident.name == "undefined" && ident.is_global_reference(self.symbols()) {
+            return true;
+        }
+        false
+    }
 
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L104-L114)
     /// Returns the number value of the node if it has one and it cannot have side effects.
@@ -98,14 +115,7 @@ pub trait NodeUtil {
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "NaN" => Some(false),
                 "Infinity" => Some(true),
-                "undefined"
-                    if ident
-                        .reference_id
-                        .get()
-                        .is_some_and(|id| self.symbols().is_global_reference(id)) =>
-                {
-                    Some(false)
-                }
+                "undefined" if self.is_identifier_undefined(ident) => Some(false),
                 _ => None,
             },
             Expression::AssignmentExpression(assign_expr) => {

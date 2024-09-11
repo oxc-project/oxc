@@ -1,6 +1,6 @@
 //! Declare symbol for `BindingIdentifier`s
 
-use std::borrow::Cow;
+use std::{borrow::Cow, ptr};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -10,7 +10,11 @@ use oxc_ast::{
 };
 use oxc_span::{GetSpan, SourceType};
 
-use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
+use crate::{
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolFlags,
+    SemanticBuilder,
+};
 
 pub(crate) trait Binder<'a> {
     #[allow(unused_variables)]
@@ -132,19 +136,42 @@ fn function_as_var(flags: ScopeFlags, source_type: SourceType) -> bool {
     flags.is_function() || (source_type.is_script() && flags.is_top())
 }
 
+/// Check for Annex B `if (foo) function a() {} else function b() {}`
+fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
+    if builder.current_scope_flags().is_strict_mode() {
+        return false;
+    }
+    let Some(AstKind::IfStatement(stmt)) = builder.nodes.parent_kind(builder.current_node_id)
+    else {
+        return false;
+    };
+    if let Statement::FunctionDeclaration(func) = &stmt.consequent {
+        if ptr::eq(func.as_ref(), function) {
+            return true;
+        }
+    }
+    if let Some(Statement::FunctionDeclaration(func)) = &stmt.alternate {
+        if ptr::eq(func.as_ref(), function) {
+            return true;
+        }
+    }
+    false
+}
+
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let current_scope_id = builder.current_scope_id;
         let scope_flags = builder.current_scope_flags();
         if let Some(ident) = &self.id {
-            if !scope_flags.is_strict_mode()
-                && matches!(
-                    builder.nodes.parent_kind(builder.current_node_id),
-                    Some(AstKind::IfStatement(_))
-                )
-            {
-                // Do not declare in if single statements,
-                // if (false) function f() {} else function g() { }
+            if is_function_part_of_if_statement(self, builder) {
+                let symbol_id = builder.symbols.create_symbol(
+                    ident.span,
+                    ident.name.clone().into(),
+                    SymbolFlags::Function,
+                    ScopeId::new(u32::MAX - 1), // Not bound to any scope.
+                    builder.current_node_id,
+                );
+                ident.symbol_id.set(Some(symbol_id));
             } else if self.r#type == FunctionType::FunctionDeclaration {
                 // The visitor is already inside the function scope,
                 // retrieve the parent scope for the function id to bind to.

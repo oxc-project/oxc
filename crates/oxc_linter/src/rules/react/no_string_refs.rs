@@ -9,12 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_parent_es5_component, get_parent_es6_component},
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, utils::get_parent_component, AstNode};
 
 fn this_refs_deprecated(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using this.refs is deprecated.")
@@ -121,8 +116,7 @@ impl Rule for NoStringRefs {
             AstKind::MemberExpression(member_expr) => {
                 if matches!(member_expr.object(), Expression::ThisExpression(_))
                     && member_expr.static_property_name() == Some("refs")
-                    && (get_parent_es5_component(node, ctx).is_some()
-                        || get_parent_es6_component(ctx).is_some())
+                    && get_parent_component(node, ctx).is_some()
                 {
                     ctx.diagnostic(this_refs_deprecated(member_expr.span()));
                 }
@@ -141,6 +135,14 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            "
+                    var Hello = function() {
+                      return this.refs;
+                    };
+                  ",
+            None,
+        ),
         (
             "
                     var Hello = React.createReactClass({
@@ -171,6 +173,32 @@ fn test() {
                         return <div ref={`hello${index}`}>Hello {this.props.name}</div>;
                       }
                     });
+                  ",
+            None,
+        ),
+        (
+            "
+                    var Hello = function() {
+                      return this.refs;
+                    };
+                    createReactClass({
+                      render: function() {
+                        let x;
+                      }
+                    });
+                  ",
+            None,
+        ),
+        (
+            "
+                    var Hello = function() {
+                      return this.refs;
+                    };
+                    class Other extends React.Component {
+                      render() {
+                        let x;
+                      }
+                    };
                   ",
             None,
         ),

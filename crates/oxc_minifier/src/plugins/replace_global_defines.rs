@@ -4,6 +4,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
+use oxc_semantic::{IsGlobalReference, SymbolTable};
 use oxc_span::{CompactStr, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
 
@@ -168,12 +169,13 @@ impl ReplaceGlobalDefinesConfig {
 /// * <https://esbuild.github.io/api/#define>
 /// * <https://github.com/terser/terser?tab=readme-ov-file#conditional-compilation>
 /// * <https://github.com/evanw/esbuild/blob/9c13ae1f06dfa909eb4a53882e3b7e4216a503fe/internal/config/globals.go#L852-L1014>
-pub struct ReplaceGlobalDefines<'a> {
+pub struct ReplaceGlobalDefines<'a, 'b> {
     ast: AstBuilder<'a>,
+    symbols: &'b mut SymbolTable,
     config: ReplaceGlobalDefinesConfig,
 }
 
-impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
+impl<'a, 'b> VisitMut<'a> for ReplaceGlobalDefines<'a, 'b> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.replace_identifier_defines(expr);
         self.replace_dot_defines(expr);
@@ -181,9 +183,13 @@ impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
     }
 }
 
-impl<'a> ReplaceGlobalDefines<'a> {
-    pub fn new(allocator: &'a Allocator, config: ReplaceGlobalDefinesConfig) -> Self {
-        Self { ast: AstBuilder::new(allocator), config }
+impl<'a, 'b> ReplaceGlobalDefines<'a, 'b> {
+    pub fn new(
+        allocator: &'a Allocator,
+        symbols: &'b mut SymbolTable,
+        config: ReplaceGlobalDefinesConfig,
+    ) -> Self {
+        Self { ast: AstBuilder::new(allocator), symbols, config }
     }
 
     pub fn build(&mut self, program: &mut Program<'a>) {
@@ -201,13 +207,15 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_identifier_defines(&self, expr: &mut Expression<'a>) {
-        if let Expression::Identifier(ident) = expr {
-            for (key, value) in &self.config.0.identifier {
-                if ident.name.as_str() == key {
-                    let value = self.parse_value(value);
-                    *expr = value;
-                    break;
-                }
+        let Expression::Identifier(ident) = expr else { return };
+        if !ident.is_global_reference(self.symbols) {
+            return;
+        }
+        for (key, value) in &self.config.0.identifier {
+            if ident.name.as_str() == key {
+                let value = self.parse_value(value);
+                *expr = value;
+                break;
             }
         }
     }
@@ -217,18 +225,17 @@ impl<'a> ReplaceGlobalDefines<'a> {
             return;
         };
         for dot_define in &self.config.0.dot {
-            if Self::is_dot_define(dot_define, member) {
+            if Self::is_dot_define(self.symbols, dot_define, member) {
                 let value = self.parse_value(&dot_define.value);
                 *expr = value;
                 return;
             }
         }
         for meta_proeperty_define in &self.config.0.meta_proeperty {
-            let ret = Self::is_meta_property_define(meta_proeperty_define, member);
-            if ret {
+            if Self::is_meta_property_define(meta_proeperty_define, member) {
                 let value = self.parse_value(&meta_proeperty_define.value);
                 *expr = value;
-                break;
+                return;
             }
         }
     }
@@ -302,7 +309,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    pub fn is_dot_define(dot_define: &DotDefine, member: &StaticMemberExpression<'a>) -> bool {
+    pub fn is_dot_define(
+        symbols: &SymbolTable,
+        dot_define: &DotDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> bool {
         debug_assert!(dot_define.parts.len() > 1);
 
         let mut current_part_member_expression = Some(member);
@@ -324,6 +335,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         Some(member)
                     }
                     Expression::Identifier(ident) => {
+                        if !ident.is_global_reference(symbols) {
+                            return false;
+                        }
                         cur_part_name = &ident.name;
                         None
                     }

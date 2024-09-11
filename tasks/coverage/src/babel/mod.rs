@@ -131,6 +131,7 @@ impl Case for BabelCase {
         let options = BabelOptions::from_test_path(dir.parent().unwrap());
         let mut source_type = SourceType::from_path(&path)
             .unwrap()
+            .with_script(true)
             .with_jsx(options.is_jsx())
             .with_typescript(options.is_typescript())
             .with_typescript_definition(options.is_typescript_definition());

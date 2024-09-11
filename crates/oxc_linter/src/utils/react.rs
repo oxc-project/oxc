@@ -7,7 +7,7 @@ use oxc_ast::{
     },
     match_member_expression, AstKind,
 };
-use oxc_semantic::{AstNode, SymbolFlags};
+use oxc_semantic::AstNode;
 
 use crate::{LintContext, OxlintSettings};
 
@@ -81,7 +81,7 @@ pub fn is_hidden_from_screen_reader<'a>(
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
             if let Some(expr) = container.expression.as_expression() {
-                expr.get_boolean_value().unwrap_or(false)
+                expr.to_boolean().unwrap_or(false)
             } else {
                 false
             }
@@ -190,26 +190,17 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     false
 }
 
-pub fn get_parent_es5_component<'a, 'b>(
+pub fn get_parent_component<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b AstNode<'a>> {
-    ctx.nodes().ancestors(node.id()).skip(1).find_map(|node_id| {
-        is_es5_component(ctx.nodes().get_node(node_id)).then(|| ctx.nodes().get_node(node_id))
-    })
-}
-
-pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b AstNode<'a>> {
-    ctx.semantic().symbols().iter_rev().find_map(|symbol| {
-        let flags = ctx.semantic().symbols().get_flags(symbol);
-        if flags.contains(SymbolFlags::Class) {
-            let node = ctx.semantic().symbol_declaration(symbol);
-            if is_es6_component(node) {
-                return Some(node);
-            }
+    for node_id in ctx.nodes().ancestors(node.id()) {
+        let node = ctx.nodes().get_node(node_id);
+        if is_es5_component(node) || is_es6_component(node) {
+            return Some(node);
         }
-        None
-    })
+    }
+    None
 }
 
 /// Resolve element type(name) using jsx-a11y settings

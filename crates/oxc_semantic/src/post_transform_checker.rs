@@ -648,22 +648,6 @@ impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'e> {
         walk::walk_declaration(self, it);
     }
 
-    fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
-        // skip `if (function foo() {}) {}`
-        if !matches!(stmt.test, Expression::FunctionExpression(_)) {
-            self.visit_expression(&stmt.test);
-        }
-        // skip `if (true) function foo() {} else function bar() {}`
-        if !stmt.consequent.is_declaration() {
-            self.visit_statement(&stmt.consequent);
-        }
-        if let Some(alternate) = &stmt.alternate {
-            if !alternate.is_declaration() {
-                self.visit_statement(alternate);
-            }
-        }
-    }
-
     fn visit_ts_type(&mut self, _it: &TSType<'a>) {
         /* noop */
     }

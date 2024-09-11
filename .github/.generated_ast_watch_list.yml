@@ -9,7 +9,7 @@ src:
   - 'crates/oxc_syntax/src/number.rs'
   - 'crates/oxc_syntax/src/operator.rs'
   - 'crates/oxc_span/src/span/types.rs'
-  - 'crates/oxc_span/src/source_type/types.rs'
+  - 'crates/oxc_span/src/source_type/mod.rs'
   - 'crates/oxc_regular_expression/src/ast.rs'
   - 'crates/oxc_ast/src/generated/derive_clone_in.rs'
   - 'crates/oxc_regular_expression/src/generated/derive_clone_in.rs'

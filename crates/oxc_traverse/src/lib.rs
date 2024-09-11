@@ -161,5 +161,5 @@ pub fn walk_program<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     // SAFETY: Walk functions are constructed to avoid unsoundness
-    unsafe { walk::walk_program(traverser, std::ptr::from_mut::<Program>(program), ctx) };
+    unsafe { walk::walk_program(traverser, std::ptr::from_mut(program), ctx) };
 }

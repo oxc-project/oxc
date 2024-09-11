@@ -16,13 +16,19 @@ pub trait Rule: Sized + Default + fmt::Debug {
     }
 
     /// Visit each AST Node
-    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    #[expect(unused_variables)]
+    #[inline]
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
 
     /// Visit each symbol
-    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_>) {}
+    #[expect(unused_variables)]
+    #[inline]
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
-    fn run_once(&self, _ctx: &LintContext) {}
+    #[expect(unused_variables)]
+    #[inline]
+    fn run_once(&self, ctx: &LintContext) {}
 
     /// Check if a rule should be run at all.
     ///
@@ -31,7 +37,9 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// enabled/disabled; this is handled by the [`linter`].
     ///
     /// [`linter`]: crate::Linter
-    fn should_run(&self, _ctx: &LintContext) -> bool {
+    #[expect(unused_variables)]
+    #[inline]
+    fn should_run(&self, ctx: &LintContext) -> bool {
         true
     }
 }
@@ -73,19 +81,6 @@ pub enum RuleCategory {
 }
 
 impl RuleCategory {
-    pub fn from(input: &str) -> Option<Self> {
-        match input {
-            "correctness" => Some(Self::Correctness),
-            "suspicious" => Some(Self::Suspicious),
-            "pedantic" => Some(Self::Pedantic),
-            "perf" => Some(Self::Perf),
-            "style" => Some(Self::Style),
-            "restriction" => Some(Self::Restriction),
-            "nursery" => Some(Self::Nursery),
-            _ => None,
-        }
-    }
-
     pub fn description(self) -> &'static str {
         match self {
             Self::Correctness => "Code that is outright wrong or useless.",
@@ -97,6 +92,22 @@ impl RuleCategory {
                 "Lints which prevent the use of language and library features. Must not be enabled as a whole, should be considered on a case-by-case basis before enabling."
             }
             Self::Nursery => "New lints that are still under development.",
+        }
+    }
+}
+
+impl TryFrom<&str> for RuleCategory {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "correctness" => Ok(Self::Correctness),
+            "suspicious" => Ok(Self::Suspicious),
+            "pedantic" => Ok(Self::Pedantic),
+            "perf" => Ok(Self::Perf),
+            "style" => Ok(Self::Style),
+            "restriction" => Ok(Self::Restriction),
+            "nursery" => Ok(Self::Nursery),
+            _ => Err(()),
         }
     }
 }

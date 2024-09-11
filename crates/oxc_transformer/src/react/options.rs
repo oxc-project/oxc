@@ -195,15 +195,28 @@ impl ReactOptions {
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReactRefreshOptions {
     /// Specify the identifier of the refresh registration variable.
+    ///
     /// Defaults to `$RefreshReg$`.
     #[serde(default = "default_refresh_reg")]
     pub refresh_reg: String,
 
     /// Specify the identifier of the refresh signature variable.
+    ///
     /// Defaults to `$RefreshSig$`.
     #[serde(default = "default_refresh_sig")]
     pub refresh_sig: String,
 
+    /// Controls whether to emit full signatures or use a more compact representation.
+    ///
+    /// When set to `true`, this option causes this plugin to emit full, readable signatures
+    /// for React components and hooks. This can be useful for debugging and development purposes.
+    ///
+    /// When set to `false` (default), the transformer will use a more compact representation.
+    /// Specifically, it generates a SHA-1 hash of the signature and then encodes it using Base64.
+    /// This process produces a deterministic, compact representation that's suitable for
+    /// production builds while still uniquely identifying components.
+    ///
+    /// Defaults to `false`.
     #[serde(default)]
     pub emit_full_signatures: bool,
 }

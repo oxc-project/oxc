@@ -1,16 +1,16 @@
 [package]
-name                   = "oxlint"
-version                = "0.9.3"
-publish                = false
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxlint"
+version = "0.9.3"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
+description.workspace = true
 
 [lints]
 workspace = true
@@ -19,9 +19,9 @@ workspace = true
 doctest = false
 
 [[bin]]
-name    = "oxlint"
-path    = "src/main.rs"
-test    = false
+name = "oxlint"
+path = "src/main.rs"
+test = false
 doctest = false
 
 [target.'cfg(all(not(target_env = "msvc"), not(target_os = "windows")))'.dependencies]
@@ -32,17 +32,17 @@ mimalloc = { workspace = true, optional = true }
 
 [dependencies]
 oxc_diagnostics = { workspace = true }
-oxc_linter      = { workspace = true }
-oxc_span        = { workspace = true }
+oxc_linter = { workspace = true }
+oxc_span = { workspace = true }
 
-glob               = { workspace = true }
-ignore             = { workspace = true, features = ["simd-accel"] }
-miette             = { workspace = true }
-tempfile           = { workspace = true }
-rayon              = { workspace = true }
-bpaf               = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
+bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
+glob = { workspace = true }
+ignore = { workspace = true, features = ["simd-accel"] }
+miette = { workspace = true }
+rayon = { workspace = true }
+tempfile = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 
 [features]
-default   = []
+default = []
 allocator = ["dep:jemallocator", "dep:mimalloc"]

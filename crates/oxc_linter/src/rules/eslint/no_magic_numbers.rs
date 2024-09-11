@@ -388,7 +388,7 @@ fn is_array_index<'a>(ast_kind: &AstKind<'a>, parent_kind: &AstKind<'a>) -> bool
             AstKind::MemberExpression(expression) => {
                 if let MemberExpression::ComputedMemberExpression(computed_expression) = expression
                 {
-                    return computed_expression.expression.is_number(numeric.value)
+                    return computed_expression.expression.is_number_value(numeric.value)
                         && numeric.value >= 0.0
                         && numeric.value.fract() == 0.0
                         && numeric.value < f64::from(u32::MAX);
@@ -635,7 +635,7 @@ fn test() {
         (
             "
 			type Others = [['a'], ['b']];
-			
+
 			type Foo = {
 			  [K in keyof Others[0]]: Others[K];
 			};
@@ -703,7 +703,7 @@ fn test() {
 			type Other = {
 			  [0]: 3;
 			};
-			
+
 			type Foo = {
 			  [K in keyof Other]: `${K & number}`;
 			};
@@ -881,7 +881,7 @@ fn test() {
         (
             "
 			type Others = [['a'], ['b']];
-			
+
 			type Foo = {
 			  [K in keyof Others[0]]: Others[K];
 			};
@@ -893,7 +893,7 @@ fn test() {
 			type Other = {
 			  [0]: 3;
 			};
-			
+
 			type Foo = {
 			  [K in keyof Other]: `${K & number}`;
 			};

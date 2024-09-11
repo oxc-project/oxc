@@ -1,15 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 29/29 (100.00%)
-Positive Passed: 28/29 (96.55%)
+Positive Passed: 29/29 (100.00%)
 Negative Passed: 17/17 (100.00%)
-Expect to Parse: tasks/coverage/misc/pass/babel-16776-m.js
-
-  × The keyword 'await' is reserved
-   ╭─[misc/pass/babel-16776-m.js:1:1]
- 1 │ await /x.y/g;
-   · ─────
- 2 │ 
-   ╰────
 
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]

@@ -178,6 +178,7 @@ impl ContentEq for Dot {
 impl<'a> ContentEq for CharacterClass<'a> {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.negative, &other.negative)
+            && ContentEq::content_eq(&self.strings, &other.strings)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.body, &other.body)
     }

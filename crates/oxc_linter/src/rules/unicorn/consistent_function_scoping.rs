@@ -185,21 +185,23 @@ impl Rule for ConsistentFunctionScoping {
                             }),
                     )
                 } else if let Some(function_id) = &function.id {
-                    (function_id.symbol_id.get().unwrap(), function_body, function_id.span())
+                    let Some(symbol_id) = function_id.symbol_id.get() else {
+                        return;
+                    };
+                    (symbol_id, function_body, function_id.span())
                 } else {
                     return;
                 }
             }
             AstKind::ArrowFunctionExpression(arrow_function) if self.check_arrow_functions => {
-                if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
-                    (
-                        binding_ident.symbol_id.get().unwrap(),
-                        &arrow_function.body,
-                        binding_ident.span(),
-                    )
-                } else {
+                let Some(binding_ident) = get_function_like_declaration(node, ctx) else {
                     return;
-                }
+                };
+                let Some(symbol_id) = binding_ident.symbol_id.get() else {
+                    return;
+                };
+
+                (symbol_id, &arrow_function.body, binding_ident.span())
             }
             _ => return,
         };
@@ -586,6 +588,7 @@ fn test() {
         ("module.exports = function foo() {};", None),
         ("module.exports.foo = function foo() {};", None),
         ("foo.bar.func = function foo() {};", None),
+        ("if(f) function f(){}", None),
     ];
 
     let fail = vec![

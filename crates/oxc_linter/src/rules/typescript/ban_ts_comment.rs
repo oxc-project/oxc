@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::CommentKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -178,7 +179,7 @@ impl Rule for BanTsComment {
                                     |fixer| {
                                         fixer.replace(
                                             comm.span,
-                                            raw.replace("@ts-ignore", "@ts-expect-error"),
+                                            raw.cow_replace("@ts-ignore", "@ts-expect-error"),
                                         )
                                     },
                                 );
