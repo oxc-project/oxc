@@ -606,15 +606,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // Don't call `enter_node` here as `Program` is a special case - node has no `parent_id`.
         // Inline the specific logic for `Program` here instead.
         // This avoids `Nodes::add_node` having to handle the special case.
-        // We can also skip calling `self.enter_kind`, and `self.jsdoc.retrieve_attached_jsdoc`
-        // as they are no-ops for `Program`.
+        // We can also skip calling `self.enter_kind`, `self.record_ast_node`
+        // and `self.jsdoc.retrieve_attached_jsdoc`, as they are all no-ops for `Program`.
         self.current_node_id = self.nodes.add_program_node(
             kind,
             self.current_scope_id,
             control_flow!(self, |cfg| cfg.current_node_ix),
             self.current_node_flags,
         );
-        self.record_ast_node();
 
         // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
         // Inline the specific logic for `Program` here instead.
