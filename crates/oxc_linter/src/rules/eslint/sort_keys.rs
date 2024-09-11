@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout, clippy::disallowed_methods)]
 use crate::{context::LintContext, rule::Rule, AstNode};
 use itertools::all;
 use oxc_ast::ast::ObjectPropertyKind;
@@ -166,6 +167,7 @@ impl Rule for SortKeys {
 
             if !self.case_sensitive {
                 for group in &mut property_groups {
+
                     *group = group.iter().map(|s| s.to_lowercase()).collect::<Vec<String>>();
                 }
             }
