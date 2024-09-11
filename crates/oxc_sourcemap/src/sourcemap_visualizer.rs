@@ -180,7 +180,7 @@ impl<'a> SourcemapVisualizer<'a> {
             }
         }
 
-        let replaced: Cow<str> = s.as_str().cow_replace("\r", "");
+        let replaced: Cow<str> = s.cow_replace("\r", "");
 
         // Windows: Replace "\r\n" and replace with "\n"
         Cow::Owned(replaced.into_owned())

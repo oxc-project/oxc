@@ -318,6 +318,7 @@ impl<'a> Fixer<'a> {
 
 #[cfg(test)]
 mod test {
+    use cow_utils::CowUtils;
     use std::borrow::Cow;
 
     use oxc_diagnostics::OxcDiagnostic;
@@ -417,7 +418,7 @@ mod test {
             get_fix_result(vec![create_message(insert_at_middle(), Some(INSERT_AT_MIDDLE))]);
         assert_eq!(
             result.fixed_code,
-            TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *"))
+            TEST_CODE.cow_replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *"))
         );
         assert_eq!(result.messages.len(), 0);
     }
