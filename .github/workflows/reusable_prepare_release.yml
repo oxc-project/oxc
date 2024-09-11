@@ -48,7 +48,7 @@ jobs:
       # update `Cargo.lock`
       - run: cargo check
 
-      - uses: peter-evans/create-pull-request@v6
+      - uses: peter-evans/create-pull-request@v7
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
