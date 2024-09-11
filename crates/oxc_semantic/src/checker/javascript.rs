@@ -1,3 +1,6 @@
+use phf::{phf_set, Set};
+use rustc_hash::FxHashMap;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
@@ -11,8 +14,6 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
-use phf::{phf_set, Set};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
 

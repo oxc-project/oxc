@@ -6,6 +6,8 @@ use std::{
     sync::Arc,
 };
 
+use rustc_hash::FxHashMap;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_cfg::{
@@ -15,7 +17,6 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
-use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,

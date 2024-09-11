@@ -4,6 +4,21 @@
 //! ```rust
 #![doc = include_str!("../examples/simple.rs")]
 //! ```
+
+use std::sync::Arc;
+
+use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
+use oxc_cfg::ControlFlowGraph;
+use oxc_span::{GetSpan, SourceType, Span};
+pub use oxc_syntax::{
+    module_record::ModuleRecord,
+    scope::{ScopeFlags, ScopeId},
+    symbol::{SymbolFlags, SymbolId},
+};
+
+pub mod dot;
+pub mod post_transform_checker;
+
 mod binder;
 mod builder;
 mod checker;
@@ -19,29 +34,15 @@ mod scope;
 mod symbol;
 mod unresolved_stack;
 
-pub mod dot;
-pub mod post_transform_checker;
-
-use std::sync::Arc;
-
-pub use builder::{SemanticBuilder, SemanticBuilderReturn};
-use class::ClassTable;
-pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
-pub use node::{AstNode, AstNodeId, AstNodes};
-use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
-use oxc_cfg::ControlFlowGraph;
-use oxc_span::{GetSpan, SourceType, Span};
-pub use oxc_syntax::{
-    module_record::ModuleRecord,
-    scope::{ScopeFlags, ScopeId},
-    symbol::{SymbolFlags, SymbolId},
-};
-
 pub use crate::{
+    builder::{SemanticBuilder, SemanticBuilderReturn},
+    jsdoc::{JSDoc, JSDocFinder, JSDocTag},
+    node::{AstNode, AstNodeId, AstNodes},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::ScopeTree,
     symbol::{IsGlobalReference, SymbolTable},
 };
+use class::ClassTable;
 
 /// Semantic analysis of a JavaScript/TypeScript program.
 ///

@@ -92,6 +92,8 @@ use std::{
 };
 
 use indexmap::IndexMap;
+use rustc_hash::FxHasher;
+
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::walk, Visit};
@@ -102,7 +104,6 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-use rustc_hash::FxHasher;
 
 use crate::{ScopeTree, SemanticBuilder, SymbolTable};
 

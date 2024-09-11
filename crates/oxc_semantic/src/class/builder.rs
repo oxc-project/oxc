@@ -8,11 +8,12 @@ use oxc_ast::{
 use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
 
+use crate::{AstNodeId, AstNodes};
+
 use super::{
     table::{Element, PrivateIdentifierReference},
     ClassTable,
 };
-use crate::{AstNodeId, AstNodes};
 
 #[derive(Debug, Default)]
 pub struct ClassTableBuilder {

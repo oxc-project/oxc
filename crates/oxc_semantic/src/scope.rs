@@ -1,11 +1,12 @@
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
+use rustc_hash::{FxHashMap, FxHasher};
+
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
 use oxc_syntax::reference::ReferenceId;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use rustc_hash::{FxHashMap, FxHasher};
 
 use crate::{symbol::SymbolId, AstNodeId};
 
