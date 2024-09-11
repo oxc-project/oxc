@@ -470,12 +470,13 @@ impl<'a> ReactRefresh<'a> {
     fn create_registration(
         &mut self,
         persistent_id: Atom<'a>,
+        reference_flags: ReferenceFlags,
         ctx: &mut TraverseCtx<'a>,
     ) -> AssignmentTarget<'a> {
         let symbol_id = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
         self.registrations.push((symbol_id, persistent_id));
         let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-        let ident = ctx.create_reference_id(SPAN, name, Some(symbol_id), ReferenceFlags::Write);
+        let ident = ctx.create_reference_id(SPAN, name, Some(symbol_id), reference_flags);
         let ident = ctx.ast.simple_assignment_target_from_identifier_reference(ident);
         ctx.ast.assignment_target_simple(ident)
     }
@@ -557,7 +558,11 @@ impl<'a> ReactRefresh<'a> {
             *expr = ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                self.create_registration(ctx.ast.atom(inferred_name), ctx),
+                self.create_registration(
+                    ctx.ast.atom(inferred_name),
+                    ReferenceFlags::read_write(),
+                    ctx,
+                ),
                 ctx.ast.move_expression(expr),
             );
         }
@@ -584,7 +589,7 @@ impl<'a> ReactRefresh<'a> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let left = self.create_registration(id.name.clone(), ctx);
+        let left = self.create_registration(id.name.clone(), ReferenceFlags::Write, ctx);
         let right = ctx.create_bound_reference_id(
             SPAN,
             id.name.clone(),

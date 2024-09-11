@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 32/52
+Passed: 38/52
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -167,12 +167,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (18/30)
-* refresh/can-handle-implicit-arrow-returns/input.jsx
-Reference flags mismatch:
-after transform: ReferenceId(18): ReferenceFlags(Write)
-rebuilt        : ReferenceId(31): ReferenceFlags(Read | Write)
-
+# babel-plugin-transform-react-jsx (24/30)
 * refresh/does-not-get-tripped-by-iifes/input.jsx
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -187,20 +182,6 @@ rebuilt        : SymbolId(0): ScopeId(0)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 
-* refresh/generates-signatures-for-function-expressions-calling-hooks/input.jsx
-Reference flags mismatch:
-after transform: ReferenceId(18): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(17): ReferenceFlags(Write)
-rebuilt        : ReferenceId(7): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(22): ReferenceFlags(Write)
-rebuilt        : ReferenceId(19): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(21): ReferenceFlags(Write)
-rebuilt        : ReferenceId(22): ReferenceFlags(Read | Write)
-
 * refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
 Missing ScopeId
 Scope children mismatch:
@@ -213,53 +194,6 @@ Missing ScopeId
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6)]
-
-* refresh/registers-capitalized-identifiers-in-hoc-calls/input.jsx
-Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
-rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
-
-* refresh/registers-likely-hocs-with-inline-functions-1/input.jsx
-Reference flags mismatch:
-after transform: ReferenceId(5): ReferenceFlags(Write)
-rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(9): ReferenceFlags(Write)
-rebuilt        : ReferenceId(6): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
-rebuilt        : ReferenceId(8): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(14): ReferenceFlags(Write)
-rebuilt        : ReferenceId(12): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(13): ReferenceFlags(Write)
-rebuilt        : ReferenceId(14): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(12): ReferenceFlags(Write)
-rebuilt        : ReferenceId(16): ReferenceFlags(Read | Write)
-
-* refresh/registers-likely-hocs-with-inline-functions-2/input.jsx
-Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(3): ReferenceFlags(Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(2): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
-
-* refresh/registers-likely-hocs-with-inline-functions-3/input.jsx
-Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
-rebuilt        : ReferenceId(0): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(3): ReferenceFlags(Write)
-rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
-Reference flags mismatch:
-after transform: ReferenceId(2): ReferenceFlags(Write)
-rebuilt        : ReferenceId(4): ReferenceFlags(Read | Write)
 
 * refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch
