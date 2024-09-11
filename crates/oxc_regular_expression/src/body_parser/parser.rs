@@ -691,12 +691,21 @@ impl<'a> PatternParser<'a> {
             }));
         }
 
-        // e.g. \18
+        // e.g. \1, \00, \000
         if !self.state.unicode_mode {
             if let Some(cp) = self.consume_legacy_octal_escape_sequence() {
+                let span_end = self.reader.offset();
+                // Keep original digits for `to_string()`
+                // Otherwise `\0022`(octal \002 + symbol 2) will be `\22`(octal \22)
+                let digits = span_end - span_start - 1; // -1 for '\'
+
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Octal,
+                    span: self.span_factory.create(span_start, span_end),
+                    kind: (match digits {
+                        3 => ast::CharacterKind::Octal3,
+                        2 => ast::CharacterKind::Octal2,
+                        _ => ast::CharacterKind::Octal1,
+                    }),
                     value: cp,
                 }));
             }

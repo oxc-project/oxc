@@ -174,10 +174,13 @@ pub enum CharacterKind {
     HexadecimalEscape = 1,
     Identifier = 2,
     Null = 3,
-    Octal = 4,
-    SingleEscape = 5,
-    Symbol = 6,
-    UnicodeEscape = 7,
+    // To distinguish leading 0 cases like `\00` and `\000`
+    Octal1 = 4,
+    Octal2 = 5,
+    Octal3 = 6,
+    SingleEscape = 7,
+    Symbol = 8,
+    UnicodeEscape = 9,
 }
 
 /// Character class.

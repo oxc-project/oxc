@@ -16,24 +16,23 @@ impl<'a> Display for RegularExpression<'a> {
 impl Display for Flags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut flags = String::with_capacity(8);
-        macro_rules! if_true_append {
-            ($flag:ident, $char:literal) => {
-                if self.$flag {
-                    flags.push($char);
-                }
-            };
-        }
 
         // write flags in the order they are described in the `MDN`
         // <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions#advanced_searching_with_flags>
-        if_true_append!(has_indices, 'd');
-        if_true_append!(global, 'g');
-        if_true_append!(ignore_case, 'i');
-        if_true_append!(multiline, 'm');
-        if_true_append!(dot_all, 's');
-        if_true_append!(unicode, 'u');
-        if_true_append!(unicode_sets, 'v');
-        if_true_append!(sticky, 'y');
+        for (v, ch) in [
+            (self.has_indices, 'd'),
+            (self.global, 'g'),
+            (self.ignore_case, 'i'),
+            (self.multiline, 'm'),
+            (self.dot_all, 's'),
+            (self.unicode, 'u'),
+            (self.unicode_sets, 'v'),
+            (self.sticky, 'y'),
+        ] {
+            if v {
+                flags.push(ch);
+            }
+        }
 
         write!(f, "{flags}")
     }
@@ -60,14 +59,17 @@ impl<'a> Display for Alternative<'a> {
                 None
             }
         }
+
         write_join_with(f, "", &self.body, |iter| {
             let next = iter.next()?;
             let Some(next) = as_character(next) else { return Some(next.to_string()) };
+
             let peek = iter.peek().and_then(|it| as_character(it));
             let (result, eat) = character_to_string(next, peek);
             if eat {
-                _ = iter.next();
+                iter.next();
             }
+
             Some(result)
         })
     }
@@ -208,25 +210,30 @@ impl<'a> Display for CharacterClass<'a> {
                 None
             }
         }
+
         write!(f, "[")?;
 
         if !self.body.is_empty() {
             if self.negative {
                 write!(f, "^")?;
             }
+
             let sep = match self.kind {
                 CharacterClassContentsKind::Union => "",
                 CharacterClassContentsKind::Subtraction => "--",
                 CharacterClassContentsKind::Intersection => "&&",
             };
+
             write_join_with(f, sep, &self.body, |iter| {
                 let next = iter.next()?;
                 let Some(next) = as_character(next) else { return Some(next.to_string()) };
+
                 let peek = iter.peek().and_then(|it| as_character(it));
                 let (result, eat) = character_to_string(next, peek);
                 if eat {
-                    _ = iter.next();
+                    iter.next();
                 }
+
                 Some(result)
             })?;
         }
@@ -270,12 +277,14 @@ impl<'a> Display for ClassString<'a> {
 
 impl<'a> Display for CapturingGroup<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let body = &self.body;
+        write!(f, "(")?;
+
         if let Some(name) = &self.name {
-            write!(f, "(?<{name}>{body})")
-        } else {
-            write!(f, "({body})")
+            write!(f, "?<{name}>")?;
         }
+        write!(f, "{}", &self.body)?;
+
+        write!(f, ")")
     }
 }
 
@@ -299,12 +308,14 @@ impl<'a> Display for IgnoreGroup<'a> {
         }
 
         write!(f, "(?")?;
+
         if let Some(enabling) = &self.enabling_modifiers {
             write_flags(f, '\0', enabling)?;
         }
         if let Some(disabling) = &self.disabling_modifiers {
             write_flags(f, '-', disabling)?;
         }
+
         write!(f, ":{})", self.body)
     }
 }
@@ -320,6 +331,88 @@ impl<'a> Display for NamedReference<'a> {
         write!(f, r"\k<{}>", self.name)
     }
 }
+
+// ---
+
+fn character_to_string(
+    this: &Character,
+    peek: Option<&Character>,
+) -> (/* result */ String, /* true of peek should be consumed */ bool) {
+    let cp = this.value;
+
+    if matches!(this.kind, CharacterKind::Symbol | CharacterKind::UnicodeEscape) {
+        // Trail only
+        if is_trail_surrogate(cp) {
+            return (format!(r"\u{cp:X}"), false);
+        }
+
+        if is_lead_surrogate(cp) {
+            if let Some(peek) = peek.filter(|peek| is_trail_surrogate(peek.value)) {
+                // Lead+Trail
+                let cp = combine_surrogate_pair(cp, peek.value);
+                let ch = char::from_u32(cp).expect("Invalid surrogate pair `Character`!");
+                return (format!("{ch}"), true);
+            }
+
+            // Lead only
+            return (format!(r"\u{cp:X}"), false);
+        }
+    }
+
+    let ch = char::from_u32(cp).expect("Invalid `Character`!");
+    let result = match this.kind {
+        // Not a surrogate, like BMP, or all units in unicode mode
+        CharacterKind::Symbol => format!("{ch}"),
+        CharacterKind::ControlLetter => match ch {
+            '\n' => r"\cJ".to_string(),
+            '\r' => r"\cM".to_string(),
+            '\t' => r"\cI".to_string(),
+            _ => format!(r"\c{ch}"),
+        },
+        CharacterKind::Identifier => {
+            format!(r"\{ch}")
+        }
+        CharacterKind::SingleEscape => match ch {
+            '\n' => String::from(r"\n"),
+            '\r' => String::from(r"\r"),
+            '\t' => String::from(r"\t"),
+            '\u{b}' => String::from(r"\v"),
+            '\u{c}' => String::from(r"\f"),
+            '\u{8}' => String::from(r"\b"),
+            '\u{2D}' => String::from(r"\-"),
+            _ => format!(r"\{ch}"),
+        },
+        CharacterKind::Null => String::from(r"\0"),
+        CharacterKind::UnicodeEscape => {
+            let hex = &format!("{cp:04X}");
+            if hex.len() <= 4 {
+                format!(r"\u{hex}")
+            } else {
+                format!(r"\u{{{hex}}}")
+            }
+        }
+        CharacterKind::HexadecimalEscape => {
+            let hex = &format!("{cp:02X}");
+            format!(r"\x{hex}")
+        }
+        CharacterKind::Octal1 => {
+            let octal = format!("{cp:o}");
+            format!(r"\{octal}")
+        }
+        CharacterKind::Octal2 => {
+            let octal = format!("{cp:02o}");
+            format!(r"\{octal}")
+        }
+        CharacterKind::Octal3 => {
+            let octal = format!("{cp:03o}");
+            format!(r"\{octal}")
+        }
+    };
+
+    (result, false)
+}
+
+// ---
 
 fn write_join<S, I, E>(f: &mut fmt::Formatter<'_>, sep: S, items: I) -> fmt::Result
 where
@@ -351,78 +444,9 @@ where
     Ok(())
 }
 
-fn character_to_string(
-    this: &Character,
-    peek: Option<&Character>,
-) -> (/* result */ String, /* true of peek should be consumed */ bool) {
-    let cp = this.value;
-
-    if matches!(this.kind, CharacterKind::Symbol | CharacterKind::UnicodeEscape) {
-        // Trail only
-        if is_trail_surrogate(cp) {
-            return (format!(r"\u{cp:X}"), false);
-        }
-
-        if is_lead_surrogate(cp) {
-            if let Some(peek) = peek.filter(|peek| is_trail_surrogate(peek.value)) {
-                // Lead+Trail
-                let cp = combine_surrogate_pair(cp, peek.value);
-                let ch = char::from_u32(cp).expect("Invalid surrogate pair `Character`!");
-                return (format!("{ch}"), true);
-            }
-
-            // Lead only
-            return (format!(r"\u{cp:X}"), false);
-        }
-    }
-
-    let ch = char::from_u32(cp).expect("Invalid `Character`!");
-    let result = match this.kind {
-        CharacterKind::ControlLetter => match ch {
-            '\n' => r"\cJ".to_string(),
-            '\r' => r"\cM".to_string(),
-            '\t' => r"\cI".to_string(),
-            _ => format!(r"\c{ch}"),
-        },
-        CharacterKind::Identifier => {
-            format!(r"\{ch}")
-        }
-        // Not a surrogate, like BMP, or all units in unicode mode
-        CharacterKind::Symbol => format!("{ch}"),
-        CharacterKind::Null => String::from(r"\0"),
-        CharacterKind::UnicodeEscape => {
-            let hex = &format!("{cp:04X}");
-            if hex.len() <= 4 {
-                format!(r"\u{hex}")
-            } else {
-                format!(r"\u{{{hex}}}")
-            }
-        }
-        CharacterKind::HexadecimalEscape => {
-            let hex = &format!("{cp:02X}");
-            format!(r"\x{hex}")
-        }
-        CharacterKind::Octal => {
-            let octal = format!("{cp:o}");
-            format!(r"\{octal}")
-        }
-        CharacterKind::SingleEscape => match ch {
-            '\n' => String::from(r"\n"),
-            '\r' => String::from(r"\r"),
-            '\t' => String::from(r"\t"),
-            '\u{b}' => String::from(r"\v"),
-            '\u{c}' => String::from(r"\f"),
-            '\u{8}' => String::from(r"\b"),
-            '\u{2D}' => String::from(r"\-"),
-            _ => format!(r"\{ch}"),
-        },
-    };
-
-    (result, false)
-}
-
 #[cfg(test)]
 mod test {
+    use crate::{Parser, ParserOptions};
     use oxc_allocator::Allocator;
 
     type Case<'a> = (
@@ -505,23 +529,24 @@ mod test {
         (r"/\5/", None),
         (r"/\6/", None),
         (r"/\7/", None),
-        // Remove leading zeroes --
-        (r"/\00/", Some(r"/\0/")),
-        (r"/\07/", Some(r"/\7/")),
-        // --
+        (r"/\00/", None),
+        (r"/\07/", None),
+        (r"/\30/", None),
+        (r"/\37/", None),
         (r"/\40/", None),
         (r"/\47/", None),
         (r"/\70/", None),
         (r"/\77/", None),
-        // Remove leading zeroes --
-        (r"/\000/", Some(r"/\0/")),
-        (r"/\007/", Some(r"/\7/")),
-        (r"/\070/", Some(r"/\70/")),
-        // --
+        (r"/\000/", None),
+        (r"/\007/", None),
+        (r"/\070/", None),
         (r"/\300/", None),
         (r"/\307/", None),
         (r"/\370/", None),
         (r"/\377/", None),
+        (r"/\0111/", None),
+        (r"/\0022/", None),
+        (r"/\0003/", None),
         (r"/(.)\1/", None),
         // Identity escape from: <https://github.com/tc39/test262/blob/d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60/test/annexB/language/literals/regexp/identity-escape.js>
         (r"/\C/", None),
@@ -553,7 +578,6 @@ mod test {
     ];
 
     fn test_display(allocator: &Allocator, (source, expect): &Case) {
-        use crate::{Parser, ParserOptions};
         let expect = expect.unwrap_or(source);
         let actual = Parser::new(allocator, source, ParserOptions::default()).parse().unwrap();
         assert_eq!(expect, actual.to_string());
