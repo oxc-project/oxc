@@ -685,8 +685,14 @@ impl<'a> ReactRefresh<'a> {
                 .push(self.ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
         }
 
-        let symbol_id =
-            ctx.generate_uid("s", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
+        // TODO: Handle var hoisted in ctx API
+        let target_scope_id = ctx
+            .scopes()
+            .ancestors(ctx.current_scope_id())
+            .find(|scope_id| ctx.scopes().get_flags(*scope_id).is_var())
+            .unwrap_or_else(|| ctx.current_scope_id());
+
+        let symbol_id = ctx.generate_uid("s", target_scope_id, SymbolFlags::FunctionScopedVariable);
 
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 

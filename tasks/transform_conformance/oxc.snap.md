@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 40/52
+Passed: 41/52
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -167,18 +167,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (26/30)
-* refresh/does-not-get-tripped-by-iifes/input.jsx
-Bindings mismatch:
-after transform: ScopeId(0): []
-rebuilt        : ScopeId(0): ["_s"]
-Bindings mismatch:
-after transform: ScopeId(1): ["_s"]
-rebuilt        : ScopeId(1): []
-Symbol scope ID mismatch:
-after transform: SymbolId(1): ScopeId(1)
-rebuilt        : SymbolId(0): ScopeId(0)
-
+# babel-plugin-transform-react-jsx (27/30)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 
