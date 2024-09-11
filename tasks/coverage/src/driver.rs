@@ -1,14 +1,19 @@
 use std::{collections::HashSet, ops::ControlFlow, path::PathBuf};
 
 use oxc::{
-    ast::{ast::Program, Trivias},
+    allocator::Allocator,
+    ast::{
+        ast::{Program, RegExpFlags},
+        Trivias,
+    },
     codegen::CodegenOptions,
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
+    regular_expression::{ParserOptions, PatternParser},
     semantic::{
         post_transform_checker::{check_semantic_after_transform, check_semantic_ids},
-        SemanticBuilderReturn,
+        Semantic, SemanticBuilderReturn,
     },
     span::{SourceType, Span},
     transformer::{TransformOptions, TransformerReturn},
@@ -78,7 +83,7 @@ impl CompilerInterface for Driver {
     fn after_semantic(
         &mut self,
         program: &mut Program<'_>,
-        _semantic_return: &mut SemanticBuilderReturn,
+        ret: &mut SemanticBuilderReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
             if let Some(errors) = check_semantic_ids(program) {
@@ -86,6 +91,7 @@ impl CompilerInterface for Driver {
                 return ControlFlow::Break(());
             }
         };
+        self.check_regular_expressions(&ret.semantic);
         ControlFlow::Continue(())
     }
 
@@ -149,5 +155,42 @@ impl Driver {
             }
         }
         false
+    }
+
+    /// Idempotency test for printing regular expressions.
+    fn check_regular_expressions(&mut self, semantic: &Semantic<'_>) {
+        let allocator = Allocator::default();
+        for literal in semantic.nodes().iter().filter_map(|node| node.kind().as_reg_exp_literal()) {
+            let Some(pattern) = literal.regex.pattern.as_pattern() else {
+                continue;
+            };
+            let printed1 = pattern.to_string();
+            let flags = literal.regex.flags;
+            let printed2 = match PatternParser::new(
+                &allocator,
+                &printed1,
+                ParserOptions {
+                    span_offset: 0,
+                    unicode_mode: flags.contains(RegExpFlags::U) || flags.contains(RegExpFlags::V),
+                    unicode_sets_mode: flags.contains(RegExpFlags::V),
+                },
+            )
+            .parse()
+            {
+                Ok(pattern) => pattern.to_string(),
+                Err(error) => {
+                    self.errors.push(OxcDiagnostic::error(format!(
+                        "Failed to re-parse `{}`, printed as `/{printed1}/{flags}`, {error}",
+                        literal.span.source_text(semantic.source_text()),
+                    )));
+                    continue;
+                }
+            };
+            if printed1 != printed2 {
+                self.errors.push(OxcDiagnostic::error(format!(
+                    "Regular Expression mismatch: {printed1} {printed2}"
+                )));
+            }
+        }
     }
 }

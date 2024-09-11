@@ -48,18 +48,20 @@ declare_oxc_lint!(
     correctness
 );
 
-fn constant_short_circuit(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn constant_short_circuit(lhs_name: &str, expr_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Unexpected constant {x0:?} on the left-hand side of a {x1:?} expression"
+        "Unexpected constant {lhs_name:?} on the left-hand side of a {expr_name:?} expression"
     ))
     .with_help("This expression always evaluates to the constant on the left-hand side")
-    .with_label(span2)
+    .with_label(span)
 }
 
-fn constant_binary_operand(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn constant_binary_operand(left_or_right: &str, operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant binary expression")
-        .with_help(format!("This compares constantly with the {x0}-hand side of the {x1}"))
-        .with_label(span2)
+        .with_help(format!(
+            "This compares constantly with the {left_or_right}-hand side of the {operator}"
+        ))
+        .with_label(span)
 }
 
 fn constant_always_new(span: Span) -> OxcDiagnostic {

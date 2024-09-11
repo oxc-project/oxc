@@ -6,10 +6,10 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow the use of undeclared variables.")
-        .with_help(format!("'{x0}' is not defined."))
-        .with_label(span1)
+        .with_help(format!("'{name}' is not defined."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -157,6 +157,7 @@ fn test() {
         "class C { static { function a() {} a; } }",
         "class C { static { a; function a() {} } }",
         "String;Array;Boolean;",
+        "function resolve<T>(path: string): T { return { path } as T; }"
     ];
 
     let fail = vec![

@@ -7,13 +7,13 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxlint::{CliRunResult, LintRunner, Runner};
+use oxlint::cli::{CliRunResult, LintRunner, Runner};
 
 fn main() -> CliRunResult {
     init_tracing();
     init_miette();
 
-    let command = oxlint::lint_command().run();
+    let command = oxlint::cli::lint_command().run();
     command.handle_threads();
     LintRunner::new(command).run()
 }

@@ -1,14 +1,15 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_span::cmp::ContentEq;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_self_compare_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+fn no_self_compare_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow comparisons where both sides are exactly the same")
         .with_help("If you are testing for NaN, you can use Number.isNaN function.")
-        .with_labels([span0, span1])
+        .with_labels([span, span1])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,10 +45,8 @@ impl Rule for NoSelfCompare {
         if !binary_expr.operator.is_compare() && !binary_expr.operator.is_equality() {
             return;
         }
-        let left = calculate_hash(&binary_expr.left);
-        let right = calculate_hash(&binary_expr.right);
 
-        if left == right {
+        if binary_expr.left.content_eq(&binary_expr.right) {
             ctx.diagnostic(no_self_compare_diagnostic(
                 binary_expr.left.span(),
                 binary_expr.right.span(),

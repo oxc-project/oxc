@@ -40,7 +40,7 @@ pub use oxc_syntax::{
 pub use crate::{
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::ScopeTree,
-    symbol::SymbolTable,
+    symbol::{IsGlobalReference, SymbolTable},
 };
 
 /// Semantic analysis of a JavaScript/TypeScript program.
@@ -295,7 +295,7 @@ mod tests {
     fn test_reference_resolutions_simple_read_write() {
         let alloc = Allocator::default();
         let target_symbol_name = Atom::from("a");
-        let typescript = SourceType::default().with_typescript(true).with_module(true);
+        let typescript = SourceType::ts();
         let sources = [
             // simple cases
             (SourceType::default(), "let a = 1; a = 2", ReferenceFlags::write()),

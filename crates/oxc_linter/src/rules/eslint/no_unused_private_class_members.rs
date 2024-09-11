@@ -8,8 +8,8 @@ use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_unused_private_class_members_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{x0}' is defined but never used.")).with_label(span1)
+fn no_unused_private_class_members_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{name}' is defined but never used.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

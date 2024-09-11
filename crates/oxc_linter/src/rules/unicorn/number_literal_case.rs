@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -5,9 +6,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn uppercase_prefix(span: Span, x1: &str) -> OxcDiagnostic {
+fn uppercase_prefix(span: Span, prefix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected number literal prefix in uppercase.")
-        .with_help(format!("Use lowercase for the number literal prefix `{x1}`."))
+        .with_help(format!("Use lowercase for the number literal prefix `{prefix}`."))
         .with_label(span)
 }
 
@@ -23,12 +24,12 @@ fn lowercase_hexadecimal_digits(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn uppercase_prefix_and_lowercase_hexadecimal_digits(span: Span, x1: &str) -> OxcDiagnostic {
+fn uppercase_prefix_and_lowercase_hexadecimal_digits(span: Span, prefix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.",
     )
     .with_help(format!(
-        "Use lowercase for the number literal prefix `{x1}` and uppercase for hexadecimal digits."
+        "Use lowercase for the number literal prefix `{prefix}` and uppercase for hexadecimal digits."
     ))
     .with_label(span)
 }
@@ -101,7 +102,7 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
                 Span::new(raw_span.start + 1, raw_span.start + 2),
                 if number_literal.starts_with("0B") { "0b" } else { "0o" },
             ),
-            number_literal.to_lowercase(),
+            number_literal.cow_to_lowercase().into_owned(),
         ));
     }
     if number_literal.starts_with("0X") || number_literal.starts_with("0x") {
@@ -131,14 +132,14 @@ fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiag
         let char_position = raw_span.start + index as u32;
         return Some((
             uppercase_exponential_notation(Span::new(char_position, char_position + 1)),
-            number_literal.to_lowercase(),
+            number_literal.cow_to_lowercase().into_owned(),
         ));
     }
     None
 }
 
 fn digits_to_uppercase(digits: &str) -> String {
-    let mut result = digits.to_uppercase();
+    let mut result = digits.cow_to_uppercase().into_owned();
     if result.ends_with('N') {
         result.truncate(result.len() - 1);
         result.push('n');

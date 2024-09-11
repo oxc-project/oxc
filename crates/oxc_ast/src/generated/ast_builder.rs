@@ -1075,15 +1075,16 @@ impl<'a> AstBuilder<'a> {
     /// - quasi
     /// - type_parameters
     #[inline]
-    pub fn expression_tagged_template<T1>(
+    pub fn expression_tagged_template<T1, T2>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        quasi: T1,
+        type_parameters: T2,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Expression::TaggedTemplateExpression(self.alloc(self.tagged_template_expression(
             span,
@@ -1989,20 +1990,21 @@ impl<'a> AstBuilder<'a> {
     /// - quasi
     /// - type_parameters
     #[inline]
-    pub fn tagged_template_expression<T1>(
+    pub fn tagged_template_expression<T1, T2>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        quasi: T1,
+        type_parameters: T2,
     ) -> TaggedTemplateExpression<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TaggedTemplateExpression {
             span,
             tag,
-            quasi,
+            quasi: quasi.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
         }
     }
@@ -2017,15 +2019,16 @@ impl<'a> AstBuilder<'a> {
     /// - quasi
     /// - type_parameters
     #[inline]
-    pub fn alloc_tagged_template_expression<T1>(
+    pub fn alloc_tagged_template_expression<T1, T2>(
         self,
         span: Span,
         tag: Expression<'a>,
-        quasi: TemplateLiteral<'a>,
-        type_parameters: T1,
+        quasi: T1,
+        type_parameters: T2,
     ) -> Box<'a, TaggedTemplateExpression<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
             self.tagged_template_expression(span, tag, quasi, type_parameters),
@@ -6740,14 +6743,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
-    pub fn module_declaration_import_declaration(
+    pub fn module_declaration_import_declaration<T1>(
         self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> ModuleDeclaration<'a> {
+    ) -> ModuleDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         ModuleDeclaration::ImportDeclaration(self.alloc(self.import_declaration(
             span,
             specifiers,
@@ -6777,14 +6783,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Will be `Some(vec![])` for empty assertion
     /// - export_kind
     #[inline]
-    pub fn module_declaration_export_all_declaration(
+    pub fn module_declaration_export_all_declaration<T1>(
         self,
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> ModuleDeclaration<'a> {
+    ) -> ModuleDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         ModuleDeclaration::ExportAllDeclaration(self.alloc(self.export_all_declaration(
             span,
             exported,
@@ -6852,15 +6861,18 @@ impl<'a> AstBuilder<'a> {
     /// - export_kind: `export type { foo }`
     /// - with_clause: Some(vec![]) for empty assertion
     #[inline]
-    pub fn module_declaration_export_named_declaration(
+    pub fn module_declaration_export_named_declaration<T1>(
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<WithClause<'a>>,
-    ) -> ModuleDeclaration<'a> {
+        with_clause: T1,
+    ) -> ModuleDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         ModuleDeclaration::ExportNamedDeclaration(self.alloc(self.export_named_declaration(
             span,
             declaration,
@@ -7082,15 +7094,24 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
-    pub fn import_declaration(
+    pub fn import_declaration<T1>(
         self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> ImportDeclaration<'a> {
-        ImportDeclaration { span, specifiers, source, with_clause, import_kind }
+    ) -> ImportDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
+        ImportDeclaration {
+            span,
+            specifiers,
+            source,
+            with_clause: with_clause.into_in(self.allocator),
+            import_kind,
+        }
     }
 
     /// Builds a [`ImportDeclaration`] and stores it in the memory arena.
@@ -7104,14 +7125,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Some(vec![]) for empty assertion
     /// - import_kind: `import type { foo } from 'bar'`
     #[inline]
-    pub fn alloc_import_declaration(
+    pub fn alloc_import_declaration<T1>(
         self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         import_kind: ImportOrExportKind,
-    ) -> Box<'a, ImportDeclaration<'a>> {
+    ) -> Box<'a, ImportDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         Box::new_in(
             self.import_declaration(span, specifiers, source, with_clause, import_kind),
             self.allocator,
@@ -7455,16 +7479,26 @@ impl<'a> AstBuilder<'a> {
     /// - export_kind: `export type { foo }`
     /// - with_clause: Some(vec![]) for empty assertion
     #[inline]
-    pub fn export_named_declaration(
+    pub fn export_named_declaration<T1>(
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<WithClause<'a>>,
-    ) -> ExportNamedDeclaration<'a> {
-        ExportNamedDeclaration { span, declaration, specifiers, source, export_kind, with_clause }
+        with_clause: T1,
+    ) -> ExportNamedDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
+        ExportNamedDeclaration {
+            span,
+            declaration,
+            specifiers,
+            source,
+            export_kind,
+            with_clause: with_clause.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`ExportNamedDeclaration`] and stores it in the memory arena.
@@ -7479,15 +7513,18 @@ impl<'a> AstBuilder<'a> {
     /// - export_kind: `export type { foo }`
     /// - with_clause: Some(vec![]) for empty assertion
     #[inline]
-    pub fn alloc_export_named_declaration(
+    pub fn alloc_export_named_declaration<T1>(
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier<'a>>,
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
-        with_clause: Option<WithClause<'a>>,
-    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        with_clause: T1,
+    ) -> Box<'a, ExportNamedDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         Box::new_in(
             self.export_named_declaration(
                 span,
@@ -7548,15 +7585,24 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Will be `Some(vec![])` for empty assertion
     /// - export_kind
     #[inline]
-    pub fn export_all_declaration(
+    pub fn export_all_declaration<T1>(
         self,
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> ExportAllDeclaration<'a> {
-        ExportAllDeclaration { span, exported, source, with_clause, export_kind }
+    ) -> ExportAllDeclaration<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
+        ExportAllDeclaration {
+            span,
+            exported,
+            source,
+            with_clause: with_clause.into_in(self.allocator),
+            export_kind,
+        }
     }
 
     /// Builds a [`ExportAllDeclaration`] and stores it in the memory arena.
@@ -7570,14 +7616,17 @@ impl<'a> AstBuilder<'a> {
     /// - with_clause: Will be `Some(vec![])` for empty assertion
     /// - export_kind
     #[inline]
-    pub fn alloc_export_all_declaration(
+    pub fn alloc_export_all_declaration<T1>(
         self,
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
-        with_clause: Option<WithClause<'a>>,
+        with_clause: T1,
         export_kind: ImportOrExportKind,
-    ) -> Box<'a, ExportAllDeclaration<'a>> {
+    ) -> Box<'a, ExportAllDeclaration<'a>>
+    where
+        T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
+    {
         Box::new_in(
             self.export_all_declaration(span, exported, source, with_clause, export_kind),
             self.allocator,
@@ -8799,17 +8848,18 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn ts_type_import_type<T1>(
+    pub fn ts_type_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> TSType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSType::TSImportType(self.alloc(self.ts_import_type(
             span,
@@ -11650,17 +11700,18 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn ts_type_query_expr_name_import_type<T1>(
+    pub fn ts_type_query_expr_name_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> TSTypeQueryExprName<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeQueryExprName::TSImportType(self.alloc(self.ts_import_type(
             span,
@@ -11701,24 +11752,25 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn ts_import_type<T1>(
+    pub fn ts_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> TSImportType<'a>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSImportType {
             span,
             is_type_of,
             parameter,
             qualifier,
-            attributes,
+            attributes: attributes.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
         }
     }
@@ -11735,17 +11787,18 @@ impl<'a> AstBuilder<'a> {
     /// - attributes
     /// - type_parameters
     #[inline]
-    pub fn alloc_ts_import_type<T1>(
+    pub fn alloc_ts_import_type<T1, T2>(
         self,
         span: Span,
         is_type_of: bool,
         parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
-        attributes: Option<TSImportAttributes<'a>>,
-        type_parameters: T1,
+        attributes: T1,
+        type_parameters: T2,
     ) -> Box<'a, TSImportType<'a>>
     where
-        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSImportAttributes<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         Box::new_in(
             self.ts_import_type(

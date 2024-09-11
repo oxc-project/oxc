@@ -10,5 +10,5 @@ use super::{NoUnusedVars, Symbol};
 // getting cast to a u32
 #[allow(clippy::cast_possible_truncation)]
 fn count_whitespace_or_commas<I: Iterator<Item = char>>(iter: I) -> u32 {
-    iter.take_while(|c| c.is_whitespace() || *c == ',').count() as u32
+    iter.take_while(|c| *c == ',' || c.is_whitespace()).map(|c| c.len_utf8() as u32).sum()
 }

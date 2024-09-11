@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use napi::Either;
 use napi_derive::napi;
 use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, RewriteExtensionsMode,
-    TypeScriptOptions,
+    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, ReactRefreshOptions,
+    RewriteExtensionsMode, TypeScriptOptions,
 };
 
 #[napi(object)]
@@ -140,6 +140,9 @@ pub struct ReactBindingOptions {
     ///
     /// @default false
     pub use_spread: Option<bool>,
+
+    /// Enable react fast refresh transform
+    pub refresh: Option<ReactRefreshBindingOptions>,
 }
 
 impl From<ReactBindingOptions> for ReactOptions {
@@ -158,7 +161,34 @@ impl From<ReactBindingOptions> for ReactOptions {
             pragma_frag: options.pragma_frag,
             use_built_ins: options.use_built_ins,
             use_spread: options.use_spread,
+            refresh: options.refresh.map(Into::into),
             ..Default::default()
+        }
+    }
+}
+
+#[napi(object)]
+pub struct ReactRefreshBindingOptions {
+    /// Specify the identifier of the refresh registration variable.
+    ///
+    /// @default `$RefreshReg$`.
+    pub refresh_reg: Option<String>,
+
+    /// Specify the identifier of the refresh signature variable.
+    ///
+    /// @default `$RefreshSig$`.
+    pub refresh_sig: Option<String>,
+
+    pub emit_full_signatures: Option<bool>,
+}
+
+impl From<ReactRefreshBindingOptions> for ReactRefreshOptions {
+    fn from(options: ReactRefreshBindingOptions) -> Self {
+        let ops = ReactRefreshOptions::default();
+        ReactRefreshOptions {
+            refresh_reg: options.refresh_reg.unwrap_or(ops.refresh_reg),
+            refresh_sig: options.refresh_sig.unwrap_or(ops.refresh_sig),
+            emit_full_signatures: options.emit_full_signatures.unwrap_or(ops.emit_full_signatures),
         }
     }
 }

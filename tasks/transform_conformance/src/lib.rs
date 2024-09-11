@@ -175,12 +175,12 @@ impl TestRunner {
                     let errors = test_case.errors();
                     if !errors.is_empty() {
                         snapshot.push('\n');
-                        for error in test_case.errors() {
+                        for error in errors {
                             snapshot.push_str(&error.message);
+                            snapshot.push('\n');
                         }
                         snapshot.push('\n');
                     }
-                    snapshot.push('\n');
                 }
                 snapshot.push('\n');
             }

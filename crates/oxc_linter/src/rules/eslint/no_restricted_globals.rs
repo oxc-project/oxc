@@ -7,14 +7,14 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_restricted_globals(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    let warn_text = if x1.is_empty() {
-        format!("Unexpected use of '{x0}'.")
+fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiagnostic {
+    let warn_text = if suffix.is_empty() {
+        format!("Unexpected use of '{global_name}'.")
     } else {
-        format!("Unexpected use of '{x0}'. {x1}")
+        format!("Unexpected use of '{global_name}'. {suffix}")
     };
 
-    OxcDiagnostic::warn(warn_text).with_label(span2)
+    OxcDiagnostic::warn(warn_text).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

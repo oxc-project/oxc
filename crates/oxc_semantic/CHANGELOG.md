@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.28.0] - 2024-09-11
+
+- 1fa3e56 semantic: [**BREAKING**] Rename `SymbolTable::iter` to `symbol_ids` (#5621) (overlookmotel)
+
+- 96a1552 semantic: [**BREAKING**] Remove `SymbolTable::iter_rev` (#5620) (overlookmotel)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+- 603817b oxc: [**BREAKING**] Add `SourceType::Unambiguous`; parse `.js` as unambiguous (#5557) (Boshen)
+
+- b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
+
+### Features
+
+- 86256ea minifier: Constant fold `typeof` (#5666) (Boshen)
+- 642295c semantic: Add `SymbolTable::delete_resolved_reference` method (#5558) (overlookmotel)
+
+### Bug Fixes
+
+- f9e3a41 semantic: Bind `SymbolId` to function name in `if (foo) function id() {}` (#5673) (Boshen)
+- 36d864a transformer/react: Don't transform if the variable does not have a value reference (#5528) (Dunqing)
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+- 731ffaa semantic: Compare nodes by pointer equality (#5686) (overlookmotel)
+- 067f9b5 semantic: Introduce `IsGlobalReference` trait (#5672) (Boshen)
+- d22a9b7 semantic: `SymbolTable::is_empty` use `is_empty` (#5622) (overlookmotel)
+
+### Testing
+- dc92489 Add trailing line breaks to conformance fixtures (#5541) (overlookmotel)
+
 ## [0.27.0] - 2024-09-06
 
 - bd820f9 semantic: [**BREAKING**] Remove `SymbolTable::get_symbol_id_from_name` and `SymbolTable::get_scope_id_from_name` (#5480) (overlookmotel)

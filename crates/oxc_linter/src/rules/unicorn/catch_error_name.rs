@@ -9,9 +9,15 @@ use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn catch_error_name_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The catch parameter {x0:?} should be named {x1:?}"))
-        .with_label(span2)
+fn catch_error_name_diagnostic(
+    caught_ident: &str,
+    expected_name: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The catch parameter {caught_ident:?} should be named {expected_name:?}"
+    ))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -56,7 +62,8 @@ declare_oxc_lint!(
     /// try { } catch (error) { }
     /// ```
     CatchErrorName,
-    style
+    style,
+    pending
 );
 
 impl Rule for CatchErrorName {

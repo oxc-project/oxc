@@ -1,3 +1,4 @@
+#![allow(clippy::disallowed_methods)]
 use std::{cell::RefCell, io::Read, path::PathBuf, rc::Rc};
 
 use bpaf::{Bpaf, Parser};
@@ -33,7 +34,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",
     "crates/oxc_span/src/span/types.rs",
-    "crates/oxc_span/src/source_type/types.rs",
+    "crates/oxc_span/src/source_type/mod.rs",
     "crates/oxc_regular_expression/src/ast.rs",
 ];
 
@@ -60,8 +61,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let cli_options = cli_options().run();
 
     if cli_options.quiet {
-        // SAFETY: we haven't started using logger yet!
-        unsafe { logger::quiet() };
+        logger::quiet().normalize_with("Failed to set logger to `quiet` mode.")?;
     }
 
     let AstCodegenResult { outputs, schema } = SOURCE_PATHS
@@ -134,7 +134,7 @@ fn write_ci_filter(
         push_item(side_effect.as_str());
     }
 
-    push_item("tasks/ast_codegen/src/**/*");
+    push_item("tasks/ast_tools/src/**");
     push_item(output_path);
 
     log!("Writing {output_path}...");
@@ -145,16 +145,16 @@ fn write_ci_filter(
 
 #[macro_use]
 mod logger {
-    static mut LOG: bool = true;
+    use std::sync::OnceLock;
 
-    /// Shouldn't be called after first use of the logger macros.
-    pub(super) unsafe fn quiet() {
-        LOG = false;
+    static LOG: OnceLock<bool> = OnceLock::new();
+
+    pub(super) fn quiet() -> Result<(), bool> {
+        LOG.set(false)
     }
 
     pub(super) fn __internal_log_enable() -> bool {
-        // SAFETY:`LOG` doesn't change from the moment we start using it.
-        unsafe { LOG }
+        *LOG.get_or_init(|| true)
     }
 
     macro_rules! log {

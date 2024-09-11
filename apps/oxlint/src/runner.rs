@@ -1,4 +1,4 @@
-use crate::CliRunResult;
+use crate::cli::CliRunResult;
 
 /// A trait for exposing functionality to the CLI.
 pub trait Runner {

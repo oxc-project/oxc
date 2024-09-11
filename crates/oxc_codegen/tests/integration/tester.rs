@@ -4,7 +4,7 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 pub fn test(source_text: &str, expected: &str) {
-    let source_type = SourceType::default().with_module(true).with_jsx(true);
+    let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let result = CodeGenerator::new()
@@ -22,7 +22,7 @@ pub fn test(source_text: &str, expected: &str) {
 }
 
 pub fn test_without_source(source_text: &str, expected: &str) {
-    let source_type = SourceType::default().with_module(true).with_jsx(true);
+    let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let result = CodeGenerator::new().build(&ret.program).source_text;
@@ -33,7 +33,7 @@ pub fn test_without_source(source_text: &str, expected: &str) {
 }
 
 pub fn test_minify(source_text: &str, expected: &str) {
-    let source_type = SourceType::default().with_module(true).with_jsx(true);
+    let source_type = SourceType::jsx();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let result = CodeGenerator::new()

@@ -568,6 +568,12 @@ impl<'a> ReactJsx<'a> {
         // TODO(improve-on-babel): Change this if we can handle differing output in tests.
         let argument_expr = match e {
             JSXElementOrFragment::Element(e) => {
+                if let Some(closing_element) = &e.closing_element {
+                    if let Some(ident) = closing_element.name.get_identifier() {
+                        ctx.delete_reference_for_identifier(ident);
+                    }
+                }
+
                 self.transform_element_name(&e.opening_element.name)
             }
             JSXElementOrFragment::Fragment(_) => self.get_fragment(ctx),

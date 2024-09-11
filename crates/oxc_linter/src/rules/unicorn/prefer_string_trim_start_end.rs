@@ -5,9 +5,13 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_string_trim_start_end_diagnostic(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`"))
-        .with_help(format!("Replace with `{x1}`"))
+fn prefer_string_trim_start_end_diagnostic(
+    span: Span,
+    good_trim: &str,
+    bad_trim: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{good_trim}` over `{bad_trim}`"))
+        .with_help(format!("Replace with `{good_trim}`"))
         .with_label(span)
 }
 

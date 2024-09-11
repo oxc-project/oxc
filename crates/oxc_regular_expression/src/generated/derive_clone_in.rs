@@ -171,7 +171,9 @@ impl<'alloc> CloneIn<'alloc> for CharacterKind {
             Self::HexadecimalEscape => CharacterKind::HexadecimalEscape,
             Self::Identifier => CharacterKind::Identifier,
             Self::Null => CharacterKind::Null,
-            Self::Octal => CharacterKind::Octal,
+            Self::Octal1 => CharacterKind::Octal1,
+            Self::Octal2 => CharacterKind::Octal2,
+            Self::Octal3 => CharacterKind::Octal3,
             Self::SingleEscape => CharacterKind::SingleEscape,
             Self::Symbol => CharacterKind::Symbol,
             Self::UnicodeEscape => CharacterKind::UnicodeEscape,
@@ -229,6 +231,7 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for CharacterClass<'old_alloc> 
         CharacterClass {
             span: CloneIn::clone_in(&self.span, allocator),
             negative: CloneIn::clone_in(&self.negative, allocator),
+            strings: CloneIn::clone_in(&self.strings, allocator),
             kind: CloneIn::clone_in(&self.kind, allocator),
             body: CloneIn::clone_in(&self.body, allocator),
         }

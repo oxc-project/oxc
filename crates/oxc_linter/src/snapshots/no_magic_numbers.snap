@@ -1,0 +1,836 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-magic-numbers): Number constants declarations must use 'const'.
+   ╭─[no_magic_numbers.tsx:1:11]
+ 1 │ var foo = 42
+   ·           ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:1:11]
+ 1 │ var foo = 0 + 1;
+   ·           ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:15]
+ 1 │ var foo = 0 + 1;
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): Number constants declarations must use 'const'.
+   ╭─[no_magic_numbers.tsx:1:11]
+ 1 │ var foo = 42n
+   ·           ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0n
+   ╭─[no_magic_numbers.tsx:1:11]
+ 1 │ var foo = 0n + 1n;
+   ·           ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1n
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ var foo = 0n + 1n;
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5
+   ╭─[no_magic_numbers.tsx:1:9]
+ 1 │ a = a + 5;
+   ·         ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5
+   ╭─[no_magic_numbers.tsx:1:6]
+ 1 │ a += 5;
+   ·      ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:1:11]
+ 1 │ var foo = 0 + 1 + -2 + 2;
+   ·           ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:15]
+ 1 │ var foo = 0 + 1 + -2 + 2;
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -2
+   ╭─[no_magic_numbers.tsx:1:19]
+ 1 │ var foo = 0 + 1 + -2 + 2;
+   ·                   ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:24]
+ 1 │ var foo = 0 + 1 + -2 + 2;
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:19]
+ 1 │ var foo = 0 + 1 + 2;
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 10
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ var foo = { bar:10 }
+   ·                 ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0x1A
+   ╭─[no_magic_numbers.tsx:1:13]
+ 1 │ console.log(0x1A + 0x02); console.log(071);
+   ·             ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0x02
+   ╭─[no_magic_numbers.tsx:1:20]
+ 1 │ console.log(0x1A + 0x02); console.log(071);
+   ·                    ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 071
+   ╭─[no_magic_numbers.tsx:1:39]
+ 1 │ console.log(0x1A + 0x02); console.log(071);
+   ·                                       ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 42
+   ╭─[no_magic_numbers.tsx:1:19]
+ 1 │ var stats = {avg: 42};
+   ·                   ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 4
+   ╭─[no_magic_numbers.tsx:1:67]
+ 1 │ var colors = {}; colors.RED = 2; colors.YELLOW = 3; colors.BLUE = 4 + 5;
+   ·                                                                   ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5
+   ╭─[no_magic_numbers.tsx:1:71]
+ 1 │ var colors = {}; colors.RED = 2; colors.YELLOW = 3; colors.BLUE = 4 + 5;
+   ·                                                                       ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 60
+   ╭─[no_magic_numbers.tsx:1:39]
+ 1 │ function getSecondsInMinute() {return 60;}
+   ·                                       ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -60
+   ╭─[no_magic_numbers.tsx:1:47]
+ 1 │ function getNegativeSecondsInMinute() {return -60;}
+   ·                                               ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:52]
+ 1 │ var data = ['foo', 'bar', 'baz']; var third = data[3];
+   ·                                                    ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:52]
+ 1 │ var data = ['foo', 'bar', 'baz']; var third = data[3];
+   ·                                                    ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:52]
+ 1 │ var data = ['foo', 'bar', 'baz']; var third = data[3];
+   ·                                                    ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -100
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-100]
+   ·     ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1.5
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-1.5]
+   ·     ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-1]
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -0.1
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-0.1]
+   ·     ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -0b110
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-0b110]
+   ·     ──────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -0o71
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-0o71]
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -0x12
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-0x12]
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -012
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-012]
+   ·     ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0.1
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[0.1]
+   ·     ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0.12e1
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[0.12e1]
+   ·     ──────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1.5
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[1.5]
+   ·     ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1.678e2
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[1.678e2]
+   ·     ───────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 56e-1
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[56e-1]
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5.000000000000001
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[5.000000000000001]
+   ·     ─────────────────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 100.9
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[100.9]
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 4294967295
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[4294967295]
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1e300
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[1e300]
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1e310
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[1e310]
+   ·     ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1e310
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[-1e310]
+   ·     ──────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[+0]
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:5]
+ 1 │ foo[+1]
+   ·     ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1
+   ╭─[no_magic_numbers.tsx:1:7]
+ 1 │ foo[-(-1)]
+   ·       ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 100
+   ╭─[no_magic_numbers.tsx:1:1]
+ 1 │ 100 .toString()
+   · ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 200
+   ╭─[no_magic_numbers.tsx:1:1]
+ 1 │ 200[100]
+   · ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:26]
+ 1 │ var a = <div arrayProp={[1,2,3]}></div>;
+   ·                          ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:28]
+ 1 │ var a = <div arrayProp={[1,2,3]}></div>;
+   ·                            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:30]
+ 1 │ var a = <div arrayProp={[1,2,3]}></div>;
+   ·                              ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:27]
+ 1 │ var min, max, mean; min = 1; max = 10; mean = 4;
+   ·                           ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 10
+   ╭─[no_magic_numbers.tsx:1:36]
+ 1 │ var min, max, mean; min = 1; max = 10; mean = 4;
+   ·                                    ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 4
+   ╭─[no_magic_numbers.tsx:1:47]
+ 1 │ var min, max, mean; min = 1; max = 10; mean = 4;
+   ·                                               ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 100n
+   ╭─[no_magic_numbers.tsx:1:3]
+ 1 │ f(100n)
+   ·   ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -100n
+   ╭─[no_magic_numbers.tsx:1:3]
+ 1 │ f(-100n)
+   ·   ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 100n
+   ╭─[no_magic_numbers.tsx:1:3]
+ 1 │ f(100n)
+   ·   ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 100
+   ╭─[no_magic_numbers.tsx:1:3]
+ 1 │ f(100)
+   ·   ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 123
+   ╭─[no_magic_numbers.tsx:1:23]
+ 1 │ const func = (param = 123) => {}
+   ·                       ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 123
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ const { param = 123 } = sourceObject;
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 123
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ const { param = 123 } = sourceObject;
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 123
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ const { param = 123 } = sourceObject;
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:14]
+ 1 │ const [one = 1, two = 2] = []
+   ·              ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:23]
+ 1 │ const [one = 1, two = 2] = []
+   ·                       ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:22]
+ 1 │ var one, two; [one = 1, two = 2] = []
+   ·                      ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:31]
+ 1 │ var one, two; [one = 1, two = 2] = []
+   ·                               ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ class C { foo = 2; }
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ class C { foo = 2; }
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ class C { foo = 2; }
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -2
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ class C { foo = -2; }
+   ·                 ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:24]
+ 1 │ class C { static foo = 2; }
+   ·                        ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:18]
+ 1 │ class C { #foo = 2; }
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:25]
+ 1 │ class C { static #foo = 2; }
+   ·                         ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:17]
+ 1 │ class C { foo = 2 + 3; }
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:21]
+ 1 │ class C { foo = 2 + 3; }
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:11]
+ 1 │ class C { 2; }
+   ·           ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ class C { [2]; }
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 1;
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -1;
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 1 | 2 | 3;
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = 1 | 2 | 3;
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:20]
+ 1 │ type Foo = 1 | 2 | 3;
+   ·                    ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 1 | -1;
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = 1 | -1;
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:3:11]
+ 2 │             interface Foo {
+ 3 │               bar: 1;
+   ·                    ─
+ 4 │             }
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1000
+   ╭─[no_magic_numbers.tsx:3:15]
+ 2 │             enum foo {
+ 3 │               SECOND = 1000,
+   ·                        ────
+ 4 │               NUM = '0123456789',
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1
+   ╭─[no_magic_numbers.tsx:5:12]
+ 4 │               NUM = '0123456789',
+ 5 │               NEG = -1,
+   ·                     ──
+ 6 │               POS = +1,
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:6:12]
+ 5 │               NEG = -1,
+ 6 │               POS = +1,
+   ·                     ──
+ 7 │             }
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:3:19]
+ 2 │             class Foo {
+ 3 │               readonly A = 1;
+   ·                            ─
+ 4 │               readonly B = 2;
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:4:19]
+ 3 │               readonly A = 1;
+ 4 │               readonly B = 2;
+   ·                            ─
+ 5 │               public static readonly C = 3;
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:5:33]
+ 4 │               readonly B = 2;
+ 5 │               public static readonly C = 3;
+   ·                                          ─
+ 6 │               static readonly D = 4;
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 4
+   ╭─[no_magic_numbers.tsx:6:26]
+ 5 │               public static readonly C = 3;
+ 6 │               static readonly D = 4;
+   ·                                   ─
+ 7 │               readonly E = -5;
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -5
+   ╭─[no_magic_numbers.tsx:7:19]
+ 6 │               static readonly D = 4;
+ 7 │               readonly E = -5;
+   ·                            ──
+ 8 │               readonly F = +6;
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 6
+   ╭─[no_magic_numbers.tsx:8:19]
+ 7 │               readonly E = -5;
+ 8 │               readonly F = +6;
+   ·                            ──
+ 9 │               private readonly G = 100n;
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 100n
+    ╭─[no_magic_numbers.tsx:9:27]
+  8 │               readonly F = +6;
+  9 │               private readonly G = 100n;
+    ·                                    ────
+ 10 │             }
+    ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = Bar[0];
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -1
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = Bar[-1];
+   ·                ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0xab
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = Bar[0xab];
+   ·                ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5.6e1
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = Bar[5.6e1];
+   ·                ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = Bar[1 | -2];
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -2
+   ╭─[no_magic_numbers.tsx:1:20]
+ 1 │ type Foo = Bar[1 | -2];
+   ·                    ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = Bar[1 & -2];
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -2
+   ╭─[no_magic_numbers.tsx:1:20]
+ 1 │ type Foo = Bar[1 & -2];
+   ·                    ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ type Foo = Bar[1 & number];
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:18]
+ 1 │ type Foo = Bar[((1 & -2) | 3) | 4];
+   ·                  ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -2
+   ╭─[no_magic_numbers.tsx:1:22]
+ 1 │ type Foo = Bar[((1 & -2) | 3) | 4];
+   ·                      ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:28]
+ 1 │ type Foo = Bar[((1 & -2) | 3) | 4];
+   ·                            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 4
+   ╭─[no_magic_numbers.tsx:1:33]
+ 1 │ type Foo = Bar[((1 & -2) | 3) | 4];
+   ·                                 ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:1:28]
+ 1 │ type Foo = Parameters<Bar>[2];
+   ·                            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:5:25]
+ 4 │             type Foo = {
+ 5 │               [K in keyof Others[0]]: Others[K];
+   ·                                  ─
+ 6 │             };
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:3:7]
+ 2 │             type Other = {
+ 3 │               [0]: 3;
+   ·                ─
+ 4 │             };
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:3:11]
+ 2 │             type Other = {
+ 3 │               [0]: 3;
+   ·                    ─
+ 4 │             };
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:3:12]
+ 2 │             type Foo = {
+ 3 │               [K in 0 | 1 | 2]: 0;
+   ·                     ─
+ 4 │             };
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:3:16]
+ 2 │             type Foo = {
+ 3 │               [K in 0 | 1 | 2]: 0;
+   ·                         ─
+ 4 │             };
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 2
+   ╭─[no_magic_numbers.tsx:3:20]
+ 2 │             type Foo = {
+ 3 │               [K in 0 | 1 | 2]: 0;
+   ·                             ─
+ 4 │             };
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:3:24]
+ 2 │             type Foo = {
+ 3 │               [K in 0 | 1 | 2]: 0;
+   ·                                 ─
+ 4 │             };
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 1;
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -2
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -2;
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3n
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 3n;
+   ·            ──
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -4n
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -4n;
+   ·            ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5.6
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 5.6;
+   ·            ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -7.8
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -7.8;
+   ·            ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0x0a
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 0x0a;
+   ·            ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -0xbc
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -0xbc;
+   ·            ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1e2
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 1e2;
+   ·            ───
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -3e4
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -3e4;
+   ·            ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5e-6
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 5e-6;
+   ·            ────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -7e-8
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -7e-8;
+   ·            ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 1.1e2
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 1.1e2;
+   ·            ─────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -3.1e4
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -3.1e4;
+   ·            ──────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5.1e-6
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = 5.1e-6;
+   ·            ──────
+   ╰────
+
+  ⚠ eslint(no-magic-numbers): No magic number: -7.1e-8
+   ╭─[no_magic_numbers.tsx:1:12]
+ 1 │ type Foo = -7.1e-8;
+   ·            ───────
+   ╰────

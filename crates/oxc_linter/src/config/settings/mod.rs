@@ -4,7 +4,7 @@ mod next;
 mod react;
 
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use self::{
     jsdoc::JSDocPluginSettings, jsx_a11y::JSXA11yPluginSettings, next::NextPluginSettings,
@@ -12,7 +12,7 @@ use self::{
 };
 
 /// Shared settings for plugins
-#[derive(Debug, Deserialize, Default, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, Default, JsonSchema)]
 pub struct OxlintSettings {
     #[serde(default)]
     #[serde(rename = "jsx-a11y")]

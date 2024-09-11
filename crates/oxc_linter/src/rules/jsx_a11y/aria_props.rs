@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -52,7 +53,8 @@ declare_oxc_lint!(
 impl Rule for AriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
-            let name = get_jsx_attribute_name(&attr.name).to_lowercase();
+            let name = get_jsx_attribute_name(&attr.name);
+            let name = name.cow_to_lowercase();
             if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
                 let suggestion = COMMON_TYPOS.get(&name).copied();
                 let diagnostic = aria_props_diagnostic(attr.span, &name, suggestion);

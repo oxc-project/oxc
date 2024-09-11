@@ -4,6 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -72,17 +73,14 @@ impl Rule for Radix {
 
         match call_expr.callee.without_parentheses() {
             Expression::Identifier(ident) => {
-                if ident.name == "parseInt"
-                    && ctx.symbols().is_global_reference(ident.reference_id().unwrap())
-                {
+                if ident.is_global_reference_name("parseInt", ctx.symbols()) {
                     Self::check_arguments(self, call_expr, ctx);
                 }
             }
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = member_expr.object.without_parentheses() {
-                    if ident.name == "Number"
+                    if ident.is_global_reference_name("Number", ctx.symbols())
                         && member_expr.property.name == "parseInt"
-                        && ctx.symbols().is_global_reference(ident.reference_id().unwrap())
                     {
                         Self::check_arguments(self, call_expr, ctx);
                     }
@@ -91,9 +89,8 @@ impl Rule for Radix {
             Expression::ChainExpression(chain_expr) => {
                 if let Some(member_expr) = chain_expr.expression.as_member_expression() {
                     if let Expression::Identifier(ident) = member_expr.object() {
-                        if ident.name == "Number"
+                        if ident.is_global_reference_name("Number", ctx.symbols())
                             && member_expr.static_property_name() == Some("parseInt")
-                            && ctx.symbols().is_global_reference(ident.reference_id().unwrap())
                         {
                             Self::check_arguments(self, call_expr, ctx);
                         }

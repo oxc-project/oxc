@@ -66,4 +66,7 @@ fn undefined() {
     test("for (undefined in {}) {}", "for(undefined in {}){}");
     test("undefined++", "undefined++");
     test("undefined += undefined", "undefined+=void 0");
+
+    // shadowd
+    test_same("(function(undefined) { let x = typeof undefined; })()");
 }

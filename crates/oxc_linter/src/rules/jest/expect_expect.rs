@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{CallExpression, Expression, Statement},
     AstKind,
@@ -273,7 +274,13 @@ fn convert_pattern(pattern: &str) -> String {
     // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
     let pattern = pattern
         .split('.')
-        .map(|p| if p == "**" { String::from("[a-z\\d\\.]*") } else { p.replace('*', "[a-z\\d]*") })
+        .map(|p| {
+            if p == "**" {
+                String::from("[a-z\\d\\.]*")
+            } else {
+                p.cow_replace('*', "[a-z\\d]*").into_owned()
+            }
+        })
         .collect::<Vec<_>>()
         .join("\\.");
 

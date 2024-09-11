@@ -3,14 +3,17 @@ use std::{env, io::BufWriter, time::Instant};
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, LintServiceOptions, Linter,
+    partial_loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter,
+    LintService, LintServiceOptions, Linter, OxlintOptions,
 };
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    command::{LintCommand, OutputFormat, OutputOptions, WarningOptions},
+    cli::{
+        CliRunResult, LintCommand, LintResult, MiscOptions, OutputFormat, OutputOptions, Runner,
+        WarningOptions,
+    },
     walk::{Extensions, Walk},
-    CliRunResult, LintResult, MiscOptions, Runner,
 };
 
 pub struct LintRunner {
@@ -78,6 +81,11 @@ impl Runner for LintRunner {
             }
         }
 
+        let filter = match Self::get_filters(filter) {
+            Ok(filter) => filter,
+            Err(e) => return e,
+        };
+
         let extensions = VALID_EXTENSIONS
             .iter()
             .chain(LINT_PARTIAL_LOADER_EXT.iter())
@@ -89,8 +97,9 @@ impl Runner for LintRunner {
 
         let number_of_files = paths.len();
 
-        let cwd = std::env::current_dir().unwrap().into_boxed_path();
-        let lint_options = LintOptions::default()
+        let cwd = std::env::current_dir().unwrap();
+        let mut options = LintServiceOptions::new(cwd, paths);
+        let lint_options = OxlintOptions::default()
             .with_filter(filter)
             .with_config_path(basic_options.config)
             .with_fix(fix_options.fix_kind())
@@ -122,8 +131,10 @@ impl Runner for LintRunner {
 
         let tsconfig = basic_options.tsconfig;
         if let Some(path) = tsconfig.as_ref() {
-            if !path.is_file() {
-                let path = if path.is_relative() { cwd.join(path) } else { path.clone() };
+            if path.is_file() {
+                options = options.with_tsconfig(path);
+            } else {
+                let path = if path.is_relative() { options.cwd().join(path) } else { path.clone() };
                 return CliRunResult::InvalidOptions {
                     message: format!(
                         "The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.",
@@ -132,7 +143,6 @@ impl Runner for LintRunner {
             }
         }
 
-        let options = LintServiceOptions { cwd, paths, tsconfig };
         let lint_service = LintService::new(linter, options);
         let mut diagnostic_service =
             Self::get_diagnostic_service(&warning_options, &output_options, &misc_options);
@@ -180,12 +190,49 @@ impl LintRunner {
         }
         diagnostic_service
     }
+
+    // moved into a separate function for readability, but it's only ever used
+    // in one place.
+    fn get_filters(
+        filters_arg: Vec<(AllowWarnDeny, String)>,
+    ) -> Result<Vec<LintFilter>, CliRunResult> {
+        let mut filters = Vec::with_capacity(filters_arg.len());
+
+        for (severity, filter_arg) in filters_arg {
+            match LintFilter::new(severity, filter_arg) {
+                Ok(filter) => {
+                    filters.push(filter);
+                }
+                Err(InvalidFilterKind::Empty) => {
+                    return Err(CliRunResult::InvalidOptions {
+                        message: format!("Cannot {severity} an empty filter."),
+                    });
+                }
+                Err(InvalidFilterKind::PluginMissing(filter)) => {
+                    return Err(CliRunResult::InvalidOptions {
+                        message: format!(
+                            "Failed to {severity} filter {filter}: Plugin name is missing. Expected <plugin>/<rule>"
+                        ),
+                    });
+                }
+                Err(InvalidFilterKind::RuleMissing(filter)) => {
+                    return Err(CliRunResult::InvalidOptions {
+                        message: format!(
+                            "Failed to {severity} filter {filter}: Rule name is missing. Expected <plugin>/<rule>"
+                        ),
+                    });
+                }
+            }
+        }
+
+        Ok(filters)
+    }
 }
 
 #[cfg(all(test, not(target_os = "windows")))]
 mod test {
     use super::LintRunner;
-    use crate::{lint_command, CliRunResult, LintResult, Runner};
+    use crate::cli::{lint_command, CliRunResult, LintResult, Runner};
 
     fn test(args: &[&str]) -> LintResult {
         let mut new_args = vec!["--silent"];

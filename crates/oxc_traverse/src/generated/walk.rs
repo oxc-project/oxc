@@ -9,6 +9,7 @@
     clippy::undocumented_unsafe_blocks,
     clippy::semicolon_if_nothing_returned,
     clippy::ptr_as_ptr,
+    clippy::ref_as_ptr,
     clippy::borrow_as_ptr,
     clippy::cast_ptr_alignment
 )]
@@ -485,8 +486,8 @@ pub(crate) unsafe fn walk_tagged_template_expression<'a, Tr: Traverse<'a>>(
     ctx.retag_stack(AncestorType::TaggedTemplateExpressionQuasi);
     walk_template_literal(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
-            as *mut TemplateLiteral,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
+            as *mut Box<TemplateLiteral>)) as *mut _,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8)
@@ -2784,10 +2785,10 @@ pub(crate) unsafe fn walk_import_declaration<'a, Tr: Traverse<'a>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_IMPORT_DECLARATION_WITH_CLAUSE)
-        as *mut Option<WithClause>)
+        as *mut Option<Box<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ImportDeclarationWithClause);
-        walk_with_clause(traverser, field as *mut _, ctx);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_import_declaration(&mut *node, ctx);
@@ -2973,10 +2974,10 @@ pub(crate) unsafe fn walk_export_named_declaration<'a, Tr: Traverse<'a>>(
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_NAMED_DECLARATION_WITH_CLAUSE)
-        as *mut Option<WithClause>)
+        as *mut Option<Box<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ExportNamedDeclarationWithClause);
-        walk_with_clause(traverser, field as *mut _, ctx);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_export_named_declaration(&mut *node, ctx);
@@ -3031,10 +3032,10 @@ pub(crate) unsafe fn walk_export_all_declaration<'a, Tr: Traverse<'a>>(
     );
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_EXPORT_ALL_DECLARATION_WITH_CLAUSE)
-        as *mut Option<WithClause>)
+        as *mut Option<Box<WithClause>>)
     {
         ctx.retag_stack(AncestorType::ExportAllDeclarationWithClause);
-        walk_with_clause(traverser, field as *mut _, ctx);
+        walk_with_clause(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
     traverser.exit_export_all_declaration(&mut *node, ctx);
@@ -5138,10 +5139,10 @@ pub(crate) unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
         walk_ts_type_name(traverser, field as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ATTRIBUTES)
-        as *mut Option<TSImportAttributes>)
+        as *mut Option<Box<TSImportAttributes>>)
     {
         ctx.retag_stack(AncestorType::TSImportTypeAttributes);
-        walk_ts_import_attributes(traverser, field as *mut _, ctx);
+        walk_ts_import_attributes(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS)

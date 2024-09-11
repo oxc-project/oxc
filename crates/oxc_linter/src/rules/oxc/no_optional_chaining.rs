@@ -5,12 +5,12 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_optional_chaining_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    if x1.is_empty() {
+fn no_optional_chaining_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
+    if help.is_empty() {
         OxcDiagnostic::warn("Optional chaining is not allowed.").with_label(span)
     } else {
         OxcDiagnostic::warn("Optional chaining is not allowed.")
-            .with_help(x1.to_owned())
+            .with_help(help.to_owned())
             .with_label(span)
     }
 }

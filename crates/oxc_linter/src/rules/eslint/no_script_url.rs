@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -37,7 +38,7 @@ impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
-                if literal.value.to_lowercase().starts_with("javascript:") =>
+                if literal.value.cow_to_lowercase().starts_with("javascript:") =>
             {
                 emit_diagnostic(ctx, literal.span);
             }
@@ -51,7 +52,7 @@ impl Rule for NoScriptUrl {
                         .unwrap()
                         .value
                         .raw
-                        .to_lowercase()
+                        .cow_to_lowercase()
                         .starts_with("javascript:")
                 {
                     emit_diagnostic(ctx, literal.span);

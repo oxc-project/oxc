@@ -213,13 +213,13 @@ We spend half of our time on strengthening the test infrastructure to prevent pr
 
 [Test Infrastructure](https://oxc.rs/docs/learn/architecture/test.html) documents our test procedures:
 
-* Conformance suite on Test262, Babel, TypeScript
-* Lots of fuzzing
-* Linter snapshot diagnostics
-* oxlint ecosystem ci
-* Idempotency testing
-* Code coverage
-* End to end 3000 top npm packages
+- Conformance suite on Test262, Babel, TypeScript
+- Lots of fuzzing
+- Linter snapshot diagnostics
+- oxlint ecosystem ci
+- Idempotency testing
+- Code coverage
+- End to end 3000 top npm packages
 
 ---
 
@@ -252,8 +252,8 @@ This project was incubated with the assistance of these exceptional mentors and 
 
 Special thanks go to
 
-* [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
-* [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
+- [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
+- [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
 
 ## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 

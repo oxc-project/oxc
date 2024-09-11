@@ -6,7 +6,7 @@ use oxc_span::SourceType;
 
 fn parse(source: &str) -> ModuleLexer {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
+    let source_type = SourceType::mjs().with_typescript_definition(true);
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(ret.errors.is_empty(), "{source} should not produce errors.\n{:?}", ret.errors);
     let module_lexer = oxc_module_lexer::ModuleLexer::new().build(&ret.program);

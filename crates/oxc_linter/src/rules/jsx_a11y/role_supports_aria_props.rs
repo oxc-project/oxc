@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXOpeningElement},
     AstKind,
@@ -50,15 +51,15 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone)]
 pub struct RoleSupportsAriaProps;
 
-fn default(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}."))
-        .with_help(format!("Try to remove invalid attribute {x1}."))
+fn default(span: Span, attr_name: &str, role: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}."))
+        .with_help(format!("Try to remove invalid attribute {attr_name}."))
         .with_label(span)
 }
 
-fn is_implicit_diagnostic(span: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}. This role is implicit on the element {x3}."))
-        .with_help(format!("Try to remove invalid attribute {x1}."))
+fn is_implicit_diagnostic(span: Span, attr_name: &str, role: &str, el_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("The attribute {attr_name} is not supported by the role {role}. This role is implicit on the element {el_name}."))
+        .with_help(format!("Try to remove invalid attribute {attr_name}."))
         .with_label(span)
 }
 
@@ -84,8 +85,9 @@ impl Rule for RoleSupportsAriaProps {
             let invalid_props = get_invalid_aria_props_for_role(role_value);
             for attr in &jsx_el.attributes {
                 if let JSXAttributeItem::Attribute(attr) = attr {
-                    let name = get_jsx_attribute_name(&attr.name).to_lowercase();
-                    if invalid_props.contains(&&name.as_str()) {
+                    let name = get_jsx_attribute_name(&attr.name);
+                    let name = name.cow_to_lowercase();
+                    if invalid_props.contains(&&name.as_ref()) {
                         ctx.diagnostic(if is_implicit {
                             is_implicit_diagnostic(attr.span, &name, role_value, &el_type)
                         } else {

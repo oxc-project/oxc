@@ -87,7 +87,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the for statement is the same node as the call expression.
-                if std::ptr::addr_of!(**call_expr2) != call_expr as *const _ {
+                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
                     return;
                 }
             }
@@ -97,7 +97,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the conditional expression is the same node as the call expression.
-                if std::ptr::addr_of!(**call_expr2) != call_expr as *const _ {
+                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
                     return;
                 }
             }

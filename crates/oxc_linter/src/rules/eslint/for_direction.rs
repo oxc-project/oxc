@@ -12,11 +12,11 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, Up
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn for_direction_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+fn for_direction_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The update clause in this loop moves the variable in the wrong direction")
         .with_help("Use while loop for intended infinite loop")
         .with_labels([
-            span0.label("This test moves in the wrong direction"),
+            span.label("This test moves in the wrong direction"),
             span1.label("with this update"),
         ])
 }

@@ -82,6 +82,23 @@ fn test() {
                 async test() {}
             };
         ",
+        // FIXME: diagnostics on method `foo` have incorrect spans
+        "
+        class Foo {
+            async foo() {}
+        }
+        ",
+        "
+        class Foo {
+            public async foo() {}
+        }
+        ",
+        // this one is fine
+        "
+        const obj = {
+            async foo() {}
+        }
+        ",
     ];
 
     Tester::new(NoAsyncAwait::NAME, pass, fail).test_and_snapshot();

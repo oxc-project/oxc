@@ -1,19 +1,19 @@
 // A launch configuration that compiles the extension and then opens it inside a new window
 {
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"type": "extensionHost",
-			"request": "launch",
-			"name": "Launch Client",
-			"runtimeExecutable": "${execPath}",
-			"args": ["--extensionDevelopmentPath=${workspaceFolder}/editors/vscode" ],
-			"sourceMaps": true,
-			"outFiles": ["${workspaceFolder}/editors/vscode/dist/*.js"],
-			"env": {
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Launch Client",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}/editors/vscode"],
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/editors/vscode/dist/*.js"],
+      "env": {
         "SERVER_PATH_DEV": "${workspaceRoot}/target/debug/oxc_language_server",
         "RUST_LOG": "debug"
       }
-		}
-	]
+    }
+  ]
 }

@@ -10,10 +10,10 @@ use regex::{Matches, Regex};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
-fn no_control_regex_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn no_control_regex_diagnostic(regex: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected control character(s)")
-        .with_help(format!("Unexpected control character(s) in regular expression: \"{x0}\""))
-        .with_label(span1)
+        .with_help(format!("Unexpected control character(s) in regular expression: \"{regex}\""))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

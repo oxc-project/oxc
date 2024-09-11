@@ -1,5 +1,6 @@
 use std::{borrow::Cow, cmp::Ordering};
 
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{
         match_member_expression, Argument, CallExpression, Expression, IdentifierName,
@@ -255,7 +256,7 @@ fn parse_jest_jest_fn_call<'a>(
     name: &'a str,
     local: &'a str,
 ) -> Option<ParsedJestFnCall<'a>> {
-    let lowercase_name = name.to_ascii_lowercase();
+    let lowercase_name = name.cow_to_ascii_lowercase();
 
     if !(lowercase_name == "jest" || lowercase_name == "vi") {
         return None;

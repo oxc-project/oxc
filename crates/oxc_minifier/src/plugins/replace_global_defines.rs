@@ -1,11 +1,13 @@
 use std::{cmp::Ordering, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
+use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
+use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SourceType};
 use oxc_syntax::identifier::is_identifier_name;
+use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 /// Configuration for [ReplaceGlobalDefines].
 ///
@@ -161,6 +163,12 @@ impl ReplaceGlobalDefinesConfig {
     }
 }
 
+#[must_use]
+pub struct ReplaceGlobalDefinesReturn {
+    pub symbols: SymbolTable,
+    pub scopes: ScopeTree,
+}
+
 /// Replace Global Defines.
 ///
 /// References:
@@ -169,66 +177,70 @@ impl ReplaceGlobalDefinesConfig {
 /// * <https://github.com/terser/terser?tab=readme-ov-file#conditional-compilation>
 /// * <https://github.com/evanw/esbuild/blob/9c13ae1f06dfa909eb4a53882e3b7e4216a503fe/internal/config/globals.go#L852-L1014>
 pub struct ReplaceGlobalDefines<'a> {
-    ast: AstBuilder<'a>,
+    allocator: &'a Allocator,
     config: ReplaceGlobalDefinesConfig,
 }
 
-impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        self.replace_identifier_defines(expr);
-        self.replace_dot_defines(expr);
-        walk_mut::walk_expression(self, expr);
+impl<'a> Traverse<'a> for ReplaceGlobalDefines<'a> {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.replace_identifier_defines(expr, ctx);
+        self.replace_dot_defines(expr, ctx);
     }
 }
 
 impl<'a> ReplaceGlobalDefines<'a> {
     pub fn new(allocator: &'a Allocator, config: ReplaceGlobalDefinesConfig) -> Self {
-        Self { ast: AstBuilder::new(allocator), config }
+        Self { allocator, config }
     }
 
-    pub fn build(&mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
+    pub fn build(
+        &mut self,
+        symbols: SymbolTable,
+        scopes: ScopeTree,
+        program: &mut Program<'a>,
+    ) -> ReplaceGlobalDefinesReturn {
+        let (symbols, scopes) = traverse_mut(self, self.allocator, program, symbols, scopes);
+        ReplaceGlobalDefinesReturn { symbols, scopes }
     }
 
     // Construct a new expression because we don't have ast clone right now.
     fn parse_value(&self, source_text: &str) -> Expression<'a> {
         // Allocate the string lazily because replacement happens rarely.
-        let source_text = self.ast.allocator.alloc(source_text.to_string());
+        let source_text = self.allocator.alloc(source_text.to_string());
         // Unwrapping here, it should already be checked by [ReplaceGlobalDefinesConfig::new].
-        Parser::new(self.ast.allocator, source_text, SourceType::default())
-            .parse_expression()
-            .unwrap()
+        Parser::new(self.allocator, source_text, SourceType::default()).parse_expression().unwrap()
     }
 
-    fn replace_identifier_defines(&self, expr: &mut Expression<'a>) {
-        if let Expression::Identifier(ident) = expr {
-            for (key, value) in &self.config.0.identifier {
-                if ident.name.as_str() == key {
-                    let value = self.parse_value(value);
-                    *expr = value;
-                    break;
-                }
+    fn replace_identifier_defines(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::Identifier(ident) = expr else { return };
+        if !ident.is_global_reference(ctx.symbols()) {
+            return;
+        }
+        for (key, value) in &self.config.0.identifier {
+            if ident.name.as_str() == key {
+                let value = self.parse_value(value);
+                *expr = value;
+                break;
             }
         }
     }
 
-    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) {
+    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(member) = expr else {
             return;
         };
         for dot_define in &self.config.0.dot {
-            if Self::is_dot_define(dot_define, member) {
+            if Self::is_dot_define(ctx.symbols(), dot_define, member) {
                 let value = self.parse_value(&dot_define.value);
                 *expr = value;
                 return;
             }
         }
         for meta_proeperty_define in &self.config.0.meta_proeperty {
-            let ret = Self::is_meta_property_define(meta_proeperty_define, member);
-            if ret {
+            if Self::is_meta_property_define(meta_proeperty_define, member) {
                 let value = self.parse_value(&meta_proeperty_define.value);
                 *expr = value;
-                break;
+                return;
             }
         }
     }
@@ -302,7 +314,11 @@ impl<'a> ReplaceGlobalDefines<'a> {
         false
     }
 
-    pub fn is_dot_define(dot_define: &DotDefine, member: &StaticMemberExpression<'a>) -> bool {
+    pub fn is_dot_define(
+        symbols: &SymbolTable,
+        dot_define: &DotDefine,
+        member: &StaticMemberExpression<'a>,
+    ) -> bool {
         debug_assert!(dot_define.parts.len() > 1);
 
         let mut current_part_member_expression = Some(member);
@@ -324,6 +340,9 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         Some(member)
                     }
                     Expression::Identifier(ident) => {
+                        if !ident.is_global_reference(symbols) {
+                            return false;
+                        }
                         cur_part_name = &ident.name;
                         None
                     }

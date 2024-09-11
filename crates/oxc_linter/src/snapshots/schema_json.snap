@@ -5,11 +5,14 @@ expression: json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "OxlintConfig",
-  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\" } } ```",
+  "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\" } } ```",
   "type": "object",
   "properties": {
     "env": {
       "description": "Environments enable and disable collections of global variables.",
+      "default": {
+        "builtin": true
+      },
       "allOf": [
         {
           "$ref": "#/definitions/OxlintEnv"
@@ -18,6 +21,7 @@ expression: json
     },
     "globals": {
       "description": "Enabled or disabled specific global variables.",
+      "default": {},
       "allOf": [
         {
           "$ref": "#/definitions/OxlintGlobals"
@@ -26,6 +30,7 @@ expression: json
     },
     "rules": {
       "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).",
+      "default": {},
       "allOf": [
         {
           "$ref": "#/definitions/OxlintRules"
@@ -33,7 +38,34 @@ expression: json
       ]
     },
     "settings": {
-      "$ref": "#/definitions/OxlintSettings"
+      "default": {
+        "jsx-a11y": {
+          "polymorphicPropName": null,
+          "components": {}
+        },
+        "next": {
+          "rootDir": []
+        },
+        "react": {
+          "formComponents": [],
+          "linkComponents": []
+        },
+        "jsdoc": {
+          "ignorePrivate": false,
+          "ignoreInternal": false,
+          "ignoreReplacesDocs": true,
+          "overrideReplacesDocs": true,
+          "augmentsExtendsReplacesDocs": false,
+          "implementsReplacesDocs": false,
+          "exemptDestructuredRootsFromChecks": false,
+          "tagNamePreference": {}
+        }
+      },
+      "allOf": [
+        {
+          "$ref": "#/definitions/OxlintSettings"
+        }
+      ]
     }
   },
   "definitions": {
@@ -164,6 +196,7 @@ expression: json
           "type": "boolean"
         },
         "tagNamePreference": {
+          "default": {},
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/TagNamePreference"
@@ -193,7 +226,12 @@ expression: json
       "type": "object",
       "properties": {
         "rootDir": {
-          "$ref": "#/definitions/OneOrMany_for_String"
+          "default": [],
+          "allOf": [
+            {
+              "$ref": "#/definitions/OneOrMany_for_String"
+            }
+          ]
         }
       }
     },
@@ -232,16 +270,53 @@ expression: json
       "type": "object",
       "properties": {
         "jsdoc": {
-          "$ref": "#/definitions/JSDocPluginSettings"
+          "default": {
+            "ignorePrivate": false,
+            "ignoreInternal": false,
+            "ignoreReplacesDocs": true,
+            "overrideReplacesDocs": true,
+            "augmentsExtendsReplacesDocs": false,
+            "implementsReplacesDocs": false,
+            "exemptDestructuredRootsFromChecks": false,
+            "tagNamePreference": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSDocPluginSettings"
+            }
+          ]
         },
         "jsx-a11y": {
-          "$ref": "#/definitions/JSXA11yPluginSettings"
+          "default": {
+            "polymorphicPropName": null,
+            "components": {}
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/JSXA11yPluginSettings"
+            }
+          ]
         },
         "next": {
-          "$ref": "#/definitions/NextPluginSettings"
+          "default": {
+            "rootDir": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/NextPluginSettings"
+            }
+          ]
         },
         "react": {
-          "$ref": "#/definitions/ReactPluginSettings"
+          "default": {
+            "formComponents": [],
+            "linkComponents": []
+          },
+          "allOf": [
+            {
+              "$ref": "#/definitions/ReactPluginSettings"
+            }
+          ]
         }
       }
     },
@@ -249,12 +324,14 @@ expression: json
       "type": "object",
       "properties": {
         "formComponents": {
+          "default": [],
           "type": "array",
           "items": {
             "$ref": "#/definitions/CustomComponent"
           }
         },
         "linkComponents": {
+          "default": [],
           "type": "array",
           "items": {
             "$ref": "#/definitions/CustomComponent"

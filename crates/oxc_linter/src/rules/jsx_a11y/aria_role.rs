@@ -14,9 +14,11 @@ use crate::{
     AstNode,
 };
 
-fn aria_role_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Elements with ARIA roles must use a valid, non-abstract ARIA role.")
-        .with_help(format!("Set a valid, non-abstract ARIA role for element with ARIA{x1}"))
+        .with_help(format!(
+            "Set a valid, non-abstract ARIA role for element with ARIA{help_suffix}"
+        ))
         .with_label(span)
 }
 

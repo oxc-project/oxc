@@ -1,6 +1,9 @@
 use std::{cell::Cell, str};
 
-use compact_str::{format_compact, CompactString};
+use compact_str::CompactString;
+use itoa::Buffer as ItoaBuffer;
+use rustc_hash::FxHashSet;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
@@ -23,6 +26,7 @@ use crate::scopes_collector::ChildScopeCollector;
 pub struct TraverseScoping {
     scopes: ScopeTree,
     symbols: SymbolTable,
+    uid_names: Option<FxHashSet<CompactStr>>,
     current_scope_id: ScopeId,
 }
 
@@ -174,21 +178,19 @@ impl TraverseScoping {
     ///
     /// # Potential improvements
     ///
-    /// TODO(improve-on-babel)
+    /// TODO(improve-on-babel):
     ///
     /// This function is fairly expensive, because it aims to replicate Babel's output.
-    /// `name_is_unique` method below searches through every single binding in the entire program
-    /// and does a string comparison on each. It also searches through every reference in entire program
-    /// (though it will avoid string comparison on most of them).
-    /// If the first name tried is already in use, it will repeat that entire search with a new name,
-    /// potentially multiple times.
     ///
-    /// We could improve this in one of 2 ways:
+    /// `init_uid_names` iterates through every single binding and unresolved reference in the entire AST,
+    /// and builds a hashset of symbols which could clash with UIDs.
+    /// Once that's built, it's cached, but `find_uid_name` still has to do at least one hashset lookup,
+    /// and a hashset insert. If the first name tried is already in use, it will do another hashset lookup,
+    /// potentially multiple times until a name which isn't taken is found.
     ///
-    /// 1. Semantic generate a hash set of all identifier names used in program.
-    ///    Check for uniqueness would then be just 1 x hashset lookup for each name that's tried.
-    ///    This would maintain output parity with Babel.
-    ///    But building the hash set would add some overhead to semantic.
+    /// We could improve this in one of 3 ways:
+    ///
+    /// 1. Build the hashset in `SemanticBuilder` instead of iterating through all symbols again here.
     ///
     /// 2. Use a much simpler method:
     ///
@@ -202,11 +204,21 @@ impl TraverseScoping {
     ///
     /// Minimal cost in semantic, and generating UIDs extremely cheap.
     ///
-    /// This is a slightly different method from Babel, but hopefully close enough that output will
-    /// match Babel for most (or maybe all) test cases.
+    /// This is a slightly different method from Babel, and unfortunately produces UID names
+    /// which differ from Babel for some of its test cases.
+    ///
+    /// 3. If output is being minified anyway, use a method which produces less debuggable output,
+    /// but is even simpler:
+    ///
+    /// * During initial semantic pass, check for any existing identifiers starting with `_`.
+    /// * Find the highest number of leading `_`s for any existing symbol.
+    /// * Generate UIDs with a counter starting at 0, prefixed with number of `_`s one greater than
+    ///   what was found in AST.
+    /// i.e. if source contains identifiers `_foo` and `__bar`, create UIDs names `___0`, `___1`,
+    /// `___2` etc. They'll all be unique within the program.
     pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
         // Get name for UID
-        let name = CompactStr::new(&self.find_uid_name(name));
+        let name = self.find_uid_name(name);
 
         // Add binding to scope
         let symbol_id =
@@ -355,6 +367,25 @@ impl TraverseScoping {
         self.create_reference(name, symbol_id, flags)
     }
 
+    /// Delete a reference.
+    ///
+    /// Provided `name` must match `reference_id`.
+    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: &str) {
+        let symbol_id = self.symbols.get_reference(reference_id).symbol_id();
+        if let Some(symbol_id) = symbol_id {
+            self.symbols.delete_resolved_reference(symbol_id, reference_id);
+        } else {
+            self.scopes.delete_root_unresolved_reference(name, reference_id);
+        }
+    }
+
+    /// Delete reference for an `IdentifierReference`.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
+        // `unwrap` should never panic as `IdentifierReference`s should always have a `ReferenceId`
+        self.delete_reference(ident.reference_id().unwrap(), &ident.name);
+    }
+
     /// Clone `IdentifierReference` based on the original reference's `SymbolId` and name.
     ///
     /// This method makes a lookup of the `SymbolId` for the reference. If you need to create multiple
@@ -410,6 +441,7 @@ impl TraverseScoping {
         Self {
             scopes,
             symbols,
+            uid_names: None,
             // Dummy value. Immediately overwritten in `walk_program`.
             current_scope_id: ScopeId::new(0),
         }
@@ -422,82 +454,50 @@ impl TraverseScoping {
     }
 
     /// Find a variable name which can be used as a UID
-    fn find_uid_name(&self, name: &str) -> CompactString {
-        let mut name = create_uid_name_base(name);
-
-        // Try the name without a numerical postfix (i.e. plain `_temp`)
-        if self.name_is_unique(&name) {
-            return name;
+    fn find_uid_name(&mut self, name: &str) -> CompactStr {
+        // If `uid_names` is not already populated, initialize it
+        if self.uid_names.is_none() {
+            self.init_uid_names();
         }
+        let uid_names = self.uid_names.as_mut().unwrap();
 
-        // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
-        // operations to a minimum for postfixes up to 99 - using `replace_range` on a single
-        // `CompactStr`, rather than generating a new string on each attempt.
-        // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
-
-        // Try single-digit postfixes (i.e. `_temp1`, `_temp2` ... `_temp9`)
-        name.push('2');
-        if self.name_is_unique(&name) {
-            return name;
-        }
-        for c in b'3'..=b'9' {
-            name.replace_range(name.len() - 1.., str::from_utf8(&[c]).unwrap());
-            if self.name_is_unique(&name) {
-                return name;
-            }
-        }
-
-        // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
-        name.replace_range(name.len() - 1.., "1");
-        name.push('0');
-        let mut c1 = b'1';
-        loop {
-            if self.name_is_unique(&name) {
-                return name;
-            }
-            for c2 in b'1'..=b'9' {
-                name.replace_range(name.len() - 1.., str::from_utf8(&[c2]).unwrap());
-                if self.name_is_unique(&name) {
-                    return name;
-                }
-            }
-            if c1 == b'9' {
-                break;
-            }
-            c1 += 1;
-            name.replace_range(name.len() - 2.., str::from_utf8(&[c1, b'0']).unwrap());
-        }
-
-        // Try longer postfixes (`_temp100` upwards)
-        let name_base = {
-            name.pop();
-            name.pop();
-            &*name
-        };
-        for n in 100..=usize::MAX {
-            let name = format_compact!("{}{}", name_base, n);
-            if self.name_is_unique(&name) {
-                return name;
-            }
-        }
-
-        panic!("Cannot generate UID");
+        let base = get_uid_name_base(name);
+        let uid = get_unique_name(base, uid_names);
+        uid_names.insert(uid.clone());
+        uid
     }
 
-    fn name_is_unique(&self, name: &str) -> bool {
-        !self.scopes.root_unresolved_references().contains_key(name)
-            && !self.symbols.names.iter().any(|n| n.as_str() == name)
+    /// Initialize `uid_names`.
+    ///
+    /// Iterate through all symbols and unresolved references in AST and identify any var names
+    /// which could clash with UIDs (start with `_`). Build a hash set containing them.
+    ///
+    /// Once this map is created, generating a UID is a relatively quick operation, rather than
+    /// iterating over all symbols and unresolved references every time generate a UID.
+    fn init_uid_names(&mut self) {
+        let uid_names = self
+            .scopes
+            .root_unresolved_references()
+            .keys()
+            .chain(self.symbols.names.iter())
+            .filter_map(|name| {
+                if name.as_bytes().first() == Some(&b'_') {
+                    Some(name.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        self.uid_names = Some(uid_names);
     }
 }
 
 /// Create base for UID name based on provided `name`.
-/// i.e. if `name` is "foo", returns "_foo".
-/// We use `CompactString` to avoid any allocations where `name` is less than 22 bytes (the common case).
-fn create_uid_name_base(name: &str) -> CompactString {
-    // Trim `_`s from start, and `0-9`s from end.
-    // Code below is equivalent to
-    // `let name = name.trim_start_matches('_').trim_end_matches(|c: char| c.is_ascii_digit());`
-    // but more efficient as operates on bytes not chars.
+/// Trim `_`s from start and digits from end.
+/// i.e. `__foo123` -> `foo`
+fn get_uid_name_base(name: &str) -> &str {
+    // Equivalent to `name.trim_start_matches('_').trim_end_matches(|c: char| c.is_ascii_digit())`
+    // but more efficient as operates on bytes not chars
     let mut bytes = name.as_bytes();
     while bytes.first() == Some(&b'_') {
         bytes = &bytes[1..];
@@ -507,15 +507,242 @@ fn create_uid_name_base(name: &str) -> CompactString {
     }
     // SAFETY: We started with a valid UTF8 `&str` and have only trimmed off ASCII characters,
     // so remainder must still be valid UTF8
+    unsafe { str::from_utf8_unchecked(bytes) }
+}
 
-    let name = unsafe { str::from_utf8_unchecked(bytes) };
+fn get_unique_name(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactStr {
+    CompactStr::from(get_unique_name_impl(base, uid_names))
+}
 
+// TODO: We could make this function more performant, especially when it checks a lot of names
+// before it reaches one that is unused.
+// This function repeatedly creates strings which have only differ from each other by digits added on end,
+// and then hashes each of those strings to test them against the hash set `uid_names`.
+// Hashing strings is fairly expensive. As here only the end of the string changes on each iteration,
+// we could calculate an "unfinished" hash not including the last block, and then just add the final
+// block to "finish" the hash on each iteration. With `FxHash` this would be straight line code and only
+// a few operations.
+fn get_unique_name_impl(base: &str, uid_names: &FxHashSet<CompactStr>) -> CompactString {
     // Create `CompactString` prepending name with `_`, and with 1 byte excess capacity.
     // The extra byte is to avoid reallocation if need to add a digit on the end later,
     // which will not be too uncommon.
     // Having to add 2 digits will be uncommon, so we don't allocate 2 extra bytes for 2 digits.
-    let mut str = CompactString::with_capacity(name.len() + 2);
-    str.push('_');
-    str.push_str(name);
-    str
+    let mut name = CompactString::with_capacity(base.len() + 2);
+    name.push('_');
+    name.push_str(base);
+
+    // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
+    // operations to a minimum for postfixes up to 99 - reusing a single `CompactString`,
+    // rather than generating a new string on each attempt.
+    // For speed we manipulate the string as bytes.
+    // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
+    //
+    // SAFETY: Only modifications to string are replacing last byte/last 2 bytes with ASCII digits.
+    // These bytes are already ASCII chars, so cannot produce an invalid UTF-8 string.
+    // Writes are always in bounds (`bytes` is redefined after string grows due to `push`).
+    unsafe {
+        let name_is_unique = |bytes: &[u8]| {
+            let name = str::from_utf8_unchecked(bytes);
+            !uid_names.contains(name)
+        };
+
+        // Try the name without a numerical postfix (i.e. plain `_temp`)
+        let bytes = name.as_bytes_mut();
+        if name_is_unique(bytes) {
+            return name;
+        }
+
+        // Try single-digit postfixes (i.e. `_temp2`, `_temp3` ... `_temp9`)
+        name.push('2');
+        let bytes = name.as_bytes_mut();
+        if name_is_unique(bytes) {
+            return name;
+        }
+
+        let last_index = bytes.len() - 1;
+        for c in b'3'..=b'9' {
+            *bytes.get_unchecked_mut(last_index) = c;
+            if name_is_unique(bytes) {
+                return name;
+            }
+        }
+
+        // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
+        *bytes.get_unchecked_mut(last_index) = b'1';
+        name.push('0');
+        let bytes = name.as_bytes_mut();
+        let last_index = last_index + 1;
+
+        let mut c1 = b'1';
+        loop {
+            if name_is_unique(bytes) {
+                return name;
+            }
+            for c2 in b'1'..=b'9' {
+                *bytes.get_unchecked_mut(last_index) = c2;
+                if name_is_unique(bytes) {
+                    return name;
+                }
+            }
+            if c1 == b'9' {
+                break;
+            }
+            c1 += 1;
+
+            let last_two: &mut [u8; 2] =
+                bytes.get_unchecked_mut(last_index - 1..=last_index).try_into().unwrap();
+            *last_two = [c1, b'0'];
+        }
+    }
+
+    // Try longer postfixes (`_temp100` upwards)
+
+    // Reserve space for 1 more byte for the additional 3rd digit.
+    // Do this here so that `name.push_str(digits)` will never need to grow the string until it reaches
+    // `n == 1000`, which makes the branch on "is there sufficient capacity to push?" in the loop below
+    // completely predictable for `n < 1000`.
+    name.reserve(1);
+
+    // At this point, `name` has had 2 digits added on end. `base_len` is length without those 2 digits.
+    let base_len = name.len() - 2;
+
+    let mut buffer = ItoaBuffer::new();
+    for n in 100..=u32::MAX {
+        let digits = buffer.format(n);
+        // SAFETY: `base_len` is always shorter than current `name.len()`, on a UTF-8 char boundary,
+        // and `name` contains at least `base_len` initialized bytes
+        unsafe { name.set_len(base_len) };
+        name.push_str(digits);
+        if !uid_names.contains(name.as_str()) {
+            return name;
+        }
+    }
+
+    // Limit for size of source text is `u32::MAX` bytes, so there cannot be `u32::MAX`
+    // identifier names in the AST. So loop above cannot fail to find an unused name.
+    unreachable!();
+}
+
+#[cfg(test)]
+#[test]
+fn test_get_unique_name() {
+    let cases: &[(&[&str], &str, &str)] = &[
+        (&[], "foo", "_foo"),
+        (&["_foo"], "foo", "_foo2"),
+        (&["_foo0", "_foo1"], "foo", "_foo"),
+        (&["_foo2", "_foo3", "_foo4"], "foo", "_foo"),
+        (&["_foo", "_foo2"], "foo", "_foo3"),
+        (&["_foo", "_foo2", "_foo4"], "foo", "_foo3"),
+        (&["_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8"], "foo", "_foo9"),
+        (
+            &["_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9"],
+            "foo",
+            "_foo10",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10",
+            ],
+            "foo",
+            "_foo11",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11",
+            ],
+            "foo",
+            "_foo12",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18",
+            ],
+            "foo",
+            "_foo19",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19",
+            ],
+            "foo",
+            "_foo20",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20",
+            ],
+            "foo",
+            "_foo21",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20", "_foo21", "_foo22", "_foo23", "_foo24", "_foo25",
+                "_foo26", "_foo27", "_foo28", "_foo29", "_foo30", "_foo31", "_foo32", "_foo33",
+                "_foo34", "_foo35", "_foo36", "_foo37", "_foo38", "_foo39", "_foo40", "_foo41",
+                "_foo42", "_foo43", "_foo44", "_foo45", "_foo46", "_foo47", "_foo48", "_foo49",
+                "_foo50", "_foo51", "_foo52", "_foo53", "_foo54", "_foo55", "_foo56", "_foo57",
+                "_foo58", "_foo59", "_foo60", "_foo61", "_foo62", "_foo63", "_foo64", "_foo65",
+                "_foo66", "_foo67", "_foo68", "_foo69", "_foo70", "_foo71", "_foo72", "_foo73",
+                "_foo74", "_foo75", "_foo76", "_foo77", "_foo78", "_foo79", "_foo80", "_foo81",
+                "_foo82", "_foo83", "_foo84", "_foo85", "_foo86", "_foo87", "_foo88", "_foo89",
+                "_foo90", "_foo91", "_foo92", "_foo93", "_foo94", "_foo95", "_foo96", "_foo97",
+                "_foo98",
+            ],
+            "foo",
+            "_foo99",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20", "_foo21", "_foo22", "_foo23", "_foo24", "_foo25",
+                "_foo26", "_foo27", "_foo28", "_foo29", "_foo30", "_foo31", "_foo32", "_foo33",
+                "_foo34", "_foo35", "_foo36", "_foo37", "_foo38", "_foo39", "_foo40", "_foo41",
+                "_foo42", "_foo43", "_foo44", "_foo45", "_foo46", "_foo47", "_foo48", "_foo49",
+                "_foo50", "_foo51", "_foo52", "_foo53", "_foo54", "_foo55", "_foo56", "_foo57",
+                "_foo58", "_foo59", "_foo60", "_foo61", "_foo62", "_foo63", "_foo64", "_foo65",
+                "_foo66", "_foo67", "_foo68", "_foo69", "_foo70", "_foo71", "_foo72", "_foo73",
+                "_foo74", "_foo75", "_foo76", "_foo77", "_foo78", "_foo79", "_foo80", "_foo81",
+                "_foo82", "_foo83", "_foo84", "_foo85", "_foo86", "_foo87", "_foo88", "_foo89",
+                "_foo90", "_foo91", "_foo92", "_foo93", "_foo94", "_foo95", "_foo96", "_foo97",
+                "_foo98", "_foo99",
+            ],
+            "foo",
+            "_foo100",
+        ),
+        (
+            &[
+                "_foo", "_foo2", "_foo3", "_foo4", "_foo5", "_foo6", "_foo7", "_foo8", "_foo9",
+                "_foo10", "_foo11", "_foo12", "_foo13", "_foo14", "_foo15", "_foo16", "_foo17",
+                "_foo18", "_foo19", "_foo20", "_foo21", "_foo22", "_foo23", "_foo24", "_foo25",
+                "_foo26", "_foo27", "_foo28", "_foo29", "_foo30", "_foo31", "_foo32", "_foo33",
+                "_foo34", "_foo35", "_foo36", "_foo37", "_foo38", "_foo39", "_foo40", "_foo41",
+                "_foo42", "_foo43", "_foo44", "_foo45", "_foo46", "_foo47", "_foo48", "_foo49",
+                "_foo50", "_foo51", "_foo52", "_foo53", "_foo54", "_foo55", "_foo56", "_foo57",
+                "_foo58", "_foo59", "_foo60", "_foo61", "_foo62", "_foo63", "_foo64", "_foo65",
+                "_foo66", "_foo67", "_foo68", "_foo69", "_foo70", "_foo71", "_foo72", "_foo73",
+                "_foo74", "_foo75", "_foo76", "_foo77", "_foo78", "_foo79", "_foo80", "_foo81",
+                "_foo82", "_foo83", "_foo84", "_foo85", "_foo86", "_foo87", "_foo88", "_foo89",
+                "_foo90", "_foo91", "_foo92", "_foo93", "_foo94", "_foo95", "_foo96", "_foo97",
+                "_foo98", "_foo99", "_foo100",
+            ],
+            "foo",
+            "_foo101",
+        ),
+    ];
+
+    for (used, name, expected) in cases {
+        let used = used.iter().map(|name| CompactStr::from(*name)).collect();
+        assert_eq!(get_unique_name(name, &used), expected);
+    }
 }

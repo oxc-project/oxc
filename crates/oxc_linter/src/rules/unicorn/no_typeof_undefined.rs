@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// foo === undefined;
     /// ```
     NoTypeofUndefined,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoTypeofUndefined {

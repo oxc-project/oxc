@@ -8,9 +8,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_amd_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn no_amd_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use AMD `require` and `define` calls.")
-        .with_help(format!("Expected imports instead of AMD {x1}()"))
+        .with_help(format!("Expected imports instead of AMD {name}()"))
         .with_label(span)
 }
 

@@ -1,4 +1,3 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -47,22 +46,12 @@ impl Rule for PreferStrictEqual {
 }
 
 impl PreferStrictEqual {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
-        let AstKind::CallExpression(call_expr) = node.kind() else {
-            return;
-        };
-        let Some(parse_jest_expect_fn_call) =
-            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
-        else {
-            return;
-        };
-        let Some(matcher) = parse_jest_expect_fn_call.matcher() else {
-            return;
-        };
-        let Some(matcher_name) = matcher.name() else {
-            return;
-        };
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) -> Option<()> {
+        let call_expr = possible_jest_node.node.kind().as_call_expression()?;
+        let parse_jest_expect_fn_call =
+            parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)?;
+        let matcher = parse_jest_expect_fn_call.matcher()?;
+        let matcher_name = matcher.name()?;
 
         if matcher_name.eq("toEqual") {
             ctx.diagnostic_with_fix(use_to_strict_equal(matcher.span), |fixer| {
@@ -75,6 +64,7 @@ impl PreferStrictEqual {
                 fixer.replace(matcher.span, replacement)
             });
         }
+        None
     }
 }
 

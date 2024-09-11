@@ -19,10 +19,10 @@ fn missing_property(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn exclusive_checked_attribute(span0: Span, span1: Span) -> OxcDiagnostic {
+fn exclusive_checked_attribute(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use either `checked` or `defaultChecked`, but not both.")
         .with_help("Remove either `checked` or `defaultChecked`.")
-        .with_labels([span0, span1])
+        .with_labels([span, span1])
 }
 
 #[derive(Debug, Default, Clone)]

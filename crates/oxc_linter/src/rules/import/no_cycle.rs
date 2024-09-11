@@ -1,6 +1,7 @@
 #![allow(clippy::cast_possible_truncation)]
 use std::{ffi::OsStr, path::Component, sync::Arc};
 
+use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
@@ -11,9 +12,9 @@ use oxc_syntax::{
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_cycle_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
+fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Dependency cycle detected")
-        .with_help(format!("These paths form a cycle: \n{x1}"))
+        .with_help(format!("These paths form a cycle: \n{paths}"))
         .with_label(span)
 }
 
@@ -142,12 +143,13 @@ impl Rule for NoCycle {
             let help = stack
                 .iter()
                 .map(|(specifier, path)| {
-                    let path = path
-                        .strip_prefix(&cwd)
-                        .unwrap_or(path)
-                        .to_string_lossy()
-                        .replace('\\', "/");
-                    format!("-> {specifier} - {path}")
+                    format!(
+                        "-> {specifier} - {}",
+                        path.strip_prefix(&cwd)
+                            .unwrap_or(path)
+                            .to_string_lossy()
+                            .cow_replace('\\', "/")
+                    )
                 })
                 .collect::<Vec<_>>()
                 .join("\n");

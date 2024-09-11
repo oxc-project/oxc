@@ -19,8 +19,9 @@ fn prefer_math_hypot(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span)
 }
 
-fn prefer_math_log_n(span: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Math.{x1}(x)` over `{x2}`")).with_label(span)
+fn prefer_math_log_n(span: Span, good_method: &str, bad_method: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Math.{good_method}(x)` over `{bad_method}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

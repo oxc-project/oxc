@@ -1,12 +1,16 @@
 use std::cell::Cell;
 
 use oxc_allocator::Box;
+use oxc_allocator::CloneIn;
+use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::{syntax_directed_operations::BoundNames, Visit};
+use oxc_ast::visit::walk_mut::walk_ts_signatures;
+use oxc_ast::{syntax_directed_operations::BoundNames, Visit, VisitMut};
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
+use crate::diagnostics::accessor_must_have_explicit_return_type;
 use crate::{
     diagnostics::{
         binding_element_export, inferred_type_of_expression, signature_computed_property_name,
@@ -217,19 +221,19 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             Declaration::TSTypeAliasDeclaration(alias_decl) => {
-                self.visit_ts_type_alias_declaration(alias_decl);
                 if !check_binding || self.scope.has_reference(&alias_decl.id.name) {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    Some(unsafe { self.ast.copy(decl) })
+                    let mut decl = decl.clone_in(self.ast.allocator);
+                    self.visit_declaration(&mut decl);
+                    Some(decl)
                 } else {
                     None
                 }
             }
             Declaration::TSInterfaceDeclaration(interface_decl) => {
-                self.visit_ts_interface_declaration(interface_decl);
                 if !check_binding || self.scope.has_reference(&interface_decl.id.name) {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    Some(unsafe { self.ast.copy(decl) })
+                    let mut decl = decl.clone_in(self.ast.allocator);
+                    self.visit_declaration(&mut decl);
+                    Some(decl)
                 } else {
                     None
                 }
@@ -286,15 +290,30 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 }
 
-impl<'a> Visit<'a> for IsolatedDeclarations<'a> {
-    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
-        if signature.return_type.is_none() {
-            self.error(inferred_type_of_expression(signature.span));
-        }
-        self.report_signature_property_key(&signature.key, signature.computed);
+impl<'a> VisitMut<'a> for IsolatedDeclarations<'a> {
+    fn visit_ts_signatures(&mut self, signatures: &mut Vec<'a, TSSignature<'a>>) {
+        self.transform_ts_signatures(signatures);
+        walk_ts_signatures(self, signatures);
     }
 
-    fn visit_ts_property_signature(&mut self, signature: &TSPropertySignature<'a>) {
+    fn visit_ts_method_signature(&mut self, signature: &mut TSMethodSignature<'a>) {
+        self.report_signature_property_key(&signature.key, signature.computed);
+        if signature.return_type.is_none() {
+            match signature.kind {
+                TSMethodSignatureKind::Method => {
+                    self.error(inferred_type_of_expression(signature.span));
+                }
+                TSMethodSignatureKind::Get => {
+                    self.error(accessor_must_have_explicit_return_type(signature.key.span()));
+                }
+                TSMethodSignatureKind::Set => {
+                    // setter method don't need return type
+                }
+            }
+        }
+    }
+
+    fn visit_ts_property_signature(&mut self, signature: &mut TSPropertySignature<'a>) {
         self.report_signature_property_key(&signature.key, signature.computed);
     }
 }

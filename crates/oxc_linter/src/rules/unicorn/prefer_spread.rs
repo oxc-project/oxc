@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{match_member_expression, Expression},
     AstKind,
@@ -9,8 +10,8 @@ use phf::phf_set;
 
 use crate::{ast_util, context::LintContext, rule::Rule, AstNode};
 
-fn prefer_spread_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {x1}"))
+fn prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {bad_method}"))
         .with_help("The spread operator (`...`) is more concise and readable.")
         .with_label(span)
 }
@@ -231,7 +232,9 @@ fn is_not_array(expr: &Expression, ctx: &LintContext) -> bool {
         _ => return false,
     };
 
-    if ident.starts_with(|c: char| c.is_ascii_uppercase()) && ident.to_ascii_uppercase() != ident {
+    if ident.starts_with(|c: char| c.is_ascii_uppercase())
+        && ident.cow_to_ascii_uppercase() != ident
+    {
         return true;
     }
 

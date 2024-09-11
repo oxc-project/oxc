@@ -9,9 +9,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn approx_constant_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Approximate value of `{x1}` found."))
-        .with_help(format!("Use `Math.{x1}` instead"))
+fn approx_constant_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Approximate value of `{method_name}` found."))
+        .with_help(format!("Use `Math.{method_name}` instead"))
         .with_label(span)
 }
 

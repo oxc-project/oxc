@@ -691,12 +691,21 @@ impl<'a> PatternParser<'a> {
             }));
         }
 
-        // e.g. \18
+        // e.g. \1, \00, \000
         if !self.state.unicode_mode {
             if let Some(cp) = self.consume_legacy_octal_escape_sequence() {
+                let span_end = self.reader.offset();
+                // Keep original digits for `to_string()`
+                // Otherwise `\0022`(octal \002 + symbol 2) will be `\22`(octal \22)
+                let digits = span_end - span_start - 1; // -1 for '\'
+
                 return Ok(Some(ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Octal,
+                    span: self.span_factory.create(span_start, span_end),
+                    kind: (match digits {
+                        3 => ast::CharacterKind::Octal3,
+                        2 => ast::CharacterKind::Octal2,
+                        _ => ast::CharacterKind::Octal1,
+                    }),
                     value: cp,
                 }));
             }
@@ -727,20 +736,11 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
+                let strings = PatternParser::may_contain_strings_in_class_contents(&kind, &body);
+
                 // [SS:EE] CharacterClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
-                if negative
-                    && body.iter().any(|item| match item {
-                        // MayContainStrings is true
-                        // - if ClassContents contains UnicodePropertyValueExpression
-                        //   - and the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
-                        //     - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
-                        ast::CharacterClassContents::UnicodePropertyEscape(
-                            unicode_property_escape,
-                        ) => unicode_property_escape.strings,
-                        _ => false,
-                    })
-                {
+                if negative && strings {
                     return Err(diagnostics::invalid_character_class(
                         self.span_factory.create(span_start, self.reader.offset()),
                     ));
@@ -750,6 +750,7 @@ impl<'a> PatternParser<'a> {
                     span: self.span_factory.create(span_start, self.reader.offset()),
                     negative,
                     kind,
+                    strings,
                     body,
                 }));
             }
@@ -979,7 +980,7 @@ impl<'a> PatternParser<'a> {
         if self.state.unicode_mode && self.reader.eat('-') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
-                kind: ast::CharacterKind::Symbol,
+                kind: ast::CharacterKind::SingleEscape,
                 value: '-' as u32,
             })));
         }
@@ -1267,55 +1268,14 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
+                let strings = PatternParser::may_contain_strings_in_class_contents(&kind, &body);
+
                 // [SS:EE] NestedClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
-                if negative {
-                    let may_contain_strings = |item: &ast::CharacterClassContents| match item {
-                        // MayContainStrings is true
-                        // - if ClassContents contains UnicodePropertyValueExpression
-                        //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
-                        //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
-                        ast::CharacterClassContents::UnicodePropertyEscape(
-                            unicode_property_escape,
-                        ) => unicode_property_escape.strings,
-                        // MayContainStrings is true
-                        // - if ClassStringDisjunction is [empty]
-                        // - || if ClassStringDisjunction contains ClassString
-                        //   - && ClassString is [empty]
-                        //   - || ClassString contains 2 more ClassSetCharacters
-                        ast::CharacterClassContents::ClassStringDisjunction(
-                            class_string_disjunction,
-                        ) => class_string_disjunction.strings,
-                        _ => false,
-                    };
-
-                    if match kind {
-                        // MayContainStrings is true
-                        // - if ClassContents is ClassUnion
-                        //   - && ClassUnion has ClassOperands
-                        //     - && at least 1 ClassOperand has MayContainStrings: true
-                        ast::CharacterClassContentsKind::Union => {
-                            body.iter().any(may_contain_strings)
-                        }
-                        // MayContainStrings is true
-                        // - if ClassContents is ClassIntersection
-                        //   - && ClassIntersection has ClassOperands
-                        //     - && all ClassOperands have MayContainStrings: true
-                        ast::CharacterClassContentsKind::Intersection => {
-                            body.iter().all(may_contain_strings)
-                        }
-                        // MayContainStrings is true
-                        // - if ClassContents is ClassSubtraction
-                        //   - && ClassSubtraction has ClassOperands
-                        //     - && the first ClassOperand has MayContainStrings: true
-                        ast::CharacterClassContentsKind::Subtraction => {
-                            body.iter().next().map_or(false, may_contain_strings)
-                        }
-                    } {
-                        return Err(diagnostics::character_class_contents_invalid_operands(
-                            self.span_factory.create(span_start, self.reader.offset()),
-                        ));
-                    }
+                if negative && strings {
+                    return Err(diagnostics::character_class_contents_invalid_operands(
+                        self.span_factory.create(span_start, self.reader.offset()),
+                    ));
                 }
 
                 return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
@@ -1323,6 +1283,7 @@ impl<'a> PatternParser<'a> {
                         span: self.span_factory.create(span_start, self.reader.offset()),
                         negative,
                         kind,
+                        strings,
                         body,
                     },
                     self.allocator,
@@ -2184,5 +2145,50 @@ impl<'a> PatternParser<'a> {
         }
 
         Some(value)
+    }
+
+    // ---
+
+    fn may_contain_strings_in_class_contents(
+        kind: &ast::CharacterClassContentsKind,
+        body: &Vec<'a, ast::CharacterClassContents<'a>>,
+    ) -> bool {
+        let may_contain_strings = |item: &ast::CharacterClassContents<'a>| match item {
+            // MayContainStrings is true
+            // - if ClassContents contains UnicodePropertyValueExpression
+            //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+            //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
+            ast::CharacterClassContents::UnicodePropertyEscape(item) => item.strings,
+            // MayContainStrings is true
+            // - if ClassStringDisjunction is [empty]
+            // - || if ClassStringDisjunction contains ClassString
+            //   - && ClassString is [empty]
+            //   - || ClassString contains 2 more ClassSetCharacters
+            ast::CharacterClassContents::ClassStringDisjunction(item) => item.strings,
+            // MayContainStrings is true
+            // - if NestedClass has MayContainStrings: true
+            ast::CharacterClassContents::NestedCharacterClass(item) => item.strings,
+            _ => false,
+        };
+
+        match kind {
+            // MayContainStrings is true
+            // - if ClassContents is ClassUnion
+            //   - && ClassUnion has ClassOperands
+            //     - && at least 1 ClassOperand has MayContainStrings: true
+            ast::CharacterClassContentsKind::Union => body.iter().any(may_contain_strings),
+            // MayContainStrings is true
+            // - if ClassContents is ClassIntersection
+            //   - && ClassIntersection has ClassOperands
+            //     - && all ClassOperands have MayContainStrings: true
+            ast::CharacterClassContentsKind::Intersection => body.iter().all(may_contain_strings),
+            // MayContainStrings is true
+            // - if ClassContents is ClassSubtraction
+            //   - && ClassSubtraction has ClassOperands
+            //     - && the first ClassOperand has MayContainStrings: true
+            ast::CharacterClassContentsKind::Subtraction => {
+                body.iter().next().map_or(false, may_contain_strings)
+            }
+        }
     }
 }

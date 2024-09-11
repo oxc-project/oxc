@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
@@ -517,7 +518,7 @@ impl<'a> ParserImpl<'a> {
         let cur_src = self.cur_src();
         let raw = &cur_src[1..cur_src.len() - end_offset as usize];
         let raw = Atom::from(if cooked.is_some() && raw.contains('\r') {
-            self.ast.str(raw.replace("\r\n", "\n").replace('\r', "\n").as_str())
+            self.ast.str(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"))
         } else {
             raw
         });
@@ -548,7 +549,10 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Expression<'a>> {
         self.bump_any(); // bump `.`
         let property = match self.cur_kind() {
-            Kind::Meta => self.parse_keyword_identifier(Kind::Meta),
+            Kind::Meta => {
+                self.set_source_type_to_module_if_unambiguous();
+                self.parse_keyword_identifier(Kind::Meta)
+            }
             Kind::Target => self.parse_keyword_identifier(Kind::Target),
             _ => self.parse_identifier_name()?,
         };

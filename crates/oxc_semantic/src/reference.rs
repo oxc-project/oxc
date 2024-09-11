@@ -114,6 +114,11 @@ impl Reference {
         self.flags.is_write()
     }
 
+    /// Returns `true` if this reference is used in a value context.
+    pub fn is_value(&self) -> bool {
+        self.flags.is_value()
+    }
+
     /// Returns `true` if this reference is used in a type context.
     #[inline]
     pub fn is_type(&self) -> bool {

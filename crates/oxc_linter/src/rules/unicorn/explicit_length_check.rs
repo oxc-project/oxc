@@ -16,18 +16,22 @@ use crate::{
     AstNode,
 };
 
-fn none_zero(span: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is not zero."))
-        .with_label(span);
-    if let Some(x) = x3 {
+fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn(format!(
+        "Use `.{prop_name} {op_and_rhs}` when checking {prop_name} is not zero."
+    ))
+    .with_label(span);
+    if let Some(x) = help {
         d = d.with_help(x);
     }
     d
 }
 
-fn zero(span: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is zero."));
-    if let Some(x) = x3 {
+fn zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn(format!(
+        "Use `.{prop_name} {op_and_rhs}` when checking {prop_name} is zero."
+    ));
+    if let Some(x) = help {
         d = d.with_help(x);
     }
     d.with_label(span)
@@ -228,7 +232,7 @@ impl ExplicitLengthCheck {
         let diagnostic = if is_zero_length_check {
             zero(span, property.as_str(), check_code, help)
         } else {
-            none_zero(span, property.as_str(), check_code, help)
+            non_zero(span, property.as_str(), check_code, help)
         };
         if auto_fix {
             ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(span, fixed));

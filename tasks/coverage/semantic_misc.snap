@@ -1,6 +1,11 @@
 semantic_misc Summary:
-AST Parsed     : 27/27 (100.00%)
-Positive Passed: 15/27 (55.56%)
+AST Parsed     : 29/29 (100.00%)
+Positive Passed: 17/29 (58.62%)
+tasks/coverage/misc/pass/babel-16776-m.js
+semantic error: Symbol flags mismatch:
+after transform: SymbolId(0): SymbolFlags(FunctionScopedVariable | Export)
+rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
+
 tasks/coverage/misc/pass/oxc-1288.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["from"]
@@ -175,12 +180,4 @@ tasks/coverage/misc/pass/swc-7187.ts
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["K"]
 rebuilt        : ScopeId(0): []
-
-tasks/coverage/misc/pass/swc-8243.tsx
-semantic error: Unresolved reference IDs mismatch for "Baz":
-after transform: [ReferenceId(3), ReferenceId(4)]
-rebuilt        : [ReferenceId(4)]
-Unresolved reference IDs mismatch for "Bar":
-after transform: [ReferenceId(1), ReferenceId(2)]
-rebuilt        : [ReferenceId(2)]
 

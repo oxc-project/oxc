@@ -4,6 +4,7 @@ use std::{
     str::FromStr,
 };
 
+use cow_utils::CowUtils;
 use itertools::Itertools;
 use oxc_ast::{
     ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement},
@@ -16,20 +17,21 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn unexpected_syntax_order_diagnostic(
-    x0: &ImportKind,
-    x1: &ImportKind,
+    curr_kind: &ImportKind,
+    prev_kind: &ImportKind,
     span2: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Expected '{x0}' syntax before '{x1}' syntax.")).with_label(span2)
+    OxcDiagnostic::warn(format!("Expected '{curr_kind}' syntax before '{prev_kind}' syntax."))
+        .with_label(span2)
 }
 
 fn sort_imports_alphabetically_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Imports should be sorted alphabetically.").with_label(span)
 }
 
-fn sort_members_alphabetically_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
+fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Member '{x0}' of the import declaration should be sorted alphabetically."
+        "Member '{name}' of the import declaration should be sorted alphabetically."
     ))
     .with_label(span)
 }
@@ -209,10 +211,10 @@ impl SortImports {
         let mut previous_local_member_name = get_first_local_member_name(previous);
 
         if self.ignore_case {
-            current_local_member_name =
-                current_local_member_name.map(|name| name.to_lowercase().into());
-            previous_local_member_name =
-                previous_local_member_name.map(|name| name.to_lowercase().into());
+            current_local_member_name = current_local_member_name
+                .map(|name| Cow::Owned(name.cow_to_lowercase().into_owned()));
+            previous_local_member_name = previous_local_member_name
+                .map(|name| Cow::Owned(name.cow_to_lowercase().into_owned()));
         }
 
         // "memberSyntaxSortOrder": ["none", "all", "multiple", "single"]
@@ -282,7 +284,7 @@ impl SortImports {
                 let b = window[1].local.name.as_str();
 
                 if self.ignore_case {
-                    a.to_lowercase() > b.to_lowercase()
+                    a.cow_to_lowercase() > b.cow_to_lowercase()
                 } else {
                     a > b
                 }
@@ -329,7 +331,7 @@ impl SortImports {
                         let b = b.local.name.as_str();
 
                         if self.ignore_case {
-                            a.to_lowercase().cmp(&b.to_lowercase())
+                            a.cow_to_lowercase().cmp(&b.cow_to_lowercase())
                         } else {
                             a.cmp(b)
                         }

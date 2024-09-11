@@ -7,7 +7,7 @@ use oxc_span::SourceType;
 
 fn codegen(source_text: &str) -> String {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_typescript(true).with_module(true);
+    let source_type = SourceType::ts();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })

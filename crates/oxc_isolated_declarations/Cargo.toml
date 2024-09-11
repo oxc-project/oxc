@@ -1,35 +1,35 @@
 [package]
-name                   = "oxc_isolated_declarations"
-version                = "0.27.0"
-publish                = true
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxc_isolated_declarations"
+version = "0.28.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/examples", "/src"]
+keywords.workspace = true
+license.workspace = true
+publish = true
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
-include                = ["/examples", "/src"]
+description.workspace = true
 
 [lints]
 workspace = true
 
 [lib]
 doctest = false
-test    = false
+test = false
 
 [dependencies]
-oxc_ast         = { workspace = true }
-oxc_span        = { workspace = true }
-oxc_allocator   = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_syntax      = { workspace = true, features = ["to_js_string"] }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 rustc-hash = { workspace = true }
 
 [dev-dependencies]
-oxc_parser  = { workspace = true }
+insta = { workspace = true, features = ["glob"] }
 oxc_codegen = { workspace = true }
-insta       = { workspace = true, features = ["glob"] }
+oxc_parser = { workspace = true }

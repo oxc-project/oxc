@@ -1,10 +1,17 @@
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ModuleRecord;
 use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
 
 use crate::{context::LintContext, rule::Rule};
 
+fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Barrel file detected, {total} modules are loaded."
+    ))
+    .with_help(format!("Loading {total} modules is slow for runtimes and bundlers.\nThe configured threshold is {threshold}.\nSee also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>."))
+    .with_labels(labels)
+}
 #[derive(Debug, Clone)]
 pub struct NoBarrelFile {
     threshold: usize,
@@ -96,12 +103,7 @@ impl Rule for NoBarrelFile {
 
         let threshold = self.threshold;
         if total >= threshold {
-            let diagnostic = OxcDiagnostic::warn(format!(
-                "Barrel file detected, {total} modules are loaded."
-            ))
-            .with_help(format!("Loading {total} modules is slow for runtimes and bundlers.\nThe configured threshold is {threshold}.\nSee also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>."))
-            .with_labels(labels);
-            ctx.diagnostic(diagnostic);
+            ctx.diagnostic(no_barrel_file(total, threshold, labels));
         }
     }
 }

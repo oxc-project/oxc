@@ -33,6 +33,11 @@ pub mod parser {
     pub use oxc_parser::*;
 }
 
+pub mod regular_expression {
+    #[doc(inline)]
+    pub use oxc_regular_expression::*;
+}
+
 pub mod span {
     #[doc(inline)]
     pub use oxc_span::*;
