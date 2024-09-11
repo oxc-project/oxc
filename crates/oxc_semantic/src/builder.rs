@@ -22,7 +22,7 @@ use crate::{
     binder::Binder,
     checker,
     class::ClassTableBuilder,
-    counter::Counts,
+    counts::Counts,
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
@@ -221,7 +221,7 @@ impl<'a> SemanticBuilder<'a> {
             let scope_id = self.scope.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
-            // Count the number of nodes, scopes, symbols, and references.
+            // Estimate the number of nodes, scopes, symbols, and references.
             // Use these counts to reserve sufficient capacity in `AstNodes`, `ScopeTree`
             // and `SymbolTable` to store them.
             // This means that as we traverse the AST and fill up these structures with data,
@@ -229,10 +229,8 @@ impl<'a> SemanticBuilder<'a> {
             // involves copying all the memory from the old allocation to the new one.
             // For large source files, these structures are very large, so growth is very costly
             // as it involves copying massive chunks of memory.
-            // Avoiding this growth produces up to 30% perf boost on our benchmarks.
-            // TODO: It would be even more efficient to calculate counts in parser to avoid
-            // this extra AST traversal.
-            let counts = Counts::count(program);
+            // Avoiding this growth produces up to 40% perf boost on our benchmarks.
+            let counts = Counts::count(program, self.source_text);
             self.nodes.reserve(counts.nodes);
             self.scope.reserve(counts.scopes);
             self.symbols.reserve(counts.symbols, counts.references);
@@ -243,11 +241,12 @@ impl<'a> SemanticBuilder<'a> {
             // Check that estimated counts accurately
             #[cfg(debug_assertions)]
             {
+                #[allow(clippy::cast_possible_truncation)]
                 let actual_counts = Counts {
-                    nodes: self.nodes.len(),
-                    scopes: self.scope.len(),
-                    symbols: self.symbols.len(),
-                    references: self.symbols.references.len(),
+                    nodes: self.nodes.len() as u32,
+                    scopes: self.scope.len() as u32,
+                    symbols: self.symbols.len() as u32,
+                    references: self.symbols.references.len() as u32,
                 };
                 Counts::assert_accurate(&actual_counts, &counts);
             }

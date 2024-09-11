@@ -20,9 +20,11 @@ impl<'a> Compressor<'a> {
         Self { allocator, options }
     }
 
-    pub fn build(self, program: &mut Program<'a>) {
-        let (symbols, scopes) =
-            SemanticBuilder::new("").build(program).semantic.into_symbol_table_and_scope_tree();
+    pub fn build(self, program: &mut Program<'a>, source_text: &str) {
+        let (symbols, scopes) = SemanticBuilder::new(source_text)
+            .build(program)
+            .semantic
+            .into_symbol_table_and_scope_tree();
         self.build_with_symbols_and_scopes(symbols, scopes, program);
     }
 

@@ -110,7 +110,7 @@ fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    let ret = Minifier::new(options).build(&allocator, program);
+    let ret = Minifier::new(options).build(&allocator, program, source_text);
     CodeGenerator::new()
         .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
         .with_mangler(ret.mangler)

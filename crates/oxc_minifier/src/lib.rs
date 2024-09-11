@@ -47,9 +47,14 @@ impl Minifier {
         Self { options }
     }
 
-    pub fn build<'a>(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        Compressor::new(allocator, self.options.compress).build(program);
-        let mangler = self.options.mangle.then(|| Mangler::default().build(program));
+    pub fn build<'a>(
+        self,
+        allocator: &'a Allocator,
+        program: &mut Program<'a>,
+        source_text: &str,
+    ) -> MinifierReturn {
+        Compressor::new(allocator, self.options.compress).build(program, source_text);
+        let mangler = self.options.mangle.then(|| Mangler::default().build(program, source_text));
         MinifierReturn { mangler }
     }
 }

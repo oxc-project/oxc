@@ -6,7 +6,7 @@ use oxc::{
         ast::{Program, RegExpFlags},
         Trivias,
     },
-    codegen::CodegenOptions,
+    codegen::{CodeGenerator, CodegenOptions},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
     parser::{ParseOptions, ParserReturn},
@@ -101,10 +101,16 @@ impl CompilerInterface for Driver {
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
+            let code = CodeGenerator::new()
+                .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+                .build(program)
+                .source_text;
+
             if let Some(errors) = check_semantic_after_transform(
                 &transformer_return.symbols,
                 &transformer_return.scopes,
                 program,
+                &code,
             ) {
                 self.errors.extend(errors);
                 return ControlFlow::Break(());

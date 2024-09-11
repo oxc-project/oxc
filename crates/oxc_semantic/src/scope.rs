@@ -301,7 +301,8 @@ impl ScopeTree {
     }
 
     /// Reserve memory for an `additional` number of scopes.
-    pub fn reserve(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: u32) {
+        let additional = additional as usize;
         self.parent_ids.reserve(additional);
         self.flags.reserve(additional);
         self.bindings.reserve(additional);

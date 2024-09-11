@@ -109,11 +109,14 @@ use crate::{ScopeTree, SemanticBuilder, SymbolTable};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
-/// Check `ScopeTree` and `SymbolTable` are correct after transform
+/// Check `ScopeTree` and `SymbolTable` are correct after transform.
+///
+/// `code_after_transform` must be the *post-transform* AST printed to string.
 pub fn check_semantic_after_transform(
     symbols_after_transform: &SymbolTable,
     scopes_after_transform: &ScopeTree,
     program: &Program<'_>,
+    code_after_transform: &str,
 ) -> Option<Vec<OxcDiagnostic>> {
     let mut errors = Errors::default();
 
@@ -129,7 +132,7 @@ pub fn check_semantic_after_transform(
     // so the cloned AST will be "clean" of all semantic data, as if it had come fresh from the parser.
     let allocator = Allocator::default();
     let program = program.clone_in(&allocator);
-    let (symbols_rebuilt, scopes_rebuilt) = SemanticBuilder::new("")
+    let (symbols_rebuilt, scopes_rebuilt) = SemanticBuilder::new(code_after_transform)
         .with_scope_tree_child_ids(scopes_after_transform.has_child_ids())
         .build(&program)
         .semantic

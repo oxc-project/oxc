@@ -23,7 +23,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     if let Some(options) = options {
-        Compressor::new(&allocator, options).build(program);
+        Compressor::new(&allocator, options).build(program, source_text);
     }
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
