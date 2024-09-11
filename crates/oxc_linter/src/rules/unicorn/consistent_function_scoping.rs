@@ -165,15 +165,15 @@ impl Rule for ConsistentFunctionScoping {
                     return;
                 }
 
-                if let Some(parent_scope_id) =
-                    ctx.scopes().get_parent_id(function.scope_id.get().unwrap())
-                {
-                    // Example: const foo = function bar() {};
-                    // The bar function scope id is 1. In order to ignore this rule,
-                    // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
-                    // should be considered.
-                    if parent_scope_id == ctx.scopes().root_scope_id() {
-                        return;
+                if let Some(func_scope_id) = function.scope_id.get() {
+                    if let Some(parent_scope_id) = ctx.scopes().get_parent_id(func_scope_id) {
+                        // Example: const foo = function bar() {};
+                        // The bar function scope id is 1. In order to ignore this rule,
+                        // its parent's scope id (in this case `foo`'s scope id is 0 and is equal to root scope id)
+                        // should be considered.
+                        if parent_scope_id == ctx.scopes().root_scope_id() {
+                            return;
+                        }
                     }
                 }
 
