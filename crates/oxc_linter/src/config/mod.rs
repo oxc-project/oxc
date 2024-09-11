@@ -26,7 +26,7 @@ use crate::{
 ///
 /// This configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).
 ///
-/// Usage: `oxlint -c oxlintrc.json`
+/// Usage: `oxlint -c oxlintrc.json --import-plugin`
 ///
 /// ::: danger NOTE
 ///
@@ -41,7 +41,7 @@ use crate::{
 /// ```json
 /// {
 ///   "env": {
-///       "browser": true
+///     "browser": true
 ///   },
 ///   "globals": {
 ///     "foo": "readonly"
@@ -49,7 +49,8 @@ use crate::{
 ///   "settings": {
 ///   },
 ///   "rules": {
-///       "eqeqeq": "warn"
+///     "eqeqeq": "warn",
+///     "import/no-cycle": "error"
 ///   }
 ///  }
 /// ```
