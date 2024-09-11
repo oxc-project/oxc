@@ -39,6 +39,6 @@ fn minify(source_text: &str, source_type: SourceType, mangle: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     let options = MinifierOptions { mangle, compress: CompressOptions::all_true() };
-    let ret = Minifier::new(options).build(&allocator, program);
+    let ret = Minifier::new(options).build(&allocator, program, source_text);
     CodeGenerator::new().with_mangler(ret.mangler).build(program).source_text
 }

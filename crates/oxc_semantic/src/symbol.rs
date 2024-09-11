@@ -197,7 +197,9 @@ impl SymbolTable {
         reference_ids.swap_remove(index);
     }
 
-    pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
+    pub fn reserve(&mut self, additional_symbols: u32, additional_references: u32) {
+        let additional_symbols = additional_symbols as usize;
+        let additional_references = additional_references as usize;
         self.spans.reserve(additional_symbols);
         self.names.reserve(additional_symbols);
         self.flags.reserve(additional_symbols);

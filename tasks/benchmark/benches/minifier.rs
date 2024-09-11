@@ -18,7 +18,7 @@ fn bench_minifier(criterion: &mut Criterion) {
                     let allocator = Allocator::default();
                     let program = Parser::new(&allocator, source_text, source_type).parse().program;
                     let program = allocator.alloc(program);
-                    Compressor::new(&allocator, options).build(program);
+                    Compressor::new(&allocator, options).build(program, source_text);
                     allocator
                 });
             },
