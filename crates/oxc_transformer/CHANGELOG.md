@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
+
+### Features
+
+- 95a6d99 transformer: Enable the react refresh plugin in enable_all (#5630) (Dunqing)
+- 7b543df transformer/react: Handle `refresh_sig` and `refresh_reg` options correctly (#5638) (Dunqing)
+
+### Bug Fixes
+
+- 1bc08e2 coverage: Parse babel unambiguously (#5579) (Boshen)
+- 919d17f transform_conformance: Only print semantic mismatch errors when output is correct (#5589) (Boshen)
+- 505d064 transformer: JSX transform delete references for `JSXClosingElement`s (#5560) (overlookmotel)
+- 9b7ecc7 transformer: RegExp transform only set span on final expression (#5508) (overlookmotel)
+- d1ece19 transformer: RegExp transform handle `Term::Quantifier` (#5501) (overlookmotel)
+- a1afd48 transformer/react: Incorrect scope_id for var hoisted in fast refresh plugin (#5695) (Dunqing)
+- f2f5e5a transformer/react: Missing scope_id for function in fast refresh plugin (#5693) (Dunqing)
+- a891c31 transformer/react: Refresh plugin has incorrect reference flags (#5656) (Dunqing)
+- 3e8b96f transformer/react: The refresh plugin cannot handle member expressions with React hooks (#5655) (Dunqing)
+- 0739b5f transformer/react: Don't transform declaration of function overloads (#5642) (Dunqing)
+- 3bf6aaf transformer/react: Support `emit_full_signatures` option in refresh plugin (#5629) (Dunqing)
+- 36d864a transformer/react: Don't transform if the variable does not have a value reference (#5528) (Dunqing)
+
+### Performance
+
+
+### Documentation
+
+- 9282647 transformer: Comment on RegExp transform for potential improvement (#5514) (overlookmotel)
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+- ce71982 transformer: Shorten code in JSX transform (#5554) (overlookmotel)
+- 758a10c transformer: RegExp transform reuse var (#5527) (overlookmotel)
+- fad0a05 transformer: RegExp transform unbox early (#5504) (overlookmotel)
+
 ## [0.27.0] - 2024-09-06
 
 - cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
