@@ -20,7 +20,7 @@ pub(crate) fn test(source_text: &str, expected: &str, config: InjectGlobalVariab
         .build(program)
         .semantic
         .into_symbol_table_and_scope_tree();
-    InjectGlobalVariables::new(&allocator, config).build(&mut symbols, &mut scopes, program);
+    InjectGlobalVariables::new(&allocator, &mut symbols, &mut scopes, config).build(program);
     let result = CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
         .build(program)
@@ -152,8 +152,14 @@ fn existing() {
 #[test]
 fn shadowing() {
     // handles shadowed variables
-    let config =
-        InjectGlobalVariablesConfig::new(vec![InjectImport::named_specifier("jquery", None, "$")]);
+    let config = InjectGlobalVariablesConfig::new(vec![
+        InjectImport::named_specifier("jquery", None, "$"),
+        InjectImport::named_specifier(
+            "fixtures/keypaths/polyfills/object-assign.js",
+            None,
+            "Object.assign",
+        ),
+    ]);
     test_same(
         "
         function launch($) {
@@ -163,8 +169,9 @@ fn shadowing() {
         }
         launch((fn) => fn());
         ",
-        config,
+        config.clone(),
     );
+    test_same("function launch(Object) { let x = Object.assign; }", config);
 }
 
 #[test]
