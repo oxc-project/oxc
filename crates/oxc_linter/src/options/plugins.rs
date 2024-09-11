@@ -3,7 +3,7 @@ use bitflags::bitflags;
 bitflags! {
     // NOTE: may be increased to a u32 if needed
     #[derive(Debug, Clone, Copy, PartialEq, Hash)]
-    pub(crate) struct LintPlugins: u16 {
+    pub struct LintPlugins: u16 {
         /// `eslint-plugin-react`, plus `eslint-plugin-react-hooks`
         const REACT = 1 << 0;
         /// `eslint-plugin-unicorn`
@@ -76,6 +76,32 @@ impl LintPlugins {
     #[inline]
     pub fn has_import(self) -> bool {
         self.contains(LintPlugins::IMPORT)
+    }
+}
+
+impl From<&str> for LintPlugins {
+    fn from(value: &str) -> Self {
+        match value {
+            "react" | "react-hooks" | "react_hooks" => LintPlugins::REACT,
+            "unicorn" => LintPlugins::UNICORN,
+            "typescript" | "typescript-eslint" | "typescript_eslint" | "@typescript-eslint" => {
+                LintPlugins::TYPESCRIPT
+            }
+            // deepscan for backwards compatibility. Those rules have been moved into oxc
+            "oxc" | "deepscan" => LintPlugins::OXC,
+            "import" => LintPlugins::IMPORT,
+            "jsdoc" => LintPlugins::JSDOC,
+            "jest" => LintPlugins::JEST,
+            "vitest" => LintPlugins::VITEST,
+            "jsx-a11y" | "jsx_a11y" => LintPlugins::JSX_A11Y,
+            "nextjs" => LintPlugins::NEXTJS,
+            "react-perf" | "react_perf" => LintPlugins::REACT_PERF,
+            "promise" => LintPlugins::PROMISE,
+            "node" => LintPlugins::NODE,
+            // "eslint" is not really a plugin, so it's 'empty'. This has the added benefit of
+            // making it the default value.
+            _ => LintPlugins::empty(),
+        }
     }
 }
 
@@ -167,27 +193,25 @@ impl<S: AsRef<str>> FromIterator<(S, bool)> for LintPluginOptions {
     fn from_iter<I: IntoIterator<Item = (S, bool)>>(iter: I) -> Self {
         let mut options = Self::default();
         for (s, enabled) in iter {
-            match s.as_ref() {
-                "react" | "react-hooks" => options.react = enabled,
-                "unicorn" => options.unicorn = enabled,
-                "typescript" | "typescript-eslint" | "@typescript-eslint" => {
-                    options.typescript = enabled;
-                }
-                // deepscan for backwards compatibility. Those rules have been
-                // moved into oxc
-                "oxc" | "deepscan" => options.oxc = enabled,
-                "import" => options.import = enabled,
-                "jsdoc" => options.jsdoc = enabled,
-                "jest" => options.jest = enabled,
-                "vitest" => options.vitest = enabled,
-                "jsx-a11y" => options.jsx_a11y = enabled,
-                "nextjs" => options.nextjs = enabled,
-                "react-perf" => options.react_perf = enabled,
-                "promise" => options.promise = enabled,
-                "node" => options.node = enabled,
-                _ => { /* ignored */ }
+            let flags = LintPlugins::from(s.as_ref());
+            match flags {
+                LintPlugins::REACT => options.react = enabled,
+                LintPlugins::UNICORN => options.unicorn = enabled,
+                LintPlugins::TYPESCRIPT => options.typescript = enabled,
+                LintPlugins::OXC => options.oxc = enabled,
+                LintPlugins::IMPORT => options.import = enabled,
+                LintPlugins::JSDOC => options.jsdoc = enabled,
+                LintPlugins::JEST => options.jest = enabled,
+                LintPlugins::VITEST => options.vitest = enabled,
+                LintPlugins::JSX_A11Y => options.jsx_a11y = enabled,
+                LintPlugins::NEXTJS => options.nextjs = enabled,
+                LintPlugins::REACT_PERF => options.react_perf = enabled,
+                LintPlugins::PROMISE => options.promise = enabled,
+                LintPlugins::NODE => options.node = enabled,
+                _ => {} // ignored
             }
         }
+
         options
     }
 }

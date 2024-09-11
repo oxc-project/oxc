@@ -3,7 +3,8 @@ use std::{env, io::BufWriter, time::Instant};
 use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
-    partial_loader::LINT_PARTIAL_LOADER_EXT, LintService, LintServiceOptions, Linter, OxlintOptions,
+    partial_loader::LINT_PARTIAL_LOADER_EXT, AllowWarnDeny, InvalidFilterKind, LintFilter,
+    LintService, LintServiceOptions, Linter, OxlintOptions,
 };
 use oxc_span::VALID_EXTENSIONS;
 
@@ -79,6 +80,11 @@ impl Runner for LintRunner {
                 };
             }
         }
+
+        let filter = match Self::get_filters(filter) {
+            Ok(filter) => filter,
+            Err(e) => return e,
+        };
 
         let extensions = VALID_EXTENSIONS
             .iter()
@@ -183,6 +189,43 @@ impl LintRunner {
             OutputFormat::Github => diagnostic_service.set_github_reporter(),
         }
         diagnostic_service
+    }
+
+    // moved into a separate function for readability, but it's only ever used
+    // in one place.
+    fn get_filters(
+        filters_arg: Vec<(AllowWarnDeny, String)>,
+    ) -> Result<Vec<LintFilter>, CliRunResult> {
+        let mut filters = Vec::with_capacity(filters_arg.len());
+
+        for (severity, filter_arg) in filters_arg {
+            match LintFilter::new(severity, filter_arg) {
+                Ok(filter) => {
+                    filters.push(filter);
+                }
+                Err(InvalidFilterKind::Empty) => {
+                    return Err(CliRunResult::InvalidOptions {
+                        message: format!("Cannot {severity} an empty filter."),
+                    });
+                }
+                Err(InvalidFilterKind::PluginMissing(filter)) => {
+                    return Err(CliRunResult::InvalidOptions {
+                        message: format!(
+                            "Failed to {severity} filter {filter}: Plugin name is missing. Expected <plugin>/<rule>"
+                        ),
+                    });
+                }
+                Err(InvalidFilterKind::RuleMissing(filter)) => {
+                    return Err(CliRunResult::InvalidOptions {
+                        message: format!(
+                            "Failed to {severity} filter {filter}: Rule name is missing. Expected <plugin>/<rule>"
+                        ),
+                    });
+                }
+            }
+        }
+
+        Ok(filters)
     }
 }
 

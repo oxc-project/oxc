@@ -1,4 +1,4 @@
-use std::convert::From;
+use std::{convert::From, fmt};
 
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use schemars::{schema::SchemaObject, JsonSchema};
@@ -26,6 +26,13 @@ impl AllowWarnDeny {
             Self::Warn => "warn",
             Self::Deny => "deny",
         }
+    }
+}
+
+impl fmt::Display for AllowWarnDeny {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.as_str().fmt(f)
     }
 }
 

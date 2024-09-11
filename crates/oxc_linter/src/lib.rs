@@ -32,7 +32,7 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, OxlintOptions},
+    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, OxlintOptions},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };

@@ -81,19 +81,6 @@ pub enum RuleCategory {
 }
 
 impl RuleCategory {
-    pub fn from(input: &str) -> Option<Self> {
-        match input {
-            "correctness" => Some(Self::Correctness),
-            "suspicious" => Some(Self::Suspicious),
-            "pedantic" => Some(Self::Pedantic),
-            "perf" => Some(Self::Perf),
-            "style" => Some(Self::Style),
-            "restriction" => Some(Self::Restriction),
-            "nursery" => Some(Self::Nursery),
-            _ => None,
-        }
-    }
-
     pub fn description(self) -> &'static str {
         match self {
             Self::Correctness => "Code that is outright wrong or useless.",
@@ -105,6 +92,22 @@ impl RuleCategory {
                 "Lints which prevent the use of language and library features. Must not be enabled as a whole, should be considered on a case-by-case basis before enabling."
             }
             Self::Nursery => "New lints that are still under development.",
+        }
+    }
+}
+
+impl TryFrom<&str> for RuleCategory {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "correctness" => Ok(Self::Correctness),
+            "suspicious" => Ok(Self::Suspicious),
+            "pedantic" => Ok(Self::Pedantic),
+            "perf" => Ok(Self::Perf),
+            "style" => Ok(Self::Style),
+            "restriction" => Ok(Self::Restriction),
+            "nursery" => Ok(Self::Nursery),
+            _ => Err(()),
         }
     }
 }
