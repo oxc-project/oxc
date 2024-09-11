@@ -2,7 +2,7 @@ use std::{cell::Cell, iter::once};
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use oxc_allocator::CloneIn;
-use oxc_ast::{ast::*, match_expression, match_member_expression, AstBuilder};
+use oxc_ast::{ast::*, match_expression, AstBuilder};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
@@ -384,14 +384,10 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
             return;
         }
 
-        let name = match &call_expr.callee {
-            Expression::Identifier(ident) => Some(ident.name.clone()),
-            Expression::StaticMemberExpression(ref member) => Some(member.property.name.clone()),
-            _ => None,
-        };
-
-        let Some(hook_name) = name else {
-            return;
+        let hook_name = match &call_expr.callee {
+            Expression::Identifier(ident) => ident.name.clone(),
+            Expression::StaticMemberExpression(ref member) => member.property.name.clone(),
+            _ => return,
         };
 
         if !is_use_hook_name(&hook_name) {
@@ -399,50 +395,47 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
         }
 
         if !is_builtin_hook(&hook_name) {
-            let (binding_name, hook_name) = match &call_expr.callee {
-                Expression::Identifier(ident) => (ident.name.clone(), None),
-                callee @ match_member_expression!(Expression) => {
-                    let member_expr = callee.to_member_expression();
-                    match member_expr.object() {
-                        Expression::Identifier(ident) => {
-                            (ident.name.clone(), Some(hook_name.clone()))
-                        }
-                        _ => unreachable!(),
+            let (binding_name, is_member_expression) = match &call_expr.callee {
+                Expression::Identifier(ident) => (Some(ident.name.clone()), false),
+                Expression::StaticMemberExpression(member) => {
+                    if let Expression::Identifier(object) = member.get_first_object() {
+                        (Some(object.name.clone()), true)
+                    } else {
+                        (None, false)
                     }
                 }
                 _ => unreachable!(),
             };
 
-            let callees = self.non_builtin_hooks_callee.entry(current_scope_id).or_default();
-
-            callees.push(
-                ctx.scopes()
-                    .find_binding(
-                        ctx.scopes().get_parent_id(ctx.current_scope_id()).unwrap(),
-                        binding_name.as_str(),
-                    )
-                    .map(|symbol_id| {
-                        let ident = ctx.create_reference_id(
-                            SPAN,
-                            binding_name.clone(),
-                            Some(symbol_id),
-                            ReferenceFlags::Read,
-                        );
-
-                        let mut expr = self.ctx.ast.expression_from_identifier_reference(ident);
-
-                        if let Some(hook_name) = hook_name {
-                            // binding_name.hook_name
-                            expr = Expression::from(self.ctx.ast.member_expression_static(
+            if let Some(binding_name) = binding_name {
+                self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
+                    ctx.scopes()
+                        .find_binding(
+                            ctx.scopes().get_parent_id(ctx.current_scope_id()).unwrap(),
+                            binding_name.as_str(),
+                        )
+                        .map(|symbol_id| {
+                            let ident = ctx.create_reference_id(
                                 SPAN,
-                                expr,
-                                self.ctx.ast.identifier_name(SPAN, hook_name),
-                                false,
-                            ));
-                        }
-                        expr
-                    }),
-            );
+                                binding_name,
+                                Some(symbol_id),
+                                ReferenceFlags::Read,
+                            );
+                            let mut expr = self.ctx.ast.expression_from_identifier_reference(ident);
+
+                            if is_member_expression {
+                                // binding_name.hook_name
+                                expr = Expression::from(self.ctx.ast.member_expression_static(
+                                    SPAN,
+                                    expr,
+                                    self.ctx.ast.identifier_name(SPAN, hook_name.clone()),
+                                    false,
+                                ));
+                            }
+                            expr
+                        }),
+                );
+            }
         }
 
         let key = if let Ancestor::VariableDeclaratorInit(declarator) = ctx.parent() {

@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 18/51
+Passed: 19/52
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -167,7 +167,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (4/29)
+# babel-plugin-transform-react-jsx (5/30)
 * refresh/can-handle-implicit-arrow-returns/input.jsx
 Reference flags mismatch:
 after transform: ReferenceId(18): ReferenceFlags(Write)
