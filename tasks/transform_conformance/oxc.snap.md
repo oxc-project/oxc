@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 38/52
+Passed: 40/52
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -167,7 +167,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (24/30)
+# babel-plugin-transform-react-jsx (26/30)
 * refresh/does-not-get-tripped-by-iifes/input.jsx
 Bindings mismatch:
 after transform: ScopeId(0): []
@@ -181,19 +181,6 @@ rebuilt        : SymbolId(0): ScopeId(0)
 
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
-
-* refresh/generates-valid-signature-for-exotic-ways-to-call-hooks/input.jsx
-Missing ScopeId
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3)]
-
-* refresh/includes-custom-hooks-into-the-signatures/input.jsx
-Missing ScopeId
-Missing ScopeId
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6)]
 
 * refresh/supports-typescript-namespace-syntax/input.tsx
 x Output mismatch

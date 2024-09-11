@@ -3,7 +3,7 @@ use std::{cell::Cell, iter::once};
 use base64::prelude::{Engine, BASE64_STANDARD};
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, match_expression, AstBuilder};
-use oxc_semantic::{Reference, ReferenceFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -666,7 +666,7 @@ impl<'a> ReactRefresh<'a> {
                     Some(self.ctx.ast.expression_array(SPAN, custom_hooks_in_scope, None)),
                 )),
             );
-            let fn_expr = self.ctx.ast.expression_function(
+            let function = self.ctx.ast.function(
                 FunctionType::FunctionExpression,
                 SPAN,
                 None,
@@ -679,7 +679,10 @@ impl<'a> ReactRefresh<'a> {
                 Option::<TSTypeAnnotation>::None,
                 Some(function_body),
             );
-            arguments.push(self.ctx.ast.argument_expression(fn_expr));
+            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
+            function.scope_id.set(Some(scope_id));
+            arguments
+                .push(self.ctx.ast.argument_expression(ctx.ast.expression_from_function(function)));
         }
 
         let symbol_id =
