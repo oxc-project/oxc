@@ -1,9 +1,12 @@
+use std::sync::Arc;
+
 use cow_utils::CowUtils;
+
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
-use std::sync::Arc;
+use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 use super::replace_global_defines::{DotDefine, ReplaceGlobalDefines};
 
@@ -100,12 +103,18 @@ impl<'a> From<&InjectImport> for DotDefineState<'a> {
     }
 }
 
+#[must_use]
+pub struct InjectGlobalVariablesReturn {
+    pub symbols: SymbolTable,
+    pub scopes: ScopeTree,
+}
+
 /// Injects import statements for global variables.
 ///
 /// References:
 ///
 /// * <https://www.npmjs.com/package/@rollup/plugin-inject>
-pub struct InjectGlobalVariables<'a, 'b> {
+pub struct InjectGlobalVariables<'a> {
     ast: AstBuilder<'a>,
     config: InjectGlobalVariablesConfig,
 
@@ -116,36 +125,32 @@ pub struct InjectGlobalVariables<'a, 'b> {
     /// Identifiers for which dot define replaced a member expression.
     replaced_dot_defines:
         Vec<(/* identifier of member expression */ CompactStr, /* local */ CompactStr)>,
-
-    symbols: &'b mut SymbolTable, // will be used to keep symbols in sync
-    scopes: &'b mut ScopeTree,
 }
 
-impl<'a, 'b> VisitMut<'a> for InjectGlobalVariables<'a, 'b> {
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        self.replace_dot_defines(expr);
-        walk_mut::walk_expression(self, expr);
+impl<'a> Traverse<'a> for InjectGlobalVariables<'a> {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.replace_dot_defines(expr, ctx);
     }
 }
 
-impl<'a, 'b> InjectGlobalVariables<'a, 'b> {
-    pub fn new(
-        allocator: &'a Allocator,
-        symbols: &'b mut SymbolTable,
-        scopes: &'b mut ScopeTree,
-        config: InjectGlobalVariablesConfig,
-    ) -> Self {
+impl<'a> InjectGlobalVariables<'a> {
+    pub fn new(allocator: &'a Allocator, config: InjectGlobalVariablesConfig) -> Self {
         Self {
             ast: AstBuilder::new(allocator),
             config,
             dot_defines: vec![],
             replaced_dot_defines: vec![],
-            symbols,
-            scopes,
         }
     }
 
-    pub fn build(&mut self, program: &mut Program<'a>) {
+    pub fn build(
+        &mut self,
+        symbols: SymbolTable,
+        scopes: ScopeTree,
+        program: &mut Program<'a>,
+    ) -> InjectGlobalVariablesReturn {
+        let mut symbols = symbols;
+        let mut scopes = scopes;
         // Step 1: slow path where visiting the AST is required to replace dot defines.
         let dot_defines = self
             .config
@@ -157,7 +162,7 @@ impl<'a, 'b> InjectGlobalVariables<'a, 'b> {
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            self.visit_program(program);
+            (symbols, scopes) = traverse_mut(self, self.ast.allocator, program, symbols, scopes);
         }
 
         // Step 2: find all the injects that are referenced.
@@ -172,17 +177,19 @@ impl<'a, 'b> InjectGlobalVariables<'a, 'b> {
                 } else if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
                     false
                 } else {
-                    self.scopes.root_unresolved_references().contains_key(i.specifier.local())
+                    scopes.root_unresolved_references().contains_key(i.specifier.local())
                 }
             })
             .cloned()
             .collect::<Vec<_>>();
 
         if injects.is_empty() {
-            return;
+            return InjectGlobalVariablesReturn { symbols, scopes };
         }
 
         self.inject_imports(&injects, program);
+
+        InjectGlobalVariablesReturn { symbols, scopes }
     }
 
     fn inject_imports(&self, injects: &[InjectImport], program: &mut Program<'a>) {
@@ -227,10 +234,10 @@ impl<'a, 'b> InjectGlobalVariables<'a, 'b> {
         }
     }
 
-    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) {
+    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::StaticMemberExpression(member) = expr {
             for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
-                if ReplaceGlobalDefines::is_dot_define(self.symbols, dot_define, member) {
+                if ReplaceGlobalDefines::is_dot_define(ctx.symbols(), dot_define, member) {
                     // If this is first replacement made for this dot define,
                     // create `Atom` for replacement, and record in `replaced_dot_defines`
                     if value_atom.is_none() {
