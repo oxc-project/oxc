@@ -22,7 +22,7 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-use crate::{array, binaryish::BinaryishOperator, doc::Doc, ss, Prettier};
+use crate::{array, binaryish::BinaryishOperator, doc::Doc, ss, DocBuilder, Prettier};
 
 impl<'a> Prettier<'a> {
     pub(crate) fn wrap_parens(&mut self, doc: Doc<'a>, kind: AstKind<'a>) -> Doc<'a> {

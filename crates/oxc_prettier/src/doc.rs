@@ -166,8 +166,8 @@ pub struct IfBreak<'a> {
 }
 
 #[derive(Clone, Copy)]
-#[allow(unused)]
 pub enum Separator {
+    #[allow(unused)]
     Softline,
     Hardline,
     CommaLine, // [",", line]
@@ -196,7 +196,6 @@ pub trait DocBuilder<'a> {
         Box::new_in(doc, self.allocator())
     }
 
-    #[allow(unused)]
     fn join(&self, separator: Separator, docs: std::vec::Vec<Doc<'a>>) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         for (i, doc) in docs.into_iter().enumerate() {
