@@ -1578,6 +1578,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_eval"
+version = "0.27.0"
+dependencies = [
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_index"
 version = "0.29.0"
 dependencies = [

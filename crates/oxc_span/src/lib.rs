@@ -4,6 +4,7 @@
 
 mod atom;
 mod compact_str;
+mod either;
 mod source_type;
 mod span;
 
@@ -13,6 +14,7 @@ pub mod hash;
 pub use crate::{
     atom::Atom,
     compact_str::{CompactStr, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN},
+    either::Either,
     source_type::{
         Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension, VALID_EXTENSIONS,
     },

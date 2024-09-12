@@ -55,7 +55,7 @@ pub mod visit {
 }
 
 pub use generated::{ast_builder, ast_kind};
-pub use num_bigint::BigUint;
+pub use num_bigint::{BigInt, BigUint};
 
 pub use crate::{
     ast_builder::AstBuilder,
