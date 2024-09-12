@@ -25,22 +25,26 @@ impl<I: Idx, T> IdxSliceIndex<I, T> for I {
 
     #[inline]
     fn get(self, slice: &IndexSlice<I, [T]>) -> Option<&Self::Output> {
-        slice.raw.get(self.index())
+        // SAFETY: Not safe!
+        Some(unsafe { slice.raw.get_unchecked(self.index()) })
     }
 
     #[inline]
     fn get_mut(self, slice: &mut IndexSlice<I, [T]>) -> Option<&mut Self::Output> {
-        slice.raw.get_mut(self.index())
+        // SAFETY: Not safe!
+        Some(unsafe { slice.raw.get_unchecked_mut(self.index()) })
     }
 
     #[inline]
     fn index(self, slice: &IndexSlice<I, [T]>) -> &Self::Output {
-        &slice.raw[self.index()]
+        // SAFETY: Not safe!
+        unsafe { slice.raw.get_unchecked(self.index()) }
     }
 
     #[inline]
     fn index_mut(self, slice: &mut IndexSlice<I, [T]>) -> &mut Self::Output {
-        &mut slice.raw[self.index()]
+        // SAFETY: Not safe!
+        unsafe { slice.raw.get_unchecked_mut(self.index()) }
     }
 }
 
@@ -51,22 +55,36 @@ macro_rules! range_slice {
 
             #[inline]
             fn get(self, slice: &IndexSlice<I, [T]>) -> Option<&Self::Output> {
-                slice.raw.get(self.into_range()).map(IndexSlice::new)
+                let range = self.into_range();
+                // SAFETY: Not safe!
+                let items = unsafe { slice.raw.get_unchecked(range) };
+                let items = IndexSlice::new(items);
+                Some(items)
             }
 
             #[inline]
             fn get_mut(self, slice: &mut IndexSlice<I, [T]>) -> Option<&mut Self::Output> {
-                slice.raw.get_mut(self.into_range()).map(IndexSlice::new_mut)
+                let range = self.into_range();
+                // SAFETY: Not safe!
+                let items = unsafe { slice.raw.get_unchecked_mut(range) };
+                let items = IndexSlice::new_mut(items);
+                Some(items)
             }
 
             #[inline]
             fn index(self, slice: &IndexSlice<I, [T]>) -> &Self::Output {
-                IndexSlice::new(&slice.raw[self.into_range()])
+                let range = self.into_range();
+                // SAFETY: Not safe!
+                let items = unsafe { slice.raw.get_unchecked(range) };
+                IndexSlice::new(items)
             }
 
             #[inline]
             fn index_mut(self, slice: &mut IndexSlice<I, [T]>) -> &mut Self::Output {
-                IndexSlice::new_mut(&mut slice.raw[self.into_range()])
+                let range = self.into_range();
+                // SAFETY: Not safe!
+                let items = unsafe { slice.raw.get_unchecked_mut(range) };
+                IndexSlice::new_mut(items)
             }
         }
     };
