@@ -1,18 +1,21 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::UpdateOperator, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_plusplus_diagnostic(span: Span, operator: &str) -> OxcDiagnostic {
+fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic {
     let diagnostic =
         OxcDiagnostic::warn(format!("Unary operator '{operator}' used.")).with_label(span);
 
-    if operator == "++" {
-        return diagnostic.with_help("Use the assignment operator `+=` instead.");
-    } else if operator == "--" {
-        return diagnostic.with_help("Use the assignment operator `-=` instead.");
+    match operator {
+        UpdateOperator::Increment => {
+            return diagnostic.with_help("Use the assignment operator `+=` instead.");
+        }
+        UpdateOperator::Decrement => {
+            return diagnostic.with_help("Use the assignment operator `-=` instead.");
+        }
     }
 
     diagnostic
@@ -98,7 +101,7 @@ impl Rule for NoPlusplus {
             return;
         }
 
-        ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator.as_str()));
+        ctx.diagnostic(no_plusplus_diagnostic(expr.span, expr.operator));
     }
 }
 
