@@ -53,7 +53,11 @@ impl<'a> FoldConstants<'a> {
     pub fn fold_expression(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::BinaryExpression(e) => self.try_fold_binary_operator(e, ctx),
-            Expression::LogicalExpression(e) => self.try_fold_logical_expression(e, ctx),
+            Expression::LogicalExpression(e)
+                if matches!(e.operator, LogicalOperator::And | LogicalOperator::Or) =>
+            {
+                self.try_fold_and_or(e, ctx)
+            }
             // TODO: move to `PeepholeMinimizeConditions`
             Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
             Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
@@ -111,7 +115,7 @@ impl<'a> FoldConstants<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<bool> {
         self.fold_expression(expr, ctx);
-        ctx.get_boolean_value(expr)
+        ctx.get_boolean_value(expr).to_option()
     }
 
     fn fold_if_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -150,11 +154,15 @@ impl<'a> FoldConstants<'a> {
         expr: &mut ConditionalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if ctx.ancestry.parent().is_tagged_template_expression() {
-            return None;
-        }
         match self.fold_expression_and_get_boolean_value(&mut expr.test, ctx) {
-            Some(true) => Some(self.ast.move_expression(&mut expr.consequent)),
+            Some(true) => {
+                // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
+                let parent = ctx.ancestry.parent();
+                if parent.is_tagged_template_expression() || parent.is_call_expression() {
+                    return None;
+                }
+                Some(self.ast.move_expression(&mut expr.consequent))
+            }
             Some(false) => Some(self.ast.move_expression(&mut expr.alternate)),
             _ => None,
         }
@@ -384,7 +392,7 @@ impl<'a> FoldConstants<'a> {
                 let right_bigint = ctx.get_side_free_bigint_value(right_expr);
 
                 if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
-                    return Tri::for_boolean(l_big.eq(&r_big));
+                    return Tri::from(l_big.eq(&r_big));
                 }
             }
 
@@ -421,7 +429,7 @@ impl<'a> FoldConstants<'a> {
                     return Tri::Unknown;
                 }
 
-                return Tri::for_boolean(left_string.cmp(&right_string) == Ordering::Less);
+                return Tri::from(left_string.cmp(&right_string) == Ordering::Less);
             }
 
             if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
@@ -450,14 +458,14 @@ impl<'a> FoldConstants<'a> {
         match (left_bigint, right_bigint, left_num, right_num) {
             // Next, try to evaluate based on the value of the node. Try comparing as BigInts first.
             (Some(l_big), Some(r_big), _, _) => {
-                return Tri::for_boolean(l_big < r_big);
+                return Tri::from(l_big < r_big);
             }
             // try comparing as Numbers.
             (_, _, Some(l_num), Some(r_num)) => match (l_num, r_num) {
                 (NumberValue::NaN, _) | (_, NumberValue::NaN) => {
-                    return Tri::for_boolean(will_negative);
+                    return Tri::from(will_negative);
                 }
-                (NumberValue::Number(l), NumberValue::Number(r)) => return Tri::for_boolean(l < r),
+                (NumberValue::Number(l), NumberValue::Number(r)) => return Tri::from(l < r),
                 _ => {}
             },
             // Finally, try comparisons between BigInt and Number.
@@ -484,7 +492,7 @@ impl<'a> FoldConstants<'a> {
         // if invert is false, then the number is on the right in tryAbstractRelationalComparison
         // if it's true, then the number is on the left
         match number_value {
-            NumberValue::NaN => Tri::for_boolean(will_negative),
+            NumberValue::NaN => Tri::from(will_negative),
             NumberValue::PositiveInfinity => Tri::True.xor(invert),
             NumberValue::NegativeInfinity => Tri::False.xor(invert),
             NumberValue::Number(num) => {
@@ -502,7 +510,7 @@ impl<'a> FoldConstants<'a> {
                             if is_exact_int64(*num) {
                                 Tri::False
                             } else {
-                                Tri::for_boolean(num.is_sign_positive()).xor(invert)
+                                Tri::from(num.is_sign_positive()).xor(invert)
                             }
                         }
                     }
@@ -534,7 +542,7 @@ impl<'a> FoldConstants<'a> {
                             return Tri::False;
                         }
 
-                        return Tri::for_boolean(l_num == r_num);
+                        return Tri::from(l_num == r_num);
                     }
 
                     Tri::Unknown
@@ -548,7 +556,7 @@ impl<'a> FoldConstants<'a> {
                             return Tri::Unknown;
                         }
 
-                        return Tri::for_boolean(left_string == right_string);
+                        return Tri::from(left_string == right_string);
                     }
 
                     if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
@@ -640,22 +648,20 @@ impl<'a> FoldConstants<'a> {
     /// Try to fold a AND / OR node.
     ///
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
-    pub fn try_fold_logical_expression(
+    pub fn try_fold_and_or(
         &self,
         logical_expr: &mut LogicalExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
-        if ctx.ancestry.parent().is_tagged_template_expression() {
-            return None;
-        }
         let op = logical_expr.operator;
-        if !matches!(op, LogicalOperator::And | LogicalOperator::Or) {
-            return None;
-        }
+        debug_assert!(matches!(op, LogicalOperator::And | LogicalOperator::Or));
 
-        if let Some(boolean_value) = ctx.get_boolean_value(&logical_expr.left) {
+        let left = &logical_expr.left;
+        let left_val = ctx.get_boolean_value(left).to_option();
+
+        if let Some(lval) = left_val {
             // Bail `0 && (module.exports = {})` for `cjs-module-lexer`.
-            if !boolean_value {
+            if !lval {
                 if let Expression::AssignmentExpression(assign_expr) = &logical_expr.right {
                     if let Some(member_expr) = assign_expr.left.as_member_expression() {
                         if member_expr.is_specific_member_access("module", "exports") {
@@ -667,11 +673,14 @@ impl<'a> FoldConstants<'a> {
 
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
-            if (boolean_value && op == LogicalOperator::Or)
-                || (!boolean_value && op == LogicalOperator::And)
-            {
+            if if lval { op == LogicalOperator::Or } else { op == LogicalOperator::And } {
                 return Some(self.ast.move_expression(&mut logical_expr.left));
-            } else if !logical_expr.left.may_have_side_effects() {
+            } else if !left.may_have_side_effects() {
+                let parent = ctx.ancestry.parent();
+                // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
+                if parent.is_tagged_template_expression() || parent.is_call_expression() {
+                    return None;
+                }
                 // (FALSE || x) => x
                 // (TRUE && x) => x
                 return Some(self.ast.move_expression(&mut logical_expr.right));
@@ -688,7 +697,7 @@ impl<'a> FoldConstants<'a> {
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
             if left_child.operator == logical_expr.operator {
-                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right);
+                let left_child_right_boolean = ctx.get_boolean_value(&left_child.right).to_option();
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
                     if !left_child.right.may_have_side_effects() {

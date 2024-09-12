@@ -27,11 +27,9 @@ fn cjs() {
 fn tagged_template() {
     test_same("(1, o.f)()");
     test_same("(1, o.f)``");
-
-    test("(true && o.f)()", "o.f()");
+    test_same("(true && o.f)()");
     test_same("(true && o.f)``");
-
-    test("(true ? o.f : false)()", "o.f()");
+    test_same("(true ? o.f : false)()");
     test_same("(true ? o.f : false)``");
 }
 
