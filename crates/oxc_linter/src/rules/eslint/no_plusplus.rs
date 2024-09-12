@@ -6,19 +6,20 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic {
-    let diagnostic =
-        OxcDiagnostic::warn(format!("Unary operator '{operator}' used.")).with_label(span);
+    let diagnostic = OxcDiagnostic::warn(format!(
+        "Unary operator '{operator}' used.",
+        operator = operator.as_str()
+    ))
+    .with_label(span);
 
     match operator {
         UpdateOperator::Increment => {
-            return diagnostic.with_help("Use the assignment operator `+=` instead.");
+            diagnostic.with_help("Use the assignment operator `+=` instead.")
         }
         UpdateOperator::Decrement => {
-            return diagnostic.with_help("Use the assignment operator `-=` instead.");
+            diagnostic.with_help("Use the assignment operator `-=` instead.")
         }
     }
-
-    diagnostic
 }
 
 #[derive(Debug, Default, Clone)]
