@@ -21,10 +21,13 @@ bb3: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "LabeledStatement(A)\nbreak <A>" ]
-    2 [ label = "unreachable" ]
-    3 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+LabeledStatement(A)
+break <A>" shape = box]
+    2 [ label = "bb2
+unreachable" shape = box]
+    3 [ label = "bb3" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     2 -> 0 [ label = "Error(Implicit)" , style = "dotted" ]
     1 -> 2 [ label = "Unreachable" , style = "dotted" ]

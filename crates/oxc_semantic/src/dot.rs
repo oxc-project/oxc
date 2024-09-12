@@ -66,10 +66,18 @@ impl DebugDot for ControlFlowGraph {
                         label
                     }
                 },
-                &|_graph, node| format!(
-                    "label = {:?} ",
-                    self.basic_blocks[*node.1].debug_dot(ctx).trim()
-                ),
+                &|_graph, node| {
+                    let basic_block_index = *node.1;
+                    let basic_block_debug_str = self.basic_blocks[*node.1].debug_dot(ctx);
+                    let trimmed_debug_str = basic_block_debug_str.trim();
+                    if trimmed_debug_str.is_empty() {
+                        format!("label = \"bb{basic_block_index}\" shape = box",)
+                    } else {
+                        format!(
+                            "label = \"bb{basic_block_index}\n{trimmed_debug_str}\" shape = box",
+                        )
+                    }
+                },
             )
         )
     }

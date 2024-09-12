@@ -28,12 +28,15 @@ bb5: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "VariableDeclaration" ]
-    2 [ label = "Condition(CallExpression(a))" ]
-    3 [ label = "" ]
-    4 [ label = "" ]
-    5 [ label = "VariableDeclaration" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+VariableDeclaration" shape = box]
+    2 [ label = "bb2
+Condition(CallExpression(a))" shape = box]
+    3 [ label = "bb3" shape = box]
+    4 [ label = "bb4" shape = box]
+    5 [ label = "bb5
+VariableDeclaration" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     2 -> 0 [ label = "Error(Implicit)" ]
     3 -> 0 [ label = "Error(Implicit)" ]

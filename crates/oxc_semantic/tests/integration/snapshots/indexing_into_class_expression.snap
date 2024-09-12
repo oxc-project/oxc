@@ -13,7 +13,9 @@ bb1: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "ExpressionStatement\nExpressionStatement" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+ExpressionStatement
+ExpressionStatement" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
 }
