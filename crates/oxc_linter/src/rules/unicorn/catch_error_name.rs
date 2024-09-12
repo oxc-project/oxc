@@ -75,7 +75,7 @@ impl Rule for CatchErrorName {
             .unwrap_or(&vec![])
             .iter()
             .map(serde_json::Value::as_str)
-            .filter(std::option::Option::is_some)
+            .filter(Option::is_some)
             .map(|x| CompactStr::from(x.unwrap()))
             .collect::<Vec<CompactStr>>();
 
