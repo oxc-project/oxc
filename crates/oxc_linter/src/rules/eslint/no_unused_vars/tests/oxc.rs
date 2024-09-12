@@ -37,6 +37,13 @@ fn test_vars_simple() {
             ",
             None,
         ),
+        (
+            "
+                const a = 0
+                obj[a]++;
+            ",
+            None,
+        ),
     ];
     let fail = vec![
         ("let a = 1", None),

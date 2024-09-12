@@ -412,6 +412,13 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 //    a = yield a // <- still considered used b/c it's propagated to the caller
                 // }
                 AstKind::YieldExpression(_) => return false,
+                AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
+                    // obj[a]++;
+                    //     ^ the reference is used as property
+                    if computed.expression.span().contains_inclusive(ref_span) {
+                        return false;
+                    }
+                }
                 _ => { /* continue up tree */ }
             }
         }
