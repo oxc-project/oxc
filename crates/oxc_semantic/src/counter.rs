@@ -30,7 +30,7 @@ impl Counts {
         counts
     }
 
-    #[cfg(debug_assertions)]
+    #[cfg_attr(not(debug_assertions), expect(dead_code))]
     pub fn assert_accurate(actual: &Self, estimated: &Self) {
         assert_eq!(actual.nodes, estimated.nodes, "nodes count mismatch");
         assert_eq!(actual.scopes, estimated.scopes, "scopes count mismatch");
