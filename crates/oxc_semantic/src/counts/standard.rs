@@ -36,29 +36,6 @@ impl Counts {
         #[allow(clippy::cast_possible_truncation)]
         let source_len = source_text.len() as u32;
 
-        #[allow(clippy::unreadable_literal)]
-        match source_len {
-            // RadixUIAdoptionSection.jsx
-            2520 => return Self { nodes: 392, scopes: 2, symbols: 11, references: 28 },
-            // antd.js
-            4120289 => {
-                return Self { nodes: 571672, scopes: 12711, symbols: 33833, references: 96414 }
-            }
-            // cal.com.tsx
-            1056294 => {
-                return Self { nodes: 153029, scopes: 2501, symbols: 5233, references: 16763 }
-            }
-            // checker.ts
-            2922154 => {
-                return Self { nodes: 303463, scopes: 10235, symbols: 15056, references: 75598 }
-            }
-            // pdf.mjs
-            567296 => {
-                return Self { nodes: 108379, scopes: 3893, symbols: 4530, references: 13578 }
-            }
-            _ => {}
-        }
-
         // Calculate maximum number of nodes, scopes, symbols and references that's possible
         // for given length of source code.
         // These will almost always be a large over-estimate, but will never be an under-estimate.
