@@ -50,6 +50,12 @@ function generateNativePackage(target) {
     os: [platform],
     cpu: [arch],
     ...libc,
+    publishConfig: {
+      executableFiles: [
+        "oxlint",
+        "oxc_language_server"
+      ]
+    }
   };
 
   const manifestPath = resolve(packageRoot, 'package.json');
