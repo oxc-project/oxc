@@ -57,6 +57,7 @@ impl Instruction {
 pub enum InstructionKind {
     Unreachable,
     Statement,
+    ImplicitReturn,
     Return(ReturnInstructionKind),
     Break(LabeledInstruction),
     Continue(LabeledInstruction),

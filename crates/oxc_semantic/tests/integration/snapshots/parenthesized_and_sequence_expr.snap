@@ -17,6 +17,7 @@ bb2: {
 
 bb3: {
 	statement
+	return
 }
 
 bb4: {
@@ -29,6 +30,7 @@ bb5: {
 
 bb6: {
 	statement
+	return
 }
 
 bb7: {
@@ -39,10 +41,10 @@ digraph {
     0 [ label = "" ]
     1 [ label = "" ]
     2 [ label = "" ]
-    3 [ label = "ExpressionStatement" ]
+    3 [ label = "ExpressionStatement\nreturn" ]
     4 [ label = "" ]
     5 [ label = "" ]
-    6 [ label = "ExpressionStatement" ]
+    6 [ label = "ExpressionStatement\nreturn" ]
     7 [ label = "" ]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Implicit)" ]

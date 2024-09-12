@@ -32,7 +32,7 @@ bb6: {
 }
 
 bb7: {
-
+	return
 }
 
 digraph {
@@ -43,7 +43,7 @@ digraph {
     4 [ label = "Condition(CallExpression(a))" ]
     5 [ label = "" ]
     6 [ label = "" ]
-    7 [ label = "" ]
+    7 [ label = "return" ]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Implicit)" ]
     1 -> 3 [ label = "NewFunction" ]

@@ -16,7 +16,7 @@ bb2: {
 }
 
 bb3: {
-
+	return
 }
 
 bb4: {
@@ -28,7 +28,7 @@ bb5: {
 }
 
 bb6: {
-
+	return
 }
 
 bb7: {
@@ -40,7 +40,7 @@ bb8: {
 }
 
 bb9: {
-
+	return
 }
 
 bb10: {
@@ -52,7 +52,7 @@ bb11: {
 }
 
 bb12: {
-
+	return
 }
 
 bb13: {
@@ -64,7 +64,7 @@ bb14: {
 }
 
 bb15: {
-
+	return
 }
 
 bb16: {
@@ -76,7 +76,7 @@ bb17: {
 }
 
 bb18: {
-
+	return
 }
 
 bb19: {
@@ -88,7 +88,7 @@ bb20: {
 }
 
 bb21: {
-
+	return
 }
 
 bb22: {
@@ -100,7 +100,7 @@ bb23: {
 }
 
 bb24: {
-
+	return
 }
 
 bb25: {
@@ -120,7 +120,7 @@ bb28: {
 }
 
 bb29: {
-
+	return
 }
 
 bb30: {
@@ -140,7 +140,7 @@ bb33: {
 }
 
 bb34: {
-
+	return
 }
 
 bb35: {
@@ -152,7 +152,7 @@ bb36: {
 }
 
 bb37: {
-
+	return
 }
 
 bb38: {
@@ -163,41 +163,41 @@ digraph {
     0 [ label = "" ]
     1 [ label = "ExpressionStatement" ]
     2 [ label = "" ]
-    3 [ label = "" ]
+    3 [ label = "return" ]
     4 [ label = "ExpressionStatement" ]
     5 [ label = "" ]
-    6 [ label = "" ]
+    6 [ label = "return" ]
     7 [ label = "" ]
     8 [ label = "" ]
-    9 [ label = "" ]
+    9 [ label = "return" ]
     10 [ label = "ExpressionStatement" ]
     11 [ label = "" ]
-    12 [ label = "" ]
+    12 [ label = "return" ]
     13 [ label = "ExpressionStatement" ]
     14 [ label = "" ]
-    15 [ label = "" ]
+    15 [ label = "return" ]
     16 [ label = "ExpressionStatement" ]
     17 [ label = "" ]
-    18 [ label = "" ]
+    18 [ label = "return" ]
     19 [ label = "ExpressionStatement" ]
     20 [ label = "" ]
-    21 [ label = "" ]
+    21 [ label = "return" ]
     22 [ label = "ExpressionStatement" ]
     23 [ label = "" ]
-    24 [ label = "" ]
+    24 [ label = "return" ]
     25 [ label = "" ]
     26 [ label = "" ]
     27 [ label = "ExpressionStatement" ]
     28 [ label = "" ]
-    29 [ label = "" ]
+    29 [ label = "return" ]
     30 [ label = "" ]
     31 [ label = "" ]
     32 [ label = "ExpressionStatement" ]
     33 [ label = "" ]
-    34 [ label = "" ]
+    34 [ label = "return" ]
     35 [ label = "ExpressionStatement" ]
     36 [ label = "" ]
-    37 [ label = "" ]
+    37 [ label = "return" ]
     38 [ label = "" ]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Implicit)" ]

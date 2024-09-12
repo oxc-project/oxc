@@ -127,6 +127,7 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
                         return (FoundReturn::No, STOP_WALKING_ON_THIS_PATH);
                     }
                     InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
+                    | InstructionKind::ImplicitReturn
                     | InstructionKind::Break(_)
                     | InstructionKind::Continue(_)
                     | InstructionKind::Iteration(_)

@@ -76,6 +76,7 @@ bb15: {
 
 bb16: {
 	statement
+	return
 }
 
 bb17: {
@@ -99,7 +100,7 @@ digraph {
     13 [ label = "unreachable" ]
     14 [ label = "" ]
     15 [ label = "ExpressionStatement\nExpressionStatement" ]
-    16 [ label = "ExpressionStatement" ]
+    16 [ label = "ExpressionStatement\nreturn" ]
     17 [ label = "" ]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Implicit)" ]

@@ -136,6 +136,7 @@ impl DebugDot for Instruction {
             InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
                 "return <implicit undefined>".to_string()
             }
+            InstructionKind::ImplicitReturn => "return".to_string(),
             InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
                 "return <value>".to_string()
             }

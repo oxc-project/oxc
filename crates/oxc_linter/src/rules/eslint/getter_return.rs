@@ -231,8 +231,10 @@ impl GetterReturn {
                                 match it.kind {
                                     // Throws are classified as returning.
                                     InstructionKind::Return(_) | InstructionKind::Throw => true,
+
                                     // Ignore irrelevant elements.
-                                    InstructionKind::Break(_)
+                                    InstructionKind::ImplicitReturn
+                                    | InstructionKind::Break(_)
                                     | InstructionKind::Continue(_)
                                     | InstructionKind::Iteration(_)
                                     | InstructionKind::Unreachable

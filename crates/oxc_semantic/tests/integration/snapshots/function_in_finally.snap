@@ -29,7 +29,7 @@ bb5: {
 }
 
 bb6: {
-
+	return
 }
 
 bb7: {
@@ -47,7 +47,7 @@ digraph {
     3 [ label = "BlockStatement\nExpressionStatement" ]
     4 [ label = "" ]
     5 [ label = "" ]
-    6 [ label = "" ]
+    6 [ label = "return" ]
     7 [ label = "ExpressionStatement" ]
     8 [ label = "" ]
     1 -> 0 [ label = "Error(Implicit)" ]

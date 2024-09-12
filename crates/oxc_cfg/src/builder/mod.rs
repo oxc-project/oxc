@@ -111,8 +111,12 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         self.push_instruction(InstructionKind::Statement, Some(stmt));
     }
 
-    pub fn push_return(&mut self, kind: ReturnInstructionKind, node: AstNodeId) {
-        self.push_instruction(InstructionKind::Return(kind), Some(node));
+    pub fn push_return(&mut self, kind: ReturnInstructionKind, node: Option<AstNodeId>) {
+        self.push_instruction(InstructionKind::Return(kind), node);
+    }
+
+    pub fn push_implicit_return(&mut self) {
+        self.push_instruction(InstructionKind::ImplicitReturn, None);
     }
 
     /// Creates and push a new `BasicBlockId` onto `self.error_path` stack.

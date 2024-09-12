@@ -70,6 +70,7 @@ impl DisplayDot for Instruction {
             InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
                 "return <implicit undefined>"
             }
+            InstructionKind::ImplicitReturn => "return",
             InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
                 "return <value>"
             }
