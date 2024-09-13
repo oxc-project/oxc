@@ -40,6 +40,7 @@ pub use crate::{
     node::{AstNode, AstNodes, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::ScopeTree,
+    stats::Stats,
     symbol::{IsGlobalReference, SymbolTable},
 };
 use class::ClassTable;
@@ -160,6 +161,17 @@ impl<'a> Semantic<'a> {
     /// [`SemanticBuilder::with_cfg`].
     pub fn cfg(&self) -> Option<&ControlFlowGraph> {
         self.cfg.as_ref()
+    }
+
+    /// Get statistics about data held in `Semantic`.
+    pub fn stats(&self) -> Stats {
+        #[allow(clippy::cast_possible_truncation)]
+        Stats::new(
+            self.nodes.len() as u32,
+            self.scopes.len() as u32,
+            self.symbols.len() as u32,
+            self.symbols.references.len() as u32,
+        )
     }
 
     pub fn is_unresolved_reference(&self, node_id: NodeId) -> bool {

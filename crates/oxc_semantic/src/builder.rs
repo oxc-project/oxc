@@ -244,12 +244,12 @@ impl<'a> SemanticBuilder<'a> {
             #[cfg(debug_assertions)]
             {
                 #[allow(clippy::cast_possible_truncation)]
-                let actual_stats = Stats {
-                    nodes: self.nodes.len() as u32,
-                    scopes: self.scope.len() as u32,
-                    symbols: self.symbols.len() as u32,
-                    references: self.symbols.references.len() as u32,
-                };
+                let actual_stats = Stats::new(
+                    self.nodes.len() as u32,
+                    self.scope.len() as u32,
+                    self.symbols.len() as u32,
+                    self.symbols.references.len() as u32,
+                );
                 Stats::assert_accurate(&actual_stats, &stats);
             }
 
