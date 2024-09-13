@@ -35,7 +35,7 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 ///
 /// [`Semantic`]: super::Semantic
 /// [`Semantic::stats`]: super::Semantic::stats
-#[derive(Default, Debug)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Stats {
     pub nodes: u32,
     pub scopes: u32,
@@ -70,7 +70,7 @@ impl Stats {
     ///
     /// # Panics
     /// Panics if stats are not accurate.
-    pub fn assert_accurate(actual: &Self, estimated: &Self) {
+    pub fn assert_accurate(actual: Self, estimated: Self) {
         assert_eq!(actual.nodes, estimated.nodes, "nodes count mismatch");
         assert_eq!(actual.scopes, estimated.scopes, "scopes count mismatch");
         assert_eq!(actual.references, estimated.references, "references count mismatch");

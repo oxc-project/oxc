@@ -250,7 +250,7 @@ impl<'a> SemanticBuilder<'a> {
                     self.symbols.len() as u32,
                     self.symbols.references.len() as u32,
                 );
-                Stats::assert_accurate(&actual_stats, &stats);
+                Stats::assert_accurate(actual_stats, stats);
             }
 
             // Checking syntax error on module record requires scope information from the previous AST pass
