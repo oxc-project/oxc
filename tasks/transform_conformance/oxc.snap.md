@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 41/52
+Passed: 42/53
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
@@ -167,7 +167,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (27/30)
+# babel-plugin-transform-react-jsx (28/31)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 

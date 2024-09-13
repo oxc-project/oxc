@@ -507,6 +507,7 @@ impl<'a> ReactJsx<'a> {
         let mut need_jsxs = false;
 
         let children = e.children();
+        let mut children_len = children.len();
 
         // Append children to object properties in automatic mode
         if is_automatic {
@@ -515,7 +516,7 @@ impl<'a> ReactJsx<'a> {
                 children.iter().filter_map(|child| self.transform_jsx_child(child, ctx)),
                 allocator,
             );
-            let children_len = children.len();
+            children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
                     children.pop().unwrap()
@@ -603,7 +604,7 @@ impl<'a> ReactJsx<'a> {
             if is_development {
                 arguments.push(Argument::from(self.ctx.ast.expression_boolean_literal(
                     SPAN,
-                    if is_fragment { false } else { children.len() > 1 },
+                    if is_fragment { false } else { children_len > 1 },
                 )));
             }
 
