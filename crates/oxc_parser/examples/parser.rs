@@ -27,12 +27,10 @@ fn main() -> Result<(), String> {
     println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
 
     println!("Comments:");
-    let comments = ret
-        .trivias
-        .comments()
-        .map(|comment| comment.span.source_text(&source_text))
-        .collect::<Vec<_>>();
-    println!("{comments:?}");
+    for comment in ret.trivias.comments() {
+        let s = comment.real_span().source_text(&source_text);
+        println!("{s}");
+    }
 
     if ret.errors.is_empty() {
         println!("Parsed Successfully.");

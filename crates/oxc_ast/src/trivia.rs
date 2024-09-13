@@ -23,6 +23,10 @@ impl Comment {
         Self { kind, span }
     }
 
+    pub fn real_span(&self) -> Span {
+        Span::new(self.real_span_start(), self.real_span_end())
+    }
+
     pub fn real_span_end(&self) -> u32 {
         match self.kind {
             CommentKind::SingleLine => self.span.end,
