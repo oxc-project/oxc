@@ -1,6 +1,6 @@
 Original   | Minified   | esbuild    | Gzip       | esbuild   
 
-72.14 kB   | 24.38 kB   | 23.70 kB   | 8.73 kB    | 8.54 kB    | react.development.js
+72.14 kB   | 24.37 kB   | 23.70 kB   | 8.73 kB    | 8.54 kB    | react.development.js
 
 173.90 kB  | 61.83 kB   | 59.82 kB   | 19.59 kB   | 19.33 kB   | moment.js 
 
@@ -18,9 +18,9 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 2.14 MB    | 751.46 kB  | 724.14 kB  | 182.74 kB  | 181.07 kB  | victory.js
 
-3.20 MB    | 1.03 MB    | 1.01 MB    | 332.61 kB  | 331.56 kB  | echarts.js
+3.20 MB    | 1.03 MB    | 1.01 MB    | 332.60 kB  | 331.56 kB  | echarts.js
 
-6.69 MB    | 2.42 MB    | 2.31 MB    | 503.23 kB  | 488.28 kB  | antd.js   
+6.69 MB    | 2.42 MB    | 2.31 MB    | 503.22 kB  | 488.28 kB  | antd.js   
 
 10.95 MB   | 3.60 MB    | 3.49 MB    | 915.21 kB  | 915.50 kB  | typescript.js
 

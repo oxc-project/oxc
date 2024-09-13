@@ -39,5 +39,6 @@ num-traits = { workspace = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
+cow-utils = { workspace = true }
 insta = { workspace = true }
 pico-args = { workspace = true }

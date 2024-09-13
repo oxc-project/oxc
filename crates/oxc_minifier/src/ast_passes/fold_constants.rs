@@ -1,11 +1,7 @@
-//! Constant Folding
-//!
-//! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-
 use std::{cmp::Ordering, mem};
 
 use num_bigint::BigInt;
-use oxc_ast::{ast::*, AstBuilder, Visit};
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     number::NumberBase,
@@ -14,13 +10,15 @@ use oxc_syntax::{
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{
-    keep_var::KeepVar,
     node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue},
     tri::Tri,
     ty::Ty,
     CompressorPass,
 };
 
+/// Constant Folding
+///
+/// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 pub struct FoldConstants<'a> {
     ast: AstBuilder<'a>,
     evaluate: bool,
@@ -29,10 +27,6 @@ pub struct FoldConstants<'a> {
 impl<'a> CompressorPass<'a> for FoldConstants<'a> {}
 
 impl<'a> Traverse<'a> for FoldConstants<'a> {
-    fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.fold_condition(stmt, ctx);
-    }
-
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.fold_expression(expr, ctx);
     }
@@ -58,8 +52,6 @@ impl<'a> FoldConstants<'a> {
             {
                 self.try_fold_and_or(e, ctx)
             }
-            // TODO: move to `PeepholeMinimizeConditions`
-            Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
             Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
             _ => None,
         } {
@@ -105,65 +97,6 @@ impl<'a> FoldConstants<'a> {
             BinaryOperator::Addition if self.evaluate => {
                 self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right, ctx)
             }
-            _ => None,
-        }
-    }
-
-    fn fold_expression_and_get_boolean_value(
-        &self,
-        expr: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<bool> {
-        self.fold_expression(expr, ctx);
-        ctx.get_boolean_value(expr).to_option()
-    }
-
-    fn fold_if_statement(&self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Statement::IfStatement(if_stmt) = stmt else { return };
-
-        // Descend and remove `else` blocks first.
-        if let Some(alternate) = &mut if_stmt.alternate {
-            self.fold_if_statement(alternate, ctx);
-            if matches!(alternate, Statement::EmptyStatement(_)) {
-                if_stmt.alternate = None;
-            }
-        }
-
-        match self.fold_expression_and_get_boolean_value(&mut if_stmt.test, ctx) {
-            Some(true) => {
-                *stmt = self.ast.move_statement(&mut if_stmt.consequent);
-            }
-            Some(false) => {
-                *stmt = if let Some(alternate) = &mut if_stmt.alternate {
-                    self.ast.move_statement(alternate)
-                } else {
-                    // Keep hoisted `vars` from the consequent block.
-                    let mut keep_var = KeepVar::new(self.ast);
-                    keep_var.visit_statement(&if_stmt.consequent);
-                    keep_var
-                        .get_variable_declaration_statement()
-                        .unwrap_or_else(|| self.ast.statement_empty(SPAN))
-                };
-            }
-            None => {}
-        }
-    }
-
-    fn try_fold_conditional_expression(
-        &self,
-        expr: &mut ConditionalExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Expression<'a>> {
-        match self.fold_expression_and_get_boolean_value(&mut expr.test, ctx) {
-            Some(true) => {
-                // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
-                let parent = ctx.ancestry.parent();
-                if parent.is_tagged_template_expression() || parent.is_call_expression() {
-                    return None;
-                }
-                Some(self.ast.move_expression(&mut expr.consequent))
-            }
-            Some(false) => Some(self.ast.move_expression(&mut expr.alternate)),
             _ => None,
         }
     }
@@ -721,78 +654,5 @@ impl<'a> FoldConstants<'a> {
             }
         }
         None
-    }
-
-    pub(crate) fn fold_condition<'b>(
-        &self,
-        stmt: &'b mut Statement<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        match stmt {
-            Statement::WhileStatement(while_stmt) => {
-                let minimized_expr = self.fold_expression_in_condition(&mut while_stmt.test);
-
-                if let Some(min_expr) = minimized_expr {
-                    while_stmt.test = min_expr;
-                }
-            }
-            Statement::ForStatement(for_stmt) => {
-                let test_expr = for_stmt.test.as_mut();
-
-                if let Some(test_expr) = test_expr {
-                    let minimized_expr = self.fold_expression_in_condition(test_expr);
-
-                    if let Some(min_expr) = minimized_expr {
-                        for_stmt.test = Some(min_expr);
-                    }
-                }
-            }
-            Statement::IfStatement(_) => {
-                self.fold_if_statement(stmt, ctx);
-            }
-            _ => {}
-        };
-    }
-
-    fn fold_expression_in_condition(&self, expr: &mut Expression<'a>) -> Option<Expression<'a>> {
-        let folded_expr = match expr {
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-                UnaryOperator::LogicalNot => {
-                    let should_fold = Self::try_minimize_not(&mut unary_expr.argument);
-
-                    if should_fold {
-                        Some(self.ast.move_expression(&mut unary_expr.argument))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            _ => None,
-        };
-
-        folded_expr
-    }
-
-    /// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java#L401-L435)
-    fn try_minimize_not(expr: &mut Expression<'a>) -> bool {
-        let span = &mut expr.span();
-
-        match expr {
-            Expression::BinaryExpression(binary_expr) => {
-                let new_op = binary_expr.operator.equality_inverse_operator();
-
-                match new_op {
-                    Some(new_op) => {
-                        binary_expr.operator = new_op;
-                        binary_expr.span = *span;
-
-                        true
-                    }
-                    _ => false,
-                }
-            }
-            _ => false,
-        }
     }
 }
