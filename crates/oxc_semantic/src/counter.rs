@@ -4,8 +4,6 @@
 
 use std::cell::Cell;
 
-use more_asserts::assert_le;
-
 use oxc_ast::{
     ast::{
         BindingIdentifier, IdentifierReference, Program, TSEnumMemberName, TSModuleDeclarationName,
@@ -41,7 +39,12 @@ impl Counts {
         // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
         // It's allocating with *not enough* capacity which is costly, as then the `Vec`
         // will grow and reallocate.
-        assert_le!(actual.symbols, estimated.symbols, "symbols count mismatch");
+        assert!(
+            actual.symbols <= estimated.symbols,
+            "symbols count mismatch {} <= {}",
+            actual.symbols,
+            estimated.symbols
+        );
     }
 }
 
