@@ -9,6 +9,36 @@ use oxc_ast::{
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
+/// Macro to assert that `left >= right`
+macro_rules! assert_ge {
+    ($left:expr, $right:expr, $($msg_args:tt)+) => {
+        match (&$left, &$right) {
+            (left, right) => if !(left >= right) {
+                panic!(
+                    "assertion failed: `(left >= right)`\n  left: `{:?}`,\n right: `{:?}`\n  {}",
+                    left, right,
+                    ::std::format_args!($($msg_args)+),
+                );
+            }
+        }
+    };
+
+    ($left:expr, $right:expr) => {
+        match (&$left, &$right) {
+            (left, right) => if !(left >= right) {
+                panic!(
+                    "assertion failed: `(left >= right)`\n  left: `{:?}`,\n right: `{:?}`",
+                    left, right,
+                );
+            }
+        }
+    };
+
+    ($lhs:expr, $rhs:expr,) => {
+        assert_le!($lhs, $rhs);
+    };
+}
+
 /// Statistics about data held in [`Semantic`].
 ///
 /// Comprises number of AST nodes, scopes, symbols, and references.
@@ -66,26 +96,21 @@ impl Stats {
         counter.stats
     }
 
-    /// Check that estimated [`Stats`] match actual.
+    /// Assert that estimated [`Stats`] match actual.
     ///
     /// # Panics
     /// Panics if stats are not accurate.
-    pub fn assert_accurate(actual: Self, estimated: Self) {
-        assert_eq!(actual.nodes, estimated.nodes, "nodes count mismatch");
-        assert_eq!(actual.scopes, estimated.scopes, "scopes count mismatch");
-        assert_eq!(actual.references, estimated.references, "references count mismatch");
-        // `Stats` may overestimate number of symbols, because multiple `BindingIdentifier`s
+    pub fn assert_accurate(self, actual: Self) {
+        assert_eq!(self.nodes, actual.nodes, "nodes count mismatch");
+        assert_eq!(self.scopes, actual.scopes, "scopes count mismatch");
+        assert_eq!(self.references, actual.references, "references count mismatch");
+        // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
         // can result in only a single symbol.
         // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
         // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
         // It's allocating with *not enough* capacity which is costly, as then the `Vec`
         // will grow and reallocate.
-        assert!(
-            actual.symbols <= estimated.symbols,
-            "symbols count mismatch {} <= {}",
-            actual.symbols,
-            estimated.symbols
-        );
+        assert_ge!(self.symbols, actual.symbols, "symbols count mismatch");
     }
 }
 
