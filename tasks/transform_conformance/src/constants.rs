@@ -84,7 +84,6 @@ pub(crate) const SKIP_TESTS: &[&str] = &[
     // Report error for deprecate option or oxc doesn’t follow error message
     "typescript/test/fixtures/opts/allowDeclareFields/input.ts",
     "react-jsx/test/fixtures/react-automatic/should-throw-when-filter-is-specified/input.js",
-    "react-jsx-development/test/fixtures/cross-platform/source-and-self-defined/input.js",
     // Not standard JavaScript or TypeScript syntax
     "typescript/test/fixtures/exports/export-type-star-from/input.ts",
     // The output is valid and semantically correct

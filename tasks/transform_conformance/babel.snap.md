@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 329/1021
+Passed: 330/1022
 
 # All Passed:
 * babel-plugin-transform-optional-catch-binding
@@ -3570,7 +3570,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx-development (7/10)
+# babel-plugin-transform-react-jsx-development (8/11)
 * cross-platform/disallow-__self-as-jsx-attribute/input.js
   ! Duplicate __self prop found.
    ,-[tasks/coverage/babel/packages/babel-plugin-transform-react-jsx-development/test/fixtures/cross-platform/disallow-__self-as-jsx-attribute/input.js:1:14]
