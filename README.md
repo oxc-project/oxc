@@ -28,7 +28,7 @@ See more at [oxc.rs](https://oxc.rs)!
 
 - [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transformation.
 - [Nova engine](https://trynova.dev) uses the [oxc][docs-oxc-url] crate for parsing.
-- [Rolldown][rolldown], [Biome][biome] and [swc-node](https://github.com/swc-project/swc-node) uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- [Rolldown][rolldown], [Mako][mako], [Biome][biome] and [swc-node](https://github.com/swc-project/swc-node) uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
 - Projects and companies like [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json), [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint), ByteDance and Shopee uses oxlint for linting.
 - ...[and many more](https://oxc.rs/docs/guide/projects.html)
 
@@ -321,3 +321,4 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [vscode]: https://github.com/microsoft/vscode
 [@typescript-eslint]: https://typescript-eslint.io
 [rolldown]: https://rolldown.rs
+[mako]: https://makojs.dev
