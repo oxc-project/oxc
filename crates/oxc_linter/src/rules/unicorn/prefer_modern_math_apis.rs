@@ -8,7 +8,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
+    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, Node,
 };
 
 fn prefer_math_abs(span: Span) -> OxcDiagnostic {
@@ -59,7 +59,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferModernMathApis {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // there are two main cases to check:
         // Bin expression:
         //     `Math.log(x) * Math.LOG10E`

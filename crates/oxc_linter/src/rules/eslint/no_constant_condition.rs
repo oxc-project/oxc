@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, Node};
 
 fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant condition")
@@ -78,7 +78,7 @@ impl Rule for NoConstantCondition {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::IfStatement(if_stmt) => {
                 if if_stmt.test.is_constant(true, ctx) {

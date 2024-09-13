@@ -2,7 +2,7 @@
 //! consider variables ignored by name pattern, but by where they are declared.
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_semantic::{AstNode, NodeId, Semantic};
+use oxc_semantic::{Node, NodeId, Semantic};
 use oxc_span::GetSpan;
 
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
@@ -244,7 +244,7 @@ impl NoUnusedVars {
         param: &FormalParameter<'a>,
         params_id: NodeId,
     ) -> bool {
-        let mut parents_iter = semantic.nodes().iter_parents(params_id).skip(1).map(AstNode::kind);
+        let mut parents_iter = semantic.nodes().iter_parents(params_id).skip(1).map(Node::kind);
 
         // in function declarations, the parent immediately before the
         // FormalParameters is a TSDeclareBlock

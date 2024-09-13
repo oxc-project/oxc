@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn require_yield_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("This generator function does not have 'yield'").with_label(span)
@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireYield {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::Function(func) = node.kind() {
             if !node.flags().has_yield()
                 && func.generator

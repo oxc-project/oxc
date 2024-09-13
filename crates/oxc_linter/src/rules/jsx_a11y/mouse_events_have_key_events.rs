@@ -8,7 +8,7 @@ use crate::{
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, get_prop_value, has_jsx_prop},
-    AstNode,
+    Node,
 };
 
 fn miss_on_focus(span: Span, attr_name: &str) -> OxcDiagnostic {
@@ -97,7 +97,7 @@ impl Rule for MouseEventsHaveKeyEvents {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_el) = node.kind() else {
             return;
         };

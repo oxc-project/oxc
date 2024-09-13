@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn needs_more_children(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span)
@@ -63,7 +63,7 @@ impl Rule for JsxNoUselessFragment {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 if !is_jsx_fragment(&jsx_elem.opening_element) {
@@ -84,7 +84,7 @@ impl Rule for JsxNoUselessFragment {
 }
 
 impl JsxNoUselessFragment {
-    fn check_element(&self, node: &AstNode, elem: &JSXElement, ctx: &LintContext) {
+    fn check_element(&self, node: &Node, elem: &JSXElement, ctx: &LintContext) {
         if jsx_elem_has_key_attr(elem) {
             return;
         }
@@ -103,7 +103,7 @@ impl JsxNoUselessFragment {
         }
     }
 
-    fn check_fragment(&self, node: &AstNode, elem: &JSXFragment, ctx: &LintContext) {
+    fn check_fragment(&self, node: &Node, elem: &JSXFragment, ctx: &LintContext) {
         if has_less_than_two_children(&elem.children)
             && !is_fragment_with_only_text_and_is_not_child(node.id(), &elem.children, ctx)
             && !(self.allow_expressions && is_fragment_with_single_expression(&elem.children))
@@ -147,7 +147,7 @@ fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
     true
 }
 
-fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_child_of_html_element(node: &Node, ctx: &LintContext) -> bool {
     if let Some(AstKind::JSXElement(elem)) = ctx.nodes().parent_kind(node.id()) {
         if is_html_element(&elem.opening_element.name) {
             return true;

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_same_reference, Node};
 
 fn double_comparisons_diagnostic(span: Span, operator: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected double comparisons.")
@@ -47,7 +47,7 @@ declare_oxc_lint!(
 
 #[allow(clippy::similar_names)]
 impl Rule for DoubleComparisons {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(logical_expr) = node.kind() else {
             return;
         };

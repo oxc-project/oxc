@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_empty_stmt, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_empty_stmt, Node};
 
 fn no_useless_switch_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Useless case in switch statement.")
@@ -50,7 +50,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessSwitchCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::SwitchStatement(switch_statement) = node.kind() else {
             return;
         };

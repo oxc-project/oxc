@@ -1,7 +1,7 @@
 use oxc_ast::{ast::CallExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeId};
+use oxc_semantic::{Node, ScopeId};
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
@@ -140,7 +140,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferHooksInOrder {
     fn run_once(&self, ctx: &LintContext) {
-        let mut hook_groups: FxHashMap<ScopeId, Vec<AstNode>> = FxHashMap::default();
+        let mut hook_groups: FxHashMap<ScopeId, Vec<Node>> = FxHashMap::default();
 
         for node in ctx.nodes().iter() {
             hook_groups.entry(node.scope_id()).or_default().push(*node);

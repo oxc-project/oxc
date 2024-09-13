@@ -11,7 +11,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
-    AstNode,
+    Node,
 };
 
 fn require_render_return_diagnostic(span: Span) -> OxcDiagnostic {
@@ -49,7 +49,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireRenderReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
             return;
         }
@@ -94,7 +94,7 @@ enum FoundReturn {
 const KEEP_WALKING_ON_THIS_PATH: bool = true;
 const STOP_WALKING_ON_THIS_PATH: bool = false;
 
-fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
+fn contains_return_statement(node: &Node, ctx: &LintContext) -> bool {
     let cfg = ctx.cfg();
     let state = neighbors_filtered_by_edge_weight(
         cfg.graph(),
@@ -144,7 +144,7 @@ fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
 
 const RENDER_METHOD_NAME: &str = "render";
 
-fn is_render_fn(node: &AstNode) -> bool {
+fn is_render_fn(node: &Node) -> bool {
     match node.kind() {
         AstKind::MethodDefinition(method) => {
             if method.key.is_specific_static_name(RENDER_METHOD_NAME) {
@@ -170,7 +170,7 @@ fn is_render_fn(node: &AstNode) -> bool {
     false
 }
 
-fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_in_es5_component<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     let Some(ancestors_0) = ctx.nodes().parent_node(node.id()) else { return false };
     if !matches!(ancestors_0.kind(), AstKind::ObjectExpression(_)) {
         return false;
@@ -186,7 +186,7 @@ fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     is_es5_component(ancestors_2)
 }
 
-fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_in_es6_component<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
     if !matches!(parent.kind(), AstKind::ClassBody(_)) {
         return false;

@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_title_in_document_head_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `<title>` with `Head` component from `next/document`.")
@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTitleInDocumentHead {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
             node.kind()
         else {

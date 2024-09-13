@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_useless_escape_diagnostic(escape_char: char, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unnecessary escape character {escape_char:?}")).with_label(span)
@@ -69,7 +69,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(literal)
                 if literal.regex.pattern.len() + literal.regex.flags.iter().count()

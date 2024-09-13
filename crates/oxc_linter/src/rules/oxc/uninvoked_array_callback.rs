@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn uninvoked_array_callback_diagnostic(cb_span: Span, arr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Uninvoked array callback")
@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for UninvokedArrayCallback {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(new_expr) = node.kind() else {
             return;
         };

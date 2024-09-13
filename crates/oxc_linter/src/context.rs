@@ -3,7 +3,7 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
-use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
+use oxc_semantic::{JSDocFinder, Nodes, ScopeTree, Semantic, SymbolTable};
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
@@ -349,7 +349,7 @@ impl<'a> LintContext<'a> {
     /// AST nodes
     ///
     /// Shorthand for `self.semantic().nodes()`.
-    pub fn nodes(&self) -> &AstNodes<'a> {
+    pub fn nodes(&self) -> &Nodes<'a> {
         self.semantic().nodes()
     }
 

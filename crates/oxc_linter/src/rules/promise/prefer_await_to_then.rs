@@ -7,7 +7,7 @@ fn prefer_wait_to_then_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer await to then()/catch()/finally()").with_label(span)
 }
 
-use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_promise, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferAwaitToThen;
@@ -29,12 +29,12 @@ declare_oxc_lint!(
     style,
 );
 
-fn is_inside_yield_or_await(node: &AstNode) -> bool {
+fn is_inside_yield_or_await(node: &Node) -> bool {
     matches!(node.kind(), AstKind::YieldExpression(_) | AstKind::AwaitExpression(_))
 }
 
 impl Rule for PreferAwaitToThen {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

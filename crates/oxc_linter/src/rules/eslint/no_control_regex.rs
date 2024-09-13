@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::{Matches, Regex};
 
-use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, Node};
 
 fn no_control_regex_diagnostic(regex: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected control character(s)")
@@ -63,7 +63,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoControlRegex {
-    fn run<'a>(&self, node: &AstNode<'a>, context: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, context: &LintContext<'a>) {
         if let Some(RegexPatternData { pattern, flags, span }) = regex_pattern(node) {
             let mut violations: Vec<&str> = Vec::new();
             let pattern = pattern.as_ref();
@@ -177,7 +177,7 @@ struct RegexPatternData<'a> {
 /// * new RegExp("foo") -> foo
 ///
 /// note: [`RegExpFlags`] and [`Span`]s are both tiny and cloneable.
-fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
+fn regex_pattern<'a>(node: &Node<'a>) -> Option<RegexPatternData<'a>> {
     let kind = node.kind();
     match kind {
         // regex literal

@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, utils::get_parent_component, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_parent_component, Node};
 
 fn this_refs_deprecated(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using this.refs is deprecated.")
@@ -106,7 +106,7 @@ impl Rule for NoStringRefs {
         Self { no_template_literals }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 if is_literal_ref_attribute(attr, self.no_template_literals) {

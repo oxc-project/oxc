@@ -8,7 +8,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
-    AstNode,
+    Node,
 };
 
 fn no_defaults_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
@@ -64,7 +64,7 @@ impl Rule for NoDefaults {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if !is_function_node(node) {
             return;
         }

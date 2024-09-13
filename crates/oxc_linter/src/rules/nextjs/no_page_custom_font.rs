@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn not_added_in_document(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged.")
@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoPageCustomFont {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(element) = node.kind() else {
             return;
         };
@@ -76,7 +76,7 @@ impl Rule for NoPageCustomFont {
     }
 }
 
-fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+fn is_inside_export_default(node: &Node<'_>, ctx: &LintContext<'_>) -> bool {
     let mut is_inside_export_default = false;
     for parent_node in ctx.nodes().iter_parents(node.id()) {
         // export default function/class

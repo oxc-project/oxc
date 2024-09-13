@@ -9,7 +9,7 @@ use crate::{
     globals::RESERVED_HTML_TAG,
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name},
-    AstNode, LintContext,
+    LintContext, Node,
 };
 
 declare_oxc_lint! {
@@ -47,7 +47,7 @@ fn aria_unsupported_elements_diagnostic(span: Span, x1: &str) -> OxcDiagnostic {
 }
 
 impl Rule for AriaUnsupportedElements {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let Some(el_type) = get_element_type(ctx, jsx_el) else {
                 return;

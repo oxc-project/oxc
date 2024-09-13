@@ -12,7 +12,7 @@ use oxc_cfg::{
 };
 use oxc_syntax::node::NodeId;
 
-use crate::{AstNode, AstNodes};
+use crate::{Node, Nodes};
 
 pub trait DisplayDot {
     fn display_dot(&self) -> String;
@@ -23,7 +23,7 @@ pub trait DebugDot {
 }
 
 #[derive(Clone, Copy)]
-pub struct DebugDotContext<'a, 'b>(&'b AstNodes<'a>);
+pub struct DebugDotContext<'a, 'b>(&'b Nodes<'a>);
 
 impl<'a, 'b> DebugDotContext<'a, 'b> {
     fn debug_ast_kind(self, id: NodeId) -> String {
@@ -42,8 +42,8 @@ impl<'a, 'b> DebugDotContext<'a, 'b> {
     }
 }
 
-impl<'a, 'b> From<&'b AstNodes<'a>> for DebugDotContext<'a, 'b> {
-    fn from(value: &'b AstNodes<'a>) -> Self {
+impl<'a, 'b> From<&'b Nodes<'a>> for DebugDotContext<'a, 'b> {
+    fn from(value: &'b Nodes<'a>) -> Self {
         Self(value)
     }
 }
@@ -118,7 +118,7 @@ impl DebugDot for Instruction {
             }
             InstructionKind::Break(LabeledInstruction::Labeled) => {
                 let Some(AstKind::BreakStatement(BreakStatement { label: Some(label), .. })) =
-                    self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
+                    self.node_id.map(|id| ctx.0.get_node(id)).map(Node::kind)
                 else {
                     unreachable!(
                         "Expected a label node to be associated with an labeled break instruction. {:?}",
@@ -131,7 +131,7 @@ impl DebugDot for Instruction {
             InstructionKind::Continue(LabeledInstruction::Labeled) => {
                 let Some(AstKind::ContinueStatement(ContinueStatement {
                     label: Some(label), ..
-                })) = self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
+                })) = self.node_id.map(|id| ctx.0.get_node(id)).map(Node::kind)
                 else {
                     unreachable!(
                         "Expected a label node to be associated with an labeled continue instruction. {:?}",

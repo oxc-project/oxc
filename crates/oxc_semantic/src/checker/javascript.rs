@@ -15,7 +15,7 @@ use oxc_syntax::{
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
+use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, Node};
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
@@ -128,7 +128,7 @@ pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
     "yield",
 };
 
-pub fn check_identifier<'a>(name: &str, span: Span, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_identifier<'a>(name: &str, span: Span, node: &Node<'a>, ctx: &SemanticBuilder<'a>) {
     // ts module block allows revered keywords
     if ctx.current_scope_flags().is_ts_module_block() {
         return;
@@ -163,7 +163,7 @@ fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
 
 pub fn check_binding_identifier<'a>(
     ident: &BindingIdentifier,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     let strict_mode = ctx.strict_mode();
@@ -195,7 +195,7 @@ fn unexpected_arguments(x0: &str, span1: Span) -> OxcDiagnostic {
 
 pub fn check_identifier_reference<'a>(
     ident: &IdentifierReference,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     //  Static Semantics: AssignmentTargetType
@@ -384,7 +384,7 @@ fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
 
 pub fn check_module_declaration<'a>(
     decl: &ModuleDeclaration,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
@@ -441,7 +441,7 @@ fn import_meta_property(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("The only valid meta property for import is import.meta").with_label(span)
 }
 
-pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_meta_property<'a>(prop: &MetaProperty, node: &Node<'a>, ctx: &SemanticBuilder<'a>) {
     match prop.meta.name.as_str() {
         "import" => {
             if prop.property.name == "meta" {
@@ -567,7 +567,7 @@ fn invalid_break(span: Span) -> OxcDiagnostic {
 
 pub fn check_break_statement<'a>(
     stmt: &BreakStatement,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
@@ -613,7 +613,7 @@ fn invalid_continue(span: Span) -> OxcDiagnostic {
 
 pub fn check_continue_statement<'a>(
     stmt: &ContinueStatement,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
@@ -667,7 +667,7 @@ fn label_redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
 
 pub fn check_labeled_statement<'a>(
     stmt: &LabeledStatement,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
@@ -702,7 +702,7 @@ fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnost
 pub fn check_for_statement_left<'a>(
     left: &ForStatementLeft,
     is_for_in: bool,
-    _node: &AstNode<'a>,
+    _node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     let ForStatementLeft::VariableDeclaration(decl) = left else { return };
@@ -742,7 +742,7 @@ fn require_class_name(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A class name is required.").with_label(span)
 }
 
-pub fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_class(class: &Class, node: &Node<'_>, ctx: &SemanticBuilder<'_>) {
     check_private_identifier(ctx);
 
     if class.is_declaration()
@@ -832,7 +832,7 @@ fn unexpected_super_reference(span: Span) -> OxcDiagnostic {
 .with_label(span)
 }
 
-pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_super<'a>(sup: &Super, node: &Node<'a>, ctx: &SemanticBuilder<'a>) {
     let super_call_span = match ctx.nodes.parent_kind(node.id()) {
         Some(AstKind::CallExpression(expr)) => Some(expr.span),
         Some(AstKind::NewExpression(expr)) => Some(expr.span),
@@ -945,7 +945,7 @@ fn a_rest_parameter_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
 
 pub fn check_formal_parameters<'a>(
     params: &FormalParameters,
-    _node: &AstNode<'a>,
+    _node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     if let Some(rest) = &params.rest {
@@ -1072,7 +1072,7 @@ fn delete_private_field(span: Span) -> OxcDiagnostic {
 
 pub fn check_unary_expression<'a>(
     unary_expr: &'a UnaryExpression,
-    _node: &AstNode<'a>,
+    _node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
@@ -1089,7 +1089,7 @@ pub fn check_unary_expression<'a>(
     }
 }
 
-fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) -> bool {
+fn is_in_formal_parameters<'a>(node: &Node<'a>, ctx: &SemanticBuilder<'a>) -> bool {
     for node_id in ctx.nodes.ancestors(node.id()).skip(1) {
         match ctx.nodes.kind(node_id) {
             AstKind::FormalParameter(_) => return true,
@@ -1109,7 +1109,7 @@ fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
 
 pub fn check_await_expression<'a>(
     expr: &AwaitExpression,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     if is_in_formal_parameters(node, ctx) {
@@ -1124,7 +1124,7 @@ pub fn check_await_expression<'a>(
 
 pub fn check_yield_expression<'a>(
     expr: &YieldExpression,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
     if is_in_formal_parameters(node, ctx) {

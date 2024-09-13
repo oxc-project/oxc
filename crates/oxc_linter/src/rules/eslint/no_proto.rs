@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_proto_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The '__proto__' property is deprecated")
@@ -38,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoProto {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::MemberExpression(member_expression) = node.kind() else {
             return;
         };

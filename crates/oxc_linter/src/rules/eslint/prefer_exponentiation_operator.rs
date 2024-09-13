@@ -4,8 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule,
-    AstNode,
+    ast_util::is_method_call, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, Node,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -35,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferExponentiationOperator {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

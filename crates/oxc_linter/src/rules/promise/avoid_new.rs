@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn avoid_new_promise_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid creating new promises").with_label(span)
@@ -30,7 +30,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for AvoidNew {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };

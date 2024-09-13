@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn bad_comparison_sequence_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad comparison sequence").with_help("Comparison result should not be used directly as an operand of another comparison. If you need to compare three or more operands, you should connect each comparison operation with logical AND operator (`&&`)").with_label(span)
@@ -34,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadComparisonSequence {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };
@@ -44,10 +44,7 @@ impl Rule for BadComparisonSequence {
     }
 }
 
-fn has_no_bad_comparison_in_parents<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> bool {
+fn has_no_bad_comparison_in_parents<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
         let kind = ctx.nodes().kind(node_id);
 

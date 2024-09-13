@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("ES2015 module syntax is preferred over namespaces.")
@@ -57,7 +57,7 @@ impl Rule for NoNamespace {
     }
 
     #[allow(clippy::cast_possible_truncation)]
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return;
         };
@@ -104,7 +104,7 @@ impl Rule for NoNamespace {
     }
 }
 
-fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_declaration(node: &Node, ctx: &LintContext) -> bool {
     ctx.nodes().iter_parents(node.id()).any(|node| {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return false;

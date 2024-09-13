@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, get_jsx_attribute_name, has_jsx_prop, is_react_component_name},
-    AstNode,
+    Node,
 };
 
 fn label_has_associated_control_diagnostic(span: Span) -> OxcDiagnostic {
@@ -201,7 +201,7 @@ impl Rule for LabelHasAssociatedControl {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXElement(element) = node.kind() else {
             return;
         };

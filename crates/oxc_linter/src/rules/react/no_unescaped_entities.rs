@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, Map};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_unescaped_entities_diagnostic(span: Span, unescaped: char, escaped: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{unescaped}` can be escaped with {escaped}")).with_label(span)
@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnescapedEntities {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXText(jsx_text) = node.kind() {
             let source = jsx_text.span.source_text(ctx.source_text());
             for (i, char) in source.char_indices() {

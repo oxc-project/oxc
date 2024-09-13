@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_styled_jsx_in_document_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`styled-jsx` should not be used in `pages/_document.js`")
@@ -34,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoStyledJsxInDocument {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(element) = node.kind() else {
             return;
         };

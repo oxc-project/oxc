@@ -8,7 +8,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::{
-    AstNode, AstNodes, NodeId, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
+    Node, NodeId, Nodes, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
     SymbolTable,
 };
 use oxc_span::{GetSpan, Span};
@@ -55,7 +55,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub fn declaration(&self) -> &AstNode<'a> {
+    pub fn declaration(&self) -> &Node<'a> {
         self.nodes().get_node(self.declaration_id())
     }
 
@@ -82,7 +82,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub fn nodes(&self) -> &AstNodes<'a> {
+    pub fn nodes(&self) -> &Nodes<'a> {
         self.semantic.nodes()
     }
 
@@ -97,18 +97,18 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    pub fn iter_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+    pub fn iter_parents(&self) -> impl Iterator<Item = &Node<'a>> + '_ {
         self.iter_self_and_parents().skip(1)
     }
 
-    pub fn iter_self_and_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+    pub fn iter_self_and_parents(&self) -> impl Iterator<Item = &Node<'a>> + '_ {
         self.nodes().iter_parents(self.declaration_id())
     }
 
     pub fn iter_relevant_parents(
         &self,
         node_id: NodeId,
-    ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
+    ) -> impl Iterator<Item = &Node<'a>> + Clone + '_ {
         self.nodes().iter_parents(node_id).skip(1).filter(|n| Self::is_relevant_kind(n.kind()))
     }
 
@@ -120,7 +120,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         let parents_iter = self
             .nodes()
             .iter_parents(node_id)
-            .map(AstNode::kind)
+            .map(Node::kind)
             // no skip
             .filter(|kind| Self::is_relevant_kind(*kind));
 
@@ -136,7 +136,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// <https://github.com/oxc-project/oxc/issues/4739>
     fn derive_span(&self) -> Span {
-        for kind in self.iter_self_and_parents().map(AstNode::kind) {
+        for kind in self.iter_self_and_parents().map(Node::kind) {
             match kind {
                 AstKind::BindingIdentifier(_) => continue,
                 AstKind::BindingRestElement(rest) => return rest.span,

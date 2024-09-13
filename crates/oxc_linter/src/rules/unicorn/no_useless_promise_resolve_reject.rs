@@ -11,7 +11,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn resolve(span: Span, preferred: &str) -> OxcDiagnostic {
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessPromiseResolveReject {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -151,9 +151,9 @@ impl Rule for NoUselessPromiseResolveReject {
 }
 
 fn get_function_like_node<'a, 'b>(
-    node: &'a AstNode<'b>,
+    node: &'a Node<'b>,
     ctx: &'a LintContext<'b>,
-) -> Option<(bool, &'a AstNode<'b>, bool)> {
+) -> Option<(bool, &'a Node<'b>, bool)> {
     let mut parent = node;
     let mut is_in_try_statement = false;
 
@@ -180,7 +180,7 @@ fn get_function_like_node<'a, 'b>(
     }
 }
 
-fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
+fn is_promise_callback<'a, 'b>(node: &'a Node<'b>, ctx: &'a LintContext<'b>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else {
         return false;
     };
@@ -218,7 +218,7 @@ fn is_promise_callback<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) 
     false
 }
 
-fn match_arrow_function_body<'a>(ctx: &LintContext<'a>, parent: &AstNode<'a>) -> bool {
+fn match_arrow_function_body<'a>(ctx: &LintContext<'a>, parent: &Node<'a>) -> bool {
     match ctx.nodes().parent_node(parent.id()) {
         Some(arrow_function_body) => match arrow_function_body.kind() {
             AstKind::FunctionBody(_) => match ctx.nodes().parent_node(arrow_function_body.id()) {
@@ -240,7 +240,7 @@ fn generate_fix<'a>(
     is_in_try_statement: bool,
     fixer: RuleFixer<'_, 'a>,
     ctx: &LintContext<'a>,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
 ) -> RuleFix<'a> {
     if call_expr.arguments.len() > 1 {
         return fixer.noop();
@@ -329,10 +329,7 @@ fn generate_fix<'a>(
     fixer.replace(replace_range, replacement_text)
 }
 
-fn get_parenthesized_node<'a, 'b>(
-    node: &'a AstNode<'b>,
-    ctx: &'a LintContext<'b>,
-) -> &'a AstNode<'b> {
+fn get_parenthesized_node<'a, 'b>(node: &'a Node<'b>, ctx: &'a LintContext<'b>) -> &'a Node<'b> {
     let mut node = node;
     while let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
         if let AstKind::ParenthesizedExpression(_) = parent_node.kind() {

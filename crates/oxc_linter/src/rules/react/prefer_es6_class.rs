@@ -7,7 +7,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
-    AstNode,
+    Node,
 };
 
 fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
@@ -57,7 +57,7 @@ impl Rule for PreferEs6Class {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always) {
             if is_es5_component(node) {
                 let AstKind::CallExpression(call_expr) = node.kind() else {

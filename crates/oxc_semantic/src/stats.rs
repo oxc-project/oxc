@@ -43,7 +43,7 @@ macro_rules! assert_ge {
 ///
 /// Comprises number of AST nodes, scopes, symbols, and references.
 ///
-/// These counts can be used to pre-allocate sufficient capacity in `AstNodes`,
+/// These counts can be used to pre-allocate sufficient capacity in `Nodes`,
 /// `ScopeTree`, and `SymbolTable` to store info for all these items.
 ///
 /// * Obtain `Stats` from an existing [`Semantic`] with [`Semantic::stats`].

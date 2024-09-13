@@ -94,7 +94,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConditionalInTest {
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &oxc_semantic::Node<'a>, ctx: &LintContext<'a>) {
         if matches!(
             node.kind(),
             AstKind::IfStatement(_)

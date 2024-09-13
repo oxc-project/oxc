@@ -12,7 +12,7 @@ use crate::{
     ast_util::{outermost_paren, outermost_paren_parent},
     context::LintContext,
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn throw_new_error_diagnostic(span: Span) -> OxcDiagnostic {
@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ThrowNewError {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

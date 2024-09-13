@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{cmp::ContentEq, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_duplicate_case_diagnostic(first: Span, second: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate case label")
@@ -79,7 +79,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let Some(ss) = node.kind().as_switch_statement() else { return };
         let mut previous_tests: Vec<&Expression<'_>> = vec![];
         for test in ss.cases.iter().filter_map(|c| c.test.as_ref()) {

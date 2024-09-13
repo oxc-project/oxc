@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("A {a} is preferred over an {b}."))
@@ -68,7 +68,7 @@ impl Rule for ConsistentIndexedObjectStyle {
         Self { is_record_mode: config == ConsistentIndexedObjectStyleConfig::Record }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if self.is_record_mode {
             match node.kind() {
                 AstKind::TSInterfaceDeclaration(inf) => {

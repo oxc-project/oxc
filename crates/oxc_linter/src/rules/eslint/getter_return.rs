@@ -16,7 +16,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected to always return a value in getter.")
@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for GetterReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
         if ctx.source_type().is_typescript() {
             return;
@@ -119,7 +119,7 @@ impl GetterReturn {
     }
 
     /// Checks whether it is necessary to check the node
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
+    fn is_wanted_node(node: &Node, ctx: &LintContext<'_>) -> Option<bool> {
         let parent = ctx.nodes().parent_node(node.id())?;
         match parent.kind() {
             AstKind::MethodDefinition(mdef) => {
@@ -177,7 +177,7 @@ impl GetterReturn {
         Some(false)
     }
 
-    fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, span: Span) {
+    fn run_diagnostic<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>, span: Span) {
         if !Self::is_wanted_node(node, ctx).unwrap_or_default() {
             return;
         }

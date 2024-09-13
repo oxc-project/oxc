@@ -37,7 +37,7 @@ mod unresolved_stack;
 pub use crate::{
     builder::{SemanticBuilder, SemanticBuilderReturn},
     jsdoc::{JSDoc, JSDocFinder, JSDocTag},
-    node::{AstNode, AstNodes, NodeId},
+    node::{Node, NodeId, Nodes},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::ScopeTree,
     stats::Stats,
@@ -53,7 +53,7 @@ use class::ClassTable;
 ///
 /// Do not construct this struct directly; instead, use [`SemanticBuilder`].
 ///
-/// [`Abstract Syntax Tree (AST)`]: crate::AstNodes
+/// [`Abstract Syntax Tree (AST)`]: crate::Nodes
 /// [`scope tree`]: crate::ScopeTree
 /// [`symbol table`]: crate::SymbolTable
 /// [`control flow graph (CFG)`]: crate::ControlFlowGraph
@@ -65,7 +65,7 @@ pub struct Semantic<'a> {
     source_type: SourceType,
 
     /// The Abstract Syntax Tree (AST) nodes.
-    nodes: AstNodes<'a>,
+    nodes: Nodes<'a>,
 
     /// The scope tree containing scopes and what identifier names are bound in
     /// each one.
@@ -109,7 +109,7 @@ impl<'a> Semantic<'a> {
     }
 
     /// Nodes in the Abstract Syntax Tree (AST)
-    pub fn nodes(&self) -> &AstNodes<'a> {
+    pub fn nodes(&self) -> &Nodes<'a> {
         &self.nodes
     }
 
@@ -192,7 +192,7 @@ impl<'a> Semantic<'a> {
         self.symbols.get_resolved_references(symbol_id)
     }
 
-    pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
+    pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &Node<'a> {
         self.nodes.get_node(self.symbols.get_declaration(symbol_id))
     }
 

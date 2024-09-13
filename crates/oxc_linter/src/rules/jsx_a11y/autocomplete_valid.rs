@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case},
-    AstNode,
+    Node,
 };
 
 fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {
@@ -179,7 +179,7 @@ impl Rule for AutocompleteValid {
             .unwrap_or_default()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let Some(name) = &get_element_type(ctx, jsx_el) else {
                 return;

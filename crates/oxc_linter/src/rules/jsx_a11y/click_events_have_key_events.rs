@@ -11,7 +11,7 @@ use crate::{
         get_element_type, has_jsx_prop, is_hidden_from_screen_reader, is_interactive_element,
         is_presentation_role,
     },
-    AstNode,
+    Node,
 };
 
 fn click_events_have_key_events_diagnostic(span: Span) -> OxcDiagnostic {
@@ -49,7 +49,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ClickEventsHaveKeyEvents {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_el) = node.kind() else {
             return;
         };

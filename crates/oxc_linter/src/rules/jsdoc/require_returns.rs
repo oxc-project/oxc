@@ -109,7 +109,7 @@ impl Rule for RequireReturns {
         // Search `ReturnStatement` when visiting `Function` requires a lot of work.
         // Instead, we collect all functions and their attributes first.
 
-        // Value of map: (AstNode, Span, Attrs: (isAsync, hasReturnValue))
+        // Value of map: (Node, Span, Attrs: (isAsync, hasReturnValue))
         let mut functions_to_check = FxHashMap::default();
         'visit_node: for node in ctx.nodes().iter() {
             match node.kind() {

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_bitwise_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected use of {x0:?}"))
@@ -70,7 +70,7 @@ impl Rule for NoBitwise {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 let op = bin_expr.operator.as_str();
@@ -111,7 +111,7 @@ fn allowed_operator(allow: &[String], operator: &str) -> bool {
     allow.iter().any(|s| s == operator)
 }
 
-fn is_int32_hint(int32_hint: bool, node: &AstNode) -> bool {
+fn is_int32_hint(int32_hint: bool, node: &Node) -> bool {
     if !int32_hint {
         return false;
     }

@@ -12,7 +12,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_same_member_expression, is_same_reference},
-    AstNode,
+    Node,
 };
 
 fn misrefactored_assign_op_diagnostic(span: Span, suggestion: &str) -> OxcDiagnostic {
@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MisrefactoredAssignOp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
             return;
         };

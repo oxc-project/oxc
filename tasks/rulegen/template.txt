@@ -6,7 +6,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFixer, RuleFix},
     rule::Rule,
-    AstNode
+    Node
 };
 
 #[derive(Debug, Default, Clone)]
@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for {{pascal_rule_name}} {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
 
     }
 }

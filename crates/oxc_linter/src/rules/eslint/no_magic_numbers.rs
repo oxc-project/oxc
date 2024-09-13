@@ -6,11 +6,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodes;
+use oxc_semantic::Nodes;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 enum NoMagicNumberReportReason {
     MustUseConst,
@@ -233,13 +233,13 @@ declare_oxc_lint!(
 
 #[derive(Debug)]
 struct InternConfig<'a> {
-    node: &'a AstNode<'a>,
+    node: &'a Node<'a>,
     value: NoMagicNumbersNumber,
     raw: String,
 }
 
 impl InternConfig<'_> {
-    pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
+    pub fn from<'a>(node: &'a Node<'a>, parent_node: &'a Node<'a>) -> InternConfig<'a> {
         let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
         let is_negative = matches!(parent_node.kind(), AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation);
 
@@ -291,7 +291,7 @@ impl Rule for NoMagicNumbers {
     fn from_configuration(value: serde_json::Value) -> Self {
         Self(Box::new(NoMagicNumbersConfig::try_from(&value).unwrap()))
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if !matches!(node.kind(), AstKind::NumericLiteral(_) | AstKind::BigIntLiteral(_)) {
             return;
         }
@@ -331,7 +331,7 @@ fn is_detectable_object(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::ObjectExpression(_) | AstKind::ObjectProperty(_))
 }
 
-fn is_parse_int_radix(parent_parent_node: &AstNode<'_>) -> bool {
+fn is_parse_int_radix(parent_parent_node: &Node<'_>) -> bool {
     let AstKind::CallExpression(expression) = parent_parent_node.kind() else {
         return false;
     };
@@ -407,7 +407,7 @@ fn is_ts_enum(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::TSEnumMember(_))
 }
 
-fn is_ts_numeric_literal<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
+fn is_ts_numeric_literal<'a>(parent_parent_node: &Node<'a>, nodes: &Nodes<'a>) -> bool {
     let mut node = parent_parent_node;
 
     while matches!(
@@ -424,7 +424,7 @@ fn is_ts_readonly_property(parent_kind: &AstKind<'_>) -> bool {
     matches!(parent_kind, AstKind::PropertyDefinition(property) if property.readonly)
 }
 
-fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNodes<'a>) -> bool {
+fn is_ts_indexed_access_type<'a>(parent_parent_node: &Node<'a>, nodes: &Nodes<'a>) -> bool {
     let mut node = parent_parent_node;
 
     while matches!(
@@ -438,7 +438,7 @@ fn is_ts_indexed_access_type<'a>(parent_parent_node: &AstNode<'a>, nodes: &AstNo
 }
 
 impl NoMagicNumbers {
-    fn is_skipable<'a>(&self, config: &InternConfig<'a>, nodes: &AstNodes<'a>) -> bool {
+    fn is_skipable<'a>(&self, config: &InternConfig<'a>, nodes: &Nodes<'a>) -> bool {
         if self.ignore.contains(&config.value) {
             return true;
         }

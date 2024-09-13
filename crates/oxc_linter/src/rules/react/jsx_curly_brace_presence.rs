@@ -12,7 +12,7 @@ use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Curly braces are unnecessary here.").with_label(span)
@@ -330,7 +330,7 @@ impl Rule for JsxCurlyBracePresence {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(el) => {
                 el.opening_element.attributes.iter().for_each(|attr| {
@@ -360,7 +360,7 @@ impl JsxCurlyBracePresence {
         &self,
         ctx: &LintContext<'a>,
         children: &Vec<'a, JSXChild<'a>>,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
     ) {
         for child in children {
             match child {
@@ -384,7 +384,7 @@ impl JsxCurlyBracePresence {
         &self,
         ctx: &LintContext<'a>,
         attr: &JSXAttributeItem<'a>,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
     ) {
         let JSXAttributeItem::Attribute(attr) = attr else {
             return;
@@ -417,7 +417,7 @@ impl JsxCurlyBracePresence {
         &self,
         ctx: &LintContext<'a>,
         container: &JSXExpressionContainer<'a>,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         // true for JSX props, false for JSX children
         is_prop: bool,
     ) {

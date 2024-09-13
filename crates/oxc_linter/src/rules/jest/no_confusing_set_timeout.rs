@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId, ReferenceId};
+use oxc_semantic::{Node, NodeId, ReferenceId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -198,7 +198,7 @@ fn handle_jest_set_time_out<'a>(
 }
 
 fn is_jest_fn_call<'a>(
-    parent_node: &AstNode<'a>,
+    parent_node: &Node<'a>,
     id_to_jest_node_map: &HashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> bool {

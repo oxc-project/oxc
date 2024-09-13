@@ -8,7 +8,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::Span;
 
 use crate::{
@@ -233,7 +233,7 @@ fn find_modifiers_and_matcher(
     Err(ExpectError::MatcherNotFound)
 }
 
-fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_top_most_call_expr<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     let mut node = node;
 
     loop {
@@ -286,7 +286,7 @@ pub struct ExpectFnCallOptions<'a, 'b> {
     pub name: &'a str,
     pub local: &'a str,
     pub head: KnownMemberExpressionProperty<'a>,
-    pub node: &'b AstNode<'a>,
+    pub node: &'b Node<'a>,
     pub ctx: &'b LintContext<'a>,
 }
 

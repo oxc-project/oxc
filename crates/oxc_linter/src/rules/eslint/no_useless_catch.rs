@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_useless_catch_diagnostic(catch: Span, rethrow: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary try/catch wrapper")
@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessCatch {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::TryStatement(try_stmt) = node.kind() else {
             return;
         };

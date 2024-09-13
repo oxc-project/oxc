@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn inline_script_id_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for InlineScriptId {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ImportDefaultSpecifier(specifier) = node.kind() else {
             return;
         };

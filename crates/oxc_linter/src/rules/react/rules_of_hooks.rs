@@ -9,14 +9,14 @@ use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodes, NodeId};
+use oxc_semantic::{NodeId, Nodes};
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
-    AstNode,
+    Node,
 };
 
 mod diagnostics {
@@ -108,7 +108,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RulesOfHooks {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call) = node.kind() else { return };
 
         if !is_react_hook(&call.callee) {
@@ -254,8 +254,8 @@ impl Rule for RulesOfHooks {
 
 fn has_conditional_path_accept_throw(
     cfg: &ControlFlowGraph,
-    from: &AstNode<'_>,
-    to: &AstNode<'_>,
+    from: &Node<'_>,
+    to: &Node<'_>,
 ) -> bool {
     let from_graph_id = from.cfg_id();
     let to_graph_id = to.cfg_id();
@@ -323,7 +323,7 @@ fn has_conditional_path_accept_throw(
     })
 }
 
-fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
+fn parent_func<'a>(nodes: &'a Nodes<'a>, node: &Node) -> Option<&'a Node<'a>> {
     nodes.ancestors(node.id()).map(|id| nodes.get_node(id)).find(|it| it.kind().is_function_like())
 }
 
@@ -331,7 +331,7 @@ fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNod
 /// And that function isn't a `React.memo` or `React.forwardRef`.
 /// Returns `true` if this node is a function argument and that isn't a React special function.
 /// Otherwise it would return `false`.
-fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
+fn is_non_react_func_arg(nodes: &Nodes, node_id: NodeId) -> bool {
     let argument = match nodes.parent_node(node_id) {
         Some(parent) if matches!(parent.kind(), AstKind::Argument(_)) => parent,
         _ => return false,
@@ -344,7 +344,7 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
     !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
 }
 
-fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
+fn is_somewhere_inside_component_or_hook(nodes: &Nodes, node_id: NodeId) -> bool {
     nodes
         .ancestors(node_id)
         .map(|id| nodes.get_node(id))
@@ -368,10 +368,7 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> b
         })
 }
 
-fn get_declaration_identifier<'a>(
-    nodes: &'a AstNodes<'a>,
-    node_id: NodeId,
-) -> Option<Cow<'a, str>> {
+fn get_declaration_identifier<'a>(nodes: &'a Nodes<'a>, node_id: NodeId) -> Option<Cow<'a, str>> {
     nodes.ancestors(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
         match kind {
             // const useHook = () => {};
@@ -397,7 +394,7 @@ fn get_declaration_identifier<'a>(
     })
 }
 
-fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: NodeId) -> bool {
+fn is_export_default<'a>(nodes: &'a Nodes<'a>, node_id: NodeId) -> bool {
     nodes
         .ancestors(node_id)
         .map(|id| nodes.get_node(id))
@@ -407,7 +404,7 @@ fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: NodeId) -> bool {
 
 /// # Panics
 /// `node_id` should always point to a valid `Function`.
-fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
+fn is_memo_or_forward_ref_callback(nodes: &Nodes, node_id: NodeId) -> bool {
     nodes.ancestors(node_id).map(|id| nodes.get_node(id)).any(|node| {
         if let AstKind::CallExpression(call) = node.kind() {
             call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))

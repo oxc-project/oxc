@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::is_react_hook,
-    AstNode,
+    Node,
 };
 
 fn consistent_function_scoping(span: Span) -> OxcDiagnostic {
@@ -158,7 +158,7 @@ impl Rule for ConsistentFunctionScoping {
         Self(Box::new(configuration))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let (function_declaration_symbol_id, function_body, reporter_span) = match node.kind() {
             AstKind::Function(function) => {
                 if let Some(AstKind::AssignmentExpression(_)) = ctx.nodes().parent_kind(node.id()) {
@@ -214,7 +214,7 @@ impl Rule for ConsistentFunctionScoping {
         }
 
         if matches!(
-            outermost_paren_parent(node, ctx).map(AstNode::kind),
+            outermost_paren_parent(node, ctx).map(Node::kind),
             Some(AstKind::ReturnStatement(_) | AstKind::Argument(_))
         ) {
             return;
@@ -295,7 +295,7 @@ impl<'a> Visit<'a> for ReferencesFinder {
     }
 }
 
-fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn is_parent_scope_iife<'a>(node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
     if let Some(parent_node) = outermost_paren_parent(node, ctx) {
         if let Some(parent_node) = outermost_paren_parent(parent_node, ctx) {
             if matches!(
@@ -312,7 +312,7 @@ fn is_parent_scope_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     false
 }
 
-fn is_in_react_hook<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn is_in_react_hook<'a>(node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
     // we want the 3rd outermost parent
     // parents are: function body -> function -> argument -> call expression
     if let Some(parent) = nth_outermost_paren_parent(node, ctx, 3) {

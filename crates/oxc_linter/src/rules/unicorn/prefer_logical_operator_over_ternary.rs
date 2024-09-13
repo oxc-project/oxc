@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_same_reference, Node};
 
 fn prefer_logical_operator_over_ternary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using a logical operator over a ternary.")
@@ -44,7 +44,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferLogicalOperatorOverTernary {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ConditionalExpression(conditional_expression) = node.kind() else {
             return;
         };

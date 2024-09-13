@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected negated condition.")
@@ -57,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNegatedCondition {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let stmt_test = match node.kind() {
             AstKind::IfStatement(if_stmt) => {
                 let Some(if_stmt_alternate) = &if_stmt.alternate else {

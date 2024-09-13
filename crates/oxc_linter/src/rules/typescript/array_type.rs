@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -115,7 +115,7 @@ impl Rule for ArrayType {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let default_config = &self.default;
         let readonly_config: &ArrayOption =
             &self.readonly.clone().unwrap_or_else(|| default_config.clone());

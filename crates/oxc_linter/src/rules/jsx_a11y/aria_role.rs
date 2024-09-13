@@ -11,7 +11,7 @@ use crate::{
     globals::{HTML_TAG, VALID_ARIA_ROLES},
     rule::Rule,
     utils::{get_element_type, get_prop_value, has_jsx_prop},
-    AstNode,
+    Node,
 };
 
 fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
@@ -140,7 +140,7 @@ impl Rule for AriaRole {
         Self(Box::new(AriaRoleConfig { ignore_non_dom, allowed_invalid_roles }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             if let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role") {
                 let Some(element_type) = get_element_type(ctx, &jsx_el.opening_element) else {

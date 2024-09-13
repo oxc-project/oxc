@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_new_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use 'new' for side effects.").with_label(span)
@@ -31,7 +31,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNew {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };

@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, globals::HTML_TAG, rule::Rule, AstNode};
+use crate::{context::LintContext, globals::HTML_TAG, rule::Rule, Node};
 
 fn self_closing_comp_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unnecessary closing tag")
@@ -73,7 +73,7 @@ impl Rule for SelfClosingComp {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXElement(jsx_el) = node.kind() else {
             return;
         };

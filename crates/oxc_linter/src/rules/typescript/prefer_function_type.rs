@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, Node};
 
 fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnostic {
     // FIXME: use imperative message phrasing
@@ -103,7 +103,7 @@ fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
     true
 }
 
-fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>) {
+fn check_member(member: &TSSignature, node: &Node<'_>, ctx: &LintContext<'_>) {
     match member {
         TSSignature::TSCallSignatureDeclaration(decl) => {
             let start = decl.span.start;
@@ -313,7 +313,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 }
 
 impl Rule for PreferFunctionType {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
                 let body: &oxc_allocator::Vec<'_, TSSignature<'_>> = &decl.body.body;

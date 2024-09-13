@@ -6,7 +6,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_syntax::operator::LogicalOperator;
 
 pub use self::boolean::*;
@@ -96,7 +96,7 @@ pub fn is_empty_object_expression(expr: &Expression) -> bool {
     }
 }
 
-pub fn is_logical_expression(node: &AstNode) -> bool {
+pub fn is_logical_expression(node: &Node) -> bool {
     matches!(
         node.kind(),
         AstKind::LogicalExpression(LogicalExpression {

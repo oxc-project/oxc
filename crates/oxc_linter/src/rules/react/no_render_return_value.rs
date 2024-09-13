@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_render_return_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not depend on the return value from ReactDOM.render.")
@@ -38,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoRenderReturnValue {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

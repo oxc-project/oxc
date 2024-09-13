@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_next_script_import_local_name, is_document_page, is_in_app_dir},
-    AstNode,
+    Node,
 };
 
 fn no_before_interactive_script_outside_document_diagnostic(span: Span) -> OxcDiagnostic {
@@ -37,7 +37,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let Some(file_path) = ctx.file_path().to_str() else {
                 return;

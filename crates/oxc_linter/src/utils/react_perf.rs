@@ -11,7 +11,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{rule::Rule, AstNode, LintContext};
+use crate::{rule::Rule, LintContext, Node};
 
 fn react_perf_inline_diagnostic(message: &'static str, attr_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(message)
@@ -60,7 +60,7 @@ impl<R> Rule for R
 where
     R: ReactPerfRule,
 {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
         if node.scope_id() == ctx.scopes().root_scope_id() {

@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_unreadable_iife_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("IIFE with parenthesized arrow function body is considered unreadable.")
@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnreadableIife {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

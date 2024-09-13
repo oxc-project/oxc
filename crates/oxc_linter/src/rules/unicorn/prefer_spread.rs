@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 
-use crate::{ast_util, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util, context::LintContext, rule::Rule, Node};
 
 fn prefer_spread_diagnostic(span: Span, bad_method: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {bad_method}"))
@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferSpread {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

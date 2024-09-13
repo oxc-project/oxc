@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow `void` operators")
@@ -49,7 +49,7 @@ impl Rule for NoVoid {
         Self { allow_as_statement }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::UnaryExpression(unary_expr) = node.kind() else {
             return;
         };

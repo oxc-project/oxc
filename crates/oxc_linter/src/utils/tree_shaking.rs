@@ -5,7 +5,7 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, StaticMemberExpression},
     AstKind, CommentKind,
 };
-use oxc_semantic::{AstNode, NodeId, SymbolId};
+use oxc_semantic::{Node, NodeId, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHashSet;
@@ -310,7 +310,7 @@ pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -
 }
 
 pub fn is_local_variable_a_whitelisted_module(
-    node: &AstNode,
+    node: &Node,
     name: &str,
     options: &NodeListenerOptions,
 ) -> bool {

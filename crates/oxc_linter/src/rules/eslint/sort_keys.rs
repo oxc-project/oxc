@@ -1,5 +1,5 @@
 #![allow(clippy::print_stdout, clippy::disallowed_methods)]
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 use itertools::all;
 use oxc_ast::ast::ObjectPropertyKind;
 use oxc_ast::syntax_directed_operations::PropName;
@@ -127,7 +127,7 @@ impl Rule for SortKeys {
             allow_line_separated_groups,
         }))
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
             if dec.properties.len() < self.min_keys {
                 return;

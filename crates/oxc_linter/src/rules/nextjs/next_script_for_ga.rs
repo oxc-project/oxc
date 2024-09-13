@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
-    AstNode,
+    Node,
 };
 
 fn next_script_for_ga_diagnostic(span: Span) -> OxcDiagnostic {
@@ -42,7 +42,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NextScriptForGa {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
             return;
         };

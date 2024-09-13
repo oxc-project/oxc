@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::ast::{CharacterKind, Term};
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_div_regex_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("A regular expression literal can be confused with '/='.")
@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDivRegex {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
             let Some(pattern) = lit.regex.pattern.as_pattern() else { return };
             if pattern

@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWebpackLoaderSyntax {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // not in top level
         if node.scope_id() != ctx.scopes().root_scope_id() {
             return;

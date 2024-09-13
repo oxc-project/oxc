@@ -13,7 +13,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_this_before_super_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected to always call super() before this/super property access.")
@@ -133,7 +133,7 @@ impl Rule for NoThisBeforeSuper {
 }
 
 impl NoThisBeforeSuper {
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
+    fn is_wanted_node(node: &Node, ctx: &LintContext<'_>) -> Option<bool> {
         let parent = ctx.nodes().parent_node(node.id())?;
         let method_def = parent.kind().as_method_definition()?;
 

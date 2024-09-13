@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::Span;
 
 use crate::{
@@ -57,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferSpyOn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assign_expr) = node.kind() else {
             return;
         };
@@ -93,7 +93,7 @@ impl PreferSpyOn {
         assign_expr: &AssignmentExpression,
         call_expr: &'a CallExpression<'a>,
         left_assign: &MemberExpression,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         ctx: &LintContext<'a>,
     ) {
         let Some(jest_fn_call) =

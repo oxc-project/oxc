@@ -10,9 +10,9 @@ use javascript as js;
 pub use javascript::check_module_record;
 use typescript as ts;
 
-use crate::{builder::SemanticBuilder, AstNode};
+use crate::{builder::SemanticBuilder, Node};
 
-pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check<'a>(node: &Node<'a>, ctx: &SemanticBuilder<'a>) {
     let kind = node.kind();
 
     match kind {

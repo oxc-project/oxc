@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn number_arg_out_of_range_diagnostic(
     method_name: &str,
@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NumberArgOutOfRange {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(expr) = node.kind() else {
             return;
         };

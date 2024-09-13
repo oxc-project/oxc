@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_util::get_declaration_of_variable, context::LintContext, globals::GLOBAL_OBJECT_NAMES,
-    rule::Rule, AstNode,
+    rule::Rule, Node,
 };
 
 fn no_document_cookie_diagnostic(span: Span) -> OxcDiagnostic {
@@ -63,7 +63,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDocumentCookie {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
             return;
         };

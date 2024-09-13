@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_new_native_nonconstructor_diagnostic(fn_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{fn_name}` cannot be called as a constructor.")).with_label(span)
@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewNativeNonconstructor {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(expr) = node.kind() else {
             return;
         };

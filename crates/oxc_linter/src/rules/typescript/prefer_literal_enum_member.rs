@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -54,7 +54,7 @@ impl Rule for PreferLiteralEnumMember {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumMember(decl) = node.kind() else {
             return;
         };

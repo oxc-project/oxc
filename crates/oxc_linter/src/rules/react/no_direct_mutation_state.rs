@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
-    AstNode,
+    Node,
 };
 
 fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {
@@ -82,7 +82,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDirectMutationState {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::AssignmentExpression(assignment_expr) => {
                 if should_ignore_component(node, ctx) {
@@ -171,7 +171,7 @@ fn get_static_member_expression_obj<'a, 'b>(
     }
 }
 
-fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn should_ignore_component<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     let mut is_constructor = false;
     let mut is_call_expression = false;
     let mut is_component = false;

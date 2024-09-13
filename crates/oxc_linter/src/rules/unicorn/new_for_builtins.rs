@@ -8,7 +8,7 @@ use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 use phf::phf_set;
 
-use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
+use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, Node};
 
 fn enforce(span: Span, fn_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `new {fn_name}()` instead of `{fn_name}()`")).with_label(span)
@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NewForBuiltins {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NewExpression(new_expr) => {
                 let callee = new_expr.callee.without_parentheses();

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_delete_var_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("variables should not be deleted").with_label(span)
@@ -36,7 +36,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDeleteVar {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::UnaryExpression(expr) = node.kind() else {
             return;
         };

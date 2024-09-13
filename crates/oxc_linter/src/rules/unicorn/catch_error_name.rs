@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{CompactStr, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn catch_error_name_diagnostic(
     caught_ident: &str,
@@ -90,7 +90,7 @@ impl Rule for CatchErrorName {
         Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CatchParameter(catch_param) = node.kind() {
             if let oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding_ident) =
                 &catch_param.pattern.kind

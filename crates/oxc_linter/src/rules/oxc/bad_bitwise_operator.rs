@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn bad_bitwise_operator_diagnostic(
     bad_operator: &str,
@@ -60,7 +60,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadBitwiseOperator {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 if is_mistype_short_circuit(node) {
@@ -81,7 +81,7 @@ impl Rule for BadBitwiseOperator {
     }
 }
 
-fn is_mistype_short_circuit(node: &AstNode) -> bool {
+fn is_mistype_short_circuit(node: &Node) -> bool {
     match node.kind() {
         AstKind::BinaryExpression(bin_expr) => {
             if bin_expr.operator != BinaryOperator::BitwiseAnd {
@@ -104,7 +104,7 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
     }
 }
 
-fn is_mistype_option_fallback(node: &AstNode) -> bool {
+fn is_mistype_option_fallback(node: &Node) -> bool {
     let AstKind::BinaryExpression(binary_expr) = node.kind() else {
         return false;
     };

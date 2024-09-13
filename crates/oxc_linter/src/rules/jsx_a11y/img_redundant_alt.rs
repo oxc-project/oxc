@@ -14,7 +14,7 @@ use crate::{
     utils::{
         get_element_type, get_prop_value, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
     },
-    AstNode,
+    Node,
 };
 
 fn img_redundant_alt_diagnostic(span: Span) -> OxcDiagnostic {
@@ -120,7 +120,7 @@ impl Rule for ImgRedundantAlt {
         Self(Box::new(ImgRedundantAltConfig::new(components, words.as_slice()).unwrap()))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

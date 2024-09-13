@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_invalid_remove_event_listener_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid `removeEventListener` call.")
@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInvalidRemoveEventListener {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

@@ -9,7 +9,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn numeric_separators_style_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid group length in numeric value.")
@@ -85,7 +85,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NumericSeparatorsStyle {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
                 if self.only_if_contains_separator && !number.raw.contains('_') {

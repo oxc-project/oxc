@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_hex_escape_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use Unicode escapes instead of hexadecimal escapes.").with_label(span)
@@ -70,7 +70,7 @@ fn check_escape(value: &str) -> Option<String> {
 }
 
 impl Rule for NoHexEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());

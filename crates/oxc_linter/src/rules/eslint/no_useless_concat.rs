@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{identifier::is_line_terminator, operator::BinaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessConcat;
@@ -36,7 +36,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessConcat {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(binary_expr) = node.kind() else {
             return;
         };

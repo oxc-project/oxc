@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_extra_double_negation_cast_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Redundant double negation")
@@ -61,7 +61,7 @@ impl Rule for NoExtraBooleanCast {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(expr)
                 if expr.callee.is_specific_id("Boolean")
@@ -85,7 +85,7 @@ impl Rule for NoExtraBooleanCast {
 
 // Checks whether the node is a context that should report an error
 // Acts recursively if it is in a logical context
-fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operands: bool) -> bool {
+fn is_flagged_ctx(node: &Node, ctx: &LintContext, enforce_for_logical_operands: bool) -> bool {
     let parent = get_real_parent(node, ctx);
     if is_bool_context(node, parent, ctx) {
         return true;
@@ -98,7 +98,7 @@ fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operand
 }
 
 // Check if a node is in a context where its value would be coerced to a boolean at runtime
-fn is_bool_context(node: &AstNode, parent: Option<&AstNode>, ctx: &LintContext) -> bool {
+fn is_bool_context(node: &Node, parent: Option<&Node>, ctx: &LintContext) -> bool {
     parent.is_some_and(|parent| {
         (is_bool_fn_or_constructor_call(parent) && is_first_arg(node, parent))
             || is_inside_test_condition(node, ctx)
@@ -107,7 +107,7 @@ fn is_bool_context(node: &AstNode, parent: Option<&AstNode>, ctx: &LintContext) 
 }
 
 // Checks whether the node is a logical expression and that the option is enabled
-fn is_logical_ctx(node: &AstNode, enforce_for_logical_operands: bool) -> bool {
+fn is_logical_ctx(node: &Node, enforce_for_logical_operands: bool) -> bool {
     match node.kind() {
         AstKind::LogicalExpression(expr) => {
             (expr.operator == LogicalOperator::And || expr.operator == LogicalOperator::Or)
@@ -117,7 +117,7 @@ fn is_logical_ctx(node: &AstNode, enforce_for_logical_operands: bool) -> bool {
     }
 }
 
-fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
+fn is_bool_fn_or_constructor_call(node: &Node) -> bool {
     match node.kind() {
         AstKind::CallExpression(expr) => expr
             .callee
@@ -133,7 +133,7 @@ fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
     }
 }
 
-fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
+fn is_first_arg(node: &Node, parent: &Node) -> bool {
     match parent.kind() {
         AstKind::CallExpression(expr) => expr.arguments.first().map_or(false, |arg| {
             if let Some(expr) = arg.as_expression() {
@@ -153,7 +153,7 @@ fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
     }
 }
 
-fn is_inside_test_condition(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_inside_test_condition(node: &Node, ctx: &LintContext) -> bool {
     get_real_parent(node, ctx).map_or(false, |parent| match parent.kind() {
         AstKind::IfStatement(stmt) => {
             let expr_span = stmt.test.get_inner_expression().without_parentheses().span();
@@ -179,16 +179,15 @@ fn is_inside_test_condition(node: &AstNode, ctx: &LintContext) -> bool {
     })
 }
 
-fn is_unary_negation(node: &AstNode) -> bool {
+fn is_unary_negation(node: &Node) -> bool {
     match node.kind() {
         AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::LogicalNot,
         _ => false,
     }
 }
 
-fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&'a AstNode<'b>> {
-    for (_, parent) in
-        ctx.nodes().iter_parents(node.id()).tuple_windows::<(&AstNode<'b>, &AstNode<'b>)>()
+fn get_real_parent<'a, 'b>(node: &Node, ctx: &'a LintContext<'b>) -> Option<&'a Node<'b>> {
+    for (_, parent) in ctx.nodes().iter_parents(node.id()).tuple_windows::<(&Node<'b>, &Node<'b>)>()
     {
         if let AstKind::Argument(_)
         | AstKind::ParenthesizedExpression(_)

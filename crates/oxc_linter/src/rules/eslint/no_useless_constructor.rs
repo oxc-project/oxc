@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_empty_constructor(constructor_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty constructors are unnecessary")
@@ -82,7 +82,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessConstructor {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::MethodDefinition(constructor) = node.kind() else {
             return;
         };

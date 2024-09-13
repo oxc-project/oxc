@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_map;
 
-use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, Node};
 
 fn prefer_query_selector_diagnostic(
     good_method: &str,
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferQuerySelector {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

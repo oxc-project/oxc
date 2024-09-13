@@ -8,7 +8,7 @@ use crate::{
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop},
-    AstNode,
+    Node,
 };
 
 fn no_autofocus_diagnostic(span: Span) -> OxcDiagnostic {
@@ -93,7 +93,7 @@ impl Rule for NoAutofocus {
         no_focus
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXElement(jsx_el) = node.kind() else {
             return;
         };

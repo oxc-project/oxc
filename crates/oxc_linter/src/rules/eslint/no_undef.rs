@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow the use of undeclared variables.")
@@ -73,7 +73,7 @@ impl Rule for NoUndef {
     }
 }
 
-fn has_typeof_operator(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+fn has_typeof_operator(node: &Node<'_>, ctx: &LintContext<'_>) -> bool {
     ctx.nodes().parent_node(node.id()).map_or(false, |parent| match parent.kind() {
         AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Typeof,
         AstKind::ParenthesizedExpression(_) => has_typeof_operator(parent, ctx),

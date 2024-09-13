@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_head_import_in_document_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `next/head` in `pages/_document.js`.")
@@ -29,7 +29,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoHeadImportInDocument {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
             node.kind()
         else {

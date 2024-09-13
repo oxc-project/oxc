@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_global_require_call, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_global_require_call, context::LintContext, rule::Rule, Node};
 
 fn no_var_requires_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require statement not part of import statement.")
@@ -33,7 +33,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoVarRequires {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(expr) = node.kind() else {
             return;
         };
@@ -47,8 +47,8 @@ impl Rule for NoVarRequires {
                 let grandparent_node = parent_node.and_then(|x| ctx.nodes().parent_node(x.id()));
                 matches!(
                     (
-                        parent_node.map(oxc_semantic::AstNode::kind),
-                        grandparent_node.map(oxc_semantic::AstNode::kind)
+                        parent_node.map(oxc_semantic::Node::kind),
+                        grandparent_node.map(oxc_semantic::Node::kind)
                     ),
                     (Some(AstKind::ExpressionStatement(_)), _)
                         | (

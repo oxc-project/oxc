@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::{GetSpan, Span};
 
 use crate::{rule::Rule, utils::get_element_type, LintContext};
@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDistractingElements {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

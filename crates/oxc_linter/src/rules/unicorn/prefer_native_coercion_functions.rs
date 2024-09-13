@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::get_first_parameter_name, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_first_parameter_name, Node};
 
 fn function(span: Span, called_fn: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNativeCoercionFunctions {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async || arrow_expr.params.items.len() == 0 {

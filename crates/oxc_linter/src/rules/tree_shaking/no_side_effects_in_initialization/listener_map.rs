@@ -15,7 +15,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, NodeId};
+use oxc_semantic::{Node, NodeId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 
@@ -217,10 +217,10 @@ impl<'a> ListenerMap for ExportSpecifier<'a> {
     }
 }
 
-// we don't need implement all AstNode
+// we don't need implement all Node
 // it's same as `reportSideEffectsInDefinitionWhenCalled` in eslint-plugin-tree-shaking
 // <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/463fa1f0bef7caa2b231a38b9c3557051f506c92/src/rules/no-side-effects-in-initialization.ts#L1070-L1080>
-impl<'a> ListenerMap for AstNode<'a> {
+impl<'a> ListenerMap for Node<'a> {
     fn report_effects_when_called(&self, options: &NodeListenerOptions) {
         match self.kind() {
             AstKind::VariableDeclarator(decl) => {

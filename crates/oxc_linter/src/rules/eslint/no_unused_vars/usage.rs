@@ -3,7 +3,7 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{Node, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use super::{ignored::FoundStatus, NoUnusedVars, Symbol};
@@ -194,7 +194,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
             return false;
         }
 
-        for parent in self.nodes().iter_parents(reference.node_id()).map(AstNode::kind) {
+        for parent in self.nodes().iter_parents(reference.node_id()).map(Node::kind) {
             match parent {
                 AstKind::IdentifierReference(_)
                 | AstKind::SimpleAssignmentTarget(_)
@@ -244,7 +244,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     /// type Foo = Array<Bar>
     /// ```
     fn is_type_self_usage(&self, reference: &Reference) -> bool {
-        for parent in self.iter_relevant_parents(reference.node_id()).map(AstNode::kind) {
+        for parent in self.iter_relevant_parents(reference.node_id()).map(Node::kind) {
             match parent {
                 AstKind::TSTypeAliasDeclaration(decl) => {
                     return self == &decl.id;
@@ -423,9 +423,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
         !is_used_by_others
     }
 
-    /// Check if a [`AstNode`] is within a return statement or implicit return.
+    /// Check if a [`Node`] is within a return statement or implicit return.
     fn is_in_return_statement(&self, node_id: NodeId) -> bool {
-        for parent in self.iter_relevant_parents(node_id).map(AstNode::kind) {
+        for parent in self.iter_relevant_parents(node_id).map(Node::kind) {
             match parent {
                 AstKind::ReturnStatement(_) => return true,
                 AstKind::ExpressionStatement(_) => continue,
@@ -567,7 +567,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         false
     }
 
-    fn is_self_function_expr_assignment(&self, ref_node: &AstNode<'a>) -> bool {
+    fn is_self_function_expr_assignment(&self, ref_node: &Node<'a>) -> bool {
         for (parent, grandparent) in self.iter_relevant_parent_and_grandparent_kinds(ref_node.id())
         {
             match (parent, grandparent) {
@@ -640,7 +640,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
         self.nodes().get_node(reference.node_id()).scope_id()
     }
 
-    /// Get the [`Span`] covering the [`AstNode`] containing a [`Reference`].
+    /// Get the [`Span`] covering the [`Node`] containing a [`Reference`].
     #[inline]
     fn get_ref_span(&self, reference: &Reference) -> Span {
         self.nodes().get_node(reference.node_id()).kind().span()
@@ -651,7 +651,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     ///    which isn't useful for checking kinds/usage, so we want the parent
     /// 2. "relevant" nodes are non "transparent". For example, parenthesis are "transparent".
     #[inline]
-    fn get_ref_relevant_node(&self, reference: &Reference) -> Option<&AstNode<'a>> {
+    fn get_ref_relevant_node(&self, reference: &Reference) -> Option<&Node<'a>> {
         self.iter_relevant_parents(reference.node_id()).next()
     }
 

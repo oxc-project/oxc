@@ -16,7 +16,7 @@ use crate::{
         collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
         PossibleJestNode,
     },
-    AstNode,
+    Node,
 };
 
 fn describe_repeat(span: Span) -> OxcDiagnostic {
@@ -154,7 +154,7 @@ fn filter_and_process_jest_result<'a>(
     }
 }
 
-fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<NodeId> {
+fn get_closest_block(node: &Node, ctx: &LintContext) -> Option<NodeId> {
     match node.kind() {
         AstKind::BlockStatement(_) | AstKind::FunctionBody(_) | AstKind::Program(_) => {
             Some(node.id())

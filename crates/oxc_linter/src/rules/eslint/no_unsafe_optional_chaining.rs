@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::LogicalOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_unsafe_optional_chaining_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe usage of optional chaining")
@@ -63,7 +63,7 @@ impl Rule for NoUnsafeOptionalChaining {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(expr) if !expr.optional => {
                 Self::check_unsafe_usage(&expr.callee, ctx);

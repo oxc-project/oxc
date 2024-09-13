@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn some(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Found a useless array length check")
@@ -153,7 +153,7 @@ fn is_useless_check<'a>(
 }
 
 impl Rule for NoUselessLengthCheck {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::LogicalExpression(log_expr) = node.kind() {
             if ![LogicalOperator::And, LogicalOperator::Or].contains(&log_expr.operator) {
                 return;

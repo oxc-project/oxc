@@ -8,7 +8,7 @@ use crate::scope::ScopeId;
 
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]
-pub struct AstNode<'a> {
+pub struct Node<'a> {
     id: NodeId,
     /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
     kind: AstKind<'a>,
@@ -22,7 +22,7 @@ pub struct AstNode<'a> {
     flags: NodeFlags,
 }
 
-impl<'a> AstNode<'a> {
+impl<'a> Node<'a> {
     #[inline]
     pub(crate) fn new(
         kind: AstKind<'a>,
@@ -65,7 +65,7 @@ impl<'a> AstNode<'a> {
     }
 }
 
-impl GetSpan for AstNode<'_> {
+impl GetSpan for Node<'_> {
     #[inline]
     fn span(&self) -> oxc_span::Span {
         self.kind.span()
@@ -74,17 +74,17 @@ impl GetSpan for AstNode<'_> {
 
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug, Default)]
-pub struct AstNodes<'a> {
+pub struct Nodes<'a> {
     /// The root node should always point to a `Program`, which is the real
     /// root of the tree. It isn't possible to statically check for this, so
     /// users should beware.
     root: Option<NodeId>,
-    nodes: IndexVec<NodeId, AstNode<'a>>,
+    nodes: IndexVec<NodeId, Node<'a>>,
     parent_ids: IndexVec<NodeId, Option<NodeId>>,
 }
 
-impl<'a> AstNodes<'a> {
-    pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+impl<'a> Nodes<'a> {
+    pub fn iter(&self) -> impl Iterator<Item = &Node<'a>> + '_ {
         self.nodes.iter()
     }
 
@@ -103,8 +103,8 @@ impl<'a> AstNodes<'a> {
     /// The first node produced by this iterator is the first parent of the node
     /// pointed to by `node_id`. The last node will usually be a `Program`.
     #[inline]
-    pub fn iter_parents(&self, node_id: NodeId) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
-        AstNodeParentIter { current_node_id: Some(node_id), nodes: self }
+    pub fn iter_parents(&self, node_id: NodeId) -> impl Iterator<Item = &Node<'a>> + Clone + '_ {
+        NodeParentIter { current_node_id: Some(node_id), nodes: self }
     }
 
     #[inline]
@@ -121,17 +121,17 @@ impl<'a> AstNodes<'a> {
         self.parent_id(ast_node_id).map(|node_id| self.kind(node_id))
     }
 
-    pub fn parent_node(&self, ast_node_id: NodeId) -> Option<&AstNode<'a>> {
+    pub fn parent_node(&self, ast_node_id: NodeId) -> Option<&Node<'a>> {
         self.parent_id(ast_node_id).map(|node_id| self.get_node(node_id))
     }
 
     #[inline]
-    pub fn get_node(&self, ast_node_id: NodeId) -> &AstNode<'a> {
+    pub fn get_node(&self, ast_node_id: NodeId) -> &Node<'a> {
         &self.nodes[ast_node_id]
     }
 
     #[inline]
-    pub fn get_node_mut(&mut self, ast_node_id: NodeId) -> &mut AstNode<'a> {
+    pub fn get_node_mut(&mut self, ast_node_id: NodeId) -> &mut Node<'a> {
         &mut self.nodes[ast_node_id]
     }
 
@@ -145,14 +145,14 @@ impl<'a> AstNodes<'a> {
     /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
     /// Returns `None` if root node isn't set.
     #[inline]
-    pub fn root_node(&self) -> Option<&AstNode<'a>> {
+    pub fn root_node(&self) -> Option<&Node<'a>> {
         self.root().map(|id| self.get_node(id))
     }
 
     /// Get the root node as mutable reference, It is always guaranteed to be a `Program`.
     /// Returns `None` if root node isn't set.
     #[inline]
-    pub fn root_node_mut(&mut self) -> Option<&mut AstNode<'a>> {
+    pub fn root_node_mut(&mut self) -> Option<&mut Node<'a>> {
         self.root().map(|id| self.get_node_mut(id))
     }
 
@@ -165,7 +165,7 @@ impl<'a> AstNodes<'a> {
         std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
     }
 
-    /// Create and add an `AstNode` to the `AstNodes` tree and returns its `NodeId`.
+    /// Create and add a `Node` to the `Nodes` tree and returns its `NodeId`.
     /// Node must not be `Program`. Use `add_program_node` instead.
     #[inline]
     pub fn add_node(
@@ -177,12 +177,12 @@ impl<'a> AstNodes<'a> {
         flags: NodeFlags,
     ) -> NodeId {
         let ast_node_id = self.parent_ids.push(Some(parent_node_id));
-        let node = AstNode::new(kind, scope_id, cfg_id, flags, ast_node_id);
+        let node = Node::new(kind, scope_id, cfg_id, flags, ast_node_id);
         self.nodes.push(node);
         ast_node_id
     }
 
-    /// Create and add an `AstNode` to the `AstNodes` tree and returns its `NodeId`.
+    /// Create and add a `Node` to the `Nodes` tree and returns its `NodeId`.
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
@@ -192,7 +192,7 @@ impl<'a> AstNodes<'a> {
     ) -> NodeId {
         let ast_node_id = self.parent_ids.push(None);
         self.root = Some(ast_node_id);
-        let node = AstNode::new(kind, scope_id, cfg_id, flags, ast_node_id);
+        let node = Node::new(kind, scope_id, cfg_id, flags, ast_node_id);
         self.nodes.push(node);
         ast_node_id
     }
@@ -204,13 +204,13 @@ impl<'a> AstNodes<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct AstNodeParentIter<'s, 'a> {
+pub struct NodeParentIter<'s, 'a> {
     current_node_id: Option<NodeId>,
-    nodes: &'s AstNodes<'a>,
+    nodes: &'s Nodes<'a>,
 }
 
-impl<'s, 'a> Iterator for AstNodeParentIter<'s, 'a> {
-    type Item = &'s AstNode<'a>;
+impl<'s, 'a> Iterator for NodeParentIter<'s, 'a> {
+    type Item = &'s Node<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(node_id) = self.current_node_id {

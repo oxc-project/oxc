@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_new_buffer_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.")
@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewBuffer {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(new_expr) = node.kind() else {
             return;
         };

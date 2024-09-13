@@ -10,7 +10,7 @@ use crate::{
         collect_params, get_function_nearest_jsdoc_node, should_ignore_as_internal,
         should_ignore_as_private, ParamKind,
     },
-    AstNode,
+    Node,
 };
 
 fn missing_type_diagnostic(span: Span) -> OxcDiagnostic {
@@ -49,7 +49,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireParamDescription {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // Collected targets from `FormalParameters`
         let params_to_check = match node.kind() {
             AstKind::Function(func) if !func.is_typescript_syntax() => collect_params(&func.params),

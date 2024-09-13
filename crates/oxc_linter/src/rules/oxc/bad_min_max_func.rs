@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn bad_min_max_func_diagnostic(constant_result: f64, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Math.min and Math.max combination leads to constant result")
@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadMinMaxFunc {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

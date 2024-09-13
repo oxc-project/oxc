@@ -13,7 +13,7 @@ use crate::{
         get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_ignore_case,
         object_has_accessible_child,
     },
-    AstNode,
+    Node,
 };
 
 fn missing_alt_prop(span: Span) -> OxcDiagnostic {
@@ -170,7 +170,7 @@ impl Rule for AltText {
         Self(Box::new(alt_text))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
@@ -189,8 +189,7 @@ impl Rule for AltText {
         // <object>
         if let Some(custom_tags) = &self.object {
             if name == "object" || custom_tags.iter().any(|i| i == name) {
-                let maybe_parent =
-                    ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
+                let maybe_parent = ctx.nodes().parent_node(node.id()).map(oxc_semantic::Node::kind);
                 if let Some(AstKind::JSXElement(parent)) = maybe_parent {
                     object_rule(jsx_el, parent, ctx);
                     return;

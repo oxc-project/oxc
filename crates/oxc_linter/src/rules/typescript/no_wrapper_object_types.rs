@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_wrapper_object_types(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use wrapper object types.").with_label(span)
@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWrapperObjectTypes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let (ident_name, ident_span, reference_id) = match node.kind() {
             AstKind::TSTypeReference(type_ref) => {
                 if let TSTypeName::IdentifierReference(type_name) = &type_ref.type_name {

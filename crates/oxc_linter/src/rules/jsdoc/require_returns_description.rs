@@ -7,7 +7,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
-    AstNode,
+    Node,
 };
 
 fn missing_description_diagnostic(span: Span) -> OxcDiagnostic {
@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireReturnsDescription {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if !is_function_node(node) {
             return;
         }

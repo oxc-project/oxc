@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_static_only_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow classes that only have static members.")
@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoStaticOnlyClass {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::Class(class) = node.kind() else {
             return;
         };

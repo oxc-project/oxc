@@ -1,5 +1,5 @@
 use oxc_ast::{ast::BindingIdentifier, AstKind};
-use oxc_semantic::{AstNode, IsGlobalReference, NodeId, SymbolId};
+use oxc_semantic::{IsGlobalReference, Node, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
@@ -181,9 +181,9 @@ impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
 /// Return the innermost `Function` or `ArrowFunctionExpression` Node
 /// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+) -> Option<&'b Node<'a>> {
     let mut current_node = node;
     loop {
         if matches!(current_node.kind(), AstKind::Program(_)) {
@@ -204,7 +204,7 @@ pub fn is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usi
 }
 
 /// Jump to the outer most of chained parentheses if any
-pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> &'b AstNode<'a> {
+pub fn outermost_paren<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> &'b Node<'a> {
     let mut node = node;
 
     loop {
@@ -222,9 +222,9 @@ pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
 }
 
 pub fn outermost_paren_parent<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+) -> Option<&'b Node<'a>> {
     ctx.nodes()
         .iter_parents(node.id())
         .skip(1)
@@ -232,10 +232,10 @@ pub fn outermost_paren_parent<'a, 'b>(
 }
 
 pub fn nth_outermost_paren_parent<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
     n: usize,
-) -> Option<&'b AstNode<'a>> {
+) -> Option<&'b Node<'a>> {
     ctx.nodes()
         .iter_parents(node.id())
         .skip(1)
@@ -247,7 +247,7 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 pub fn iter_outer_expressions<'a, 'ctx>(
     ctx: &'ctx LintContext<'a>,
     node_id: NodeId,
-) -> impl Iterator<Item = &'ctx AstNode<'a>> + 'ctx {
+) -> impl Iterator<Item = &'ctx Node<'a>> + 'ctx {
     ctx.nodes().iter_parents(node_id).skip(1).filter(|parent| {
         !matches!(
             parent.kind(),
@@ -264,7 +264,7 @@ pub fn iter_outer_expressions<'a, 'ctx>(
 pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+) -> Option<&'b Node<'a>> {
     let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
     let symbol_table = ctx.semantic().symbols();
     Some(ctx.nodes().get_node(symbol_table.get_declaration(symbol_id)))
@@ -391,7 +391,7 @@ pub fn is_global_require_call(call_expr: &CallExpression, ctx: &LintContext) -> 
     call_expr.callee.is_global_reference_name("require", ctx.symbols())
 }
 
-pub fn is_function_node(node: &AstNode) -> bool {
+pub fn is_function_node(node: &Node) -> bool {
     match node.kind() {
         AstKind::Function(f) if f.is_function_declaration() => true,
         AstKind::Function(f) if f.is_expression() => true,
@@ -401,7 +401,7 @@ pub fn is_function_node(node: &AstNode) -> bool {
 }
 
 pub fn get_function_like_declaration<'b>(
-    node: &AstNode<'b>,
+    node: &Node<'b>,
     ctx: &LintContext<'b>,
 ) -> Option<&'b BindingIdentifier<'b>> {
     let parent = outermost_paren_parent(node, ctx)?;

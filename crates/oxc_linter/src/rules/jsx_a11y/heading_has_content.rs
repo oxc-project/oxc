@@ -7,7 +7,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, is_hidden_from_screen_reader, object_has_accessible_child},
-    AstNode,
+    Node,
 };
 
 fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
@@ -82,7 +82,7 @@ impl Rule for HeadingHasContent {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
@@ -105,7 +105,7 @@ impl Rule for HeadingHasContent {
             return;
         }
 
-        let maybe_parent = ctx.nodes().parent_node(node.id()).map(oxc_semantic::AstNode::kind);
+        let maybe_parent = ctx.nodes().parent_node(node.id()).map(oxc_semantic::Node::kind);
         if let Some(AstKind::JSXElement(parent)) = maybe_parent {
             if object_has_accessible_child(ctx, parent) {
                 return;

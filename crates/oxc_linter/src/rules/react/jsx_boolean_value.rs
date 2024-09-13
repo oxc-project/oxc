@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::get_prop_value, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_prop_value, Node};
 
 fn boolean_value_diagnostic(attr: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Value must be omitted for boolean attribute {attr:?}"))
@@ -102,7 +102,7 @@ impl Rule for JsxBooleanValue {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else { return };
 
         for attr in &jsx_opening_elem.attributes {

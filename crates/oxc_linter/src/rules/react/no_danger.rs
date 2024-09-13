@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{has_jsx_prop, is_create_element_call},
-    AstNode,
+    Node,
 };
 
 fn no_danger_diagnostic(span: Span) -> OxcDiagnostic {
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDanger {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 if let Some(JSXAttributeItem::Attribute(prop)) =

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_label_var_diagnostic(name: &str, id_span: Span, label_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Found identifier '{name}' with the same name as a label."))
@@ -59,7 +59,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLabelVar {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::LabeledStatement(labeled_stmt) = node.kind() else { return };
 
         if let Some(symbol_id) =

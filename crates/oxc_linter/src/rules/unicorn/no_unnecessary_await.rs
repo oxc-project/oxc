@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_unnecessary_await_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow awaiting non-promise values")
@@ -34,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnnecessaryAwait {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::AwaitExpression(expr) = node.kind() {
             if !not_promise(&expr.argument) {
                 return;

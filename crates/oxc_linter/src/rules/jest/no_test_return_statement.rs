@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTestReturnStatement {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 check_call_expression(call_expr, node, ctx);
@@ -61,7 +61,7 @@ impl Rule for NoTestReturnStatement {
 
 fn check_call_expression<'a>(
     call_expr: &'a CallExpression<'a>,
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &LintContext<'a>,
 ) {
     if !is_type_of_jest_fn_call(

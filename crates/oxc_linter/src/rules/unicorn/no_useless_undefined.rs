@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, Node};
 
 fn warn() -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use useless `undefined`.")
@@ -131,7 +131,7 @@ fn is_undefined(arg: &Argument) -> bool {
     false
 }
 
-fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+fn is_has_function_return_type(node: &Node, ctx: &LintContext<'_>) -> bool {
     let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
         return false;
     };
@@ -155,12 +155,12 @@ impl Rule for NoUselessUndefined {
         Self { check_arguments, check_arrow_function_body }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::IdentifierReference(undefined_literal)
                 if undefined_literal.name == "undefined" =>
             {
-                let mut parent_node: &AstNode<'a> = node;
+                let mut parent_node: &Node<'a> = node;
                 while let Some(parent) = ctx.nodes().parent_node(parent_node.id()) {
                     let parent_kind = parent.kind();
 

@@ -2,7 +2,7 @@ use oxc_ast::{ast::ArrayExpressionElement, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSparseArrays;
@@ -26,7 +26,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSparseArrays {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ArrayExpression(array_expr) = node.kind() {
             let violations = array_expr
                 .elements

@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, Node};
 
 fn string_literal(span: Span, replacement: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("This pattern can be replaced with `{replacement}`."))
@@ -51,7 +51,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferStringReplaceAll {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

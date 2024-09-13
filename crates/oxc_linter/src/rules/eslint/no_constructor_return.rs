@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_constructor_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected return statement in constructor.").with_label(span)
@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstructorReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ReturnStatement(ret) = node.kind() else { return };
         if ret.argument.is_none() {
             return;
@@ -58,7 +58,7 @@ impl Rule for NoConstructorReturn {
     }
 }
 
-fn is_constructor(node: &AstNode<'_>) -> bool {
+fn is_constructor(node: &Node<'_>) -> bool {
     matches!(
         node.kind(),
         AstKind::MethodDefinition(MethodDefinition { kind: MethodDefinitionKind::Constructor, .. })

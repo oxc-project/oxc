@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_for_of_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -115,7 +115,7 @@ impl<'a> ExpressionExt for Expression<'a> {
 }
 
 impl Rule for PreferForOf {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ForStatement(for_stmt) = node.kind() else {
             return;
         };

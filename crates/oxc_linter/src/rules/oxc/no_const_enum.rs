@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_const_enum_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected const enum")
@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstEnum {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSEnumDeclaration(enum_decl) = node.kind() {
             if !enum_decl.r#const {
                 return;

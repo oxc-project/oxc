@@ -219,9 +219,9 @@ impl ScopeTree {
         &self.bindings[scope_id]
     }
 
-    /// Get the ID of the [`AstNode`] that created a scope.
+    /// Get the ID of the [`Node`] that created a scope.
     ///
-    /// [`AstNode`]: crate::AstNode
+    /// [`Node`]: crate::Node
     #[inline]
     pub fn get_node_id(&self, scope_id: ScopeId) -> NodeId {
         self.node_ids[scope_id]

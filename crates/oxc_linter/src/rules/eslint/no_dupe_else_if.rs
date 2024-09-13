@@ -8,7 +8,7 @@ use oxc_span::cmp::ContentEq;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_dupe_else_if_diagnostic(first_test: Span, second_test: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("duplicate conditions in if-else-if chains")
@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDupeElseIf {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // if (a) {} else if (a) {}
         //                ^^ get this if statement
         let AstKind::IfStatement(if_stmt) = node.kind() else {

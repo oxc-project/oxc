@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
+    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, Node,
 };
 
 fn no_length_as_slice_end_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {
@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLengthAsSliceEnd {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

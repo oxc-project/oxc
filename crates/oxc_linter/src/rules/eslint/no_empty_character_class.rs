@@ -6,7 +6,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_empty_character_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty character class")
@@ -33,7 +33,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyCharacterClass {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         lazy_static! {
             /*
             * plain-English description of the following regexp:

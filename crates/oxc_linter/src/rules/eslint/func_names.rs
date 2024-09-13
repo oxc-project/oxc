@@ -14,7 +14,7 @@ use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn named_diagnostic(function_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected named {function_name}."))
@@ -43,7 +43,7 @@ enum FuncNamesConfig {
 }
 
 impl FuncNamesConfig {
-    fn is_invalid_function(self, func: &Function, parent_node: &AstNode<'_>) -> bool {
+    fn is_invalid_function(self, func: &Function, parent_node: &Node<'_>) -> bool {
         let func_name = func.name();
 
         match self {
@@ -147,7 +147,7 @@ declare_oxc_lint!(
 
 /// Determines whether the current FunctionExpression node is a get, set, or
 /// shorthand method in an object literal or a class.
-fn is_object_or_class_method(parent_node: &AstNode) -> bool {
+fn is_object_or_class_method(parent_node: &Node) -> bool {
     match parent_node.kind() {
         AstKind::MethodDefinition(_) => true,
         AstKind::ObjectProperty(property) => {
@@ -161,7 +161,7 @@ fn is_object_or_class_method(parent_node: &AstNode) -> bool {
 
 /// Determines whether the current FunctionExpression node has a name that would be
 /// inferred from context in a conforming ES6 environment.
-fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &AstNode<'a>) -> bool {
+fn has_inferred_name<'a>(function: &Function<'a>, parent_node: &Node<'a>) -> bool {
     if is_object_or_class_method(parent_node) {
         return true;
     }
@@ -255,7 +255,7 @@ fn get_property_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
     }
 }
 
-fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
+fn get_static_property_name<'a>(parent_node: &Node<'a>) -> Option<Cow<'a, str>> {
     let (key, computed) = match parent_node.kind() {
         AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
         AstKind::MethodDefinition(method_definition) => {
@@ -274,7 +274,7 @@ fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str
 
 /// Gets the name and kind of the given function node.
 /// @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
-fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a>) -> Cow<'a, str> {
+fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &Node<'a>) -> Cow<'a, str> {
     let mut tokens: Vec<Cow<'a, str>> = vec![];
 
     match parent_node.kind() {
@@ -370,7 +370,7 @@ impl Rule for FuncNames {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut invalid_funcs: Vec<(&Function, &AstNode)> = vec![];
+        let mut invalid_funcs: Vec<(&Function, &Node)> = vec![];
 
         for node in ctx.nodes().iter() {
             match node.kind() {
@@ -480,7 +480,7 @@ impl Rule for FuncNames {
 }
 
 fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<Cow<'a, str>> {
-    for parent_kind in ctx.nodes().iter_parents(parent_id).map(AstNode::kind) {
+    for parent_kind in ctx.nodes().iter_parents(parent_id).map(Node::kind) {
         match parent_kind {
             AstKind::ParenthesizedExpression(_)
             | AstKind::TSAsExpression(_)

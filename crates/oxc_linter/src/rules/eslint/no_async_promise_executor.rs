@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_async_promise_executor_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Promise executor functions should not be `async`.").with_label(span)
@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAsyncPromiseExecutor {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(new_expression) = node.kind() else {
             return;
         };

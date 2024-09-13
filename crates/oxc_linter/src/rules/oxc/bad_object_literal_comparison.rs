@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn object_comparison(span: Span, const_result: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected object literal comparison.")
@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadObjectLiteralComparison {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(binary_expression) = node.kind() else {
             return;
         };

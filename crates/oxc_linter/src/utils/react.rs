@@ -7,7 +7,7 @@ use oxc_ast::{
     },
     match_member_expression, AstKind,
 };
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 
 use crate::{LintContext, OxlintSettings};
 
@@ -146,7 +146,7 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
 const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";
 
-pub fn is_es5_component(node: &AstNode) -> bool {
+pub fn is_es5_component(node: &Node) -> bool {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return false;
     };
@@ -168,7 +168,7 @@ pub fn is_es5_component(node: &AstNode) -> bool {
 const COMPONENT: &str = "Component";
 const PURE_COMPONENT: &str = "PureComponent";
 
-pub fn is_es6_component(node: &AstNode) -> bool {
+pub fn is_es6_component(node: &Node) -> bool {
     let AstKind::Class(class_expr) = node.kind() else {
         return false;
     };
@@ -191,9 +191,9 @@ pub fn is_es6_component(node: &AstNode) -> bool {
 }
 
 pub fn get_parent_component<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+) -> Option<&'b Node<'a>> {
     for node_id in ctx.nodes().ancestors(node.id()) {
         let node = ctx.nodes().get_node(node_id);
         if is_es5_component(node) || is_es6_component(node) {

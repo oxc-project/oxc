@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_this_assignment_diagnostic(span: Span, ident_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not assign `this` to `{ident_name}`"))
@@ -58,7 +58,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThisAssignment {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_decl) => {
                 let Some(init) = &variable_decl.init else {

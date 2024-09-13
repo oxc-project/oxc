@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_dnyamic_require_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a literal string or immutable template literal")
@@ -54,7 +54,7 @@ impl Rule for NoDynamicRequire {
         Self { esmodule }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportExpression(import) => {
                 if self.esmodule && !is_static_value(&import.source) {

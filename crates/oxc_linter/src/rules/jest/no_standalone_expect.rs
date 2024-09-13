@@ -14,7 +14,7 @@ use crate::{
         parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, KnownMemberExpressionParentKind,
         ParsedExpectFnCall, PossibleJestNode,
     },
-    AstNode,
+    Node,
 };
 
 fn no_standalone_expect_diagnostic(span: Span) -> OxcDiagnostic {
@@ -127,7 +127,7 @@ impl NoStandaloneExpect {
 }
 
 fn is_correct_place_to_call_expect<'a>(
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     additional_test_block_functions: &[String],
     id_nodes_mapping: &HashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
@@ -195,7 +195,7 @@ fn is_correct_place_to_call_expect<'a>(
 }
 
 fn is_var_declarator_or_test_block<'a>(
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     additional_test_block_functions: &[String],
     id_nodes_mapping: &HashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,

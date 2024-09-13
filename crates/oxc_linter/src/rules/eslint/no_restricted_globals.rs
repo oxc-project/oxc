@@ -5,7 +5,7 @@ use oxc_span::Span;
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_restricted_globals(global_name: &str, suffix: &str, span: Span) -> OxcDiagnostic {
     let warn_text = if suffix.is_empty() {
@@ -79,7 +79,7 @@ impl Rule for NoRestrictedGlobals {
         Self { restricted_globals: Box::new(list) }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::IdentifierReference(ident) = node.kind() {
             let Some(message) = self.restricted_globals.get(ident.name.as_str()) else {
                 return;

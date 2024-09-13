@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_optional_chaining_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
     if help.is_empty() {
@@ -76,7 +76,7 @@ impl Rule for NoOptionalChaining {
         Self(Box::new(NoOptionalChainingConfig { message: message.to_string() }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ChainExpression(expr) = node.kind() {
             ctx.diagnostic(no_optional_chaining_diagnostic(expr.span, &self.message));
         }

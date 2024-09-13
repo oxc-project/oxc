@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_misused_new_interface_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Interfaces cannot be constructed, only classes.")
@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMisusedNew {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(interface_decl) => {
                 let decl_name = &interface_decl.id.name;

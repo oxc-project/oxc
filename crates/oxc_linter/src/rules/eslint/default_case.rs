@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::{Regex, RegexBuilder};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn default_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require default cases in switch statements.")
@@ -62,7 +62,7 @@ impl Rule for DefaultCase {
         Self(Box::new(cfg))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::SwitchStatement(switch) = node.kind() {
             let cases = &switch.cases;
 

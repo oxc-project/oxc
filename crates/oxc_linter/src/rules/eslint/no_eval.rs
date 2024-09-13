@@ -2,7 +2,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -56,7 +56,7 @@ impl Rule for NoEval {
         Self { allow_indirect }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
 
         if let AstKind::IdentifierReference(ident) = kind {

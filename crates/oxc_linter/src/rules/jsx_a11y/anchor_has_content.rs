@@ -14,7 +14,7 @@ use crate::{
         get_element_type, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
         object_has_accessible_child,
     },
-    AstNode,
+    Node,
 };
 
 fn missing_content(span: Span) -> OxcDiagnostic {
@@ -62,7 +62,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for AnchorHasContent {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else {
                 return;

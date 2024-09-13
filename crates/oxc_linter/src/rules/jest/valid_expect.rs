@@ -14,7 +14,7 @@ use crate::{
     utils::{
         collect_possible_jest_call_node, parse_expect_jest_fn_call, ExpectError, PossibleJestNode,
     },
-    AstNode,
+    Node,
 };
 
 fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(
@@ -230,7 +230,7 @@ impl ValidExpect {
 }
 
 fn find_top_most_member_expression<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b MemberExpression<'a>> {
     let mut top_most_member_expression = None;
@@ -255,7 +255,7 @@ fn find_top_most_member_expression<'a, 'b>(
 }
 
 fn is_acceptable_return_node<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     allow_return: bool,
     ctx: &'b LintContext<'a>,
 ) -> bool {
@@ -282,12 +282,12 @@ fn is_acceptable_return_node<'a, 'b>(
     }
 }
 
-type ParentAndIsFirstItem<'a, 'b> = (&'b AstNode<'a>, bool);
+type ParentAndIsFirstItem<'a, 'b> = (&'b Node<'a>, bool);
 
 // Returns the parent node of the given node, ignoring some nodes,
 // and return whether the first item if parent is an array.
 fn get_parent_with_ignore<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<ParentAndIsFirstItem<'a, 'b>> {
     let mut node = node;
@@ -320,10 +320,10 @@ fn get_parent_with_ignore<'a, 'b>(
 }
 
 fn find_promise_call_expression_node<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
-    default_node: &'b AstNode<'a>,
-) -> Option<&'b AstNode<'a>> {
+    default_node: &'b Node<'a>,
+) -> Option<&'b Node<'a>> {
     let Some((mut parent, is_first_array_item)) = get_parent_with_ignore(node, ctx) else {
         return Some(default_node);
     };
@@ -357,10 +357,7 @@ fn find_promise_call_expression_node<'a, 'b>(
     Some(default_node)
 }
 
-fn get_parent_if_thenable<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> &'b AstNode<'a> {
+fn get_parent_if_thenable<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> &'b Node<'a> {
     let grandparent =
         ctx.nodes().parent_node(node.id()).and_then(|node| ctx.nodes().parent_node(node.id()));
 

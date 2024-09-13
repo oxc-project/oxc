@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::get_string_literal_prop_value, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_string_literal_prop_value, Node};
 
 fn no_css_tags_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not include stylesheets manually.")
@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCssTags {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
             return;
         };

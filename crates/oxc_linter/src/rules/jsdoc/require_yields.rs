@@ -13,7 +13,7 @@ use crate::{
         get_function_nearest_jsdoc_node, should_ignore_as_avoid, should_ignore_as_internal,
         should_ignore_as_private,
     },
-    AstNode,
+    Node,
 };
 
 fn missing_yields(span: Span) -> OxcDiagnostic {
@@ -101,7 +101,7 @@ impl Rule for RequireYields {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let config = &self.0;
 
         // This rule checks generator function should have JSDoc `@yields` tag.

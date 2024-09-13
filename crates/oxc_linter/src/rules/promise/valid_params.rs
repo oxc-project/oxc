@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_promise, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_promise, Node};
 
 fn zero_or_one_argument_required_diagnostic(
     span: Span,
@@ -60,7 +60,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidParams {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

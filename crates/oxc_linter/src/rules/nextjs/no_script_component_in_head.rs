@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_script_component_in_head_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prevent usage of `next/script` in `next/head` component.")
@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoScriptComponentInHead {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
             node.kind()
         else {

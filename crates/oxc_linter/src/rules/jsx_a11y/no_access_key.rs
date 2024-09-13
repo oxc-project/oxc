@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, Node};
 
 fn no_access_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No access key attribute allowed.")
@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAccessKey {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

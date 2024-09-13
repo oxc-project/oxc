@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Variable or `function` declarations are not allowed in nested blocks")
@@ -59,7 +59,7 @@ impl Rule for NoInnerDeclarations {
         Self { config }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let span = match node.kind() {
             AstKind::VariableDeclaration(decl)
                 if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both =>

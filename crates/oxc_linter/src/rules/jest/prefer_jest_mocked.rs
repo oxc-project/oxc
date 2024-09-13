@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_set, Set};
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, Node};
 
 fn use_jest_mocked(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `jest.mocked()` over `fn as jest.Mock`.")
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferJestMocked {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSAsExpression(ts_expr) = node.kind() {
             if !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::TSAsExpression(_))) {
                 Self::check_ts_as_expression(node, ts_expr, ctx);
@@ -75,7 +75,7 @@ const MOCK_TYPES: Set<&'static str> = phf_set! {
 
 impl PreferJestMocked {
     fn check_ts_as_expression<'a>(
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         as_expr: &TSAsExpression,
         ctx: &LintContext<'a>,
     ) {
@@ -87,7 +87,7 @@ impl PreferJestMocked {
     }
 
     fn check_assert_type<'a>(
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         assert_type: &TSTypeAssertion,
         ctx: &LintContext<'a>,
     ) {
@@ -99,7 +99,7 @@ impl PreferJestMocked {
     }
 
     fn check<'a>(
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         ts_reference: &TSTypeReference,
         arg_span: Span,
         span: Span,
@@ -129,7 +129,7 @@ impl PreferJestMocked {
     }
 }
 
-fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn can_fix<'a>(node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
     outermost_paren_parent(node, ctx)
         .map_or(false, |parent| !matches!(parent.kind(), AstKind::SimpleAssignmentTarget(_)))
 }

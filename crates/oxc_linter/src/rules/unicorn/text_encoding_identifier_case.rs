@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn text_encoding_identifier_case_diagnostic(
     span: Span,
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for TextEncodingIdentifierCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let (s, span) = match node.kind() {
             AstKind::StringLiteral(string_lit) => (&string_lit.value, string_lit.span),
             AstKind::JSXText(jsx_text) => (&jsx_text.value, jsx_text.span),

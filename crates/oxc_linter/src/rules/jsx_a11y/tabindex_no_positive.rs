@@ -7,7 +7,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{has_jsx_prop_ignore_case, parse_jsx_value},
-    AstNode,
+    Node,
 };
 
 fn tabindex_no_positive_diagnostic(span: Span) -> OxcDiagnostic {
@@ -49,7 +49,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for TabindexNoPositive {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

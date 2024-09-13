@@ -12,7 +12,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::is_boolean_node,
-    AstNode,
+    Node,
 };
 
 fn over_method(span: Span) -> OxcDiagnostic {
@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferArraySome {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 if !is_method_call(call_expr, None, Some(&["find", "findLast"]), Some(1), Some(2)) {
@@ -197,7 +197,7 @@ fn is_node_value_not_function(expr: &Expression) -> bool {
 }
 
 fn is_checking_undefined<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     _call_expr: &'b CallExpression<'a>,
     ctx: &'b LintContext<'a>,
 ) -> bool {

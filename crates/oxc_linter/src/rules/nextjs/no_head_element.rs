@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::is_in_app_dir, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::is_in_app_dir, Node};
 
 fn no_head_element_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `<head>` element. Use `<Head />` from `next/head` instead.")
@@ -29,7 +29,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoHeadElement {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let Some(full_file_path) = ctx.file_path().to_str() else {
             return;
         };

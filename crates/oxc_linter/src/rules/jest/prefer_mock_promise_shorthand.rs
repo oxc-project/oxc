@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferMockPromiseShorthand {
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &oxc_semantic::Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

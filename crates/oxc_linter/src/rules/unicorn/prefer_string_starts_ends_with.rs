@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn starts_with(span: Span) -> OxcDiagnostic {
@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferStringStartsEndsWith {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

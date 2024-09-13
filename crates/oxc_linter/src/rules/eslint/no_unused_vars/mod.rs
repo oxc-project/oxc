@@ -14,7 +14,7 @@ use std::ops::Deref;
 use options::NoUnusedVarsOptions;
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags, SymbolId};
+use oxc_semantic::{Node, ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::GetSpan;
 use symbol::Symbol;
 
@@ -259,7 +259,7 @@ impl NoUnusedVars {
             | AstKind::ImportNamespaceSpecifier(_) => {
                 let diagnostic = diagnostic::imported(symbol);
                 let declaration =
-                    symbol.iter_self_and_parents().map(AstNode::kind).find_map(|kind| match kind {
+                    symbol.iter_self_and_parents().map(Node::kind).find_map(|kind| match kind {
                         AstKind::ImportDeclaration(import) => Some(import),
                         _ => None,
                     });

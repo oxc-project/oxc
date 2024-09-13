@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_namespace_keyword_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use 'namespace' instead of 'module' to declare custom TypeScript modules.")
@@ -34,13 +34,13 @@ declare_oxc_lint!(
     fix
 );
 
-fn is_nest_module(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+fn is_nest_module(node: &Node, ctx: &LintContext<'_>) -> bool {
     ctx.nodes()
         .parent_node(node.id())
         .map_or(false, |parent_node| is_valid_module_node(parent_node))
 }
 
-fn is_valid_module_node(node: &AstNode) -> bool {
+fn is_valid_module_node(node: &Node) -> bool {
     matches!(node.kind(), AstKind::TSModuleDeclaration(module) if is_valid_module(module))
 }
 
@@ -51,7 +51,7 @@ fn is_valid_module(module: &TSModuleDeclaration) -> bool {
 }
 
 impl Rule for PreferNamespaceKeyword {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
 
         if !is_valid_module(module) || is_nest_module(node, ctx) {

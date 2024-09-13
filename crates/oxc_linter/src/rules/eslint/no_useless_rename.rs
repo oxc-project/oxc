@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -83,7 +83,7 @@ impl Rule for NoUselessRename {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectPattern(object_pattern) => {
                 if self.ignore_destructuring {

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDynamicDelete;
@@ -34,7 +34,7 @@ fn no_dynamic_delete_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 impl Rule for NoDynamicDelete {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::UnaryExpression(expr) = node.kind() else { return };
         if !matches!(expr.operator, UnaryOperator::Delete) {
             return;

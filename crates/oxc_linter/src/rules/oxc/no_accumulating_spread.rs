@@ -14,7 +14,7 @@ use crate::{
     ast_util::{call_expr_method_callee_info, is_method_call},
     context::LintContext,
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn reduce_likely_array_spread_diagnostic(spread_span: Span, reduce_span: Span) -> OxcDiagnostic {
@@ -123,7 +123,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAccumulatingSpread {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // only check spreads on identifiers
         let AstKind::SpreadElement(spread) = node.kind() else {
             return;
@@ -160,7 +160,7 @@ impl Rule for NoAccumulatingSpread {
 }
 
 fn check_reduce_usage<'a>(
-    declaration: &AstNode<'a>,
+    declaration: &Node<'a>,
     referenced_symbol_id: SymbolId,
     spread_span: Span,
     ctx: &LintContext<'a>,
@@ -195,8 +195,8 @@ fn check_reduce_usage<'a>(
 }
 
 fn check_loop_usage<'a>(
-    declaration_node: &AstNode<'a>,
-    declarator: &AstNode<'a>,
+    declaration_node: &Node<'a>,
+    declarator: &Node<'a>,
     referenced_symbol_id: SymbolId,
     spread_node_id: NodeId,
     spread_span: Span,

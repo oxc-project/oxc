@@ -11,8 +11,7 @@ use oxc_span::Span;
 use phf::{phf_map, phf_ordered_set, Map};
 
 use crate::{
-    ast_util::get_symbol_id_of_variable, context::LintContext, fixer::RuleFixer, rule::Rule,
-    AstNode,
+    ast_util::get_symbol_id_of_variable, context::LintContext, fixer::RuleFixer, rule::Rule, Node,
 };
 
 fn prefer_numeric_literals_diagnostic(span: Span, prefix_name: &str) -> OxcDiagnostic {
@@ -58,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNumericLiterals {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

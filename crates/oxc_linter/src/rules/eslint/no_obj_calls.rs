@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ScopeId};
+use oxc_semantic::{Node, ScopeId};
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -126,7 +126,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
 }
 
 impl Rule for NoObjCalls {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         #[allow(clippy::needless_return)]
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),

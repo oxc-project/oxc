@@ -25,7 +25,7 @@ use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 use config::LintConfig;
 use options::LintOptions;
 use oxc_diagnostics::Error;
-use oxc_semantic::{AstNode, Semantic};
+use oxc_semantic::{Node, Semantic};
 
 pub use crate::{
     config::OxlintConfig,

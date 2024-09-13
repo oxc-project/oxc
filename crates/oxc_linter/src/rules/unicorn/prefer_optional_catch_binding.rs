@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_optional_catch_binding_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer omitting the catch binding parameter if it is unused")
@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferOptionalCatchBinding {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CatchParameter(catch_param) = node.kind() else {
             return;
         };

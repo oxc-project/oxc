@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, Node};
 
 fn no_process_exit_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow `process.exit()`.")
@@ -42,7 +42,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoProcessExit {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(expr) = node.kind() {
             if is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None) {
                 if has_hashbang(ctx)
@@ -66,7 +66,7 @@ fn has_hashbang(ctx: &LintContext) -> bool {
     program.hashbang.is_some()
 }
 
-fn is_inside_process_event_handler(ctx: &LintContext, node: &AstNode) -> bool {
+fn is_inside_process_event_handler(ctx: &LintContext, node: &Node) -> bool {
     for parent in ctx.nodes().iter_parents(node.id()) {
         if let AstKind::CallExpression(expr) = parent.kind() {
             if is_method_call(expr, Some(&["process"]), Some(&["on", "once"]), Some(1), None) {

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_continue_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected use of `continue` statement.")
@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoContinue {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ContinueStatement(continue_statement) = node.kind() {
             ctx.diagnostic(no_continue_diagnostic(Span::new(
                 continue_statement.span.start,

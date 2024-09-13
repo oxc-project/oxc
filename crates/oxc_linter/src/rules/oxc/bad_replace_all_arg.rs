@@ -10,7 +10,7 @@ use crate::{
     ast_util::{extract_regex_flags, get_declaration_of_variable, is_method_call},
     context::LintContext,
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn bad_replace_all_arg_diagnostic(replace_all_span: Span, regex_span: Span) -> OxcDiagnostic {
@@ -50,7 +50,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadReplaceAllArg {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

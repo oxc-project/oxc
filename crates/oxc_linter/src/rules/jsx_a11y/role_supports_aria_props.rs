@@ -16,7 +16,7 @@ use crate::{
         get_element_type, get_jsx_attribute_name, get_string_literal_prop_value,
         has_jsx_prop_ignore_case,
     },
-    AstNode,
+    Node,
 };
 
 declare_oxc_lint!(
@@ -64,7 +64,7 @@ fn is_implicit_diagnostic(span: Span, attr_name: &str, role: &str, el_name: &str
 }
 
 impl Rule for RoleSupportsAriaProps {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

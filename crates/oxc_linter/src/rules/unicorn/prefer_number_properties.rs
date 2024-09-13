@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
+use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, Node};
 
 fn prefer_number_properties_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use `Number.{method_name}` instead of the global `{method_name}`"))
@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNumberProperties {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::MemberExpression(member_expr) => {
                 let Expression::Identifier(ident_name) = member_expr.object() else {

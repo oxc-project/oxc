@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_new_func(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("The Function constructor is eval.").with_label(span)
@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNewFunc {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let id_and_span = match node.kind() {
             AstKind::NewExpression(new_expr) => {
                 let Some(id) = new_expr.callee.get_identifier_reference() else {
@@ -62,7 +62,7 @@ impl Rule for NoNewFunc {
                 Some((obj_id, call_expr.span))
             }
             AstKind::MemberExpression(mem_expr) => {
-                let parent: Option<&AstNode<'a>> =
+                let parent: Option<&Node<'a>> =
                     ctx.nodes().iter_parents(node.id()).skip(1).find(|node| {
                         !matches!(
                             node.kind(),
@@ -70,8 +70,7 @@ impl Rule for NoNewFunc {
                         )
                     });
 
-                let Some(AstKind::CallExpression(parent_call_expr)) = parent.map(AstNode::kind)
-                else {
+                let Some(AstKind::CallExpression(parent_call_expr)) = parent.map(Node::kind) else {
                     return;
                 };
 

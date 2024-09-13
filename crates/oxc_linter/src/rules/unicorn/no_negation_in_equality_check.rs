@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_negation_in_equality_check_diagnostic(
     span: Span,
@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNegationInEqualityCheck {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BinaryExpression(binary_expr) = node.kind() {
             let Expression::UnaryExpression(left_unary_expr) = &binary_expr.left else {
                 return;

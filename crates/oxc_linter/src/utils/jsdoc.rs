@@ -6,7 +6,7 @@ use oxc_semantic::JSDoc;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
+use crate::{config::JSDocPluginSettings, context::LintContext, Node};
 
 /// JSDoc is often attached on the parent node of a function.
 ///
@@ -26,9 +26,9 @@ use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
 /// class Y { qux = () => {} }
 /// ```
 pub fn get_function_nearest_jsdoc_node<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+) -> Option<&'b Node<'a>> {
     let mut current_node = node;
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`
     while ctx.jsdoc().get_all_by_node(current_node).is_none() {

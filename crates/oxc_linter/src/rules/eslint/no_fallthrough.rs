@@ -18,7 +18,7 @@ use oxc_span::{GetSpan, Span};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a 'break' statement before 'case'.").with_label(span)
@@ -257,7 +257,7 @@ impl Rule for NoFallthrough {
         Self::new(comment_pattern, allow_empty_case, report_unused_fallthrough_comment)
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::SwitchStatement(switch) = node.kind() else { return };
 
         let cfg = ctx.cfg();
@@ -429,7 +429,7 @@ impl NoFallthrough {
 // Issue: <https://github.com/oxc-project/oxc/issues/3662>
 fn get_switch_semantic_cases(
     ctx: &LintContext,
-    node: &AstNode,
+    node: &Node,
     switch: &SwitchStatement,
 ) -> (
     Vec<BasicBlockId>,

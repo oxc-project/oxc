@@ -17,7 +17,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
@@ -137,7 +137,7 @@ impl Rule for ConsistentTypeImports {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if self.disallow_type_annotations.0 {
             //  `import()` type annotations are forbidden.
             // `type Foo = import('foo')`

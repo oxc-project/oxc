@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn react_in_jsx_scope_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'React' must be in scope when using JSX")
@@ -42,7 +42,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ReactInJsxScope {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let node_span = match node.kind() {
             AstKind::JSXOpeningElement(v) => v.name.span(),
             AstKind::JSXFragment(v) => v.opening_fragment.span,

@@ -7,7 +7,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, ReferenceId};
+use oxc_semantic::{Node, ReferenceId};
 use phf::phf_set;
 
 use crate::LintContext;
@@ -139,7 +139,7 @@ pub fn parse_expect_jest_fn_call<'a>(
 }
 
 pub struct PossibleJestNode<'a, 'b> {
-    pub node: &'b AstNode<'a>,
+    pub node: &'b Node<'a>,
     pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
 }
 

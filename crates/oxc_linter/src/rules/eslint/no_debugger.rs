@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_debugger_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`debugger` statement is not allowed").with_label(span)
@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDebugger {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::DebuggerStatement(stmt) = node.kind() {
             ctx.diagnostic_with_fix(no_debugger_diagnostic(stmt.span), |fixer| {
                 let Some(parent) = ctx

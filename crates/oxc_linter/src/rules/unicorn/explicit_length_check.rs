@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_boolean_ancestor, is_boolean_node},
-    AstNode,
+    Node,
 };
 
 fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
@@ -115,10 +115,10 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
     )
 }
 fn get_length_check_node<'a, 'b>(
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     ctx: &'b LintContext<'a>,
     // (is_zero_length_check, length_check_node)
-) -> Option<(bool, &'b AstNode<'a>)> {
+) -> Option<(bool, &'b Node<'a>)> {
     let parent = ctx.nodes().parent_node(node.id());
     parent.and_then(|parent| {
         if let AstKind::BinaryExpression(binary_expr) = parent.kind() {
@@ -168,7 +168,7 @@ impl ExplicitLengthCheck {
     fn report<'a>(
         &self,
         ctx: &LintContext<'a>,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         is_zero_length_check: bool,
         static_member_expr: &StaticMemberExpression,
         auto_fix: bool,
@@ -242,7 +242,7 @@ impl ExplicitLengthCheck {
     }
 }
 impl Rule for ExplicitLengthCheck {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(
             static_member_expr,
         )) = node.kind()
@@ -270,7 +270,7 @@ impl Rule for ExplicitLengthCheck {
                     return;
                 }
                 let parent = ctx.nodes().parent_node(node.id());
-                let kind = parent.map(AstNode::kind);
+                let kind = parent.map(Node::kind);
                 match kind {
                     Some(AstKind::LogicalExpression(LogicalExpression {
                         operator, right, ..

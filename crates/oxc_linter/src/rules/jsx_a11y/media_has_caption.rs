@@ -9,7 +9,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_element_type, Node};
 
 fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")
@@ -105,7 +105,7 @@ impl Rule for MediaHasCaption {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

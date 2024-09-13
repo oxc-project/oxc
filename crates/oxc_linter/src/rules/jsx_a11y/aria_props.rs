@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, utils::get_jsx_attribute_name,
-    AstNode,
+    Node,
 };
 
 fn aria_props_diagnostic(span: Span, prop_name: &str, suggestion: Option<&str>) -> OxcDiagnostic {
@@ -51,7 +51,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for AriaProps {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
             let name = get_jsx_attribute_name(&attr.name);
             let name = name.cow_to_lowercase();

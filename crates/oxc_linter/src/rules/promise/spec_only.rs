@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::PROMISE_STATIC_METHODS, Node};
 
 fn spec_only(prop_name: &str, member_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Avoid using non-standard `Promise.{prop_name}`"))
@@ -64,7 +64,7 @@ impl Rule for SpecOnly {
         Self(Box::new(SpecOnlyConfig { allowed_methods }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::MemberExpression(member_expr) = node.kind() else {
             return;
         };

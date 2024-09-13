@@ -15,7 +15,7 @@ use regex::Regex;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, Node};
 
 fn invalid_prop_on_tag(span: Span, prop: &str, tag: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid property found")
@@ -459,7 +459,7 @@ impl Rule for NoUnknownProperty {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
 
         let AstKind::JSXOpeningElement(el) = &node.kind() else {

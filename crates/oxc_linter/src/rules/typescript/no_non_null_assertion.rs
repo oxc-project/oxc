@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNonNullAssertion;
@@ -32,7 +32,7 @@ fn no_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 impl Rule for NoNonNullAssertion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSNonNullExpression(expr) = node.kind() else { return };
         ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span));
     }

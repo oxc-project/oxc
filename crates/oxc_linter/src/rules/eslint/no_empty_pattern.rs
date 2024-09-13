@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_empty_pattern_diagnostic(pattern_type: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow empty destructuring patterns.")
@@ -75,7 +75,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyPattern {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let (pattern_type, span) = match node.kind() {
             AstKind::ArrayPattern(array) if array.is_empty() => ("array", array.span),
             AstKind::ObjectPattern(object) if object.is_empty() => ("object", object.span),

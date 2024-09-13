@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_add_event_listener_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `addEventListener()` over their `on`-function counterparts.")
@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferAddEventListener {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
             return;
         };

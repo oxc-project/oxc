@@ -19,7 +19,7 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
@@ -147,7 +147,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessSpread {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if !matches!(node.kind(), AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_)) {
             return;
         }
@@ -179,7 +179,7 @@ impl Rule for NoUselessSpread {
     }
 }
 
-fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn check_useless_spread_in_list<'a>(node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else {
         return false;
     };
@@ -287,7 +287,7 @@ fn diagnose_array_in_array_spread<'a>(
 }
 
 fn check_useless_iterable_to_array<'a>(
-    node: &AstNode<'a>,
+    node: &Node<'a>,
     array_expr: &ArrayExpression<'a>,
     spread_elem: &SpreadElement<'a>,
     ctx: &LintContext<'a>,

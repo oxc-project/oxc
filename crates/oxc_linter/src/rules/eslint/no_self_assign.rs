@@ -11,7 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_self_assign_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("this expression is assigned to itself").with_label(span)
@@ -58,7 +58,7 @@ impl Rule for NoSelfAssign {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assignment) = node.kind() else {
             return;
         };

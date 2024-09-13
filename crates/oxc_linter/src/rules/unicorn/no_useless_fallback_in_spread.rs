@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, Node};
 
 fn no_useless_fallback_in_spread_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow useless fallback when spreading in object literals")
@@ -42,7 +42,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessFallbackInSpread {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::LogicalExpression(logical_expression) = node.kind() else {
             return;
         };

@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_compare_neg_zero_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use the {operator} operator to compare against -0."))
@@ -34,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCompareNegZero {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };

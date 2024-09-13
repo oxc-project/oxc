@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_unsafe_finally_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe finally block")
@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeFinally {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
 
         let sentinel_node_type = match kind {

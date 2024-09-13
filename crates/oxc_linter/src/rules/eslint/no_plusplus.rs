@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_plusplus_diagnostic(span: Span, operator: UpdateOperator) -> OxcDiagnostic {
     let diagnostic = OxcDiagnostic::warn(format!(
@@ -92,7 +92,7 @@ impl Rule for NoPlusplus {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::UpdateExpression(expr) = node.kind() else {
             return;
         };
@@ -112,7 +112,7 @@ impl Rule for NoPlusplus {
 ///   - An operand of a sequence expression that is the update node: for (;; foo(), i++) {}
 ///   - An operand of a sequence expression that is child of another sequence expression, etc.,
 ///     up to the sequence expression that is the update node: for (;; foo(), (bar(), (baz(), i++))) {}
-fn is_for_loop_afterthought(node: &AstNode, ctx: &LintContext) -> Option<bool> {
+fn is_for_loop_afterthought(node: &Node, ctx: &LintContext) -> Option<bool> {
     let mut cur = ctx.nodes().parent_node(node.id())?;
 
     while let AstKind::SequenceExpression(_) | AstKind::ParenthesizedExpression(_) = cur.kind() {

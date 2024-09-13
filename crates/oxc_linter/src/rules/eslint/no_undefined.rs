@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUndefined;
@@ -65,7 +65,7 @@ fn diagnostic_undefined_keyword(name: &str, span: Span, ctx: &LintContext) {
 }
 
 impl Rule for NoUndefined {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::IdentifierReference(ident) => {
                 diagnostic_undefined_keyword(ident.name.as_str(), ident.span, ctx);

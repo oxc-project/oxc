@@ -19,7 +19,7 @@ use crate::{
     rules::eslint::array_callback_return::return_checker::{
         check_statement, StatementReturnStatus,
     },
-    AstNode,
+    Node,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -161,7 +161,7 @@ impl Rule for ExplicitFunctionReturnType {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) => {
                 if !func.is_declaration() & !func.is_expression() {
@@ -318,7 +318,7 @@ impl ExplicitFunctionReturnType {
         matches!(unary_expr.operator, UnaryOperator::Void)
     }
 
-    fn is_allowed_function<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    fn is_allowed_function<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
         match node.kind() {
             AstKind::Function(func) => {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
@@ -354,7 +354,7 @@ impl ExplicitFunctionReturnType {
 
     fn check_parent_for_is_allowed_function<'a>(
         &self,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
         let Some(parent) = get_parent_node(node, ctx) else { return false };
@@ -390,7 +390,7 @@ impl ExplicitFunctionReturnType {
 
     fn is_valid_function_expression_return_type<'a>(
         &self,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
         if check_typed_function_expression(node, ctx) {
@@ -399,7 +399,7 @@ impl ExplicitFunctionReturnType {
         self.check_allow_expressions(node, ctx)
     }
 
-    fn check_allow_expressions(&self, node: &AstNode, ctx: &LintContext) -> bool {
+    fn check_allow_expressions(&self, node: &Node, ctx: &LintContext) -> bool {
         let Some(parent) = ctx.nodes().parent_node(node.id()) else {
             return false;
         };
@@ -413,7 +413,7 @@ impl ExplicitFunctionReturnType {
             )
     }
 
-    fn returns_const_assertion_directly(&self, node: &AstNode) -> bool {
+    fn returns_const_assertion_directly(&self, node: &Node) -> bool {
         if !self.allow_direct_const_assertion_in_arrow_functions {
             return false;
         }
@@ -456,7 +456,7 @@ impl ExplicitFunctionReturnType {
      * function fn() { return function() { ... } }
      * ```
      */
-    fn does_immediately_return_function_expression(&self, node: &AstNode) -> bool {
+    fn does_immediately_return_function_expression(&self, node: &Node) -> bool {
         if !self.allow_higher_order_functions {
             return false;
         }
@@ -470,7 +470,7 @@ impl ExplicitFunctionReturnType {
 }
 
 // check function is IIFE (Immediately Invoked Function Expression)
-fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn is_iife<'a>(node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else {
         return false;
     };
@@ -483,23 +483,23 @@ fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
  *         ^^^^^^^^
  * ```
  */
-fn is_constructor_argument(node: &AstNode) -> bool {
+fn is_constructor_argument(node: &Node) -> bool {
     matches!(node.kind(), AstKind::NewExpression(_))
 }
 
-fn is_constructor_or_setter(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_constructor_or_setter(node: &Node, ctx: &LintContext) -> bool {
     let Some(parent) = ctx.nodes().parent_node(node.id()) else {
         return false;
     };
     is_constructor(parent) || is_setter(parent)
 }
 
-fn is_constructor(node: &AstNode) -> bool {
+fn is_constructor(node: &Node) -> bool {
     let AstKind::MethodDefinition(method_def) = node.kind() else { return false };
     method_def.kind.is_constructor()
 }
 
-fn is_setter(node: &AstNode) -> bool {
+fn is_setter(node: &Node) -> bool {
     match node.kind() {
         AstKind::MethodDefinition(method_def) => method_def.kind.is_set(),
         AstKind::ObjectProperty(obj_prop) => {
@@ -509,10 +509,7 @@ fn is_setter(node: &AstNode) -> bool {
     }
 }
 
-fn get_parent_node<'a, 'b>(
-    node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
-) -> Option<&'b AstNode<'a>> {
+fn get_parent_node<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> Option<&'b Node<'a>> {
     let parent = outermost_paren_parent(node, ctx)?;
     match parent.kind() {
         AstKind::Argument(_) => outermost_paren_parent(parent, ctx),
@@ -520,14 +517,14 @@ fn get_parent_node<'a, 'b>(
     }
 }
 
-fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn check_typed_function_expression<'a>(node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else { return false };
     is_typed_parent(parent, Some(node))
         || is_property_of_object_with_type(parent, ctx)
         || is_constructor_argument(parent)
 }
 
-fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>) -> bool {
+fn is_typed_parent(parent: &Node, callee: Option<&Node>) -> bool {
     is_type_assertion(parent)
         || is_variable_declarator_with_type_annotation(parent)
         || is_default_function_parameter_with_type_annotation(parent)
@@ -536,13 +533,13 @@ fn is_typed_parent(parent: &AstNode, callee: Option<&AstNode>) -> bool {
         || is_typed_jsx(parent)
 }
 
-fn is_variable_declarator_with_type_annotation(node: &AstNode) -> bool {
+fn is_variable_declarator_with_type_annotation(node: &Node) -> bool {
     let AstKind::VariableDeclarator(var_decl) = node.kind() else { return false };
 
     var_decl.id.type_annotation.is_some()
 }
 
-fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
+fn is_function_argument(parent: &Node, callee: Option<&Node>) -> bool {
     let AstKind::CallExpression(call_expr) = parent.kind() else { return false };
 
     if callee.is_none() {
@@ -565,10 +562,10 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
     }
 }
 
-fn is_type_assertion(node: &AstNode) -> bool {
+fn is_type_assertion(node: &Node) -> bool {
     matches!(node.kind(), AstKind::TSAsExpression(_) | AstKind::TSTypeAssertion(_))
 }
-fn is_default_function_parameter_with_type_annotation(node: &AstNode) -> bool {
+fn is_default_function_parameter_with_type_annotation(node: &Node) -> bool {
     let AstKind::AssignmentPattern(assign) = node.kind() else { return false };
 
     assign.left.type_annotation.is_some()
@@ -580,7 +577,7 @@ fn is_default_function_parameter_with_type_annotation(node: &AstNode) -> bool {
  * public x: Foo = ...
  * ```
  */
-fn is_property_definition_with_type_annotation(node: &AstNode) -> bool {
+fn is_property_definition_with_type_annotation(node: &Node) -> bool {
     let AstKind::PropertyDefinition(prop_def) = node.kind() else { return false };
     prop_def.type_annotation.is_some()
 }
@@ -593,7 +590,7 @@ fn is_property_definition_with_type_annotation(node: &AstNode) -> bool {
  * <Baz {...props} />
  * ```
  */
-fn is_typed_jsx(node: &AstNode) -> bool {
+fn is_typed_jsx(node: &Node) -> bool {
     if matches!(node.kind(), AstKind::JSXExpressionContainer(_) | AstKind::JSXSpreadAttribute(_)) {
         return true;
     }
@@ -606,7 +603,7 @@ fn is_function(expr: &Expression) -> bool {
     matches!(expr, Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_))
 }
 
-fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn ancestor_has_return_type<'a>(node: &Node<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else { return false };
 
     if let AstKind::ObjectProperty(prop) = parent.kind() {
@@ -652,7 +649,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
     false
 }
 
-fn all_return_statements_are_functions(node: &AstNode) -> bool {
+fn all_return_statements_are_functions(node: &Node) -> bool {
     match node.kind() {
         AstKind::ArrowFunctionExpression(arrow_func_expr) => {
             check_return_statements(&arrow_func_expr.body.statements)
@@ -668,7 +665,7 @@ fn all_return_statements_are_functions(node: &AstNode) -> bool {
     }
 }
 
-fn check_return_statement_and_bodyless(node: &AstNode) -> bool {
+fn check_return_statement_and_bodyless(node: &Node) -> bool {
     match node.kind() {
         AstKind::ReturnStatement(_) => true,
         AstKind::ArrowFunctionExpression(func) => func.body.statements.is_empty(),
@@ -714,7 +711,7 @@ fn check_return_statements<'a>(statements: &'a [Statement<'a>]) -> bool {
  * const x: Foo = { bar: { prop: () => {} } }
  * ```
  */
-fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
+fn is_property_of_object_with_type(node: &Node, ctx: &LintContext) -> bool {
     if !matches!(node.kind(), AstKind::ObjectProperty(_)) {
         return false;
     }

@@ -9,7 +9,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, utils, AstNode};
+use crate::{context::LintContext, rule::Rule, utils, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAsyncEndpointHandlers(Box<NoAsyncEndpointHandlersConfig>);
@@ -183,7 +183,7 @@ impl Rule for NoAsyncEndpointHandlers {
         Self(Box::new(NoAsyncEndpointHandlersConfig { allowed_names }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
         let Some((_endpoint, args)) = utils::as_endpoint_registration(&kind) else {
             return;

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_find_dom_node_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected call to `findDOMNode`.")
@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoFindDomNode {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_resolver::NODEJS_BUILTINS;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_node_protocol_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using the `node:` protocol when importing Node.js builtin modules.")
@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNodeProtocol {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let string_lit_value_with_span = match node.kind() {
             AstKind::ImportExpression(import) => match import.source {
                 Expression::StringLiteral(ref str_lit) => {

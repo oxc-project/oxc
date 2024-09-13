@@ -16,7 +16,7 @@ use crate::{
         get_first_parameter_name, get_return_identifier_name, is_empty_array_expression,
         is_prototype_property,
     },
-    AstNode,
+    Node,
 };
 
 fn prefer_array_flat_diagnostic(span: Span) -> OxcDiagnostic {
@@ -65,7 +65,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferArrayFlat {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

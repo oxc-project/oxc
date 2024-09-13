@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_unreadable_array_destructuring_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow unreadable array destructuring")
@@ -53,7 +53,7 @@ fn is_unreadable_array_destructuring<T, U>(elements: &Vec<Option<T>>, rest: &Opt
 }
 
 impl Rule for NoUnreadableArrayDestructuring {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ArrayPattern(array_pattern) = node.kind() {
             if is_unreadable_array_destructuring(&array_pattern.elements, &array_pattern.rest) {
                 ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));

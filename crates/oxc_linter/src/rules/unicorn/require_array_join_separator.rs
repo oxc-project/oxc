@@ -4,8 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_prototype_property,
-    AstNode,
+    ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_prototype_property, Node,
 };
 
 fn require_array_join_separator_diagnostic(span: Span) -> OxcDiagnostic {
@@ -48,7 +47,7 @@ fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -
 }
 
 impl Rule for RequireArrayJoinSeparator {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

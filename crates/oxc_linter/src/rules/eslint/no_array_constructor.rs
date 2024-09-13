@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_array_constructor_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow `Array` constructors")
@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoArrayConstructor {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let (span, callee, arguments, type_parameters, optional) = match node.kind() {
             AstKind::CallExpression(call_expr) => (
                 call_expr.span,

@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, fixer::Fix, rule::Rule, Node};
 
 fn prefer_array_flat_map_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`Array.flatMap` performs `Array.map` and `Array.flat` in one step.")
@@ -38,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferArrayFlatMap {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(flat_call_expr) = node.kind() else {
             return;
         };

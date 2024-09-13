@@ -7,7 +7,7 @@ use std::{
 
 use oxc_semantic::SymbolId;
 
-use crate::{context::LintContext, AllowWarnDeny, AstNode, FixKind, RuleEnum};
+use crate::{context::LintContext, AllowWarnDeny, FixKind, Node, RuleEnum};
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
@@ -18,7 +18,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// Visit each AST Node
     #[expect(unused_variables)]
     #[inline]
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {}
 
     /// Visit each symbol
     #[expect(unused_variables)]

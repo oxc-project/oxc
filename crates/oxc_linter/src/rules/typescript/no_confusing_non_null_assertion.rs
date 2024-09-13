@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConfusingNonNullAssertion;
@@ -75,7 +75,7 @@ fn is_confusable_operator(operator: BinaryOperator) -> bool {
 }
 
 impl Rule for NoConfusingNonNullAssertion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BinaryExpression(binary_expr)
                 if is_confusable_operator(binary_expr.operator) =>

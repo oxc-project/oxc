@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use phf::{phf_set, Set};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     let mut d =
@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidTypeof {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // match on `typeof` unary expression for better performance
         let _unary_expr = match node.kind() {
             AstKind::UnaryExpression(unary_expr)

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_template_curly_in_string_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected template string expression")
@@ -33,7 +33,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTemplateCurlyInString {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::StringLiteral(literal) = node.kind() else {
             return;
         };

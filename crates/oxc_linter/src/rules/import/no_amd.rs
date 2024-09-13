@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_amd_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use AMD `require` and `define` calls.")
@@ -43,7 +43,7 @@ declare_oxc_lint!(
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/src/rules/no-amd.js>
 impl Rule for NoAmd {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // not in top level
         if node.scope_id() != ctx.scopes().root_scope_id() {
             return;

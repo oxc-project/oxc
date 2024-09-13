@@ -8,7 +8,7 @@ use crate::{
     ast_util::{call_expr_method_callee_info, is_method_call},
     context::LintContext,
     rule::Rule,
-    AstNode,
+    Node,
 };
 
 fn prefer_includes_diagnostic(span: Span) -> OxcDiagnostic {
@@ -48,7 +48,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferIncludes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(bin_expr) = node.kind() else {
             return;
         };

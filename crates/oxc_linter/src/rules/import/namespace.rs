@@ -6,7 +6,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, ModuleRecord};
+use oxc_semantic::{ModuleRecord, Node};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::{ExportExportName, ExportImportName, ImportImportName};
 
@@ -219,7 +219,7 @@ fn get_module_request_name(name: &str, module_record: &ModuleRecord) -> Option<S
 }
 
 fn check_deep_namespace_for_node(
-    node: &AstNode,
+    node: &Node,
     source: &str,
     namespaces: &[String],
     module: &Arc<ModuleRecord>,

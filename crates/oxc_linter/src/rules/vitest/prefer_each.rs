@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId};
+use oxc_semantic::{Node, NodeId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -78,7 +78,7 @@ impl Rule for PreferEach {
 }
 
 impl PreferEach {
-    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut HashSet<NodeId>) {
+    fn run<'a>(node: &Node<'a>, ctx: &LintContext<'a>, skip: &mut HashSet<NodeId>) {
         let kind = node.kind();
 
         let AstKind::CallExpression(call_expr) = kind else { return };

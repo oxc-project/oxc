@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_anonymous_default_export_diagnostic(span: Span, kind: ErrorNodeKind) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow anonymous functions and classes as the default export")
@@ -57,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAnonymousDefaultExport {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let problem_node = match node.kind() {
             // ESM: export default
             AstKind::ExportDefaultDeclaration(export_decl) => match &export_decl.declaration {

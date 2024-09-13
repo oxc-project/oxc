@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
-    AstNode,
+    Node,
 };
 
 fn missing_lang_prop(span: Span) -> OxcDiagnostic {
@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for HtmlHasLang {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

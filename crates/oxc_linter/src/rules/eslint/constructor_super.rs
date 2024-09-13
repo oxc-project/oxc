@@ -1,7 +1,7 @@
 use oxc_macros::declare_oxc_lint;
 
 // use oxc_span::Span;
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 // #[derive(Debug, Error, Diagnostic)]
 // #[error("Expected to call 'super()'.")]
@@ -38,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConstructorSuper {
-    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, _node: &Node<'a>, _ctx: &LintContext<'a>) {}
 }
 
 #[test]

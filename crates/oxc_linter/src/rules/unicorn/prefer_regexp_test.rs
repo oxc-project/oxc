@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, Node};
 
 fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer RegExp#test() over String#match() and RegExp#exec()")
@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferRegexpTest {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn escape_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use uppercase characters for the value of the escape sequence.")
@@ -127,7 +127,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
     }
 }
 impl Rule for EscapeCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());

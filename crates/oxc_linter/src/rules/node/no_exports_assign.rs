@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_exports_assign(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow the assignment to `exports`.")
@@ -70,7 +70,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExportsAssign {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assign_expr) = node.kind() else {
             return;
         };
@@ -86,7 +86,7 @@ impl Rule for NoExportsAssign {
         }
 
         let parent = ctx.nodes().parent_node(node.id());
-        if let Some(AstKind::AssignmentExpression(assign_expr)) = parent.map(AstNode::kind) {
+        if let Some(AstKind::AssignmentExpression(assign_expr)) = parent.map(Node::kind) {
             if is_module_exports(assign_expr.left.as_member_expression(), ctx) {
                 return;
             }

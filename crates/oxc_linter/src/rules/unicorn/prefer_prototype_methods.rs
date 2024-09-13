@@ -8,7 +8,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_empty_array_expression, is_empty_object_expression},
-    AstNode,
+    Node,
 };
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferPrototypeMethods {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

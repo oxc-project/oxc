@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn guard_for_in_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require `for-in` loops to include an `if` statement")
@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for GuardForIn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ForInStatement(for_in_statement) = node.kind() {
             match &for_in_statement.body {
                 Statement::EmptyStatement(_) | Statement::IfStatement(_) => return,

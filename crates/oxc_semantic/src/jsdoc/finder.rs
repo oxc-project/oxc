@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use oxc_span::{GetSpan, Span};
 
-use crate::AstNode;
+use crate::Node;
 
 use super::parser::JSDoc;
 
@@ -18,7 +18,7 @@ impl<'a> JSDocFinder<'a> {
         Self { attached, not_attached }
     }
 
-    pub fn get_one_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDoc<'a>> {
+    pub fn get_one_by_node<'b>(&'b self, node: &Node<'a>) -> Option<JSDoc<'a>> {
         let jsdocs = self.get_all_by_node(node)?;
 
         // If flagged, at least 1 JSDoc is attached
@@ -26,7 +26,7 @@ impl<'a> JSDocFinder<'a> {
         jsdocs.last().cloned()
     }
 
-    pub fn get_all_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<Vec<JSDoc<'a>>> {
+    pub fn get_all_by_node<'b>(&'b self, node: &Node<'a>) -> Option<Vec<JSDoc<'a>>> {
         if !node.flags().has_jsdoc() {
             return None;
         }

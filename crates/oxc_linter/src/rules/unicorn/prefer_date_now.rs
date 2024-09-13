@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_date_now(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Date.now()` over `new Date()`")
@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferDateNow {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 // `new Date().{getTime,valueOf}()`

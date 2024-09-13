@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn sort_vars_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Variable declarations should be sorted").with_label(span)
@@ -59,7 +59,7 @@ impl Rule for SortVars {
         Self { ignore_case }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::VariableDeclaration(var_decl) = node.kind() else {
             return;
         };

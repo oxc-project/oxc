@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, Node};
 
 fn no_array_for_each_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `Array#forEach`")
@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoArrayForEach {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

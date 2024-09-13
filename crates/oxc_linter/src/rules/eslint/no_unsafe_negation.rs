@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, Node};
 
 fn no_unsafe_negation_diagnostic(operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected logical not in the left hand side of '{operator}' operator"))
@@ -53,7 +53,7 @@ impl Rule for NoUnsafeNegation {
         Self { enforce_for_ordering_relations }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };

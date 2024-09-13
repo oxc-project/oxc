@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_await_expression_member_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow member access from await expression")
@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAwaitExpressionMember {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::MemberExpression(member_expr) = node.kind() else {
             return;
         };

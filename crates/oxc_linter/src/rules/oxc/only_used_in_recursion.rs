@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_util::get_function_like_declaration, context::LintContext, fixer::Fix, rule::Rule, AstNode,
+    ast_util::get_function_like_declaration, context::LintContext, fixer::Fix, rule::Rule, Node,
 };
 
 fn only_used_in_recursion_diagnostic(span: Span, param_name: &str) -> OxcDiagnostic {
@@ -65,7 +65,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for OnlyUsedInRecursion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let (function_id, function_parameters, function_span) = match node.kind() {
             AstKind::Function(function) => {
                 if function.is_typescript_syntax() {

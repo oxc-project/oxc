@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn prefer_type_error_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -50,7 +50,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferTypeError {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThrowStatement(throw_stmt) = node.kind() else {
             return;
         };

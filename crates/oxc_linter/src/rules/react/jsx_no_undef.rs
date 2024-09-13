@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn jsx_no_undef_diagnostic(ident_name: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow undeclared variables in JSX")
@@ -56,7 +56,7 @@ fn get_member_ident<'a>(mut expr: &'a JSXMemberExpression<'a>) -> Option<&'a Ide
 }
 
 impl Rule for JsxNoUndef {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(elem) = &node.kind() {
             if let Some(ident) = get_resolvable_ident(&elem.name) {
                 let reference = ctx.symbols().get_reference(ident.reference_id().unwrap());

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn default_param_last_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Default parameters should be last")
@@ -36,7 +36,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for DefaultParamLast {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(function) => {
                 if !function.is_declaration() && !function.is_expression() {

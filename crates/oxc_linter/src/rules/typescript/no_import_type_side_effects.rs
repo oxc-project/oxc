@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, Node};
 
 fn no_import_type_side_effects_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.")
@@ -62,7 +62,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoImportTypeSideEffects {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::ImportDeclaration(import_decl) = node.kind() else {
             return;
         };

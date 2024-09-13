@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn erasing_op_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected erasing operation. This expression will always evaluate to zero.")
@@ -49,7 +49,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ErasingOp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(binary_expression) = node.kind() else {
             return;
         };

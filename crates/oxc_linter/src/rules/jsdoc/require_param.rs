@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use oxc_ast::{ast::MethodDefinitionKind, AstKind};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, JSDoc};
+use oxc_semantic::{JSDoc, Node};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
@@ -104,7 +104,7 @@ impl Rule for RequireParam {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         // Collected targets from `FormalParameters`
         let params_to_check = match node.kind() {
             AstKind::Function(func) if !func.is_typescript_syntax() => collect_params(&func.params),

@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, phf_set};
 
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, Node};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{role}` role is missing required aria props `{props}`."))
@@ -55,7 +55,7 @@ static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, phf::Set<&'static str
 };
 
 impl Rule for RoleHasRequiredAriaProps {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") else {
                 return;

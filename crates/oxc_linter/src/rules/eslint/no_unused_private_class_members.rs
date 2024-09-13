@@ -2,7 +2,7 @@ use itertools::Itertools;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, AstNodes, NodeId};
+use oxc_semantic::{Node, NodeId, Nodes};
 use oxc_span::Span;
 use oxc_syntax::class::ElementKind;
 
@@ -114,10 +114,10 @@ impl Rule for NoUnusedPrivateClassMembers {
     }
 }
 
-fn is_read(current_node_id: NodeId, nodes: &AstNodes) -> bool {
+fn is_read(current_node_id: NodeId, nodes: &Nodes) -> bool {
     for (curr, parent) in nodes
         .iter_parents(nodes.parent_id(current_node_id).unwrap_or(current_node_id))
-        .tuple_windows::<(&AstNode<'_>, &AstNode<'_>)>()
+        .tuple_windows::<(&Node<'_>, &Node<'_>)>()
     {
         match (curr.kind(), parent.kind()) {
             (

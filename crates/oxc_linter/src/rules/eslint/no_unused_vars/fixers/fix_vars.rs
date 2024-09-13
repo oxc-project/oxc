@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{Expression, VariableDeclarator},
     AstKind,
 };
-use oxc_semantic::{AstNode, NodeId};
+use oxc_semantic::{Node, NodeId};
 use oxc_span::CompactStr;
 use regex::Regex;
 
@@ -34,7 +34,7 @@ impl NoUnusedVars {
             return fixer.noop();
         }
 
-        let Some(parent) = symbol.nodes().parent_node(decl_id).map(AstNode::kind) else {
+        let Some(parent) = symbol.nodes().parent_node(decl_id).map(Node::kind) else {
             #[cfg(debug_assertions)]
             panic!("VariableDeclarator nodes should always have a parent node");
             #[cfg(not(debug_assertions))]

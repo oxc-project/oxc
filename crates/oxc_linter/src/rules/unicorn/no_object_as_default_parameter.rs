@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn identifier(span: Span, param: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use an object literal as default for parameter `{param}`."))
@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoObjectAsDefaultParameter {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentPattern(assignment_pat) = node.kind() else {
             return;
         };

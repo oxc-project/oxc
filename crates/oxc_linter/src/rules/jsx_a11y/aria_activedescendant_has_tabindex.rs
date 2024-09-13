@@ -11,7 +11,7 @@ use crate::{
     globals::HTML_TAG,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_element, parse_jsx_value},
-    AstNode,
+    Node,
 };
 
 fn aria_activedescendant_has_tabindex_diagnostic(span: Span, el_name: &str) -> OxcDiagnostic {
@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for AriaActivedescendantHasTabindex {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_el) = node.kind() else {
             return;
         };

@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn missing_key_prop_for_element_in_array(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span)
@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxKey {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 check_jsx_element(node, jsx_elem, ctx);
@@ -73,7 +73,7 @@ impl Rule for JsxKey {
     }
 }
 
-pub fn is_to_array(node: &AstNode<'_>) -> bool {
+pub fn is_to_array(node: &Node<'_>) -> bool {
     const TOARRAY: &str = "toArray";
 
     let AstKind::CallExpression(call) = node.kind() else { return false };
@@ -114,7 +114,7 @@ pub fn is_import<'a>(
     import_matcher(ctx, actual_local_name, expected_module_name)
 }
 
-pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+pub fn is_children<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     const REACT: &str = "React";
     const CHILDREN: &str = "Children";
 
@@ -136,7 +136,7 @@ pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> b
 
     return is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN;
 }
-fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_within_children_to_array<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     let parents_iter = ctx.nodes().iter_parents(node.id()).skip(2);
     parents_iter
         .filter(|parent_node| matches!(parent_node.kind(), AstKind::CallExpression(_)))
@@ -149,7 +149,7 @@ enum InsideArrayOrIterator {
 }
 
 fn is_in_array_or_iter<'a, 'b>(
-    node: &'b AstNode<'a>,
+    node: &'b Node<'a>,
     ctx: &'b LintContext<'a>,
 ) -> Option<InsideArrayOrIterator> {
     let mut node = node;
@@ -223,7 +223,7 @@ fn is_in_array_or_iter<'a, 'b>(
     }
 }
 
-fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
+fn check_jsx_element<'a>(node: &Node<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
         if is_within_children_to_array(node, ctx) {
             return;
@@ -271,7 +271,7 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
     }
 }
 
-fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
+fn check_jsx_fragment<'a>(node: &Node<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
         if is_within_children_to_array(node, ctx) {
             return;

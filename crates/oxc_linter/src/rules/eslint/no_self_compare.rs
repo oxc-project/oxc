@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::cmp::ContentEq;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_self_compare_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow comparisons where both sides are exactly the same")
@@ -38,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSelfCompare {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(binary_expr) = node.kind() else {
             return;
         };

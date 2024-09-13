@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::Node;
 use oxc_span::Span;
 
 use crate::{
@@ -161,7 +161,7 @@ impl Rule for RequireHook {
         Self(Box::new(RequireHookConfig { allowed_function_calls }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
 
         if let AstKind::Program(program) = kind {
@@ -197,7 +197,7 @@ impl Rule for RequireHook {
 impl RequireHook {
     fn check_block_body<'a>(
         &self,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         statements: &'a OxcVec<'a, Statement<'_>>,
         ctx: &LintContext<'a>,
     ) {
@@ -206,7 +206,7 @@ impl RequireHook {
         }
     }
 
-    fn check<'a>(&self, node: &AstNode<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
+    fn check<'a>(&self, node: &Node<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
             self.check_should_report_in_hook(node, &expr_stmt.expression, ctx);
         } else if let Statement::VariableDeclaration(var_decl) = stmt {
@@ -225,7 +225,7 @@ impl RequireHook {
 
     fn check_should_report_in_hook<'a>(
         &self,
-        node: &AstNode<'a>,
+        node: &Node<'a>,
         expr: &'a Expression<'a>,
         ctx: &LintContext<'a>,
     ) {

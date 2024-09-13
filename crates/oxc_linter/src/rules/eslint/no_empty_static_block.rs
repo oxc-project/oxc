@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_empty_static_block_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow empty static blocks")
@@ -51,7 +51,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyStaticBlock {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StaticBlock(static_block) = node.kind() {
             if static_block.body.is_empty() {
                 if ctx.semantic().trivias().has_comments_between(static_block.span) {

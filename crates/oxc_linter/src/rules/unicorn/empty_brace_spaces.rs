@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn empty_brace_spaces_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No spaces inside empty pair of braces allowed")
@@ -33,7 +33,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for EmptyBraceSpaces {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StaticBlock(static_block) => {
                 let start = static_block.span.start;

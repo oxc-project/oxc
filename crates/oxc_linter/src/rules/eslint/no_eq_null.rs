@@ -6,7 +6,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_eq_null_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use '===' to compare with null")
@@ -58,7 +58,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEqNull {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BinaryExpression(binary_expression) = node.kind() {
             let bad_operator = matches!(
                 binary_expression.operator,

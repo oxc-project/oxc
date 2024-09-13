@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Script URL is a form of eval")
@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoScriptUrl {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
                 if literal.value.cow_to_lowercase().starts_with("javascript:") =>
@@ -67,7 +67,7 @@ fn emit_diagnostic(ctx: &LintContext, span: Span) {
     ctx.diagnostic(no_script_url_diagnostic(Span::new(span.start, span.end)));
 }
 
-fn is_tagged_template_expression(ctx: &LintContext, node: &AstNode, literal_span: Span) -> bool {
+fn is_tagged_template_expression(ctx: &LintContext, node: &Node, literal_span: Span) -> bool {
     matches!(
         ctx.nodes().parent_kind(node.id()),
         Some(AstKind::TaggedTemplateExpression(expr)) if expr.quasi.span == literal_span

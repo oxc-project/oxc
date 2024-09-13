@@ -8,7 +8,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
-    AstNode,
+    Node,
 };
 
 fn implements_on_classes_diagnostic(span: Span) -> OxcDiagnostic {
@@ -58,7 +58,7 @@ declare_oxc_lint!(
     correctness
 );
 
-fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_function_inside_of_class<'a, 'b>(node: &'b Node<'a>, ctx: &'b LintContext<'a>) -> bool {
     let mut current_node = node;
     while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
         match parent_node.kind() {
@@ -75,7 +75,7 @@ fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintConte
 }
 
 impl Rule for ImplementsOnClasses {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if !is_function_node(node) {
             return;
         }

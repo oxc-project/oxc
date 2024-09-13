@@ -26,7 +26,7 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
     module_record::ModuleRecordBuilder,
-    node::{AstNodes, NodeFlags, NodeId},
+    node::{NodeFlags, NodeId, Nodes},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
     stats::Stats,
@@ -87,7 +87,7 @@ pub struct SemanticBuilder<'a> {
     pub(crate) hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
     // builders
-    pub(crate) nodes: AstNodes<'a>,
+    pub(crate) nodes: Nodes<'a>,
     pub(crate) scope: ScopeTree,
     pub(crate) symbols: SymbolTable,
 
@@ -136,7 +136,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
-            nodes: AstNodes::default(),
+            nodes: Nodes::default(),
             hoisting_variables: FxHashMap::default(),
             scope,
             symbols: SymbolTable::default(),
@@ -237,7 +237,7 @@ impl<'a> SemanticBuilder<'a> {
             program.scope_id.set(Some(scope_id));
         } else {
             // Use counts of nodes, scopes, symbols, and references to pre-allocate sufficient capacity
-            // in `AstNodes`, `ScopeTree` and `SymbolTable`.
+            // in `Nodes`, `ScopeTree` and `SymbolTable`.
             //
             // This means that as we traverse the AST and fill up these structures with data,
             // they never need to grow and reallocate - which is an expensive operation as it

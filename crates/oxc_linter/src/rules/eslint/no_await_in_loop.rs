@@ -6,7 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn no_await_in_loop_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span)
@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAwaitInLoop {
-    fn run(&self, node: &AstNode, ctx: &LintContext) {
+    fn run(&self, node: &Node, ctx: &LintContext) {
         // if node is AwaitExpression or AwaitForOfStatement
         let span = match node.kind() {
             // if the await attr of ForOfStatement is false, return
@@ -130,7 +130,7 @@ impl NoAwaitInLoop {
         }
     }
 
-    fn is_looped(span: Span, parent: &AstNode) -> bool {
+    fn is_looped(span: Span, parent: &Node) -> bool {
         match parent.kind() {
             AstKind::ForStatement(stmt) => {
                 let mut result = Self::node_matches_stmt_span(span, &stmt.body);
@@ -170,7 +170,7 @@ impl NoAwaitInLoop {
         span1.start <= span2.start && span1.end >= span2.end
     }
 
-    fn is_boundary(node: &AstNode) -> bool {
+    fn is_boundary(node: &Node) -> bool {
         match node.kind() {
             AstKind::Function(func) => func.is_declaration() || func.is_expression(),
             AstKind::ArrowFunctionExpression(_) => true,

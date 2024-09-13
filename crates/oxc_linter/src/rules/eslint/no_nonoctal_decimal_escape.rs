@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::{Captures, Regex};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, Node};
 
 fn replacement(escape_sequence: &str, replacement: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Don't use '{escape_sequence}' escape sequence."))
@@ -44,7 +44,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNonoctalDecimalEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &Node<'a>, ctx: &LintContext<'a>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
             check_string(ctx, literal.span.source_text(ctx.source_text()));
         }
