@@ -926,7 +926,7 @@ impl<'a> ReactRefresh<'a> {
 }
 
 fn is_componentish_name(name: &str) -> bool {
-    name.chars().next().unwrap().is_ascii_uppercase()
+    name.as_bytes().first().is_some_and(u8::is_ascii_uppercase)
 }
 
 fn is_use_hook_name(name: &str) -> bool {
