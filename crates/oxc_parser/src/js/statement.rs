@@ -130,7 +130,7 @@ impl<'a> ParserImpl<'a> {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
-                let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
+                let label = self.ast.label_identifier(ident.span, ident.name.clone());
                 let body = self.parse_statement_list_item(StatementContext::Label)?;
                 return Ok(self.ast.statement_labeled(self.end_span(span), label, body));
             }
