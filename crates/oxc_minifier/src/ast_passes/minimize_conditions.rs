@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{node_util::NodeUtil, tri::Tri, CompressorPass};
@@ -10,27 +10,25 @@ use crate::{node_util::NodeUtil, tri::Tri, CompressorPass};
 /// with `? :` and short-circuit binary operators.
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
-pub struct MinimizeConditions<'a> {
-    ast: AstBuilder<'a>,
-}
+pub struct MinimizeConditions;
 
-impl<'a> CompressorPass<'a> for MinimizeConditions<'a> {}
+impl<'a> CompressorPass<'a> for MinimizeConditions {}
 
-impl<'a> Traverse<'a> for MinimizeConditions<'a> {
+impl<'a> Traverse<'a> for MinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.fold_expression(expr, ctx);
     }
 }
 
-impl<'a> MinimizeConditions<'a> {
-    pub fn new(ast: AstBuilder<'a>) -> Self {
-        Self { ast }
+impl<'a> MinimizeConditions {
+    pub fn new() -> Self {
+        Self
     }
 
     fn fold_expression(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Some(folded_expr) = match expr {
             Expression::ConditionalExpression(e) => self.try_fold_conditional_expression(e, ctx),
-            Expression::UnaryExpression(e) if e.operator.is_not() => self.try_minimize_not(e),
+            Expression::UnaryExpression(e) if e.operator.is_not() => self.try_minimize_not(e, ctx),
             _ => None,
         } {
             *expr = folded_expr;
@@ -49,20 +47,24 @@ impl<'a> MinimizeConditions<'a> {
                 if parent.is_tagged_template_expression() || parent.is_call_expression() {
                     return None;
                 }
-                Some(self.ast.move_expression(&mut expr.consequent))
+                Some(ctx.ast.move_expression(&mut expr.consequent))
             }
-            Tri::False => Some(self.ast.move_expression(&mut expr.alternate)),
+            Tri::False => Some(ctx.ast.move_expression(&mut expr.alternate)),
             Tri::Unknown => None,
         }
     }
 
     /// Try to minimize NOT nodes such as `!(x==y)`.
-    fn try_minimize_not(&self, expr: &mut UnaryExpression<'a>) -> Option<Expression<'a>> {
+    fn try_minimize_not(
+        &self,
+        expr: &mut UnaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
         debug_assert!(expr.operator.is_not());
         if let Expression::BinaryExpression(binary_expr) = &mut expr.argument {
             if let Some(new_op) = binary_expr.operator.equality_inverse_operator() {
                 binary_expr.operator = new_op;
-                return Some(self.ast.move_expression(&mut expr.argument));
+                return Some(ctx.ast.move_expression(&mut expr.argument));
             }
         }
         None

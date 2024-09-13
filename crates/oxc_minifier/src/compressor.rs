@@ -47,37 +47,37 @@ impl<'a> Compressor<'a> {
 
     fn remove_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_syntax {
-            RemoveSyntax::new(ctx.ast, self.options).build(program, ctx);
+            RemoveSyntax::new(self.options).build(program, ctx);
         }
     }
 
     fn minimize_conditions(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.minimize_conditions {
-            MinimizeConditions::new(ctx.ast).build(program, ctx);
+            MinimizeConditions::new().build(program, ctx);
         }
     }
 
     fn fold_constants(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.fold_constants {
-            FoldConstants::new(ctx.ast).with_evaluate(self.options.evaluate).build(program, ctx);
+            FoldConstants::new().with_evaluate(self.options.evaluate).build(program, ctx);
         }
     }
 
     fn substitute_alternate_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.substitute_alternate_syntax {
-            SubstituteAlternateSyntax::new(ctx.ast, self.options).build(program, ctx);
+            SubstituteAlternateSyntax::new(self.options).build(program, ctx);
         }
     }
 
     fn remove_dead_code(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_dead_code {
-            RemoveDeadCode::new(ctx.ast).build(program, ctx);
+            RemoveDeadCode::new().build(program, ctx);
         }
     }
 
     fn collapse(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.collapse {
-            Collapse::new(ctx.ast, self.options).build(program, ctx);
+            Collapse::new(self.options).build(program, ctx);
         }
     }
 }
