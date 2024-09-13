@@ -41,6 +41,16 @@ fn test_vars_simple() {
             "
                 const a = 0
                 obj[a]++;
+                obj[a] += 1;
+            ",
+            None,
+        ),
+        (
+            "
+                const obj = 0
+                obj.a++;
+                obj.a += 1;
+                obj.b.c++;
             ",
             None,
         ),

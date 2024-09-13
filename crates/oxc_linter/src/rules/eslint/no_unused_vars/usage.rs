@@ -341,8 +341,12 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
-                AstKind::UpdateExpression(_) | AstKind::SimpleAssignmentTarget(_) => {
-                    is_used_by_others = false;
+                AstKind::UpdateExpression(UpdateExpression { argument, .. })
+                | AstKind::SimpleAssignmentTarget(argument) => {
+                    // `a.b++` or `a[b] + 1` are not reassignment of `a`
+                    if !argument.is_member_expression() {
+                        is_used_by_others = false;
+                    }
                 }
                 // RHS usage when LHS != reference's symbol is definitely used by
                 // others
@@ -412,13 +416,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 //    a = yield a // <- still considered used b/c it's propagated to the caller
                 // }
                 AstKind::YieldExpression(_) => return false,
-                AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
-                    // obj[a]++;
-                    //     ^ the reference is used as property
-                    if computed.expression.span().contains_inclusive(ref_span) {
-                        return false;
-                    }
-                }
                 _ => { /* continue up tree */ }
             }
         }
