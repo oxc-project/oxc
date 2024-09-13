@@ -15,10 +15,10 @@ use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 #[derive(Default, Debug)]
 pub(crate) struct Stats {
-    pub nodes: usize,
-    pub scopes: usize,
-    pub symbols: usize,
-    pub references: usize,
+    pub nodes: u32,
+    pub scopes: u32,
+    pub symbols: u32,
+    pub references: u32,
 }
 
 impl Stats {

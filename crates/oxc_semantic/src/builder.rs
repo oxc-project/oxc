@@ -233,9 +233,9 @@ impl<'a> SemanticBuilder<'a> {
             // TODO: It would be even more efficient to calculate counts in parser to avoid
             // this extra AST traversal.
             let stats = Stats::count(program);
-            self.nodes.reserve(stats.nodes);
-            self.scope.reserve(stats.scopes);
-            self.symbols.reserve(stats.symbols, stats.references);
+            self.nodes.reserve(stats.nodes as usize);
+            self.scope.reserve(stats.scopes as usize);
+            self.symbols.reserve(stats.symbols as usize, stats.references as usize);
 
             // Visit AST to generate scopes tree etc
             self.visit_program(program);
@@ -243,11 +243,12 @@ impl<'a> SemanticBuilder<'a> {
             // Check that estimated counts accurately
             #[cfg(debug_assertions)]
             {
+                #[allow(clippy::cast_possible_truncation)]
                 let actual_stats = Stats {
-                    nodes: self.nodes.len(),
-                    scopes: self.scope.len(),
-                    symbols: self.symbols.len(),
-                    references: self.symbols.references.len(),
+                    nodes: self.nodes.len() as u32,
+                    scopes: self.scope.len() as u32,
+                    symbols: self.symbols.len() as u32,
+                    references: self.symbols.references.len() as u32,
                 };
                 Stats::assert_accurate(&actual_stats, &stats);
             }
