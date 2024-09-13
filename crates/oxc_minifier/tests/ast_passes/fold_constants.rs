@@ -606,6 +606,40 @@ fn test_fold_logical_op2() {
 }
 
 #[test]
+fn test_fold_nullish_coalesce() {
+    // fold if left is null/undefined
+    test("null ?? 1", "1");
+    test("undefined ?? false", "false");
+    test("(a(), null) ?? 1", "(a(), null, 1)");
+
+    test("x = [foo()] ?? x", "x = [foo()]");
+
+    // short circuit on all non nullish LHS
+    test("x = false ?? x", "x = false");
+    test("x = true ?? x", "x = true");
+    test("x = 0 ?? x", "x = 0");
+    test("x = 3 ?? x", "x = 3");
+
+    // unfoldable, because the right-side may be the result
+    test_same("a = x ?? true");
+    test_same("a = x ?? false");
+    test_same("a = x ?? 3");
+    test_same("a = b ? c : x ?? false");
+    test_same("a = b ? x ?? false : c");
+
+    // folded, but not here.
+    test_same("a = x ?? false ? b : c");
+    test_same("a = x ?? true ? b : c");
+
+    test_same("x = foo() ?? true ?? bar()");
+    test("x = foo() ?? (true && bar())", "x = foo() ?? bar()");
+    test_same("x = (foo() || false) ?? bar()");
+
+    test("a() ?? (1 ?? b())", "a() ?? 1");
+    test("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
+}
+
+#[test]
 fn test_fold_void() {
     test_same("void 0");
     test("void 1", "void 0");

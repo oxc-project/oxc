@@ -10,7 +10,9 @@ use oxc_syntax::{
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{
-    node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue},
+    node_util::{
+        is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue, ValueType,
+    },
     tri::Tri,
     ty::Ty,
     CompressorPass,
@@ -50,6 +52,9 @@ impl<'a> FoldConstants {
                 if matches!(e.operator, LogicalOperator::And | LogicalOperator::Or) =>
             {
                 self.try_fold_and_or(e, ctx)
+            }
+            Expression::LogicalExpression(e) if e.operator == LogicalOperator::Coalesce => {
+                self.try_fold_coalesce(e, ctx)
             }
             Expression::UnaryExpression(e) => self.try_fold_unary_expression(e, ctx),
             _ => None,
@@ -654,5 +659,40 @@ impl<'a> FoldConstants {
             }
         }
         None
+    }
+
+    /// Try to fold a nullish coalesce `foo ?? bar`.
+    pub fn try_fold_coalesce(
+        &self,
+        logical_expr: &mut LogicalExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        debug_assert_eq!(logical_expr.operator, LogicalOperator::Coalesce);
+        let left = &logical_expr.left;
+        let left_val = ctx.get_known_value_type(left);
+        match left_val {
+            ValueType::Null | ValueType::Void => {
+                Some(if left.may_have_side_effects() {
+                    // e.g. `(a(), null) ?? 1` => `(a(), null, 1)`
+                    let expressions = ctx.ast.vec_from_iter([
+                        ctx.ast.move_expression(&mut logical_expr.left),
+                        ctx.ast.move_expression(&mut logical_expr.right),
+                    ]);
+                    ctx.ast.expression_sequence(SPAN, expressions)
+                } else {
+                    // nullish condition => this expression evaluates to the right side.
+                    ctx.ast.move_expression(&mut logical_expr.right)
+                })
+            }
+            ValueType::Number
+            | ValueType::Bigint
+            | ValueType::String
+            | ValueType::Boolean
+            | ValueType::Object => {
+                // non-nullish condition => this expression evaluates to the left side.
+                Some(ctx.ast.move_expression(&mut logical_expr.left))
+            }
+            ValueType::Undetermined => None,
+        }
     }
 }
