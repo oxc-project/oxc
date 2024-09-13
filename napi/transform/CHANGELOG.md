@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Bug Fixes
+
+- 608b7d3 napi/transformer: Refresh plugin doesn't work even after passing the refresh option (#5702) (Dunqing)
+
 ## [0.28.0] - 2024-09-11
 
 - b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)

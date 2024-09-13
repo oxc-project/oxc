@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+### Bug Fixes
+
+- 77d9170 transformer/react: IsStaticChildren should be false when there is only one child (#5745) (Dunqing)
+
+### Refactor
+
+- 4bdc202 rust: Remove some #[allow(unused)] (#5716) (Boshen)
+- cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
+
 ## [0.28.0] - 2024-09-11
 
 - ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)

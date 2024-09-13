@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+- e968e9f minifier: Constant fold nullish coalescing operator (#5761) (Boshen)
+- 6bc13f6 minifier: Add `MinimizeConditions` pass (#5747) (Boshen)
+
+### Bug Fixes
+
+- 8ff013a minifier: Handle dce CallExpression::callee (#5752) (Boshen)
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+### Refactor
+
+- 2890c98 minifier: Add tests for `remove_syntax` (#5749) (Boshen)
+- 9a9d8f6 minifier: Replace `self.ast` with `ctx.ast` (#5748) (Boshen)
+- 746f7b3 minifier: Align code with closure compiler (#5717) (Boshen)
+- 21e2df5 minifier: Replace `VisitMut` with `Traverse` for inject and define plugins (#5705) (Boshen)
+
 ## [0.28.0] - 2024-09-11
 
 - ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
