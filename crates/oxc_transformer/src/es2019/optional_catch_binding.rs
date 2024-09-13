@@ -34,7 +34,7 @@
 
 use std::cell::Cell;
 
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -70,8 +70,7 @@ impl<'a> Traverse<'a> for OptionalCatchBinding<'a> {
             BindingIdentifier { span: SPAN, symbol_id: Cell::new(Some(symbol_id)), name };
         let binding_pattern_kind =
             ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let binding_pattern =
-            ctx.ast.binding_pattern(binding_pattern_kind, None::<TSTypeAnnotation<'a>>, false);
+        let binding_pattern = ctx.ast.binding_pattern(binding_pattern_kind, NONE, false);
         let param = ctx.ast.catch_parameter(SPAN, binding_pattern);
         clause.param = Some(param);
     }

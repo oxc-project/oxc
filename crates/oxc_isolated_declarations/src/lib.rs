@@ -24,7 +24,7 @@ use std::{cell::RefCell, collections::VecDeque, mem};
 use diagnostics::function_with_assigning_properties;
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstBuilder, Visit};
+use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -308,14 +308,8 @@ impl<'a> IsolatedDeclarations<'a> {
         if need_empty_export_marker {
             let specifiers = self.ast.vec();
             let kind = ImportOrExportKind::Value;
-            let empty_export = self.ast.alloc_export_named_declaration(
-                SPAN,
-                None,
-                specifiers,
-                None,
-                kind,
-                None::<WithClause>,
-            );
+            let empty_export =
+                self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, NONE);
             new_ast_stmts
                 .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         }

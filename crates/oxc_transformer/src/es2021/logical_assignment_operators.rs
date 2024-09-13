@@ -56,7 +56,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::{CloneIn, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator};
@@ -367,7 +367,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         };
         let kind = VariableDeclarationKind::Var;
         let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation>, false);
+        let id = ctx.ast.binding_pattern(id, NONE, false);
         self.var_declarations
             .last_mut()
             .unwrap()

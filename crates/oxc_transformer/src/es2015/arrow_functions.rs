@@ -62,7 +62,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -294,7 +294,7 @@ impl<'a> ArrowFunctions<'a> {
                 self.ctx
                     .ast
                     .binding_pattern_kind_from_binding_identifier(id.create_binding_identifier()),
-                Option::<TSTypeAnnotation>::None,
+                NONE,
                 false,
             );
 

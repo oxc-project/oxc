@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
@@ -1169,7 +1169,7 @@ impl<'a> ParserImpl<'a> {
             this_param,
             params,
             return_type,
-            Option::<TSTypeParameterDeclaration>::None,
+            NONE,
         ))
     }
 
@@ -1195,7 +1195,7 @@ impl<'a> ParserImpl<'a> {
             this_param,
             params,
             return_type,
-            Option::<TSTypeParameterDeclaration>::None,
+            NONE,
         ))
     }
 

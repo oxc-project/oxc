@@ -1,4 +1,4 @@
-use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, AstBuilder, Visit};
+use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, AstBuilder, Visit, NONE};
 use oxc_span::{Atom, Span, SPAN};
 
 pub struct KeepVar<'a> {
@@ -57,8 +57,7 @@ impl<'a> KeepVar<'a> {
         let kind = VariableDeclarationKind::Var;
         let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span)| {
             let binding_kind = self.ast.binding_pattern_kind_binding_identifier(span, name);
-            let id =
-                self.ast.binding_pattern::<Option<TSTypeAnnotation>>(binding_kind, None, false);
+            let id = self.ast.binding_pattern(binding_kind, NONE, false);
             self.ast.variable_declarator(span, kind, id, None, false)
         }));
 

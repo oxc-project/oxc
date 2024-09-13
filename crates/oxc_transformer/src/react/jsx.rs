@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -641,13 +641,7 @@ impl<'a> ReactJsx<'a> {
         }
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
-        self.ast().expression_call(
-            e.span(),
-            callee,
-            Option::<TSTypeParameterInstantiation>::None,
-            arguments,
-            false,
-        )
+        self.ast().expression_call(e.span(), callee, NONE, arguments, false)
     }
 
     fn transform_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {

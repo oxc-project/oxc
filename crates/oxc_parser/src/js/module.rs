@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
@@ -347,7 +347,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.vec(),
             None,
             ImportOrExportKind::Value,
-            None::<WithClause>,
+            NONE,
         ))
     }
 

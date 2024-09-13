@@ -2,7 +2,7 @@ use std::{cell::Cell, iter::once};
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use oxc_allocator::CloneIn;
-use oxc_ast::{ast::*, match_expression, AstBuilder};
+use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
 use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
@@ -164,7 +164,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
                         ctx.ast.binding_pattern_kind_from_binding_identifier(
                             binding_identifier.clone(),
                         ),
-                        None::<TSTypeAnnotation<'a>>,
+                        NONE,
                         false,
                     ),
                     None,
@@ -182,13 +182,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
             ));
             new_statements.push(ctx.ast.statement_expression(
                 SPAN,
-                ctx.ast.expression_call(
-                    SPAN,
-                    callee,
-                    Option::<TSTypeParameterInstantiation>::None,
-                    arguments,
-                    false,
-                ),
+                ctx.ast.expression_call(SPAN, callee, NONE, arguments, false),
             ));
         }
         program.body.push(Statement::from(ctx.ast.declaration_variable(
@@ -299,7 +293,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
                             &binding_identifier,
                             ctx,
                         ),
-                        Option::<TSTypeParameterInstantiation>::None,
+                        NONE,
                         arguments,
                         false,
                     ),
@@ -329,7 +323,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
         *expr = self.ctx.ast.expression_call(
             SPAN,
             Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
-            Option::<TSTypeParameterInstantiation>::None,
+            NONE,
             arguments,
             false,
         );
@@ -366,7 +360,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
                         &binding_identifier,
                         ctx,
                     ),
-                    Option::<TSTypeParameterInstantiation>::None,
+                    NONE,
                     arguments,
                     false,
                 ),
@@ -656,7 +650,7 @@ impl<'a> ReactRefresh<'a> {
                 SPAN,
                 FormalParameterKind::FormalParameter,
                 self.ctx.ast.vec(),
-                Option::<BindingRestElement>::None,
+                NONE,
             );
             let function_body = self.ctx.ast.function_body(
                 SPAN,
@@ -673,10 +667,10 @@ impl<'a> ReactRefresh<'a> {
                 false,
                 false,
                 false,
-                Option::<TSTypeParameterDeclaration>::None,
-                Option::<TSThisParameter>::None,
+                NONE,
+                NONE,
                 formal_parameters,
-                Option::<TSTypeAnnotation>::None,
+                NONE,
                 Some(function_body),
             );
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::Function);
@@ -708,7 +702,7 @@ impl<'a> ReactRefresh<'a> {
             ctx.ast.expression_call(
                 SPAN,
                 Self::create_identifier_reference_from_binding_identifier(&binding_identifier, ctx),
-                Option::<TSTypeParameterInstantiation>::None,
+                NONE,
                 ctx.ast.vec(),
                 false,
             ),
@@ -722,13 +716,13 @@ impl<'a> ReactRefresh<'a> {
             VariableDeclarationKind::Var,
             ctx.ast.binding_pattern(
                 ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier.clone()),
-                Option::<TSTypeAnnotation>::None,
+                NONE,
                 false,
             ),
             Some(ctx.ast.expression_call(
                 SPAN,
                 self.refresh_sig.to_expression(ctx),
-                Option::<TSTypeParameterInstantiation>::None,
+                NONE,
                 ctx.ast.vec(),
                 false,
             )),

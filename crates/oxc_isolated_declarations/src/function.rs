@@ -1,7 +1,6 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::Function;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_span::{Span, SPAN};
 
 use crate::{
@@ -41,7 +40,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 unsafe { self.ast.copy(&func.this_param) },
                 params,
                 return_type,
-                Option::<FunctionBody>::None,
+                NONE,
             ))
         }
     }

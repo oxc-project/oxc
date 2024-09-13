@@ -31,7 +31,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::{CloneIn, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
@@ -137,34 +137,19 @@ impl<'a> Traverse<'a> for NullishCoalescingOperator<'a> {
                 SPAN,
                 FormalParameterKind::ArrowFormalParameters,
                 ctx.ast.vec1(param),
-                None::<BindingRestElement>,
+                NONE,
             );
             let body = ctx.ast.function_body(
                 SPAN,
                 ctx.ast.vec(),
                 ctx.ast.vec1(ctx.ast.statement_expression(SPAN, new_expr)),
             );
-            let type_parameters = None::<TSTypeParameterDeclaration>;
-            let type_annotation = None::<TSTypeAnnotation>;
-            let arrow_function = ctx.ast.arrow_function_expression(
-                SPAN,
-                true,
-                false,
-                type_parameters,
-                params,
-                type_annotation,
-                body,
-            );
+            let arrow_function =
+                ctx.ast.arrow_function_expression(SPAN, true, false, NONE, params, NONE, body);
             arrow_function.scope_id.set(Some(current_scope_id));
             let arrow_function = ctx.ast.expression_from_arrow_function(arrow_function);
             // `(x) => x;` -> `((x) => x)();`
-            new_expr = ctx.ast.expression_call(
-                SPAN,
-                arrow_function,
-                None::<TSTypeParameterInstantiation>,
-                ctx.ast.vec(),
-                false,
-            );
+            new_expr = ctx.ast.expression_call(SPAN, arrow_function, NONE, ctx.ast.vec(), false);
         } else {
             let kind = VariableDeclarationKind::Var;
             self.var_declarations
@@ -207,7 +192,7 @@ impl<'a> NullishCoalescingOperator<'a> {
             symbol_id: Cell::new(Some(symbol_id)),
         };
         let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-        let id = ctx.ast.binding_pattern(id, None::<TSTypeAnnotation<'_>>, false);
+        let id = ctx.ast.binding_pattern(id, NONE, false);
         let reference =
             ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlags::Read);
 

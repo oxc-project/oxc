@@ -26,7 +26,7 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-object-rest-spread>
 //! * Object rest/spread TC39 proposal: <https://github.com/tc39/proposal-object-rest-spread>
 
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolId};
 use oxc_span::SPAN;
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -84,13 +84,7 @@ impl<'a> Traverse<'a> for ObjectSpread<'a> {
         let callee = self.get_extend_object_callee(object_id, babel_helpers_id, ctx);
 
         // ({ ...x }) => _objectSpread({}, x)
-        *expr = ctx.ast.expression_call(
-            SPAN,
-            callee,
-            None::<TSTypeParameterInstantiation>,
-            arguments,
-            false,
-        );
+        *expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
 
         // ({ ...x, y, z }) => _objectSpread(_objectSpread({}, x), { y, z });
         if !obj_prop_list.is_empty() {
@@ -101,13 +95,7 @@ impl<'a> Traverse<'a> for ObjectSpread<'a> {
 
             let callee = self.get_extend_object_callee(object_id, babel_helpers_id, ctx);
 
-            *expr = ctx.ast.expression_call(
-                SPAN,
-                callee,
-                None::<TSTypeParameterInstantiation>,
-                arguments,
-                false,
-            );
+            *expr = ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         }
     }
 }

@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
+use oxc_ast::{ast::*, syntax_directed_operations::BoundNames, NONE};
 use oxc_span::{Atom, CompactStr, SPAN};
 use oxc_syntax::{
     operator::{AssignmentOperator, LogicalOperator},
@@ -298,8 +298,7 @@ impl<'a> TypeScriptNamespace<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
             let pattern_kind = self.ctx.ast.binding_pattern_kind_binding_identifier(SPAN, name);
-            let binding =
-                self.ctx.ast.binding_pattern(pattern_kind, Option::<TSTypeAnnotation>::None, false);
+            let binding = self.ctx.ast.binding_pattern(pattern_kind, NONE, false);
             let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
             self.ctx.ast.vec1(decl)
         };
@@ -325,14 +324,13 @@ impl<'a> TypeScriptNamespace<'a> {
             let body = self.ctx.ast.function_body(SPAN, directives, stmts);
             let params = {
                 let ident = self.ctx.ast.binding_pattern_kind_binding_identifier(SPAN, arg_name);
-                let pattern =
-                    self.ctx.ast.binding_pattern(ident, Option::<TSTypeAnnotation>::None, false);
+                let pattern = self.ctx.ast.binding_pattern(ident, NONE, false);
                 let items = self.ctx.ast.vec1(self.ctx.ast.plain_formal_parameter(SPAN, pattern));
                 self.ctx.ast.formal_parameters(
                     SPAN,
                     FormalParameterKind::FormalParameter,
                     items,
-                    Option::<BindingRestElement>::None,
+                    NONE,
                 )
             };
             let function = self.ctx.ast.plain_function(
@@ -410,13 +408,7 @@ impl<'a> TypeScriptNamespace<'a> {
             self.ctx.ast.vec1(self.ctx.ast.argument_expression(expr))
         };
 
-        let expr = self.ctx.ast.expression_call(
-            SPAN,
-            callee,
-            Option::<TSTypeParameterInstantiation>::None,
-            arguments,
-            false,
-        );
+        let expr = self.ctx.ast.expression_call(SPAN, callee, NONE, arguments, false);
         self.ctx.ast.statement_expression(SPAN, expr)
     }
 
