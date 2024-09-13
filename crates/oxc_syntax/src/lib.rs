@@ -6,6 +6,7 @@ pub mod keyword;
 pub mod module_graph_visitor;
 pub mod module_record;
 pub mod node;
+pub mod nonmax;
 pub mod number;
 pub mod operator;
 pub mod precedence;

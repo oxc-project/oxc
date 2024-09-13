@@ -1,19 +1,21 @@
 use bitflags::bitflags;
-use nonmax::NonMaxU32;
 use oxc_allocator::CloneIn;
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
+use crate::nonmax::NonMaxU32;
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ReferenceId(NonMaxU32);
 
 impl Idx for ReferenceId {
-    #[allow(clippy::cast_possible_truncation)]
+    /// Create `ReferenceId` from `usize`.
+    ///
+    /// # Panics
+    /// Panics if `idx` exceeds `NonMaxU32::MAX.get()`.
     fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+        Self(NonMaxU32::from_usize(idx))
     }
 
     fn index(self) -> usize {

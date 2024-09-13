@@ -1308,12 +1308,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nonmax"
-version = "0.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "610a5acd306ec67f907abe5567859a3c693fb9886eb1f012ab8f2a47bef3db51"
-
-[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1530,7 +1524,6 @@ dependencies = [
  "cow-utils",
  "daachorse",
  "insta",
- "nonmax",
  "once_cell",
  "oxc_allocator",
  "oxc_ast",
@@ -1911,7 +1904,6 @@ dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
  "dashmap 6.0.1",
- "nonmax",
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_index",

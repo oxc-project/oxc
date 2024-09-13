@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
-use nonmax::NonMaxU32;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Span;
-use oxc_syntax::identifier::{LS, PS};
+use oxc_syntax::{
+    identifier::{LS, PS},
+    nonmax::NonMaxU32,
+};
 
 // Irregular line breaks - '\u{2028}' (LS) and '\u{2029}' (PS)
 const LS_OR_PS_FIRST: u8 = 0xE2;
@@ -16,11 +18,12 @@ const PS_THIRD: u8 = 0xA9;
 pub struct ColumnOffsetsId(NonMaxU32);
 
 impl Idx for ColumnOffsetsId {
-    #[allow(clippy::cast_possible_truncation)]
+    /// Create `ColumnOffsetsId` from `usize`.
+    ///
+    /// # Panics
+    /// Panics if `idx` exceeds `NonMaxU32::MAX.get()`.
     fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is a legal value for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+        Self(NonMaxU32::from_usize(idx))
     }
 
     fn index(self) -> usize {

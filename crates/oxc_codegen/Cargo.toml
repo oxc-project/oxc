@@ -31,7 +31,6 @@ oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 bitflags = { workspace = true }
 daachorse = { workspace = true }
-nonmax = { workspace = true }
 once_cell = { workspace = true }
 rustc-hash = { workspace = true }
 

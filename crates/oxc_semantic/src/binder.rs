@@ -9,6 +9,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_span::{GetSpan, SourceType};
+use oxc_syntax::nonmax::NonMaxU32;
 
 use crate::{
     scope::{ScopeFlags, ScopeId},
@@ -162,7 +163,7 @@ impl<'a> Binder<'a> for Function<'a> {
                     ident.span,
                     ident.name.clone().into(),
                     SymbolFlags::Function,
-                    ScopeId::new(u32::MAX - 1), // Not bound to any scope.
+                    ScopeId::new(NonMaxU32::MAX.get()), // Not bound to any scope.
                     builder.current_node_id,
                 );
                 ident.symbol_id.set(Some(symbol_id));

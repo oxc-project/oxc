@@ -1,8 +1,9 @@
 use bitflags::bitflags;
-use nonmax::NonMaxU32;
 use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
+
+use crate::nonmax::NonMaxU32;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ScopeId(NonMaxU32);
@@ -11,32 +12,29 @@ impl ScopeId {
     /// Create `ScopeId` from `u32`.
     ///
     /// # Panics
-    /// Panics if `idx` is `u32::MAX`.
+    /// Panics if `idx` exceeds `NonMaxU32::MAX.get()`.
     pub const fn new(idx: u32) -> Self {
-        // We could use `NonMaxU32::new(idx).unwrap()` but `Option::unwrap` is not a const function
-        // and we want this function to be
-        assert!(idx != u32::MAX);
-        // SAFETY: We have checked that `idx` is not `u32::MAX`
-        unsafe { Self::new_unchecked(idx) }
+        Self(NonMaxU32::new_checked(idx))
     }
 
     /// Create `ScopeId` from `u32` unchecked.
     ///
     /// # SAFETY
-    /// `idx` must not be `u32::MAX`.
+    /// `idx` must not exceed `NonMaxU32::MAX.get()`.
     #[allow(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
     pub const unsafe fn new_unchecked(idx: u32) -> Self {
-        // SAFETY: Caller must ensure `idx` is not `u32::MAX`
+        // SAFETY: Caller must ensure `idx` does not exceed `NonMaxU32::MAX.get()`
         Self(NonMaxU32::new_unchecked(idx))
     }
 }
 
 impl Idx for ScopeId {
-    #[allow(clippy::cast_possible_truncation)]
+    /// Create `ScopeId` from `usize`.
+    ///
+    /// # Panics
+    /// Panics if `idx` exceeds `NonMaxU32::MAX.get()`.
     fn from_usize(idx: usize) -> Self {
-        assert!(idx < u32::MAX as usize);
-        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
-        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
+        Self(NonMaxU32::from_usize(idx))
     }
 
     fn index(self) -> usize {
