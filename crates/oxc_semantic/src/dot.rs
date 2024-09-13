@@ -10,7 +10,7 @@ use oxc_cfg::{
     BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind, IterationInstructionKind,
     LabeledInstruction, ReturnInstructionKind,
 };
-use oxc_syntax::node::AstNodeId;
+use oxc_syntax::node::NodeId;
 
 use crate::{AstNode, AstNodes};
 
@@ -26,11 +26,11 @@ pub trait DebugDot {
 pub struct DebugDotContext<'a, 'b>(&'b AstNodes<'a>);
 
 impl<'a, 'b> DebugDotContext<'a, 'b> {
-    fn debug_ast_kind(self, id: AstNodeId) -> String {
+    fn debug_ast_kind(self, id: NodeId) -> String {
         self.0.kind(id).debug_name().into_owned()
     }
 
-    fn try_eval_literal(self, id: AstNodeId) -> Option<String> {
+    fn try_eval_literal(self, id: NodeId) -> Option<String> {
         match self.0.kind(id) {
             AstKind::NumericLiteral(lit) => Some(lit.value.to_string()),
             AstKind::BooleanLiteral(lit) => Some(lit.value.to_string()),

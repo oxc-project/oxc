@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodeId, SymbolId};
+use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use phf::phf_set;
@@ -106,7 +106,7 @@ impl Rule for NoImportAssign {
 /// - `Reflect.deleteProperty`
 /// - `Reflect.set`
 /// - `Reflect.setPrototypeOf`
-fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintContext<'_>) -> bool {
+fn is_argument_of_well_known_mutation_function(node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     let current_node = ctx.nodes().get_node(node_id);
     let call_expression_node =
         ctx.nodes().parent_node(node_id).and_then(|node| ctx.nodes().parent_kind(node.id()));

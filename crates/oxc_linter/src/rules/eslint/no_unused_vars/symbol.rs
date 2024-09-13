@@ -8,7 +8,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::{
-    AstNode, AstNodeId, AstNodes, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
+    AstNode, AstNodes, NodeId, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
     SymbolTable,
 };
 use oxc_span::{GetSpan, Span};
@@ -77,7 +77,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     #[inline]
-    fn declaration_id(&self) -> AstNodeId {
+    fn declaration_id(&self) -> NodeId {
         self.symbols().get_declaration(self.id)
     }
 
@@ -107,14 +107,14 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     pub fn iter_relevant_parents(
         &self,
-        node_id: AstNodeId,
+        node_id: NodeId,
     ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
         self.nodes().iter_parents(node_id).skip(1).filter(|n| Self::is_relevant_kind(n.kind()))
     }
 
     pub fn iter_relevant_parent_and_grandparent_kinds(
         &self,
-        node_id: AstNodeId,
+        node_id: NodeId,
     ) -> impl Iterator<Item = (/* parent */ AstKind<'a>, /* grandparent */ AstKind<'a>)> + Clone + '_
     {
         let parents_iter = self

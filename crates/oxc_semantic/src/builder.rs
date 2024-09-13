@@ -27,7 +27,7 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
     module_record::ModuleRecordBuilder,
-    node::{AstNodeId, AstNodes, NodeFlags},
+    node::{AstNodes, NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
@@ -72,12 +72,12 @@ pub struct SemanticBuilder<'a> {
     errors: RefCell<Vec<OxcDiagnostic>>,
 
     // states
-    pub(crate) current_node_id: AstNodeId,
+    pub(crate) current_node_id: NodeId,
     pub(crate) current_node_flags: NodeFlags,
     pub(crate) current_symbol_flags: SymbolFlags,
     pub(crate) current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
-    pub(crate) function_stack: Vec<AstNodeId>,
+    pub(crate) function_stack: Vec<NodeId>,
     // To make a namespace/module value like
     // we need the to know the modules we are inside
     // and when we reach a value declaration we set it
@@ -108,7 +108,7 @@ pub struct SemanticBuilder<'a> {
 
     pub(crate) class_table_builder: ClassTableBuilder,
 
-    ast_node_records: Vec<AstNodeId>,
+    ast_node_records: Vec<NodeId>,
 }
 
 /// Data returned by [`SemanticBuilder::build`].
@@ -128,7 +128,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: SourceType::default(),
             trivias: trivias.clone(),
             errors: RefCell::new(vec![]),
-            current_node_id: AstNodeId::new(0),
+            current_node_id: NodeId::new(0),
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
             current_reference_flags: ReferenceFlags::empty(),
@@ -218,7 +218,7 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         self.source_type = program.source_type;
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, NodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
             // Count the number of nodes, scopes, symbols, and references.
@@ -314,13 +314,13 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     fn record_ast_nodes(&mut self) {
         if self.cfg.is_some() {
-            self.ast_node_records.push(AstNodeId::DUMMY);
+            self.ast_node_records.push(NodeId::DUMMY);
         }
     }
 
     #[inline]
     #[allow(clippy::unnecessary_wraps)]
-    fn retrieve_recorded_ast_node(&mut self) -> Option<AstNodeId> {
+    fn retrieve_recorded_ast_node(&mut self) -> Option<NodeId> {
         if self.cfg.is_some() {
             Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
         } else {
@@ -335,7 +335,7 @@ impl<'a> SemanticBuilder<'a> {
         // <https://github.com/oxc-project/oxc/pull/4273>
         if self.cfg.is_some() {
             if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == AstNodeId::DUMMY {
+                if *record == NodeId::DUMMY {
                     *record = self.current_node_id;
                 }
             }

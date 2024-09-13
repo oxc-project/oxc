@@ -8,7 +8,7 @@ use tsify::Tsify;
 
 pub use oxc_syntax::reference::{ReferenceFlags, ReferenceId};
 
-use crate::{symbol::SymbolId, AstNodeId};
+use crate::{symbol::SymbolId, NodeId};
 
 /// Describes where and how a Symbol is used in the AST.
 ///
@@ -37,7 +37,7 @@ use crate::{symbol::SymbolId, AstNodeId};
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct Reference {
     /// The AST node making the reference.
-    node_id: AstNodeId,
+    node_id: NodeId,
     /// The symbol being referenced.
     ///
     /// This will be [`None`] if no symbol could be found within
@@ -52,17 +52,13 @@ pub struct Reference {
 impl Reference {
     /// Create a new unresolved reference.
     #[inline]
-    pub fn new(node_id: AstNodeId, flags: ReferenceFlags) -> Self {
+    pub fn new(node_id: NodeId, flags: ReferenceFlags) -> Self {
         Self { node_id, symbol_id: None, flags }
     }
 
     /// Create a new resolved reference on a symbol.
     #[inline]
-    pub fn new_with_symbol_id(
-        node_id: AstNodeId,
-        symbol_id: SymbolId,
-        flags: ReferenceFlags,
-    ) -> Self {
+    pub fn new_with_symbol_id(node_id: NodeId, symbol_id: SymbolId, flags: ReferenceFlags) -> Self {
         Self { node_id, symbol_id: Some(symbol_id), flags }
     }
 
@@ -74,7 +70,7 @@ impl Reference {
     /// [`IdentifierReference`]: oxc_ast::ast::IdentifierReference
     /// [`JSXIdentifier`]: oxc_ast::ast::JSXIdentifier
     #[inline]
-    pub fn node_id(&self) -> AstNodeId {
+    pub fn node_id(&self) -> NodeId {
         self.node_id
     }
 

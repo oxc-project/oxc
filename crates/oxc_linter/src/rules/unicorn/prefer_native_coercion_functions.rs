@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_first_parameter_name, AstNode};
@@ -188,7 +188,7 @@ fn is_matching_native_coercion_function_call(
 }
 
 fn check_array_callback_methods(
-    node_id: AstNodeId,
+    node_id: NodeId,
     arg: &FormalParameters,
     function_body: &FunctionBody,
     is_arrow: bool,

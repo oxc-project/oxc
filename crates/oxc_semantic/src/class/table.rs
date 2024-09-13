@@ -4,7 +4,7 @@ use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::class::{ClassId, ElementId, ElementKind};
 
-use crate::node::AstNodeId;
+use crate::node::NodeId;
 
 #[derive(Debug)]
 pub struct Element {
@@ -29,14 +29,14 @@ impl Element {
 
 #[derive(Debug)]
 pub struct PrivateIdentifierReference {
-    pub id: AstNodeId,
+    pub id: NodeId,
     pub name: CompactStr,
     pub span: Span,
     pub element_ids: Vec<ElementId>,
 }
 
 impl PrivateIdentifierReference {
-    pub fn new(id: AstNodeId, name: CompactStr, span: Span, element_ids: Vec<ElementId>) -> Self {
+    pub fn new(id: NodeId, name: CompactStr, span: Span, element_ids: Vec<ElementId>) -> Self {
         Self { id, name, span, element_ids }
     }
 }
@@ -47,7 +47,7 @@ impl PrivateIdentifierReference {
 #[derive(Debug, Default)]
 pub struct ClassTable {
     pub parent_ids: FxHashMap<ClassId, ClassId>,
-    pub declarations: IndexVec<ClassId, AstNodeId>,
+    pub declarations: IndexVec<ClassId, NodeId>,
     pub elements: IndexVec<ClassId, IndexVec<ElementId, Element>>,
     // PrivateIdentifier reference
     pub private_identifiers: IndexVec<ClassId, Vec<PrivateIdentifierReference>>,
@@ -62,7 +62,7 @@ impl ClassTable {
         self.declarations.raw.len()
     }
 
-    pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &AstNodeId)> + '_ {
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &NodeId)> + '_ {
         self.declarations.iter_enumerated()
     }
 
@@ -73,7 +73,7 @@ impl ClassTable {
         self.private_identifiers[class_id].iter()
     }
 
-    pub fn get_node_id(&self, class_id: ClassId) -> AstNodeId {
+    pub fn get_node_id(&self, class_id: ClassId) -> NodeId {
         self.declarations[class_id]
     }
 
@@ -102,7 +102,7 @@ impl ClassTable {
         self.elements[class_id].iter().any(|p| p.is_private && p.name == name)
     }
 
-    pub fn declare_class(&mut self, parent_id: Option<ClassId>, ast_node_id: AstNodeId) -> ClassId {
+    pub fn declare_class(&mut self, parent_id: Option<ClassId>, ast_node_id: NodeId) -> ClassId {
         let class_id = self.declarations.push(ast_node_id);
         if let Some(parent_id) = parent_id {
             self.parent_ids.insert(class_id, parent_id);

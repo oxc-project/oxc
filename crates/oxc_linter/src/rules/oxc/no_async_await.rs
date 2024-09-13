@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -49,7 +49,7 @@ impl Rule for NoAsyncAwait {
     }
 }
 
-fn report(node_id: AstNodeId, func_span: Span, ctx: &LintContext<'_>) {
+fn report(node_id: NodeId, func_span: Span, ctx: &LintContext<'_>) {
     /// "async".len()
     const ASYNC_LEN: u32 = 5;
 

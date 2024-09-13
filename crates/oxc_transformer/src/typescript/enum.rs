@@ -4,7 +4,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
-    node::AstNodeId,
+    node::NodeId,
     number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::ReferenceFlags,
@@ -85,7 +85,7 @@ impl<'a> TypeScriptEnum<'a> {
             enum_name.to_compact_str(),
             SymbolFlags::FunctionScopedVariable,
             func_scope_id,
-            AstNodeId::DUMMY,
+            NodeId::DUMMY,
         );
         ctx.scopes_mut().add_binding(func_scope_id, enum_name.to_compact_str(), param_symbol_id);
         let ident = BindingIdentifier {

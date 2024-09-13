@@ -6,7 +6,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{
@@ -100,7 +100,7 @@ impl Rule for NoIdenticalTitle {
                     let parent = span_to_parent_mapping.get(span)?;
                     Some((*span, *kind, *parent))
                 })
-                .collect::<Vec<(Span, JestFnKind, AstNodeId)>>();
+                .collect::<Vec<(Span, JestFnKind, NodeId)>>();
             // After being sorted by parent_id, the span with the same parent will be placed nearby.
             kind_and_spans.sort_by(|a, b| a.2.cmp(&b.2));
 
@@ -129,7 +129,7 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a str, JestFnKind, AstNodeId)> {
+) -> Option<(Span, &'a str, JestFnKind, NodeId)> {
     let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;
     // we only need check `describe` or `test` block
@@ -154,7 +154,7 @@ fn filter_and_process_jest_result<'a>(
     }
 }
 
-fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<AstNodeId> {
+fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<NodeId> {
     match node.kind() {
         AstKind::BlockStatement(_) | AstKind::FunctionBody(_) | AstKind::Program(_) => {
             Some(node.id())

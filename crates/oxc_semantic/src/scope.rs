@@ -8,7 +8,7 @@ use oxc_span::CompactStr;
 use oxc_syntax::reference::ReferenceId;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-use crate::{symbol::SymbolId, AstNodeId};
+use crate::{symbol::SymbolId, NodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
@@ -37,7 +37,7 @@ pub struct ScopeTree {
     pub(crate) build_child_ids: bool,
 
     /// Maps a scope to its node id.
-    node_ids: IndexVec<ScopeId, AstNodeId>,
+    node_ids: IndexVec<ScopeId, NodeId>,
 
     flags: IndexVec<ScopeId, ScopeFlags>,
 
@@ -223,7 +223,7 @@ impl ScopeTree {
     ///
     /// [`AstNode`]: crate::AstNode
     #[inline]
-    pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {
+    pub fn get_node_id(&self, scope_id: ScopeId) -> NodeId {
         self.node_ids[scope_id]
     }
 
@@ -272,7 +272,7 @@ impl ScopeTree {
     pub fn add_scope(
         &mut self,
         parent_id: Option<ScopeId>,
-        node_id: AstNodeId,
+        node_id: NodeId,
         flags: ScopeFlags,
     ) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);

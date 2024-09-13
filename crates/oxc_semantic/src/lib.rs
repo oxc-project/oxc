@@ -37,7 +37,7 @@ mod unresolved_stack;
 pub use crate::{
     builder::{SemanticBuilder, SemanticBuilderReturn},
     jsdoc::{JSDoc, JSDocFinder, JSDocTag},
-    node::{AstNode, AstNodeId, AstNodes},
+    node::{AstNode, AstNodes, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::ScopeTree,
     symbol::{IsGlobalReference, SymbolTable},
@@ -83,7 +83,7 @@ pub struct Semantic<'a> {
     /// Parsed JSDoc comments.
     jsdoc: JSDocFinder<'a>,
 
-    unused_labels: Vec<AstNodeId>,
+    unused_labels: Vec<NodeId>,
 
     /// Control flow graph. Only present if [`Semantic`] is built with cfg
     /// creation enabled using [`SemanticBuilder::with_cfg`].
@@ -150,7 +150,7 @@ impl<'a> Semantic<'a> {
         &self.symbols
     }
 
-    pub fn unused_labels(&self) -> &Vec<AstNodeId> {
+    pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }
 
@@ -162,7 +162,7 @@ impl<'a> Semantic<'a> {
         self.cfg.as_ref()
     }
 
-    pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {
+    pub fn is_unresolved_reference(&self, node_id: NodeId) -> bool {
         let reference_node = self.nodes.get_node(node_id);
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;

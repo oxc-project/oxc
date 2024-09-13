@@ -377,7 +377,7 @@ impl<'s> PostTransformChecker<'s> {
                 }
             }
 
-            // NB: Skip checking node IDs match - transformer does not set `AstNodeId`s
+            // NB: Skip checking node IDs match - transformer does not set `NodeId`s
         }
     }
 
@@ -412,7 +412,7 @@ impl<'s> PostTransformChecker<'s> {
                 self.errors.push_mismatch("Symbol scope ID mismatch", symbol_ids, scope_ids);
             }
 
-            // NB: Skip checking declarations match - transformer does not set `AstNodeId`s
+            // NB: Skip checking declarations match - transformer does not set `NodeId`s
 
             // Check resolved references match
             let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {

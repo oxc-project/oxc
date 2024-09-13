@@ -1,4 +1,4 @@
-use crate::AstNodeId;
+use crate::NodeId;
 
 #[derive(Debug)]
 pub struct LabeledScope<'a> {
@@ -11,7 +11,7 @@ pub struct LabeledScope<'a> {
 pub struct UnusedLabels<'a> {
     pub scopes: Vec<LabeledScope<'a>>,
     pub curr_scope: usize,
-    pub labels: Vec<AstNodeId>,
+    pub labels: Vec<NodeId>,
 }
 
 impl<'a> UnusedLabels<'a> {
@@ -27,7 +27,7 @@ impl<'a> UnusedLabels<'a> {
         }
     }
 
-    pub fn mark_unused(&mut self, current_node_id: AstNodeId) {
+    pub fn mark_unused(&mut self, current_node_id: NodeId) {
         let scope = &self.scopes[self.curr_scope];
         if !scope.used {
             self.labels.push(current_node_id);
