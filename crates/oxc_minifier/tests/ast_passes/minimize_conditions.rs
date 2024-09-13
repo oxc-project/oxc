@@ -4,7 +4,11 @@ use oxc_minifier::CompressOptions;
 
 // TODO: handle negative cases
 fn test(source_text: &str, positive: &str, _negative: &str) {
-    let options = CompressOptions { minimize_conditions: true, ..CompressOptions::all_false() };
+    let options = CompressOptions {
+        remove_syntax: true,
+        minimize_conditions: true,
+        ..CompressOptions::all_false()
+    };
     crate::test(source_text, positive, options);
 }
 

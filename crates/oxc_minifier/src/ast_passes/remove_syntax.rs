@@ -25,8 +25,11 @@ impl<'a> Traverse<'a> for RemoveSyntax {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        Self::strip_parenthesized_expression(expr, ctx);
         self.compress_console(expr, ctx);
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        Self::strip_parenthesized_expression(expr, ctx);
     }
 
     fn exit_arrow_function_expression(
@@ -46,7 +49,6 @@ impl<'a> RemoveSyntax {
     fn strip_parenthesized_expression(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
             *expr = ctx.ast.move_expression(&mut paren_expr.expression);
-            Self::strip_parenthesized_expression(expr, ctx);
         }
     }
 
