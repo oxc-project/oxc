@@ -124,10 +124,6 @@ impl Linter {
             .map(|rule| (rule, self.ctx_for_rule(&ctx, rule)))
             .collect::<Vec<_>>();
 
-        for (rule, ctx) in &rules {
-            rule.run_once(ctx);
-        }
-
         for symbol in semantic.symbols().symbol_ids() {
             for (rule, ctx) in &rules {
                 rule.run_on_symbol(symbol, ctx);
@@ -138,6 +134,11 @@ impl Linter {
             for (rule, ctx) in &rules {
                 rule.run(node, ctx);
             }
+        }
+
+        for (rule, ctx) in &rules {
+            rule.run_once(ctx);
+            rule.run_once_at_end(ctx);
         }
 
         rules.into_iter().flat_map(|(_, ctx)| ctx.into_message()).collect::<Vec<_>>()
