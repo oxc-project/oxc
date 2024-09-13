@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{node_util::NodeUtil, tri::Tri, CompressorPass};
 
@@ -44,7 +44,9 @@ impl<'a> MinimizeConditions {
             Tri::True => {
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true ? o.f : false)(); (true ? o.f : false)``;`
                 let parent = ctx.ancestry.parent();
-                if parent.is_tagged_template_expression() || parent.is_call_expression() {
+                if parent.is_tagged_template_expression()
+                    || matches!(parent, Ancestor::CallExpressionCallee(_))
+                {
                     return None;
                 }
                 Some(ctx.ast.move_expression(&mut expr.consequent))

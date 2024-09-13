@@ -7,7 +7,7 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 
 use crate::{
     node_util::{is_exact_int64, IsLiteralValue, MayHaveSideEffects, NodeUtil, NumberValue},
@@ -609,7 +609,9 @@ impl<'a> FoldConstants {
             } else if !left.may_have_side_effects() {
                 let parent = ctx.ancestry.parent();
                 // Bail `let o = { f() { assert.ok(this !== o); } }; (true && o.f)(); (true && o.f)``;`
-                if parent.is_tagged_template_expression() || parent.is_call_expression() {
+                if parent.is_tagged_template_expression()
+                    || matches!(parent, Ancestor::CallExpressionCallee(_))
+                {
                     return None;
                 }
                 // (FALSE || x) => x
