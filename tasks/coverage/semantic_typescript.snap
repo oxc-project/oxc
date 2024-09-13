@@ -5487,7 +5487,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(8), ScopeId(9)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(6), ReferenceId(14), ReferenceId(17), ReferenceId(18), ReferenceId(20), ReferenceId(23), ReferenceId(24)]
+after transform: SymbolId(0): [ReferenceId(6), ReferenceId(15), ReferenceId(16), ReferenceId(18), ReferenceId(21), ReferenceId(22), ReferenceId(24)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(3), ReferenceId(5), ReferenceId(8), ReferenceId(10), ReferenceId(12)]
 Reference symbol mismatch:
 after transform: ReferenceId(8): Some("DropdownMenu")
@@ -21130,10 +21130,13 @@ rebuilt        : ["undefined"]
 tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpressionNotCountedAsChild.tsx
 semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["Props", "React", "Wrapper", "_jsx", "_jsxFileName", "element"]
-rebuilt        : ScopeId(0): ["Wrapper", "_jsx", "_jsxFileName", "element"]
+rebuilt        : ScopeId(0): ["React", "Wrapper", "_jsx", "_jsxFileName", "element"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol reference IDs mismatch:
+after transform: SymbolId(0): [ReferenceId(0)]
+rebuilt        : SymbolId(0): []
 
 tasks/coverage/typescript/tests/cases/compiler/jsxFactoryAndJsxFragmentFactory.tsx
 semantic error: Bindings mismatch:
@@ -21371,10 +21374,7 @@ after transform: ["Function"]
 rebuilt        : []
 
 tasks/coverage/typescript/tests/cases/compiler/jsxPartialSpread.tsx
-semantic error: Bindings mismatch:
-after transform: ScopeId(0): ["React", "Repro", "Select", "_jsx", "_jsxFileName"]
-rebuilt        : ScopeId(0): ["Repro", "Select", "_jsx", "_jsxFileName"]
-Symbol reference IDs mismatch:
+semantic error: Symbol reference IDs mismatch:
 after transform: SymbolId(0): [ReferenceId(2), ReferenceId(3)]
 rebuilt        : SymbolId(0): [ReferenceId(3)]
 Unresolved references mismatch:

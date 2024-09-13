@@ -1,17 +1,13 @@
 commit: 3bcfee23
 
-Passed: 42/53
+Passed: 43/53
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-arrow-functions
 * babel-preset-typescript
 * regexp
-
-
-# babel-plugin-transform-arrow-functions (1/2)
-* with-this-member-expression/input.jsx
-x Output mismatch
 
 
 # babel-plugin-transform-typescript (1/8)

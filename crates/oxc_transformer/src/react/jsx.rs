@@ -370,7 +370,7 @@ impl<'a> Traverse<'a> for ReactJsx<'a> {
         self.add_runtime_imports(program, ctx);
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         *expr = match expr {
             Expression::JSXElement(e) => self.transform_jsx(&JSXElementOrFragment::Element(e), ctx),
             Expression::JSXFragment(e) => {
