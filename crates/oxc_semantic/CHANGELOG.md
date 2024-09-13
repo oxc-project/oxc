@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 805fbac oxc_cfg: Better control flow graph dot dot repr (#5731) (IWANABETHATGUY)
+- f3baa49 semantic: Add `SemanticBuilder::with_stats` (#5757) (overlookmotel)
+- 7fa0cb3 semantic: Expose `Stats` (#5755) (overlookmotel)
+
+### Refactor
+
+- 4bdc202 rust: Remove some #[allow(unused)] (#5716) (Boshen)
+- a35fb14 semantic: `Stats::assert_accurate` take `self` (#5758) (overlookmotel)
+- 4b896f1 semantic: Make `Stats` `Copy` (#5756) (overlookmotel)
+- b4b460f semantic: `Stats` store counts as `u32` (#5754) (overlookmotel)
+- 667170c semantic: Rename `Counts` to `Stats` (#5753) (overlookmotel)
+- cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
+- 7dfcdfc semantic: Remove `more-asserts` dependency (#5739) (overlookmotel)
+- 6436524 semantic: Fix dead code warning in release mode (#5728) (overlookmotel)
+- e02621d semantic: Re-order use statements (#5712) (overlookmotel)
+- ac6203c semantic: Move `Counts` code into counter module (#5710) (overlookmotel)
+- 339fcfc semantic: Rename `Counts` in transform checker (#5709) (overlookmotel)
+- d8ec781 semantic: Remove `record_ast_node` call for `Program` (#5701) (overlookmotel)
+
+### Styling
+
+- 1857ff0 semantic: Rename vars for node IDs (#5699) (overlookmotel)
+
 ## [0.28.0] - 2024-09-11
 
 - 1fa3e56 semantic: [**BREAKING**] Rename `SymbolTable::iter` to `symbol_ids` (#5621) (overlookmotel)
