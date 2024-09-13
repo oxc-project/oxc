@@ -134,12 +134,6 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub(super) fn run_once_at_end<'a>(&self, ctx: &LintContext<'a>) {
-                match self {
-                    #(Self::#struct_names(rule) => rule.run_once_at_end(ctx)),*
-                }
-            }
-
             pub(super) fn should_run(&self, ctx: &LintContext) -> bool {
                 match self {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*

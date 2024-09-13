@@ -30,11 +30,6 @@ pub trait Rule: Sized + Default + fmt::Debug {
     #[inline]
     fn run_once(&self, ctx: &LintContext) {}
 
-    /// Run only once at end
-    #[expect(unused_variables)]
-    #[inline]
-    fn run_once_at_end(&self, ctx: &LintContext) {}
-
     /// Check if a rule should be run at all.
     ///
     /// You usually do not need to implement this function. If you do, use it to

@@ -138,7 +138,6 @@ impl Linter {
 
         for (rule, ctx) in &rules {
             rule.run_once(ctx);
-            rule.run_once_at_end(ctx);
         }
 
         rules.into_iter().flat_map(|(_, ctx)| ctx.into_message()).collect::<Vec<_>>()
