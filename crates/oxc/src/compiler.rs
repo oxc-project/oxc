@@ -156,12 +156,13 @@ pub trait CompilerInterface {
         /* Compress */
 
         if let Some(options) = self.compress_options() {
-            self.compress(&allocator, &mut program, options);
+            self.compress(&allocator, &mut program, source_text, options);
         }
 
         /* Mangler */
 
-        let mangler = self.mangle_options().map(|options| self.mangle(&mut program, options));
+        let mangler =
+            self.mangle_options().map(|options| self.mangle(&mut program, source_text, options));
 
         /* Codegen */
 
@@ -214,13 +215,19 @@ pub trait CompilerInterface {
         &self,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
+        source_text: &str,
         options: CompressOptions,
     ) {
-        Compressor::new(allocator, options).build(program);
+        Compressor::new(allocator, options).build(program, source_text);
     }
 
-    fn mangle(&self, program: &mut Program<'_>, options: MangleOptions) -> Mangler {
-        Mangler::new().with_options(options).build(program)
+    fn mangle(
+        &self,
+        program: &mut Program<'_>,
+        source_text: &str,
+        options: MangleOptions,
+    ) -> Mangler {
+        Mangler::new().with_options(options).build(program, source_text)
     }
 
     fn codegen<'a>(

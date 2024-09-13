@@ -266,7 +266,7 @@ impl Oxc {
                     CompressOptions::all_false()
                 },
             };
-            Minifier::new(options).build(&allocator, &mut program).mangler
+            Minifier::new(options).build(&allocator, &mut program, source_text).mangler
         } else {
             None
         };

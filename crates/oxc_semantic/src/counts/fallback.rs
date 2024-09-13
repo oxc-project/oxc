@@ -1,6 +1,10 @@
-//! Visitor to count nodes, scopes, symbols and references in AST.
-//! These counts can be used to pre-allocate sufficient capacity in `AstNodes`,
-//! `ScopeTree`, and `SymbolTable` to store info for all these items.
+//! Counter to estimate counts of nodes, scopes, symbols and references.
+//!
+//! Produces an accurate count, by visiting AST and counting these items.
+//!
+//! Doing a full traverse of AST has a sizeable performance cost, but is necessary on platforms
+//! which are 32-bit or do not have virtual memory (e.g. WASM) and so the "standard" version of
+//! `Counts` is not suitable.
 
 use std::cell::Cell;
 
@@ -13,38 +17,37 @@ use oxc_ast::{
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
+use super::assert_le;
+
 #[derive(Default, Debug)]
-pub(crate) struct Counts {
-    pub nodes: usize,
-    pub scopes: usize,
-    pub symbols: usize,
-    pub references: usize,
+pub struct Counts {
+    pub nodes: u32,
+    pub scopes: u32,
+    pub symbols: u32,
+    pub references: u32,
 }
 
 impl Counts {
-    pub fn count(program: &Program) -> Self {
-        let mut counts = Counts::default();
+    /// Calculate counts by visiting AST
+    pub fn count(program: &Program, _source_text: &str) -> Self {
+        let mut counts = Self::default();
         counts.visit_program(program);
         counts
     }
 
+    /// Assert that estimated counts were accurate
     #[cfg_attr(not(debug_assertions), expect(dead_code))]
     pub fn assert_accurate(actual: &Self, estimated: &Self) {
         assert_eq!(actual.nodes, estimated.nodes, "nodes count mismatch");
         assert_eq!(actual.scopes, estimated.scopes, "scopes count mismatch");
-        assert_eq!(actual.references, estimated.references, "references count mismatch");
         // `Counts` may overestimate number of symbols, because multiple `BindingIdentifier`s
         // can result in only a single symbol.
         // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
-        // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
+        // This is not a big problem - allocating a `Vec` with excess capacity is fairly cheap.
         // It's allocating with *not enough* capacity which is costly, as then the `Vec`
         // will grow and reallocate.
-        assert!(
-            actual.symbols <= estimated.symbols,
-            "symbols count mismatch {} <= {}",
-            actual.symbols,
-            estimated.symbols
-        );
+        assert_le!(actual.symbols, estimated.symbols, "symbols count mismatch");
+        assert_eq!(actual.references, estimated.references, "references count mismatch");
     }
 }
 

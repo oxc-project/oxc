@@ -81,8 +81,8 @@ impl Mangler {
     }
 
     #[must_use]
-    pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
-        let semantic = SemanticBuilder::new("").build(program).semantic;
+    pub fn build<'a>(mut self, program: &'a Program<'a>, source_text: &str) -> Mangler {
+        let semantic = SemanticBuilder::new(source_text).build(program).semantic;
 
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.

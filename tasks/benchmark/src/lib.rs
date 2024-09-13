@@ -2,8 +2,8 @@ use std::alloc::{GlobalAlloc, Layout, System};
 
 pub use criterion::*;
 
-#[global_allocator]
-static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
+// #[global_allocator]
+// static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
 
 /// Global allocator for use in benchmarks.
 ///
@@ -24,6 +24,7 @@ static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
 /// [`GlobalAlloc::realloc`] implementation which *never* grows in place.
 /// It therefore represents the "worse case scenario" for memory allocation performance.
 /// This behavior is consistent and predictable, and therefore stabilizes benchmark results.
+#[expect(dead_code)]
 struct NeverGrowInPlaceAllocator;
 
 // SAFETY: Methods simply delegate to `System` allocator

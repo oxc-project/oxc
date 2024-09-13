@@ -197,7 +197,8 @@ impl<'a> AstNodes<'a> {
         ast_node_id
     }
 
-    pub fn reserve(&mut self, additional: usize) {
+    pub fn reserve(&mut self, additional: u32) {
+        let additional = additional as usize;
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
     }

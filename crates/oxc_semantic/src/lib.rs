@@ -23,7 +23,7 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
-mod counter;
+mod counts;
 mod diagnostics;
 mod jsdoc;
 mod label;

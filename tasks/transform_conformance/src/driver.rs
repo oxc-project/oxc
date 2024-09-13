@@ -2,6 +2,7 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
     ast::ast::Program,
+    codegen::{CodeGenerator, CodegenOptions},
     diagnostics::OxcDiagnostic,
     semantic::post_transform_checker::check_semantic_after_transform,
     span::SourceType,
@@ -43,10 +44,16 @@ impl CompilerInterface for Driver {
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic {
+            let code = CodeGenerator::new()
+                .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+                .build(program)
+                .source_text;
+
             if let Some(errors) = check_semantic_after_transform(
                 &transformer_return.symbols,
                 &transformer_return.scopes,
                 program,
+                &code,
             ) {
                 self.errors.extend(errors);
             }
