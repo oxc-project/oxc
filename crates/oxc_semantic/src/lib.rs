@@ -23,7 +23,6 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
-mod counter;
 mod diagnostics;
 mod jsdoc;
 mod label;
@@ -31,6 +30,7 @@ mod module_record;
 mod node;
 mod reference;
 mod scope;
+mod stats;
 mod symbol;
 mod unresolved_stack;
 

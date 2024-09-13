@@ -14,18 +14,18 @@ use oxc_ast::{
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 #[derive(Default, Debug)]
-pub(crate) struct Counts {
+pub(crate) struct Stats {
     pub nodes: usize,
     pub scopes: usize,
     pub symbols: usize,
     pub references: usize,
 }
 
-impl Counts {
+impl Stats {
     pub fn count(program: &Program) -> Self {
-        let mut counts = Counts::default();
-        counts.visit_program(program);
-        counts
+        let mut stats = Stats::default();
+        stats.visit_program(program);
+        stats
     }
 
     #[cfg_attr(not(debug_assertions), expect(dead_code))]
@@ -33,7 +33,7 @@ impl Counts {
         assert_eq!(actual.nodes, estimated.nodes, "nodes count mismatch");
         assert_eq!(actual.scopes, estimated.scopes, "scopes count mismatch");
         assert_eq!(actual.references, estimated.references, "references count mismatch");
-        // `Counts` may overestimate number of symbols, because multiple `BindingIdentifier`s
+        // `Stats` may overestimate number of symbols, because multiple `BindingIdentifier`s
         // can result in only a single symbol.
         // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
         // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
@@ -48,7 +48,7 @@ impl Counts {
     }
 }
 
-impl<'a> Visit<'a> for Counts {
+impl<'a> Visit<'a> for Stats {
     #[inline]
     fn enter_node(&mut self, _: AstKind<'a>) {
         self.nodes += 1;

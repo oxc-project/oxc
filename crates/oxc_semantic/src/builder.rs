@@ -22,7 +22,6 @@ use crate::{
     binder::Binder,
     checker,
     class::ClassTableBuilder,
-    counter::Counts,
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::UnusedLabels,
@@ -30,6 +29,7 @@ use crate::{
     node::{AstNodes, NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
+    stats::Stats,
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     unresolved_stack::UnresolvedReferencesStack,
     JSDocFinder, Semantic,
@@ -232,10 +232,10 @@ impl<'a> SemanticBuilder<'a> {
             // Avoiding this growth produces up to 30% perf boost on our benchmarks.
             // TODO: It would be even more efficient to calculate counts in parser to avoid
             // this extra AST traversal.
-            let counts = Counts::count(program);
-            self.nodes.reserve(counts.nodes);
-            self.scope.reserve(counts.scopes);
-            self.symbols.reserve(counts.symbols, counts.references);
+            let stats = Stats::count(program);
+            self.nodes.reserve(stats.nodes);
+            self.scope.reserve(stats.scopes);
+            self.symbols.reserve(stats.symbols, stats.references);
 
             // Visit AST to generate scopes tree etc
             self.visit_program(program);
@@ -243,13 +243,13 @@ impl<'a> SemanticBuilder<'a> {
             // Check that estimated counts accurately
             #[cfg(debug_assertions)]
             {
-                let actual_counts = Counts {
+                let actual_stats = Stats {
                     nodes: self.nodes.len(),
                     scopes: self.scope.len(),
                     symbols: self.symbols.len(),
                     references: self.symbols.references.len(),
                 };
-                Counts::assert_accurate(&actual_counts, &counts);
+                Stats::assert_accurate(&actual_stats, &stats);
             }
 
             // Checking syntax error on module record requires scope information from the previous AST pass
