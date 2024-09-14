@@ -1750,6 +1750,7 @@ dependencies = [
  "oxc_regular_expression",
  "oxc_span",
  "oxc_syntax",
+ "pico-args",
  "rustc-hash",
  "seq-macro",
  "serde_json",
