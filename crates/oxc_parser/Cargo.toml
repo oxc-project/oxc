@@ -38,6 +38,7 @@ memchr = { workspace = true }
 
 [dev-dependencies]
 oxc_ast = { workspace = true, features = ["serialize"] }
+pico-args = { workspace = true }
 serde_json = { workspace = true }
 
 [features]
