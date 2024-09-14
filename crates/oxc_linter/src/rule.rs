@@ -5,6 +5,7 @@ use std::{
     ops::Deref,
 };
 
+use dyn_clone::DynClone;
 use oxc_semantic::SymbolId;
 
 use crate::{context::LintContext, AllowWarnDeny, AstNode, FixKind, RuleEnum};
@@ -18,12 +19,12 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// Visit each AST Node
     #[expect(unused_variables)]
     #[inline]
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {}
 
     /// Visit each symbol
     #[expect(unused_variables)]
     #[inline]
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {}
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &mut LintContext<'_>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
     #[expect(unused_variables)]
@@ -43,6 +44,10 @@ pub trait Rule: Sized + Default + fmt::Debug {
         true
     }
 }
+
+pub trait RuleState: DynClone {}
+
+dyn_clone::clone_trait_object!(RuleState);
 
 pub trait RuleMeta {
     const NAME: &'static str;

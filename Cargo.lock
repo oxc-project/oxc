@@ -1631,6 +1631,7 @@ dependencies = [
  "convert_case",
  "cow-utils",
  "dashmap 6.0.1",
+ "dyn-clone",
  "globset",
  "insta",
  "itertools",

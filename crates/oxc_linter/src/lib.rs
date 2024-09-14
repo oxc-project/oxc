@@ -118,7 +118,7 @@ impl Linter {
         let ctx = self.create_ctx(path, semantic);
         let semantic = Rc::clone(ctx.semantic());
 
-        let rules = self
+        let mut rules = self
             .rules
             .iter()
             .filter(|rule| rule.should_run(&ctx))
@@ -130,13 +130,13 @@ impl Linter {
         }
 
         for symbol in semantic.symbols().symbol_ids() {
-            for (rule, ctx) in &rules {
+            for (rule,  ctx) in &mut rules {
                 rule.run_on_symbol(symbol, ctx);
             }
         }
 
         for node in semantic.nodes().iter() {
-            for (rule, ctx) in &rules {
+            for (rule, ctx) in &mut rules {
                 rule.run(node, ctx);
             }
         }

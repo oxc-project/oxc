@@ -10,11 +10,7 @@ use oxc_syntax::module_record::ModuleRecord;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    config::LintConfig,
-    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::{FixKind, Message, RuleFix, RuleFixer},
-    javascript_globals::GLOBALS,
-    AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
+    config::LintConfig, disable_directives::{DisableDirectives, DisableDirectivesBuilder}, fixer::{FixKind, Message, RuleFix, RuleFixer}, javascript_globals::GLOBALS, rule::RuleState, AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings
 };
 
 #[derive(Clone)]
@@ -58,6 +54,8 @@ pub struct LintContext<'a> {
     /// ```
     severity: Severity,
     frameworks: FrameworkFlags,
+
+    rule_state: Option<Box<dyn RuleState>>
 }
 
 impl<'a> LintContext<'a> {
@@ -91,6 +89,7 @@ impl<'a> LintContext<'a> {
             current_rule_fix_capabilities: RuleFixMeta::None,
             severity: Severity::Warning,
             frameworks: FrameworkFlags::empty(),
+            rule_state: None,
         }
     }
 
@@ -113,6 +112,11 @@ impl<'a> LintContext<'a> {
 
     pub fn with_rule_name(mut self, name: &'static str) -> Self {
         self.current_rule_name = name;
+        self
+    }
+
+    pub fn with_rule_state(mut self, state: Box<dyn RuleState>) -> Self {
+        self.rule_state = Some(state);
         self
     }
 
