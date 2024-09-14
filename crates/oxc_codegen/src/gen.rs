@@ -1,5 +1,6 @@
 use std::{borrow::Cow, ops::Not};
 
+use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -719,10 +720,10 @@ impl<'a> Gen for ImportDeclaration<'a> {
                 p.print_char(b'"');
                 p.print_str(self.source.value.as_str());
                 p.print_char(b'"');
-                if self.with_clause.is_some() {
+                if let Some(with_clause) = &self.with_clause {
                     p.print_hard_space();
+                    with_clause.gen(p, ctx);
                 }
-                self.with_clause.gen(p, ctx);
                 p.print_semicolon_after_statement();
                 return;
             }
@@ -802,20 +803,12 @@ impl<'a> Gen for ImportDeclaration<'a> {
             p.print_str(" from ");
         }
         self.source.gen(p, ctx);
-        if self.with_clause.is_some() {
+        if let Some(with_clause) = &self.with_clause {
             p.print_hard_space();
-        }
-        self.with_clause.gen(p, ctx);
-        p.add_source_mapping(self.span.end);
-        p.print_semicolon_after_statement();
-    }
-}
-
-impl<'a> Gen for Option<WithClause<'a>> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
-        if let Some(with_clause) = self {
             with_clause.gen(p, ctx);
         }
+        p.add_source_mapping(self.span.end);
+        p.print_semicolon_after_statement();
     }
 }
 
@@ -976,10 +969,10 @@ impl<'a> Gen for ExportAllDeclaration<'a> {
 
         p.print_str(" from ");
         self.source.gen(p, ctx);
-        if self.with_clause.is_some() {
+        if let Some(with_clause) = &self.with_clause {
             p.print_hard_space();
+            with_clause.gen(p, ctx);
         }
-        self.with_clause.gen(p, ctx);
         p.print_semicolon_after_statement();
     }
 }
@@ -1240,7 +1233,7 @@ impl<'a> Gen for RegExpLiteral<'a> {
         );
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
-            || (Some('<') == last && pattern_text.to_lowercase().starts_with("script"))
+            || (Some('<') == last && pattern_text.cow_to_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }

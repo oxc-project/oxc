@@ -41,6 +41,11 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
+
+            if is_top_level && stmt.is_module_declaration() {
+                self.set_source_type_to_module_if_unambiguous();
+            }
+
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
             // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
@@ -125,7 +130,7 @@ impl<'a> ParserImpl<'a> {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
-                let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
+                let label = self.ast.label_identifier(ident.span, ident.name.clone());
                 let body = self.parse_statement_list_item(StatementContext::Label)?;
                 return Ok(self.ast.statement_labeled(self.end_span(span), label, body));
             }

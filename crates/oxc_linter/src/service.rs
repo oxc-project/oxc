@@ -25,13 +25,43 @@ use crate::{
 
 pub struct LintServiceOptions {
     /// Current working directory
-    pub cwd: Box<Path>,
+    cwd: Box<Path>,
 
     /// All paths to lint
-    pub paths: Vec<Box<Path>>,
+    paths: Vec<Box<Path>>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
-    pub tsconfig: Option<PathBuf>,
+    tsconfig: Option<PathBuf>,
+}
+
+impl LintServiceOptions {
+    #[must_use]
+    pub fn new<T>(cwd: T, paths: Vec<Box<Path>>) -> Self
+    where
+        T: Into<Box<Path>>,
+    {
+        Self { cwd: cwd.into(), paths, tsconfig: None }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_tsconfig<T>(mut self, tsconfig: T) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        let tsconfig = tsconfig.into();
+        // Should this be canonicalized?
+        let tsconfig = if tsconfig.is_relative() { self.cwd.join(tsconfig) } else { tsconfig };
+        debug_assert!(tsconfig.is_file());
+
+        self.tsconfig = Some(tsconfig);
+        self
+    }
+
+    #[inline]
+    pub fn cwd(&self) -> &Path {
+        &self.cwd
+    }
 }
 
 #[derive(Clone)]
@@ -135,7 +165,7 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().plugins.import.then(|| {
+        let resolver = linter.options().plugins.has_import().then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
@@ -280,7 +310,7 @@ impl Runtime {
             .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
-        if self.linter.options().plugins.import {
+        if self.linter.options().plugins.has_import() {
             self.module_map.insert(
                 path.to_path_buf().into_boxed_path(),
                 ModuleState::Resolved(Arc::clone(&module_record)),
@@ -362,7 +392,7 @@ impl Runtime {
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {
-        if !self.linter.options().plugins.import {
+        if !self.linter.options().plugins.has_import() {
             return false;
         }
 
@@ -417,7 +447,7 @@ impl Runtime {
     }
 
     fn ignore_path(&self, path: &Path) {
-        if self.linter.options().plugins.import {
+        if self.linter.options().plugins.has_import() {
             self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
             self.update_cache_state(path);
         }

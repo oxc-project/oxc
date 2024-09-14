@@ -41,10 +41,10 @@ For a maintainable and understandable codebase, please go big on code comments. 
 
 Each transform should include a comment at top of file including:
 
-* High level explanation of what transform does.
-* One "before / after" example.
-* Link to Babel plugin.
-* Note of any ways in which our implementation diverges from Babel's, and why.
+- High level explanation of what transform does.
+- One "before / after" example.
+- Link to Babel plugin.
+- Note of any ways in which our implementation diverges from Babel's, and why.
 
 #### Methods
 
@@ -88,17 +88,17 @@ So where we feel Babel's implementation is inefficient, but we have to follow it
 tests, make a `// TODO(improve-on-babel): Babel's impl is inefficient because X, we could do better by Y`
 comment, so we can return to it later.
 
-### Clear "entry points" 
+### Clear "entry points"
 
 "Entry points" are where the visitor calls into the transform.
 
-* Entry points of transform should be implemented as `impl Traverse for MyTransform`.
-* Those methods have to be called `enter_*` and `exit_*`.
-* Parent transform will only interface with child transform via these entry points.
-* Only other method exposed externally should be `new`. That should be at top of the file.
-* Entry points go directly below `new` method definition.
-* Internal methods implemented lower down in an `impl MyTransform` block.
-* Internal methods named descriptively - `add_id_to_function` not `transform_function`.
+- Entry points of transform should be implemented as `impl Traverse for MyTransform`.
+- Those methods have to be called `enter_*` and `exit_*`.
+- Parent transform will only interface with child transform via these entry points.
+- Only other method exposed externally should be `new`. That should be at top of the file.
+- Entry points go directly below `new` method definition.
+- Internal methods implemented lower down in an `impl MyTransform` block.
+- Internal methods named descriptively - `add_id_to_function` not `transform_function`.
 
 i.e. File is laid out so logic flows from top of file to bottom.
 

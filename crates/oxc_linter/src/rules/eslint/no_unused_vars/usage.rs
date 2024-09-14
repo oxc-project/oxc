@@ -3,7 +3,7 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_semantic::{AstNode, AstNodeId, Reference, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{AstNode, NodeId, Reference, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use super::{ignored::FoundStatus, NoUnusedVars, Symbol};
@@ -341,8 +341,12 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 }
                 // When symbol is being assigned a new value, we flag the reference
                 // as only affecting itself until proven otherwise.
-                AstKind::UpdateExpression(_) | AstKind::SimpleAssignmentTarget(_) => {
-                    is_used_by_others = false;
+                AstKind::UpdateExpression(UpdateExpression { argument, .. })
+                | AstKind::SimpleAssignmentTarget(argument) => {
+                    // `a.b++` or `a[b] + 1` are not reassignment of `a`
+                    if !argument.is_member_expression() {
+                        is_used_by_others = false;
+                    }
                 }
                 // RHS usage when LHS != reference's symbol is definitely used by
                 // others
@@ -420,7 +424,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 
     /// Check if a [`AstNode`] is within a return statement or implicit return.
-    fn is_in_return_statement(&self, node_id: AstNodeId) -> bool {
+    fn is_in_return_statement(&self, node_id: NodeId) -> bool {
         for parent in self.iter_relevant_parents(node_id).map(AstNode::kind) {
             match parent {
                 AstKind::ReturnStatement(_) => return true,
@@ -653,7 +657,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
     /// Find the [`SymbolId`] for the nearest function declaration or expression
     /// that is a parent of `node_id`.
-    fn get_nearest_function(&self, node_id: AstNodeId) -> Option<SymbolId> {
+    fn get_nearest_function(&self, node_id: NodeId) -> Option<SymbolId> {
         // set to `true` when we find an arrow function and we want to get its
         // name from the variable its assigned to.
         let mut needs_variable_identifier = false;

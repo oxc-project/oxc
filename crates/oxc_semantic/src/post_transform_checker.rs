@@ -92,6 +92,8 @@ use std::{
 };
 
 use indexmap::IndexMap;
+use rustc_hash::FxHasher;
+
 use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::walk, Visit};
@@ -102,7 +104,6 @@ use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolId,
 };
-use rustc_hash::FxHasher;
 
 use crate::{ScopeTree, SemanticBuilder, SymbolTable};
 
@@ -376,7 +377,7 @@ impl<'s> PostTransformChecker<'s> {
                 }
             }
 
-            // NB: Skip checking node IDs match - transformer does not set `AstNodeId`s
+            // NB: Skip checking node IDs match - transformer does not set `NodeId`s
         }
     }
 
@@ -411,7 +412,7 @@ impl<'s> PostTransformChecker<'s> {
                 self.errors.push_mismatch("Symbol scope ID mismatch", symbol_ids, scope_ids);
             }
 
-            // NB: Skip checking declarations match - transformer does not set `AstNodeId`s
+            // NB: Skip checking declarations match - transformer does not set `NodeId`s
 
             // Check resolved references match
             let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
@@ -646,22 +647,6 @@ impl<'a, 'e> Visit<'a> for SemanticIdsCollector<'e> {
             return;
         }
         walk::walk_declaration(self, it);
-    }
-
-    fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
-        // skip `if (function foo() {}) {}`
-        if !matches!(stmt.test, Expression::FunctionExpression(_)) {
-            self.visit_expression(&stmt.test);
-        }
-        // skip `if (true) function foo() {} else function bar() {}`
-        if !stmt.consequent.is_declaration() {
-            self.visit_statement(&stmt.consequent);
-        }
-        if let Some(alternate) = &stmt.alternate {
-            if !alternate.is_declaration() {
-                self.visit_statement(alternate);
-            }
-        }
     }
 
     fn visit_ts_type(&mut self, _it: &TSType<'a>) {

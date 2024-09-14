@@ -74,16 +74,14 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
     #[inline(always)]
     pub fn from_slice(s: &[T]) -> &Self {
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
-
-        unsafe { &*(s as *const [T] as *const Self) }
+        unsafe { &*(core::ptr::from_ref(s) as *const Self) }
     }
 
     /// Construct a new mutable IdxSlice by wrapping an existing mutable slice.
     #[inline(always)]
     pub fn from_slice_mut(s: &mut [T]) -> &mut Self {
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
-
-        unsafe { &mut *(s as *mut [T] as *mut Self) }
+        unsafe { &mut *(core::ptr::from_mut(s) as *mut Self) }
     }
 
     /// Copies `self` into a new `IndexVec`.
@@ -411,26 +409,25 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
     /// Return the the last element, if we are not empty.
     #[inline(always)]
     pub fn last(&self) -> Option<&T> {
-        self.len().checked_sub(1).and_then(|i| self.get(I::from_usize(i)))
+        self.raw.last()
     }
 
     /// Return the the last element, if we are not empty.
     #[inline]
     pub fn last_mut(&mut self) -> Option<&mut T> {
-        let i = self.len().checked_sub(1)?;
-        self.get_mut(I::from_usize(i))
+        self.raw.last_mut()
     }
 
     /// Return the the first element, if we are not empty.
     #[inline]
     pub fn first(&self) -> Option<&T> {
-        self.get(I::from_usize(0))
+        self.raw.first()
     }
 
     /// Return the the first element, if we are not empty.
     #[inline]
     pub fn first_mut(&mut self) -> Option<&mut T> {
-        self.get_mut(I::from_usize(0))
+        self.raw.first_mut()
     }
 
     /// Copies elements from one part of the slice to another part of itself,
@@ -670,7 +667,7 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
         } else {
             let last = self.last_idx();
             let split = self.split_at_mut(last);
-            Some((&mut split.1[0], split.0))
+            Some((&mut split.1[I::from_usize(0)], split.0))
         }
     }
 }

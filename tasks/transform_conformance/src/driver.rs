@@ -10,6 +10,7 @@ use oxc::{
 };
 
 pub struct Driver {
+    check_semantic: bool,
     options: TransformOptions,
     printed: String,
     errors: Vec<OxcDiagnostic>,
@@ -41,20 +42,22 @@ impl CompilerInterface for Driver {
         program: &mut Program<'_>,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
-        if let Some(errors) = check_semantic_after_transform(
-            &transformer_return.symbols,
-            &transformer_return.scopes,
-            program,
-        ) {
-            self.errors.extend(errors);
+        if self.check_semantic {
+            if let Some(errors) = check_semantic_after_transform(
+                &transformer_return.symbols,
+                &transformer_return.scopes,
+                program,
+            ) {
+                self.errors.extend(errors);
+            }
         }
         ControlFlow::Continue(())
     }
 }
 
 impl Driver {
-    pub fn new(options: TransformOptions) -> Self {
-        Self { options, printed: String::new(), errors: vec![] }
+    pub fn new(check_semantic: bool, options: TransformOptions) -> Self {
+        Self { check_semantic, options, printed: String::new(), errors: vec![] }
     }
 
     pub fn errors(&mut self) -> Vec<OxcDiagnostic> {

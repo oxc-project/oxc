@@ -1,23 +1,54 @@
 mod allow_warn_deny;
+mod filter;
 mod plugins;
 
 use std::{convert::From, path::PathBuf};
 
-pub use allow_warn_deny::AllowWarnDeny;
+use filter::LintFilterKind;
 use oxc_diagnostics::Error;
-pub use plugins::LintPluginOptions;
+use plugins::LintPlugins;
 use rustc_hash::FxHashSet;
 
+pub use allow_warn_deny::AllowWarnDeny;
+pub use filter::{InvalidFilterKind, LintFilter};
+pub use plugins::LintPluginOptions;
+
 use crate::{
-    config::OxlintConfig, fixer::FixKind, rules::RULES, utils::is_jest_rule_adapted_to_vitest,
+    config::{LintConfig, OxlintConfig},
+    fixer::FixKind,
+    rules::RULES,
+    utils::is_jest_rule_adapted_to_vitest,
     FrameworkFlags, RuleCategory, RuleEnum, RuleWithSeverity,
 };
 
+/// Subset of options used directly by the [`Linter`]. Derived from
+/// [`OxlintOptions`], which is the public-facing API. Do not expose this
+/// outside of this crate.
+///
+/// [`Linter`]: crate::Linter
+#[derive(Debug, Default)]
+#[cfg_attr(test, derive(PartialEq))]
+pub(crate) struct LintOptions {
+    pub fix: FixKind,
+    pub framework_hints: FrameworkFlags,
+    pub plugins: LintPlugins,
+}
+
+impl From<OxlintOptions> for LintOptions {
+    fn from(options: OxlintOptions) -> Self {
+        Self {
+            fix: options.fix,
+            framework_hints: options.framework_hints,
+            plugins: options.plugins.into(),
+        }
+    }
+}
+
 #[derive(Debug)]
-pub struct LintOptions {
+pub struct OxlintOptions {
     /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
     /// Defaults to [("deny", "correctness")]
-    pub filter: Vec<(AllowWarnDeny, String)>,
+    pub filter: Vec<LintFilter>,
     pub config_path: Option<PathBuf>,
     /// Enable automatic code fixes. Set to [`None`] to disable.
     ///
@@ -29,10 +60,10 @@ pub struct LintOptions {
     pub framework_hints: FrameworkFlags,
 }
 
-impl Default for LintOptions {
+impl Default for OxlintOptions {
     fn default() -> Self {
         Self {
-            filter: vec![(AllowWarnDeny::Warn, String::from("correctness"))],
+            filter: vec![LintFilter::warn(RuleCategory::Correctness)],
             config_path: None,
             fix: FixKind::None,
             plugins: LintPluginOptions::default(),
@@ -41,9 +72,9 @@ impl Default for LintOptions {
     }
 }
 
-impl LintOptions {
+impl OxlintOptions {
     #[must_use]
-    pub fn with_filter(mut self, filter: Vec<(AllowWarnDeny, String)>) -> Self {
+    pub fn with_filter(mut self, filter: Vec<LintFilter>) -> Self {
         if !filter.is_empty() {
             self.filter = filter;
         }
@@ -151,59 +182,71 @@ impl LintOptions {
     }
 }
 
-impl LintOptions {
+impl OxlintOptions {
     /// # Errors
     ///
     /// * Returns `Err` if there are any errors parsing the configuration file.
-    pub fn derive_rules_and_config(&self) -> Result<(Vec<RuleWithSeverity>, OxlintConfig), Error> {
+    pub(crate) fn derive_rules_and_config(
+        &self,
+    ) -> Result<(Vec<RuleWithSeverity>, LintConfig), Error> {
         let config =
             self.config_path.as_ref().map(|path| OxlintConfig::from_file(path)).transpose()?;
 
         let mut rules: FxHashSet<RuleWithSeverity> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();
 
-        for (severity, name_or_category) in &self.filter {
-            let maybe_category = RuleCategory::from(name_or_category.as_str());
+        for (severity, filter) in self.filter.iter().map(Into::into) {
             match severity {
-                AllowWarnDeny::Deny | AllowWarnDeny::Warn => {
-                    match maybe_category {
-                        Some(category) => rules.extend(
+                AllowWarnDeny::Deny | AllowWarnDeny::Warn => match filter {
+                    LintFilterKind::Category(category) => {
+                        rules.extend(
                             all_rules
                                 .iter()
-                                .filter(|rule| rule.category() == category)
-                                .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
-                        ),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.extend(
-                                    all_rules
-                                        .iter()
-                                        .filter(|rule| rule.category() != RuleCategory::Nursery)
-                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
-                                );
-                            } else {
-                                rules.extend(
-                                    all_rules
-                                        .iter()
-                                        .filter(|rule| rule.name() == name_or_category)
-                                        .map(|rule| RuleWithSeverity::new(rule.clone(), *severity)),
-                                );
-                            }
+                                .filter(|rule| rule.category() == *category)
+                                .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                        );
+                    }
+                    LintFilterKind::Rule(_, name) => {
+                        rules.extend(
+                            all_rules
+                                .iter()
+                                .filter(|rule| rule.name() == name)
+                                .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                        );
+                    }
+                    LintFilterKind::Generic(name_or_category) => {
+                        if name_or_category == "all" {
+                            rules.extend(
+                                all_rules
+                                    .iter()
+                                    .filter(|rule| rule.category() != RuleCategory::Nursery)
+                                    .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                            );
+                        } else {
+                            rules.extend(
+                                all_rules
+                                    .iter()
+                                    .filter(|rule| rule.name() == name_or_category)
+                                    .map(|rule| RuleWithSeverity::new(rule.clone(), severity)),
+                            );
                         }
-                    };
-                }
-                AllowWarnDeny::Allow => {
-                    match maybe_category {
-                        Some(category) => rules.retain(|rule| rule.category() != category),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.clear();
-                            } else {
-                                rules.retain(|rule| rule.name() != name_or_category);
-                            }
+                    }
+                },
+                AllowWarnDeny::Allow => match filter {
+                    LintFilterKind::Category(category) => {
+                        rules.retain(|rule| rule.category() != *category);
+                    }
+                    LintFilterKind::Rule(_, name) => {
+                        rules.retain(|rule| rule.name() != name);
+                    }
+                    LintFilterKind::Generic(name_or_category) => {
+                        if name_or_category == "all" {
+                            rules.clear();
+                        } else {
+                            rules.retain(|rule| rule.name() != name_or_category);
                         }
-                    };
-                }
+                    }
+                },
             }
         }
 
@@ -216,7 +259,7 @@ impl LintOptions {
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(|rule| rule.id());
 
-        Ok((rules, config.unwrap_or_default()))
+        Ok((rules, config.map(Into::into).unwrap_or_default()))
     }
 
     /// Get final filtered rules by reading `self.xxx_plugin`

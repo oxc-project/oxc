@@ -303,8 +303,9 @@ impl Module {
 
     pub fn load(mut self) -> Result<Self> {
         assert!(!self.loaded, "can't load twice!");
-
-        let mut file = std::fs::File::open(&self.file).normalize()?;
+        let mut file = std::fs::File::open(&self.file).normalize().map_err(|err| {
+            format!("Error reading file: {}, reason: {}", &self.file.to_string_lossy(), err)
+        })?;
         let mut content = String::new();
         file.read_to_string(&mut content).normalize()?;
         let file = parse_file(content.as_str()).normalize()?;

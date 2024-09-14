@@ -2,11 +2,14 @@ commit: 3bcfee23
 
 semantic_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1737/2101 (82.67%)
+Positive Passed: 1739/2101 (82.77%)
 tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body/input.js
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
+semantic error: Symbol scope ID mismatch:
+after transform: SymbolId(0): ScopeId(4294967294)
+rebuilt        : SymbolId(0): ScopeId(4294967294)
+Symbol scope ID mismatch:
+after transform: SymbolId(1): ScopeId(4294967294)
+rebuilt        : SymbolId(1): ScopeId(4294967294)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/interpreter-directive/interpreter-directive-import/input.js
 semantic error: Bindings mismatch:
@@ -23,14 +26,9 @@ semantic error: Unexpected new.target expression
 Unexpected new.target expression
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/scope/dupl-bind-catch-hang-func/input.js
-semantic error: Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
-
-tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/230/input.js
-semantic error: Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
+semantic error: Symbol scope ID mismatch:
+after transform: SymbolId(1): ScopeId(4294967294)
+rebuilt        : SymbolId(1): ScopeId(4294967294)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/core/uncategorised/327/input.js
 semantic error: A 'return' statement can only be used within a function body.
@@ -138,15 +136,10 @@ semantic error: Bindings mismatch:
 after transform: ScopeId(0): ["nil"]
 rebuilt        : ScopeId(0): []
 
-tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0002/input.js
-semantic error: Binding symbols mismatch:
-after transform: ScopeId(0): [SymbolId(0)]
-rebuilt        : ScopeId(0): [SymbolId(0)]
-
 tasks/coverage/babel/packages/babel-parser/test/fixtures/esprima/statement-if/migrated_0003/input.js
-semantic error: Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): [ScopeId(1)]
+semantic error: Symbol scope ID mismatch:
+after transform: SymbolId(0): ScopeId(4294967294)
+rebuilt        : SymbolId(0): ScopeId(4294967294)
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-function-with-newline/input.ts
 semantic error: Unresolved references mismatch:
@@ -769,8 +762,9 @@ semantic error: `export = <value>;` is only supported when compiling modules to 
 Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals-in-unambiguous/input.ts
-semantic error: `export = <value>;` is only supported when compiling modules to CommonJS.
-Please consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Unresolved references mismatch:
+after transform: ["f"]
+rebuilt        : []
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/export-type/input.ts
 semantic error: Bindings mismatch:
@@ -894,8 +888,14 @@ semantic error: `import lib = require(...);` is only supported when compiling mo
 Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-unambiguous/input.ts
-semantic error: `import lib = require(...);` is only supported when compiling modules to CommonJS.
-Please consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.
+semantic error: Missing SymbolId: a
+Missing ReferenceId: require
+Binding symbols mismatch:
+after transform: ScopeId(0): [SymbolId(0)]
+rebuilt        : ScopeId(0): [SymbolId(0)]
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["require"]
 
 tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/export-import/input.ts
 semantic error: Missing SymbolId: A

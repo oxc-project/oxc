@@ -371,6 +371,12 @@ impl<I: Idx, T> IndexVec<I, T> {
         self.raw.shrink_to_fit();
     }
 
+    /// Shrinks the capacity of the vector with a lower bound.
+    #[inline]
+    pub fn shrink_to(&mut self, min_capacity: usize) {
+        self.raw.shrink_to(min_capacity);
+    }
+
     /// Shortens the vector, keeping the first `len` elements and dropping
     /// the rest. See [`Vec::truncate`]
     #[inline]

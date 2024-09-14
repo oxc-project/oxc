@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::CommentKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -58,7 +59,7 @@ impl Rule for PreferTsExpectError {
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,
-                        format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
+                        format!("//{}", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             } else {
@@ -66,7 +67,7 @@ impl Rule for PreferTsExpectError {
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,
-                        format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
+                        format!("/*{}*/", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             }

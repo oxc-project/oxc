@@ -15,7 +15,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_semantic::{AstNode, AstNodeId};
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 
@@ -302,12 +302,7 @@ impl<'a> ListenerMap for AstNode<'a> {
     }
 }
 
-fn report_on_imported_call(
-    span: Span,
-    name: &str,
-    node_id: AstNodeId,
-    options: &NodeListenerOptions,
-) {
+fn report_on_imported_call(span: Span, name: &str, node_id: NodeId, options: &NodeListenerOptions) {
     if has_comment_about_side_effect_check(span, options.ctx) {
         return;
     }

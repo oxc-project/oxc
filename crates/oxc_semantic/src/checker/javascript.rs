@@ -1,3 +1,6 @@
+use phf::{phf_set, Set};
+use rustc_hash::FxHashMap;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
@@ -11,8 +14,6 @@ use oxc_syntax::{
     number::NumberBase,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
 };
-use phf::{phf_set, Set};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
 
@@ -404,6 +405,10 @@ pub fn check_module_declaration<'a>(
     let start = decl.span().start;
     let span = Span::new(start, start + 6);
     match ctx.source_type.module_kind() {
+        ModuleKind::Unambiguous => {
+            #[cfg(debug_assertions)]
+            panic!("Technically unreachable, omit to avoid panic.");
+        }
         ModuleKind::Script => {
             ctx.error(module_code(text, span));
         }

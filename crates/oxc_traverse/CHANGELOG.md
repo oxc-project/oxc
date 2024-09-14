@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+- c3dd2a0 ast: [**BREAKING**] Revert: reduce byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (#5715) (overlookmotel)
+
+### Performance
+
+
+### Refactor
+
+- cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
+
+## [0.28.0] - 2024-09-11
+
+- afc4548 ast: [**BREAKING**] Educe byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (Boshen)
+
+- 7415e85 ast: [**BREAKING**] Reduce byte size of `TSImportType::attributes` by `Box`ing it (#5678) (Boshen)
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+### Features
+
+- 17226dd traverse: Add methods for deleting references (#5559) (overlookmotel)
+
+### Performance
+
+- e8013d2 traverse: Faster string operations generating UIDs (#5626) (overlookmotel)
+- 4996874 traverse: `generate_uid` cache available binding names (#5611) (overlookmotel)
+
+### Documentation
+
+- 1c051ae traverse: Correct code comment 2 (#5607) (overlookmotel)
+- 2e24a15 traverse: Correct code comment (#5604) (overlookmotel)
+
+### Refactor
+
+- 2de6ea0 index, traverse: Remove unnecessary type annotations (#5650) (overlookmotel)
+- 19cdcc5 traverse: Revert changes to `walk.rs` (#5652) (overlookmotel)- 26d9235 Enable clippy::ref_as_ptr  (#5577) (夕舞八弦)
+
+### Styling
+
+- e52d006 traverse: Fix formatting of traverse codegen (#5651) (overlookmotel)
+- 97e99bd traverse: Remove excess line break (#5603) (overlookmotel)
+
+### Testing
+
+- 2e367c9 traverse: Enable tests for `oxc_traverse` crate (#5625) (overlookmotel)
+
 ## [0.27.0] - 2024-09-06
 
 - cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)

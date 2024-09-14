@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+- 603817b oxc: [**BREAKING**] Add `SourceType::Unambiguous`; parse `.js` as unambiguous (#5557) (Boshen)
+
+### Features
+
+
+### Performance
+
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+
 ## [0.27.0] - 2024-09-06
 
 - cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)

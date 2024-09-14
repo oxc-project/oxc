@@ -16,7 +16,7 @@ alias new-typescript-rule := new-ts-rule
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov cargo-shear -y
+  cargo binstall cargo-watch cargo-insta typos-cli cargo-shear dprint -y
 
 # When ready, run the same CI commands
 ready:
@@ -28,7 +28,6 @@ ready:
   just lint
   just doc
   just ast
-  cargo shear
   git status
 
 # Clone or update submodules
@@ -61,8 +60,9 @@ ast:
 
 # Format all files
 fmt:
+  cargo shear --fix # remove all unused dependencies
   cargo fmt --all
-  taplo format
+  dprint fmt
 
 # Run cargo check
 check:
@@ -96,6 +96,14 @@ coverage:
 conformance *args='':
   cargo coverage -- {{args}}
 
+# Watch oxlint
+watch-oxlint *args='':
+  just watch 'run -p oxlint -- {{args}}'
+
+# Build oxlint in release build
+oxlint:
+  cargo oxlint
+
 # Get code coverage
 codecov:
   cargo codecov --html
@@ -103,10 +111,6 @@ codecov:
 # Run the benchmarks. See `tasks/benchmark`
 benchmark:
   cargo benchmark
-
-# Removed Unused Dependencies
-shear:
-  cargo shear --fix
 
 # Automatically DRY up Cargo.toml manifests in a workspace.
 autoinherit:
@@ -118,9 +122,9 @@ test-transform *args='':
   cargo run -p oxc_transform_conformance -- {{args}}
   cargo run -p oxc_transform_conformance -- --exec  {{args}}
 
-# Build oxlint in release build
-oxlint:
-  cargo oxlint
+# Install wasm-pack
+install-wasm:
+  cargo binstall wasm-pack
 
 watch-wasm:
   cargo watch --no-vcs-ignores -i 'npm/oxc-wasm/**' -- just build-wasm dev

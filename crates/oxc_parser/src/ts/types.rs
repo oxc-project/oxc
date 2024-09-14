@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
@@ -376,7 +376,7 @@ impl<'a> ParserImpl<'a> {
             Kind::This => {
                 let span = self.start_span();
                 self.bump_any(); // bump `this`
-                let this_type = TSThisType { span: self.end_span(span) };
+                let this_type = self.ast.ts_this_type(self.end_span(span));
                 if self.peek_at(Kind::Is) && !self.peek_token().is_on_new_line {
                     return self.parse_this_type_predicate(this_type);
                 }
@@ -664,7 +664,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_this_type_node(&mut self) -> TSThisType {
         let span = self.start_span();
         self.bump_any(); // bump `this`
-        TSThisType { span: self.end_span(span) }
+        self.ast.ts_this_type(self.end_span(span))
     }
 
     fn parse_ts_type_constraint(&mut self) -> Result<Option<TSType<'a>>> {
@@ -877,17 +877,15 @@ impl<'a> ParserImpl<'a> {
             let element_type = self.parse_tuple_element_type()?;
             let span = self.end_span(span);
             return Ok(if dotdotdot {
-                TSTupleElement::TSRestType(self.ast.alloc(TSRestType {
-                    span,
-                    type_annotation: self.ast.ts_type_named_tuple_member(
-                        self.end_span(member_span),
-                        element_type,
-                        label,
-                        // TODO: A tuple member cannot be both optional and rest. (TS5085)
-                        // See typescript suite <conformance/types/tuple/restTupleElements1.ts>
-                        optional,
-                    ),
-                }))
+                let type_annotation = self.ast.ts_type_named_tuple_member(
+                    self.end_span(member_span),
+                    element_type,
+                    label,
+                    // TODO: A tuple member cannot be both optional and rest. (TS5085)
+                    // See typescript suite <conformance/types/tuple/restTupleElements1.ts>
+                    optional,
+                );
+                self.ast.ts_tuple_element_rest_type(span, type_annotation)
             } else {
                 TSTupleElement::from(self.ast.ts_type_named_tuple_member(
                     span,
@@ -920,9 +918,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         if self.eat(Kind::Dot3) {
             let ty = self.parse_ts_type()?;
-            return Ok(TSTupleElement::TSRestType(
-                self.ast.alloc(TSRestType { span: self.end_span(span), type_annotation: ty }),
-            ));
+            return Ok(self.ast.ts_tuple_element_rest_type(self.end_span(span), ty));
         }
         let ty = self.parse_ts_type()?;
         if let TSType::JSDocNullableType(ty) = ty {
@@ -1169,7 +1165,7 @@ impl<'a> ParserImpl<'a> {
             this_param,
             params,
             return_type,
-            Option::<TSTypeParameterDeclaration>::None,
+            NONE,
         ))
     }
 
@@ -1195,7 +1191,7 @@ impl<'a> ParserImpl<'a> {
             this_param,
             params,
             return_type,
-            Option::<TSTypeParameterDeclaration>::None,
+            NONE,
         ))
     }
 

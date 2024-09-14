@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{Expression, VariableDeclarator},
     AstKind,
 };
-use oxc_semantic::{AstNode, AstNodeId};
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::CompactStr;
 use regex::Regex;
 
@@ -28,7 +28,7 @@ impl NoUnusedVars {
         fixer: RuleFixer<'_, 'a>,
         symbol: &Symbol<'_, 'a>,
         decl: &VariableDeclarator<'a>,
-        decl_id: AstNodeId,
+        decl_id: NodeId,
     ) -> RuleFix<'a> {
         if decl.init.as_ref().is_some_and(|init| is_skipped_init(symbol, init)) {
             return fixer.noop();

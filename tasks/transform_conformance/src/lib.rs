@@ -101,7 +101,7 @@ impl TestRunner {
         root: &Path,
         filter: Option<&String>,
     ) -> (IndexMap<String, Vec<TestCaseKind>>, IndexMap<String, Vec<TestCaseKind>>) {
-        let cwd = babel_root();
+        let cwd = root.parent().unwrap_or(root);
         // use `IndexMap` to keep the order of the test cases the same in insert order.
         let mut transform_files = IndexMap::<String, Vec<TestCaseKind>>::new();
         let mut exec_files = IndexMap::<String, Vec<TestCaseKind>>::new();
@@ -119,8 +119,7 @@ impl TestRunner {
                                 return None;
                             }
                         }
-                        TestCaseKind::new(&cwd, path)
-                            .filter(|test_case| !test_case.skip_test_case())
+                        TestCaseKind::new(cwd, path).filter(|test_case| !test_case.skip_test_case())
                     })
                     .partition(|p| matches!(p, TestCaseKind::Transform(_)));
 
@@ -175,12 +174,12 @@ impl TestRunner {
                     let errors = test_case.errors();
                     if !errors.is_empty() {
                         snapshot.push('\n');
-                        for error in test_case.errors() {
+                        for error in errors {
                             snapshot.push_str(&error.message);
+                            snapshot.push('\n');
                         }
                         snapshot.push('\n');
                     }
-                    snapshot.push('\n');
                 }
                 snapshot.push('\n');
             }

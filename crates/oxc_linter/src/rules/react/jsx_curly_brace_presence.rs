@@ -8,7 +8,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
 use serde_json::Value;
 
@@ -470,7 +470,7 @@ fn is_allowed_string_like<'a>(
     ctx: &LintContext<'a>,
     s: &'a str,
     container: &JSXExpressionContainer<'a>,
-    node_id: AstNodeId,
+    node_id: NodeId,
     is_prop: bool,
 ) -> bool {
     is_whitespace(s)
@@ -530,7 +530,7 @@ fn report_unnecessary_curly<'a>(
 fn has_adjacent_jsx_expression_containers<'a>(
     ctx: &LintContext<'a>,
     container: &JSXExpressionContainer<'a>,
-    node_id: AstNodeId,
+    node_id: NodeId,
     // element: &JSXElement<'a>,
 ) -> bool {
     let Some(parent) = ctx.semantic().nodes().parent_kind(node_id) else { return false };

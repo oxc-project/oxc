@@ -28,7 +28,7 @@ See more at [oxc.rs](https://oxc.rs)!
 
 - [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transformation.
 - [Nova engine](https://trynova.dev) uses the [oxc][docs-oxc-url] crate for parsing.
-- [Rolldown][rolldown], [Biome][biome] and [swc-node](https://github.com/swc-project/swc-node) uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- [Rolldown][rolldown], [Biome][biome], [swc-node](https://github.com/swc-project/swc-node) and [Mako][mako] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
 - Projects and companies like [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json), [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint), ByteDance and Shopee uses oxlint for linting.
 - ...[and many more](https://oxc.rs/docs/guide/projects.html)
 
@@ -213,13 +213,13 @@ We spend half of our time on strengthening the test infrastructure to prevent pr
 
 [Test Infrastructure](https://oxc.rs/docs/learn/architecture/test.html) documents our test procedures:
 
-* Conformance suite on Test262, Babel, TypeScript
-* Lots of fuzzing
-* Linter snapshot diagnostics
-* oxlint ecosystem ci
-* Idempotency testing
-* Code coverage
-* End to end 3000 top npm packages
+- Conformance suite on Test262, Babel, TypeScript
+- Lots of fuzzing
+- Linter snapshot diagnostics
+- oxlint ecosystem ci
+- Idempotency testing
+- Code coverage
+- End to end 3000 top npm packages
 
 ---
 
@@ -252,8 +252,8 @@ This project was incubated with the assistance of these exceptional mentors and 
 
 Special thanks go to
 
-* [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
-* [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
+- [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
+- [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
 
 ## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 
@@ -321,3 +321,4 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [vscode]: https://github.com/microsoft/vscode
 [@typescript-eslint]: https://typescript-eslint.io
 [rolldown]: https://rolldown.rs
+[mako]: https://makojs.dev

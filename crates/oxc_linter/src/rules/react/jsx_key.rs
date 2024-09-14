@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
@@ -91,8 +92,9 @@ pub fn import_matcher<'a>(
     actual_local_name: &'a str,
     expected_module_name: &'a str,
 ) -> bool {
+    let expected_module_name = expected_module_name.cow_to_lowercase();
     ctx.semantic().module_record().import_entries.iter().any(|import| {
-        import.module_request.name().as_str() == expected_module_name.to_lowercase()
+        import.module_request.name().as_str() == expected_module_name
             && import.local_name.name().as_str() == actual_local_name
     })
 }
@@ -103,10 +105,9 @@ pub fn is_import<'a>(
     expected_local_name: &'a str,
     expected_module_name: &'a str,
 ) -> bool {
-    let total_imports = ctx.semantic().module_record().requested_modules.len();
-    let total_variables = ctx.scopes().get_bindings(ctx.scopes().root_scope_id()).len();
-
-    if total_variables == 0 && total_imports == 0 {
+    if ctx.semantic().module_record().requested_modules.is_empty()
+        && ctx.scopes().get_bindings(ctx.scopes().root_scope_id()).is_empty()
+    {
         return actual_local_name == expected_local_name;
     }
 
@@ -486,10 +487,10 @@ fn test() {
              </div>
               );}))}
         ",
-        r#"import { Children } from "react";        
+        r#"import { Children } from "react";
         Children.toArray([1, 2 ,3].map(x => <App />));
         "#,
-        r#"import React from "react";        
+        r#"import React from "react";
         React.Children.toArray([1, 2 ,3].map(x => <App />));
         "#,
         r"React.Children.toArray([1, 2 ,3].map(x => <App />));",

@@ -2,7 +2,7 @@ use std::cell::{Cell, RefCell};
 
 use indexmap::IndexMap;
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
@@ -108,7 +108,7 @@ impl<'a> ModuleImports<'a> {
             SPAN,
             Some(specifiers),
             StringLiteral::new(SPAN, source),
-            None,
+            NONE,
             ImportOrExportKind::Value,
         );
         self.ast.statement_module_declaration(import_stmt)
@@ -139,18 +139,12 @@ impl<'a> ModuleImports<'a> {
             };
             self.ast.binding_pattern(
                 self.ast.binding_pattern_kind_from_binding_identifier(ident),
-                Option::<TSTypeAnnotation>::None,
+                NONE,
                 false,
             )
         };
         let decl = {
-            let init = self.ast.expression_call(
-                SPAN,
-                callee,
-                Option::<TSTypeParameterInstantiation>::None,
-                args,
-                false,
-            );
+            let init = self.ast.expression_call(SPAN, callee, NONE, args, false);
             let decl = self.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             self.ast.vec1(decl)
         };

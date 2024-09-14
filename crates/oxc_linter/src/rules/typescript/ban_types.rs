@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -65,7 +66,7 @@ impl Rule for BanTypes {
                     "String" | "Boolean" | "Number" | "Symbol" | "BigInt" => {
                         ctx.diagnostic(type_diagnostic(
                             name.as_str(),
-                            &name.to_lowercase(),
+                            &name.as_str().cow_to_lowercase(),
                             typ.span,
                         ));
                     }

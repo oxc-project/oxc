@@ -1,6 +1,9 @@
+use std::borrow::Cow;
+
 use rustc_hash::FxHashMap;
 
 use crate::SourceMap;
+use cow_utils::CowUtils;
 
 /// The `SourcemapVisualizer` is a helper for sourcemap testing.
 /// It print the mapping of original content and final content tokens.
@@ -151,16 +154,18 @@ impl<'a> SourcemapVisualizer<'a> {
         tables
     }
 
-    fn str_slice_by_token(buff: &[Vec<u16>], start: (u32, u32), end: (u32, u32)) -> String {
+    fn str_slice_by_token(buff: &[Vec<u16>], start: (u32, u32), end: (u32, u32)) -> Cow<'_, str> {
         if start.0 == end.0 {
             if start.1 <= end.1 {
-                return String::from_utf16(
-                    &buff[start.0 as usize][start.1 as usize..end.1 as usize],
-                )
-                .unwrap();
+                return Cow::Owned(
+                    String::from_utf16(&buff[start.0 as usize][start.1 as usize..end.1 as usize])
+                        .unwrap(),
+                );
             }
-            return String::from_utf16(&buff[start.0 as usize][end.1 as usize..start.1 as usize])
-                .unwrap();
+            return Cow::Owned(
+                String::from_utf16(&buff[start.0 as usize][end.1 as usize..start.1 as usize])
+                    .unwrap(),
+            );
         }
 
         let mut s = String::new();
@@ -175,8 +180,10 @@ impl<'a> SourcemapVisualizer<'a> {
             }
         }
 
+        let replaced: Cow<str> = s.cow_replace("\r", "");
+
         // Windows: Replace "\r\n" and replace with "\n"
-        s.replace('\r', "")
+        Cow::Owned(replaced.into_owned())
     }
 }
 

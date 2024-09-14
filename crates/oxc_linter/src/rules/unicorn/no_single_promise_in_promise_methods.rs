@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
@@ -125,7 +125,7 @@ fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
     is_method_call(call_expr, Some(&["Promise"]), Some(&["all", "any", "race"]), Some(1), Some(1))
 }
 
-fn is_fixable(call_node_id: AstNodeId, ctx: &LintContext<'_>) -> bool {
+fn is_fixable(call_node_id: NodeId, ctx: &LintContext<'_>) -> bool {
     for parent in ctx.semantic().nodes().iter_parents(call_node_id).skip(1) {
         match parent.kind() {
             AstKind::CallExpression(_)

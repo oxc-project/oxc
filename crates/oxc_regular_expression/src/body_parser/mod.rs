@@ -221,6 +221,7 @@ mod test {
             (r"\P{Basic_Emoji}", ParserOptions::default().with_unicode_sets_mode(), true),
             (r"[^\p{Basic_Emoji}]", ParserOptions::default().with_unicode_sets_mode(), true),
             (r"[[^\p{Basic_Emoji}]]", ParserOptions::default().with_unicode_sets_mode(), true),
+            (r"[^\q{}]", ParserOptions::default().with_unicode_sets_mode(), true),
             (r"[[^\q{}]]", ParserOptions::default().with_unicode_sets_mode(), true),
             (r"[[^\q{ng}]]", ParserOptions::default().with_unicode_sets_mode(), true),
             (r"[[^\q{a|}]]", ParserOptions::default().with_unicode_sets_mode(), true),
@@ -237,6 +238,12 @@ mod test {
             (r"[[^\q{ng}--\q{o|k}]]", ParserOptions::default().with_unicode_sets_mode(), true),
             (r"[[^\q{o|k}--\q{ng}]]", ParserOptions::default().with_unicode_sets_mode(), false),
             (r"[[z-a]]", ParserOptions::default().with_unicode_sets_mode(), true),
+            (r"[[[[[^[[[[\q{ng}]]]]]]]]]", ParserOptions::default().with_unicode_sets_mode(), true),
+            (
+                r"[^[[[[[[[[[[[[[[[[\q{ng}]]]]]]]]]]]]]]]]]",
+                ParserOptions::default().with_unicode_sets_mode(),
+                true,
+            ),
         ] {
             assert_eq!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),

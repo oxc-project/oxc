@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -200,7 +200,7 @@ fn has_less_than_two_children(children: &oxc_allocator::Vec<'_, JSXChild<'_>>) -
 }
 
 fn is_fragment_with_only_text_and_is_not_child<'a>(
-    id: AstNodeId,
+    id: NodeId,
     node: &oxc_allocator::Vec<'a, JSXChild<'a>>,
     ctx: &LintContext,
 ) -> bool {

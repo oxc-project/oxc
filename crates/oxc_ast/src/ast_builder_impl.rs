@@ -7,13 +7,24 @@
 
 use std::mem;
 
-use oxc_allocator::{Allocator, Box, String, Vec};
+use oxc_allocator::{Allocator, Box, FromIn, String, Vec};
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{number::NumberBase, operator::UnaryOperator};
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 use crate::AstBuilder;
+
+/// Type that can be used in any AST builder method call which requires an `IntoIn<'a, Anything<'a>>`.
+/// Pass `NONE` instead of `None::<Anything<'a>>`.
+#[allow(clippy::upper_case_acronyms)]
+pub struct NONE;
+
+impl<'a, T> FromIn<'a, NONE> for Option<Box<'a, T>> {
+    fn from_in(_: NONE, _: &'a Allocator) -> Self {
+        None
+    }
+}
 
 impl<'a> AstBuilder<'a> {
     #[inline]
@@ -108,10 +119,16 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Constructors ---------- */
 
+    /// `0`
+    #[inline]
+    pub fn number_0(self) -> Expression<'a> {
+        self.expression_numeric_literal(Span::default(), 0.0, "0", NumberBase::Decimal)
+    }
+
     /// `void 0`
     #[inline]
     pub fn void_0(self) -> Expression<'a> {
-        let num = self.expression_numeric_literal(Span::default(), 0.0, "0", NumberBase::Decimal);
+        let num = self.number_0();
         Expression::UnaryExpression(self.alloc(self.unary_expression(
             Span::default(),
             UnaryOperator::Void,
@@ -139,19 +156,9 @@ impl<'a> AstBuilder<'a> {
         params: FormalParameters<'a>,
         body: Option<FunctionBody<'a>>,
     ) -> Box<'a, Function<'a>> {
-        self.alloc(self.function(
-            r#type,
-            span,
-            id,
-            false,
-            false,
-            false,
-            Option::<TSTypeParameterDeclaration>::None,
-            None::<Box<'a, TSThisParameter<'a>>>,
-            params,
-            Option::<TSTypeAnnotation>::None,
-            body,
-        ))
+        self.alloc(
+            self.function(r#type, span, id, false, false, false, NONE, NONE, params, NONE, body),
+        )
     }
 
     /* ---------- Modules ---------- */
@@ -168,7 +175,7 @@ impl<'a> AstBuilder<'a> {
             self.vec(),
             None,
             ImportOrExportKind::Value,
-            None,
+            NONE,
         ))
     }
 
@@ -185,7 +192,7 @@ impl<'a> AstBuilder<'a> {
             specifiers,
             source,
             ImportOrExportKind::Value,
-            None,
+            NONE,
         ))
     }
 

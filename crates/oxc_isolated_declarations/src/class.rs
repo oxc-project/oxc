@@ -1,6 +1,6 @@
 use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_span::{Atom, GetSpan, SPAN};
 use rustc_hash::FxHashMap;
 
@@ -130,7 +130,7 @@ impl<'a> IsolatedDeclarations<'a> {
             unsafe { self.ast.copy(&function.this_param) },
             params,
             return_type,
-            Option::<FunctionBody>::None,
+            NONE,
         );
 
         self.ast.class_element_method_definition(
@@ -170,7 +170,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             false,
-            Option::<TSTypeAnnotation>::None,
+            NONE,
             accessibility,
         )
     }
@@ -228,7 +228,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     SPAN,
                     FormalParameterKind::Signature,
                     self.ast.vec(),
-                    Option::<BindingRestElement>::None,
+                    NONE,
                 );
                 self.transform_class_method_definition(method, params, None)
             }
@@ -491,20 +491,8 @@ impl<'a> IsolatedDeclarations<'a> {
             let r#type = PropertyDefinitionType::PropertyDefinition;
             let decorators = self.ast.vec();
             let element = self.ast.class_element_property_definition(
-                r#type,
-                SPAN,
-                decorators,
-                ident,
-                None,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                Option::<TSTypeAnnotation>::None,
-                None,
+                r#type, SPAN, decorators, ident, None, false, false, false, false, false, false,
+                false, NONE, None,
             );
 
             elements.insert(0, element);
@@ -562,11 +550,6 @@ impl<'a> IsolatedDeclarations<'a> {
         let parameter =
             self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);
         let items = self.ast.vec1(parameter);
-        self.ast.alloc_formal_parameters(
-            SPAN,
-            FormalParameterKind::Signature,
-            items,
-            Option::<BindingRestElement>::None,
-        )
+        self.ast.alloc_formal_parameters(SPAN, FormalParameterKind::Signature, items, NONE)
     }
 }

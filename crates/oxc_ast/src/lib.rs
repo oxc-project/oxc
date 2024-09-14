@@ -59,6 +59,7 @@ pub use num_bigint::BigUint;
 
 pub use crate::{
     ast_builder::AstBuilder,
+    ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
     trivia::{Comment, CommentKind, SortedComments, Trivias},
     visit::{Visit, VisitMut},

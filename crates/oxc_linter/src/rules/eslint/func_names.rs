@@ -9,7 +9,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 use phf::phf_set;
@@ -479,7 +479,7 @@ impl Rule for FuncNames {
     }
 }
 
-fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: AstNodeId) -> Option<Cow<'a, str>> {
+fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<Cow<'a, str>> {
     for parent_kind in ctx.nodes().iter_parents(parent_id).map(AstNode::kind) {
         match parent_kind {
             AstKind::ParenthesizedExpression(_)

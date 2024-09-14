@@ -37,6 +37,23 @@ fn test_vars_simple() {
             ",
             None,
         ),
+        (
+            "
+                const a = 0
+                obj[a]++;
+                obj[a] += 1;
+            ",
+            None,
+        ),
+        (
+            "
+                const obj = 0
+                obj.a++;
+                obj.a += 1;
+                obj.b.c++;
+            ",
+            None,
+        ),
     ];
     let fail = vec![
         ("let a = 1", None),
@@ -110,6 +127,7 @@ fn test_vars_simple() {
         // type annotations do not get clobbered
         ("let x: number = 1; x = 2;", "let _x: number = 1; _x = 2;", None, FixKind::DangerousFix),
         ("const { a } = obj;", "", None, FixKind::DangerousSuggestion),
+        ("let [f,\u{a0}a]=p", "let [,a]=p", None, FixKind::DangerousSuggestion),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail)
@@ -469,7 +487,7 @@ fn test_functions() {
         "
         function foo(a: number): number;
         function foo(a: number | string): number {
-            return Number(a) 
+            return Number(a)
         }
         foo();
         ",
@@ -952,9 +970,9 @@ fn test_type_references() {
         type PermissionValues<T> = {
             [K in keyof T]: T[K] extends object ? PermissionValues<T[K]> : T[K];
         }[keyof T];
-        
+
         export type ApiPermission = PermissionValues<typeof API_PERMISSIONS>;
-        
+
         export const API_PERMISSIONS = {} as const;
         ",
         "

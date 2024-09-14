@@ -8,13 +8,30 @@ use std::borrow::Cow;
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
 use oxc_ast::ast::*;
-use oxc_semantic::{ScopeTree, SymbolTable};
+use oxc_semantic::{IsGlobalReference, ScopeTree, SymbolTable};
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
-pub use self::{may_have_side_effects::MayHaveSideEffects, number_value::NumberValue};
+use crate::tri::Tri;
+
+pub use self::{
+    is_literal_value::IsLiteralValue, may_have_side_effects::MayHaveSideEffects,
+    number_value::NumberValue,
+};
 
 pub fn is_exact_int64(num: f64) -> bool {
     num.fract() == 0.0
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum ValueType {
+    Undetermined,
+    Null,
+    Void,
+    Number,
+    Bigint,
+    String,
+    Boolean,
+    Object,
 }
 
 pub trait NodeUtil {
@@ -22,6 +39,20 @@ pub trait NodeUtil {
 
     #[allow(unused)]
     fn scopes(&self) -> &ScopeTree;
+
+    fn is_expression_undefined(&self, expr: &Expression) -> bool {
+        if let Expression::Identifier(ident) = expr {
+            return self.is_identifier_undefined(ident);
+        };
+        false
+    }
+
+    fn is_identifier_undefined(&self, ident: &IdentifierReference) -> bool {
+        if ident.name == "undefined" && ident.is_global_reference(self.symbols()) {
+            return true;
+        }
+        false
+    }
 
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L104-L114)
     /// Returns the number value of the node if it has one and it cannot have side effects.
@@ -72,7 +103,7 @@ pub trait NodeUtil {
     /// Gets the boolean value of a node that represents an expression, or `None` if no
     /// such value can be determined by static analysis.
     /// This method does not consider whether the node may have side-effects.
-    fn get_boolean_value(&self, expr: &Expression) -> Option<bool> {
+    fn get_boolean_value(&self, expr: &Expression) -> Tri {
         match expr {
             Expression::RegExpLiteral(_)
             | Expression::ArrayExpression(_)
@@ -80,12 +111,14 @@ pub trait NodeUtil {
             | Expression::ClassExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::NewExpression(_)
-            | Expression::ObjectExpression(_) => Some(true),
-            Expression::NullLiteral(_) => Some(false),
-            Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
-            Expression::NumericLiteral(number_literal) => Some(number_literal.value != 0.0),
-            Expression::BigIntLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
-            Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
+            | Expression::ObjectExpression(_) => Tri::True,
+            Expression::NullLiteral(_) => Tri::False,
+            Expression::BooleanLiteral(boolean_literal) => Tri::from(boolean_literal.value),
+            Expression::NumericLiteral(number_literal) => Tri::from(number_literal.value != 0.0),
+            Expression::BigIntLiteral(big_int_literal) => Tri::from(!big_int_literal.is_zero()),
+            Expression::StringLiteral(string_literal) => {
+                Tri::from(!string_literal.value.is_empty())
+            }
             Expression::TemplateLiteral(template_literal) => {
                 // only for ``
                 template_literal
@@ -94,23 +127,17 @@ pub trait NodeUtil {
                     .filter(|quasi| quasi.tail)
                     .and_then(|quasi| quasi.value.cooked.as_ref())
                     .map(|cooked| !cooked.is_empty())
+                    .into()
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "NaN" => Some(false),
-                "Infinity" => Some(true),
-                "undefined"
-                    if ident
-                        .reference_id
-                        .get()
-                        .is_some_and(|id| self.symbols().is_global_reference(id)) =>
-                {
-                    Some(false)
-                }
-                _ => None,
+                "NaN" => Tri::False,
+                "Infinity" => Tri::True,
+                "undefined" if self.is_identifier_undefined(ident) => Tri::False,
+                _ => Tri::Unknown,
             },
             Expression::AssignmentExpression(assign_expr) => {
                 match assign_expr.operator {
-                    AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => None,
+                    AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => Tri::Unknown,
                     // For ASSIGN, the value is the value of the RHS.
                     _ => self.get_boolean_value(&assign_expr.right),
                 }
@@ -123,36 +150,35 @@ pub trait NodeUtil {
                     LogicalOperator::And => {
                         let left = self.get_boolean_value(&logical_expr.left);
                         let right = self.get_boolean_value(&logical_expr.right);
-
                         match (left, right) {
-                            (Some(true), Some(true)) => Some(true),
-                            (Some(false), _) | (_, Some(false)) => Some(false),
-                            (None, _) | (_, None) => None,
+                            (Tri::True, Tri::True) => Tri::True,
+                            (Tri::False, _) | (_, Tri::False) => Tri::False,
+                            (Tri::Unknown, _) | (_, Tri::Unknown) => Tri::Unknown,
                         }
                     }
                     // true || false -> true
                     // false || false -> false
-                    // a || b -> None
+                    // a || b -> Tri::Unknown
                     LogicalOperator::Or => {
                         let left = self.get_boolean_value(&logical_expr.left);
                         let right = self.get_boolean_value(&logical_expr.right);
 
                         match (left, right) {
-                            (Some(true), _) | (_, Some(true)) => Some(true),
-                            (Some(false), Some(false)) => Some(false),
-                            (None, _) | (_, None) => None,
+                            (Tri::True, _) | (_, Tri::True) => Tri::True,
+                            (Tri::False, Tri::False) => Tri::False,
+                            (Tri::Unknown, _) | (_, Tri::Unknown) => Tri::Unknown,
                         }
                     }
-                    LogicalOperator::Coalesce => None,
+                    LogicalOperator::Coalesce => Tri::Unknown,
                 }
             }
             Expression::SequenceExpression(sequence_expr) => {
                 // For sequence expression, the value is the value of the RHS.
-                sequence_expr.expressions.last().and_then(|e| self.get_boolean_value(e))
+                sequence_expr.expressions.last().map_or(Tri::Unknown, |e| self.get_boolean_value(e))
             }
             Expression::UnaryExpression(unary_expr) => {
                 if unary_expr.operator == UnaryOperator::Void {
-                    Some(false)
+                    Tri::False
                 } else if matches!(
                     unary_expr.operator,
                     UnaryOperator::BitwiseNot
@@ -163,15 +189,17 @@ pub trait NodeUtil {
                     // +1 -> true
                     // +0 -> false
                     // -0 -> false
-                    self.get_number_value(expr).map(|value| value != NumberValue::Number(0_f64))
+                    self.get_number_value(expr)
+                        .map(|value| value != NumberValue::Number(0_f64))
+                        .into()
                 } else if unary_expr.operator == UnaryOperator::LogicalNot {
                     // !true -> false
-                    self.get_boolean_value(&unary_expr.argument).map(|boolean| !boolean)
+                    self.get_boolean_value(&unary_expr.argument).not()
                 } else {
-                    None
+                    Tri::Unknown
                 }
             }
-            _ => None,
+            _ => Tri::Unknown,
         }
     }
 
@@ -203,7 +231,7 @@ pub trait NodeUtil {
                 }
                 UnaryOperator::LogicalNot => self
                     .get_boolean_value(expr)
-                    .map(|boolean| if boolean { 1_f64 } else { 0_f64 })
+                    .map(|tri| if tri.is_true() { 1_f64 } else { 0_f64 })
                     .map(NumberValue::Number),
                 UnaryOperator::Void => Some(NumberValue::NaN),
                 _ => None,
@@ -254,7 +282,7 @@ pub trait NodeUtil {
             }
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::LogicalNot => self.get_boolean_value(expr).map(|boolean| {
-                    if boolean {
+                    if boolean.is_true() {
                         BigInt::one()
                     } else {
                         BigInt::zero()
@@ -326,7 +354,7 @@ pub trait NodeUtil {
                     UnaryOperator::LogicalNot => {
                         self.get_boolean_value(&unary_expr.argument).map(|boolean| {
                             // need reversed.
-                            if boolean {
+                            if boolean.is_true() {
                                 Cow::Borrowed("false")
                             } else {
                                 Cow::Borrowed("true")
@@ -374,5 +402,28 @@ pub trait NodeUtil {
         }
 
         return BigInt::parse_bytes(s.as_bytes(), 10);
+    }
+
+    /// Evaluate  and attempt to determine which primitive value type it could resolve to.
+    /// Without proper type information some assumptions had to be made for operations that could
+    /// result in a BigInt or a Number. If there is not enough information available to determine one
+    /// or the other then we assume Number in order to maintain historical behavior of the compiler and
+    /// avoid breaking projects that relied on this behavior.
+    fn get_known_value_type(&self, e: &Expression<'_>) -> ValueType {
+        match e {
+            Expression::NumericLiteral(_) => ValueType::Number,
+            Expression::NullLiteral(_) => ValueType::Null,
+            Expression::ArrayExpression(_) | Expression::ObjectExpression(_) => ValueType::Object,
+            Expression::BooleanLiteral(_) => ValueType::Boolean,
+            Expression::Identifier(ident) if self.is_identifier_undefined(ident) => ValueType::Void,
+            Expression::SequenceExpression(e) => e
+                .expressions
+                .last()
+                .map_or(ValueType::Undetermined, |e| self.get_known_value_type(e)),
+            Expression::BigIntLiteral(_) => ValueType::Bigint,
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => ValueType::String,
+            // TODO: complete this
+            _ => ValueType::Undetermined,
+        }
     }
 }

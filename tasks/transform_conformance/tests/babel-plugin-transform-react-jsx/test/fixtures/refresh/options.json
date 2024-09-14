@@ -1,5 +1,13 @@
 {
-  "plugins": [["transform-react-jsx", {
-    "refresh": {}
-  }]]
+  "plugins": [
+    [
+      "transform-react-jsx",
+      {
+        "refresh": {
+          "emitFullSignatures": true
+        }
+      }
+    ]
+  ],
+  "sourceType": "module"
 }

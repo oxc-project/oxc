@@ -1,4 +1,4 @@
-js compatibility: 265/593 (44.69%)
+js compatibility: 266/593 (44.86%)
 
 # Failed
 
@@ -43,7 +43,6 @@ js compatibility: 265/593 (44.69%)
 * assignment/issue-6922.js
 * assignment/issue-7572.js
 * assignment/lone-arg.js
-* assignment/sequence.js
 
 ### assignment-comments
 * assignment-comments/call.js

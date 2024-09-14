@@ -129,13 +129,17 @@ impl Case for BabelCase {
     fn new(path: PathBuf, code: String) -> Self {
         let dir = workspace_root().join(&path);
         let options = BabelOptions::from_test_path(dir.parent().unwrap());
-        let source_type = SourceType::from_path(&path)
+        let mut source_type = SourceType::from_path(&path)
             .unwrap()
             .with_script(true)
             .with_jsx(options.is_jsx())
             .with_typescript(options.is_typescript())
-            .with_typescript_definition(options.is_typescript_definition())
-            .with_module(options.is_module());
+            .with_typescript_definition(options.is_typescript_definition());
+        if options.is_unambiguous() {
+            source_type = source_type.with_unambiguous(true);
+        } else if options.is_module() {
+            source_type = source_type.with_module(true);
+        }
         let should_fail = Self::determine_should_fail(&path, &options);
         Self { path, code, source_type, options, should_fail, result: TestResult::ToBeRun }
     }

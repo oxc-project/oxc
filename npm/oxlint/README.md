@@ -43,6 +43,6 @@ See [usage instructions](https://oxc.rs/docs/guide/usage/linter.html).
 
 Run
 
-* `npx --yes oxlint@latest` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
-* `npx oxlint@latest --help` for quick usage instructions.
-* `npx oxlint@latest --rules` for the list of rules.
+- `npx --yes oxlint@latest` in your JavaScript / TypeScript codebase and see it complete in milliseconds. No configurations are required.
+- `npx oxlint@latest --help` for quick usage instructions.
+- `npx oxlint@latest --rules` for the list of rules.

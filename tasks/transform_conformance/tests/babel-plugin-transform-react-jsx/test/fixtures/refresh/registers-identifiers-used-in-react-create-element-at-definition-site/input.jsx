@@ -28,7 +28,7 @@ function Foo() {
     React.createElement(Alias1),
     React.createElement(Alias2),
     jsx(Header),
-    React.createElement(Dict.X),
+    React.createElement(Dict.X)
   ];
 }
 

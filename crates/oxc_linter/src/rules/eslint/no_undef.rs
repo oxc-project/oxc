@@ -157,6 +157,7 @@ fn test() {
         "class C { static { function a() {} a; } }",
         "class C { static { a; function a() {} } }",
         "String;Array;Boolean;",
+        "function resolve<T>(path: string): T { return { path } as T; }"
     ];
 
     let fail = vec![

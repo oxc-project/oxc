@@ -4,6 +4,44 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+- c3dd2a0 ast: [**BREAKING**] Revert: reduce byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (#5715) (overlookmotel)
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+### Performance
+
+
+## [0.28.0] - 2024-09-11
+
+- afc4548 ast: [**BREAKING**] Educe byte size of `TaggedTemplateExpression::quasi` by `Boxing` it (#5679) (Boshen)
+
+- 7415e85 ast: [**BREAKING**] Reduce byte size of `TSImportType::attributes` by `Box`ing it (#5678) (Boshen)
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+### Features
+
+- 2da5ad1 ast: Add `JSXElementName::get_identifier` method (#5556) (overlookmotel)
+- 68c3cf5 minifier: Fold `void 1` -> `void 0` (#5670) (Boshen)
+- c6bbf94 minifier: Constant fold unary expression (#5669) (Boshen)
+
+### Bug Fixes
+
+- 28b934c coverage: Apply `always_strict` to test262 and typescript per the specifcation (#5555) (Boshen)
+- 0511d55 regular_expression: Report more MayContainStrings error in (nested)class (#5661) (leaysgur)
+
+### Performance
+
+
+### Refactor
+
+- 14ee086 ast: Inline `AstKind::as_*` methods (#5547) (overlookmotel)
+- 2da42ef regular_expression: Improve AST docs with refactoring may_contain_strings (#5665) (leaysgur)- 26d9235 Enable clippy::ref_as_ptr  (#5577) (夕舞八弦)
+
 ## [0.27.0] - 2024-09-06
 
 - cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)

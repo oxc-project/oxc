@@ -1,9 +1,10 @@
 use oxc_ast::{
-    ast::{AssignmentTarget, Expression, IdentifierReference, MemberExpression},
+    ast::{AssignmentTarget, Expression, MemberExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -14,19 +15,11 @@ fn no_exports_assign(span: Span) -> OxcDiagnostic {
         .with_help("Unexpected assignment to 'exports' variable. Use 'module.exports' instead.")
 }
 
-fn is_global_reference(ctx: &LintContext, id: &IdentifierReference, name: &str) -> bool {
-    if let Some(reference_id) = id.reference_id() {
-        return id.name == name && ctx.symbols().is_global_reference(reference_id);
-    }
-    false
-}
-
 fn is_exports(node: &AssignmentTarget, ctx: &LintContext) -> bool {
     let AssignmentTarget::AssignmentTargetIdentifier(id) = node else {
         return false;
     };
-
-    is_global_reference(ctx, id, "exports")
+    id.is_global_reference_name("exports", ctx.symbols())
 }
 
 fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool {
@@ -39,7 +32,7 @@ fn is_module_exports(expr: Option<&MemberExpression>, ctx: &LintContext) -> bool
     };
 
     return mem_expr.static_property_name() == Some("exports")
-        && is_global_reference(ctx, obj_id, "module");
+        && obj_id.is_global_reference_name("module", ctx.symbols());
 }
 
 #[derive(Debug, Default, Clone)]

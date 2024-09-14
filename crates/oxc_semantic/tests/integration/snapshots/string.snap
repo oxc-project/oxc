@@ -12,7 +12,7 @@ bb1: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
 }

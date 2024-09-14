@@ -3,7 +3,7 @@ mod dot;
 pub mod visit;
 
 use itertools::Itertools;
-use oxc_syntax::node::AstNodeId;
+use oxc_syntax::node::NodeId;
 use petgraph::{
     stable_graph::NodeIndex,
     visit::{Control, DfsEvent, EdgeRef},
@@ -44,11 +44,11 @@ impl BasicBlock {
 #[derive(Debug, Clone)]
 pub struct Instruction {
     pub kind: InstructionKind,
-    pub node_id: Option<AstNodeId>,
+    pub node_id: Option<NodeId>,
 }
 
 impl Instruction {
-    pub fn new(kind: InstructionKind, node_id: Option<AstNodeId>) -> Self {
+    pub fn new(kind: InstructionKind, node_id: Option<NodeId>) -> Self {
         Self { kind, node_id }
     }
 }

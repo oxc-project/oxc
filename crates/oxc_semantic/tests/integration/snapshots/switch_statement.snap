@@ -106,29 +106,57 @@ bb22: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "" ]
-    2 [ label = "" ]
-    3 [ label = "SwitchStatement" ]
-    4 [ label = "Condition(1)" ]
-    5 [ label = "ExpressionStatement\nbreak" ]
-    6 [ label = "unreachable" ]
-    7 [ label = "Condition(2)" ]
-    8 [ label = "ExpressionStatement" ]
-    9 [ label = "Condition(3)" ]
-    10 [ label = "ExpressionStatement\nbreak" ]
-    11 [ label = "unreachable" ]
-    12 [ label = "Condition(4)" ]
-    13 [ label = "BlockStatement\nExpressionStatement\nVariableDeclaration\nExpressionStatement\nreturn <value>" ]
-    14 [ label = "unreachable" ]
-    15 [ label = "Condition(5)" ]
-    16 [ label = "ExpressionStatement\nExpressionStatement\nExpressionStatement" ]
-    17 [ label = "" ]
-    18 [ label = "ExpressionStatement\nreturn <value>" ]
-    19 [ label = "unreachable" ]
-    20 [ label = "ExpressionStatement\nreturn <value>" ]
-    21 [ label = "unreachable" ]
-    22 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+SwitchStatement" shape = box]
+    4 [ label = "bb4
+Condition(1)" shape = box]
+    5 [ label = "bb5
+ExpressionStatement
+break" shape = box]
+    6 [ label = "bb6
+unreachable" shape = box]
+    7 [ label = "bb7
+Condition(2)" shape = box]
+    8 [ label = "bb8
+ExpressionStatement" shape = box]
+    9 [ label = "bb9
+Condition(3)" shape = box]
+    10 [ label = "bb10
+ExpressionStatement
+break" shape = box]
+    11 [ label = "bb11
+unreachable" shape = box]
+    12 [ label = "bb12
+Condition(4)" shape = box]
+    13 [ label = "bb13
+BlockStatement
+ExpressionStatement
+VariableDeclaration
+ExpressionStatement
+return <value>" shape = box]
+    14 [ label = "bb14
+unreachable" shape = box]
+    15 [ label = "bb15
+Condition(5)" shape = box]
+    16 [ label = "bb16
+ExpressionStatement
+ExpressionStatement
+ExpressionStatement" shape = box]
+    17 [ label = "bb17" shape = box]
+    18 [ label = "bb18
+ExpressionStatement
+return <value>" shape = box]
+    19 [ label = "bb19
+unreachable" shape = box]
+    20 [ label = "bb20
+ExpressionStatement
+return <value>" shape = box]
+    21 [ label = "bb21
+unreachable" shape = box]
+    22 [ label = "bb22" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Implicit)" ]
     1 -> 3 [ label = "NewFunction" ]

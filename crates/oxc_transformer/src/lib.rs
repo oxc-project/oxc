@@ -228,6 +228,18 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.enter_jsx_element(node, ctx);
     }
 
+    fn enter_jsx_element_name(&mut self, node: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.enter_jsx_element_name(node, ctx);
+    }
+
+    fn enter_jsx_member_expression_object(
+        &mut self,
+        node: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x3_es2015.enter_jsx_member_expression_object(node, ctx);
+    }
+
     fn enter_jsx_fragment(&mut self, node: &mut JSXFragment<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_jsx_fragment(node, ctx);
     }

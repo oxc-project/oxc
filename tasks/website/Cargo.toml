@@ -1,41 +1,41 @@
 [package]
-name              = "website"
-version           = "0.0.0"
-publish           = false
+name = "website"
+version = "0.0.0"
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [lints]
 workspace = true
 
 [[bin]]
-name    = "website"
-test    = false
+name = "website"
+test = false
 doctest = false
 
 [lib]
 doctest = false
 
 [dependencies]
-oxc_linter   = { workspace = true }
-oxlint       = { path = "../../apps/oxlint" }
-pico-args    = { workspace = true }
-serde_json   = { workspace = true }
-schemars     = { workspace = true }
-handlebars   = { workspace = true }
-serde        = { workspace = true }
-bpaf         = { workspace = true, features = ["docgen"] }
+bpaf = { workspace = true, features = ["docgen"] }
+handlebars = { workspace = true }
+oxc_linter = { workspace = true }
+oxlint = { path = "../../apps/oxlint" }
+pico-args = { workspace = true }
 project-root = { workspace = true }
+schemars = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
-oxc_allocator   = { workspace = true }
+oxc_allocator = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_parser      = { workspace = true }
-oxc_span        = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_span = { workspace = true }
 
-insta    = { workspace = true }
+insta = { workspace = true }
 markdown = { version = "1.0.0-alpha.19" }
-scraper  = { version = "0.20.0" }
+scraper = { version = "0.20.0" }
 
 [package.metadata.cargo-shear]
 ignored = ["bpaf"]

@@ -22,6 +22,8 @@ pub mod table;
 
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
+use config::LintConfig;
+use options::LintOptions;
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
@@ -30,7 +32,7 @@ pub use crate::{
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
-    options::{AllowWarnDeny, LintOptions},
+    options::{AllowWarnDeny, InvalidFilterKind, LintFilter, OxlintOptions},
     rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
@@ -54,12 +56,12 @@ fn size_asserts() {
 pub struct Linter {
     rules: Vec<RuleWithSeverity>,
     options: LintOptions,
-    eslint_config: Arc<OxlintConfig>,
+    config: Arc<LintConfig>,
 }
 
 impl Default for Linter {
     fn default() -> Self {
-        Self::from_options(LintOptions::default()).unwrap()
+        Self::from_options(OxlintOptions::default()).unwrap()
     }
 }
 
@@ -67,9 +69,9 @@ impl Linter {
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.
-    pub fn from_options(options: LintOptions) -> Result<Self, Error> {
-        let (rules, eslint_config) = options.derive_rules_and_config()?;
-        Ok(Self { rules, options, eslint_config: Arc::new(eslint_config) })
+    pub fn from_options(options: OxlintOptions) -> Result<Self, Error> {
+        let (rules, config) = options.derive_rules_and_config()?;
+        Ok(Self { rules, options: options.into(), config: Arc::new(config) })
     }
 
     #[cfg(test)]
@@ -79,9 +81,11 @@ impl Linter {
         self
     }
 
+    /// Used for testing
+    #[cfg(test)]
     #[must_use]
-    pub fn with_eslint_config(mut self, eslint_config: OxlintConfig) -> Self {
-        self.eslint_config = Arc::new(eslint_config);
+    pub(crate) fn with_eslint_config(mut self, config: LintConfig) -> Self {
+        self.config = Arc::new(config);
         self
     }
 
@@ -101,7 +105,7 @@ impl Linter {
         self
     }
 
-    pub fn options(&self) -> &LintOptions {
+    pub(crate) fn options(&self) -> &LintOptions {
         &self.options
     }
 
@@ -125,7 +129,7 @@ impl Linter {
             rule.run_once(ctx);
         }
 
-        for symbol in semantic.symbols().iter() {
+        for symbol in semantic.symbols().symbol_ids() {
             for (rule, ctx) in &rules {
                 rule.run_on_symbol(symbol, ctx);
             }
@@ -153,11 +157,11 @@ impl Linter {
     fn create_ctx<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> LintContext<'a> {
         let mut ctx = LintContext::new(path.to_path_buf().into_boxed_path(), semantic)
             .with_fix(self.options.fix)
-            .with_eslint_config(&self.eslint_config)
+            .with_config(&self.config)
             .with_frameworks(self.options.framework_hints);
 
         // set file-specific jest/vitest flags
-        if self.options.plugins.jest || self.options.plugins.vitest {
+        if self.options.plugins.has_test() {
             let mut test_flags = FrameworkFlags::empty();
 
             if frameworks::has_vitest_imports(ctx.module_record()) {
@@ -187,7 +191,7 @@ impl Linter {
     }
 
     fn map_jest(&self, plugin_name: &'static str, rule_name: &str) -> &'static str {
-        if self.options.plugins.vitest
+        if self.options.plugins.has_vitest()
             && plugin_name == "jest"
             && utils::is_jest_rule_adapted_to_vitest(rule_name)
         {
@@ -218,7 +222,7 @@ mod test {
         let schema = schemars::schema_for!(OxlintConfig);
         let json = serde_json::to_string_pretty(&schema).unwrap();
         let existing_json = fs::read_to_string(&path).unwrap_or_default();
-        if existing_json != json {
+        if existing_json.trim() != json.trim() {
             std::fs::write(&path, &json).unwrap();
         }
         insta::with_settings!({ prepend_module_to_snapshot => false }, {

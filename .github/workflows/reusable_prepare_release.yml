@@ -8,7 +8,7 @@ on:
         type: string
         description: "The name defined in oxc_release.toml"
     secrets:
-      OXC_BOT_PAT :
+      OXC_BOT_PAT:
         required: true
     outputs:
       pull-request-number:
@@ -48,16 +48,16 @@ jobs:
       # update `Cargo.lock`
       - run: cargo check
 
-      - uses: peter-evans/create-pull-request@v6
+      - uses: peter-evans/create-pull-request@v7
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
           # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
           token: ${{ secrets.OXC_BOT_PAT }}
-          commit-message: "release: ${{ inputs.name }}"
+          commit-message: "release(${{ inputs.name }}): v${{ steps.run.outputs.VERSION }}"
           branch: release/${{ inputs.name }}
           branch-suffix: timestamp
           base: main
-          title: "release: ${{ inputs.name }} v${{ steps.run.outputs.VERSION }}"
+          title: "release(${{ inputs.name }}): v${{ steps.run.outputs.VERSION }}"
           body: ${{ steps.run.outputs.CHANGELOG }}
           assignees: Boshen

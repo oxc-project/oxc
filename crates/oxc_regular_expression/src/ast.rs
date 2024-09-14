@@ -174,10 +174,13 @@ pub enum CharacterKind {
     HexadecimalEscape = 1,
     Identifier = 2,
     Null = 3,
-    Octal = 4,
-    SingleEscape = 5,
-    Symbol = 6,
-    UnicodeEscape = 7,
+    // To distinguish leading 0 cases like `\00` and `\000`
+    Octal1 = 4,
+    Octal2 = 5,
+    Octal3 = 6,
+    SingleEscape = 7,
+    Symbol = 8,
+    UnicodeEscape = 9,
 }
 
 /// Character class.
@@ -213,7 +216,7 @@ pub enum CharacterClassEscapeKind {
 pub struct UnicodePropertyEscape<'a> {
     pub span: Span,
     pub negative: bool,
-    /// `true` if `UnicodeSetsMode` and `name` matched unicode property of strings.
+    /// `true` if `UnicodeSetsMode` and `name` matches unicode property of strings.
     pub strings: bool,
     pub name: Atom<'a>,
     pub value: Option<Atom<'a>>,
@@ -237,6 +240,10 @@ pub struct Dot {
 pub struct CharacterClass<'a> {
     pub span: Span,
     pub negative: bool,
+    /// `true` if:
+    /// - `body` contains [`UnicodePropertyEscape`], nested [`CharacterClass`] or [`ClassStringDisjunction`] which `strings` is `true`
+    /// - and matches each logic depends on `kind`
+    pub strings: bool,
     pub kind: CharacterClassContentsKind,
     pub body: Vec<'a, CharacterClassContents<'a>>,
 }
@@ -287,7 +294,7 @@ pub struct CharacterClassRange {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct ClassStringDisjunction<'a> {
     pub span: Span,
-    /// `true` if body is empty or contain [`ClassString`] which `strings` is `true`
+    /// `true` if body is empty or contains [`ClassString`] which `strings` is `true`.
     pub strings: bool,
     pub body: Vec<'a, ClassString<'a>>,
 }
@@ -312,6 +319,7 @@ pub struct ClassString<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct CapturingGroup<'a> {
     pub span: Span,
+    /// Group name to be referenced by [`NamedReference`].
     pub name: Option<Atom<'a>>,
     pub body: Disjunction<'a>,
 }
@@ -329,6 +337,8 @@ pub struct IgnoreGroup<'a> {
     pub body: Disjunction<'a>,
 }
 
+/// Pattern modifiers in [`IgnoreGroup`].
+/// e.g. `(?i:...)`, `(?-s:...)`
 #[ast]
 #[derive(Debug)]
 #[generate_derive(CloneIn, ContentEq, ContentHash)]

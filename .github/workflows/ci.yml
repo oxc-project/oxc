@@ -5,19 +5,19 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths-ignore:
-      - '**/*.md'
-      - '**/*.yml'
-      - '!.github/workflows/ci.yml'
-      - '!.github/actions/clone-submodules/action.yml'
+      - "**/*.md"
+      - "**/*.yml"
+      - "!.github/workflows/ci.yml"
+      - "!.github/actions/clone-submodules/action.yml"
   push:
     branches:
       - main
       - "renovate/**"
     paths-ignore:
-      - '**/*.md'
-      - '**/*.yml'
-      - '!.github/workflows/ci.yml'
-      - '!.github/actions/clone-submodules/action.yml'
+      - "**/*.md"
+      - "**/*.yml"
+      - "!.github/workflows/ci.yml"
+      - "!.github/actions/clone-submodules/action.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -132,10 +132,7 @@ jobs:
         run: |
           npx -y wasm-pack build --target web --dev ./crates/oxc_wasm
           npx -y wasm-pack build --target web --dev ./wasm/parser
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
+      - uses: ./.github/actions/pnpm
       - name: Check output types
         run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
 
@@ -144,7 +141,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.24.3
+      - uses: crate-ci/typos@v1.24.5
         with:
           files: .
 
@@ -213,11 +210,8 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         if: steps.filter.outputs.src == 'true'
 
-      - uses: actions/setup-node@v4
+      - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
 
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
@@ -241,7 +235,7 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
-          filters: '.github/.generated_ast_watch_list.yml'
+          filters: ".github/.generated_ast_watch_list.yml"
 
       - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
@@ -276,21 +270,12 @@ jobs:
           # cache `target` directory to avoid download crates
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
-      - uses: pnpm/action-setup@v4.0.0
-        if: steps.filter.outputs.src == 'true'
-        with:
-          package_json_file: ./package.json
-      - uses: actions/setup-node@v4
-        if: steps.filter.outputs.src == 'true'
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install
+      - uses: ./.github/actions/pnpm
         if: steps.filter.outputs.src == 'true'
       - name: Test napi/parser
+        run: pnpm build && pnpm test
         if: steps.filter.outputs.src == 'true'
         working-directory: napi/parser
-        run: pnpm build && pnpm test
       - name: Test napi/transform
         if: steps.filter.outputs.src == 'true'
         working-directory: napi/transform

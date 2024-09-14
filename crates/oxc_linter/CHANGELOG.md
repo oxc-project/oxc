@@ -4,6 +4,68 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.5] - 2024-09-12
+
+### Features
+
+- 4b04f65 linter: Implement `no-plusplus` rule (#5570) (Cam McHenry)
+
+## [0.9.4] - 2024-09-12
+
+- 1fa3e56 semantic: [**BREAKING**] Rename `SymbolTable::iter` to `symbol_ids` (#5621) (overlookmotel)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+### Features
+
+- 9ca2593 linter: Eslint/sort-keys  (#4845) (Na'aman Hirschfeld)
+- 023c160 linter: Impl `Serialize` for `OxlintConfig` (#5594) (DonIsaac)
+- 24d6a47 linter: Implement `eslint/no-invalid-regexp` (#5443) (Boshen)
+- c6bbf94 minifier: Constant fold unary expression (#5669) (Boshen)
+
+### Bug Fixes
+
+- af6d240 linter: Panic in consistent-function-scoping (#5613) (DonIsaac)
+- 54e2e76 linter: `react/no_set_state` + `react/no_string_refs` rules find correct parent (#5615) (overlookmotel)
+- 3b87ac4 linter: Fix no_unused_vars panic when encountering unicode (#5582) (Boshen)
+
+### Performance
+
+- bfe9186 linter: Use `cow_replace` instead of `replace` (#5643) (dalaoshu)
+- e3ae5db linter: Use cow_to_ascii_lowercase/uppercase (#5637) (heygsc)
+- a0370bf linter: Use cow_utils in no_script_url (#5633) (heygsc)
+- 37e922c linter: `eslint/no_shadow_restricted_names` use `run_on_symbol` (#5618) (overlookmotel)
+- 0b7fccf linter: `react/no_set_state` + `react/no_string_refs` rules reduce iteration over ancestors (#5616) (overlookmotel)
+- 2c3f3fe linter: Make `jsx_key` slightly faster (#5585) (Boshen)
+- cd81d12 linter: Add `should_run` to check path only once to nextjs/no_typos (#5584) (Boshen)
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+### Documentation
+
+- 64f9575 linter: Add plugin usage to example with configuration (Boshen)
+- 8c9179d linter: Fix typos (#5591) (Brian Donovan)
+
+### Refactor
+
+- 9e9435f linter: Add `LintFilter` (#5685) (DonIsaac)
+- 4f70fe5 linter: Start internal/external split of LintPluginOptions (#5660) (DonIsaac)
+- 5ae9b48 linter: Start internal/external split of `OxlintOptions` (#5659) (DonIsaac)
+- c8bc6f0 linter: Use `std::ptr::eq` (#5649) (overlookmotel)
+- a37c064 linter: Use `ContentHash` for `no_duplicate_case`; remove `calculate_hash` (#5648) (Boshen)
+- 0b3c1d7 linter: Start internal/external split of `OxlintConfig` (#5595) (DonIsaac)
+- 89bdf55 linter: Inline `Rule` trait default methods (#5619) (overlookmotel)
+- afea8d5 linter: Rename `Rule` trait method params (#5617) (overlookmotel)
+- 4e748b5 linter: Replace ast "compare by hash" to "compare by content" (#5602) (dalaoshu)
+- bac03e3 linter: Make fields of `LintServiceOptions` private (#5593) (DonIsaac)
+- 2661d8b linter: Jest prefer_strict_equal (#5588) (IWANABETHATGUY)
+- 067f9b5 semantic: Introduce `IsGlobalReference` trait (#5672) (Boshen)- 26d9235 Enable clippy::ref_as_ptr  (#5577) (夕舞八弦)
+
+### Testing
+
+- 8e79f8d linter: Add class method test cases for `oxc/no-async-await` (#5550) (DonIsaac)
+- 3835189 linter: Add test case for no_unused_vars in 3b87ac4 (Boshen)
+- 5f27551 linter: Add a passing case to no_undef (#5580) (Boshen)
+
 ## [0.9.3] - 2024-09-07
 
 - b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)

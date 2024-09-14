@@ -1,24 +1,24 @@
 // Code copied from [Rome](https://github.com/rome/tools/blob/main/npm/rome/scripts/generate-packages.mjs)
 
-import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import * as fs from "node:fs";
+import * as fs from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const OXLINT_BIN_NAME = "oxlint";
-const OXLS_BIN_NAME = "oxc_language_server";
-const OXLINT_ROOT = resolve(fileURLToPath(import.meta.url), "../..");
-const PACKAGES_ROOT = resolve(OXLINT_ROOT, "..");
-const REPO_ROOT = resolve(PACKAGES_ROOT, "..");
-const MANIFEST_PATH = resolve(OXLINT_ROOT, "package.json");
+const OXLINT_BIN_NAME = 'oxlint';
+const OXLS_BIN_NAME = 'oxc_language_server';
+const OXLINT_ROOT = resolve(fileURLToPath(import.meta.url), '../..');
+const PACKAGES_ROOT = resolve(OXLINT_ROOT, '..');
+const REPO_ROOT = resolve(PACKAGES_ROOT, '..');
+const MANIFEST_PATH = resolve(OXLINT_ROOT, 'package.json');
 
 const rootManifest = JSON.parse(
-  fs.readFileSync(MANIFEST_PATH).toString("utf-8")
+  fs.readFileSync(MANIFEST_PATH).toString('utf-8'),
 );
 
 const LIBC_MAPPING = {
-  "gnu": "glibc",
-  "musl": "musl",
-}
+  'gnu': 'glibc',
+  'musl': 'musl',
+};
 
 function generateNativePackage(target) {
   const packageName = `@${OXLINT_BIN_NAME}/${target}`;
@@ -35,10 +35,10 @@ function generateNativePackage(target) {
   // Generate the package.json manifest
   const { version, author, license, homepage, bugs, repository } = rootManifest;
 
-  const triple = target.split("-");
+  const triple = target.split('-');
   const platform = triple[0];
   const arch = triple[1];
-  const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] }
+  const libc = triple[2] && { libc: [LIBC_MAPPING[triple[2]]] };
   const manifest = {
     name: packageName,
     version,
@@ -49,15 +49,21 @@ function generateNativePackage(target) {
     repository,
     os: [platform],
     cpu: [arch],
-    ...libc
+    ...libc,
+    publishConfig: {
+      executableFiles: [
+        'oxlint',
+        'oxc_language_server',
+      ],
+    },
   };
 
-  const manifestPath = resolve(packageRoot, "package.json");
+  const manifestPath = resolve(packageRoot, 'package.json');
   console.log(`Create manifest ${manifestPath}`);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest));
 
   // Copy the binary
-  const ext = platform === "win32" ? ".exe" : "";
+  const ext = platform === 'win32' ? '.exe' : '';
 
   const oxlintBinSource = resolve(REPO_ROOT, `${OXLINT_BIN_NAME}-${target}${ext}`);
   const oxlintBinTarget = resolve(packageRoot, `${OXLINT_BIN_NAME}${ext}`);
@@ -75,10 +81,10 @@ function generateNativePackage(target) {
 }
 
 function writeManifest() {
-  const manifestPath = resolve(PACKAGES_ROOT, OXLINT_BIN_NAME, "package.json");
+  const manifestPath = resolve(PACKAGES_ROOT, OXLINT_BIN_NAME, 'package.json');
 
   const manifestData = JSON.parse(
-    fs.readFileSync(manifestPath).toString("utf-8")
+    fs.readFileSync(manifestPath).toString('utf-8'),
   );
 
   const nativePackages = TARGETS.map((target) => [
@@ -86,8 +92,8 @@ function writeManifest() {
     rootManifest.version,
   ]);
 
-  manifestData["version"] = rootManifest.version;
-  manifestData["optionalDependencies"] = Object.fromEntries(nativePackages);
+  manifestData['version'] = rootManifest.version;
+  manifestData['optionalDependencies'] = Object.fromEntries(nativePackages);
 
   console.log(`Update manifest ${manifestPath}`);
   const content = JSON.stringify(manifestData);
@@ -97,18 +103,18 @@ function writeManifest() {
 // NOTE: Must update npm/oxlint/bin/oxlint
 // and npm/oxlint/bin/oxc_language_server
 const TARGETS = [
-  "win32-x64",
-  "win32-arm64",
-  "linux-x64-gnu",
-  "linux-arm64-gnu",
-  "linux-x64-musl",
-  "linux-arm64-musl",
-  "darwin-x64",
-  "darwin-arm64",
-]
+  'win32-x64',
+  'win32-arm64',
+  'linux-x64-gnu',
+  'linux-arm64-gnu',
+  'linux-x64-musl',
+  'linux-arm64-musl',
+  'darwin-x64',
+  'darwin-arm64',
+];
 
 for (const target of TARGETS) {
-    generateNativePackage(target);
+  generateNativePackage(target);
 }
 
 writeManifest();

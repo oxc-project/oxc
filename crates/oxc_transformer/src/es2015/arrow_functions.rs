@@ -62,7 +62,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::Vec;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -131,17 +131,37 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         self.insert_this_var_statement_at_the_top_of_statements(&mut body.statements);
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::ArrowFunctionExpression(_) => {
-                self.stacks.push(true);
+    fn enter_jsx_element_name(
+        &mut self,
+        element_name: &mut JSXElementName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let JSXElementName::ThisExpression(this) = element_name {
+            if !self.is_inside_arrow_function() {
+                return;
             }
-            Expression::FunctionExpression(_) => self.stacks.push(false),
-            _ => {}
+
+            let ident = self.get_this_name(ctx).create_spanned_read_reference(this.span, ctx);
+            *element_name = self.ctx.ast.jsx_element_name_from_identifier_reference(ident);
+        };
+    }
+
+    fn enter_jsx_member_expression_object(
+        &mut self,
+        object: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let JSXMemberExpressionObject::ThisExpression(this) = object {
+            if !self.is_inside_arrow_function() {
+                return;
+            }
+
+            let ident = self.get_this_name(ctx).create_spanned_read_reference(this.span, ctx);
+            *object = self.ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
         }
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         match expr {
             Expression::ThisExpression(this_expr) => {
                 if !self.is_inside_arrow_function() {
@@ -152,6 +172,16 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                     self.get_this_name(ctx).create_spanned_read_reference(this_expr.span, ctx);
                 *expr = self.ctx.ast.expression_from_identifier_reference(ident);
             }
+            Expression::ArrowFunctionExpression(_) => {
+                self.stacks.push(true);
+            }
+            Expression::FunctionExpression(_) => self.stacks.push(false),
+            _ => {}
+        }
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        match expr {
             Expression::ArrowFunctionExpression(arrow_function_expr) => {
                 *expr = self.transform_arrow_function_expression(arrow_function_expr, ctx);
                 self.stacks.pop();
@@ -294,7 +324,7 @@ impl<'a> ArrowFunctions<'a> {
                 self.ctx
                     .ast
                     .binding_pattern_kind_from_binding_identifier(id.create_binding_identifier()),
-                Option::<TSTypeAnnotation>::None,
+                NONE,
                 false,
             );
 

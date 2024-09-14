@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
@@ -113,7 +113,7 @@ impl<'a> ParserImpl<'a> {
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, Option::<TSTypeAnnotation>::None, false), false)
+            (self.ast.binding_pattern(binding_kind, NONE, false), false)
         };
 
         let init =

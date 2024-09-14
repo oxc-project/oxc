@@ -40,7 +40,6 @@ use crate::context::Ctx;
 ///
 /// In:  `const x: number = 0;`
 /// Out: `const x = 0;`
-#[allow(unused)]
 pub struct TypeScript<'a> {
     options: Rc<TypeScriptOptions>,
     ctx: Ctx<'a>,

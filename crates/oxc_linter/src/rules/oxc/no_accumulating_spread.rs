@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodeId, SymbolId};
+use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -198,7 +198,7 @@ fn check_loop_usage<'a>(
     declaration_node: &AstNode<'a>,
     declarator: &AstNode<'a>,
     referenced_symbol_id: SymbolId,
-    spread_node_id: AstNodeId,
+    spread_node_id: NodeId,
     spread_span: Span,
     ctx: &LintContext<'a>,
 ) {

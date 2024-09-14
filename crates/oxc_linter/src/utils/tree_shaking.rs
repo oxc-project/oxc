@@ -5,7 +5,7 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, StaticMemberExpression},
     AstKind, CommentKind,
 };
-use oxc_semantic::{AstNode, AstNodeId, SymbolId};
+use oxc_semantic::{AstNode, NodeId, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHashSet;
@@ -135,7 +135,7 @@ impl Value {
 }
 
 pub fn get_write_expr<'a, 'b>(
-    node_id: AstNodeId,
+    node_id: NodeId,
     ctx: &'b LintContext<'a>,
 ) -> Option<&'b Expression<'a>> {
     let parent = ctx.nodes().parent_node(node_id)?;

@@ -179,13 +179,7 @@ jobs:
       - name: Untar
         run: ls *.gz | xargs -i tar xf {}
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4.0.0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+      - uses: ./.github/actions/pnpm
 
       - name: Generate npm packages
         run: |
@@ -200,7 +194,7 @@ jobs:
         run: |
           for package in npm/oxlint*
           do
-            pnpm publish $package/ --tag latest --provenance --access public
+            pnpm publish $package/ --tag latest --provenance --access public --no-git-checks
             echo '----'
           done
 

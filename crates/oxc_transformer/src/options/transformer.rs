@@ -16,6 +16,7 @@ use crate::{
     react::ReactOptions,
     regexp::RegExpOptions,
     typescript::TypeScriptOptions,
+    ReactRefreshOptions,
 };
 
 /// <https://babel.dev/docs/options>
@@ -61,7 +62,11 @@ impl TransformOptions {
             cwd: PathBuf::new(),
             assumptions: CompilerAssumptions::default(),
             typescript: TypeScriptOptions::default(),
-            react: ReactOptions { development: true, ..ReactOptions::default() },
+            react: ReactOptions {
+                development: true,
+                refresh: Some(ReactRefreshOptions::default()),
+                ..ReactOptions::default()
+            },
             regexp: RegExpOptions {
                 sticky_flag: true,
                 unicode_flag: true,
