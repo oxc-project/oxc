@@ -5,7 +5,7 @@ use std::{cell::Cell, rc::Rc};
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::{NodeId, SymbolFlags};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     operator::AssignmentOperator,
@@ -554,8 +554,12 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        let block =
-            BlockStatement { span, body: ctx.ast.vec1(stmt), scope_id: Cell::new(Some(scope_id)) };
+        let block = BlockStatement {
+            node_id: NodeId::DUMMY,
+            span,
+            body: ctx.ast.vec1(stmt),
+            scope_id: Cell::new(Some(scope_id)),
+        };
         Statement::BlockStatement(ctx.ast.alloc(block))
     }
 
@@ -576,6 +580,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
             let block = BlockStatement {
+                node_id: NodeId::DUMMY,
                 span: stmt.span(),
                 body: ctx.ast.vec(),
                 scope_id: Cell::new(Some(scope_id)),

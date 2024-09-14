@@ -204,10 +204,8 @@ impl<'a> AstBuilder<'a> {
         extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
     ) -> Vec<'a, TSInterfaceHeritage<'a>> {
         Vec::from_iter_in(
-            extends.into_iter().map(|(expression, type_parameters, span)| TSInterfaceHeritage {
-                span,
-                expression,
-                type_parameters,
+            extends.into_iter().map(|(expression, type_parameters, span)| {
+                self.ts_interface_heritage(span, expression, type_parameters)
             }),
             self.allocator,
         )

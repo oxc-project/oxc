@@ -3,8 +3,10 @@ use std::collections::VecDeque;
 use crate::{codegen::EarlyCtx, rust_ast::AstType, Result};
 
 mod calc_layout;
+mod fake_node_id;
 mod linker;
 pub use calc_layout::CalcLayout;
+pub use fake_node_id::FakeNodeId;
 pub use linker::Linker;
 
 pub trait Pass {

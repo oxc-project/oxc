@@ -63,6 +63,7 @@ use std::cell::Cell;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
+use oxc_semantic::NodeId;
 use oxc_span::SPAN;
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -291,6 +292,7 @@ impl<'a> ArrowFunctions<'a> {
         }
 
         let new_function = Function {
+            node_id: NodeId::DUMMY,
             r#type: FunctionType::FunctionExpression,
             span: arrow_function_expr.span,
             id: None,

@@ -1,6 +1,7 @@
 use std::cell::Cell;
 
 use oxc_ast::ast::{BindingIdentifier, IdentifierReference};
+use oxc_semantic::NodeId;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     reference::ReferenceFlags,
@@ -79,6 +80,7 @@ impl<'a> BoundIdentifier<'a> {
     /// Create `BindingIdentifier` for this binding
     pub fn create_binding_identifier(&self) -> BindingIdentifier<'a> {
         BindingIdentifier {
+            node_id: NodeId::DUMMY,
             span: SPAN,
             name: self.name.clone(),
             symbol_id: Cell::new(Some(self.symbol_id)),

@@ -34,7 +34,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::{ReferenceFlags, SymbolFlags};
+use oxc_semantic::{NodeId, ReferenceFlags, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{Traverse, TraverseCtx};
@@ -315,6 +315,7 @@ impl<'a> ExponentiationOperator<'a> {
         {
             // var _name;
             let binding_identifier = BindingIdentifier {
+                node_id: NodeId::DUMMY,
                 span: SPAN,
                 name: symbol_name.clone(),
                 symbol_id: Cell::new(Some(symbol_id)),

@@ -3,7 +3,8 @@ use std::{borrow::Cow, cell::Cell, fmt};
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
-    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
+    node::NodeId, operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags,
+    symbol::SymbolId,
 };
 
 use crate::ast::*;
@@ -33,7 +34,15 @@ impl<'a> Program<'a> {
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Self {
-        Self { span, source_type, directives, hashbang, body, scope_id: Cell::default() }
+        Self {
+            node_id: NodeId::DUMMY,
+            span,
+            source_type,
+            directives,
+            hashbang,
+            body,
+            scope_id: Cell::default(),
+        }
     }
 }
 
@@ -314,7 +323,7 @@ impl<'a> Expression<'a> {
 
 impl<'a> IdentifierName<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
+        Self { node_id: NodeId::DUMMY, span, name }
     }
 }
 
@@ -328,7 +337,7 @@ impl<'a> fmt::Display for IdentifierName<'a> {
 impl<'a> IdentifierReference<'a> {
     #[inline]
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, reference_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, name, reference_id: Cell::default() }
     }
 
     #[inline]
@@ -337,7 +346,7 @@ impl<'a> IdentifierReference<'a> {
         name: Atom<'a>,
         reference_id: Option<ReferenceId>,
     ) -> Self {
-        Self { span, name, reference_id: Cell::new(reference_id) }
+        Self { node_id: NodeId::DUMMY, span, name, reference_id: Cell::new(reference_id) }
     }
 
     #[inline]
@@ -354,7 +363,7 @@ impl<'a> fmt::Display for IdentifierReference<'a> {
 
 impl<'a> BindingIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name, symbol_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, name, symbol_id: Cell::default() }
     }
 }
 
@@ -669,7 +678,7 @@ impl<'a> ArrayAssignmentTarget<'a> {
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     ) -> Self {
-        Self { span, elements, rest: None, trailing_comma: None }
+        Self { node_id: NodeId::DUMMY, span, elements, rest: None, trailing_comma: None }
     }
 }
 
@@ -678,7 +687,7 @@ impl<'a> ObjectAssignmentTarget<'a> {
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
     ) -> Self {
-        Self { span, properties, rest: None }
+        Self { node_id: NodeId::DUMMY, span, properties, rest: None }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -734,7 +743,7 @@ impl<'a> Statement<'a> {
 impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
     fn from_in(expression: Expression<'a>, allocator: &'a oxc_allocator::Allocator) -> Self {
         Statement::ExpressionStatement(Box::from_in(
-            ExpressionStatement { span: expression.span(), expression },
+            ExpressionStatement { node_id: NodeId::DUMMY, span: expression.span(), expression },
             allocator,
         ))
     }
@@ -751,7 +760,7 @@ impl<'a> Directive<'a> {
 
 impl<'a> BlockStatement<'a> {
     pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, body, scope_id: Cell::default() }
     }
 }
 
@@ -844,7 +853,7 @@ impl<'a> ForStatement<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> Self {
-        Self { span, init, test, update, body, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, init, test, update, body, scope_id: Cell::default() }
     }
 }
 
@@ -863,7 +872,7 @@ impl<'a> ForInStatement<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Self {
-        Self { span, left, right, body, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, left, right, body, scope_id: Cell::default() }
     }
 }
 
@@ -875,7 +884,7 @@ impl<'a> ForOfStatement<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Self {
-        Self { span, r#await, left, right, body, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, r#await, left, right, body, scope_id: Cell::default() }
     }
 }
 
@@ -889,7 +898,7 @@ impl<'a> ForStatementLeft<'a> {
 
 impl<'a> SwitchStatement<'a> {
     pub fn new(span: Span, discriminant: Expression<'a>, cases: Vec<'a, SwitchCase<'a>>) -> Self {
-        Self { span, discriminant, cases, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, discriminant, cases, scope_id: Cell::default() }
     }
 }
 
@@ -905,13 +914,13 @@ impl<'a> CatchClause<'a> {
         param: Option<CatchParameter<'a>>,
         body: Box<'a, BlockStatement<'a>>,
     ) -> Self {
-        Self { span, param, body, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, param, body, scope_id: Cell::default() }
     }
 }
 
 impl<'a> BindingPattern<'a> {
     pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
-        Self { kind, type_annotation: None, optional: false }
+        Self { node_id: NodeId::DUMMY, kind, type_annotation: None, optional: false }
     }
 
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
@@ -993,6 +1002,7 @@ impl<'a> Function<'a> {
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Self {
         Self {
+            node_id: NodeId::DUMMY,
             r#type,
             span,
             id,
@@ -1113,6 +1123,7 @@ impl<'a> ArrowFunctionExpression<'a> {
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Self {
         Self {
+            node_id: NodeId::DUMMY,
             span,
             expression,
             r#async,
@@ -1151,6 +1162,7 @@ impl<'a> Class<'a> {
         declare: bool,
     ) -> Self {
         Self {
+            node_id: NodeId::DUMMY,
             r#type,
             span,
             decorators,
@@ -1357,13 +1369,13 @@ impl MethodDefinitionType {
 
 impl<'a> PrivateIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
+        Self { node_id: NodeId::DUMMY, span, name }
     }
 }
 
 impl<'a> StaticBlock<'a> {
     pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
-        Self { span, body, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, body, scope_id: Cell::default() }
     }
 }
 
@@ -1471,7 +1483,13 @@ impl<'a> ExportAllDeclaration<'a> {
 
 impl<'a> ExportSpecifier<'a> {
     pub fn new(span: Span, local: ModuleExportName<'a>, exported: ModuleExportName<'a>) -> Self {
-        Self { span, local, exported, export_kind: ImportOrExportKind::Value }
+        Self {
+            node_id: NodeId::DUMMY,
+            span,
+            local,
+            exported,
+            export_kind: ImportOrExportKind::Value,
+        }
     }
 }
 

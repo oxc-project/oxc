@@ -3,6 +3,7 @@
 use std::fmt;
 
 use oxc_span::{Atom, Span};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
@@ -10,7 +11,7 @@ use crate::ast::*;
 
 impl<'a> JSXIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
-        Self { span, name }
+        Self { node_id: NodeId::DUMMY, span, name }
     }
 }
 

@@ -8,6 +8,7 @@
 )]
 
 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+use oxc_syntax::node::NodeId;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -28,7 +29,7 @@ impl<'a> AstBuilder<'a> {
     /// - value
     #[inline]
     pub fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
-        BooleanLiteral { span, value }
+        BooleanLiteral { node_id: NodeId::DUMMY, span, value }
     }
 
     /// Builds a [`BooleanLiteral`] and stores it in the memory arena.
@@ -51,7 +52,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn null_literal(self, span: Span) -> NullLiteral {
-        NullLiteral { span }
+        NullLiteral { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`NullLiteral`] and stores it in the memory arena.
@@ -85,7 +86,13 @@ impl<'a> AstBuilder<'a> {
     where
         S: IntoIn<'a, &'a str>,
     {
-        NumericLiteral { span, value, raw: raw.into_in(self.allocator), base }
+        NumericLiteral {
+            node_id: NodeId::DUMMY,
+            span,
+            value,
+            raw: raw.into_in(self.allocator),
+            base,
+        }
     }
 
     /// Builds a [`NumericLiteral`] and stores it in the memory arena.
@@ -124,7 +131,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        BigIntLiteral { span, raw: raw.into_in(self.allocator), base }
+        BigIntLiteral { node_id: NodeId::DUMMY, span, raw: raw.into_in(self.allocator), base }
     }
 
     /// Builds a [`BigIntLiteral`] and stores it in the memory arena.
@@ -163,7 +170,7 @@ impl<'a> AstBuilder<'a> {
         value: EmptyObject,
         regex: RegExp<'a>,
     ) -> RegExpLiteral<'a> {
-        RegExpLiteral { span, value, regex }
+        RegExpLiteral { node_id: NodeId::DUMMY, span, value, regex }
     }
 
     /// Builds a [`RegExpLiteral`] and stores it in the memory arena.
@@ -196,7 +203,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        StringLiteral { span, value: value.into_in(self.allocator) }
+        StringLiteral { node_id: NodeId::DUMMY, span, value: value.into_in(self.allocator) }
     }
 
     /// Builds a [`StringLiteral`] and stores it in the memory arena.
@@ -233,7 +240,15 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, hashbang, directives, body, scope_id: Default::default() }
+        Program {
+            node_id: NodeId::DUMMY,
+            span,
+            source_type,
+            hashbang,
+            directives,
+            body,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`Program`] and stores it in the memory arena.
@@ -1475,7 +1490,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        IdentifierName { span, name: name.into_in(self.allocator) }
+        IdentifierName { node_id: NodeId::DUMMY, span, name: name.into_in(self.allocator) }
     }
 
     /// Builds a [`IdentifierName`] and stores it in the memory arena.
@@ -1506,6 +1521,7 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         IdentifierReference {
+            node_id: NodeId::DUMMY,
             span,
             name: name.into_in(self.allocator),
             reference_id: Default::default(),
@@ -1544,6 +1560,7 @@ impl<'a> AstBuilder<'a> {
         A: IntoIn<'a, Atom<'a>>,
     {
         BindingIdentifier {
+            node_id: NodeId::DUMMY,
             span,
             name: name.into_in(self.allocator),
             symbol_id: Default::default(),
@@ -1577,7 +1594,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        LabelIdentifier { span, name: name.into_in(self.allocator) }
+        LabelIdentifier { node_id: NodeId::DUMMY, span, name: name.into_in(self.allocator) }
     }
 
     /// Builds a [`LabelIdentifier`] and stores it in the memory arena.
@@ -1603,7 +1620,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn this_expression(self, span: Span) -> ThisExpression {
-        ThisExpression { span }
+        ThisExpression { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`ThisExpression`] and stores it in the memory arena.
@@ -1632,7 +1649,7 @@ impl<'a> AstBuilder<'a> {
         elements: Vec<'a, ArrayExpressionElement<'a>>,
         trailing_comma: Option<Span>,
     ) -> ArrayExpression<'a> {
-        ArrayExpression { span, elements, trailing_comma }
+        ArrayExpression { node_id: NodeId::DUMMY, span, elements, trailing_comma }
     }
 
     /// Builds a [`ArrayExpression`] and stores it in the memory arena.
@@ -1715,7 +1732,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn elision(self, span: Span) -> Elision {
-        Elision { span }
+        Elision { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`Elision`] and stores it in the memory arena.
@@ -1744,7 +1761,7 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, ObjectPropertyKind<'a>>,
         trailing_comma: Option<Span>,
     ) -> ObjectExpression<'a> {
-        ObjectExpression { span, properties, trailing_comma }
+        ObjectExpression { node_id: NodeId::DUMMY, span, properties, trailing_comma }
     }
 
     /// Builds a [`ObjectExpression`] and stores it in the memory arena.
@@ -1856,7 +1873,17 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> ObjectProperty<'a> {
-        ObjectProperty { span, kind, key, value, init, method, shorthand, computed }
+        ObjectProperty {
+            node_id: NodeId::DUMMY,
+            span,
+            kind,
+            key,
+            value,
+            init,
+            method,
+            shorthand,
+            computed,
+        }
     }
 
     /// Builds a [`ObjectProperty`] and stores it in the memory arena.
@@ -1958,7 +1985,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
     ) -> TemplateLiteral<'a> {
-        TemplateLiteral { span, quasis, expressions }
+        TemplateLiteral { node_id: NodeId::DUMMY, span, quasis, expressions }
     }
 
     /// Builds a [`TemplateLiteral`] and stores it in the memory arena.
@@ -2000,6 +2027,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TaggedTemplateExpression {
+            node_id: NodeId::DUMMY,
             span,
             tag,
             quasi,
@@ -2048,7 +2076,7 @@ impl<'a> AstBuilder<'a> {
         tail: bool,
         value: TemplateElementValue<'a>,
     ) -> TemplateElement<'a> {
-        TemplateElement { span, tail, value }
+        TemplateElement { node_id: NodeId::DUMMY, span, tail, value }
     }
 
     /// Builds a [`TemplateElement`] and stores it in the memory arena.
@@ -2182,7 +2210,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         optional: bool,
     ) -> ComputedMemberExpression<'a> {
-        ComputedMemberExpression { span, object, expression, optional }
+        ComputedMemberExpression { node_id: NodeId::DUMMY, span, object, expression, optional }
     }
 
     /// Builds a [`ComputedMemberExpression`] and stores it in the memory arena.
@@ -2225,7 +2253,7 @@ impl<'a> AstBuilder<'a> {
         property: IdentifierName<'a>,
         optional: bool,
     ) -> StaticMemberExpression<'a> {
-        StaticMemberExpression { span, object, property, optional }
+        StaticMemberExpression { node_id: NodeId::DUMMY, span, object, property, optional }
     }
 
     /// Builds a [`StaticMemberExpression`] and stores it in the memory arena.
@@ -2265,7 +2293,7 @@ impl<'a> AstBuilder<'a> {
         field: PrivateIdentifier<'a>,
         optional: bool,
     ) -> PrivateFieldExpression<'a> {
-        PrivateFieldExpression { span, object, field, optional }
+        PrivateFieldExpression { node_id: NodeId::DUMMY, span, object, field, optional }
     }
 
     /// Builds a [`PrivateFieldExpression`] and stores it in the memory arena.
@@ -2311,6 +2339,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         CallExpression {
+            node_id: NodeId::DUMMY,
             span,
             callee,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -2368,6 +2397,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         NewExpression {
+            node_id: NodeId::DUMMY,
             span,
             callee,
             arguments,
@@ -2413,7 +2443,7 @@ impl<'a> AstBuilder<'a> {
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
     ) -> MetaProperty<'a> {
-        MetaProperty { span, meta, property }
+        MetaProperty { node_id: NodeId::DUMMY, span, meta, property }
     }
 
     /// Builds a [`MetaProperty`] and stores it in the memory arena.
@@ -2443,7 +2473,7 @@ impl<'a> AstBuilder<'a> {
     /// - argument: The expression being spread.
     #[inline]
     pub fn spread_element(self, span: Span, argument: Expression<'a>) -> SpreadElement<'a> {
-        SpreadElement { span, argument }
+        SpreadElement { node_id: NodeId::DUMMY, span, argument }
     }
 
     /// Builds a [`SpreadElement`] and stores it in the memory arena.
@@ -2505,7 +2535,7 @@ impl<'a> AstBuilder<'a> {
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
     ) -> UpdateExpression<'a> {
-        UpdateExpression { span, operator, prefix, argument }
+        UpdateExpression { node_id: NodeId::DUMMY, span, operator, prefix, argument }
     }
 
     /// Builds a [`UpdateExpression`] and stores it in the memory arena.
@@ -2543,7 +2573,7 @@ impl<'a> AstBuilder<'a> {
         operator: UnaryOperator,
         argument: Expression<'a>,
     ) -> UnaryExpression<'a> {
-        UnaryExpression { span, operator, argument }
+        UnaryExpression { node_id: NodeId::DUMMY, span, operator, argument }
     }
 
     /// Builds a [`UnaryExpression`] and stores it in the memory arena.
@@ -2581,7 +2611,7 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> BinaryExpression<'a> {
-        BinaryExpression { span, left, operator, right }
+        BinaryExpression { node_id: NodeId::DUMMY, span, left, operator, right }
     }
 
     /// Builds a [`BinaryExpression`] and stores it in the memory arena.
@@ -2621,7 +2651,7 @@ impl<'a> AstBuilder<'a> {
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
-        PrivateInExpression { span, left, operator, right }
+        PrivateInExpression { node_id: NodeId::DUMMY, span, left, operator, right }
     }
 
     /// Builds a [`PrivateInExpression`] and stores it in the memory arena.
@@ -2661,7 +2691,7 @@ impl<'a> AstBuilder<'a> {
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> LogicalExpression<'a> {
-        LogicalExpression { span, left, operator, right }
+        LogicalExpression { node_id: NodeId::DUMMY, span, left, operator, right }
     }
 
     /// Builds a [`LogicalExpression`] and stores it in the memory arena.
@@ -2701,7 +2731,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> ConditionalExpression<'a> {
-        ConditionalExpression { span, test, consequent, alternate }
+        ConditionalExpression { node_id: NodeId::DUMMY, span, test, consequent, alternate }
     }
 
     /// Builds a [`ConditionalExpression`] and stores it in the memory arena.
@@ -2741,7 +2771,7 @@ impl<'a> AstBuilder<'a> {
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> AssignmentExpression<'a> {
-        AssignmentExpression { span, operator, left, right }
+        AssignmentExpression { node_id: NodeId::DUMMY, span, operator, left, right }
     }
 
     /// Builds a [`AssignmentExpression`] and stores it in the memory arena.
@@ -3074,7 +3104,7 @@ impl<'a> AstBuilder<'a> {
         rest: Option<AssignmentTargetRest<'a>>,
         trailing_comma: Option<Span>,
     ) -> ArrayAssignmentTarget<'a> {
-        ArrayAssignmentTarget { span, elements, rest, trailing_comma }
+        ArrayAssignmentTarget { node_id: NodeId::DUMMY, span, elements, rest, trailing_comma }
     }
 
     /// Builds a [`ArrayAssignmentTarget`] and stores it in the memory arena.
@@ -3115,7 +3145,7 @@ impl<'a> AstBuilder<'a> {
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
         rest: Option<AssignmentTargetRest<'a>>,
     ) -> ObjectAssignmentTarget<'a> {
-        ObjectAssignmentTarget { span, properties, rest }
+        ObjectAssignmentTarget { node_id: NodeId::DUMMY, span, properties, rest }
     }
 
     /// Builds a [`ObjectAssignmentTarget`] and stores it in the memory arena.
@@ -3149,7 +3179,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         target: AssignmentTarget<'a>,
     ) -> AssignmentTargetRest<'a> {
-        AssignmentTargetRest { span, target }
+        AssignmentTargetRest { node_id: NodeId::DUMMY, span, target }
     }
 
     /// Builds a [`AssignmentTargetRest`] and stores it in the memory arena.
@@ -3223,7 +3253,7 @@ impl<'a> AstBuilder<'a> {
         binding: AssignmentTarget<'a>,
         init: Expression<'a>,
     ) -> AssignmentTargetWithDefault<'a> {
-        AssignmentTargetWithDefault { span, binding, init }
+        AssignmentTargetWithDefault { node_id: NodeId::DUMMY, span, binding, init }
     }
 
     /// Builds a [`AssignmentTargetWithDefault`] and stores it in the memory arena.
@@ -3323,7 +3353,7 @@ impl<'a> AstBuilder<'a> {
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a>>,
     ) -> AssignmentTargetPropertyIdentifier<'a> {
-        AssignmentTargetPropertyIdentifier { span, binding, init }
+        AssignmentTargetPropertyIdentifier { node_id: NodeId::DUMMY, span, binding, init }
     }
 
     /// Builds a [`AssignmentTargetPropertyIdentifier`] and stores it in the memory arena.
@@ -3359,7 +3389,7 @@ impl<'a> AstBuilder<'a> {
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
     ) -> AssignmentTargetPropertyProperty<'a> {
-        AssignmentTargetPropertyProperty { span, name, binding }
+        AssignmentTargetPropertyProperty { node_id: NodeId::DUMMY, span, name, binding }
     }
 
     /// Builds a [`AssignmentTargetPropertyProperty`] and stores it in the memory arena.
@@ -3393,7 +3423,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
     ) -> SequenceExpression<'a> {
-        SequenceExpression { span, expressions }
+        SequenceExpression { node_id: NodeId::DUMMY, span, expressions }
     }
 
     /// Builds a [`SequenceExpression`] and stores it in the memory arena.
@@ -3420,7 +3450,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn super_(self, span: Span) -> Super {
-        Super { span }
+        Super { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`Super`] and stores it in the memory arena.
@@ -3443,7 +3473,7 @@ impl<'a> AstBuilder<'a> {
     /// - argument
     #[inline]
     pub fn await_expression(self, span: Span, argument: Expression<'a>) -> AwaitExpression<'a> {
-        AwaitExpression { span, argument }
+        AwaitExpression { node_id: NodeId::DUMMY, span, argument }
     }
 
     /// Builds a [`AwaitExpression`] and stores it in the memory arena.
@@ -3471,7 +3501,7 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn chain_expression(self, span: Span, expression: ChainElement<'a>) -> ChainExpression<'a> {
-        ChainExpression { span, expression }
+        ChainExpression { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`ChainExpression`] and stores it in the memory arena.
@@ -3548,7 +3578,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ParenthesizedExpression<'a> {
-        ParenthesizedExpression { span, expression }
+        ParenthesizedExpression { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`ParenthesizedExpression`] and stores it in the memory arena.
@@ -4056,7 +4086,12 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        Directive { span, expression, directive: directive.into_in(self.allocator) }
+        Directive {
+            node_id: NodeId::DUMMY,
+            span,
+            expression,
+            directive: directive.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`Directive`] and stores it in the memory arena.
@@ -4092,7 +4127,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        Hashbang { span, value: value.into_in(self.allocator) }
+        Hashbang { node_id: NodeId::DUMMY, span, value: value.into_in(self.allocator) }
     }
 
     /// Builds a [`Hashbang`] and stores it in the memory arena.
@@ -4119,7 +4154,7 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn block_statement(self, span: Span, body: Vec<'a, Statement<'a>>) -> BlockStatement<'a> {
-        BlockStatement { span, body, scope_id: Default::default() }
+        BlockStatement { node_id: NodeId::DUMMY, span, body, scope_id: Default::default() }
     }
 
     /// Builds a [`BlockStatement`] and stores it in the memory arena.
@@ -4495,7 +4530,7 @@ impl<'a> AstBuilder<'a> {
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
     ) -> VariableDeclaration<'a> {
-        VariableDeclaration { span, kind, declarations, declare }
+        VariableDeclaration { node_id: NodeId::DUMMY, span, kind, declarations, declare }
     }
 
     /// Builds a [`VariableDeclaration`] and stores it in the memory arena.
@@ -4537,7 +4572,7 @@ impl<'a> AstBuilder<'a> {
         init: Option<Expression<'a>>,
         definite: bool,
     ) -> VariableDeclarator<'a> {
-        VariableDeclarator { span, kind, id, init, definite }
+        VariableDeclarator { node_id: NodeId::DUMMY, span, kind, id, init, definite }
     }
 
     /// Builds a [`VariableDeclarator`] and stores it in the memory arena.
@@ -4570,7 +4605,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn empty_statement(self, span: Span) -> EmptyStatement {
-        EmptyStatement { span }
+        EmptyStatement { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`EmptyStatement`] and stores it in the memory arena.
@@ -4597,7 +4632,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> ExpressionStatement<'a> {
-        ExpressionStatement { span, expression }
+        ExpressionStatement { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`ExpressionStatement`] and stores it in the memory arena.
@@ -4633,7 +4668,7 @@ impl<'a> AstBuilder<'a> {
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> IfStatement<'a> {
-        IfStatement { span, test, consequent, alternate }
+        IfStatement { node_id: NodeId::DUMMY, span, test, consequent, alternate }
     }
 
     /// Builds a [`IfStatement`] and stores it in the memory arena.
@@ -4671,7 +4706,7 @@ impl<'a> AstBuilder<'a> {
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> DoWhileStatement<'a> {
-        DoWhileStatement { span, body, test }
+        DoWhileStatement { node_id: NodeId::DUMMY, span, body, test }
     }
 
     /// Builds a [`DoWhileStatement`] and stores it in the memory arena.
@@ -4707,7 +4742,7 @@ impl<'a> AstBuilder<'a> {
         test: Expression<'a>,
         body: Statement<'a>,
     ) -> WhileStatement<'a> {
-        WhileStatement { span, test, body }
+        WhileStatement { node_id: NodeId::DUMMY, span, test, body }
     }
 
     /// Builds a [`WhileStatement`] and stores it in the memory arena.
@@ -4747,7 +4782,15 @@ impl<'a> AstBuilder<'a> {
         update: Option<Expression<'a>>,
         body: Statement<'a>,
     ) -> ForStatement<'a> {
-        ForStatement { span, init, test, update, body, scope_id: Default::default() }
+        ForStatement {
+            node_id: NodeId::DUMMY,
+            span,
+            init,
+            test,
+            update,
+            body,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`ForStatement`] and stores it in the memory arena.
@@ -4828,7 +4871,14 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForInStatement<'a> {
-        ForInStatement { span, left, right, body, scope_id: Default::default() }
+        ForInStatement {
+            node_id: NodeId::DUMMY,
+            span,
+            left,
+            right,
+            body,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`ForInStatement`] and stores it in the memory arena.
@@ -4912,7 +4962,15 @@ impl<'a> AstBuilder<'a> {
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForOfStatement<'a> {
-        ForOfStatement { span, r#await, left, right, body, scope_id: Default::default() }
+        ForOfStatement {
+            node_id: NodeId::DUMMY,
+            span,
+            r#await,
+            left,
+            right,
+            body,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`ForOfStatement`] and stores it in the memory arena.
@@ -4950,7 +5008,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> ContinueStatement<'a> {
-        ContinueStatement { span, label }
+        ContinueStatement { node_id: NodeId::DUMMY, span, label }
     }
 
     /// Builds a [`ContinueStatement`] and stores it in the memory arena.
@@ -4982,7 +5040,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         label: Option<LabelIdentifier<'a>>,
     ) -> BreakStatement<'a> {
-        BreakStatement { span, label }
+        BreakStatement { node_id: NodeId::DUMMY, span, label }
     }
 
     /// Builds a [`BreakStatement`] and stores it in the memory arena.
@@ -5014,7 +5072,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Option<Expression<'a>>,
     ) -> ReturnStatement<'a> {
-        ReturnStatement { span, argument }
+        ReturnStatement { node_id: NodeId::DUMMY, span, argument }
     }
 
     /// Builds a [`ReturnStatement`] and stores it in the memory arena.
@@ -5048,7 +5106,7 @@ impl<'a> AstBuilder<'a> {
         object: Expression<'a>,
         body: Statement<'a>,
     ) -> WithStatement<'a> {
-        WithStatement { span, object, body }
+        WithStatement { node_id: NodeId::DUMMY, span, object, body }
     }
 
     /// Builds a [`WithStatement`] and stores it in the memory arena.
@@ -5084,7 +5142,13 @@ impl<'a> AstBuilder<'a> {
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
     ) -> SwitchStatement<'a> {
-        SwitchStatement { span, discriminant, cases, scope_id: Default::default() }
+        SwitchStatement {
+            node_id: NodeId::DUMMY,
+            span,
+            discriminant,
+            cases,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`SwitchStatement`] and stores it in the memory arena.
@@ -5120,7 +5184,7 @@ impl<'a> AstBuilder<'a> {
         test: Option<Expression<'a>>,
         consequent: Vec<'a, Statement<'a>>,
     ) -> SwitchCase<'a> {
-        SwitchCase { span, test, consequent }
+        SwitchCase { node_id: NodeId::DUMMY, span, test, consequent }
     }
 
     /// Builds a [`SwitchCase`] and stores it in the memory arena.
@@ -5156,7 +5220,7 @@ impl<'a> AstBuilder<'a> {
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
     ) -> LabeledStatement<'a> {
-        LabeledStatement { span, label, body }
+        LabeledStatement { node_id: NodeId::DUMMY, span, label, body }
     }
 
     /// Builds a [`LabeledStatement`] and stores it in the memory arena.
@@ -5186,7 +5250,7 @@ impl<'a> AstBuilder<'a> {
     /// - argument
     #[inline]
     pub fn throw_statement(self, span: Span, argument: Expression<'a>) -> ThrowStatement<'a> {
-        ThrowStatement { span, argument }
+        ThrowStatement { node_id: NodeId::DUMMY, span, argument }
     }
 
     /// Builds a [`ThrowStatement`] and stores it in the memory arena.
@@ -5228,6 +5292,7 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
         TryStatement {
+            node_id: NodeId::DUMMY,
             span,
             block: block.into_in(self.allocator),
             handler: handler.into_in(self.allocator),
@@ -5279,6 +5344,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, BlockStatement<'a>>>,
     {
         CatchClause {
+            node_id: NodeId::DUMMY,
             span,
             param,
             body: body.into_in(self.allocator),
@@ -5316,7 +5382,7 @@ impl<'a> AstBuilder<'a> {
     /// - pattern
     #[inline]
     pub fn catch_parameter(self, span: Span, pattern: BindingPattern<'a>) -> CatchParameter<'a> {
-        CatchParameter { span, pattern }
+        CatchParameter { node_id: NodeId::DUMMY, span, pattern }
     }
 
     /// Builds a [`CatchParameter`] and stores it in the memory arena.
@@ -5343,7 +5409,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn debugger_statement(self, span: Span) -> DebuggerStatement {
-        DebuggerStatement { span }
+        DebuggerStatement { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`DebuggerStatement`] and stores it in the memory arena.
@@ -5375,7 +5441,12 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
-        BindingPattern { kind, type_annotation: type_annotation.into_in(self.allocator), optional }
+        BindingPattern {
+            node_id: NodeId::DUMMY,
+            kind,
+            type_annotation: type_annotation.into_in(self.allocator),
+            optional,
+        }
     }
 
     /// Builds a [`BindingPattern`] and stores it in the memory arena.
@@ -5531,7 +5602,7 @@ impl<'a> AstBuilder<'a> {
         left: BindingPattern<'a>,
         right: Expression<'a>,
     ) -> AssignmentPattern<'a> {
-        AssignmentPattern { span, left, right }
+        AssignmentPattern { node_id: NodeId::DUMMY, span, left, right }
     }
 
     /// Builds a [`AssignmentPattern`] and stores it in the memory arena.
@@ -5570,7 +5641,12 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
-        ObjectPattern { span, properties, rest: rest.into_in(self.allocator) }
+        ObjectPattern {
+            node_id: NodeId::DUMMY,
+            span,
+            properties,
+            rest: rest.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`ObjectPattern`] and stores it in the memory arena.
@@ -5613,7 +5689,7 @@ impl<'a> AstBuilder<'a> {
         shorthand: bool,
         computed: bool,
     ) -> BindingProperty<'a> {
-        BindingProperty { span, key, value, shorthand, computed }
+        BindingProperty { node_id: NodeId::DUMMY, span, key, value, shorthand, computed }
     }
 
     /// Builds a [`BindingProperty`] and stores it in the memory arena.
@@ -5656,7 +5732,7 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
-        ArrayPattern { span, elements, rest: rest.into_in(self.allocator) }
+        ArrayPattern { node_id: NodeId::DUMMY, span, elements, rest: rest.into_in(self.allocator) }
     }
 
     /// Builds a [`ArrayPattern`] and stores it in the memory arena.
@@ -5693,7 +5769,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: BindingPattern<'a>,
     ) -> BindingRestElement<'a> {
-        BindingRestElement { span, argument }
+        BindingRestElement { node_id: NodeId::DUMMY, span, argument }
     }
 
     /// Builds a [`BindingRestElement`] and stores it in the memory arena.
@@ -5751,6 +5827,7 @@ impl<'a> AstBuilder<'a> {
         T5: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Function {
+            node_id: NodeId::DUMMY,
             r#type,
             span,
             id,
@@ -5842,7 +5919,13 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, BindingRestElement<'a>>>>,
     {
-        FormalParameters { span, kind, items, rest: rest.into_in(self.allocator) }
+        FormalParameters {
+            node_id: NodeId::DUMMY,
+            span,
+            kind,
+            items,
+            rest: rest.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`FormalParameters`] and stores it in the memory arena.
@@ -5889,7 +5972,15 @@ impl<'a> AstBuilder<'a> {
         readonly: bool,
         r#override: bool,
     ) -> FormalParameter<'a> {
-        FormalParameter { span, decorators, pattern, accessibility, readonly, r#override }
+        FormalParameter {
+            node_id: NodeId::DUMMY,
+            span,
+            decorators,
+            pattern,
+            accessibility,
+            readonly,
+            r#override,
+        }
     }
 
     /// Builds a [`FormalParameter`] and stores it in the memory arena.
@@ -5934,7 +6025,7 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         statements: Vec<'a, Statement<'a>>,
     ) -> FunctionBody<'a> {
-        FunctionBody { span, directives, statements }
+        FunctionBody { node_id: NodeId::DUMMY, span, directives, statements }
     }
 
     /// Builds a [`FunctionBody`] and stores it in the memory arena.
@@ -5985,6 +6076,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         ArrowFunctionExpression {
+            node_id: NodeId::DUMMY,
             span,
             expression,
             r#async,
@@ -6054,7 +6146,7 @@ impl<'a> AstBuilder<'a> {
         delegate: bool,
         argument: Option<Expression<'a>>,
     ) -> YieldExpression<'a> {
-        YieldExpression { span, delegate, argument }
+        YieldExpression { node_id: NodeId::DUMMY, span, delegate, argument }
     }
 
     /// Builds a [`YieldExpression`] and stores it in the memory arena.
@@ -6112,6 +6204,7 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Class {
+            node_id: NodeId::DUMMY,
             r#type,
             span,
             decorators,
@@ -6190,7 +6283,7 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn class_body(self, span: Span, body: Vec<'a, ClassElement<'a>>) -> ClassBody<'a> {
-        ClassBody { span, body }
+        ClassBody { node_id: NodeId::DUMMY, span, body }
     }
 
     /// Builds a [`ClassBody`] and stores it in the memory arena.
@@ -6486,6 +6579,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, Function<'a>>>,
     {
         MethodDefinition {
+            node_id: NodeId::DUMMY,
             r#type,
             span,
             decorators,
@@ -6593,6 +6687,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         PropertyDefinition {
+            node_id: NodeId::DUMMY,
             r#type,
             span,
             decorators,
@@ -6683,7 +6778,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        PrivateIdentifier { span, name: name.into_in(self.allocator) }
+        PrivateIdentifier { node_id: NodeId::DUMMY, span, name: name.into_in(self.allocator) }
     }
 
     /// Builds a [`PrivateIdentifier`] and stores it in the memory arena.
@@ -6710,7 +6805,7 @@ impl<'a> AstBuilder<'a> {
     /// - body
     #[inline]
     pub fn static_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> StaticBlock<'a> {
-        StaticBlock { span, body, scope_id: Default::default() }
+        StaticBlock { node_id: NodeId::DUMMY, span, body, scope_id: Default::default() }
     }
 
     /// Builds a [`StaticBlock`] and stores it in the memory arena.
@@ -6982,6 +7077,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         AccessorProperty {
+            node_id: NodeId::DUMMY,
             r#type,
             span,
             decorators,
@@ -7059,7 +7155,7 @@ impl<'a> AstBuilder<'a> {
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
     ) -> ImportExpression<'a> {
-        ImportExpression { span, source, arguments }
+        ImportExpression { node_id: NodeId::DUMMY, span, source, arguments }
     }
 
     /// Builds a [`ImportExpression`] and stores it in the memory arena.
@@ -7103,6 +7199,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
         ImportDeclaration {
+            node_id: NodeId::DUMMY,
             span,
             specifiers,
             source,
@@ -7253,7 +7350,7 @@ impl<'a> AstBuilder<'a> {
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
     ) -> ImportSpecifier<'a> {
-        ImportSpecifier { span, imported, local, import_kind }
+        ImportSpecifier { node_id: NodeId::DUMMY, span, imported, local, import_kind }
     }
 
     /// Builds a [`ImportSpecifier`] and stores it in the memory arena.
@@ -7289,7 +7386,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportDefaultSpecifier<'a> {
-        ImportDefaultSpecifier { span, local }
+        ImportDefaultSpecifier { node_id: NodeId::DUMMY, span, local }
     }
 
     /// Builds a [`ImportDefaultSpecifier`] and stores it in the memory arena.
@@ -7321,7 +7418,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         local: BindingIdentifier<'a>,
     ) -> ImportNamespaceSpecifier<'a> {
-        ImportNamespaceSpecifier { span, local }
+        ImportNamespaceSpecifier { node_id: NodeId::DUMMY, span, local }
     }
 
     /// Builds a [`ImportNamespaceSpecifier`] and stores it in the memory arena.
@@ -7355,7 +7452,7 @@ impl<'a> AstBuilder<'a> {
         attributes_keyword: IdentifierName<'a>,
         with_entries: Vec<'a, ImportAttribute<'a>>,
     ) -> WithClause<'a> {
-        WithClause { span, attributes_keyword, with_entries }
+        WithClause { node_id: NodeId::DUMMY, span, attributes_keyword, with_entries }
     }
 
     /// Builds a [`WithClause`] and stores it in the memory arena.
@@ -7391,7 +7488,7 @@ impl<'a> AstBuilder<'a> {
         key: ImportAttributeKey<'a>,
         value: StringLiteral<'a>,
     ) -> ImportAttribute<'a> {
-        ImportAttribute { span, key, value }
+        ImportAttribute { node_id: NodeId::DUMMY, span, key, value }
     }
 
     /// Builds a [`ImportAttribute`] and stores it in the memory arena.
@@ -7489,6 +7586,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
         ExportNamedDeclaration {
+            node_id: NodeId::DUMMY,
             span,
             declaration,
             specifiers,
@@ -7550,7 +7648,7 @@ impl<'a> AstBuilder<'a> {
         declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
     ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration { span, declaration, exported }
+        ExportDefaultDeclaration { node_id: NodeId::DUMMY, span, declaration, exported }
     }
 
     /// Builds a [`ExportDefaultDeclaration`] and stores it in the memory arena.
@@ -7594,6 +7692,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, WithClause<'a>>>>,
     {
         ExportAllDeclaration {
+            node_id: NodeId::DUMMY,
             span,
             exported,
             source,
@@ -7647,7 +7746,7 @@ impl<'a> AstBuilder<'a> {
         exported: ModuleExportName<'a>,
         export_kind: ImportOrExportKind,
     ) -> ExportSpecifier<'a> {
-        ExportSpecifier { span, local, exported, export_kind }
+        ExportSpecifier { node_id: NodeId::DUMMY, span, local, exported, export_kind }
     }
 
     /// Builds a [`ExportSpecifier`] and stores it in the memory arena.
@@ -7937,6 +8036,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         TSThisParameter {
+            node_id: NodeId::DUMMY,
             span,
             this_span,
             type_annotation: type_annotation.into_in(self.allocator),
@@ -7983,7 +8083,15 @@ impl<'a> AstBuilder<'a> {
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration { span, id, members, r#const, declare, scope_id: Default::default() }
+        TSEnumDeclaration {
+            node_id: NodeId::DUMMY,
+            span,
+            id,
+            members,
+            r#const,
+            declare,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`TSEnumDeclaration`] and stores it in the memory arena.
@@ -8023,7 +8131,7 @@ impl<'a> AstBuilder<'a> {
         id: TSEnumMemberName<'a>,
         initializer: Option<Expression<'a>>,
     ) -> TSEnumMember<'a> {
-        TSEnumMember { span, id, initializer }
+        TSEnumMember { node_id: NodeId::DUMMY, span, id, initializer }
     }
 
     /// Builds a [`TSEnumMember`] and stores it in the memory arena.
@@ -8175,7 +8283,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSTypeAnnotation<'a> {
-        TSTypeAnnotation { span, type_annotation }
+        TSTypeAnnotation { node_id: NodeId::DUMMY, span, type_annotation }
     }
 
     /// Builds a [`TSTypeAnnotation`] and stores it in the memory arena.
@@ -8203,7 +8311,7 @@ impl<'a> AstBuilder<'a> {
     /// - literal
     #[inline]
     pub fn ts_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSLiteralType<'a> {
-        TSLiteralType { span, literal }
+        TSLiteralType { node_id: NodeId::DUMMY, span, literal }
     }
 
     /// Builds a [`TSLiteralType`] and stores it in the memory arena.
@@ -9449,6 +9557,7 @@ impl<'a> AstBuilder<'a> {
         false_type: TSType<'a>,
     ) -> TSConditionalType<'a> {
         TSConditionalType {
+            node_id: NodeId::DUMMY,
             span,
             check_type,
             extends_type,
@@ -9492,7 +9601,7 @@ impl<'a> AstBuilder<'a> {
     /// - types
     #[inline]
     pub fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSUnionType<'a> {
-        TSUnionType { span, types }
+        TSUnionType { node_id: NodeId::DUMMY, span, types }
     }
 
     /// Builds a [`TSUnionType`] and stores it in the memory arena.
@@ -9524,7 +9633,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         types: Vec<'a, TSType<'a>>,
     ) -> TSIntersectionType<'a> {
-        TSIntersectionType { span, types }
+        TSIntersectionType { node_id: NodeId::DUMMY, span, types }
     }
 
     /// Builds a [`TSIntersectionType`] and stores it in the memory arena.
@@ -9556,7 +9665,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         type_annotation: TSType<'a>,
     ) -> TSParenthesizedType<'a> {
-        TSParenthesizedType { span, type_annotation }
+        TSParenthesizedType { node_id: NodeId::DUMMY, span, type_annotation }
     }
 
     /// Builds a [`TSParenthesizedType`] and stores it in the memory arena.
@@ -9590,7 +9699,7 @@ impl<'a> AstBuilder<'a> {
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
     ) -> TSTypeOperator<'a> {
-        TSTypeOperator { span, operator, type_annotation }
+        TSTypeOperator { node_id: NodeId::DUMMY, span, operator, type_annotation }
     }
 
     /// Builds a [`TSTypeOperator`] and stores it in the memory arena.
@@ -9620,7 +9729,7 @@ impl<'a> AstBuilder<'a> {
     /// - element_type
     #[inline]
     pub fn ts_array_type(self, span: Span, element_type: TSType<'a>) -> TSArrayType<'a> {
-        TSArrayType { span, element_type }
+        TSArrayType { node_id: NodeId::DUMMY, span, element_type }
     }
 
     /// Builds a [`TSArrayType`] and stores it in the memory arena.
@@ -9654,7 +9763,7 @@ impl<'a> AstBuilder<'a> {
         object_type: TSType<'a>,
         index_type: TSType<'a>,
     ) -> TSIndexedAccessType<'a> {
-        TSIndexedAccessType { span, object_type, index_type }
+        TSIndexedAccessType { node_id: NodeId::DUMMY, span, object_type, index_type }
     }
 
     /// Builds a [`TSIndexedAccessType`] and stores it in the memory arena.
@@ -9688,7 +9797,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         element_types: Vec<'a, TSTupleElement<'a>>,
     ) -> TSTupleType<'a> {
-        TSTupleType { span, element_types }
+        TSTupleType { node_id: NodeId::DUMMY, span, element_types }
     }
 
     /// Builds a [`TSTupleType`] and stores it in the memory arena.
@@ -9724,7 +9833,7 @@ impl<'a> AstBuilder<'a> {
         label: IdentifierName<'a>,
         optional: bool,
     ) -> TSNamedTupleMember<'a> {
-        TSNamedTupleMember { span, element_type, label, optional }
+        TSNamedTupleMember { node_id: NodeId::DUMMY, span, element_type, label, optional }
     }
 
     /// Builds a [`TSNamedTupleMember`] and stores it in the memory arena.
@@ -9756,7 +9865,7 @@ impl<'a> AstBuilder<'a> {
     /// - type_annotation
     #[inline]
     pub fn ts_optional_type(self, span: Span, type_annotation: TSType<'a>) -> TSOptionalType<'a> {
-        TSOptionalType { span, type_annotation }
+        TSOptionalType { node_id: NodeId::DUMMY, span, type_annotation }
     }
 
     /// Builds a [`TSOptionalType`] and stores it in the memory arena.
@@ -9784,7 +9893,7 @@ impl<'a> AstBuilder<'a> {
     /// - type_annotation
     #[inline]
     pub fn ts_rest_type(self, span: Span, type_annotation: TSType<'a>) -> TSRestType<'a> {
-        TSRestType { span, type_annotation }
+        TSRestType { node_id: NodeId::DUMMY, span, type_annotation }
     }
 
     /// Builds a [`TSRestType`] and stores it in the memory arena.
@@ -9866,7 +9975,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_any_keyword(self, span: Span) -> TSAnyKeyword {
-        TSAnyKeyword { span }
+        TSAnyKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSAnyKeyword`] and stores it in the memory arena.
@@ -9888,7 +9997,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_string_keyword(self, span: Span) -> TSStringKeyword {
-        TSStringKeyword { span }
+        TSStringKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSStringKeyword`] and stores it in the memory arena.
@@ -9910,7 +10019,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_boolean_keyword(self, span: Span) -> TSBooleanKeyword {
-        TSBooleanKeyword { span }
+        TSBooleanKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSBooleanKeyword`] and stores it in the memory arena.
@@ -9932,7 +10041,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_number_keyword(self, span: Span) -> TSNumberKeyword {
-        TSNumberKeyword { span }
+        TSNumberKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSNumberKeyword`] and stores it in the memory arena.
@@ -9954,7 +10063,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_never_keyword(self, span: Span) -> TSNeverKeyword {
-        TSNeverKeyword { span }
+        TSNeverKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSNeverKeyword`] and stores it in the memory arena.
@@ -9976,7 +10085,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_intrinsic_keyword(self, span: Span) -> TSIntrinsicKeyword {
-        TSIntrinsicKeyword { span }
+        TSIntrinsicKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSIntrinsicKeyword`] and stores it in the memory arena.
@@ -9998,7 +10107,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_unknown_keyword(self, span: Span) -> TSUnknownKeyword {
-        TSUnknownKeyword { span }
+        TSUnknownKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSUnknownKeyword`] and stores it in the memory arena.
@@ -10020,7 +10129,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_null_keyword(self, span: Span) -> TSNullKeyword {
-        TSNullKeyword { span }
+        TSNullKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSNullKeyword`] and stores it in the memory arena.
@@ -10042,7 +10151,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_undefined_keyword(self, span: Span) -> TSUndefinedKeyword {
-        TSUndefinedKeyword { span }
+        TSUndefinedKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSUndefinedKeyword`] and stores it in the memory arena.
@@ -10064,7 +10173,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_void_keyword(self, span: Span) -> TSVoidKeyword {
-        TSVoidKeyword { span }
+        TSVoidKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSVoidKeyword`] and stores it in the memory arena.
@@ -10086,7 +10195,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_symbol_keyword(self, span: Span) -> TSSymbolKeyword {
-        TSSymbolKeyword { span }
+        TSSymbolKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSSymbolKeyword`] and stores it in the memory arena.
@@ -10108,7 +10217,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_this_type(self, span: Span) -> TSThisType {
-        TSThisType { span }
+        TSThisType { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSThisType`] and stores it in the memory arena.
@@ -10130,7 +10239,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_object_keyword(self, span: Span) -> TSObjectKeyword {
-        TSObjectKeyword { span }
+        TSObjectKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSObjectKeyword`] and stores it in the memory arena.
@@ -10152,7 +10261,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn ts_big_int_keyword(self, span: Span) -> TSBigIntKeyword {
-        TSBigIntKeyword { span }
+        TSBigIntKeyword { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`TSBigIntKeyword`] and stores it in the memory arena.
@@ -10185,6 +10294,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSTypeReference {
+            node_id: NodeId::DUMMY,
             span,
             type_name,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -10278,7 +10388,7 @@ impl<'a> AstBuilder<'a> {
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
     ) -> TSQualifiedName<'a> {
-        TSQualifiedName { span, left, right }
+        TSQualifiedName { node_id: NodeId::DUMMY, span, left, right }
     }
 
     /// Builds a [`TSQualifiedName`] and stores it in the memory arena.
@@ -10312,7 +10422,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSType<'a>>,
     ) -> TSTypeParameterInstantiation<'a> {
-        TSTypeParameterInstantiation { span, params }
+        TSTypeParameterInstantiation { node_id: NodeId::DUMMY, span, params }
     }
 
     /// Builds a [`TSTypeParameterInstantiation`] and stores it in the memory arena.
@@ -10354,7 +10464,16 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
-        TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
+        TSTypeParameter {
+            node_id: NodeId::DUMMY,
+            span,
+            name,
+            constraint,
+            default,
+            r#in,
+            out,
+            r#const,
+        }
     }
 
     /// Builds a [`TSTypeParameter`] and stores it in the memory arena.
@@ -10399,7 +10518,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         params: Vec<'a, TSTypeParameter<'a>>,
     ) -> TSTypeParameterDeclaration<'a> {
-        TSTypeParameterDeclaration { span, params }
+        TSTypeParameterDeclaration { node_id: NodeId::DUMMY, span, params }
     }
 
     /// Builds a [`TSTypeParameterDeclaration`] and stores it in the memory arena.
@@ -10441,6 +10560,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSTypeAliasDeclaration {
+            node_id: NodeId::DUMMY,
             span,
             id,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -10497,6 +10617,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSClassImplements {
+            node_id: NodeId::DUMMY,
             span,
             expression,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -10550,6 +10671,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Box<'a, TSInterfaceBody<'a>>>,
     {
         TSInterfaceDeclaration {
+            node_id: NodeId::DUMMY,
             span,
             id,
             extends,
@@ -10604,7 +10726,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         body: Vec<'a, TSSignature<'a>>,
     ) -> TSInterfaceBody<'a> {
-        TSInterfaceBody { span, body }
+        TSInterfaceBody { node_id: NodeId::DUMMY, span, body }
     }
 
     /// Builds a [`TSInterfaceBody`] and stores it in the memory arena.
@@ -10648,6 +10770,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         TSPropertySignature {
+            node_id: NodeId::DUMMY,
             span,
             computed,
             optional,
@@ -10924,6 +11047,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignature {
+            node_id: NodeId::DUMMY,
             span,
             parameters,
             type_annotation: type_annotation.into_in(self.allocator),
@@ -10982,6 +11106,7 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSCallSignatureDeclaration {
+            node_id: NodeId::DUMMY,
             span,
             this_param,
             params: params.into_in(self.allocator),
@@ -11060,6 +11185,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSMethodSignature {
+            node_id: NodeId::DUMMY,
             span,
             key,
             computed,
@@ -11145,6 +11271,7 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSConstructSignatureDeclaration {
+            node_id: NodeId::DUMMY,
             span,
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
@@ -11201,6 +11328,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignatureName {
+            node_id: NodeId::DUMMY,
             span,
             name: name.into_in(self.allocator),
             type_annotation: type_annotation.into_in(self.allocator),
@@ -11248,6 +11376,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSInterfaceHeritage {
+            node_id: NodeId::DUMMY,
             span,
             expression,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -11296,6 +11425,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
         TSTypePredicate {
+            node_id: NodeId::DUMMY,
             span,
             parameter_name,
             asserts,
@@ -11394,7 +11524,15 @@ impl<'a> AstBuilder<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> TSModuleDeclaration<'a> {
-        TSModuleDeclaration { span, id, body, kind, declare, scope_id: Default::default() }
+        TSModuleDeclaration {
+            node_id: NodeId::DUMMY,
+            span,
+            id,
+            body,
+            kind,
+            declare,
+            scope_id: Default::default(),
+        }
     }
 
     /// Builds a [`TSModuleDeclaration`] and stores it in the memory arena.
@@ -11560,7 +11698,7 @@ impl<'a> AstBuilder<'a> {
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> TSModuleBlock<'a> {
-        TSModuleBlock { span, directives, body }
+        TSModuleBlock { node_id: NodeId::DUMMY, span, directives, body }
     }
 
     /// Builds a [`TSModuleBlock`] and stores it in the memory arena.
@@ -11594,7 +11732,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         members: Vec<'a, TSSignature<'a>>,
     ) -> TSTypeLiteral<'a> {
-        TSTypeLiteral { span, members }
+        TSTypeLiteral { node_id: NodeId::DUMMY, span, members }
     }
 
     /// Builds a [`TSTypeLiteral`] and stores it in the memory arena.
@@ -11625,7 +11763,11 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
-        TSInferType { span, type_parameter: type_parameter.into_in(self.allocator) }
+        TSInferType {
+            node_id: NodeId::DUMMY,
+            span,
+            type_parameter: type_parameter.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`TSInferType`] and stores it in the memory arena.
@@ -11661,7 +11803,12 @@ impl<'a> AstBuilder<'a> {
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
-        TSTypeQuery { span, expr_name, type_parameters: type_parameters.into_in(self.allocator) }
+        TSTypeQuery {
+            node_id: NodeId::DUMMY,
+            span,
+            expr_name,
+            type_parameters: type_parameters.into_in(self.allocator),
+        }
     }
 
     /// Builds a [`TSTypeQuery`] and stores it in the memory arena.
@@ -11763,6 +11910,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         TSImportType {
+            node_id: NodeId::DUMMY,
             span,
             is_type_of,
             parameter,
@@ -11825,7 +11973,7 @@ impl<'a> AstBuilder<'a> {
         attributes_keyword: IdentifierName<'a>,
         elements: Vec<'a, TSImportAttribute<'a>>,
     ) -> TSImportAttributes<'a> {
-        TSImportAttributes { span, attributes_keyword, elements }
+        TSImportAttributes { node_id: NodeId::DUMMY, span, attributes_keyword, elements }
     }
 
     /// Builds a [`TSImportAttributes`] and stores it in the memory arena.
@@ -11861,7 +12009,7 @@ impl<'a> AstBuilder<'a> {
         name: TSImportAttributeName<'a>,
         value: Expression<'a>,
     ) -> TSImportAttribute<'a> {
-        TSImportAttribute { span, name, value }
+        TSImportAttribute { node_id: NodeId::DUMMY, span, name, value }
     }
 
     /// Builds a [`TSImportAttribute`] and stores it in the memory arena.
@@ -11966,6 +12114,7 @@ impl<'a> AstBuilder<'a> {
         T4: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSFunctionType {
+            node_id: NodeId::DUMMY,
             span,
             this_param: this_param.into_in(self.allocator),
             params: params.into_in(self.allocator),
@@ -12030,6 +12179,7 @@ impl<'a> AstBuilder<'a> {
         T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
     {
         TSConstructorType {
+            node_id: NodeId::DUMMY,
             span,
             r#abstract,
             params: params.into_in(self.allocator),
@@ -12093,6 +12243,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
     {
         TSMappedType {
+            node_id: NodeId::DUMMY,
             span,
             type_parameter: type_parameter.into_in(self.allocator),
             name_type,
@@ -12155,7 +12306,7 @@ impl<'a> AstBuilder<'a> {
         quasis: Vec<'a, TemplateElement<'a>>,
         types: Vec<'a, TSType<'a>>,
     ) -> TSTemplateLiteralType<'a> {
-        TSTemplateLiteralType { span, quasis, types }
+        TSTemplateLiteralType { node_id: NodeId::DUMMY, span, quasis, types }
     }
 
     /// Builds a [`TSTemplateLiteralType`] and stores it in the memory arena.
@@ -12191,7 +12342,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSAsExpression<'a> {
-        TSAsExpression { span, expression, type_annotation }
+        TSAsExpression { node_id: NodeId::DUMMY, span, expression, type_annotation }
     }
 
     /// Builds a [`TSAsExpression`] and stores it in the memory arena.
@@ -12227,7 +12378,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSSatisfiesExpression<'a> {
-        TSSatisfiesExpression { span, expression, type_annotation }
+        TSSatisfiesExpression { node_id: NodeId::DUMMY, span, expression, type_annotation }
     }
 
     /// Builds a [`TSSatisfiesExpression`] and stores it in the memory arena.
@@ -12263,7 +12414,7 @@ impl<'a> AstBuilder<'a> {
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSTypeAssertion<'a> {
-        TSTypeAssertion { span, expression, type_annotation }
+        TSTypeAssertion { node_id: NodeId::DUMMY, span, expression, type_annotation }
     }
 
     /// Builds a [`TSTypeAssertion`] and stores it in the memory arena.
@@ -12301,7 +12452,13 @@ impl<'a> AstBuilder<'a> {
         module_reference: TSModuleReference<'a>,
         import_kind: ImportOrExportKind,
     ) -> TSImportEqualsDeclaration<'a> {
-        TSImportEqualsDeclaration { span, id, module_reference, import_kind }
+        TSImportEqualsDeclaration {
+            node_id: NodeId::DUMMY,
+            span,
+            id,
+            module_reference,
+            import_kind,
+        }
     }
 
     /// Builds a [`TSImportEqualsDeclaration`] and stores it in the memory arena.
@@ -12375,7 +12532,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: StringLiteral<'a>,
     ) -> TSExternalModuleReference<'a> {
-        TSExternalModuleReference { span, expression }
+        TSExternalModuleReference { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`TSExternalModuleReference`] and stores it in the memory arena.
@@ -12407,7 +12564,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSNonNullExpression<'a> {
-        TSNonNullExpression { span, expression }
+        TSNonNullExpression { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`TSNonNullExpression`] and stores it in the memory arena.
@@ -12435,7 +12592,7 @@ impl<'a> AstBuilder<'a> {
     /// - expression
     #[inline]
     pub fn decorator(self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
-        Decorator { span, expression }
+        Decorator { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`Decorator`] and stores it in the memory arena.
@@ -12463,7 +12620,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: Expression<'a>,
     ) -> TSExportAssignment<'a> {
-        TSExportAssignment { span, expression }
+        TSExportAssignment { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`TSExportAssignment`] and stores it in the memory arena.
@@ -12495,7 +12652,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: IdentifierName<'a>,
     ) -> TSNamespaceExportDeclaration<'a> {
-        TSNamespaceExportDeclaration { span, id }
+        TSNamespaceExportDeclaration { node_id: NodeId::DUMMY, span, id }
     }
 
     /// Builds a [`TSNamespaceExportDeclaration`] and stores it in the memory arena.
@@ -12533,6 +12690,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Box<'a, TSTypeParameterInstantiation<'a>>>,
     {
         TSInstantiationExpression {
+            node_id: NodeId::DUMMY,
             span,
             expression,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -12578,7 +12736,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNullableType<'a> {
-        JSDocNullableType { span, type_annotation, postfix }
+        JSDocNullableType { node_id: NodeId::DUMMY, span, type_annotation, postfix }
     }
 
     /// Builds a [`JSDocNullableType`] and stores it in the memory arena.
@@ -12614,7 +12772,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: TSType<'a>,
         postfix: bool,
     ) -> JSDocNonNullableType<'a> {
-        JSDocNonNullableType { span, type_annotation, postfix }
+        JSDocNonNullableType { node_id: NodeId::DUMMY, span, type_annotation, postfix }
     }
 
     /// Builds a [`JSDocNonNullableType`] and stores it in the memory arena.
@@ -12643,7 +12801,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn js_doc_unknown_type(self, span: Span) -> JSDocUnknownType {
-        JSDocUnknownType { span }
+        JSDocUnknownType { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`JSDocUnknownType`] and stores it in the memory arena.
@@ -12679,6 +12837,7 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, JSXClosingElement<'a>>>>,
     {
         JSXElement {
+            node_id: NodeId::DUMMY,
             span,
             opening_element: opening_element.into_in(self.allocator),
             closing_element: closing_element.into_in(self.allocator),
@@ -12736,6 +12895,7 @@ impl<'a> AstBuilder<'a> {
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
     {
         JSXOpeningElement {
+            node_id: NodeId::DUMMY,
             span,
             self_closing,
             name,
@@ -12785,7 +12945,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         name: JSXElementName<'a>,
     ) -> JSXClosingElement<'a> {
-        JSXClosingElement { span, name }
+        JSXClosingElement { node_id: NodeId::DUMMY, span, name }
     }
 
     /// Builds a [`JSXClosingElement`] and stores it in the memory arena.
@@ -12821,7 +12981,7 @@ impl<'a> AstBuilder<'a> {
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
     ) -> JSXFragment<'a> {
-        JSXFragment { span, opening_fragment, closing_fragment, children }
+        JSXFragment { node_id: NodeId::DUMMY, span, opening_fragment, closing_fragment, children }
     }
 
     /// Builds a [`JSXFragment`] and stores it in the memory arena.
@@ -12988,7 +13148,7 @@ impl<'a> AstBuilder<'a> {
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXNamespacedName<'a> {
-        JSXNamespacedName { span, namespace, property }
+        JSXNamespacedName { node_id: NodeId::DUMMY, span, namespace, property }
     }
 
     /// Builds a [`JSXNamespacedName`] and stores it in the memory arena.
@@ -13024,7 +13184,7 @@ impl<'a> AstBuilder<'a> {
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
     ) -> JSXMemberExpression<'a> {
-        JSXMemberExpression { span, object, property }
+        JSXMemberExpression { node_id: NodeId::DUMMY, span, object, property }
     }
 
     /// Builds a [`JSXMemberExpression`] and stores it in the memory arena.
@@ -13149,7 +13309,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: JSXExpression<'a>,
     ) -> JSXExpressionContainer<'a> {
-        JSXExpressionContainer { span, expression }
+        JSXExpressionContainer { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`JSXExpressionContainer`] and stores it in the memory arena.
@@ -13199,7 +13359,7 @@ impl<'a> AstBuilder<'a> {
     /// - span: The [`Span`] covering this node
     #[inline]
     pub fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
-        JSXEmptyExpression { span }
+        JSXEmptyExpression { node_id: NodeId::DUMMY, span }
     }
 
     /// Builds a [`JSXEmptyExpression`] and stores it in the memory arena.
@@ -13280,7 +13440,7 @@ impl<'a> AstBuilder<'a> {
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
     ) -> JSXAttribute<'a> {
-        JSXAttribute { span, name, value }
+        JSXAttribute { node_id: NodeId::DUMMY, span, name, value }
     }
 
     /// Builds a [`JSXAttribute`] and stores it in the memory arena.
@@ -13314,7 +13474,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         argument: Expression<'a>,
     ) -> JSXSpreadAttribute<'a> {
-        JSXSpreadAttribute { span, argument }
+        JSXSpreadAttribute { node_id: NodeId::DUMMY, span, argument }
     }
 
     /// Builds a [`JSXSpreadAttribute`] and stores it in the memory arena.
@@ -13528,7 +13688,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        JSXIdentifier { span, name: name.into_in(self.allocator) }
+        JSXIdentifier { node_id: NodeId::DUMMY, span, name: name.into_in(self.allocator) }
     }
 
     /// Builds a [`JSXIdentifier`] and stores it in the memory arena.
@@ -13701,7 +13861,7 @@ impl<'a> AstBuilder<'a> {
     /// - expression: The expression being spread.
     #[inline]
     pub fn jsx_spread_child(self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
-        JSXSpreadChild { span, expression }
+        JSXSpreadChild { node_id: NodeId::DUMMY, span, expression }
     }
 
     /// Builds a [`JSXSpreadChild`] and stores it in the memory arena.
@@ -13732,7 +13892,7 @@ impl<'a> AstBuilder<'a> {
     where
         A: IntoIn<'a, Atom<'a>>,
     {
-        JSXText { span, value: value.into_in(self.allocator) }
+        JSXText { node_id: NodeId::DUMMY, span, value: value.into_in(self.allocator) }
     }
 
     /// Builds a [`JSXText`] and stores it in the memory arena.

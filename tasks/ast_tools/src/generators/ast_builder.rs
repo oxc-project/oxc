@@ -46,6 +46,7 @@ impl Generator for AstBuilderGenerator {
 
                 ///@@line_break
                 use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+                use oxc_syntax::node::NodeId;
 
                 ///@@line_break
                 #[allow(clippy::wildcard_imports)]
@@ -231,6 +232,7 @@ fn default_init_field(field: &FieldDef) -> bool {
             field!(symbol_id: Cell<Option<SymbolId>>),
             field!(reference_id: Cell<Option<ReferenceId>>),
             field!(reference_flags: ReferenceFlags),
+            field!(node_id: NodeId),
         ]);
     }
 
@@ -246,7 +248,12 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
     fn default_field(param: &Param) -> TokenStream {
         debug_assert!(param.is_default);
         let ident = &param.ident;
-        quote!(#ident: Default::default())
+        // HACK: remove this condition when `node_id`s are added manually
+        if param.ident == "node_id" {
+            quote!(#ident: NodeId::DUMMY)
+        } else {
+            quote!(#ident: Default::default())
+        }
     }
     let ident = ty.ident();
     let as_type = ty.to_type();
@@ -544,6 +551,7 @@ fn get_struct_params(struct_: &StructDef, ctx: &LateCtx) -> Vec<Param> {
                 let t = format_ident!("A").to_token_stream();
                 (Some(parse_quote!(#t)), Some((quote!(#t: IntoIn<'a, Atom<'a>>), t)))
             }
+            (TypeWrapper::None, None) if field.typ.name().inner_name() == "NodeId" => (None, None),
             _ => (None, None),
         };
         let ty = interface_typ.unwrap_or_else(|| field.typ.to_type());

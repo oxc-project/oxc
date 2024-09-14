@@ -42,6 +42,7 @@ impl Generator for AssertLayouts {
                 ///@@line_break
                 #[allow(clippy::wildcard_imports)]
                 use oxc_regular_expression::ast::*;
+                use oxc_syntax::node::NodeId;
 
                 ///@@line_break
                 #[cfg(target_pointer_width = "64")]

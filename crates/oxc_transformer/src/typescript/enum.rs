@@ -89,6 +89,7 @@ impl<'a> TypeScriptEnum<'a> {
         );
         ctx.scopes_mut().add_binding(func_scope_id, enum_name.to_compact_str(), param_symbol_id);
         let ident = BindingIdentifier {
+            node_id: NodeId::DUMMY,
             span: decl.id.span,
             name: decl.id.name.clone(),
             symbol_id: Cell::new(Some(param_symbol_id)),
@@ -112,6 +113,7 @@ impl<'a> TypeScriptEnum<'a> {
         let statements = self.transform_ts_enum_members(&mut decl.members, &ident, ctx);
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = Expression::FunctionExpression(ctx.alloc(Function {
+            node_id: NodeId::DUMMY,
             r#type: FunctionType::FunctionExpression,
             span: SPAN,
             id: None,

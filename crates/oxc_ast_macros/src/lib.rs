@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use syn::parse_quote;
 
 /// returns `#[repr(C, u8)]` if `enum_` has any non-unit variant,
 /// Otherwise it would return `#[repr(u8)]`.
@@ -149,12 +150,28 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
 /// 2. `tsify`
 #[proc_macro_attribute]
 #[allow(clippy::missing_panics_doc)]
-pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let input = syn::parse_macro_input!(input as syn::Item);
+pub fn ast(args: TokenStream, input: TokenStream) -> TokenStream {
+    let mut input = syn::parse_macro_input!(input as syn::Item);
 
-    let (head, tail) = match &input {
+    let (head, tail) = match &mut input {
         syn::Item::Enum(enum_) => (enum_repr(enum_), assert_generated_derives(&enum_.attrs)),
         syn::Item::Struct(struct_) => {
+            {
+                // HACK: temperorary messure to speed up the initial implementation.
+                let args = TokenStream2::from(args);
+                if args.into_iter().next().is_some_and(
+                    |tk| matches!(tk, proc_macro2::TokenTree::Ident(id) if id == "visit" ),
+                ) {
+                    match &mut struct_.fields {
+                        syn::Fields::Named(fields) => {
+                            fields
+                                .named
+                                .insert(0, parse_quote!(pub node_id: ::oxc_syntax::node::NodeId));
+                        }
+                        _ => {}
+                    }
+                }
+            }
             (quote!(#[repr(C)]), assert_generated_derives(&struct_.attrs))
         }
 

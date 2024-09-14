@@ -365,5 +365,8 @@ lazy_static! {
         ReferenceFlags: { _ => Layout::known(1, 1, 0), },
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
         RegExpFlags: { _ => Layout::known(1, 1, 0), },
+        // External type
+        // NOTE: It's a wrapper around `NonZeroU32`
+        NonMaxU32: { _ => Layout::of::<std::num::NonZeroU32>(), },
     };
 }

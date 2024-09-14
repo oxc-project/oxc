@@ -32,7 +32,7 @@ use std::cell::Cell;
 
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{ast::*, NONE};
-use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
+use oxc_semantic::{NodeId, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -187,6 +187,7 @@ impl<'a> NullishCoalescingOperator<'a> {
 
         // var _name;
         let binding_identifier = BindingIdentifier {
+            node_id: NodeId::DUMMY,
             span: SPAN,
             name: symbol_name.clone(),
             symbol_id: Cell::new(Some(symbol_id)),

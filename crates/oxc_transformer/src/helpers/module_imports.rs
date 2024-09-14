@@ -3,7 +3,7 @@ use std::cell::{Cell, RefCell};
 use indexmap::IndexMap;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, NONE};
-use oxc_semantic::ReferenceFlags;
+use oxc_semantic::{NodeId, ReferenceFlags};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::TraverseCtx;
@@ -90,19 +90,17 @@ impl<'a> ModuleImports<'a> {
     ) -> Statement<'a> {
         let specifiers = self.ast.vec_from_iter(names.into_iter().map(|name| {
             let local = name.local.unwrap_or_else(|| name.imported.clone());
-            ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
-                span: SPAN,
-                imported: ModuleExportName::IdentifierName(IdentifierName::new(
-                    SPAN,
-                    name.imported,
-                )),
-                local: BindingIdentifier {
+            self.ast.import_declaration_specifier_import_specifier(
+                SPAN,
+                self.ast.module_export_name_identifier_name(SPAN, name.imported),
+                BindingIdentifier {
+                    node_id: NodeId::DUMMY,
                     span: SPAN,
                     name: local,
                     symbol_id: Cell::new(Some(name.symbol_id)),
                 },
-                import_kind: ImportOrExportKind::Value,
-            }))
+                ImportOrExportKind::Value,
+            )
         }));
         let import_stmt = self.ast.module_declaration_import_declaration(
             SPAN,
@@ -133,6 +131,7 @@ impl<'a> ModuleImports<'a> {
         let name = names.into_iter().next().unwrap();
         let id = {
             let ident = BindingIdentifier {
+                node_id: NodeId::DUMMY,
                 span: SPAN,
                 name: name.imported,
                 symbol_id: Cell::new(Some(name.symbol_id)),

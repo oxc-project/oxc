@@ -3,7 +3,7 @@ use std::{cell::Cell, iter::once};
 use base64::prelude::{Engine, BASE64_STANDARD};
 use oxc_allocator::CloneIn;
 use oxc_ast::{ast::*, match_expression, AstBuilder, NONE};
-use oxc_semantic::{Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_semantic::{NodeId, Reference, ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
 use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
@@ -151,6 +151,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
         for (symbol_id, persistent_id) in self.registrations.drain(..) {
             let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
             let binding_identifier = BindingIdentifier {
+                node_id: NodeId::DUMMY,
                 name: name.clone(),
                 symbol_id: Cell::new(Some(symbol_id)),
                 span: SPAN,
@@ -691,6 +692,7 @@ impl<'a> ReactRefresh<'a> {
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         let binding_identifier = BindingIdentifier {
+            node_id: NodeId::DUMMY,
             span: SPAN,
             name: symbol_name.clone(),
             symbol_id: Cell::new(Some(symbol_id)),

@@ -23,7 +23,7 @@ use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, GeneratorOutput,
     VisitGenerator, VisitMutGenerator,
 };
-use passes::{CalcLayout, Linker};
+use passes::{CalcLayout, FakeNodeId, Linker};
 use util::{write_all_to, NormalizeError};
 
 static SOURCE_PATHS: &[&str] = &[
@@ -31,6 +31,7 @@ static SOURCE_PATHS: &[&str] = &[
     "crates/oxc_ast/src/ast/js.rs",
     "crates/oxc_ast/src/ast/ts.rs",
     "crates/oxc_ast/src/ast/jsx.rs",
+    "crates/oxc_syntax/src/node.rs",
     "crates/oxc_syntax/src/number.rs",
     "crates/oxc_syntax/src/operator.rs",
     "crates/oxc_span/src/span/types.rs",
@@ -68,6 +69,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .iter()
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .pass(Linker)
+        .pass(FakeNodeId)
         .pass(CalcLayout)
         .derive(DeriveCloneIn)
         .derive(DeriveGetSpan)

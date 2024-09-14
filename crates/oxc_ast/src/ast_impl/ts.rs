@@ -7,6 +7,7 @@ use std::{cell::Cell, fmt};
 
 use oxc_allocator::Vec;
 use oxc_span::{Atom, Span};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
@@ -18,7 +19,15 @@ impl<'a> TSEnumDeclaration<'a> {
         r#const: bool,
         declare: bool,
     ) -> Self {
-        Self { span, id, members, r#const, declare, scope_id: Cell::default() }
+        Self {
+            node_id: NodeId::DUMMY,
+            span,
+            id,
+            members,
+            r#const,
+            declare,
+            scope_id: Cell::default(),
+        }
     }
 }
 
@@ -151,7 +160,7 @@ impl<'a> TSModuleDeclaration<'a> {
         kind: TSModuleDeclarationKind,
         declare: bool,
     ) -> Self {
-        Self { span, id, body, kind, declare, scope_id: Cell::default() }
+        Self { node_id: NodeId::DUMMY, span, id, body, kind, declare, scope_id: Cell::default() }
     }
 
     pub fn is_strict(&self) -> bool {

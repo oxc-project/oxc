@@ -12,13 +12,13 @@ use std::{
 use oxc_allocator::CloneIn;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{cmp::ContentEq, hash::ContentHash, Atom, Span};
-use oxc_syntax::number::NumberBase;
+use oxc_syntax::{node::NodeId, number::NumberBase};
 
 use crate::ast::*;
 
 impl BooleanLiteral {
     pub fn new(span: Span, value: bool) -> Self {
-        Self { span, value }
+        Self { node_id: NodeId::DUMMY, span, value }
     }
 
     pub fn as_str(&self) -> &'static str {
@@ -46,7 +46,7 @@ impl ContentHash for NullLiteral {
 
 impl NullLiteral {
     pub fn new(span: Span) -> Self {
-        Self { span }
+        Self { node_id: NodeId::DUMMY, span }
     }
 }
 
@@ -59,7 +59,7 @@ impl fmt::Display for NullLiteral {
 
 impl<'a> NumericLiteral<'a> {
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
-        Self { span, value, raw, base }
+        Self { node_id: NodeId::DUMMY, span, value, raw, base }
     }
 
     /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
@@ -261,7 +261,7 @@ impl fmt::Display for RegExpFlags {
 
 impl<'a> StringLiteral<'a> {
     pub fn new(span: Span, value: Atom<'a>) -> Self {
-        Self { span, value }
+        Self { node_id: NodeId::DUMMY, span, value }
     }
 
     /// Static Semantics: `IsStringWellFormedUnicode`

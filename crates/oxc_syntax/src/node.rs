@@ -1,9 +1,13 @@
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_allocator::CloneIn;
+use oxc_ast_macros::ast;
 use oxc_index::Idx;
+use oxc_span::{cmp::ContentEq, hash::ContentHash};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
+#[ast]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct NodeId(NonMaxU32);
 
@@ -43,6 +47,25 @@ impl Idx for NodeId {
 
     fn index(self) -> usize {
         self.0.get() as usize
+    }
+}
+
+impl<'alloc> CloneIn<'alloc> for NodeId {
+    type Cloned = Self;
+    fn clone_in(&self, _: &'alloc oxc_allocator::Allocator) -> Self::Cloned {
+        *self
+    }
+}
+
+impl ContentEq for NodeId {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
+impl ContentHash for NodeId {
+    fn content_hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        std::hash::Hash::hash(self, state);
     }
 }
 

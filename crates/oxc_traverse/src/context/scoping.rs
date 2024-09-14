@@ -296,7 +296,12 @@ impl TraverseScoping {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_bound_reference(symbol_id, flags);
-        IdentifierReference { span, name, reference_id: Cell::new(Some(reference_id)) }
+        IdentifierReference {
+            node_id: NodeId::DUMMY,
+            span,
+            name,
+            reference_id: Cell::new(Some(reference_id)),
+        }
     }
 
     /// Create an unbound reference
@@ -319,7 +324,12 @@ impl TraverseScoping {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
-        IdentifierReference { span, name, reference_id: Cell::new(Some(reference_id)) }
+        IdentifierReference {
+            node_id: NodeId::DUMMY,
+            span,
+            name,
+            reference_id: Cell::new(Some(reference_id)),
+        }
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
