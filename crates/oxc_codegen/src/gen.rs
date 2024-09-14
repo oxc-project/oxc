@@ -1,14 +1,13 @@
 use std::{borrow::Cow, ops::Not};
 
 use cow_utils::CowUtils;
-use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
-    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
+    operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
 
@@ -18,32 +17,12 @@ use crate::{
     Codegen, Context, Operator,
 };
 
-pub trait Gen {
-    #[allow(unused_variables)]
-    fn gen(&self, p: &mut Codegen, ctx: Context) {}
+pub trait Gen: GetSpan {
+    fn gen(&self, p: &mut Codegen, ctx: Context);
 }
 
-pub trait GenExpr {
-    #[allow(unused_variables)]
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {}
-}
-
-impl<'a, T> Gen for Box<'a, T>
-where
-    T: Gen,
-{
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
-        (**self).gen(p, ctx);
-    }
-}
-
-impl<'a, T> GenExpr for Box<'a, T>
-where
-    T: GenExpr,
-{
-    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        (**self).gen_expr(p, precedence, ctx);
-    }
+pub trait GenExpr: GetSpan {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
 }
 
 impl<'a> Gen for Program<'a> {
@@ -679,9 +658,13 @@ impl<'a> Gen for FunctionBody<'a> {
 
 impl<'a> Gen for FormalParameter<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        self.decorators.gen(p, ctx);
+        for decorator in &self.decorators {
+            decorator.gen(p, ctx);
+            p.print_hard_space();
+        }
         if let Some(accessibility) = self.accessibility {
-            accessibility.gen(p, ctx);
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.readonly {
             p.print_str("readonly ");
@@ -1716,28 +1699,6 @@ impl<'a> GenExpr for BinaryExpression<'a> {
     }
 }
 
-impl Gen for LogicalOperator {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        p.print_str(self.as_str());
-    }
-}
-
-impl Gen for BinaryOperator {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        let operator = self.as_str();
-        if self.is_keyword() {
-            p.print_space_before_identifier();
-            p.print_str(operator);
-        } else {
-            let op: Operator = (*self).into();
-            p.print_space_before_operator(op);
-            p.print_str(operator);
-            p.prev_op = Some(op);
-            p.prev_op_end = p.code().len();
-        }
-    }
-}
-
 impl<'a> GenExpr for PrivateInExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Compare, |p| {
@@ -1868,7 +1829,15 @@ impl<'a> Gen for ArrayAssignmentTarget<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'[');
-        p.print_list(&self.elements, ctx);
+        for (index, item) in self.elements.iter().enumerate() {
+            if index != 0 {
+                p.print_comma();
+                p.print_soft_space();
+            }
+            if let Some(item) = item {
+                item.gen(p, ctx);
+            }
+        }
         if let Some(target) = &self.rest {
             if !self.elements.is_empty() {
                 p.print_comma();
@@ -1881,14 +1850,6 @@ impl<'a> Gen for ArrayAssignmentTarget<'a> {
         }
         p.print_char(b']');
         p.add_source_mapping(self.span.end);
-    }
-}
-
-impl<'a> Gen for Option<AssignmentTargetMaybeDefault<'a>> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
-        if let Some(arg) = self {
-            arg.gen(p, ctx);
-        }
     }
 }
 
@@ -2166,7 +2127,10 @@ impl<'a> Gen for Class<'a> {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
-            self.decorators.gen(p, ctx);
+            for decorator in &self.decorators {
+                decorator.gen(p, ctx);
+                p.print_hard_space();
+            }
             if self.declare {
                 p.print_str("declare ");
             }
@@ -2469,10 +2433,14 @@ impl<'a> Gen for StaticBlock<'a> {
 impl<'a> Gen for MethodDefinition<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.decorators.gen(p, ctx);
+        for decorator in &self.decorators {
+            decorator.gen(p, ctx);
+            p.print_hard_space();
+        }
 
         if let Some(accessibility) = &self.accessibility {
-            accessibility.gen(p, ctx);
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.r#type == MethodDefinitionType::TSAbstractMethodDefinition {
             p.print_str("abstract ");
@@ -2532,12 +2500,16 @@ impl<'a> Gen for MethodDefinition<'a> {
 impl<'a> Gen for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.decorators.gen(p, ctx);
+        for decorator in &self.decorators {
+            decorator.gen(p, ctx);
+            p.print_hard_space();
+        }
         if self.declare {
             p.print_str("declare ");
         }
-        if let Some(accessibility) = &self.accessibility {
-            accessibility.gen(p, ctx);
+        if let Some(accessibility) = self.accessibility {
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
             p.print_str("abstract ");
@@ -2575,12 +2547,16 @@ impl<'a> Gen for PropertyDefinition<'a> {
 impl<'a> Gen for AccessorProperty<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.decorators.gen(p, ctx);
+        for decorator in &self.decorators {
+            decorator.gen(p, ctx);
+            p.print_hard_space();
+        }
         if self.r#type.is_abstract() {
             p.print_str("abstract ");
         }
-        if let Some(accessibility) = &self.accessibility {
-            accessibility.gen(p, ctx);
+        if let Some(accessibility) = self.accessibility {
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.r#static {
             p.print_str("static ");
@@ -2737,15 +2713,6 @@ impl<'a> Gen for AssignmentPattern<'a> {
         p.print_equal();
         p.print_soft_space();
         self.right.gen_expr(p, Precedence::Comma, Context::empty());
-    }
-}
-
-impl<'a> Gen for Vec<'a, Decorator<'a>> {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
-        for decorator in self {
-            decorator.gen(p, ctx);
-            p.print_hard_space();
-        }
     }
 }
 
@@ -3427,7 +3394,7 @@ impl<'a> Gen for TSModuleDeclaration<'a> {
         if self.declare {
             p.print_str("declare ");
         }
-        self.kind.gen(p, ctx);
+        p.print_str(self.kind.as_str());
         // If the kind is global, then the id is also `global`, so we don't need to print it
         if !self.kind.is_global() {
             p.print_space_before_identifier();
@@ -3456,22 +3423,6 @@ impl<'a> Gen for TSModuleDeclaration<'a> {
             }
         }
         p.needs_semicolon = false;
-    }
-}
-
-impl Gen for TSModuleDeclarationKind {
-    fn gen(&self, p: &mut Codegen, _: Context) {
-        match self {
-            TSModuleDeclarationKind::Global => {
-                p.print_str("global");
-            }
-            TSModuleDeclarationKind::Module => {
-                p.print_str("module");
-            }
-            TSModuleDeclarationKind::Namespace => {
-                p.print_str("namespace");
-            }
-        }
     }
 }
 
@@ -3636,16 +3587,6 @@ impl<'a> Gen for TSModuleReference<'a> {
                 p.print_str(")");
             }
             match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
-        }
-    }
-}
-
-impl Gen for TSAccessibility {
-    fn gen(&self, p: &mut Codegen, _ctx: Context) {
-        match self {
-            Self::Public => p.print_str("public "),
-            Self::Private => p.print_str("private "),
-            Self::Protected => p.print_str("protected "),
         }
     }
 }

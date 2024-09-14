@@ -76,7 +76,6 @@ impl NoUnsafeNegation {
     /// Precondition:
     /// expr.left is `UnaryExpression` whose operator is '!'
     fn report_with_fix<'a>(expr: &BinaryExpression, ctx: &LintContext<'a>) {
-        use oxc_codegen::{Context, Gen};
         // Diagnostic points at the unexpected negation
         let diagnostic = no_unsafe_negation_diagnostic(expr.operator.as_str(), expr.left.span());
 
@@ -88,7 +87,9 @@ impl NoUnsafeNegation {
                 let Expression::UnaryExpression(left) = &expr.left else { unreachable!() };
                 codegen.print_char(b'(');
                 codegen.print_expression(&left.argument);
-                expr.operator.gen(&mut codegen, Context::default());
+                codegen.print_char(b' ');
+                codegen.print_str(expr.operator.as_str());
+                codegen.print_char(b' ');
                 codegen.print_expression(&expr.right);
                 codegen.print_char(b')');
                 codegen.into_source_text()

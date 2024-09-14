@@ -159,6 +159,16 @@ impl<'a> TSModuleDeclaration<'a> {
     }
 }
 
+impl TSModuleDeclarationKind {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Global => "global",
+            Self::Module => "module",
+            Self::Namespace => "namespace",
+        }
+    }
+}
+
 impl<'a> TSModuleDeclarationName<'a> {
     pub fn is_string_literal(&self) -> bool {
         matches!(self, Self::StringLiteral(_))
