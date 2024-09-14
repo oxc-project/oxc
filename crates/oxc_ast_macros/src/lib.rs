@@ -156,19 +156,16 @@ pub fn ast(args: TokenStream, input: TokenStream) -> TokenStream {
     let (head, tail) = match &mut input {
         syn::Item::Enum(enum_) => (enum_repr(enum_), assert_generated_derives(&enum_.attrs)),
         syn::Item::Struct(struct_) => {
+            // HACK: temperorary measure to speed up the initial implementation of `node_id`.
             {
-                // HACK: temperorary messure to speed up the initial implementation.
                 let args = TokenStream2::from(args);
                 if args.into_iter().next().is_some_and(
                     |tk| matches!(tk, proc_macro2::TokenTree::Ident(id) if id == "visit" ),
                 ) {
-                    match &mut struct_.fields {
-                        syn::Fields::Named(fields) => {
-                            fields
-                                .named
-                                .insert(0, parse_quote!(pub node_id: ::oxc_syntax::node::NodeId));
-                        }
-                        _ => {}
+                    if let syn::Fields::Named(fields) = &mut struct_.fields {
+                        fields
+                            .named
+                            .insert(0, parse_quote!(pub node_id: ::oxc_syntax::node::NodeId));
                     }
                 }
             }
