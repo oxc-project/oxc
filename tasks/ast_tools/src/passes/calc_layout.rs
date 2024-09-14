@@ -123,9 +123,14 @@ fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
         acc
     }
 
-    let with_tag = |mut acc: KnownLayout| -> KnownLayout {
-        acc.consume_niches(ty.item.variants.len() as u128, true);
-        acc
+    let with_tag = |layout: KnownLayout| -> Result<KnownLayout> {
+        let niches = layout.niches();
+        let layout = std::alloc::Layout::from_size_align(layout.size(), layout.align())
+            .normalize()?
+            .pad_to_align();
+        let mut layout = KnownLayout::new(layout.size(), layout.align(), niches);
+        layout.consume_niches(ty.item.variants.len() as u128, true);
+        Ok(layout)
     };
 
     let layouts = collect_variant_layouts(ty, ctx)?;
@@ -137,8 +142,8 @@ fn calc_enum_layout(ty: &mut Enum, ctx: &EarlyCtx) -> Result<PlatformLayout> {
         .collect::<Option<_>>()
         .expect("already checked.");
 
-    let x32 = with_tag(layouts_x32.into_iter().fold(KnownLayout::default(), fold_layout));
-    let x64 = with_tag(layouts_x64.into_iter().fold(KnownLayout::default(), fold_layout));
+    let x32 = with_tag(layouts_x32.into_iter().fold(KnownLayout::default(), fold_layout))?;
+    let x64 = with_tag(layouts_x64.into_iter().fold(KnownLayout::default(), fold_layout))?;
     Ok(PlatformLayout(Layout::from(x64), Layout::from(x32)))
 }
 
