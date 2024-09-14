@@ -71,7 +71,7 @@ impl Rule for PreferStructuredClone {
         Self(Box::new(PreferStructuredCloneConfig { allowed_functions }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::CallExpression(call_expr): oxc_ast::AstKind<'a> = node.kind() else {
             return;
         };

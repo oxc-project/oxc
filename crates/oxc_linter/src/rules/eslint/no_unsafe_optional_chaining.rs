@@ -63,7 +63,7 @@ impl Rule for NoUnsafeOptionalChaining {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(expr) if !expr.optional => {
                 Self::check_unsafe_usage(&expr.callee, ctx);

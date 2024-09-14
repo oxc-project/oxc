@@ -174,7 +174,7 @@ impl Rule for NoNull {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::NullLiteral(null_literal) = node.kind() else {
             return;
         };

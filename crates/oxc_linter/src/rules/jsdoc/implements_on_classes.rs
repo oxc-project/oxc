@@ -75,7 +75,7 @@ fn is_function_inside_of_class<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintConte
 }
 
 impl Rule for ImplementsOnClasses {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if !is_function_node(node) {
             return;
         }

@@ -201,7 +201,7 @@ impl Rule for LabelHasAssociatedControl {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::JSXElement(element) = node.kind() else {
             return;
         };

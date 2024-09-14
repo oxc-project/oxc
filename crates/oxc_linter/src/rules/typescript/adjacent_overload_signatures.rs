@@ -280,7 +280,7 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 }
 
 impl Rule for AdjacentOverloadSignatures {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::Class(class) => {
                 let members = &class.body.body;

@@ -83,7 +83,7 @@ impl Rule for NoRestSpreadProperties {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::SpreadElement(spread_element) => {
                 if ctx

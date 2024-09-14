@@ -59,7 +59,7 @@ impl Rule for SortVars {
         Self { ignore_case }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::VariableDeclaration(var_decl) = node.kind() else {
             return;
         };

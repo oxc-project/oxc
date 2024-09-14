@@ -68,7 +68,7 @@ impl Rule for ConsistentIndexedObjectStyle {
         Self { is_record_mode: config == ConsistentIndexedObjectStyleConfig::Record }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if self.is_record_mode {
             match node.kind() {
                 AstKind::TSInterfaceDeclaration(inf) => {

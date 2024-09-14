@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNumberProperties {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::MemberExpression(member_expr) => {
                 let Expression::Identifier(ident_name) = member_expr.object() else {

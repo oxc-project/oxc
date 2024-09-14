@@ -38,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoProto {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::MemberExpression(member_expression) = node.kind() else {
             return;
         };

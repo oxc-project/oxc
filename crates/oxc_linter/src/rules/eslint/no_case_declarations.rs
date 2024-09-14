@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCaseDeclarations {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::SwitchCase(switch_case) = node.kind() {
             let consequent = &switch_case.consequent;
 

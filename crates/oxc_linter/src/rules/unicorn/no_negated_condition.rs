@@ -57,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNegatedCondition {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let stmt_test = match node.kind() {
             AstKind::IfStatement(if_stmt) => {
                 let Some(if_stmt_alternate) = &if_stmt.alternate else {

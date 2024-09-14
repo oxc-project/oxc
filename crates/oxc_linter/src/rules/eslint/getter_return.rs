@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for GetterReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
         if ctx.source_type().is_typescript() {
             return;

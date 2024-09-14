@@ -57,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxPropsNoSpreadMulti {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_opening_el) = node.kind() {
             let spread_attrs =
                 jsx_opening_el.attributes.iter().filter_map(JSXAttributeItem::as_spread);

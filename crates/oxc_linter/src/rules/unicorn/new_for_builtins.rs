@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NewForBuiltins {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::NewExpression(new_expr) => {
                 let callee = new_expr.callee.without_parentheses();

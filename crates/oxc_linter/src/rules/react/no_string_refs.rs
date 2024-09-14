@@ -106,7 +106,7 @@ impl Rule for NoStringRefs {
         Self { no_template_literals }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 if is_literal_ref_attribute(attr, self.no_template_literals) {

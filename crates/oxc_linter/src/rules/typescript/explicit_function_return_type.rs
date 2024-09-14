@@ -161,7 +161,7 @@ impl Rule for ExplicitFunctionReturnType {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) => {
                 if !func.is_declaration() & !func.is_expression() {

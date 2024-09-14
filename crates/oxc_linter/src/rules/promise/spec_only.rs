@@ -64,7 +64,7 @@ impl Rule for SpecOnly {
         Self(Box::new(SpecOnlyConfig { allowed_methods }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::MemberExpression(member_expr) = node.kind() else {
             return;
         };

@@ -56,7 +56,7 @@ fn get_member_ident<'a>(mut expr: &'a JSXMemberExpression<'a>) -> Option<&'a Ide
 }
 
 impl Rule for JsxNoUndef {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXOpeningElement(elem) = &node.kind() {
             if let Some(ident) = get_resolvable_ident(&elem.name) {
                 let reference = ctx.symbols().get_reference(ident.reference_id().unwrap());

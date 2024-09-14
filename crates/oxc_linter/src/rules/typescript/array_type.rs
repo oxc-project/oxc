@@ -115,7 +115,7 @@ impl Rule for ArrayType {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let default_config = &self.default;
         let readonly_config: &ArrayOption =
             &self.readonly.clone().unwrap_or_else(|| default_config.clone());

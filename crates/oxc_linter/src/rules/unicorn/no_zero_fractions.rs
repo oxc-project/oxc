@@ -51,7 +51,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoZeroFractions {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::NumericLiteral(number_literal) = node.kind() else {
             return;
         };

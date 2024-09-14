@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for TextEncodingIdentifierCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let (s, span) = match node.kind() {
             AstKind::StringLiteral(string_lit) => (&string_lit.value, string_lit.span),
             AstKind::JSXText(jsx_text) => (&jsx_text.value, jsx_text.span),

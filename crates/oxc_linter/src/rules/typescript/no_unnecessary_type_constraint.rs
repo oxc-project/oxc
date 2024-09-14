@@ -48,7 +48,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::TSTypeParameterDeclaration(decl) = node.kind() {
             for param in &decl.params {
                 if let Some(ty) = &param.constraint {

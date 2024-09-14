@@ -59,7 +59,7 @@ impl Rule for NoInnerDeclarations {
         Self { config }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let span = match node.kind() {
             AstKind::VariableDeclaration(decl)
                 if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both =>

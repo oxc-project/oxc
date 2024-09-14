@@ -75,7 +75,7 @@ impl Rule for ParamNames {
         Self(Box::new(cfg))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::NewExpression(new_expr) = node.kind() else {
             return;
         };

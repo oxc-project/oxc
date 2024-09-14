@@ -459,7 +459,7 @@ impl Rule for NoUnknownProperty {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
 
         let AstKind::JSXOpeningElement(el) = &node.kind() else {

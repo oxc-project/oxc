@@ -48,7 +48,7 @@ fn is_array_prototype_property(member_expr: &MemberExpression, property: &str) -
 }
 
 impl Rule for RequireArrayJoinSeparator {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

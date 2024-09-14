@@ -46,7 +46,7 @@ impl Rule for NoEmpty {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
                 let parent = ctx.nodes().parent_kind(node.id());

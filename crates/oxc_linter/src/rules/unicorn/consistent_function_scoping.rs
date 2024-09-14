@@ -158,7 +158,7 @@ impl Rule for ConsistentFunctionScoping {
         Self(Box::new(configuration))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let (function_declaration_symbol_id, function_body, reporter_span) = match node.kind() {
             AstKind::Function(function) => {
                 if let Some(AstKind::AssignmentExpression(_)) = ctx.nodes().parent_kind(node.id()) {

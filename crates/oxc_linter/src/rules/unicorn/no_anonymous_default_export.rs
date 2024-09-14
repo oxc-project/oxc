@@ -57,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAnonymousDefaultExport {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let problem_node = match node.kind() {
             // ESM: export default
             AstKind::ExportDefaultDeclaration(export_decl) => match &export_decl.declaration {

@@ -242,7 +242,7 @@ impl ExplicitLengthCheck {
     }
 }
 impl Rule for ExplicitLengthCheck {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(
             static_member_expr,
         )) = node.kind()

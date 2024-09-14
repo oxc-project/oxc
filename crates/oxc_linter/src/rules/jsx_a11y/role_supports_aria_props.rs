@@ -64,7 +64,7 @@ fn is_implicit_diagnostic(span: Span, attr_name: &str, role: &str, el_name: &str
 }
 
 impl Rule for RoleSupportsAriaProps {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

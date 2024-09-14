@@ -33,7 +33,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyCharacterClass {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         lazy_static! {
             /*
             * plain-English description of the following regexp:

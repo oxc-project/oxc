@@ -127,7 +127,7 @@ impl Rule for SortKeys {
             allow_line_separated_groups,
         }))
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
             if dec.properties.len() < self.min_keys {
                 return;

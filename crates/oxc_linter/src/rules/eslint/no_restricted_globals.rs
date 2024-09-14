@@ -79,7 +79,7 @@ impl Rule for NoRestrictedGlobals {
         Self { restricted_globals: Box::new(list) }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::IdentifierReference(ident) = node.kind() {
             let Some(message) = self.restricted_globals.get(ident.name.as_str()) else {
                 return;

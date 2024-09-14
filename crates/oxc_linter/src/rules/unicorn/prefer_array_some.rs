@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferArraySome {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 if !is_method_call(call_expr, None, Some(&["find", "findLast"]), Some(1), Some(2)) {

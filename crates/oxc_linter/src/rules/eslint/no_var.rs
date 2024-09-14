@@ -48,7 +48,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoVar {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::VariableDeclaration(dec) = node.kind() {
             if dec.kind == VariableDeclarationKind::Var {
                 let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));

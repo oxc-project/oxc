@@ -155,7 +155,7 @@ impl Rule for NoUselessUndefined {
         Self { check_arguments, check_arrow_function_body }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::IdentifierReference(undefined_literal)
                 if undefined_literal.name == "undefined" =>

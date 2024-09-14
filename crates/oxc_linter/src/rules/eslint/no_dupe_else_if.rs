@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDupeElseIf {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         // if (a) {} else if (a) {}
         //                ^^ get this if statement
         let AstKind::IfStatement(if_stmt) = node.kind() else {

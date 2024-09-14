@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferOptionalCatchBinding {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::CatchParameter(catch_param) = node.kind() else {
             return;
         };

@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoContinue {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::ContinueStatement(continue_statement) = node.kind() {
             ctx.diagnostic(no_continue_diagnostic(Span::new(
                 continue_statement.span.start,

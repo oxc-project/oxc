@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDanger {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 if let Some(JSXAttributeItem::Attribute(prop)) =

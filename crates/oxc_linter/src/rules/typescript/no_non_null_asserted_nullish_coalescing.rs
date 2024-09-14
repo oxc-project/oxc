@@ -34,7 +34,7 @@ fn no_non_null_asserted_nullish_coalescing_diagnostic(span: Span) -> OxcDiagnost
 }
 
 impl Rule for NoNonNullAssertedNullishCoalescing {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::LogicalExpression(expr) = node.kind() else { return };
         let Expression::TSNonNullExpression(ts_non_null_expr) = &expr.left else { return };
         if let Expression::Identifier(ident) = &ts_non_null_expr.expression {

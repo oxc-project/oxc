@@ -70,7 +70,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ButtonHasType {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::JSXOpeningElement(jsx_el) => {
                 let JSXElementName::Identifier(identifier) = &jsx_el.name else {

@@ -108,7 +108,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RulesOfHooks {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::CallExpression(call) = node.kind() else { return };
 
         if !is_react_hook(&call.callee) {

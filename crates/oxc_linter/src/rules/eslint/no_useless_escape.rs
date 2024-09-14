@@ -69,7 +69,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(literal)
                 if literal.regex.pattern.len() + literal.regex.flags.iter().count()

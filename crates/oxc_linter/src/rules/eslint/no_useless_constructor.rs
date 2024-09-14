@@ -82,7 +82,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessConstructor {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::MethodDefinition(constructor) = node.kind() else {
             return;
         };

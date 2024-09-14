@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWrapperObjectTypes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let (ident_name, ident_span, reference_id) = match node.kind() {
             AstKind::TSTypeReference(type_ref) => {
                 if let TSTypeName::IdentifierReference(type_name) = &type_ref.type_name {

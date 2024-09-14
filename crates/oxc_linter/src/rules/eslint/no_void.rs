@@ -49,7 +49,7 @@ impl Rule for NoVoid {
         Self { allow_as_statement }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::UnaryExpression(unary_expr) = node.kind() else {
             return;
         };

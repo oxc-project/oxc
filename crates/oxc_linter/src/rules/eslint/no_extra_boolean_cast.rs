@@ -61,7 +61,7 @@ impl Rule for NoExtraBooleanCast {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(expr)
                 if expr.callee.is_specific_id("Boolean")

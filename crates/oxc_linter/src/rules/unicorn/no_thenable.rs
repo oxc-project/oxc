@@ -60,7 +60,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThenable {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
                 expr.properties.iter().for_each(|prop| {

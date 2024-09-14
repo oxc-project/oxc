@@ -63,7 +63,7 @@ impl Rule for JsxNoUselessFragment {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 if !is_jsx_fragment(&jsx_elem.opening_element) {

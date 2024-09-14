@@ -76,7 +76,7 @@ impl Rule for ArrayCallbackReturn {
         Self { check_for_each, allow_implicit_return }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let (function_body, always_explicit_return) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value

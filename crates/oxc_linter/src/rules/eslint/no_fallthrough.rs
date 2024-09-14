@@ -257,7 +257,7 @@ impl Rule for NoFallthrough {
         Self::new(comment_pattern, allow_empty_case, report_unused_fallthrough_comment)
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::SwitchStatement(switch) = node.kind() else { return };
 
         let cfg = ctx.cfg();

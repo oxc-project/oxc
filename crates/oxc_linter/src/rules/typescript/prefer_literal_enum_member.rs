@@ -54,7 +54,7 @@ impl Rule for PreferLiteralEnumMember {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::TSEnumMember(decl) = node.kind() else {
             return;
         };

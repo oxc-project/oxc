@@ -73,7 +73,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConstComparisons {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::LogicalExpression(logical_expr) = node.kind() else {
             return;
         };

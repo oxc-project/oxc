@@ -60,7 +60,7 @@ impl<R> Rule for R
 where
     R: ReactPerfRule,
 {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
         if node.scope_id() == ctx.scopes().root_scope_id() {

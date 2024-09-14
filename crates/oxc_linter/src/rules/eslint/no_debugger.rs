@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDebugger {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::DebuggerStatement(stmt) = node.kind() {
             ctx.diagnostic_with_fix(no_debugger_diagnostic(stmt.span), |fixer| {
                 let Some(parent) = ctx

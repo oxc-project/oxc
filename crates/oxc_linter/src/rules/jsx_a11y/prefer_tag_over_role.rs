@@ -90,7 +90,7 @@ static ROLE_TO_TAG_MAP: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|
 });
 
 impl Rule for PreferTagOverRole {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(name) = get_element_type(ctx, jsx_el) {
                 if let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") {

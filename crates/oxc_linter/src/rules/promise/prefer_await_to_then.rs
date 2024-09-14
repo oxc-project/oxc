@@ -34,7 +34,7 @@ fn is_inside_yield_or_await(node: &AstNode) -> bool {
 }
 
 impl Rule for PreferAwaitToThen {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };

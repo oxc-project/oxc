@@ -153,7 +153,7 @@ fn is_useless_check<'a>(
 }
 
 impl Rule for NoUselessLengthCheck {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::LogicalExpression(log_expr) = node.kind() {
             if ![LogicalOperator::And, LogicalOperator::Or].contains(&log_expr.operator) {
                 return;

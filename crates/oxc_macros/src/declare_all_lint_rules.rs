@@ -116,13 +116,13 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub(super) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+            pub(super) fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run(node, ctx)),*
                 }
             }
 
-            pub(super) fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
+            pub(super) fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &mut LintContext<'a>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
                 }

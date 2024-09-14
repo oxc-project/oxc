@@ -94,7 +94,7 @@ impl Rule for NoThisAlias {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(init) = &decl.init else { return };

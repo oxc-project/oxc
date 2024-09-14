@@ -50,7 +50,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
     phf_set!("defineProperty", "deleteProperty", "set", "setPrototypeOf");
 
 impl Rule for NoImportAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &mut LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flags(symbol_id).is_import() {
             let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));

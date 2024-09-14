@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTestReturnStatement {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 check_call_expression(call_expr, node, ctx);

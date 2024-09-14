@@ -30,7 +30,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExtraNonNullAssertion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let expr = match node.kind() {
             AstKind::TSNonNullExpression(expr) => {
                 if let Expression::TSNonNullExpression(expr) = expr.expression.without_parentheses()

@@ -63,7 +63,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoControlRegex {
-    fn run<'a>(&self, node: &AstNode<'a>, context: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, context: &mut LintContext<'a>) {
         if let Some(RegexPatternData { pattern, flags, span }) = regex_pattern(node) {
             let mut violations: Vec<&str> = Vec::new();
             let pattern = pattern.as_ref();

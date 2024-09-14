@@ -65,7 +65,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for OnlyUsedInRecursion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let (function_id, function_parameters, function_span) = match node.kind() {
             AstKind::Function(function) => {
                 if function.is_typescript_syntax() {

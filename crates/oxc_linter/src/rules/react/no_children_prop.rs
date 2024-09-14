@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoChildrenProp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 let JSXAttributeName::Identifier(attr_ident) = &attr.name else {

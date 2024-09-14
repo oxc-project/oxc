@@ -55,7 +55,7 @@ impl Rule for NoInvalidRegexp {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let (pattern_arg, flags_arg) = match node.kind() {
             AstKind::NewExpression(expr) if expr.callee.is_specific_id("RegExp") => {
                 parse_arguments_to_check(expr.arguments.first(), expr.arguments.get(1))

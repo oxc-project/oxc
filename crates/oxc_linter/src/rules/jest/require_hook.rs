@@ -161,7 +161,7 @@ impl Rule for RequireHook {
         Self(Box::new(RequireHookConfig { allowed_function_calls }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let kind = node.kind();
 
         if let AstKind::Program(program) = kind {

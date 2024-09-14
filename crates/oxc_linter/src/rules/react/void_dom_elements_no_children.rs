@@ -64,7 +64,7 @@ pub fn is_void_dom_element(element_name: &str) -> bool {
 }
 
 impl Rule for VoidDomElementsNoChildren {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_el) => {
                 let jsx_opening_el = &jsx_el.opening_element;

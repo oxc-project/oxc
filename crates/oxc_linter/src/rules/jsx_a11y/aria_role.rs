@@ -140,7 +140,7 @@ impl Rule for AriaRole {
         Self(Box::new(AriaRoleConfig { ignore_non_dom, allowed_invalid_roles }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             if let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role") {
                 let Some(element_type) = get_element_type(ctx, &jsx_el.opening_element) else {

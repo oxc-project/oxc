@@ -179,7 +179,7 @@ impl Rule for AutocompleteValid {
             .unwrap_or_default()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let Some(name) = &get_element_type(ctx, jsx_el) else {
                 return;

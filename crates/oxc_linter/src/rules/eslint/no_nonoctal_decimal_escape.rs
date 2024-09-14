@@ -44,7 +44,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNonoctalDecimalEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
             check_string(ctx, literal.span.source_text(ctx.source_text()));
         }

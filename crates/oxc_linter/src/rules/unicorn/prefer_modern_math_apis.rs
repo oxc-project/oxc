@@ -59,7 +59,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferModernMathApis {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         // there are two main cases to check:
         // Bin expression:
         //     `Math.log(x) * Math.LOG10E`

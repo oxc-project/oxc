@@ -73,7 +73,7 @@ impl Rule for SelfClosingComp {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::JSXElement(jsx_el) = node.kind() else {
             return;
         };

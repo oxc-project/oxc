@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoFuncAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &mut LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
         let decl = symbol_table.get_declaration(symbol_id);
         if let AstKind::Function(_) = ctx.nodes().kind(decl) {

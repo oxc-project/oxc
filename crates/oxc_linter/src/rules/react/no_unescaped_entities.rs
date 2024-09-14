@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnescapedEntities {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXText(jsx_text) = node.kind() {
             let source = jsx_text.span.source_text(ctx.source_text());
             for (i, char) in source.char_indices() {

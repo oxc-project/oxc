@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstructorReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::ReturnStatement(ret) = node.kind() else { return };
         if ret.argument.is_none() {
             return;

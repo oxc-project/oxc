@@ -36,7 +36,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessConcat {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::BinaryExpression(binary_expr) = node.kind() else {
             return;
         };

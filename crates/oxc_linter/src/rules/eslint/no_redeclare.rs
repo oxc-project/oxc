@@ -59,7 +59,7 @@ impl Rule for NoRedeclare {
         Self { built_in_globals }
     }
 
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &mut LintContext) {
         let symbol_table = ctx.semantic().symbols();
         let decl_node_id = symbol_table.get_declaration(symbol_id);
         match ctx.nodes().kind(decl_node_id) {

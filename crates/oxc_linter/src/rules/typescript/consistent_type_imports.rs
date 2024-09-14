@@ -137,7 +137,7 @@ impl Rule for ConsistentTypeImports {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if self.disallow_type_annotations.0 {
             //  `import()` type annotations are forbidden.
             // `type Foo = import('foo')`

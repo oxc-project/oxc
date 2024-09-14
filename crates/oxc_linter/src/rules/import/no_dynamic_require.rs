@@ -54,7 +54,7 @@ impl Rule for NoDynamicRequire {
         Self { esmodule }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::ImportExpression(import) => {
                 if self.esmodule && !is_static_value(&import.source) {

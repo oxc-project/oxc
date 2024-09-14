@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadObjectLiteralComparison {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::BinaryExpression(binary_expression) = node.kind() else {
             return;
         };

@@ -68,7 +68,7 @@ impl Rule for ConsistentTypeDefinitions {
         Self { config }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::TSTypeAliasDeclaration(decl) => match &decl.type_annotation {
                 TSType::TSTypeLiteral(_)

@@ -55,7 +55,7 @@ static ROLE_TO_REQUIRED_ARIA_PROPS: phf::Map<&'static str, phf::Set<&'static str
 };
 
 impl Rule for RoleHasRequiredAriaProps {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") else {
                 return;

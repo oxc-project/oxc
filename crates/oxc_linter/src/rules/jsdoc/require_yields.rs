@@ -101,7 +101,7 @@ impl Rule for RequireYields {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let config = &self.0;
 
         // This rule checks generator function should have JSDoc `@yields` tag.

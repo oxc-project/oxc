@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BanTypes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::TSTypeReference(typ) => {
                 let name = match &typ.type_name {

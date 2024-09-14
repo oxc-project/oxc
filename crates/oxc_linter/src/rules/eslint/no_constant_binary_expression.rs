@@ -77,7 +77,7 @@ fn constant_both_always_new(span: Span) -> OxcDiagnostic {
 }
 
 impl Rule for NoConstantBinaryExpression {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::LogicalExpression(expr) => match expr.operator {
                 LogicalOperator::Or | LogicalOperator::And if expr.left.is_constant(true, ctx) => {

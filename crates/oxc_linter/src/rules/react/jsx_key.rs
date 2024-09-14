@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxKey {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 check_jsx_element(node, jsx_elem, ctx);

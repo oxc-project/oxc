@@ -57,7 +57,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferSpyOn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::AssignmentExpression(assign_expr) = node.kind() else {
             return;
         };

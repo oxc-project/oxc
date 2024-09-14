@@ -34,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnnecessaryAwait {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::AwaitExpression(expr) = node.kind() {
             if !not_promise(&expr.argument) {
                 return;

@@ -58,7 +58,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThisAssignment {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_decl) => {
                 let Some(init) = &variable_decl.init else {

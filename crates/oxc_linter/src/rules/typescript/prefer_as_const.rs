@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferAsConst {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_declarator) => {
                 let Some(type_annotation) = &variable_declarator.id.type_annotation else {

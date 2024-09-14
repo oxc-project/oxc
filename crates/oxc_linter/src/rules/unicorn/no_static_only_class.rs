@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoStaticOnlyClass {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         let AstKind::Class(class) = node.kind() else {
             return;
         };

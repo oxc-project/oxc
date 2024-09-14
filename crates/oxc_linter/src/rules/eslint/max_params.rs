@@ -73,7 +73,7 @@ impl Rule for MaxParams {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         match node.kind() {
             AstKind::Function(function) => {
                 if !function.is_declaration() & !function.is_expression() {

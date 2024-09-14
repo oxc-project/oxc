@@ -122,7 +122,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxNoTargetBlank {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &mut LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
             let Some(tag_name) = &jsx_ele.name.get_identifier_name() else {
                 return;
