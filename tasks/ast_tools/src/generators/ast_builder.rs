@@ -248,7 +248,7 @@ fn generate_struct_builder_fn(ty: &StructDef, ctx: &LateCtx) -> TokenStream {
     fn default_field(param: &Param) -> TokenStream {
         debug_assert!(param.is_default);
         let ident = &param.ident;
-        // HACK: remove this condition when `node_id`s are added manually
+        // HACK: remove this condition after making types `non_exhaustive`!
         if param.ident == "node_id" {
             quote!(#ident: NodeId::DUMMY)
         } else {
