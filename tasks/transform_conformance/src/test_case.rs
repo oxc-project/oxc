@@ -6,7 +6,7 @@ use std::{
 use cow_utils::CowUtils;
 use oxc::{
     allocator::Allocator,
-    codegen::CodeGenerator,
+    codegen::{CodeGenerator, CommentOptions},
     diagnostics::{Error, NamedSource, OxcDiagnostic},
     parser::Parser,
     span::{SourceType, VALID_EXTENSIONS},
@@ -299,7 +299,10 @@ impl TestCase for ConformanceTestCase {
                 |output| {
                     // Get expected code by parsing the source text, so we can get the same code generated result.
                     let ret = Parser::new(&allocator, &output, source_type).parse();
-                    CodeGenerator::new().build(&ret.program).source_text
+                    CodeGenerator::new()
+                        .enable_comment(&output, ret.trivias, CommentOptions::default())
+                        .build(&ret.program)
+                        .source_text
                 },
             );
 

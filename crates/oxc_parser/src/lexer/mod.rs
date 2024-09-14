@@ -210,6 +210,7 @@ impl<'a> Lexer<'a> {
             return lookahead.token;
         }
         let kind = self.read_next_token();
+        self.trivia_builder.handle_token(self.token.start);
         self.finish_next(kind)
     }
 
@@ -218,6 +219,7 @@ impl<'a> Lexer<'a> {
         self.token.end = self.offset();
         debug_assert!(self.token.start <= self.token.end);
         let token = self.token;
+        self.trivia_builder.handle_token(token.start);
         self.token = Token::default();
         token
     }

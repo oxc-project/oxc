@@ -61,7 +61,7 @@ pub use crate::{
     ast_builder::AstBuilder,
     ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
-    trivia::{Comment, CommentKind, SortedComments, Trivias},
+    trivia::{Comment, CommentKind, CommentPosition, SortedComments, Trivias},
     visit::{Visit, VisitMut},
 };
 

@@ -8,19 +8,39 @@ use std::{
 
 use oxc_span::Span;
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum CommentPosition {
+    Leading,
+    Trailing,
+    Dangling,
+}
+
 /// Single or multiline comment
 #[derive(Debug, Clone, Copy)]
 pub struct Comment {
     pub kind: CommentKind,
     /// The span of the comment text (without leading/trailing delimiters).
     pub span: Span,
+
+    pub position: CommentPosition,
+    pub preceded_by_newline: Option<bool>,
+    pub followed_by_newline: Option<bool>,
+
+    pub attached_to: u32,
 }
 
 impl Comment {
     #[inline]
     pub fn new(start: u32, end: u32, kind: CommentKind) -> Self {
         let span = Span::new(start, end);
-        Self { kind, span }
+        Self {
+            kind,
+            span,
+            position: CommentPosition::Dangling,
+            preceded_by_newline: None,
+            followed_by_newline: None,
+            attached_to: 0,
+        }
     }
 
     pub fn real_span(&self) -> Span {
@@ -39,6 +59,26 @@ impl Comment {
         match self.kind {
             CommentKind::SingleLine | CommentKind::MultiLine => self.span.start - 2,
         }
+    }
+
+    #[inline]
+    pub fn is_single_line(self) -> bool {
+        self.kind == CommentKind::SingleLine
+    }
+
+    #[inline]
+    pub fn is_multi_line(self) -> bool {
+        self.kind == CommentKind::MultiLine
+    }
+
+    #[inline]
+    pub fn is_leading(&self) -> bool {
+        self.position == CommentPosition::Leading
+    }
+
+    #[inline]
+    pub fn is_trailing(&self) -> bool {
+        self.position == CommentPosition::Trailing
     }
 }
 
@@ -192,11 +232,11 @@ mod test {
     #[test]
     fn test_comments_range() {
         let comments: SortedComments = vec![
-            Comment { span: Span::new(0, 4), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(5, 9), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(10, 13), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(14, 17), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(18, 23), kind: CommentKind::SingleLine },
+            Comment::new(0, 4, CommentKind::SingleLine),
+            Comment::new(5, 9, CommentKind::SingleLine),
+            Comment::new(10, 13, CommentKind::SingleLine),
+            Comment::new(14, 17, CommentKind::SingleLine),
+            Comment::new(18, 23, CommentKind::SingleLine),
         ]
         .into_boxed_slice();
         let full_len = comments.len();

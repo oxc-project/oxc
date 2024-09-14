@@ -34,6 +34,7 @@ impl<'a> Lexer<'a> {
             c if is_irregular_line_terminator(c) => {
                 self.consume_char();
                 self.token.is_on_new_line = true;
+                self.trivia_builder.handle_newline();
                 self.trivia_builder.add_irregular_whitespace(self.token.start, self.offset());
                 Kind::Skip
             }

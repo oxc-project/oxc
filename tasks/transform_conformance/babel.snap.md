@@ -2258,37 +2258,13 @@ rebuilt        : ScopeId(0): ["C"]
 x Output mismatch
 
 * exports/issue-9916-1/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-rebuilt        : ScopeId(0): ["a"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
+x Output mismatch
 
 * exports/issue-9916-2/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
+x Output mismatch
 
 * exports/issue-9916-3/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["PromiseRejectCb", "PromiseResolveCb", "a"]
-rebuilt        : ScopeId(0): ["a"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
-rebuilt        : ScopeId(0): []
-Unresolved references mismatch:
-after transform: ["PromiseLike"]
-rebuilt        : []
+x Output mismatch
 
 * exports/type-only-export-specifier-1/input.ts
 Symbol reference IDs mismatch:
@@ -2489,23 +2465,7 @@ after transform: SymbolId(2): [ReferenceId(4), ReferenceId(6)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 
 * namespace/alias/input.ts
-Missing SymbolId: b
-Missing SymbolId: AliasModule
-Bindings mismatch:
-after transform: ScopeId(0): ["AliasModule", "LongNameModule", "b", "babel", "bar", "baz", "node", "some", "str"]
-rebuilt        : ScopeId(0): ["AliasModule", "b", "babel", "bar", "baz", "node", "some", "str"]
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1)]
-rebuilt        : ScopeId(0): []
-Reference symbol mismatch:
-after transform: ReferenceId(3): Some("AliasModule")
-rebuilt        : ReferenceId(2): Some("AliasModule")
-Reference symbol mismatch:
-after transform: ReferenceId(4): Some("AliasModule")
-rebuilt        : ReferenceId(3): Some("AliasModule")
-Unresolved reference IDs mismatch for "LongNameModule":
-after transform: [ReferenceId(1), ReferenceId(5)]
-rebuilt        : [ReferenceId(1)]
+x Output mismatch
 
 * namespace/ambient-module-nested/input.ts
 Ambient modules cannot be nested in other modules or namespaces.

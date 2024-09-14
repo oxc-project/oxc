@@ -66,6 +66,7 @@ pub struct Codegen<'a> {
     source_text: Option<&'a str>,
 
     trivias: Trivias,
+    leading_comments: FxHashMap</* attached_to */ u32, Vec<Comment>>,
 
     mangler: Option<Mangler>,
 
@@ -133,6 +134,7 @@ impl<'a> Codegen<'a> {
             comment_options: CommentOptions::default(),
             source_text: None,
             trivias: Trivias::default(),
+            leading_comments: FxHashMap::default(),
             mangler: None,
             code: vec![],
             needs_semicolon: false,
@@ -185,6 +187,20 @@ impl<'a> Codegen<'a> {
         trivias: Trivias,
         options: CommentOptions,
     ) -> Self {
+        let mut leading_comments: FxHashMap<u32, Vec<Comment>> = FxHashMap::default();
+        for comment in trivias
+            .comments()
+            .copied()
+            .filter(|comment| comment.attached_to != 0 && comment.is_leading())
+            .filter(|comment| {
+                let s = comment.span.source_text(source_text);
+                // only print jsdoc and `@__PURE__`, `@license`, `@preserve` etc
+                (comment.is_multi_line() && s.starts_with('*')) || s.trim_start().starts_with('@')
+            })
+        {
+            leading_comments.entry(comment.attached_to).or_default().push(comment);
+        }
+        self.leading_comments = leading_comments;
         self.trivias = trivias;
         self.comment_options = options;
         self.with_source_text(source_text)
@@ -206,7 +222,7 @@ impl<'a> Codegen<'a> {
 
     #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
-        program.gen(&mut self, Context::default());
+        program.print(&mut self, Context::default());
         let source_text = self.into_source_text();
         let source_map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { source_text, source_map }
@@ -233,7 +249,7 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::Lowest, Context::empty());
+        expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
 }
 
@@ -353,7 +369,7 @@ impl<'a> Codegen<'a> {
 
     fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for item in items {
-            item.gen(self, ctx);
+            item.print(self, ctx);
             self.print_comma();
         }
     }
@@ -371,6 +387,7 @@ impl<'a> Codegen<'a> {
             self.print_indent();
         }
         self.add_source_mapping(span.end);
+        self.print_leading_comments(span.end);
         self.print_char(b'}');
     }
 
@@ -404,7 +421,7 @@ impl<'a> Codegen<'a> {
                     self.print_hard_space();
                 }
                 self.print_next_indent_as_space = true;
-                stmt.gen(self, ctx);
+                stmt.print(self, ctx);
             }
         }
     }
@@ -413,7 +430,7 @@ impl<'a> Codegen<'a> {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
             for stmt in &stmt.body {
                 p.print_semicolon_if_needed();
-                stmt.gen(p, ctx);
+                stmt.print(p, ctx);
             }
         });
         self.needs_semicolon = false;
@@ -423,11 +440,11 @@ impl<'a> Codegen<'a> {
     // ```
     // let mut iter = items.iter();
     // let Some(item) = iter.next() else { return };
-    // item.gen(self, ctx);
+    // item.print(self, ctx);
     // for item in iter {
     //     self.print_comma();
     //     self.print_soft_space();
-    //     item.gen(self, ctx);
+    //     item.print(self, ctx);
     // }
     // ```
     // But it turned out this was actually a bit slower.
@@ -438,7 +455,7 @@ impl<'a> Codegen<'a> {
                 self.print_comma();
                 self.print_soft_space();
             }
-            item.gen(self, ctx);
+            item.print(self, ctx);
         }
     }
 
@@ -448,7 +465,7 @@ impl<'a> Codegen<'a> {
                 self.print_comma();
                 self.print_soft_space();
             }
-            item.gen_expr(self, precedence, ctx);
+            item.print_expr(self, precedence, ctx);
         }
     }
 
@@ -589,5 +606,28 @@ impl<'a> Codegen<'a> {
 
     fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Vec<AnnotationComment>> {
         self.move_comment_map.remove(&node_start)
+    }
+
+    fn print_leading_comments(&mut self, start: u32) {
+        if self.options.minify {
+            return;
+        }
+        let Some(source_text) = self.source_text else { return };
+        let Some(comments) = self.leading_comments.remove(&start) else { return };
+        // dbg!(&comments);
+
+        let first = comments.first().copied().unwrap();
+        let last = comments.last().copied().unwrap();
+
+        let s = Span::new(first.real_span_start(), last.real_span_end()).source_text(source_text);
+        if matches!(first.preceded_by_newline, Some(true)) {
+            self.print_char(b'\n');
+            self.print_indent();
+        }
+        self.print_str(s);
+        if last.is_single_line() || matches!(last.followed_by_newline, Some(true)) {
+            self.print_char(b'\n');
+            self.print_indent();
+        }
     }
 }
