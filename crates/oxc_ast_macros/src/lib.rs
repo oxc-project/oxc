@@ -54,6 +54,8 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
 
         if ident == "CloneIn" {
             (quote!(::oxc_allocator::CloneIn), quote!(<'static>))
+        } else if ident == "GetNodeId" {
+            (quote!(::oxc_syntax::node::GetNodeId), TokenStream2::default())
         } else if ident == "GetSpan" {
             (quote!(::oxc_span::GetSpan), TokenStream2::default())
         } else if ident == "GetSpanMut" {

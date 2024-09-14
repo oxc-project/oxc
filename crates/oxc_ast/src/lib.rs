@@ -44,6 +44,7 @@ mod generated {
     pub mod derive_clone_in;
     pub mod derive_content_eq;
     pub mod derive_content_hash;
+    pub mod derive_get_node_id;
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
     pub mod visit;
