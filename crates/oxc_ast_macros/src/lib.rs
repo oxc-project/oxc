@@ -1,7 +1,8 @@
-use proc_macro::TokenStream;
-use syn::{parse_macro_input, Item};
+use proc_macro::{TokenStream, TokenTree};
 
-mod ast;
+mod generated {
+    pub mod ast;
+}
 
 /// This attribute serves two purposes.
 /// First, it is a marker for our `ast_tools` to detect AST types.
@@ -70,9 +71,8 @@ mod ast;
 /// 2. `tsify`
 #[proc_macro_attribute]
 pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as Item);
-    let expanded = ast::ast(&input);
-    TokenStream::from(expanded)
+    let name = get_type_name(&input);
+    generated::ast::gen(&name, input)
 }
 
 /// Dummy derive macro for a non-existent trait `Ast`.
@@ -84,4 +84,39 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 #[proc_macro_derive(Ast, attributes(scope, visit, span, generate_derive, clone_in, serde, tsify))]
 pub fn ast_derive(_input: TokenStream) -> TokenStream {
     TokenStream::new()
+}
+
+/// Get type name as a string.
+///
+/// # Panics
+/// Panics if struct is not `struct` or `enum`.
+fn get_type_name(input: &TokenStream) -> String {
+    let mut it = input.clone().into_iter();
+    let mut next = || match it.next() {
+        Some(tt) => tt,
+        None => unreachable!(),
+    };
+
+    loop {
+        let TokenTree::Ident(ident) = next() else { continue };
+        let mut ident_str = ident.to_string();
+
+        // Skip over `pub`, `pub(crate)`, `pub(super)`
+        if ident_str.as_str() == "pub" {
+            let mut tt = next();
+            if matches!(tt, TokenTree::Group(_)) {
+                tt = next();
+            }
+            let TokenTree::Ident(ident) = tt else { unreachable!() };
+            ident_str = ident.to_string();
+        }
+
+        assert!(
+            matches!(ident_str.as_str(), "struct" | "enum"),
+            "`#[ast] attr can only be applied to structs and enums"
+        );
+
+        let TokenTree::Ident(ident) = next() else { unreachable!() };
+        return ident.to_string();
+    }
 }
