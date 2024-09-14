@@ -130,7 +130,7 @@ impl Linter {
         }
 
         for symbol in semantic.symbols().symbol_ids() {
-            for (rule,  ctx) in &mut rules {
+            for (rule, ctx) in &mut rules {
                 rule.run_on_symbol(symbol, ctx);
             }
         }

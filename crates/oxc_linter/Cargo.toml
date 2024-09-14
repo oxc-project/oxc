@@ -38,6 +38,7 @@ bitflags = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
 dashmap = { workspace = true }
+dyn-clone = "1.0.17"
 globset = { workspace = true }
 itertools = { workspace = true }
 json-strip-comments = { workspace = true }
@@ -56,7 +57,6 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 url = { workspace = true }
-dyn-clone = "1.0.17"
 
 [dev-dependencies]
 insta = { workspace = true }

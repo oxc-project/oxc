@@ -10,7 +10,12 @@ use oxc_syntax::module_record::ModuleRecord;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    config::LintConfig, disable_directives::{DisableDirectives, DisableDirectivesBuilder}, fixer::{FixKind, Message, RuleFix, RuleFixer}, javascript_globals::GLOBALS, rule::RuleState, AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings
+    config::LintConfig,
+    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
+    fixer::{FixKind, Message, RuleFix, RuleFixer},
+    javascript_globals::GLOBALS,
+    rule::RuleState,
+    AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 #[derive(Clone)]
@@ -55,7 +60,7 @@ pub struct LintContext<'a> {
     severity: Severity,
     frameworks: FrameworkFlags,
 
-    rule_state: Option<Box<dyn RuleState>>
+    rule_state: Option<Box<dyn RuleState>>,
 }
 
 impl<'a> LintContext<'a> {
