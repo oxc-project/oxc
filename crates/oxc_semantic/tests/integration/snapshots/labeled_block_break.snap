@@ -52,17 +52,27 @@ bb10: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "TryStatement" ]
-    2 [ label = "" ]
-    3 [ label = "BlockStatement" ]
-    4 [ label = "BlockStatement\nLabeledStatement(LABEL)\nBlockStatement\nIfStatement" ]
-    5 [ label = "Condition(IdentifierReference(condition))" ]
-    6 [ label = "BlockStatement\nbreak <LABEL>" ]
-    7 [ label = "unreachable" ]
-    8 [ label = "" ]
-    9 [ label = "" ]
-    10 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+TryStatement" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+BlockStatement" shape = box]
+    4 [ label = "bb4
+BlockStatement
+LabeledStatement(LABEL)
+BlockStatement
+IfStatement" shape = box]
+    5 [ label = "bb5
+Condition(IdentifierReference(condition))" shape = box]
+    6 [ label = "bb6
+BlockStatement
+break <LABEL>" shape = box]
+    7 [ label = "bb7
+unreachable" shape = box]
+    8 [ label = "bb8" shape = box]
+    9 [ label = "bb9" shape = box]
+    10 [ label = "bb10" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Explicit)" ]
     4 -> 0 [ label = "Error(Implicit)" ]

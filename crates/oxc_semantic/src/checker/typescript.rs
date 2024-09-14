@@ -1,11 +1,15 @@
 use std::borrow::Cow;
 
-use oxc_ast::syntax_directed_operations::{BoundNames, PropName};
+use rustc_hash::FxHashMap;
+
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{
+    ast::*,
+    syntax_directed_operations::{BoundNames, PropName},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, Span};
-use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 

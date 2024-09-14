@@ -3,7 +3,7 @@ use std::sync::Arc;
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
@@ -197,13 +197,9 @@ impl<'a> InjectGlobalVariables<'a> {
             let specifiers = Some(self.ast.vec1(self.inject_import_to_specifier(inject)));
             let source = self.ast.string_literal(SPAN, inject.source.as_str());
             let kind = ImportOrExportKind::Value;
-            let import_decl = self.ast.module_declaration_import_declaration(
-                SPAN,
-                specifiers,
-                source,
-                None::<WithClause>,
-                kind,
-            );
+            let import_decl = self
+                .ast
+                .module_declaration_import_declaration(SPAN, specifiers, source, NONE, kind);
             self.ast.statement_module_declaration(import_decl)
         });
         program.body.splice(0..0, imports);

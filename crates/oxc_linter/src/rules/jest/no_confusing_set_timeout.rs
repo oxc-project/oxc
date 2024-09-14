@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, AstNodeId, ReferenceId};
+use oxc_semantic::{AstNode, NodeId, ReferenceId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -151,7 +151,7 @@ fn handle_jest_set_time_out<'a>(
     reference_id_list: impl Iterator<Item = ReferenceId>,
     jest_reference_id_list: &Vec<(ReferenceId, Span)>,
     seen_jest_set_timeout: &mut bool,
-    id_to_jest_node_map: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    id_to_jest_node_map: &HashMap<NodeId, &PossibleJestNode<'a, '_>>,
 ) {
     let nodes = ctx.nodes();
     let scopes = ctx.scopes();
@@ -199,7 +199,7 @@ fn handle_jest_set_time_out<'a>(
 
 fn is_jest_fn_call<'a>(
     parent_node: &AstNode<'a>,
-    id_to_jest_node_map: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    id_to_jest_node_map: &HashMap<NodeId, &PossibleJestNode<'a, '_>>,
     ctx: &LintContext<'a>,
 ) -> bool {
     let mut id = parent_node.id();

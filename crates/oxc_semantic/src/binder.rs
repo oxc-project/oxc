@@ -3,8 +3,8 @@
 use std::{borrow::Cow, ptr};
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
 use oxc_ast::{
+    ast::*,
     syntax_directed_operations::{BoundNames, IsSimpleParameterList},
     AstKind,
 };

@@ -194,7 +194,7 @@ jobs:
         run: |
           for package in npm/oxlint*
           do
-            pnpm publish $package/ --tag latest --provenance --access public
+            pnpm publish $package/ --tag latest --provenance --access public --no-git-checks
             echo '----'
           done
 

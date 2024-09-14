@@ -9,7 +9,7 @@ use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodeId, AstNodes};
+use oxc_semantic::{AstNodes, NodeId};
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
@@ -331,7 +331,7 @@ fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNod
 /// And that function isn't a `React.memo` or `React.forwardRef`.
 /// Returns `true` if this node is a function argument and that isn't a React special function.
 /// Otherwise it would return `false`.
-fn is_non_react_func_arg(nodes: &AstNodes, node_id: AstNodeId) -> bool {
+fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
     let argument = match nodes.parent_node(node_id) {
         Some(parent) if matches!(parent.kind(), AstKind::Argument(_)) => parent,
         _ => return false,
@@ -344,7 +344,7 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: AstNodeId) -> bool {
     !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
 }
 
-fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -> bool {
+fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
         .ancestors(node_id)
         .map(|id| nodes.get_node(id))
@@ -370,7 +370,7 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
 
 fn get_declaration_identifier<'a>(
     nodes: &'a AstNodes<'a>,
-    node_id: AstNodeId,
+    node_id: NodeId,
 ) -> Option<Cow<'a, str>> {
     nodes.ancestors(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
         match kind {
@@ -397,7 +397,7 @@ fn get_declaration_identifier<'a>(
     })
 }
 
-fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: AstNodeId) -> bool {
+fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: NodeId) -> bool {
     nodes
         .ancestors(node_id)
         .map(|id| nodes.get_node(id))
@@ -407,7 +407,7 @@ fn is_export_default<'a>(nodes: &'a AstNodes<'a>, node_id: AstNodeId) -> bool {
 
 /// # Panics
 /// `node_id` should always point to a valid `Function`.
-fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: AstNodeId) -> bool {
+fn is_memo_or_forward_ref_callback(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes.ancestors(node_id).map(|id| nodes.get_node(id)).any(|node| {
         if let AstKind::CallExpression(call) = node.kind() {
             call.callee_name().is_some_and(|name| matches!(name, "forwardRef" | "memo"))

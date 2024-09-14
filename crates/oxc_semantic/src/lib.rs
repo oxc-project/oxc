@@ -4,30 +4,9 @@
 //! ```rust
 #![doc = include_str!("../examples/simple.rs")]
 //! ```
-mod binder;
-mod builder;
-mod checker;
-mod class;
-mod counter;
-mod diagnostics;
-mod jsdoc;
-mod label;
-mod module_record;
-mod node;
-mod reference;
-mod scope;
-mod symbol;
-mod unresolved_stack;
-
-pub mod dot;
-pub mod post_transform_checker;
 
 use std::sync::Arc;
 
-pub use builder::{SemanticBuilder, SemanticBuilderReturn};
-use class::ClassTable;
-pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
-pub use node::{AstNode, AstNodeId, AstNodes};
 use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
 use oxc_cfg::ControlFlowGraph;
 use oxc_span::{GetSpan, SourceType, Span};
@@ -37,11 +16,34 @@ pub use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
+pub mod dot;
+pub mod post_transform_checker;
+
+mod binder;
+mod builder;
+mod checker;
+mod class;
+mod diagnostics;
+mod jsdoc;
+mod label;
+mod module_record;
+mod node;
+mod reference;
+mod scope;
+mod stats;
+mod symbol;
+mod unresolved_stack;
+
 pub use crate::{
+    builder::{SemanticBuilder, SemanticBuilderReturn},
+    jsdoc::{JSDoc, JSDocFinder, JSDocTag},
+    node::{AstNode, AstNodes, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
     scope::ScopeTree,
+    stats::Stats,
     symbol::{IsGlobalReference, SymbolTable},
 };
+use class::ClassTable;
 
 /// Semantic analysis of a JavaScript/TypeScript program.
 ///
@@ -82,7 +84,7 @@ pub struct Semantic<'a> {
     /// Parsed JSDoc comments.
     jsdoc: JSDocFinder<'a>,
 
-    unused_labels: Vec<AstNodeId>,
+    unused_labels: Vec<NodeId>,
 
     /// Control flow graph. Only present if [`Semantic`] is built with cfg
     /// creation enabled using [`SemanticBuilder::with_cfg`].
@@ -149,7 +151,7 @@ impl<'a> Semantic<'a> {
         &self.symbols
     }
 
-    pub fn unused_labels(&self) -> &Vec<AstNodeId> {
+    pub fn unused_labels(&self) -> &Vec<NodeId> {
         &self.unused_labels
     }
 
@@ -161,7 +163,18 @@ impl<'a> Semantic<'a> {
         self.cfg.as_ref()
     }
 
-    pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {
+    /// Get statistics about data held in `Semantic`.
+    pub fn stats(&self) -> Stats {
+        #[allow(clippy::cast_possible_truncation)]
+        Stats::new(
+            self.nodes.len() as u32,
+            self.scopes.len() as u32,
+            self.symbols.len() as u32,
+            self.symbols.references.len() as u32,
+        )
+    }
+
+    pub fn is_unresolved_reference(&self, node_id: NodeId) -> bool {
         let reference_node = self.nodes.get_node(node_id);
         let AstKind::IdentifierReference(id) = reference_node.kind() else {
             return false;

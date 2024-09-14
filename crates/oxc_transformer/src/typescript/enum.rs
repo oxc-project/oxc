@@ -1,10 +1,10 @@
 use std::cell::Cell;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
+use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
-    node::AstNodeId,
+    node::NodeId,
     number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::ReferenceFlags,
@@ -85,7 +85,7 @@ impl<'a> TypeScriptEnum<'a> {
             enum_name.to_compact_str(),
             SymbolFlags::FunctionScopedVariable,
             func_scope_id,
-            AstNodeId::DUMMY,
+            NodeId::DUMMY,
         );
         ctx.scopes_mut().add_binding(func_scope_id, enum_name.to_compact_str(), param_symbol_id);
         let ident = BindingIdentifier {
@@ -94,7 +94,7 @@ impl<'a> TypeScriptEnum<'a> {
             symbol_id: Cell::new(Some(param_symbol_id)),
         };
         let kind = ast.binding_pattern_kind_from_binding_identifier(ident.clone());
-        let id = ast.binding_pattern(kind, Option::<TSTypeAnnotation>::None, false);
+        let id = ast.binding_pattern(kind, NONE, false);
 
         // ((Foo) => {
         let params = ast.formal_parameter(SPAN, ast.vec(), id, None, false, false);
@@ -103,7 +103,7 @@ impl<'a> TypeScriptEnum<'a> {
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
             params,
-            Option::<BindingRestElement>::None,
+            NONE,
         );
 
         // Foo[Foo["X"] = 0] = "X";
@@ -146,13 +146,7 @@ impl<'a> TypeScriptEnum<'a> {
             ast.vec1(Argument::from(expression))
         };
 
-        let call_expression = ast.expression_call(
-            SPAN,
-            callee,
-            Option::<TSTypeParameterInstantiation>::None,
-            arguments,
-            false,
-        );
+        let call_expression = ast.expression_call(SPAN, callee, NONE, arguments, false);
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;
@@ -176,8 +170,7 @@ impl<'a> TypeScriptEnum<'a> {
             let binding_identifier = decl.id.clone();
             let binding_pattern_kind =
                 ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
-            let binding =
-                ast.binding_pattern(binding_pattern_kind, Option::<TSTypeAnnotation>::None, false);
+            let binding = ast.binding_pattern(binding_pattern_kind, NONE, false);
             let decl = ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
             ast.vec1(decl)
         };

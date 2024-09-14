@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
@@ -218,13 +218,13 @@ impl<'a> ParserImpl<'a> {
             };
             let params_span = self.end_span(ident.span);
             let ident = self.ast.binding_pattern_kind_from_binding_identifier(ident);
-            let pattern = self.ast.binding_pattern(ident, Option::<TSTypeAnnotation>::None, false);
+            let pattern = self.ast.binding_pattern(ident, NONE, false);
             let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
             self.ast.alloc_formal_parameters(
                 params_span,
                 FormalParameterKind::ArrowFormalParameters,
                 self.ast.vec1(formal_parameter),
-                Option::<BindingRestElement>::None,
+                NONE,
             )
         };
 

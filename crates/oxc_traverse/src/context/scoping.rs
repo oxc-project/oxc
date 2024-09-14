@@ -6,7 +6,7 @@ use rustc_hash::FxHashSet;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, visit::Visit};
-use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
+use oxc_semantic::{NodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
@@ -82,7 +82,7 @@ impl TraverseScoping {
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
         let flags = self.scopes.get_new_scope_flags(flags, parent_id);
-        self.scopes.add_scope(Some(parent_id), AstNodeId::DUMMY, flags)
+        self.scopes.add_scope(Some(parent_id), NodeId::DUMMY, flags)
     }
 
     /// Create new scope as child of current scope.
@@ -222,7 +222,7 @@ impl TraverseScoping {
 
         // Add binding to scope
         let symbol_id =
-            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, AstNodeId::DUMMY);
+            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, NodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -281,7 +281,7 @@ impl TraverseScoping {
         symbol_id: SymbolId,
         flags: ReferenceFlags,
     ) -> ReferenceId {
-        let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flags);
+        let reference = Reference::new_with_symbol_id(NodeId::DUMMY, symbol_id, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.resolved_references[symbol_id].push(reference_id);
         reference_id
@@ -305,7 +305,7 @@ impl TraverseScoping {
         name: CompactStr,
         flags: ReferenceFlags,
     ) -> ReferenceId {
-        let reference = Reference::new(AstNodeId::DUMMY, flags);
+        let reference = Reference::new(NodeId::DUMMY, flags);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
         reference_id

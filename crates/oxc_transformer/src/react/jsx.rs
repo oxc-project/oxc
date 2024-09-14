@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
@@ -370,7 +370,7 @@ impl<'a> Traverse<'a> for ReactJsx<'a> {
         self.add_runtime_imports(program, ctx);
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         *expr = match expr {
             Expression::JSXElement(e) => self.transform_jsx(&JSXElementOrFragment::Element(e), ctx),
             Expression::JSXFragment(e) => {
@@ -507,6 +507,7 @@ impl<'a> ReactJsx<'a> {
         let mut need_jsxs = false;
 
         let children = e.children();
+        let mut children_len = children.len();
 
         // Append children to object properties in automatic mode
         if is_automatic {
@@ -515,7 +516,7 @@ impl<'a> ReactJsx<'a> {
                 children.iter().filter_map(|child| self.transform_jsx_child(child, ctx)),
                 allocator,
             );
-            let children_len = children.len();
+            children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
                     children.pop().unwrap()
@@ -603,7 +604,7 @@ impl<'a> ReactJsx<'a> {
             if is_development {
                 arguments.push(Argument::from(self.ctx.ast.expression_boolean_literal(
                     SPAN,
-                    if is_fragment { false } else { children.len() > 1 },
+                    if is_fragment { false } else { children_len > 1 },
                 )));
             }
 
@@ -641,13 +642,7 @@ impl<'a> ReactJsx<'a> {
         }
 
         let callee = self.get_create_element(has_key_after_props_spread, need_jsxs, ctx);
-        self.ast().expression_call(
-            e.span(),
-            callee,
-            Option::<TSTypeParameterInstantiation>::None,
-            arguments,
-            false,
-        )
+        self.ast().expression_call(e.span(), callee, NONE, arguments, false)
     }
 
     fn transform_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {

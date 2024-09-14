@@ -409,26 +409,25 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
     /// Return the the last element, if we are not empty.
     #[inline(always)]
     pub fn last(&self) -> Option<&T> {
-        self.len().checked_sub(1).and_then(|i| self.get(I::from_usize(i)))
+        self.raw.last()
     }
 
     /// Return the the last element, if we are not empty.
     #[inline]
     pub fn last_mut(&mut self) -> Option<&mut T> {
-        let i = self.len().checked_sub(1)?;
-        self.get_mut(I::from_usize(i))
+        self.raw.last_mut()
     }
 
     /// Return the the first element, if we are not empty.
     #[inline]
     pub fn first(&self) -> Option<&T> {
-        self.get(I::from_usize(0))
+        self.raw.first()
     }
 
     /// Return the the first element, if we are not empty.
     #[inline]
     pub fn first_mut(&mut self) -> Option<&mut T> {
-        self.get_mut(I::from_usize(0))
+        self.raw.first_mut()
     }
 
     /// Copies elements from one part of the slice to another part of itself,
@@ -668,7 +667,7 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
         } else {
             let last = self.last_idx();
             let split = self.split_at_mut(last);
-            Some((&mut split.1[0], split.0))
+            Some((&mut split.1[I::from_usize(0)], split.0))
         }
     }
 }

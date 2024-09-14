@@ -15,26 +15,6 @@ fn test_same(source_text: &str) {
     test(source_text, source_text);
 }
 
-// Oxc
-
-#[test]
-fn cjs() {
-    // Bail `cjs-module-lexer`.
-    test_same("0 && (module.exports = { version });");
-}
-
-#[test] // https://github.com/oxc-project/oxc/issues/4341
-fn tagged_template() {
-    test_same("(1, o.f)()");
-    test_same("(1, o.f)``");
-
-    test("(true && o.f)()", "o.f()");
-    test_same("(true && o.f)``");
-
-    test("(true ? o.f : false)()", "o.f()");
-    test_same("(true ? o.f : false)``");
-}
-
 // Google Closure Compiler
 
 #[test]
@@ -623,6 +603,40 @@ fn test_fold_logical_op2() {
     test("x = function(){} && x", "x=x");
     test("x = true && function(){}", "x=function(){}");
     test("x = [(function(){alert(x)})()] && x", "x=([function(){alert(x)}()],x)");
+}
+
+#[test]
+fn test_fold_nullish_coalesce() {
+    // fold if left is null/undefined
+    test("null ?? 1", "1");
+    test("undefined ?? false", "false");
+    test("(a(), null) ?? 1", "(a(), null, 1)");
+
+    test("x = [foo()] ?? x", "x = [foo()]");
+
+    // short circuit on all non nullish LHS
+    test("x = false ?? x", "x = false");
+    test("x = true ?? x", "x = true");
+    test("x = 0 ?? x", "x = 0");
+    test("x = 3 ?? x", "x = 3");
+
+    // unfoldable, because the right-side may be the result
+    test_same("a = x ?? true");
+    test_same("a = x ?? false");
+    test_same("a = x ?? 3");
+    test_same("a = b ? c : x ?? false");
+    test_same("a = b ? x ?? false : c");
+
+    // folded, but not here.
+    test_same("a = x ?? false ? b : c");
+    test_same("a = x ?? true ? b : c");
+
+    test_same("x = foo() ?? true ?? bar()");
+    test("x = foo() ?? (true && bar())", "x = foo() ?? bar()");
+    test_same("x = (foo() || false) ?? bar()");
+
+    test("a() ?? (1 ?? b())", "a() ?? 1");
+    test("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
 }
 
 #[test]

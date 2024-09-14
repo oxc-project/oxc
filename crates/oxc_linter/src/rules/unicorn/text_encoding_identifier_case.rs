@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -102,7 +102,7 @@ fn get_replacement(node: &str) -> Option<&'static str> {
     None
 }
 
-fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool {
+fn is_jsx_meta_elem_with_charset_attr(id: NodeId, ctx: &LintContext) -> bool {
     let Some(parent) = ctx.nodes().parent_node(id) else {
         return false;
     };

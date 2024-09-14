@@ -461,7 +461,7 @@ pub struct TaggedTemplateExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub tag: Expression<'a>,
-    pub quasi: Box<'a, TemplateLiteral<'a>>,
+    pub quasi: TemplateLiteral<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 

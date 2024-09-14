@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, AstNodeId};
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -19,7 +19,7 @@ fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {
 }
 
 #[inline]
-fn is_in_test(ctx: &LintContext<'_>, id: AstNodeId) -> bool {
+fn is_in_test(ctx: &LintContext<'_>, id: NodeId) -> bool {
     ctx.nodes().iter_parents(id).any(|node| {
         let AstKind::CallExpression(ancestor_call_expr) = node.kind() else { return false };
         let Some(ancestor_member_expr) = ancestor_call_expr.callee.as_member_expression() else {
@@ -70,7 +70,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferEach {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut skip = HashSet::<AstNodeId>::new();
+        let mut skip = HashSet::<NodeId>::new();
         ctx.nodes().iter().for_each(|node| {
             Self::run(node, ctx, &mut skip);
         });
@@ -78,7 +78,7 @@ impl Rule for PreferEach {
 }
 
 impl PreferEach {
-    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut HashSet<AstNodeId>) {
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut HashSet<NodeId>) {
         let kind = node.kind();
 
         let AstKind::CallExpression(call_expr) = kind else { return };

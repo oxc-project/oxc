@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
@@ -164,7 +164,7 @@ impl<'a> ReactJsxSource<'a> {
         let id = {
             let ident = filename_var.create_binding_identifier();
             let ident = self.ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
-            self.ctx.ast.binding_pattern(ident, Option::<TSTypeAnnotation>::None, false)
+            self.ctx.ast.binding_pattern(ident, NONE, false)
         };
         let decl = {
             let init = self

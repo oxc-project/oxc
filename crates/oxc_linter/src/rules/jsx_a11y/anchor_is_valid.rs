@@ -137,9 +137,7 @@ impl Rule for AnchorIsValid {
             };
             // Don't eagerly get `span` here, to avoid that work unless rule fails
             let get_span = || jsx_el.opening_element.name.span();
-            if let Option::Some(href_attr) =
-                has_jsx_prop_ignore_case(&jsx_el.opening_element, "href")
-            {
+            if let Some(href_attr) = has_jsx_prop_ignore_case(&jsx_el.opening_element, "href") {
                 let JSXAttributeItem::Attribute(attr) = href_attr else {
                     return;
                 };

@@ -1,8 +1,15 @@
+use cow_utils::CowUtils;
+
 use oxc_minifier::CompressOptions;
 
 fn test(source_text: &str, expected: &str) {
+    let t = "('production' == 'production')";
+    let f = "('production' == 'development')";
+    let source_text = source_text.cow_replace("true", t);
+    let source_text = source_text.cow_replace("false", f);
+
     let options = CompressOptions::dead_code_elimination();
-    crate::test(source_text, expected, options);
+    crate::test(&source_text, expected, options);
 }
 
 fn test_same(source_text: &str) {
@@ -85,11 +92,7 @@ fn dce_if_statement() {
     // typeof
     test("if (typeof 1 !== 'number') { REMOVE; }", "");
     test("if (typeof false !== 'boolean') { REMOVE; }", "");
-    test(
-        "if (typeof 1 === 'string') { REMOVE;
-}",
-        "",
-    );
+    test("if (typeof 1 === 'string') { REMOVE; }", "");
 }
 
 #[test]

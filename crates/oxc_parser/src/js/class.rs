@@ -421,20 +421,19 @@ impl<'a> ParserImpl<'a> {
         } else {
             MethodDefinitionType::MethodDefinition
         };
-        let method_definition = MethodDefinition {
+        Ok(self.ast.class_element_method_definition(
             r#type,
-            span: self.end_span(span),
+            self.end_span(span),
+            decorators,
             key,
             value,
             kind,
             computed,
             r#static,
             r#override,
-            accessibility,
             optional,
-            decorators,
-        };
-        Ok(ClassElement::MethodDefinition(self.ast.alloc(method_definition)))
+            accessibility,
+        ))
     }
 
     /// `FieldDefinition`[?Yield, ?Await] ;
@@ -464,23 +463,22 @@ impl<'a> ParserImpl<'a> {
         } else {
             PropertyDefinitionType::PropertyDefinition
         };
-        let property_definition = PropertyDefinition {
+        Ok(self.ast.class_element_property_definition(
             r#type,
-            span: self.end_span(span),
+            self.end_span(span),
+            decorators,
             key,
             value,
             computed,
             r#static,
             declare,
             r#override,
+            optional,
+            definite,
             readonly,
             type_annotation,
             accessibility,
-            optional,
-            definite,
-            decorators,
-        };
-        Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
+        ))
     }
 
     /// `ClassStaticBlockStatementList` :

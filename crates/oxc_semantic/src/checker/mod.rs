@@ -1,12 +1,13 @@
+use oxc_ast::{
+    ast::{DoWhileStatement, ForStatement, WhileStatement},
+    AstKind,
+};
+
 mod javascript;
 mod typescript;
 
 use javascript as js;
 pub use javascript::check_module_record;
-use oxc_ast::{
-    ast::{DoWhileStatement, ForStatement, WhileStatement},
-    AstKind,
-};
 use typescript as ts;
 
 use crate::{builder::SemanticBuilder, AstNode};

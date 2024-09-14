@@ -106,7 +106,6 @@ impl<'a> BoundIdentifier<'a> {
     }
 
     /// Create `IdentifierReference` referencing this binding, which is written to, with specified `Span`
-    #[allow(unused)]
     pub fn create_spanned_write_reference(
         &self,
         span: Span,
@@ -127,7 +126,6 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `IdentifierReference` referencing this binding, which is read from + written to,
     /// with specified `Span`
-    #[allow(unused)]
     pub fn create_spanned_read_write_reference(
         &self,
         span: Span,

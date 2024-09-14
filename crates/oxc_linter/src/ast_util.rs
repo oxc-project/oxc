@@ -1,5 +1,5 @@
 use oxc_ast::{ast::BindingIdentifier, AstKind};
-use oxc_semantic::{AstNode, AstNodeId, IsGlobalReference, SymbolId};
+use oxc_semantic::{AstNode, IsGlobalReference, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 
@@ -246,7 +246,7 @@ pub fn nth_outermost_paren_parent<'a, 'b>(
 /// [`Expression::get_inner_expression`].
 pub fn iter_outer_expressions<'a, 'ctx>(
     ctx: &'ctx LintContext<'a>,
-    node_id: AstNodeId,
+    node_id: NodeId,
 ) -> impl Iterator<Item = &'ctx AstNode<'a>> + 'ctx {
     ctx.nodes().iter_parents(node_id).skip(1).filter(|parent| {
         !matches!(

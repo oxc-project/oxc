@@ -2612,10 +2612,10 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTag<'a, 't> {
     }
 
     #[inline]
-    pub fn quasi(self) -> &'t Box<'a, TemplateLiteral<'a>> {
+    pub fn quasi(self) -> &'t TemplateLiteral<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
-                as *const Box<'a, TemplateLiteral<'a>>)
+                as *const TemplateLiteral<'a>)
         }
     }
 
@@ -2684,10 +2684,10 @@ impl<'a, 't> TaggedTemplateExpressionWithoutTypeParameters<'a, 't> {
     }
 
     #[inline]
-    pub fn quasi(self) -> &'t Box<'a, TemplateLiteral<'a>> {
+    pub fn quasi(self) -> &'t TemplateLiteral<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TAGGED_TEMPLATE_EXPRESSION_QUASI)
-                as *const Box<'a, TemplateLiteral<'a>>)
+                as *const TemplateLiteral<'a>)
         }
     }
 }

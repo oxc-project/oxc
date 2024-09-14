@@ -15,9 +15,10 @@ export default function App() {
 	const baz = FancyHook.useThing();
 	React.useState();
 	useThePlatform();
+	use();
 	return _jsxs("h1", { children: [bar, baz] });
 }
-_s2(App, "useFancyState{bar}\\nuseThing{baz}\\nuseState{}\\nuseThePlatform{}", true, function() {
+_s2(App, "useFancyState{bar}\\nuseThing{baz}\\nuseState{}\\nuseThePlatform{}\\nuse{}", true, function() {
 	return [FancyHook.useThing];
 });
 _c = App;

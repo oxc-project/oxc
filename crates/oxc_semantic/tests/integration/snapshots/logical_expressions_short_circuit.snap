@@ -73,23 +73,33 @@ bb16: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "IfStatement" ]
-    2 [ label = "Condition(LogicalExpression)" ]
-    3 [ label = "" ]
-    4 [ label = "" ]
-    5 [ label = "BlockStatement\nExpressionStatement" ]
-    6 [ label = "IfStatement" ]
-    7 [ label = "Condition(LogicalExpression)" ]
-    8 [ label = "" ]
-    9 [ label = "" ]
-    10 [ label = "ExpressionStatement" ]
-    11 [ label = "IfStatement" ]
-    12 [ label = "Condition(LogicalExpression)" ]
-    13 [ label = "" ]
-    14 [ label = "" ]
-    15 [ label = "ExpressionStatement" ]
-    16 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+IfStatement" shape = box]
+    2 [ label = "bb2
+Condition(LogicalExpression)" shape = box]
+    3 [ label = "bb3" shape = box]
+    4 [ label = "bb4" shape = box]
+    5 [ label = "bb5
+BlockStatement
+ExpressionStatement" shape = box]
+    6 [ label = "bb6
+IfStatement" shape = box]
+    7 [ label = "bb7
+Condition(LogicalExpression)" shape = box]
+    8 [ label = "bb8" shape = box]
+    9 [ label = "bb9" shape = box]
+    10 [ label = "bb10
+ExpressionStatement" shape = box]
+    11 [ label = "bb11
+IfStatement" shape = box]
+    12 [ label = "bb12
+Condition(LogicalExpression)" shape = box]
+    13 [ label = "bb13" shape = box]
+    14 [ label = "bb14" shape = box]
+    15 [ label = "bb15
+ExpressionStatement" shape = box]
+    16 [ label = "bb16" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     2 -> 0 [ label = "Error(Implicit)" ]
     3 -> 0 [ label = "Error(Implicit)" ]

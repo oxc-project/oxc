@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, AstNodeId};
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
@@ -98,7 +98,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
 fn check_parents<'a>(
     node: &AstNode<'a>,
-    visited: &mut FxHashSet<AstNodeId>,
+    visited: &mut FxHashSet<NodeId>,
     in_conditional: InConditional,
     ctx: &LintContext<'a>,
 ) -> InConditional {

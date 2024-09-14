@@ -6,10 +6,11 @@ fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
     operator != UnaryOperator::Delete
 }
 
-/// port from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L241)
 /// Returns true if some node in n's subtree changes application state. If
 /// `check_for_new_objects` is true, we assume that newly created mutable objects (like object
 /// literals) change state. Otherwise, we assume that they have no side effects.
+///
+/// Ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L241)
 pub trait CheckForStateChange<'a, 'b> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool;
 }

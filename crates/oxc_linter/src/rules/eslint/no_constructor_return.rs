@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -65,7 +65,7 @@ fn is_constructor(node: &AstNode<'_>) -> bool {
     )
 }
 
-fn is_definitely_in_constructor(ctx: &LintContext, node_id: AstNodeId) -> bool {
+fn is_definitely_in_constructor(ctx: &LintContext, node_id: NodeId) -> bool {
     ctx.nodes()
         .ancestors(node_id)
         .map(|id| ctx.nodes().get_node(id))

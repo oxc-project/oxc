@@ -1,5 +1,10 @@
 #![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 
+#[cfg(feature = "serialize")]
+use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
+
 use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
@@ -7,13 +12,9 @@ pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 use crate::{
-    node::AstNodeId,
+    node::NodeId,
     reference::{Reference, ReferenceId},
 };
 
@@ -38,7 +39,7 @@ pub struct SymbolTable {
     pub flags: IndexVec<SymbolId, SymbolFlags>,
     pub scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
-    pub declarations: IndexVec<SymbolId, AstNodeId>,
+    pub declarations: IndexVec<SymbolId, NodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
@@ -123,7 +124,7 @@ impl SymbolTable {
     }
 
     #[inline]
-    pub fn get_declaration(&self, symbol_id: SymbolId) -> AstNodeId {
+    pub fn get_declaration(&self, symbol_id: SymbolId) -> NodeId {
         self.declarations[symbol_id]
     }
 
@@ -133,7 +134,7 @@ impl SymbolTable {
         name: CompactStr,
         flags: SymbolFlags,
         scope_id: ScopeId,
-        node_id: AstNodeId,
+        node_id: NodeId,
     ) -> SymbolId {
         self.spans.push(span);
         self.names.push(name);

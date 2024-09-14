@@ -2,7 +2,7 @@
 //! consider variables ignored by name pattern, but by where they are declared.
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_semantic::{AstNode, AstNodeId, Semantic};
+use oxc_semantic::{AstNode, NodeId, Semantic};
 use oxc_span::GetSpan;
 
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
@@ -154,7 +154,7 @@ impl NoUnusedVars {
     pub(super) fn is_allowed_type_parameter(
         &self,
         symbol: &Symbol<'_, '_>,
-        declaration_id: AstNodeId,
+        declaration_id: NodeId,
     ) -> bool {
         matches!(symbol.nodes().parent_kind(declaration_id), Some(AstKind::TSMappedType(_)))
     }
@@ -234,7 +234,7 @@ impl NoUnusedVars {
             .any(|p| p.has_modifier() || p.pattern.has_any_used_binding(ctx))
     }
 
-    /// `params_id` is the [`AstNodeId`] to a [`AstKind::FormalParameters`] node.
+    /// `params_id` is the [`NodeId`] to a [`AstKind::FormalParameters`] node.
     ///
     /// The following allowed conditions are handled:
     /// 1. setter parameters - removing them causes a syntax error.
@@ -242,7 +242,7 @@ impl NoUnusedVars {
     fn is_allowed_param_because_of_method<'a>(
         semantic: &Semantic<'a>,
         param: &FormalParameter<'a>,
-        params_id: AstNodeId,
+        params_id: NodeId,
     ) -> bool {
         let mut parents_iter = semantic.nodes().iter_parents(params_id).skip(1).map(AstNode::kind);
 

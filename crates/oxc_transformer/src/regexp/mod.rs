@@ -46,7 +46,7 @@
 
 use std::borrow::Cow;
 
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_regular_expression::ast::{
     CharacterClass, CharacterClassContents, LookAroundAssertionKind, Pattern, Term,
@@ -186,12 +186,7 @@ impl<'a> Traverse<'a> for RegExp<'a> {
             ctx.ast.argument_expression(ctx.ast.expression_string_literal(SPAN, flags_str));
         arguments.push(flags_str);
 
-        *expr = ctx.ast.expression_new(
-            regexp.span,
-            callee,
-            arguments,
-            None::<TSTypeParameterInstantiation>,
-        );
+        *expr = ctx.ast.expression_new(regexp.span, callee, arguments, NONE);
     }
 }
 

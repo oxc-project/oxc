@@ -83,24 +83,43 @@ bb17: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "" ]
-    2 [ label = "" ]
-    3 [ label = "ForInStatement\nVariableDeclaration" ]
-    4 [ label = "" ]
-    5 [ label = "Iteration(IdentifierReference(array) in expr)" ]
-    6 [ label = "BlockStatement\nIfStatement" ]
-    7 [ label = "Condition(if cond)" ]
-    8 [ label = "BlockStatement\nExpressionStatement\nbreak" ]
-    9 [ label = "unreachable" ]
-    10 [ label = "IfStatement" ]
-    11 [ label = "Condition(else cond)" ]
-    12 [ label = "BlockStatement\nExpressionStatement\ncontinue" ]
-    13 [ label = "unreachable" ]
-    14 [ label = "" ]
-    15 [ label = "ExpressionStatement\nExpressionStatement" ]
-    16 [ label = "ExpressionStatement" ]
-    17 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1" shape = box]
+    2 [ label = "bb2" shape = box]
+    3 [ label = "bb3
+ForInStatement
+VariableDeclaration" shape = box]
+    4 [ label = "bb4" shape = box]
+    5 [ label = "bb5
+Iteration(IdentifierReference(array) in expr)" shape = box]
+    6 [ label = "bb6
+BlockStatement
+IfStatement" shape = box]
+    7 [ label = "bb7
+Condition(if cond)" shape = box]
+    8 [ label = "bb8
+BlockStatement
+ExpressionStatement
+break" shape = box]
+    9 [ label = "bb9
+unreachable" shape = box]
+    10 [ label = "bb10
+IfStatement" shape = box]
+    11 [ label = "bb11
+Condition(else cond)" shape = box]
+    12 [ label = "bb12
+BlockStatement
+ExpressionStatement
+continue" shape = box]
+    13 [ label = "bb13
+unreachable" shape = box]
+    14 [ label = "bb14" shape = box]
+    15 [ label = "bb15
+ExpressionStatement
+ExpressionStatement" shape = box]
+    16 [ label = "bb16
+ExpressionStatement" shape = box]
+    17 [ label = "bb17" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     3 -> 2 [ label = "Error(Implicit)" ]
     1 -> 3 [ label = "NewFunction" ]

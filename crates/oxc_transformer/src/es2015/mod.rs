@@ -96,4 +96,20 @@ impl<'a> Traverse<'a> for ES2015<'a> {
             self.arrow_functions.enter_variable_declarator(node, ctx);
         }
     }
+
+    fn enter_jsx_element_name(&mut self, node: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.enter_jsx_element_name(node, ctx);
+        }
+    }
+
+    fn enter_jsx_member_expression_object(
+        &mut self,
+        node: &mut JSXMemberExpressionObject<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.enter_jsx_member_expression_object(node, ctx);
+        }
+    }
 }

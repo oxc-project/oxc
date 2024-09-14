@@ -338,13 +338,11 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral<'a>> {
         let span = self.start_span();
-
         // split out pattern
         let (pattern_end, flags) = self.read_regex()?;
         let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
         let pattern_text = &self.source_text[pattern_start as usize..pattern_end as usize];
         self.bump_any();
-
         let pattern = self
             .options
             .parse_regular_expression
@@ -356,7 +354,6 @@ impl<'a> ParserImpl<'a> {
                     pat.map_or_else(|| RegExpPattern::Invalid(pattern_text), RegExpPattern::Pattern)
                 },
             );
-
         Ok(self.ast.reg_exp_literal(self.end_span(span), EmptyObject, RegExp { pattern, flags }))
     }
 
@@ -471,7 +468,7 @@ impl<'a> ParserImpl<'a> {
             }
             _ => unreachable!("parse_template_literal"),
         }
-        Ok(TemplateLiteral { span: self.end_span(span), quasis, expressions })
+        Ok(self.ast.template_literal(self.end_span(span), quasis, expressions))
     }
 
     pub(crate) fn parse_template_literal_expression(

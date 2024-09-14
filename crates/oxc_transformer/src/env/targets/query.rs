@@ -16,7 +16,6 @@ use super::{version::Version, Versions};
 #[allow(clippy::large_enum_variant)]
 pub enum Targets {
     Query(Query),
-    #[allow(unused)]
     EsModules(EsModules),
     Versions(Versions),
     HashMap(FxHashMap<String, QueryOrVersion>),

@@ -1,17 +1,13 @@
 commit: 3bcfee23
 
-Passed: 41/52
+Passed: 43/53
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
 * babel-plugin-transform-optional-catch-binding
+* babel-plugin-transform-arrow-functions
 * babel-preset-typescript
 * regexp
-
-
-# babel-plugin-transform-arrow-functions (1/2)
-* with-this-member-expression/input.jsx
-x Output mismatch
 
 
 # babel-plugin-transform-typescript (1/8)
@@ -167,7 +163,7 @@ rebuilt        : SymbolId(2): []
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (27/30)
+# babel-plugin-transform-react-jsx (28/31)
 * refresh/does-not-transform-it-because-it-is-not-used-in-the-AST/input.jsx
 x Output mismatch
 

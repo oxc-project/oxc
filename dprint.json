@@ -10,7 +10,6 @@
   "toml": {
   },
   "excludes": [
-    "npm/oxlint/configuration_schema.json",
     "tasks/coverage/misc",
     "**/tests/**",
     "**/fixtures/**",
@@ -20,6 +19,8 @@
     "pnpm-lock.yaml",
     "napi/{parser,transform}/index.js",
     "napi/{parser,transform}/index.d.ts",
+    "npm/*/package.json",
+    "npm/oxlint/configuration_schema.json",
     ".github/.generated_ast_watch_list.yml"
   ],
   "plugins": [
