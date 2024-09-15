@@ -1,4 +1,4 @@
-ts compatibility: 50/526 (9.51%)
+ts compatibility: 55/526 (10.46%)
 
 # Failed
 
@@ -239,12 +239,6 @@ ts compatibility: 50/526 (9.51%)
 * conformance/types/any/anyAsConstructor.ts
 * conformance/types/any/anyAsGenericFunctionCall.ts
 
-### conformance/types/constKeyword
-* conformance/types/constKeyword/constKeyword.ts
-
-### conformance/types/enumDeclaration
-* conformance/types/enumDeclaration/enumDeclaration.ts
-
 ### conformance/types/firstTypeNode
 * conformance/types/firstTypeNode/firstTypeNode.ts
 
@@ -393,7 +387,6 @@ ts compatibility: 50/526 (9.51%)
 ### declare
 * declare/declare-get-set-field.ts
 * declare/declare_class_fields.ts
-* declare/declare_enum.ts
 * declare/declare_function.ts
 * declare/declare_interface.ts
 * declare/declare_module.ts
@@ -441,9 +434,7 @@ ts compatibility: 50/526 (9.51%)
 * end-of-line/multiline.ts
 
 ### enum
-* enum/computed-members.ts
 * enum/enum.ts
-* enum/multiline.ts
 
 ### error-recovery
 * error-recovery/generic.ts
