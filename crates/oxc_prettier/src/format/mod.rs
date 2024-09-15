@@ -826,7 +826,20 @@ impl<'a> Format<'a> for TSInferType<'a> {
 
 impl<'a> Format<'a> for TSIntersectionType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        let mut add_symbol = false;
+
+        for ts_type in &self.types {
+            if add_symbol {
+                parts.push(ss!(" & "));
+            } else {
+                add_symbol = true;
+            }
+
+            parts.push(ts_type.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
@@ -921,7 +934,20 @@ impl<'a> Format<'a> for TSParenthesizedType<'a> {
 
 impl<'a> Format<'a> for TSUnionType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        let mut add_symbol = false;
+
+        for ts_type in &self.types {
+            if add_symbol {
+                parts.push(ss!(" | "));
+            } else {
+                add_symbol = true;
+            }
+
+            parts.push(ts_type.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
