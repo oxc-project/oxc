@@ -986,7 +986,7 @@ impl<'a> Format<'a> for TSEnumDeclaration<'a> {
             parts.extend(hardline!());
         }
         parts.push(ss!("}"));
-        
+
         Doc::Array(parts)
     }
 }
@@ -1002,7 +1002,7 @@ impl<'a> Format<'a> for TSEnumMember<'a> {
         }
 
         parts.push(ss!(","));
-        
+
         Doc::Array(parts)
     }
 }
@@ -1013,7 +1013,7 @@ impl<'a> Format<'a> for TSEnumMemberName<'a> {
             TSEnumMemberName::StaticIdentifier(identifier) => identifier.format(p),
             TSEnumMemberName::StaticStringLiteral(string_literal) => string_literal.format(p),
             TSEnumMemberName::StaticTemplateLiteral(template_literal) => template_literal.format(p),
-            name => array!(p, ss!("["), name.as_expression().unwrap().format(p), ss!("]"))
+            name => array!(p, ss!("["), name.as_expression().unwrap().format(p), ss!("]")),
         }
     }
 }
