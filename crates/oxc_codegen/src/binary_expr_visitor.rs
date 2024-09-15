@@ -9,10 +9,7 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{
-    gen::{Gen, GenExpr},
-    Codegen, Context,
-};
+use crate::{gen::GenExpr, Codegen, Context, Operator};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -49,11 +46,25 @@ pub enum BinaryishOperator {
     Logical(LogicalOperator),
 }
 
-impl Gen for BinaryishOperator {
-    fn gen(&self, p: &mut Codegen, ctx: Context) {
+fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
+    let operator = op.as_str();
+    if op.is_keyword() {
+        p.print_space_before_identifier();
+        p.print_str(operator);
+    } else {
+        let op: Operator = op.into();
+        p.print_space_before_operator(op);
+        p.print_str(operator);
+        p.prev_op = Some(op);
+        p.prev_op_end = p.code().len();
+    }
+}
+
+impl BinaryishOperator {
+    fn gen(self, p: &mut Codegen) {
         match self {
-            Self::Binary(op) => op.gen(p, ctx),
-            Self::Logical(op) => op.gen(p, ctx),
+            Self::Binary(op) => print_binary_operator(op, p),
+            Self::Logical(op) => p.print_str(op.as_str()),
         }
     }
 }
@@ -185,7 +196,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
 
     pub fn visit_right_and_finish(&self, p: &mut Codegen) {
         p.print_soft_space();
-        self.operator.gen(p, Context::empty());
+        self.operator.gen(p);
         p.print_soft_space();
         self.e.right().gen_expr(p, self.right_precedence, self.ctx & Context::FORBID_IN);
         if self.wrap {

@@ -100,6 +100,8 @@ pub fn transform(
 
 fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
     let (symbols, scopes) = SemanticBuilder::new(ctx.source_text())
+        // Estimate transformer will triple scopes, symbols, references
+        .with_excess_capacity(2.0)
         .build(&ctx.program())
         .semantic
         .into_symbol_table_and_scope_tree();

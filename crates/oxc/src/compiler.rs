@@ -186,7 +186,14 @@ pub trait CompilerInterface {
         source_text: &'a str,
         source_path: &Path,
     ) -> SemanticBuilderReturn<'a> {
-        SemanticBuilder::new(source_text)
+        let mut builder = SemanticBuilder::new(source_text);
+
+        if self.transform_options().is_some() {
+            // Estimate transformer will triple scopes, symbols, references
+            builder = builder.with_excess_capacity(2.0);
+        }
+
+        builder
             .with_check_syntax_error(self.check_semantic_error())
             .with_scope_tree_child_ids(self.semantic_child_scope_ids())
             .build_module_record(source_path, program)
