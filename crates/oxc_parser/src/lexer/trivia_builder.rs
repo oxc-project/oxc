@@ -17,12 +17,12 @@ impl TriviaBuilder {
 
     pub fn add_single_line_comment(&mut self, start: u32, end: u32) {
         // skip leading `//`
-        self.add_comment(Comment::new(start + 2, end, CommentKind::SingleLine));
+        self.add_comment(Comment::new(start + 2, end, CommentKind::Line));
     }
 
     pub fn add_multi_line_comment(&mut self, start: u32, end: u32) {
         // skip leading `/*` and trailing `*/`
-        self.add_comment(Comment::new(start + 2, end - 2, CommentKind::MultiLine));
+        self.add_comment(Comment::new(start + 2, end - 2, CommentKind::Block));
     }
 
     fn add_comment(&mut self, comment: Comment) {

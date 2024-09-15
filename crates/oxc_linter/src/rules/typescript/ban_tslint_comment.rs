@@ -44,7 +44,7 @@ impl Rule for BanTslintComment {
                     source_text_len,
                     comment.span.start,
                     comment.span.end,
-                    comment.kind.is_multi_line(),
+                    comment.is_block(),
                 );
 
                 ctx.diagnostic_with_fix(

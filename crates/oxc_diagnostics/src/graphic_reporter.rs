@@ -642,14 +642,14 @@ impl GraphicalReportHandler {
                     max_gutter,
                     line,
                     labels,
-                    LabelRenderMode::MultiLineFirst,
+                    LabelRenderMode::BlockFirst,
                 )?;
 
                 self.render_multi_line_end_single(
                     f,
                     first,
                     label.style,
-                    LabelRenderMode::MultiLineFirst,
+                    LabelRenderMode::BlockFirst,
                 )?;
                 for label_line in rest {
                     // no line number!
@@ -660,13 +660,13 @@ impl GraphicalReportHandler {
                         max_gutter,
                         line,
                         labels,
-                        LabelRenderMode::MultiLineRest,
+                        LabelRenderMode::BlockRest,
                     )?;
                     self.render_multi_line_end_single(
                         f,
                         label_line,
                         label.style,
-                        LabelRenderMode::MultiLineRest,
+                        LabelRenderMode::BlockRest,
                     )?;
                 }
             }
@@ -764,7 +764,7 @@ impl GraphicalReportHandler {
         let applicable = highlights.iter().filter(|hl| line.span_applies_gutter(hl));
         for (i, hl) in applicable.enumerate() {
             if !line.span_line_only(hl) && line.span_ends(hl) {
-                if render_mode == LabelRenderMode::MultiLineRest {
+                if render_mode == LabelRenderMode::BlockRest {
                     // this is to make multiline labels work. We want to make the right amount
                     // of horizontal space for them, but not actually draw the lines
                     let horizontal_space = max_gutter.saturating_sub(i) + 2;
@@ -792,7 +792,7 @@ impl GraphicalReportHandler {
                                 num_repeat
                                     // if we are rendering a multiline label, then leave a bit of space for the
                                     // rcross character
-                                    - if render_mode == LabelRenderMode::MultiLineFirst {
+                                    - if render_mode == LabelRenderMode::BlockFirst {
                                         1
                                     } else {
                                         0
@@ -1039,9 +1039,9 @@ impl GraphicalReportHandler {
                             hl,
                             label_line,
                             if first {
-                                LabelRenderMode::MultiLineFirst
+                                LabelRenderMode::BlockFirst
                             } else {
-                                LabelRenderMode::MultiLineRest
+                                LabelRenderMode::BlockRest
                             },
                         )?;
                         first = false;
@@ -1090,10 +1090,10 @@ impl GraphicalReportHandler {
                     LabelRenderMode::SingleLine => {
                         format!("{}{} {}", chars.lbot, chars.hbar.to_string().repeat(2), label,)
                     }
-                    LabelRenderMode::MultiLineFirst => {
+                    LabelRenderMode::BlockFirst => {
                         format!("{}{}{} {}", chars.lbot, chars.hbar, chars.rcross, label,)
                     }
-                    LabelRenderMode::MultiLineRest => {
+                    LabelRenderMode::BlockRest => {
                         format!("  {} {}", chars.vbar, label,)
                     }
                 };
@@ -1115,10 +1115,10 @@ impl GraphicalReportHandler {
             LabelRenderMode::SingleLine => {
                 writeln!(f, "{} {}", self.theme.characters.hbar.style(style), label)?;
             }
-            LabelRenderMode::MultiLineFirst => {
+            LabelRenderMode::BlockFirst => {
                 writeln!(f, "{} {}", self.theme.characters.rcross.style(style), label)?;
             }
-            LabelRenderMode::MultiLineRest => {
+            LabelRenderMode::BlockRest => {
                 writeln!(f, "{} {}", self.theme.characters.vbar.style(style), label)?;
             }
         }
@@ -1206,9 +1206,9 @@ enum LabelRenderMode {
     /// we're rendering a single line label (or not rendering in any special way)
     SingleLine,
     /// we're rendering a multiline label
-    MultiLineFirst,
+    BlockFirst,
     /// we're rendering the rest of a multiline label
-    MultiLineRest,
+    BlockRest,
 }
 
 #[derive(Debug)]

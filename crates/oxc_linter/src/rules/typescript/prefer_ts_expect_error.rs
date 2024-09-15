@@ -1,5 +1,5 @@
 use cow_utils::CowUtils;
-use oxc_ast::CommentKind;
+use oxc_ast::Comment;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -50,11 +50,11 @@ impl Rule for PreferTsExpectError {
         for comment in comments {
             let raw = comment.span.source_text(ctx.semantic().source_text());
 
-            if !is_valid_ts_ignore_present(comment.kind, raw) {
+            if !is_valid_ts_ignore_present(*comment, raw) {
                 continue;
             }
 
-            if comment.kind.is_single_line() {
+            if comment.is_line() {
                 let comment_span = Span::new(comment.span.start - 2, comment.span.end);
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
@@ -79,18 +79,18 @@ impl Rule for PreferTsExpectError {
     }
 }
 
-fn get_last_comment_line(comment: CommentKind, raw: &str) -> String {
-    if comment.is_single_line() {
+fn get_last_comment_line(comment: Comment, raw: &str) -> String {
+    if comment.is_line() {
         return String::from(raw);
     }
 
     return String::from(raw.lines().last().unwrap_or(raw));
 }
 
-fn is_valid_ts_ignore_present(comment: CommentKind, raw: &str) -> bool {
+fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {
     let line = get_last_comment_line(comment, raw);
 
-    if comment.is_single_line() {
+    if comment.is_line() {
         test_single_line_comment(&line)
     } else {
         test_multi_line_comment(&line)
