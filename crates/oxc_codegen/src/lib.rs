@@ -206,7 +206,7 @@ impl<'a> Codegen<'a> {
 
     #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
-        program.gen(&mut self, Context::default());
+        program.print(&mut self, Context::default());
         let source_text = self.into_source_text();
         let source_map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { source_text, source_map }
@@ -233,7 +233,7 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::Lowest, Context::empty());
+        expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
 }
 
@@ -353,7 +353,7 @@ impl<'a> Codegen<'a> {
 
     fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for item in items {
-            item.gen(self, ctx);
+            item.print(self, ctx);
             self.print_comma();
         }
     }
@@ -404,7 +404,7 @@ impl<'a> Codegen<'a> {
                     self.print_hard_space();
                 }
                 self.print_next_indent_as_space = true;
-                stmt.gen(self, ctx);
+                stmt.print(self, ctx);
             }
         }
     }
@@ -413,7 +413,7 @@ impl<'a> Codegen<'a> {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
             for stmt in &stmt.body {
                 p.print_semicolon_if_needed();
-                stmt.gen(p, ctx);
+                stmt.print(p, ctx);
             }
         });
         self.needs_semicolon = false;
@@ -423,11 +423,11 @@ impl<'a> Codegen<'a> {
     // ```
     // let mut iter = items.iter();
     // let Some(item) = iter.next() else { return };
-    // item.gen(self, ctx);
+    // item.print(self, ctx);
     // for item in iter {
     //     self.print_comma();
     //     self.print_soft_space();
-    //     item.gen(self, ctx);
+    //     item.print(self, ctx);
     // }
     // ```
     // But it turned out this was actually a bit slower.
@@ -438,7 +438,7 @@ impl<'a> Codegen<'a> {
                 self.print_comma();
                 self.print_soft_space();
             }
-            item.gen(self, ctx);
+            item.print(self, ctx);
         }
     }
 
@@ -448,7 +448,7 @@ impl<'a> Codegen<'a> {
                 self.print_comma();
                 self.print_soft_space();
             }
-            item.gen_expr(self, precedence, ctx);
+            item.print_expr(self, precedence, ctx);
         }
     }
 
