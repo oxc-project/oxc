@@ -1,9 +1,7 @@
 use crate::context::Ctx;
 use crate::modules::options::{format::ModulesFormat, ModulesOptions};
-use oxc_ast::ast::{BindingIdentifier, IdentifierName, IdentifierReference, Program};
-use oxc_span::{Atom, SPAN};
+use oxc_ast::ast::{BindingIdentifier, IdentifierName, IdentifierReference};
 use oxc_traverse::{Traverse, TraverseCtx};
-use std::cell::Cell;
 
 pub mod options;
 
