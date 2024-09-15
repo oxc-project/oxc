@@ -554,8 +554,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        let block =
-            BlockStatement { span, body: ctx.ast.vec1(stmt), scope_id: Cell::new(Some(scope_id)) };
+        let block = BlockStatement::new_with_scope_id(span, ctx.ast.vec1(stmt), scope_id);
+        block.scope_id.set(Some(scope_id));
         Statement::BlockStatement(ctx.ast.alloc(block))
     }
 
@@ -575,11 +575,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     ) {
         if stmt.is_typescript_syntax() {
             let scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
-            let block = BlockStatement {
-                span: stmt.span(),
-                body: ctx.ast.vec(),
-                scope_id: Cell::new(Some(scope_id)),
-            };
+            let block = BlockStatement::new_with_scope_id(stmt.span(), ctx.ast.vec(), scope_id);
             *stmt = Statement::BlockStatement(ctx.ast.alloc(block));
         }
     }
