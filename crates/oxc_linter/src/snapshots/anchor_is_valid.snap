@@ -44,6 +44,13 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use an incorrect href for the 'a' element.
    ╭─[anchor_is_valid.tsx:1:2]
+ 1 │ <a href={`#`} />
+   ·  ─
+   ╰────
+  help: Provide a correct href for the `a` element.
+
+  ⚠ eslint-plugin-jsx-a11y(anchor-is-valid): Use an incorrect href for the 'a' element.
+   ╭─[anchor_is_valid.tsx:1:2]
  1 │ <a href='javascript:void(0)' />
    ·  ─
    ╰────
