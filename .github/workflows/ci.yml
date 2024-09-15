@@ -124,14 +124,15 @@ jobs:
         with:
           cache-key: wasm
           save-cache: ${{ github.ref_name == 'main' }}
+          tools: wasm-pack
       - name: Check
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
       - name: Build
         run: |
-          npx -y wasm-pack build --target web --dev ./crates/oxc_wasm
-          npx -y wasm-pack build --target web --dev ./wasm/parser
+          wasm-pack build --target web --dev ./crates/oxc_wasm
+          wasm-pack build --target web --dev ./wasm/parser
       - uses: ./.github/actions/pnpm
       - name: Check output types
         run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
