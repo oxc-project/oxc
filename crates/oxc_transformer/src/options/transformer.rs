@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde_json::{from_value, json, Value};
 
+use crate::modules::options::ModulesOptions;
 use crate::{
     compiler_assumptions::CompilerAssumptions,
     env::{can_enable_plugin, EnvOptions, Versions},
@@ -53,6 +54,8 @@ pub struct TransformOptions {
     pub es2020: ES2020Options,
 
     pub es2021: ES2021Options,
+
+    pub modules: ModulesOptions,
 }
 
 impl TransformOptions {
@@ -86,6 +89,7 @@ impl TransformOptions {
             es2019: ES2019Options { optional_catch_binding: true },
             es2020: ES2020Options { nullish_coalescing_operator: true },
             es2021: ES2021Options { logical_assignment_operators: true },
+            modules: ModulesOptions::default(),
         }
     }
 

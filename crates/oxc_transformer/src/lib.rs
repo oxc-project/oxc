@@ -20,6 +20,7 @@ mod es2018;
 mod es2019;
 mod es2020;
 mod es2021;
+mod modules;
 mod react;
 mod regexp;
 mod typescript;
@@ -55,6 +56,7 @@ pub use crate::{
 use crate::{
     context::{Ctx, TransformCtx},
     es2015::ES2015,
+    modules::Modules,
     react::React,
     typescript::TypeScript,
 };
@@ -70,6 +72,7 @@ pub struct Transformer<'a> {
     // NOTE: all callbacks must run in order.
     x0_typescript: TypeScript<'a>,
     x1_react: React<'a>,
+    x1_modules: Modules<'a>,
     x2_es2021: ES2021<'a>,
     x2_es2020: ES2020<'a>,
     x2_es2019: ES2019<'a>,
@@ -100,6 +103,7 @@ impl<'a> Transformer<'a> {
             ctx: Rc::clone(&ctx),
             x0_typescript: TypeScript::new(options.typescript, Rc::clone(&ctx)),
             x1_react: React::new(options.react, Rc::clone(&ctx)),
+            x1_modules: Modules::new(options.modules, Rc::clone(&ctx)),
             x2_es2021: ES2021::new(options.es2021, Rc::clone(&ctx)),
             x2_es2020: ES2020::new(options.es2020, Rc::clone(&ctx)),
             x2_es2019: ES2019::new(options.es2019, Rc::clone(&ctx)),
@@ -420,5 +424,25 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.enter_ts_export_assignment(export_assignment, ctx);
+    }
+
+    fn exit_identifier_name(&mut self, node: &mut IdentifierName<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x1_modules.exit_identifier_name(node, ctx);
+    }
+
+    fn exit_identifier_reference(
+        &mut self,
+        node: &mut IdentifierReference<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x1_modules.exit_identifier_reference(node, ctx);
+    }
+
+    fn enter_binding_identifier(
+        &mut self,
+        node: &mut BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x1_modules.enter_binding_identifier(node, ctx);
     }
 }
