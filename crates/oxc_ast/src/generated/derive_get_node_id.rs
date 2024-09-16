@@ -22,20 +22,12 @@ impl GetNodeId for BooleanLiteral {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for NullLiteral {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -44,20 +36,12 @@ impl<'a> GetNodeId for NumericLiteral<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BigIntLiteral<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -66,10 +50,6 @@ impl<'a> GetNodeId for RegExpLiteral<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for StringLiteral<'a> {
@@ -77,20 +57,12 @@ impl<'a> GetNodeId for StringLiteral<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for Program<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -141,62 +113,12 @@ impl<'a> GetNodeId for Expression<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for IdentifierName<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -205,20 +127,12 @@ impl<'a> GetNodeId for IdentifierReference<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BindingIdentifier<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -227,10 +141,6 @@ impl<'a> GetNodeId for LabelIdentifier<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for ThisExpression {
@@ -238,20 +148,12 @@ impl GetNodeId for ThisExpression {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ArrayExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -304,54 +206,6 @@ impl<'a> GetNodeId for ArrayExpressionElement<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::SpreadElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Elision(it) => GetNodeId::node_id_mut(it),
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl GetNodeId for Elision {
@@ -359,20 +213,12 @@ impl GetNodeId for Elision {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ObjectExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -383,22 +229,12 @@ impl<'a> GetNodeId for ObjectPropertyKind<'a> {
             Self::SpreadProperty(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::ObjectProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SpreadProperty(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ObjectProperty<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -451,64 +287,12 @@ impl<'a> GetNodeId for PropertyKey<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::StaticIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TemplateLiteral<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -517,20 +301,12 @@ impl<'a> GetNodeId for TaggedTemplateExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TemplateElement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -542,23 +318,12 @@ impl<'a> GetNodeId for MemberExpression<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ComputedMemberExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -567,20 +332,12 @@ impl<'a> GetNodeId for StaticMemberExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for PrivateFieldExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -589,20 +346,12 @@ impl<'a> GetNodeId for CallExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for NewExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -611,20 +360,12 @@ impl<'a> GetNodeId for MetaProperty<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for SpreadElement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -676,63 +417,12 @@ impl<'a> GetNodeId for Argument<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::SpreadElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for UpdateExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -741,20 +431,12 @@ impl<'a> GetNodeId for UnaryExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BinaryExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -763,20 +445,12 @@ impl<'a> GetNodeId for PrivateInExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for LogicalExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -785,20 +459,12 @@ impl<'a> GetNodeId for ConditionalExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for AssignmentExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -818,21 +484,6 @@ impl<'a> GetNodeId for AssignmentTarget<'a> {
             Self::ObjectAssignmentTarget(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::AssignmentTargetIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for SimpleAssignmentTarget<'a> {
@@ -849,19 +500,6 @@ impl<'a> GetNodeId for SimpleAssignmentTarget<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::AssignmentTargetIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for AssignmentTargetPattern<'a> {
@@ -871,22 +509,12 @@ impl<'a> GetNodeId for AssignmentTargetPattern<'a> {
             Self::ObjectAssignmentTarget(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::ArrayAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ArrayAssignmentTarget<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -895,20 +523,12 @@ impl<'a> GetNodeId for ObjectAssignmentTarget<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for AssignmentTargetRest<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -929,32 +549,12 @@ impl<'a> GetNodeId for AssignmentTargetMaybeDefault<'a> {
             Self::ObjectAssignmentTarget(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::AssignmentTargetWithDefault(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentTargetIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for AssignmentTargetWithDefault<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -965,22 +565,12 @@ impl<'a> GetNodeId for AssignmentTargetProperty<'a> {
             Self::AssignmentTargetPropertyProperty(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::AssignmentTargetPropertyIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentTargetPropertyProperty(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for AssignmentTargetPropertyIdentifier<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -989,20 +579,12 @@ impl<'a> GetNodeId for AssignmentTargetPropertyProperty<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for SequenceExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1011,10 +593,6 @@ impl GetNodeId for Super {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for AwaitExpression<'a> {
@@ -1022,20 +600,12 @@ impl<'a> GetNodeId for AwaitExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ChainExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1048,24 +618,12 @@ impl<'a> GetNodeId for ChainElement<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ParenthesizedExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1106,52 +664,12 @@ impl<'a> GetNodeId for Statement<'a> {
             Self::TSNamespaceExportDeclaration(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::BlockStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BreakStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ContinueStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::DebuggerStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::DoWhileStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::EmptyStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExpressionStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ForInStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ForOfStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ForStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::IfStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LabeledStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ReturnStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SwitchStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThrowStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TryStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::WhileStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::WithStatement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::VariableDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAliasDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInterfaceDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSEnumDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSModuleDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSImportEqualsDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExportAllDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExportDefaultDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExportNamedDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSExportAssignment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNamespaceExportDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for Directive<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1160,20 +678,12 @@ impl<'a> GetNodeId for Hashbang<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BlockStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1190,28 +700,12 @@ impl<'a> GetNodeId for Declaration<'a> {
             Self::TSImportEqualsDeclaration(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::VariableDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAliasDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInterfaceDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSEnumDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSModuleDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSImportEqualsDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for VariableDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1220,20 +714,12 @@ impl<'a> GetNodeId for VariableDeclarator<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for EmptyStatement {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1242,20 +728,12 @@ impl<'a> GetNodeId for ExpressionStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for IfStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1264,10 +742,6 @@ impl<'a> GetNodeId for DoWhileStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for WhileStatement<'a> {
@@ -1275,20 +749,12 @@ impl<'a> GetNodeId for WhileStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ForStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1340,63 +806,12 @@ impl<'a> GetNodeId for ForStatementInit<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::VariableDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ForInStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1417,32 +832,12 @@ impl<'a> GetNodeId for ForStatementLeft<'a> {
             Self::ObjectAssignmentTarget(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::VariableDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentTargetIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectAssignmentTarget(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ForOfStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1451,20 +846,12 @@ impl<'a> GetNodeId for ContinueStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BreakStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1473,20 +860,12 @@ impl<'a> GetNodeId for ReturnStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for WithStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1495,20 +874,12 @@ impl<'a> GetNodeId for SwitchStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for SwitchCase<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1517,20 +888,12 @@ impl<'a> GetNodeId for LabeledStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ThrowStatement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1539,20 +902,12 @@ impl<'a> GetNodeId for TryStatement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for CatchClause<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1561,10 +916,6 @@ impl<'a> GetNodeId for CatchParameter<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for DebuggerStatement {
@@ -1572,20 +923,12 @@ impl GetNodeId for DebuggerStatement {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BindingPattern<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1598,24 +941,12 @@ impl<'a> GetNodeId for BindingPatternKind<'a> {
             Self::AssignmentPattern(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::BindingIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectPattern(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayPattern(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentPattern(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for AssignmentPattern<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1624,20 +955,12 @@ impl<'a> GetNodeId for ObjectPattern<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BindingProperty<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1646,20 +969,12 @@ impl<'a> GetNodeId for ArrayPattern<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for BindingRestElement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1668,20 +983,12 @@ impl<'a> GetNodeId for Function<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for FormalParameters<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1690,20 +997,12 @@ impl<'a> GetNodeId for FormalParameter<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for FunctionBody<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1712,20 +1011,12 @@ impl<'a> GetNodeId for ArrowFunctionExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for YieldExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1734,20 +1025,12 @@ impl<'a> GetNodeId for Class<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ClassBody<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1761,25 +1044,12 @@ impl<'a> GetNodeId for ClassElement<'a> {
             Self::TSIndexSignature(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::StaticBlock(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MethodDefinition(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PropertyDefinition(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AccessorProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSIndexSignature(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for MethodDefinition<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1788,10 +1058,6 @@ impl<'a> GetNodeId for PropertyDefinition<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for PrivateIdentifier<'a> {
@@ -1799,20 +1065,12 @@ impl<'a> GetNodeId for PrivateIdentifier<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for StaticBlock<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1827,26 +1085,12 @@ impl<'a> GetNodeId for ModuleDeclaration<'a> {
             Self::TSNamespaceExportDeclaration(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::ImportDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExportAllDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExportDefaultDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExportNamedDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSExportAssignment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNamespaceExportDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for AccessorProperty<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1855,20 +1099,12 @@ impl<'a> GetNodeId for ImportExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ImportDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1880,23 +1116,12 @@ impl<'a> GetNodeId for ImportDeclarationSpecifier<'a> {
             Self::ImportNamespaceSpecifier(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::ImportSpecifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportDefaultSpecifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportNamespaceSpecifier(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ImportSpecifier<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1905,20 +1130,12 @@ impl<'a> GetNodeId for ImportDefaultSpecifier<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ImportNamespaceSpecifier<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1927,20 +1144,12 @@ impl<'a> GetNodeId for WithClause<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ImportAttribute<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1951,22 +1160,12 @@ impl<'a> GetNodeId for ImportAttributeKey<'a> {
             Self::StringLiteral(it) => GetNodeId::node_id(it),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Identifier(it) => GetNodeId::node_id_mut(it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ExportNamedDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -1975,10 +1174,6 @@ impl<'a> GetNodeId for ExportDefaultDeclaration<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ExportAllDeclaration<'a> {
@@ -1986,20 +1181,12 @@ impl<'a> GetNodeId for ExportAllDeclaration<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for ExportSpecifier<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2053,55 +1240,6 @@ impl<'a> GetNodeId for ExportDefaultDeclarationKind<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::FunctionDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInterfaceDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for ModuleExportName<'a> {
@@ -2112,23 +1250,12 @@ impl<'a> GetNodeId for ModuleExportName<'a> {
             Self::StringLiteral(it) => GetNodeId::node_id(it),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::IdentifierName(it) => GetNodeId::node_id_mut(it),
-            Self::IdentifierReference(it) => GetNodeId::node_id_mut(it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSThisParameter<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2137,20 +1264,12 @@ impl<'a> GetNodeId for TSEnumDeclaration<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSEnumMember<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2205,56 +1324,6 @@ impl<'a> GetNodeId for TSEnumMemberName<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::StaticIdentifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticStringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticTemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticNumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSTypeAnnotation<'a> {
@@ -2262,20 +1331,12 @@ impl<'a> GetNodeId for TSTypeAnnotation<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSLiteralType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2290,18 +1351,6 @@ impl<'a> GetNodeId for TSLiteral<'a> {
             Self::StringLiteral(it) => GetNodeId::node_id(it.as_ref()),
             Self::TemplateLiteral(it) => GetNodeId::node_id(it.as_ref()),
             Self::UnaryExpression(it) => GetNodeId::node_id(it.as_ref()),
-        }
-    }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
         }
     }
 }
@@ -2349,58 +1398,12 @@ impl<'a> GetNodeId for TSType<'a> {
             Self::JSDocUnknownType(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::TSAnyKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSBigIntKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSBooleanKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSIntrinsicKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNeverKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNullKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNumberKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSObjectKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSStringKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSymbolKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSUndefinedKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSUnknownKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSVoidKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSArrayType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSConditionalType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSConstructorType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSFunctionType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSImportType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSIndexedAccessType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInferType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSIntersectionType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSLiteralType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSMappedType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNamedTupleMember(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSQualifiedName(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTemplateLiteralType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSThisType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTupleType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeOperatorType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypePredicate(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeQuery(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSUnionType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSParenthesizedType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSDocNullableType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSDocNonNullableType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSDocUnknownType(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSConditionalType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2409,20 +1412,12 @@ impl<'a> GetNodeId for TSUnionType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSIntersectionType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2431,20 +1426,12 @@ impl<'a> GetNodeId for TSParenthesizedType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSTypeOperator<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2453,20 +1440,12 @@ impl<'a> GetNodeId for TSArrayType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSIndexedAccessType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2475,20 +1454,12 @@ impl<'a> GetNodeId for TSTupleType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSNamedTupleMember<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2497,20 +1468,12 @@ impl<'a> GetNodeId for TSOptionalType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSRestType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2559,60 +1522,12 @@ impl<'a> GetNodeId for TSTupleElement<'a> {
             Self::JSDocUnknownType(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::TSOptionalType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSRestType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAnyKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSBigIntKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSBooleanKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSIntrinsicKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNeverKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNullKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNumberKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSObjectKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSStringKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSymbolKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSUndefinedKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSUnknownKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSVoidKeyword(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSArrayType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSConditionalType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSConstructorType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSFunctionType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSImportType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSIndexedAccessType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInferType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSIntersectionType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSLiteralType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSMappedType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNamedTupleMember(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSQualifiedName(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTemplateLiteralType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSThisType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTupleType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeOperatorType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypePredicate(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeQuery(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSUnionType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSParenthesizedType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSDocNullableType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSDocNonNullableType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSDocUnknownType(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl GetNodeId for TSAnyKeyword {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2621,20 +1536,12 @@ impl GetNodeId for TSStringKeyword {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for TSBooleanKeyword {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2643,20 +1550,12 @@ impl GetNodeId for TSNumberKeyword {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for TSNeverKeyword {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2665,20 +1564,12 @@ impl GetNodeId for TSIntrinsicKeyword {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for TSUnknownKeyword {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2687,20 +1578,12 @@ impl GetNodeId for TSNullKeyword {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for TSUndefinedKeyword {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2709,20 +1592,12 @@ impl GetNodeId for TSVoidKeyword {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for TSSymbolKeyword {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2731,20 +1606,12 @@ impl GetNodeId for TSThisType {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for TSObjectKeyword {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2753,20 +1620,12 @@ impl GetNodeId for TSBigIntKeyword {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSTypeReference<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2777,22 +1636,12 @@ impl<'a> GetNodeId for TSTypeName<'a> {
             Self::QualifiedName(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::IdentifierReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::QualifiedName(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSQualifiedName<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2801,20 +1650,12 @@ impl<'a> GetNodeId for TSTypeParameterInstantiation<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSTypeParameter<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2823,20 +1664,12 @@ impl<'a> GetNodeId for TSTypeParameterDeclaration<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSTypeAliasDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2845,20 +1678,12 @@ impl<'a> GetNodeId for TSClassImplements<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSInterfaceDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2867,20 +1692,12 @@ impl<'a> GetNodeId for TSInterfaceBody<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSPropertySignature<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2894,25 +1711,12 @@ impl<'a> GetNodeId for TSSignature<'a> {
             Self::TSMethodSignature(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::TSIndexSignature(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSPropertySignature(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSCallSignatureDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSConstructSignatureDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSMethodSignature(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSIndexSignature<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2921,20 +1725,12 @@ impl<'a> GetNodeId for TSCallSignatureDeclaration<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSMethodSignature<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2943,20 +1739,12 @@ impl<'a> GetNodeId for TSConstructSignatureDeclaration<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSIndexSignatureName<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2965,20 +1753,12 @@ impl<'a> GetNodeId for TSInterfaceHeritage<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSTypePredicate<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -2989,22 +1769,12 @@ impl<'a> GetNodeId for TSTypePredicateName<'a> {
             Self::This(it) => GetNodeId::node_id(it),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::This(it) => GetNodeId::node_id_mut(it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSModuleDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3013,12 +1783,6 @@ impl<'a> GetNodeId for TSModuleDeclarationName<'a> {
         match self {
             Self::Identifier(it) => GetNodeId::node_id(it),
             Self::StringLiteral(it) => GetNodeId::node_id(it),
-        }
-    }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Identifier(it) => GetNodeId::node_id_mut(it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(it),
         }
     }
 }
@@ -3030,22 +1794,12 @@ impl<'a> GetNodeId for TSModuleDeclarationBody<'a> {
             Self::TSModuleBlock(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::TSModuleDeclaration(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSModuleBlock(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSModuleBlock<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3054,10 +1808,6 @@ impl<'a> GetNodeId for TSTypeLiteral<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSInferType<'a> {
@@ -3065,20 +1815,12 @@ impl<'a> GetNodeId for TSInferType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSTypeQuery<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3090,23 +1832,12 @@ impl<'a> GetNodeId for TSTypeQueryExprName<'a> {
             Self::QualifiedName(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::TSImportType(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::IdentifierReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::QualifiedName(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSImportType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3115,20 +1846,12 @@ impl<'a> GetNodeId for TSImportAttributes<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSImportAttribute<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3139,22 +1862,12 @@ impl<'a> GetNodeId for TSImportAttributeName<'a> {
             Self::StringLiteral(it) => GetNodeId::node_id(it),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Identifier(it) => GetNodeId::node_id_mut(it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSFunctionType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3163,20 +1876,12 @@ impl<'a> GetNodeId for TSConstructorType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSMappedType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3185,20 +1890,12 @@ impl<'a> GetNodeId for TSTemplateLiteralType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSAsExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3207,10 +1904,6 @@ impl<'a> GetNodeId for TSSatisfiesExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSTypeAssertion<'a> {
@@ -3218,20 +1911,12 @@ impl<'a> GetNodeId for TSTypeAssertion<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSImportEqualsDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3243,23 +1928,12 @@ impl<'a> GetNodeId for TSModuleReference<'a> {
             Self::QualifiedName(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::ExternalModuleReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::IdentifierReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::QualifiedName(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for TSExternalModuleReference<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3268,20 +1942,12 @@ impl<'a> GetNodeId for TSNonNullExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for Decorator<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3290,20 +1956,12 @@ impl<'a> GetNodeId for TSExportAssignment<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for TSNamespaceExportDeclaration<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3312,20 +1970,12 @@ impl<'a> GetNodeId for TSInstantiationExpression<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for JSDocNullableType<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3334,20 +1984,12 @@ impl<'a> GetNodeId for JSDocNonNullableType<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl GetNodeId for JSDocUnknownType {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3356,20 +1998,12 @@ impl<'a> GetNodeId for JSXElement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for JSXOpeningElement<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3378,20 +2012,12 @@ impl<'a> GetNodeId for JSXClosingElement<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for JSXFragment<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3405,15 +2031,6 @@ impl<'a> GetNodeId for JSXElementName<'a> {
             Self::ThisExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::IdentifierReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NamespacedName(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for JSXNamespacedName<'a> {
@@ -3421,20 +2038,12 @@ impl<'a> GetNodeId for JSXNamespacedName<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for JSXMemberExpression<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3446,23 +2055,12 @@ impl<'a> GetNodeId for JSXMemberExpressionObject<'a> {
             Self::ThisExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::IdentifierReference(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for JSXExpressionContainer<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3514,63 +2112,12 @@ impl<'a> GetNodeId for JSXExpression<'a> {
             Self::PrivateFieldExpression(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::EmptyExpression(it) => GetNodeId::node_id_mut(it),
-            Self::BooleanLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NullLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NumericLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BigIntLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::RegExpLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TemplateLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::MetaProperty(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Super(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrayExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ArrowFunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AssignmentExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::AwaitExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::BinaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::CallExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ChainExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ClassExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ConditionalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::FunctionExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ImportExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::LogicalExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NewExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ObjectExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ParenthesizedExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SequenceExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TaggedTemplateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ThisExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UnaryExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::UpdateExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::YieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateInExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXElement(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::JSXFragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSAsExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSSatisfiesExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSTypeAssertion(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSNonNullExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::TSInstantiationExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ComputedMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::StaticMemberExpression(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::PrivateFieldExpression(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl GetNodeId for JSXEmptyExpression {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3581,22 +2128,12 @@ impl<'a> GetNodeId for JSXAttributeItem<'a> {
             Self::SpreadAttribute(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Attribute(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::SpreadAttribute(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for JSXAttribute<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3605,10 +2142,6 @@ impl<'a> GetNodeId for JSXSpreadAttribute<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for JSXAttributeName<'a> {
@@ -3616,12 +2149,6 @@ impl<'a> GetNodeId for JSXAttributeName<'a> {
         match self {
             Self::Identifier(it) => GetNodeId::node_id(it.as_ref()),
             Self::NamespacedName(it) => GetNodeId::node_id(it.as_ref()),
-        }
-    }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Identifier(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::NamespacedName(it) => GetNodeId::node_id_mut(&mut **it),
         }
     }
 }
@@ -3635,24 +2162,12 @@ impl<'a> GetNodeId for JSXAttributeValue<'a> {
             Self::Fragment(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::StringLiteral(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExpressionContainer(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Element(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Fragment(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for JSXIdentifier<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }
 
@@ -3666,15 +2181,6 @@ impl<'a> GetNodeId for JSXChild<'a> {
             Self::Spread(it) => GetNodeId::node_id(it.as_ref()),
         }
     }
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        match self {
-            Self::Text(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Element(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Fragment(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::ExpressionContainer(it) => GetNodeId::node_id_mut(&mut **it),
-            Self::Spread(it) => GetNodeId::node_id_mut(&mut **it),
-        }
-    }
 }
 
 impl<'a> GetNodeId for JSXSpreadChild<'a> {
@@ -3682,19 +2188,11 @@ impl<'a> GetNodeId for JSXSpreadChild<'a> {
     fn node_id(&self) -> NodeId {
         self.node_id
     }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
-    }
 }
 
 impl<'a> GetNodeId for JSXText<'a> {
     #[inline]
     fn node_id(&self) -> NodeId {
         self.node_id
-    }
-    #[inline]
-    fn node_id_mut(&mut self) -> &mut NodeId {
-        &mut self.node_id
     }
 }

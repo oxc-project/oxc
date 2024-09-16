@@ -8,7 +8,6 @@ use serde::{Serialize, Serializer};
 
 pub trait GetNodeId {
     fn node_id(&self) -> NodeId;
-    fn node_id_mut(&mut self) -> &mut NodeId;
 }
 
 #[ast]
