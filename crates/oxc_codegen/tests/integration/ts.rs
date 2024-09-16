@@ -1,19 +1,4 @@
-use std::fmt::Write;
-
-use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_parser::Parser;
-use oxc_span::SourceType;
-
-fn codegen(source_text: &str) -> String {
-    let allocator = Allocator::default();
-    let source_type = SourceType::ts();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
-        .build(&ret.program)
-        .source_text
-}
+use crate::snapshot;
 
 #[test]
 fn ts() {
@@ -54,12 +39,5 @@ fn ts() {
         "div<T>``",
     ];
 
-    let snapshot = cases.into_iter().fold(String::new(), |mut w, case| {
-        write!(w, "{case}\n{}\n", codegen(case)).unwrap();
-        w
-    });
-
-    insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
-        insta::assert_snapshot!("ts", snapshot);
-    });
+    snapshot("ts", &cases);
 }

@@ -6,7 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    fixer::Fix,
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnostic {
     // FIXME: use imperative message phrasing
@@ -397,7 +402,7 @@ impl Rule for PreferFunctionType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

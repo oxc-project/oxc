@@ -302,14 +302,14 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
 
 #[cfg(test)]
 mod test {
-    use std::{path::Path, rc::Rc};
+    use std::rc::Rc;
 
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
-    use crate::LintContext;
+    use crate::{options::LintOptions, ContextHost};
 
     #[test]
     fn test_is_jest_file() {
@@ -320,16 +320,18 @@ mod test {
         let semantic_ret = SemanticBuilder::new("").with_cfg(true).build(program).semantic;
         let semantic_ret = Rc::new(semantic_ret);
 
-        let path = Path::new("foo.js");
-        let ctx = LintContext::new(Box::from(path), Rc::clone(&semantic_ret));
+        let build_ctx = |path: &'static str| {
+            Rc::new(ContextHost::new(path, Rc::clone(&semantic_ret), LintOptions::default()))
+                .spawn_for_test()
+        };
+
+        let ctx = build_ctx("foo.js");
         assert!(!super::is_jest_file(&ctx));
 
-        let path = Path::new("foo.test.js");
-        let ctx = LintContext::new(Box::from(path), Rc::clone(&semantic_ret));
+        let ctx = build_ctx("foo.test.js");
         assert!(super::is_jest_file(&ctx));
 
-        let path = Path::new("__tests__/foo/test.spec.js");
-        let ctx = LintContext::new(Box::from(path), semantic_ret);
+        let ctx = build_ctx("__tests__/foo/test.spec.js");
         assert!(super::is_jest_file(&ctx));
     }
 }

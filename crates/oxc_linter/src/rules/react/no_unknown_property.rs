@@ -15,7 +15,12 @@ use regex::Regex;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::get_jsx_attribute_name,
+    AstNode,
+};
 
 fn invalid_prop_on_tag(span: Span, prop: &str, tag: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid property found")
@@ -540,7 +545,7 @@ impl Rule for NoUnknownProperty {
             });
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

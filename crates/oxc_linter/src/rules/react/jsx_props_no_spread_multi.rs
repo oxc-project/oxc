@@ -6,7 +6,7 @@ use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     fixer::{Fix, RuleFix},
     rule::Rule,
     utils::is_same_member_expression,
@@ -122,7 +122,7 @@ impl Rule for JsxPropsNoSpreadMulti {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }
