@@ -99,6 +99,7 @@ pub struct SemanticBuilder<'a> {
     build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
     stats: Option<Stats>,
+    excess_capacity: f64,
 
     /// Should additional syntax checks be performed?
     ///
@@ -146,6 +147,7 @@ impl<'a> SemanticBuilder<'a> {
             build_jsdoc: false,
             jsdoc: JSDocBuilder::new(source_text, trivias),
             stats: None,
+            excess_capacity: 0.0,
             check_syntax_error: false,
             cfg: None,
             class_table_builder: ClassTableBuilder::new(),
@@ -208,6 +210,24 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Request `SemanticBuilder` to allocate excess capacity for scopes, symbols, and references.
+    ///
+    /// `excess_capacity` is provided as a fraction.
+    /// e.g. to over-allocate by 20%, pass `0.2` as `excess_capacity`.
+    ///
+    /// Has no effect if a `Stats` object is provided with [`SemanticBuilder::with_stats`],
+    /// only if `SemanticBuilder` is calculating stats itself.
+    ///
+    /// This is useful when you intend to modify `Semantic`, adding more `nodes`, `scopes`, `symbols`,
+    /// or `references`. Allocating excess capacity for these additions at the outset prevents
+    /// `Semantic`'s data structures needing to grow later on which involves memory copying.
+    /// For large ASTs with a lot of semantic data, re-allocation can be very costly.
+    #[must_use]
+    pub fn with_excess_capacity(mut self, excess_capacity: f64) -> Self {
+        self.excess_capacity = excess_capacity;
+        self
+    }
+
     /// Get the built module record from `build_module_record`
     pub fn module_record(&self) -> Arc<ModuleRecord> {
         Arc::clone(&self.module_record)
@@ -248,10 +268,11 @@ impl<'a> SemanticBuilder<'a> {
             //
             // If user did not provide existing `Stats`, calculate them by visiting AST.
             let (stats, check_stats) = if let Some(stats) = self.stats {
-                (stats, false)
+                (stats, None)
             } else {
                 let stats = Stats::count(program);
-                (stats, true)
+                let stats_with_excess = stats.increase_by(self.excess_capacity);
+                (stats_with_excess, Some(stats))
             };
             self.nodes.reserve(stats.nodes as usize);
             self.scope.reserve(stats.scopes as usize);
@@ -262,7 +283,7 @@ impl<'a> SemanticBuilder<'a> {
 
             // Check that estimated counts accurately (unless in release mode)
             #[cfg(debug_assertions)]
-            if check_stats {
+            if let Some(stats) = check_stats {
                 #[allow(clippy::cast_possible_truncation)]
                 let actual_stats = Stats::new(
                     self.nodes.len() as u32,

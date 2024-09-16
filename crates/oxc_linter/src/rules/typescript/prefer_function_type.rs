@@ -173,12 +173,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                     [span.start as usize..span.end as usize];
 
                                                 match comment_interface.kind {
-                                                    CommentKind::SingleLine => {
+                                                    CommentKind::Line => {
                                                         let single_line_comment: String =
                                                             format!("//{comment}\n");
                                                         comments_vec.push(single_line_comment);
                                                     }
-                                                    CommentKind::MultiLine => {
+                                                    CommentKind::Block => {
                                                         let multi_line_comment: String =
                                                             format!("/*{comment}*/\n");
                                                         comments_vec.push(multi_line_comment);

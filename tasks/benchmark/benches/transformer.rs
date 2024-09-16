@@ -30,6 +30,8 @@ fn bench_transformer(criterion: &mut Criterion) {
                     Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(program);
                 let (symbols, scopes) = SemanticBuilder::new(source_text)
+                    // Estimate transformer will triple scopes, symbols, references
+                    .with_excess_capacity(2.0)
                     .build(program)
                     .semantic
                     .into_symbol_table_and_scope_tree();

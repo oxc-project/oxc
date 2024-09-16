@@ -59,8 +59,6 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-arrow-functions>
 //! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
 
-use std::cell::Cell;
-
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
@@ -290,23 +288,23 @@ impl<'a> ArrowFunctions<'a> {
             *flags &= !ScopeFlags::Arrow;
         }
 
-        let new_function = Function {
-            r#type: FunctionType::FunctionExpression,
-            span: arrow_function_expr.span,
-            id: None,
-            generator: false,
-            r#async: arrow_function_expr.r#async,
-            declare: false,
-            this_param: None,
+        let new_function = ctx.ast.function(
+            FunctionType::FunctionExpression,
+            arrow_function_expr.span,
+            None,
+            false,
+            arrow_function_expr.r#async,
+            false,
             // SAFETY: `ast.copy` is unsound! We need to fix.
-            params: unsafe { self.ctx.ast.copy(&arrow_function_expr.params) },
-            body: Some(body),
+            unsafe { self.ctx.ast.copy(&arrow_function_expr.type_parameters) },
+            None::<TSThisParameter<'a>>,
             // SAFETY: `ast.copy` is unsound! We need to fix.
-            type_parameters: unsafe { self.ctx.ast.copy(&arrow_function_expr.type_parameters) },
+            unsafe { self.ctx.ast.copy(&arrow_function_expr.params) },
             // SAFETY: `ast.copy` is unsound! We need to fix.
-            return_type: unsafe { self.ctx.ast.copy(&arrow_function_expr.return_type) },
-            scope_id: Cell::new(scope_id),
-        };
+            unsafe { self.ctx.ast.copy(&arrow_function_expr.return_type) },
+            Some(body),
+        );
+        new_function.scope_id.set(scope_id);
 
         let expr = Expression::FunctionExpression(self.ctx.ast.alloc(new_function));
         // Avoid creating a function declaration.

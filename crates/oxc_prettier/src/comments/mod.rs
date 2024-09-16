@@ -18,7 +18,7 @@ impl Comment {
         Self {
             start: span.start,
             end: span.end,
-            is_block: comment.kind.is_multi_line(),
+            is_block: comment.is_block(),
             has_line_suffix: false,
         }
     }
