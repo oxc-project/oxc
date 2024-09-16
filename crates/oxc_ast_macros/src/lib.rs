@@ -1,86 +1,6 @@
 use proc_macro::TokenStream;
-use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
 
-/// returns `#[repr(C, u8)]` if `enum_` has any non-unit variant,
-/// Otherwise it would return `#[repr(u8)]`.
-fn enum_repr(enum_: &syn::ItemEnum) -> TokenStream2 {
-    if enum_.variants.iter().any(|var| !matches!(var.fields, syn::Fields::Unit)) {
-        quote!(#[repr(C, u8)])
-    } else {
-        quote!(#[repr(u8)])
-    }
-}
-
-/// Generate assertions that traits used in `#[generate_derive]` are in scope.
-///
-/// e.g. for `#[generate_derive(GetSpan)]`, it generates:
-///
-/// ```rs
-/// const _: () = {
-///     {
-///         trait AssertionTrait: ::oxc_span::GetSpan {}
-///         impl<T: GetSpan> AssertionTrait for T {}
-///     }
-/// };
-/// ```
-///
-/// If `GetSpan` is not in scope, or it is not the correct `oxc_span::GetSpan`,
-/// this will raise a compilation error.
-fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
-    #[inline]
-    fn parse(attr: &syn::Attribute) -> impl Iterator<Item = syn::Ident> {
-        attr.parse_args_with(
-            syn::punctuated::Punctuated::<syn::Ident, syn::token::Comma>::parse_terminated,
-        )
-        .expect("`generate_derive` only accepts traits as single segment paths, Found an invalid argument")
-        .into_iter()
-    }
-
-    // TODO: benchmark this to see if a lazy static cell containing `HashMap` would perform better.
-    #[inline]
-    fn abs_trait(
-        ident: &syn::Ident,
-    ) -> (/* absolute type path */ TokenStream2, /* possible generics */ TokenStream2) {
-        #[cold]
-        fn invalid_derive(ident: &syn::Ident) -> ! {
-            panic!(
-                "Invalid derive trait(generate_derive): {ident}.\n\
-                    Help: If you are trying to implement a new `generate_derive` trait, \
-                    Make sure to add it to the list below."
-            )
-        }
-
-        if ident == "CloneIn" {
-            (quote!(::oxc_allocator::CloneIn), quote!(<'static>))
-        } else if ident == "GetSpan" {
-            (quote!(::oxc_span::GetSpan), TokenStream2::default())
-        } else if ident == "GetSpanMut" {
-            (quote!(::oxc_span::GetSpanMut), TokenStream2::default())
-        } else if ident == "ContentEq" {
-            (quote!(::oxc_span::cmp::ContentEq), TokenStream2::default())
-        } else if ident == "ContentHash" {
-            (quote!(::oxc_span::hash::ContentHash), TokenStream2::default())
-        } else {
-            invalid_derive(ident)
-        }
-    }
-
-    // NOTE: At this level we don't care if a trait is derived multiple times, It is the
-    // responsibility of the `ast_tools` to raise errors for those.
-    let assertion =
-        attrs.iter().filter(|attr| attr.path().is_ident("generate_derive")).flat_map(parse).map(
-            |derive| {
-                let (abs_derive, generics) = abs_trait(&derive);
-                quote! {{
-                    // NOTE: these are wrapped in a scope to avoid the need for unique identifiers.
-                    trait AssertionTrait: #abs_derive #generics {}
-                    impl<T: #derive #generics> AssertionTrait for T {}
-                }}
-            },
-        );
-    quote!(const _: () = { #(#assertion)* };)
-}
+mod ast;
 
 /// This attribute serves two purposes.
 /// First, it is a marker for our `ast_tools` to detect AST types.
@@ -148,25 +68,9 @@ fn assert_generated_derives(attrs: &[syn::Attribute]) -> TokenStream2 {
 /// 1. `serde`
 /// 2. `tsify`
 #[proc_macro_attribute]
-#[allow(clippy::missing_panics_doc)]
 pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::Item);
-
-    let (head, tail) = match &input {
-        syn::Item::Enum(enum_) => (enum_repr(enum_), assert_generated_derives(&enum_.attrs)),
-        syn::Item::Struct(struct_) => {
-            (quote!(#[repr(C)]), assert_generated_derives(&struct_.attrs))
-        }
-
-        _ => unreachable!(),
-    };
-
-    let expanded = quote! {
-        #[derive(::oxc_ast_macros::Ast)]
-        #head
-        #input
-        #tail
-    };
+    let expanded = ast::ast(&input);
     TokenStream::from(expanded)
 }
 
@@ -177,6 +81,6 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 ///
 /// Read [`macro@ast`] for further details.
 #[proc_macro_derive(Ast, attributes(scope, visit, span, generate_derive, clone_in, serde, tsify))]
-pub fn ast_derive(_item: TokenStream) -> TokenStream {
+pub fn ast_derive(_input: TokenStream) -> TokenStream {
     TokenStream::new()
 }
