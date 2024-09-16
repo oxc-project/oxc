@@ -992,9 +992,40 @@ impl<'a> Format<'a> for JSDocUnknownType {
 impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
+
+        if self.declare {
+            parts.push(ss!("declare "));
+        }
+
         parts.push(ss!("interface "));
         parts.push(format!(p, self.id));
         parts.push(space!());
+
+        if let Some(extends) = &self.extends {
+            if extends.len() > 0 {
+                let mut extends_parts = p.vec();
+                let mut display_comma = false;
+
+                extends_parts.push(ss!("extends "));
+
+                for extend in extends {
+                    if display_comma {
+                        extends_parts.push(ss!(", "));
+                    } else {
+                        display_comma = true;
+                    }
+
+                    extends_parts.push(extend.expression.format(p));
+                    if let Some(type_parameters) = &extend.type_parameters {
+                        extends_parts.push(type_parameters.format(p));
+                    }
+                }
+
+                parts.extend(extends_parts);
+                parts.push(space!());
+            }
+        }
+
         parts.push(ss!("{"));
         if self.body.body.len() > 0 {
             let mut indent_parts = p.vec();
@@ -2379,6 +2410,11 @@ impl<'a> Format<'a> for BindingPattern<'a> {
             BindingPatternKind::ArrayPattern(ref pattern) => pattern.format(p),
             BindingPatternKind::AssignmentPattern(ref pattern) => pattern.format(p),
         });
+
+        if self.optional {
+            parts.push(ss!("?"));
+        }
+
         if let Some(typ) = &self.type_annotation {
             parts.push(array![p, ss!(": "), typ.type_annotation.format(p)]);
         }
