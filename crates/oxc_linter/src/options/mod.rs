@@ -6,12 +6,11 @@ use std::{convert::From, path::PathBuf};
 
 use filter::LintFilterKind;
 use oxc_diagnostics::Error;
-use plugins::LintPlugins;
 use rustc_hash::FxHashSet;
 
 pub use allow_warn_deny::AllowWarnDeny;
 pub use filter::{InvalidFilterKind, LintFilter};
-pub use plugins::LintPluginOptions;
+pub use plugins::{LintPluginOptions, LintPlugins};
 
 use crate::{
     config::{LintConfig, OxlintConfig},
@@ -26,7 +25,7 @@ use crate::{
 /// outside of this crate.
 ///
 /// [`Linter`]: crate::Linter
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 #[cfg_attr(test, derive(PartialEq))]
 pub(crate) struct LintOptions {
     pub fix: FixKind,

@@ -1,5 +1,7 @@
 #![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
-use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
+mod host;
+
+use std::{cell::RefCell, path::Path, rc::Rc};
 
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
@@ -10,35 +12,24 @@ use oxc_syntax::module_record::ModuleRecord;
 #[cfg(debug_assertions)]
 use crate::rule::RuleFixMeta;
 use crate::{
-    config::LintConfig,
-    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
+    disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
     AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
+pub use host::ContextHost;
+
 #[derive(Clone)]
 #[must_use]
 pub struct LintContext<'a> {
-    semantic: Rc<Semantic<'a>>,
+    /// Shared context independent of the rule being linted.
+    parent: Rc<ContextHost<'a>>,
 
     /// Diagnostics reported by the linter.
     ///
     /// Contains diagnostics for all rules across all files.
     diagnostics: RefCell<Vec<Message<'a>>>,
-
-    disable_directives: Rc<DisableDirectives<'a>>,
-
-    /// Whether or not to apply code fixes during linting. Defaults to
-    /// [`FixKind::None`] (no fixing).
-    ///
-    /// Set via the `--fix`, `--fix-suggestions`, and `--fix-dangerously` CLI
-    /// flags.
-    fix: FixKind,
-
-    file_path: Rc<Path>,
-
-    config: Arc<LintConfig>,
 
     // states
     current_plugin_name: &'static str,
@@ -57,53 +48,10 @@ pub struct LintContext<'a> {
     /// }
     /// ```
     severity: Severity,
-    frameworks: FrameworkFlags,
 }
 
 impl<'a> LintContext<'a> {
     const WEBSITE_BASE_URL: &'static str = "https://oxc.rs/docs/guide/usage/linter/rules";
-
-    /// # Panics
-    /// If `semantic.cfg()` is `None`.
-    pub fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
-        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 128;
-
-        // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
-        // unwrapped without any runtime checks after construction.
-        assert!(
-            semantic.cfg().is_some(),
-            "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
-        );
-        let disable_directives =
-            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias().clone())
-                .build();
-        Self {
-            semantic,
-            diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
-            disable_directives: Rc::new(disable_directives),
-            fix: FixKind::None,
-            file_path: file_path.into(),
-            config: Arc::new(LintConfig::default()),
-            current_plugin_name: "eslint",
-            current_plugin_prefix: "eslint",
-            current_rule_name: "",
-            #[cfg(debug_assertions)]
-            current_rule_fix_capabilities: RuleFixMeta::None,
-            severity: Severity::Warning,
-            frameworks: FrameworkFlags::empty(),
-        }
-    }
-
-    /// Enable/disable automatic code fixes.
-    pub fn with_fix(mut self, fix: FixKind) -> Self {
-        self.fix = fix;
-        self
-    }
-
-    pub(crate) fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
-        self.config = Arc::clone(config);
-        self
-    }
 
     pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
         self.current_plugin_name = plugin;
@@ -122,38 +70,37 @@ impl<'a> LintContext<'a> {
         self
     }
 
+    /// Update the severity of diagnostics reported by the rule this context is
+    /// associated with.
+    #[inline]
     pub fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
         self.severity = Severity::from(severity);
         self
     }
 
-    /// Set [`FrameworkFlags`], overwriting any existing flags.
-    pub fn with_frameworks(mut self, frameworks: FrameworkFlags) -> Self {
-        self.frameworks = frameworks;
-        self
-    }
-
-    /// Add additional [`FrameworkFlags`]
-    pub fn and_frameworks(mut self, frameworks: FrameworkFlags) -> Self {
-        self.frameworks |= frameworks;
-        self
-    }
-
+    /// Get information such as the control flow graph, bound symbols, AST, etc.
+    /// for the file being linted.
+    ///
+    /// Refer to [`Semantic`]'s documentation for more information.
+    #[inline]
     pub fn semantic(&self) -> &Rc<Semantic<'a>> {
-        &self.semantic
+        &self.parent.semantic
     }
 
+    #[inline]
     pub fn cfg(&self) -> &ControlFlowGraph {
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
         // assert the existence of control flow so it should always be `Some`.
         unsafe { self.semantic().cfg().unwrap_unchecked() }
     }
 
+    #[inline]
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {
-        &self.disable_directives
+        &self.parent.disable_directives
     }
 
     /// Source code of the file being linted.
+    #[inline]
     pub fn source_text(&self) -> &'a str {
         self.semantic().source_text()
     }
@@ -165,29 +112,34 @@ impl<'a> LintContext<'a> {
     }
 
     /// [`SourceType`] of the file currently being linted.
+    #[inline]
     pub fn source_type(&self) -> &SourceType {
         self.semantic().source_type()
     }
 
     /// Path to the file currently being linted.
+    #[inline]
     pub fn file_path(&self) -> &Path {
-        &self.file_path
+        &self.parent.file_path
     }
 
     /// Plugin settings
+    #[inline]
     pub fn settings(&self) -> &OxlintSettings {
-        &self.config.settings
+        &self.parent.config.settings
     }
 
+    #[inline]
     pub fn globals(&self) -> &OxlintGlobals {
-        &self.config.globals
+        &self.parent.config.globals
     }
 
     /// Runtime environments turned on/off by the user.
     ///
     /// Examples of environments are `builtin`, `browser`, `node`, etc.
+    #[inline]
     pub fn env(&self) -> &OxlintEnv {
-        &self.config.env
+        &self.parent.config.env
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {
@@ -211,7 +163,7 @@ impl<'a> LintContext<'a> {
     }
 
     fn add_diagnostic(&self, mut message: Message<'a>) {
-        if self.disable_directives.contains(self.current_rule_name, message.span()) {
+        if self.parent.disable_directives.contains(self.current_rule_name, message.span()) {
             return;
         }
         message.error = message
@@ -334,7 +286,7 @@ impl<'a> LintContext<'a> {
             (Some(message), None) => diagnostic.with_help(message.to_owned()),
             _ => diagnostic,
         };
-        if self.fix.can_apply(rule_fix.kind()) {
+        if self.parent.fix.can_apply(rule_fix.kind()) {
             let fix = rule_fix.into_fix(self.source_text());
             self.add_diagnostic(Message::new(diagnostic, Some(fix)));
         } else {
@@ -343,7 +295,7 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn frameworks(&self) -> FrameworkFlags {
-        self.frameworks
+        self.parent.frameworks
     }
 
     /// AST nodes
@@ -380,16 +332,6 @@ impl<'a> LintContext<'a> {
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         self.semantic().jsdoc()
     }
-
-    // #[inline]
-    // fn plugin_name_to_prefix(&self, plugin_name: &'static str) -> &'static str {
-    //     let plugin_name = if self. plugin_name == "jest" && self.frameworks.contains(FrameworkFlags::Vitest) {
-    //         "vitest"
-    //     } else {
-    //         plugin_name
-    //     };
-    //     PLUGIN_PREFIXES.get(plugin_name).copied().unwrap_or(plugin_name)
-    // }
 }
 
 #[inline]

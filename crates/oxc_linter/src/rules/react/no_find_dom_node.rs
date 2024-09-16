@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_find_dom_node_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected call to `findDOMNode`.")
@@ -67,7 +71,7 @@ impl Rule for NoFindDomNode {
         ctx.diagnostic(no_find_dom_node_diagnostic(span));
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

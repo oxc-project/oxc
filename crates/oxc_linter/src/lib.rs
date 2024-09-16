@@ -23,6 +23,7 @@ pub mod table;
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
 use config::LintConfig;
+use context::ContextHost;
 use options::LintOptions;
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
@@ -113,22 +114,22 @@ impl Linter {
         self.rules.len()
     }
 
-    // pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
-        let ctx = self.create_ctx(path, semantic);
-        let semantic = Rc::clone(ctx.semantic());
+        let ctx_host =
+            Rc::new(ContextHost::new(path, semantic, self.options).with_config(&self.config));
 
         let rules = self
             .rules
             .iter()
-            .filter(|rule| rule.should_run(&ctx))
-            .map(|rule| (rule, self.ctx_for_rule(&ctx, rule)))
+            .filter(|rule| rule.should_run(&ctx_host))
+            .map(|rule| (rule, Rc::clone(&ctx_host).spawn(rule)))
             .collect::<Vec<_>>();
 
         for (rule, ctx) in &rules {
             rule.run_once(ctx);
         }
 
+        let semantic = ctx_host.semantic();
         for symbol in semantic.symbols().symbol_ids() {
             for (rule, ctx) in &rules {
                 rule.run_on_symbol(symbol, ctx);
@@ -152,53 +153,6 @@ impl Linter {
         }
         writeln!(writer, "Default: {}", table.turned_on_by_default_count).unwrap();
         writeln!(writer, "Total: {}", table.total).unwrap();
-    }
-
-    fn create_ctx<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> LintContext<'a> {
-        let mut ctx = LintContext::new(path.to_path_buf().into_boxed_path(), semantic)
-            .with_fix(self.options.fix)
-            .with_config(&self.config)
-            .with_frameworks(self.options.framework_hints);
-
-        // set file-specific jest/vitest flags
-        if self.options.plugins.has_test() {
-            let mut test_flags = FrameworkFlags::empty();
-
-            if frameworks::has_vitest_imports(ctx.module_record()) {
-                test_flags.set(FrameworkFlags::Vitest, true);
-            } else if frameworks::is_jestlike_file(path)
-                || frameworks::has_jest_imports(ctx.module_record())
-            {
-                test_flags.set(FrameworkFlags::Jest, true);
-            }
-
-            ctx = ctx.and_frameworks(test_flags);
-        }
-
-        ctx
-    }
-
-    fn ctx_for_rule<'a>(&self, ctx: &LintContext<'a>, rule: &RuleWithSeverity) -> LintContext<'a> {
-        let rule_name = rule.name();
-        let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
-
-        #[cfg(debug_assertions)]
-        let ctx = ctx.clone().with_rule_fix_capabilities(rule.rule.fix());
-        #[cfg(not(debug_assertions))]
-        let ctx = ctx.clone();
-
-        ctx.with_plugin_name(plugin_name).with_rule_name(rule_name).with_severity(rule.severity)
-    }
-
-    fn map_jest(&self, plugin_name: &'static str, rule_name: &str) -> &'static str {
-        if self.options.plugins.has_vitest()
-            && plugin_name == "jest"
-            && utils::is_jest_rule_adapted_to_vitest(rule_name)
-        {
-            "vitest"
-        } else {
-            plugin_name
-        }
     }
 }
 

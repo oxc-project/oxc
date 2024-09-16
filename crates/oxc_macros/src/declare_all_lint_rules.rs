@@ -61,7 +61,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let expanded = quote! {
         #(pub use self::#use_stmts::#struct_names;)*
 
-        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta}, AstNode};
+        use crate::{context::{ContextHost, LintContext}, rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
@@ -134,7 +134,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub(super) fn should_run(&self, ctx: &LintContext) -> bool {
+            pub(super) fn should_run(&self, ctx: &ContextHost) -> bool {
                 match self {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*
                 }
