@@ -28,6 +28,7 @@ use tsify::Tsify;
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub struct BooleanLiteral {
     #[serde(flatten)]
     pub span: Span,
@@ -42,6 +43,7 @@ pub struct BooleanLiteral {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub struct NullLiteral {
     #[serde(flatten)]
     pub span: Span,
@@ -55,6 +57,7 @@ pub struct NullLiteral {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub struct NumericLiteral<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -73,6 +76,7 @@ pub struct NumericLiteral<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub struct BigIntLiteral<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -91,6 +95,7 @@ pub struct BigIntLiteral<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub struct RegExpLiteral<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -147,6 +152,7 @@ pub struct EmptyObject;
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
+#[non_exhaustive]
 pub struct StringLiteral<'a> {
     #[serde(flatten)]
     pub span: Span,

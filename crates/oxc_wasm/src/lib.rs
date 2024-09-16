@@ -420,8 +420,8 @@ impl Oxc {
             .comments()
             .map(|comment| Comment {
                 r#type: match comment.kind {
-                    CommentKind::SingleLine => CommentType::Line,
-                    CommentKind::MultiLine => CommentType::Block,
+                    CommentKind::Line => CommentType::Line,
+                    CommentKind::Block => CommentType::Block,
                 },
                 value: comment.span.source_text(source_text).to_string(),
                 start: comment.span.start,

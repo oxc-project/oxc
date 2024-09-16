@@ -299,7 +299,7 @@ pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -
             ctx.source_text()[..comment.span.end as usize].lines().next_back().unwrap_or("");
         let nothing_before_comment = previous_line
             .trim()
-            .strip_prefix(if comment.kind == CommentKind::SingleLine { "//" } else { "/*" })
+            .strip_prefix(if comment.kind == CommentKind::Line { "//" } else { "/*" })
             .is_some_and(|s| s.trim().is_empty());
         if !nothing_before_comment {
             return None;

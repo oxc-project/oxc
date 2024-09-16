@@ -147,7 +147,7 @@ impl<'a> JSDocBuilder<'a> {
     }
 
     fn parse_if_jsdoc_comment(&self, comment: &Comment) -> Option<JSDoc<'a>> {
-        if !comment.kind.is_multi_line() {
+        if !comment.is_block() {
             return None;
         }
 

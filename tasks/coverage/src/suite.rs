@@ -32,7 +32,6 @@ pub enum TestResult {
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
     GenericError(/* case */ &'static str, /* error */ String),
-    Snapshot(String),
 }
 
 pub struct CoverageReport<'a, T> {
@@ -391,9 +390,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             }
             TestResult::IncorrectlyPassed => {
                 writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
-            }
-            TestResult::Snapshot(snapshot) => {
-                writer.write_all(snapshot.as_bytes())?;
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }

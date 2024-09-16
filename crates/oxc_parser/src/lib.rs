@@ -510,11 +510,11 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
         let sources = [
-            ("// line comment", CommentKind::SingleLine),
-            ("/* line comment */", CommentKind::MultiLine),
+            ("// line comment", CommentKind::Line),
+            ("/* line comment */", CommentKind::Block),
             (
                 "type Foo = ( /* Require properties which are not generated automatically. */ 'bar')",
-                CommentKind::MultiLine,
+                CommentKind::Block,
             ),
         ];
         for (source, kind) in sources {

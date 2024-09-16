@@ -546,7 +546,7 @@ impl<'a> IsolatedDeclarations<'a> {
         kind: BindingPatternKind<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
-        let pattern = BindingPattern { kind, type_annotation, optional: false };
+        let pattern = self.ast.binding_pattern(kind, type_annotation, false);
         let parameter =
             self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);
         let items = self.ast.vec1(parameter);

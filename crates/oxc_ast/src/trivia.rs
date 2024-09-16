@@ -8,19 +8,34 @@ use std::{
 
 use oxc_span::Span;
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum CommentKind {
+    Line,
+    Block,
+}
+
 /// Single or multiline comment
 #[derive(Debug, Clone, Copy)]
 pub struct Comment {
-    pub kind: CommentKind,
     /// The span of the comment text (without leading/trailing delimiters).
     pub span: Span,
+
+    pub kind: CommentKind,
 }
 
 impl Comment {
     #[inline]
     pub fn new(start: u32, end: u32, kind: CommentKind) -> Self {
         let span = Span::new(start, end);
-        Self { kind, span }
+        Self { span, kind }
+    }
+
+    pub fn is_line(self) -> bool {
+        self.kind == CommentKind::Line
+    }
+
+    pub fn is_block(self) -> bool {
+        self.kind == CommentKind::Block
     }
 
     pub fn real_span(&self) -> Span {
@@ -29,36 +44,18 @@ impl Comment {
 
     pub fn real_span_end(&self) -> u32 {
         match self.kind {
-            CommentKind::SingleLine => self.span.end,
+            CommentKind::Line => self.span.end,
             // length of `*/`
-            CommentKind::MultiLine => self.span.end + 2,
+            CommentKind::Block => self.span.end + 2,
         }
     }
 
     pub fn real_span_start(&self) -> u32 {
-        match self.kind {
-            CommentKind::SingleLine | CommentKind::MultiLine => self.span.start - 2,
-        }
+        self.span.start - 2
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum CommentKind {
-    SingleLine,
-    MultiLine,
-}
-
-impl CommentKind {
-    #[inline]
-    pub fn is_single_line(self) -> bool {
-        self == Self::SingleLine
-    }
-
-    #[inline]
-    pub fn is_multi_line(self) -> bool {
-        self == Self::MultiLine
-    }
-}
+impl CommentKind {}
 
 /// Sorted set of unique trivia comments, in ascending order by starting position.
 pub type SortedComments = Box<[Comment]>;
@@ -192,11 +189,11 @@ mod test {
     #[test]
     fn test_comments_range() {
         let comments: SortedComments = vec![
-            Comment { span: Span::new(0, 4), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(5, 9), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(10, 13), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(14, 17), kind: CommentKind::SingleLine },
-            Comment { span: Span::new(18, 23), kind: CommentKind::SingleLine },
+            Comment::new(0, 4, CommentKind::Line),
+            Comment::new(5, 9, CommentKind::Line),
+            Comment::new(10, 13, CommentKind::Line),
+            Comment::new(14, 17, CommentKind::Line),
+            Comment::new(18, 23, CommentKind::Line),
         ]
         .into_boxed_slice();
         let full_len = comments.len();

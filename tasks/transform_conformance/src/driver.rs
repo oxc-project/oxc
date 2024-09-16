@@ -2,7 +2,10 @@ use std::{mem, ops::ControlFlow, path::Path};
 
 use oxc::{
     ast::ast::Program,
+    ast::Trivias,
+    codegen::{CodeGenerator, CodegenOptions},
     diagnostics::OxcDiagnostic,
+    mangler::Mangler,
     semantic::post_transform_checker::check_semantic_after_transform,
     span::SourceType,
     transformer::{TransformOptions, TransformerReturn},
@@ -52,6 +55,18 @@ impl CompilerInterface for Driver {
             }
         }
         ControlFlow::Continue(())
+    }
+
+    // Disable comments
+    fn codegen<'a>(
+        &self,
+        program: &Program<'a>,
+        _source_text: &'a str,
+        _trivias: &Trivias,
+        mangler: Option<Mangler>,
+        options: CodegenOptions,
+    ) -> String {
+        CodeGenerator::new().with_options(options).with_mangler(mangler).build(program).source_text
     }
 }
 

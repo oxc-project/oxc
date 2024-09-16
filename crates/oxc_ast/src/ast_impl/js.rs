@@ -3,7 +3,10 @@ use std::{borrow::Cow, cell::Cell, fmt};
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
-    operator::UnaryOperator, reference::ReferenceId, scope::ScopeFlags, symbol::SymbolId,
+    operator::UnaryOperator,
+    reference::ReferenceId,
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
 };
 
 use crate::ast::*;
@@ -355,6 +358,10 @@ impl<'a> fmt::Display for IdentifierReference<'a> {
 impl<'a> BindingIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
+    }
+
+    pub fn new_with_symbol_id(span: Span, name: Atom<'a>, symbol_id: SymbolId) -> Self {
+        Self { span, name, symbol_id: Cell::new(Some(symbol_id)) }
     }
 }
 
@@ -753,6 +760,10 @@ impl<'a> BlockStatement<'a> {
     pub fn new(span: Span, body: Vec<'a, Statement<'a>>) -> Self {
         Self { span, body, scope_id: Cell::default() }
     }
+
+    pub fn new_with_scope_id(span: Span, body: Vec<'a, Statement<'a>>, scope_id: ScopeId) -> Self {
+        Self { span, body, scope_id: Cell::new(Some(scope_id)) }
+    }
 }
 
 impl<'a> Declaration<'a> {
@@ -910,10 +921,6 @@ impl<'a> CatchClause<'a> {
 }
 
 impl<'a> BindingPattern<'a> {
-    pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
-        Self { kind, type_annotation: None, optional: false }
-    }
-
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
         self.kind.get_identifier()
     }

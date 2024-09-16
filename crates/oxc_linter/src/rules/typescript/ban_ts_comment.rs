@@ -155,10 +155,10 @@ impl Rule for BanTsComment {
         let comments = ctx.semantic().trivias().comments();
         for comm in comments {
             let raw = ctx.source_range(comm.span);
-            if let Some(captures) = find_ts_comment_directive(raw, comm.kind.is_single_line()) {
+            if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
                 let (directive, description) = (captures.0, captures.1);
-                if CommentKind::MultiLine == comm.kind
+                if CommentKind::Block == comm.kind
                     && (directive == "check" || directive == "nocheck")
                 {
                     continue;
