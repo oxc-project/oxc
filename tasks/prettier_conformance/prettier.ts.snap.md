@@ -1,4 +1,4 @@
-ts compatibility: 85/526 (16.16%)
+ts compatibility: 89/526 (16.92%)
 
 # Failed
 
@@ -32,7 +32,6 @@ ts compatibility: 85/526 (16.16%)
 * as/array-pattern.ts
 * as/as-const-embedded.ts
 * as/as.ts
-* as/assignment.ts
 * as/assignment2.ts
 * as/export_default_as.ts
 * as/expression-statement.ts
@@ -49,7 +48,6 @@ ts compatibility: 85/526 (16.16%)
 * assignment/issue-10848.tsx
 * assignment/issue-10850.ts
 * assignment/issue-12413.ts
-* assignment/issue-2322.ts
 * assignment/issue-2482.ts
 * assignment/issue-3122.ts
 * assignment/issue-5370.ts
@@ -212,7 +210,6 @@ ts compatibility: 85/526 (16.16%)
 ### conformance/internalModules/importDeclarations
 * conformance/internalModules/importDeclarations/circularImportAlias.ts
 * conformance/internalModules/importDeclarations/exportImportAlias.ts
-* conformance/internalModules/importDeclarations/exportInterface.ts
 * conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
 * conformance/internalModules/importDeclarations/shadowedInternalModule.ts
 
@@ -467,7 +464,6 @@ ts compatibility: 85/526 (16.16%)
 * interface/ignore.ts
 * interface/long-extends.ts
 * interface/pattern-parameters.ts
-* interface/separator.ts
 
 ### interface/long-type-parameters
 * interface/long-type-parameters/long-type-parameters.ts

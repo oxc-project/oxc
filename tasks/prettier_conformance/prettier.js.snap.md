@@ -1,4 +1,4 @@
-js compatibility: 266/593 (44.86%)
+js compatibility: 267/593 (45.03%)
 
 # Failed
 
@@ -292,7 +292,6 @@ js compatibility: 266/593 (44.86%)
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
 * last-argument-expansion/number-only-array.js
-* last-argument-expansion/object.js
 * last-argument-expansion/overflow.js
 
 ### line-suffix-boundary
