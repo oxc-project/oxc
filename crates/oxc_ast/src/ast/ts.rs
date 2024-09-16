@@ -1081,6 +1081,14 @@ impl TSModuleDeclarationKind {
     pub fn is_global(self) -> bool {
         matches!(self, TSModuleDeclarationKind::Global)
     }
+
+    pub fn to_str(self) -> &'static str {
+        match self {
+            TSModuleDeclarationKind::Global => "global",
+            TSModuleDeclarationKind::Namespace => "namespace",
+            TSModuleDeclarationKind::Module => "module",
+        }
+    }
 }
 
 #[ast(visit)]

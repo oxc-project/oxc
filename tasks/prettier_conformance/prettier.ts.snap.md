@@ -1,4 +1,4 @@
-ts compatibility: 68/526 (12.93%)
+ts compatibility: 89/526 (16.92%)
 
 # Failed
 
@@ -32,7 +32,6 @@ ts compatibility: 68/526 (12.93%)
 * as/array-pattern.ts
 * as/as-const-embedded.ts
 * as/as.ts
-* as/assignment.ts
 * as/assignment2.ts
 * as/export_default_as.ts
 * as/expression-statement.ts
@@ -49,9 +48,7 @@ ts compatibility: 68/526 (12.93%)
 * assignment/issue-10848.tsx
 * assignment/issue-10850.ts
 * assignment/issue-12413.ts
-* assignment/issue-2322.ts
 * assignment/issue-2482.ts
-* assignment/issue-2485.ts
 * assignment/issue-3122.ts
 * assignment/issue-5370.ts
 * assignment/issue-6783.ts
@@ -172,7 +169,6 @@ ts compatibility: 68/526 (12.93%)
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
 ### conformance/classes/classDeclarations/classHeritageSpecification
-* conformance/classes/classDeclarations/classHeritageSpecification/classAppearsToHaveMembersOfObject.ts
 * conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts
 * conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts
 * conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts
@@ -214,9 +210,7 @@ ts compatibility: 68/526 (12.93%)
 ### conformance/internalModules/importDeclarations
 * conformance/internalModules/importDeclarations/circularImportAlias.ts
 * conformance/internalModules/importDeclarations/exportImportAlias.ts
-* conformance/internalModules/importDeclarations/exportInterface.ts
 * conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
-* conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts
 * conformance/internalModules/importDeclarations/shadowedInternalModule.ts
 
 ### conformance/parser/ecmascript5/Statements
@@ -244,9 +238,6 @@ ts compatibility: 68/526 (12.93%)
 * conformance/types/functions/functionOverloadErrorsSyntax.ts
 * conformance/types/functions/functionTypeTypeParameters.ts
 
-### conformance/types/interfaceDeclaration
-* conformance/types/interfaceDeclaration/interfaceDeclaration.ts
-
 ### conformance/types/intersectionType
 * conformance/types/intersectionType/intersectionType.ts
 
@@ -255,9 +246,6 @@ ts compatibility: 68/526 (12.93%)
 
 ### conformance/types/mappedType
 * conformance/types/mappedType/mappedType.ts
-
-### conformance/types/methodSignature
-* conformance/types/methodSignature/methodSignature.ts
 
 ### conformance/types/moduleDeclaration
 * conformance/types/moduleDeclaration/kind-detection.ts
@@ -336,7 +324,6 @@ ts compatibility: 68/526 (12.93%)
 * custom/call/callSignature.ts
 
 ### custom/computedProperties
-* custom/computedProperties/string.ts
 * custom/computedProperties/symbol.ts
 
 ### custom/declare
@@ -369,8 +356,6 @@ ts compatibility: 68/526 (12.93%)
 * declare/declare_class_fields.ts
 * declare/declare_function.ts
 * declare/declare_interface.ts
-* declare/declare_module.ts
-* declare/declare_namespace.ts
 * declare/declare_var.ts
 * declare/object-type-in-declare-function.ts
 
@@ -423,11 +408,9 @@ ts compatibility: 68/526 (12.93%)
 
 ### export
 * export/comment.ts
-* export/default.ts
 * export/export-class.ts
 * export/export-type-star-from-2.ts
 * export/export-type-star-from.ts
-* export/export.ts
 
 ### export-default
 * export-default/function_as.ts
@@ -477,12 +460,10 @@ ts compatibility: 68/526 (12.93%)
 
 ### interface
 * interface/comments-generic.ts
-* interface/comments.ts
 * interface/generic.ts
 * interface/ignore.ts
 * interface/long-extends.ts
 * interface/pattern-parameters.ts
-* interface/separator.ts
 
 ### interface/long-type-parameters
 * interface/long-type-parameters/long-type-parameters.ts
@@ -517,7 +498,6 @@ ts compatibility: 68/526 (12.93%)
 
 ### keywords
 * keywords/keywords-2.ts
-* keywords/keywords.ts
 * keywords/module.ts
 
 ### last-argument-expansion
@@ -554,9 +534,6 @@ ts compatibility: 68/526 (12.93%)
 
 ### multiparser-css
 * multiparser-css/issue-6259.ts
-
-### namespace
-* namespace/invalid-await.ts
 
 ### never
 * never/type-argument.src.ts
@@ -607,9 +584,6 @@ ts compatibility: 68/526 (12.93%)
 
 ### private-fields-in-in
 * private-fields-in-in/basic.ts
-
-### quote-props
-* quote-props/types.ts
 
 ### range
 * range/export-assignment.ts
@@ -724,11 +698,8 @@ ts compatibility: 68/526 (12.93%)
 * typeparams/tagged-template-expression.ts
 
 ### typeparams/consistent
-* typeparams/consistent/flow-only.ts
 * typeparams/consistent/issue-9501.ts
-* typeparams/consistent/simple-types.ts
 * typeparams/consistent/template-literal-types.ts
-* typeparams/consistent/typescript-only.ts
 
 ### typeparams/empty-parameters-with-arrow-function
 * typeparams/empty-parameters-with-arrow-function/issue-13817.ts
