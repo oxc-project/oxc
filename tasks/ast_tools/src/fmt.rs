@@ -11,7 +11,10 @@ static WHITE_SPACES: &str = " \t";
 
 /// Pretty print
 pub fn pretty_print(input: &TokenStream) -> String {
-    let result = prettyplease::unparse(&parse_file(input.to_string().as_str()).unwrap());
+    let mut result = input.to_string();
+    if let Ok(file) = parse_file(&result) {
+        result = prettyplease::unparse(&file);
+    }
     // `insert!` and `endl!` macros are not currently used
     // let result = ENDL_REGEX.replace_all(&result, EndlReplacer);
     // let result = INSERT_REGEX.replace_all(&result, InsertReplacer).to_string();

@@ -89,7 +89,7 @@ pub fn ast_derive(_input: TokenStream) -> TokenStream {
 /// Get type name as a string.
 ///
 /// # Panics
-/// Panics if struct is not `struct` or `enum`.
+/// Panics if type is not `struct` or `enum`.
 fn get_type_name(input: &TokenStream) -> String {
     let mut it = input.clone().into_iter();
     let mut next = || match it.next() {
