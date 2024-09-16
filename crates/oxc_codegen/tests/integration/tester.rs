@@ -15,10 +15,11 @@ pub fn test(source_text: &str, expected: &str) {
         )
         .build(&ret.program)
         .source_text;
-    assert_eq!(
-        result, expected,
-        "\nfor source {source_text:?}\nexpect {expected:?}\ngot    {result:?}"
-    );
+    assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");
+}
+
+pub fn test_same(source_text: &str) {
+    test(source_text, source_text);
 }
 
 pub fn test_without_source(source_text: &str, expected: &str) {

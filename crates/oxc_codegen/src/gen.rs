@@ -12,7 +12,6 @@ use oxc_syntax::{
 };
 
 use crate::{
-    annotation_comment::AnnotationKind,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     Codegen, Context, Operator,
 };
@@ -21,6 +20,7 @@ pub trait Gen: GetSpan {
     fn gen(&self, p: &mut Codegen, ctx: Context);
 
     fn print(&self, p: &mut Codegen, ctx: Context) {
+        p.print_leading_comments(self.span().start);
         self.gen(p, ctx);
     }
 }
@@ -29,6 +29,7 @@ pub trait GenExpr: GetSpan {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
 
     fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        p.print_leading_comments(self.span().start);
         self.gen_expr(p, precedence, ctx);
     }
 }
@@ -467,6 +468,7 @@ impl<'a> Gen for ReturnStatement<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("return");
         if let Some(arg) = &self.argument {
             p.print_hard_space();
@@ -560,19 +562,6 @@ impl<'a> Gen for VariableDeclaration<'a> {
             p.print_str("declare ");
         }
 
-        if p.comment_options.preserve_annotate_comments
-            && matches!(self.kind, VariableDeclarationKind::Const)
-        {
-            if let Some(declarator) = self.declarations.first() {
-                if let Some(ref init) = declarator.init {
-                    let leading_annotate_comments =
-                        p.get_leading_annotate_comments(self.span.start);
-                    if !leading_annotate_comments.is_empty() {
-                        p.move_comments(init.span().start, leading_annotate_comments);
-                    }
-                }
-            }
-        }
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
@@ -603,7 +592,7 @@ impl<'a> Gen for Function<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
-        p.gen_comments(self.span.start);
+        // p.gen_comments(self.span.start);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
@@ -833,27 +822,6 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
         p.add_source_mapping(self.span.start);
         p.print_indent();
 
-        if p.comment_options.preserve_annotate_comments {
-            match &self.declaration {
-                Some(Declaration::FunctionDeclaration(_)) => {
-                    p.gen_comments(self.span.start);
-                }
-                Some(Declaration::VariableDeclaration(var_decl))
-                    if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
-                {
-                    if let Some(declarator) = var_decl.declarations.first() {
-                        if let Some(ref init) = declarator.init {
-                            let leading_annotate_comments =
-                                p.get_leading_annotate_comments(self.span.start);
-                            if !leading_annotate_comments.is_empty() {
-                                p.move_comments(init.span().start, leading_annotate_comments);
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            };
-        }
         p.print_str("export ");
         if self.export_kind.is_type() {
             p.print_str("type ");
@@ -1385,13 +1353,8 @@ impl<'a> GenExpr for PrivateFieldExpression<'a> {
 
 impl<'a> GenExpr for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let annotate_comments = p.get_leading_annotate_comments(self.span.start);
-        if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
-            wrap = true;
-        }
+        let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comments, &mut AnnotationKind::empty());
             p.add_source_mapping(self.span.start);
             self.callee.print_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
@@ -1589,7 +1552,7 @@ impl<'a> Gen for PropertyKey<'a> {
 impl<'a> GenExpr for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
-            p.gen_comments(self.span.start);
+            // p.gen_comments(self.span.start);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
                 p.print_str("async");
@@ -2044,13 +2007,8 @@ impl<'a> GenExpr for ChainExpression<'a> {
 
 impl<'a> GenExpr for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        let mut wrap = precedence >= self.precedence();
-        let annotate_comment = p.get_leading_annotate_comments(self.span.start);
-        if !annotate_comment.is_empty() && precedence >= Precedence::Postfix {
-            wrap = true;
-        }
+        let wrap = precedence >= self.precedence();
         p.wrap(wrap, |p| {
-            p.print_comments(&annotate_comment, &mut AnnotationKind::empty());
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");

@@ -56,6 +56,9 @@ fn parse<'a>(
         }
         return None;
     }
+    for comment in ret.trivias.comments() {
+        println!("{comment:?}");
+    }
     Some(ret)
 }
 

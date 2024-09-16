@@ -178,34 +178,39 @@ fn test_new() {
     // test_minify("new x().y", "new x().y;");
     // test_minify("new x() + y", "new x+y;");
     // test_minify("new x() ** 2", "new x**2;");
+}
 
+#[test]
+fn webpack() {
     // Test preservation of Webpack-specific comments
-    // test(
-    // "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-    // "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    // );
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
-    // );
-    // test(
-    // "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-    // "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
-    // );
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    // );
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
-    // ); // Not currently handled
-    // test(
-    // "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    // );
-    // test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-    // "new Worker(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
+    test(
+        "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+        "new Worker(\n// webpackBar: 2\n\"path\");\n",
+    ); // trailing not handled
+    test(
+        "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+        "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ \"path\");\n",
+    );
+    test(
+        "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+        "new Worker(\"path\");\n",
+    ); // first line is not webpack
+    test(
+        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+        "new Worker(/* webpackFoo: 1 */ \"path\");\n",
+    ); // trailing not handled
+    test(
+        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+        "new Worker(/* webpackFoo: 1 */ \"path\");\n",
+    ); // trailing not handled
+    test(
+        "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+        "new Worker(/* webpackFoo: 1 */ \"path\");\n",
+    ); // trailing not handled
+    test(
+        "new Worker(new URL(\"path\", /* webpackFoo: these can go anywhere */ import.meta.url))",
+        "new Worker(new URL(\"path\", /* webpackFoo: these can go anywhere */ import.meta.url));\n",
+    );
 }
 
 #[test]

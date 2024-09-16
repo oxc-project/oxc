@@ -3,18 +3,18 @@
 //! Code adapted from
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
-mod annotation_comment;
 mod binary_expr_visitor;
+mod comments;
 mod context;
 mod gen;
 mod operator;
 mod sourcemap_builder;
 
-use std::{borrow::Cow, collections::hash_map::Entry, ops::Range};
+use std::borrow::Cow;
 
 use oxc_ast::{
     ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
-    Comment, Trivias,
+    Trivias,
 };
 use oxc_mangler::Mangler;
 use oxc_span::Span;
@@ -25,9 +25,8 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashMap;
 
-use self::annotation_comment::AnnotationComment;
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
+    binary_expr_visitor::BinaryExpressionVisitor, comments::CommentsMap, operator::Operator,
     sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
@@ -66,6 +65,7 @@ pub struct Codegen<'a> {
     source_text: Option<&'a str>,
 
     trivias: Trivias,
+    leading_comments: CommentsMap,
 
     mangler: Option<Mangler>,
 
@@ -96,15 +96,7 @@ pub struct Codegen<'a> {
 
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
-
-    latest_consumed_comment_end: u32,
-
-    /// The key of map is the node start position,
-    /// the first element of value is the start of the comment
-    /// the second element of value includes the end of the comment and comment kind.
-    move_comment_map: MoveCommentMap,
 }
-pub(crate) type MoveCommentMap = FxHashMap<u32, Vec<AnnotationComment>>;
 
 impl<'a> Default for Codegen<'a> {
     fn default() -> Self {
@@ -133,6 +125,7 @@ impl<'a> Codegen<'a> {
             comment_options: CommentOptions::default(),
             source_text: None,
             trivias: Trivias::default(),
+            leading_comments: FxHashMap::default(),
             mangler: None,
             code: vec![],
             needs_semicolon: false,
@@ -148,8 +141,6 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: b'"',
             sourcemap_builder: None,
-            latest_consumed_comment_end: 0,
-            move_comment_map: MoveCommentMap::default(),
         }
     }
 
@@ -185,6 +176,7 @@ impl<'a> Codegen<'a> {
         trivias: Trivias,
         options: CommentOptions,
     ) -> Self {
+        self.build_leading_comments(source_text, &trivias);
         self.trivias = trivias;
         self.comment_options = options;
         self.with_source_text(source_text)
@@ -287,9 +279,9 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
-    fn peek_nth(&self, n: usize) -> Option<char> {
+    fn peek_nth(&self, n: u32) -> Option<char> {
         // SAFETY: criteria of `from_utf8_unchecked` are met.
-        unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
+        unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n as usize)
     }
 
     #[inline]
@@ -535,59 +527,5 @@ impl<'a> Codegen<'a> {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
         }
-    }
-}
-
-// Comment related
-impl<'a> Codegen<'a> {
-    fn preserve_annotate_comments(&self) -> bool {
-        self.comment_options.preserve_annotate_comments && !self.options.minify
-    }
-
-    /// Avoid issue related to rustc borrow checker .
-    /// Since if you want to print a range of source code, you need to borrow the source code
-    /// as immutable first, and call the [Self::print_str] which is a mutable borrow.
-    ///
-    /// # Panics
-    /// If `self.source_text` isn't set.
-    fn print_range_of_source_code(&mut self, range: Range<usize>) {
-        let source_text = self.source_text.expect("expect `Codegen::source_text` to be set.");
-        self.code.extend_from_slice(source_text[range].as_bytes());
-    }
-
-    fn get_leading_comments(
-        &self,
-        start: u32,
-        end: u32,
-    ) -> impl DoubleEndedIterator<Item = &'_ Comment> + '_ {
-        self.trivias.comments_range(start..end)
-    }
-
-    /// In some scenario, we want to move the comment that should be codegened to another position.
-    /// ```js
-    ///  /* @__NO_SIDE_EFFECTS__ */ export const a = function() {
-    ///
-    ///  }, b = 10000;
-    ///
-    /// ```
-    /// should generate such output:
-    /// ```js
-    ///   export const /* @__NO_SIDE_EFFECTS__ */ a = function() {
-    ///
-    ///  }, b = 10000;
-    /// ```
-    fn move_comments(&mut self, position: u32, full_comment_infos: Vec<AnnotationComment>) {
-        match self.move_comment_map.entry(position) {
-            Entry::Occupied(mut occ) => {
-                occ.get_mut().extend(full_comment_infos);
-            }
-            Entry::Vacant(vac) => {
-                vac.insert(full_comment_infos);
-            }
-        }
-    }
-
-    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Vec<AnnotationComment>> {
-        self.move_comment_map.remove(&node_start)
     }
 }

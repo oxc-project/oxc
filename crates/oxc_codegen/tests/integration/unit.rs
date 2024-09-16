@@ -1,4 +1,4 @@
-use crate::tester::{test, test_minify, test_without_source};
+use crate::tester::{test, test_minify, test_same, test_without_source};
 
 #[test]
 fn module_decl() {
@@ -253,4 +253,25 @@ fn equality() {
     test_minify("(a | b) == (c & d)", "(a|b)==(c&d);");
     test_minify("a, b == c , d", "a,b==c,d;");
     test_minify("(a, b) == (c , d)", "(a,b)==(c,d);");
+}
+
+#[test]
+fn vite_ignore() {
+    test("import(/* @vite-ignore */ dynamicVar)", "import(/* @vite-ignore */ dynamicVar);\n");
+    test(
+        "new Worker(new URL('./path', import.meta.url), /* @vite-ignore */ dynamicOptions)",
+        "new Worker(new URL(\"./path\", import.meta.url), /* @vite-ignore */ dynamicOptions);\n",
+    );
+}
+
+#[test]
+#[ignore] // TODO
+fn comments() {
+    test_same(
+        r"
+/* @internal */
+// not actually internal, this line need to be preserved
+export var x
+    ",
+    );
 }
