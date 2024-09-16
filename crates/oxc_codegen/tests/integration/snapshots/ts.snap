@@ -1,114 +1,174 @@
 ---
-source: crates/oxc_codegen/tests/integration/ts.rs
+source: crates/oxc_codegen/tests/integration/main.rs
 ---
+########## 0
 let x: string = `\x01`;
+----------
 let x: string = `\x01`;
 
+########## 1
 function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {
 	return x;
 }
+----------
 function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {
 	return x;
 }
 
+########## 2
 let x: string[] = ['abc', 'def', 'ghi'];
+----------
 let x: string[] = ['abc', 'def', 'ghi'];
 
+########## 3
 let x: Array<string> = ['abc', 'def', 'ghi',];
+----------
 let x: Array<string> = ['abc', 'def', 'ghi'];
 
+########## 4
 let x: [string, number] = ['abc', 123];
+----------
 let x: [string, number] = ['abc', 123];
 
+########## 5
 let x: string | number = 'abc';
+----------
 let x: string | number = 'abc';
 
+########## 6
 let x: string & number = 'abc';
+----------
 let x: string & number = 'abc';
 
+########## 7
 let x: typeof String = 'string';
+----------
 let x: typeof String = 'string';
 
+########## 8
 let x: keyof string = 'length';
+----------
 let x: keyof string = 'length';
 
+########## 9
 let x: keyof typeof String = 'length';
+----------
 let x: keyof typeof String = 'length';
 
+########## 10
 let x: string['length'] = 123;
+----------
 let x: string['length'] = 123;
 
+########## 11
 function isString(value: unknown): asserts value is string {
             if (typeof value !== 'string') {
                 throw new Error('Not a string');
             }
         }
+----------
 function isString(value: unknown): asserts value is string {
 	if (typeof value !== 'string') {
 		throw new Error('Not a string');
 	}
 }
 
+########## 12
 import type { Foo } from 'foo';
+----------
 import type { Foo } from 'foo';
 
+########## 13
 import { Foo, type Bar } from 'foo';
+----------
 import { Foo, type Bar } from 'foo';
 
+########## 14
 export { Foo, type Bar } from 'foo';
+----------
 export { Foo, type Bar } from 'foo';
 
+########## 15
 type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }
+----------
 type A<T> = { [K in keyof T as K extends string ? B<K> : K] : T[K]};
 
+########## 16
 class A {readonly type = 'frame'}
+----------
 class A {
 	readonly type = 'frame';
 }
 
+########## 17
 let foo: { <T>(t: T): void }
+----------
 let foo: {<T>(t: T): void};
 
+########## 18
 let foo: { new <T>(t: T): void }
+----------
 let foo: {new <T>(t: T): void};
 
+########## 19
 function <const T>(){}
+----------
 function<const T>() {}
 
+########## 20
 class A {m?(): void}
+----------
 class A {
 	m?(): void;
 }
 
+########## 21
 class A {constructor(public readonly a: number) {}}
+----------
 class A {
 	constructor(public readonly a: number) {}
 }
 
+########## 22
 abstract class A {private abstract static m() {}}
+----------
 abstract class A {
 	private abstract static m() {}
 }
 
+########## 23
 abstract class A {private abstract static readonly prop: string}
+----------
 abstract class A {
 	private abstract static readonly prop: string;
 }
 
+########## 24
 a = x!;
+----------
 a = x!;
 
+########## 25
 b = (x as y);
+----------
 b = ((x) as y);
 
+########## 26
 c = foo<string>;
+----------
 c = foo<string>;
 
+########## 27
 d = x satisfies y;
+----------
 d = ((x) satisfies y);
 
+########## 28
 export @x declare abstract class C {}
+----------
 export @x declare abstract class C {}
 
+########## 29
 div<T>``
+----------
 div<T>``;
