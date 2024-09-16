@@ -176,7 +176,7 @@ mod parser_parse {
     ///
     /// `UniquePromise` is a zero-sized type and has no runtime cost. It's purely for the type-checker.
     ///
-    /// `UniquePromise::new_for_tests` is a backdoor for unit tests and benchmarks, so they can create a
+    /// `UniquePromise::new_for_benchmarks` is a backdoor for benchmarks, so they can create a
     /// `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
     pub(crate) struct UniquePromise {
         _dummy: (),
@@ -191,8 +191,8 @@ mod parser_parse {
         /// Backdoor for tests/benchmarks to create a `UniquePromise` (see above).
         /// This function must NOT be exposed outside of tests and benchmarks,
         /// as it allows circumventing safety invariants of the parser.
-        #[cfg(any(test, feature = "benchmarking"))]
-        pub fn new_for_tests() -> Self {
+        #[cfg(feature = "benchmarking")]
+        pub fn new_for_benchmarks() -> Self {
             Self { _dummy: () }
         }
     }
