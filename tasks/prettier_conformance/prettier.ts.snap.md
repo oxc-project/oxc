@@ -1,4 +1,4 @@
-ts compatibility: 55/526 (10.46%)
+ts compatibility: 59/526 (11.22%)
 
 # Failed
 
@@ -58,7 +58,6 @@ ts compatibility: 55/526 (10.46%)
 * assignment/issue-3122.ts
 * assignment/issue-5370.ts
 * assignment/issue-6783.ts
-* assignment/issue-8619.ts
 * assignment/issue-9172.ts
 * assignment/lone-arg.ts
 * assignment/parenthesized.ts
@@ -274,17 +273,11 @@ ts compatibility: 55/526 (10.46%)
 ### conformance/types/namespaceExportDeclaration
 * conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts
 
-### conformance/types/never
-* conformance/types/never/never.ts
-
 ### conformance/types/nonNullExpression
 * conformance/types/nonNullExpression/nonNullExpression.ts
 
 ### conformance/types/parameterProperty
 * conformance/types/parameterProperty/parameterProperty.ts
-
-### conformance/types/symbol
-* conformance/types/symbol/symbol.ts
 
 ### conformance/types/thisType
 * conformance/types/thisType/thisType.ts
@@ -315,9 +308,6 @@ ts compatibility: 55/526 (10.46%)
 
 ### conformance/types/typeReference
 * conformance/types/typeReference/typeReference.ts
-
-### conformance/types/undefined
-* conformance/types/undefined/undefined.ts
 
 ### conformance/types/union
 * conformance/types/union/unionTypeCallSignatures.ts
