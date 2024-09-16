@@ -53,7 +53,7 @@ declare_oxc_lint!(
     /// ```
     PreferStructuredClone,
     style,
-    pending,
+    pending
 );
 
 impl Rule for PreferStructuredClone {

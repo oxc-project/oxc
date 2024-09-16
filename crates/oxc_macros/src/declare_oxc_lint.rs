@@ -13,6 +13,7 @@ pub struct LintRuleMeta {
     /// Describes what auto-fixing capabilities the rule has
     fix: Option<Ident>,
     documentation: String,
+    state: Option<Ident>,
     pub used_in_test: bool,
 }
 
@@ -45,10 +46,17 @@ impl Parse for LintRuleMeta {
             None
         };
 
+        let state = if input.peek(Token!(,)) {
+            input.parse::<Token!(,)>()?;
+            Some(input.parse()?)
+        } else {
+            None
+        };
+
         // Ignore the rest
         input.parse::<proc_macro2::TokenStream>()?;
 
-        Ok(Self { name: struct_name, category, fix, documentation, used_in_test: false })
+        Ok(Self { name: struct_name, category, fix, documentation, state, used_in_test: false })
     }
 }
 
@@ -57,7 +65,7 @@ fn rule_name_converter() -> Converter {
 }
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta { name, category, fix, documentation, used_in_test } = metadata;
+    let LintRuleMeta { name, category, fix, documentation, state, used_in_test } = metadata;
 
     let canonical_name = rule_name_converter().convert(name.to_string());
     let category = match category.to_string().as_str() {
@@ -83,6 +91,12 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         Some(quote! { use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta}, fixer::FixKind}; })
     };
 
+    let state_type = if let Some(ty) = state {
+        quote! { type State = #ty; }
+    } else {
+        quote! { type State = (); }
+    };
+
     let output = quote! {
         #import_statement
 
@@ -92,6 +106,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             const CATEGORY: RuleCategory = #category;
 
             #fix
+
+            #state_type
 
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)

@@ -115,8 +115,9 @@ impl Linter {
     }
 
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
-        let ctx_host =
-            Rc::new(ContextHost::new(path, semantic, self.options).with_config(&self.config));
+        let ctx_host = Rc::new(
+            ContextHost::new(path, semantic, self.options, &self.rules).with_config(&self.config),
+        );
 
         let rules = self
             .rules

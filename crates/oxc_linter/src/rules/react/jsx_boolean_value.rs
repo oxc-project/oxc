@@ -66,7 +66,7 @@ declare_oxc_lint!(
     /// ```
     JsxBooleanValue,
     style,
-    fix,
+    fix
 );
 
 impl Rule for JsxBooleanValue {

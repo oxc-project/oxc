@@ -55,6 +55,13 @@ pub trait RuleMeta {
     /// What kind of auto-fixing can this rule do?
     const FIX: RuleFixMeta = RuleFixMeta::None;
 
+    /// Data stored between each call to [run](`Rule::run`),
+    /// [run_on_symbol](`Rule::run_on_symbol`), and
+    /// [run_once](`Rule::run_once`). State is reset between files.
+    ///
+    /// By default, this is the unit type (aka `()`).
+    type State: Default + 'static;
+
     fn documentation() -> Option<&'static str> {
         None
     }
@@ -257,6 +264,12 @@ impl Deref for RuleWithSeverity {
     type Target = RuleEnum;
 
     fn deref(&self) -> &Self::Target {
+        &self.rule
+    }
+}
+
+impl AsRef<RuleEnum> for RuleWithSeverity {
+    fn as_ref(&self) -> &RuleEnum {
         &self.rule
     }
 }

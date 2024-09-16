@@ -139,6 +139,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*
                 }
             }
+
+            pub(crate) fn new_state(&self) -> Box<std::cell::RefCell<dyn std::any::Any>> {
+                match self {
+                    #(Self::#struct_names(_) => Box::new(std::cell::RefCell::new(<#struct_names as RuleMeta>::State::default()))),*
+                }
+            }
         }
 
         impl std::hash::Hash for RuleEnum {

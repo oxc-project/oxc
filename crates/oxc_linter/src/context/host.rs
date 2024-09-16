@@ -11,7 +11,7 @@ use crate::{
     utils, FrameworkFlags, RuleWithSeverity,
 };
 
-use super::{plugin_name_to_prefix, LintContext};
+use super::{plugin_name_to_prefix, LintContext, RuleState};
 
 /// Stores shared information about a file being linted.
 ///
@@ -46,6 +46,8 @@ pub struct ContextHost<'a> {
     pub(super) config: Arc<LintConfig>,
     pub(super) frameworks: FrameworkFlags,
     pub(super) plugins: LintPlugins,
+
+    pub(super) state: RuleState,
 }
 
 impl<'a> ContextHost<'a> {
@@ -55,6 +57,7 @@ impl<'a> ContextHost<'a> {
         file_path: P,
         semantic: Rc<Semantic<'a>>,
         options: LintOptions,
+        rules: &Vec<RuleWithSeverity>,
     ) -> Self {
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
@@ -77,6 +80,7 @@ impl<'a> ContextHost<'a> {
             config: Arc::new(LintConfig::default()),
             frameworks: options.framework_hints,
             plugins: options.plugins,
+            state: RuleState::new(rules),
         }
         .sniff_for_frameworks()
     }
@@ -116,6 +120,7 @@ impl<'a> ContextHost<'a> {
         LintContext {
             parent: self,
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
+            current_rule_id: rule.id(),
             current_rule_name: rule_name,
             current_plugin_name: plugin_name,
             current_plugin_prefix: plugin_name_to_prefix(plugin_name),
@@ -132,6 +137,7 @@ impl<'a> ContextHost<'a> {
         LintContext {
             parent: Rc::clone(&self),
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
+            current_rule_id: 0,
             current_rule_name: "",
             current_plugin_name: "eslint",
             current_plugin_prefix: "eslint",

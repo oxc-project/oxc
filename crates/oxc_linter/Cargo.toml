@@ -45,6 +45,7 @@ language-tags = { workspace = true }
 lazy_static = { workspace = true }
 memchr = { workspace = true }
 mime_guess = { workspace = true }
+nohash-hasher = { workspace = true }
 once_cell = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }

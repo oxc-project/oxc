@@ -321,8 +321,13 @@ mod test {
         let semantic_ret = Rc::new(semantic_ret);
 
         let build_ctx = |path: &'static str| {
-            Rc::new(ContextHost::new(path, Rc::clone(&semantic_ret), LintOptions::default()))
-                .spawn_for_test()
+            Rc::new(ContextHost::new(
+                path,
+                Rc::clone(&semantic_ret),
+                LintOptions::default(),
+                &vec![],
+            ))
+            .spawn_for_test()
         };
 
         let ctx = build_ctx("foo.js");

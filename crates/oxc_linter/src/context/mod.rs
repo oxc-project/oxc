@@ -1,7 +1,12 @@
 #![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
 mod host;
+mod rule_state;
 
-use std::{cell::RefCell, path::Path, rc::Rc};
+use std::{
+    cell::{RefCell, RefMut},
+    path::Path,
+    rc::Rc,
+};
 
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
@@ -15,10 +20,11 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
+    AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings, RuleMeta,
 };
 
 pub use host::ContextHost;
+pub(crate) use rule_state::RuleState;
 
 #[derive(Clone)]
 #[must_use]
@@ -32,6 +38,7 @@ pub struct LintContext<'a> {
     diagnostics: RefCell<Vec<Message<'a>>>,
 
     // states
+    current_rule_id: usize,
     current_plugin_name: &'static str,
     current_plugin_prefix: &'static str,
     current_rule_name: &'static str,
@@ -132,6 +139,12 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn globals(&self) -> &OxlintGlobals {
         &self.parent.config.globals
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn state<R: RuleMeta + 'static>(&self) -> RefMut<'_, R::State> {
+        self.parent.state.get_mut::<R>(self.current_rule_id)
     }
 
     /// Runtime environments turned on/off by the user.
