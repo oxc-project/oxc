@@ -178,14 +178,12 @@ mod parser_parse {
     ///
     /// `UniquePromise::new_for_benchmarks` is a backdoor for benchmarks, so they can create a
     /// `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
-    pub(crate) struct UniquePromise {
-        _dummy: (),
-    }
+    pub(crate) struct UniquePromise(());
 
     impl UniquePromise {
         #[inline]
         fn new() -> Self {
-            Self { _dummy: () }
+            Self(())
         }
 
         /// Backdoor for tests/benchmarks to create a `UniquePromise` (see above).
@@ -193,7 +191,7 @@ mod parser_parse {
         /// as it allows circumventing safety invariants of the parser.
         #[cfg(feature = "benchmarking")]
         pub fn new_for_benchmarks() -> Self {
-            Self { _dummy: () }
+            Self(())
         }
     }
 
