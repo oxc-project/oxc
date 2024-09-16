@@ -43,6 +43,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Move this function to the outer scope.
 
   ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:4:34]
+ 3 │             function outer() {
+ 4 │                 inner = function inner() {}
+   ·                                  ─────
+ 5 │             }
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
    ╭─[consistent_function_scoping.tsx:2:26]
  1 │ function doFoo(foo) {
  2 │                 function doBar(bar) {

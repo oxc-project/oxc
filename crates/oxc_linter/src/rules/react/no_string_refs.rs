@@ -9,7 +9,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, utils::get_parent_component, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::get_parent_component,
+    AstNode,
+};
 
 fn this_refs_deprecated(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using this.refs is deprecated.")
@@ -125,7 +130,7 @@ impl Rule for NoStringRefs {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

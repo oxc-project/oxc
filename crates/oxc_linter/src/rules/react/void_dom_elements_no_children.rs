@@ -10,7 +10,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_create_element_call,
+    AstNode,
+};
 
 fn void_dom_elements_no_children_diagnostic(tag: &str, span: Span) -> OxcDiagnostic {
     // TODO: use imperative phrasing
@@ -142,7 +147,7 @@ impl Rule for VoidDomElementsNoChildren {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

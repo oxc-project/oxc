@@ -14,7 +14,7 @@ use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
@@ -268,7 +268,7 @@ impl Rule for ConsistentTypeImports {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

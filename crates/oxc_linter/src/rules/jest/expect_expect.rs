@@ -289,6 +289,32 @@ fn convert_pattern(pattern: &str) -> String {
 }
 
 #[test]
+fn debug() {
+    use crate::tester::Tester;
+
+    let mut pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+
+    let mut fail = vec![];
+
+    let pass_vitest = vec![(
+        "
+                import { test } from 'vitest';
+                test.skip(\"skipped test\", () => {})
+            ",
+        None,
+    )];
+
+    let fail_vitest = vec![];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
+    Tester::new(ExpectExpect::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test();
+}
+#[test]
 fn test() {
     use crate::tester::Tester;
 

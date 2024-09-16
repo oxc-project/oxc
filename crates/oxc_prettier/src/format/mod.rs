@@ -992,7 +992,55 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
 
 impl<'a> Format<'a> for TSEnumDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        if self.declare {
+            parts.push(ss!("declare "));
+        }
+        if self.r#const {
+            parts.push(ss!("const "));
+        }
+        parts.push(ss!("enum "));
+        parts.push(self.id.format(p));
+        parts.push(ss!(" {"));
+        if self.members.len() > 0 {
+            let mut indent_parts = p.vec();
+            for member in &self.members {
+                indent_parts.extend(hardline!());
+                indent_parts.push(member.format(p));
+            }
+            parts.push(Doc::Indent(indent_parts));
+            parts.extend(hardline!());
+        }
+        parts.push(ss!("}"));
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSEnumMember<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        parts.push(self.id.format(p));
+
+        if let Some(initializer) = &self.initializer {
+            parts.push(ss!(" = "));
+            parts.push(initializer.format(p));
+        }
+
+        parts.push(ss!(","));
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSEnumMemberName<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSEnumMemberName::StaticIdentifier(identifier) => identifier.format(p),
+            TSEnumMemberName::StaticStringLiteral(string_literal) => string_literal.format(p),
+            TSEnumMemberName::StaticTemplateLiteral(template_literal) => template_literal.format(p),
+            name => array!(p, ss!("["), name.as_expression().unwrap().format(p), ss!("]")),
+        }
     }
 }
 

@@ -22,9 +22,9 @@ pub struct DisableDirectives<'a> {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
     /// Spans of comments that disable all rules
-    disable_all_comments: Vec<Span>,
+    disable_all_comments: Box<[Span]>,
     /// All comments that disable one or more specific rules
-    disable_rule_comments: Vec<DisableRuleComment<'a>>,
+    disable_rule_comments: Box<[DisableRuleComment<'a>]>,
 }
 
 impl<'a> DisableDirectives<'a> {
@@ -38,11 +38,11 @@ impl<'a> DisableDirectives<'a> {
         })
     }
 
-    pub fn disable_all_comments(&self) -> &Vec<Span> {
+    pub fn disable_all_comments(&self) -> &[Span] {
         &self.disable_all_comments
     }
 
-    pub fn disable_rule_comments(&self) -> &Vec<DisableRuleComment<'a>> {
+    pub fn disable_rule_comments(&self) -> &[DisableRuleComment<'a>] {
         &self.disable_rule_comments
     }
 }
@@ -79,8 +79,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
         self.build_impl();
         DisableDirectives {
             intervals: self.intervals,
-            disable_all_comments: self.disable_all_comments,
-            disable_rule_comments: self.disable_rule_comments,
+            disable_all_comments: self.disable_all_comments.into_boxed_slice(),
+            disable_rule_comments: self.disable_rule_comments.into_boxed_slice(),
         }
     }
 
