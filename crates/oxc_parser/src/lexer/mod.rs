@@ -138,7 +138,7 @@ impl<'a> Lexer<'a> {
         source_text: &'a str,
         source_type: SourceType,
     ) -> Self {
-        let unique = UniquePromise::new_for_tests();
+        let unique = UniquePromise::new_for_benchmarks();
         Self::new(allocator, source_text, source_type, unique)
     }
 
@@ -218,6 +218,7 @@ impl<'a> Lexer<'a> {
         self.token.end = self.offset();
         debug_assert!(self.token.start <= self.token.end);
         let token = self.token;
+        self.trivia_builder.handle_token(token.start);
         self.token = Token::default();
         token
     }

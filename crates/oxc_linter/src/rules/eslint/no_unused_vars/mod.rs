@@ -18,7 +18,10 @@ use oxc_semantic::{AstNode, ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::GetSpan;
 use symbol::Symbol;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedVars(Box<NoUnusedVarsOptions>);
@@ -210,7 +213,7 @@ impl Rule for NoUnusedVars {
         self.run_on_symbol_internal(&symbol, ctx);
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         // ignore .d.ts and vue files.
         // 1. declarations have side effects (they get merged together)
         // 2. vue scripts declare variables that get used in the template, which

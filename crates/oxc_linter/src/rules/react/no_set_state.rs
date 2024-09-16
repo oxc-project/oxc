@@ -3,7 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, utils::get_parent_component, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::get_parent_component,
+    AstNode,
+};
 
 fn no_set_state_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use setState").with_label(span)
@@ -66,7 +71,7 @@ impl Rule for NoSetState {
         ctx.diagnostic(no_set_state_diagnostic(call_expr.callee.span()));
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

@@ -1,7 +1,7 @@
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::{LintContext, ContextHost}, rule::Rule};
 
 fn no_exports_found(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No exports found")

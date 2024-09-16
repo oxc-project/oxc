@@ -35,7 +35,7 @@ impl<'a> Lexer<'a> {
                 if next_byte != LS_OR_PS_FIRST {
                     // `\r` or `\n`
                     self.trivia_builder
-                        .add_single_line_comment(self.token.start, self.source.offset_of(pos));
+                        .add_line_comment(self.token.start, self.source.offset_of(pos));
                     // SAFETY: Safe to consume `\r` or `\n` as both are ASCII
                     pos = unsafe { pos.add(1) };
                     // We've found the end. Do not continue searching.
@@ -50,7 +50,7 @@ impl<'a> Lexer<'a> {
                         if matches!(next2, LS_BYTES_2_AND_3 | PS_BYTES_2_AND_3) {
                             // Irregular line break
                             self.trivia_builder
-                                .add_single_line_comment(self.token.start, self.source.offset_of(pos));
+                                .add_line_comment(self.token.start, self.source.offset_of(pos));
                             // Advance `pos` to after this char.
                             // SAFETY: `0xE2` is always 1st byte of a 3-byte UTF-8 char,
                             // so consuming 3 bytes will place `pos` on next UTF-8 char boundary.
@@ -69,7 +69,7 @@ impl<'a> Lexer<'a> {
                 }
             },
             handle_eof: {
-                self.trivia_builder.add_single_line_comment(self.token.start, self.offset());
+                self.trivia_builder.add_line_comment(self.token.start, self.offset());
                 return Kind::Skip;
             },
         };
@@ -145,7 +145,7 @@ impl<'a> Lexer<'a> {
             },
         };
 
-        self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
+        self.trivia_builder.add_block_comment(self.token.start, self.offset());
         Kind::Skip
     }
 
@@ -165,7 +165,7 @@ impl<'a> Lexer<'a> {
         if let Some(index) = finder.find(remaining) {
             // SAFETY: `pos + index + 2` is end of `*/`, so a valid `SourcePosition`
             self.source.set_position(unsafe { pos.add(index + 2) });
-            self.trivia_builder.add_multi_line_comment(self.token.start, self.offset());
+            self.trivia_builder.add_block_comment(self.token.start, self.offset());
             Kind::Skip
         } else {
             self.source.advance_to_end();

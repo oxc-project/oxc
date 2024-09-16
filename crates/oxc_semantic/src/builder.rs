@@ -267,6 +267,7 @@ impl<'a> SemanticBuilder<'a> {
             // Avoiding this growth produces up to 30% perf boost on our benchmarks.
             //
             // If user did not provide existing `Stats`, calculate them by visiting AST.
+            #[cfg_attr(not(debug_assertions), expect(unused_variables))]
             let (stats, check_stats) = if let Some(stats) = self.stats {
                 (stats, None)
             } else {

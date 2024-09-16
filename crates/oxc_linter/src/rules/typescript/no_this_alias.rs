@@ -8,7 +8,11 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_this_alias_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected aliasing of 'this' to local variable.")
@@ -153,7 +157,7 @@ impl Rule for NoThisAlias {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

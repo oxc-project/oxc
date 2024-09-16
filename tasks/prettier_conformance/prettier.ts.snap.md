@@ -1,4 +1,4 @@
-ts compatibility: 58/526 (11.03%)
+ts compatibility: 68/526 (12.93%)
 
 # Failed
 
@@ -55,7 +55,6 @@ ts compatibility: 58/526 (11.03%)
 * assignment/issue-3122.ts
 * assignment/issue-5370.ts
 * assignment/issue-6783.ts
-* assignment/issue-8619.ts
 * assignment/issue-9172.ts
 * assignment/lone-arg.ts
 * assignment/parenthesized.ts
@@ -232,12 +231,6 @@ ts compatibility: 58/526 (11.03%)
 * conformance/types/any/anyAsConstructor.ts
 * conformance/types/any/anyAsGenericFunctionCall.ts
 
-### conformance/types/constKeyword
-* conformance/types/constKeyword/constKeyword.ts
-
-### conformance/types/enumDeclaration
-* conformance/types/enumDeclaration/enumDeclaration.ts
-
 ### conformance/types/firstTypeNode
 * conformance/types/firstTypeNode/firstTypeNode.ts
 
@@ -273,17 +266,11 @@ ts compatibility: 58/526 (11.03%)
 ### conformance/types/namespaceExportDeclaration
 * conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts
 
-### conformance/types/never
-* conformance/types/never/never.ts
-
 ### conformance/types/nonNullExpression
 * conformance/types/nonNullExpression/nonNullExpression.ts
 
 ### conformance/types/parameterProperty
 * conformance/types/parameterProperty/parameterProperty.ts
-
-### conformance/types/symbol
-* conformance/types/symbol/symbol.ts
 
 ### conformance/types/thisType
 * conformance/types/thisType/thisType.ts
@@ -315,9 +302,6 @@ ts compatibility: 58/526 (11.03%)
 ### conformance/types/typeReference
 * conformance/types/typeReference/typeReference.ts
 
-### conformance/types/undefined
-* conformance/types/undefined/undefined.ts
-
 ### conformance/types/union
 * conformance/types/union/unionTypeCallSignatures.ts
 * conformance/types/union/unionTypeCallSignatures3.ts
@@ -326,7 +310,6 @@ ts compatibility: 58/526 (11.03%)
 * conformance/types/union/unionTypeEquivalence.ts
 * conformance/types/union/unionTypeFromArrayLiteral.ts
 * conformance/types/union/unionTypeIndexSignature.ts
-* conformance/types/union/unionTypePropertyAccessibility.ts
 
 ### conformance/types/variableDeclarator
 * conformance/types/variableDeclarator/variableDeclarator.ts
@@ -384,7 +367,6 @@ ts compatibility: 58/526 (11.03%)
 
 ### declare
 * declare/declare_class_fields.ts
-* declare/declare_enum.ts
 * declare/declare_function.ts
 * declare/declare_interface.ts
 * declare/declare_module.ts
@@ -432,9 +414,7 @@ ts compatibility: 58/526 (11.03%)
 * end-of-line/multiline.ts
 
 ### enum
-* enum/computed-members.ts
 * enum/enum.ts
-* enum/multiline.ts
 
 ### error-recovery
 * error-recovery/generic.ts

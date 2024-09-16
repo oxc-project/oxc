@@ -7,7 +7,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn missing_key_prop_for_element_in_array(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span)
@@ -68,7 +72,7 @@ impl Rule for JsxKey {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }
