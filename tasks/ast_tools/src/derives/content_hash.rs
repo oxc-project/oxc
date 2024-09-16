@@ -13,8 +13,9 @@ define_derive! {
     pub struct DeriveContentHash;
 }
 
-const IGNORE_FIELD_TYPES: [/* type name */ &str; 4] = [
+const IGNORE_FIELD_TYPES: [/* type name */ &str; 5] = [
     "Span",
+    "NodeId",
     "ScopeId",
     "SymbolId",
     "ReferenceId",
