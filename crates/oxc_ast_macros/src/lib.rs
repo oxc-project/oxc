@@ -1,4 +1,5 @@
 use proc_macro::TokenStream;
+use syn::{parse_macro_input, Item};
 
 mod ast;
 
@@ -69,7 +70,7 @@ mod ast;
 /// 2. `tsify`
 #[proc_macro_attribute]
 pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let input = syn::parse_macro_input!(input as syn::Item);
+    let input = parse_macro_input!(input as Item);
     let expanded = ast::ast(&input);
     TokenStream::from(expanded)
 }
