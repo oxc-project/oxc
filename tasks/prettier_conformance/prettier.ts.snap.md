@@ -1,9 +1,6 @@
-ts compatibility: 50/526 (9.51%)
+ts compatibility: 58/526 (11.03%)
 
 # Failed
-
-### abstract-property
-* abstract-property/semicolon.ts
 
 ### ambient
 * ambient/ambient.ts
@@ -83,8 +80,6 @@ ts compatibility: 50/526 (9.51%)
 
 ### class
 * class/constructor.ts
-* class/declare-readonly-field-initializer-w-annotation.ts
-* class/declare-readonly-field-initializer.ts
 * class/dunder.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
@@ -163,7 +158,6 @@ ts compatibility: 50/526 (9.51%)
 * conformance/classes/mixinClassesAnnotated.ts
 * conformance/classes/mixinClassesAnonymous.ts
 * conformance/classes/mixinClassesMembers.ts
-* conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
@@ -175,7 +169,6 @@ ts compatibility: 50/526 (9.51%)
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
@@ -355,7 +348,6 @@ ts compatibility: 50/526 (9.51%)
 
 ### custom/abstract
 * custom/abstract/abstractNewlineHandling.ts
-* custom/abstract/abstractProperties.ts
 
 ### custom/call
 * custom/call/callSignature.ts
@@ -391,7 +383,6 @@ ts compatibility: 50/526 (9.51%)
 * custom/typeParameters/variables.ts
 
 ### declare
-* declare/declare-get-set-field.ts
 * declare/declare_class_fields.ts
 * declare/declare_enum.ts
 * declare/declare_function.ts
@@ -647,7 +638,6 @@ ts compatibility: 50/526 (9.51%)
 
 ### readonly
 * readonly/array.ts
-* readonly/readonly.ts
 
 ### rest-type
 * rest-type/complex.ts
