@@ -893,7 +893,27 @@ impl<'a> Format<'a> for TSTupleType<'a> {
 
 impl<'a> Format<'a> for TSTypeLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(ss!("{"));
+        if self.members.len() > 0 {
+            let mut indent_parts = p.vec();
+
+            for member in &self.members {
+                indent_parts.extend(hardline!());
+                indent_parts.push(member.format(p));
+
+                if let Some(semi) = p.semi() {
+                    indent_parts.push(semi);
+                }
+            }
+
+            parts.push(Doc::Indent(indent_parts));
+            parts.extend(hardline!());
+        }
+        parts.push(ss!("}"));
+
+        Doc::Array(parts)
     }
 }
 
@@ -981,6 +1001,10 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
             for sig in &self.body.body {
                 indent_parts.extend(hardline!());
                 indent_parts.push(format!(p, sig));
+
+                if let Some(semi) = p.semi() {
+                    indent_parts.push(semi);
+                }
             }
             parts.push(Doc::Indent(indent_parts));
             parts.extend(hardline!());
@@ -1046,7 +1070,61 @@ impl<'a> Format<'a> for TSEnumMemberName<'a> {
 
 impl<'a> Format<'a> for TSModuleDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        if self.declare {
+            parts.push(ss!("declare "));
+        }
+
+        parts.push(ss!(self.kind.to_str()));
+        parts.push(space!());
+        parts.push(self.id.format(p));
+        parts.push(ss!(" {"));
+
+        if let Some(body) = &self.body {
+            let mut indent_parts = p.vec();
+
+            indent_parts.extend(hardline!());
+            indent_parts.push(body.format(p));
+            parts.push(Doc::Indent(indent_parts));
+        }
+
+        parts.extend(hardline!());
+        parts.push(ss!("}"));
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSModuleDeclarationName<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSModuleDeclarationName::Identifier(identifier) => identifier.format(p),
+            TSModuleDeclarationName::StringLiteral(string_literal) => string_literal.format(p),
+        }
+    }
+}
+
+impl<'a> Format<'a> for TSModuleDeclarationBody<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        match self {
+            TSModuleDeclarationBody::TSModuleBlock(module_block) => module_block.format(p),
+            TSModuleDeclarationBody::TSModuleDeclaration(module_declaration) => {
+                module_declaration.format(p)
+            }
+        }
+    }
+}
+
+impl<'a> Format<'a> for TSModuleBlock<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+
+        for body_part in &self.body {
+            parts.push(body_part.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
@@ -1110,7 +1188,21 @@ impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
 
 impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        if self.params.len() == 0 {
+            return Doc::Array(parts);
+        }
+
+        parts.push(ss!("<"));
+
+        for param in &self.params {
+            parts.push(param.format(p));
+        }
+
+        parts.push(ss!(">"));
+
+        Doc::Array(parts)
     }
 }
 
@@ -2402,7 +2494,34 @@ impl<'a> Format<'a> for TSConstructSignatureDeclaration<'a> {
 
 impl<'a> Format<'a> for TSMethodSignature<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        if self.computed {
+            parts.push(ss!("["));
+        }
+
+        parts.push(self.key.format(p));
+
+        if self.computed {
+            parts.push(ss!("]"));
+        }
+
+        if self.optional {
+            parts.push(ss!("?"));
+        }
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(type_parameters.format(p));
+        }
+
+        parts.push(self.params.format(p));
+
+        if let Some(return_type) = &self.return_type {
+            parts.push(ss!(": "));
+            parts.push(return_type.type_annotation.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
