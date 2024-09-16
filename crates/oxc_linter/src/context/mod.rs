@@ -159,7 +159,7 @@ impl<'a> LintContext<'a> {
     /* Diagnostics */
 
     pub fn into_message(self) -> Vec<Message<'a>> {
-        self.diagnostics.borrow().iter().cloned().collect::<Vec<_>>()
+        self.diagnostics.into_inner()
     }
 
     fn add_diagnostic(&self, mut message: Message<'a>) {
