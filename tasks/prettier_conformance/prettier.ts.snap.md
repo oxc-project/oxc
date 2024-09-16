@@ -1,9 +1,6 @@
-ts compatibility: 59/526 (11.22%)
+ts compatibility: 68/526 (12.93%)
 
 # Failed
-
-### abstract-property
-* abstract-property/semicolon.ts
 
 ### ambient
 * ambient/ambient.ts
@@ -82,8 +79,6 @@ ts compatibility: 59/526 (11.22%)
 
 ### class
 * class/constructor.ts
-* class/declare-readonly-field-initializer-w-annotation.ts
-* class/declare-readonly-field-initializer.ts
 * class/dunder.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
@@ -162,7 +157,6 @@ ts compatibility: 59/526 (11.22%)
 * conformance/classes/mixinClassesAnnotated.ts
 * conformance/classes/mixinClassesAnonymous.ts
 * conformance/classes/mixinClassesMembers.ts
-* conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
@@ -174,7 +168,6 @@ ts compatibility: 59/526 (11.22%)
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
@@ -317,7 +310,6 @@ ts compatibility: 59/526 (11.22%)
 * conformance/types/union/unionTypeEquivalence.ts
 * conformance/types/union/unionTypeFromArrayLiteral.ts
 * conformance/types/union/unionTypeIndexSignature.ts
-* conformance/types/union/unionTypePropertyAccessibility.ts
 
 ### conformance/types/variableDeclarator
 * conformance/types/variableDeclarator/variableDeclarator.ts
@@ -339,7 +331,6 @@ ts compatibility: 59/526 (11.22%)
 
 ### custom/abstract
 * custom/abstract/abstractNewlineHandling.ts
-* custom/abstract/abstractProperties.ts
 
 ### custom/call
 * custom/call/callSignature.ts
@@ -375,7 +366,6 @@ ts compatibility: 59/526 (11.22%)
 * custom/typeParameters/variables.ts
 
 ### declare
-* declare/declare-get-set-field.ts
 * declare/declare_class_fields.ts
 * declare/declare_function.ts
 * declare/declare_interface.ts
@@ -628,7 +618,6 @@ ts compatibility: 59/526 (11.22%)
 
 ### readonly
 * readonly/array.ts
-* readonly/readonly.ts
 
 ### rest-type
 * rest-type/complex.ts

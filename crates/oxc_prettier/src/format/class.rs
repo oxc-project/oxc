@@ -74,6 +74,7 @@ pub(super) fn print_class_body<'a>(p: &mut Prettier<'a>, class_body: &ClassBody<
     Doc::Array(parts)
 }
 
+#[derive(Debug)]
 pub enum ClassMemberish<'a, 'b> {
     PropertyDefinition(&'b PropertyDefinition<'a>),
     AccessorProperty(&'b AccessorProperty<'a>),
@@ -122,12 +123,62 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
         }
     }
 
+    fn is_declare(&self) -> bool {
+        match self {
+            ClassMemberish::PropertyDefinition(property_definition) => property_definition.declare,
+            ClassMemberish::AccessorProperty(_) => false,
+        }
+    }
+
+    fn is_abstract(&self) -> bool {
+        match self {
+            ClassMemberish::PropertyDefinition(property_definition) => {
+                property_definition.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition
+            }
+            ClassMemberish::AccessorProperty(accessor_property) => {
+                accessor_property.r#type == AccessorPropertyType::TSAbstractAccessorProperty
+            }
+        }
+    }
+
+    fn is_optional(&self) -> bool {
+        match self {
+            ClassMemberish::PropertyDefinition(property_definition) => property_definition.optional,
+            ClassMemberish::AccessorProperty(_) => false,
+        }
+    }
+
+    fn is_definite(&self) -> bool {
+        match self {
+            ClassMemberish::PropertyDefinition(property_definition) => property_definition.definite,
+            ClassMemberish::AccessorProperty(accessor_property) => accessor_property.definite,
+        }
+    }
+
     fn right_expr(&self) -> Option<&Expression<'a>> {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => {
                 property_definition.value.as_ref()
             }
             ClassMemberish::AccessorProperty(_) => None,
+        }
+    }
+
+    fn format_accessibility(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
+        match self {
+            ClassMemberish::AccessorProperty(def) => def.accessibility.map(|v| ss!(v.as_str())),
+            ClassMemberish::PropertyDefinition(def) => def.accessibility.map(|v| ss!(v.as_str())),
+        }
+    }
+
+    fn format_type_annotation(&self, p: &mut Prettier<'a>) -> Option<Doc<'a>> {
+        match self {
+            ClassMemberish::PropertyDefinition(property_definition) => {
+                property_definition.type_annotation.as_ref().map(|v| v.type_annotation.format(p))
+            }
+            ClassMemberish::AccessorProperty(accessor_definition) => {
+                accessor_definition.type_annotation.as_ref().map(|v| v.type_annotation.format(p))
+            }
         }
     }
 }
@@ -138,12 +189,22 @@ pub(super) fn print_class_property<'a>(
 ) -> Doc<'a> {
     let mut parts = p.vec();
 
-    if node.decorators().is_some_and(|x| !x.is_empty()) {
-        // TODO: print decorators
+    if let Some(decarators) = node.decorators() {
+        for decorator in decarators {
+            parts.push(ss!("@"));
+            parts.push(decorator.expression.format(p));
+            parts.extend(hardline!());
+        }
     }
 
-    // TODO: print typescript accessibility token
-    // TODO: print declare token
+    if let Some(accessibility) = node.format_accessibility(p) {
+        parts.push(accessibility);
+        parts.push(space!());
+    }
+
+    if node.is_declare() {
+        parts.push(ss!("declare "));
+    }
 
     if node.is_static() {
         parts.push(ss!("static "));
@@ -157,7 +218,9 @@ pub(super) fn print_class_property<'a>(
         parts.push(ss!("readonly "));
     }
 
-    // TODO: print abstract token
+    if node.is_abstract() {
+        parts.push(ss!("abstract "));
+    }
 
     if matches!(node, ClassMemberish::AccessorProperty(_)) {
         parts.push(ss!("readonly "));
@@ -165,9 +228,16 @@ pub(super) fn print_class_property<'a>(
 
     parts.push(node.format_key(p));
 
-    // TODO: print optional token
-    // TODO: print definite token
-    // TODO: print type annotation
+    if node.is_optional() {
+        parts.push(ss!("?"));
+    } else if node.is_definite() {
+        parts.push(ss!("!"));
+    }
+
+    if let Some(type_annotation) = node.format_type_annotation(p) {
+        parts.push(ss!(": "));
+        parts.push(type_annotation);
+    }
 
     let right_expr = node.right_expr();
     let node = match node {
