@@ -637,17 +637,8 @@ impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
             parts.push(ss!("declare "));
         }
 
-        if self.declare {
-            parts.push(ss!("declare "));
-        }
-
         parts.push(ss!("type "));
         parts.push(format!(p, self.id));
-
-        if let Some(params) = &self.type_parameters {
-            parts.push(params.format(p));
-        }
-
 
         if let Some(params) = &self.type_parameters {
             parts.push(params.format(p));
@@ -826,16 +817,13 @@ impl<'a> Format<'a> for TSFunctionType<'a> {
             parts.push(type_parameters.format(p));
         }
 
-        // parts.push(ss!("("));
-
-        // ToDo: this param should be inside of params "(" and ")"
         if let Some(this_param) = &self.this_param {
             parts.push(this_param.format(p));
             parts.push(ss!(", "));
         }
 
         parts.push(self.params.format(p));
-        // parts.push(ss!(")"));
+
         parts.push(ss!(" => "));
         parts.push(self.return_type.type_annotation.format(p));
 
