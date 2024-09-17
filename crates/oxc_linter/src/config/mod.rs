@@ -92,7 +92,7 @@ mod test {
             env::current_dir().unwrap().join("fixtures/eslint_config_vitest_replace.json");
         let config = Oxlintrc::from_file(&fixture_path).unwrap();
         let mut set = FxHashSet::default();
-        config.override_rules(&mut set, &RULES);
+        config.rules.override_rules(&mut set, &RULES);
 
         let rule = set.into_iter().next().unwrap();
         assert_eq!(rule.name(), "no-disabled-tests");

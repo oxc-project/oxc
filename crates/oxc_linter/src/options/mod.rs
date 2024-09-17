@@ -249,7 +249,7 @@ impl OxlintOptions {
         }
 
         if let Some(config) = &config {
-            config.override_rules(&mut rules, &all_rules);
+            config.rules.override_rules(&mut rules, &all_rules);
         }
 
         let mut rules = rules.into_iter().collect::<Vec<_>>();
