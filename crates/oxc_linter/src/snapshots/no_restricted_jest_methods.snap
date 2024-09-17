@@ -1,69 +1,60 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `jest.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest.fn()
    ·      ──
    ╰────
-  help: Use of `"fn"` is disallowed
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `jest.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest["fn"]()
    ·      ────
    ╰────
-  help: Use of `"fn"` is disallowed
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `jest.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Do not use mocks
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest.mock()
    ·      ────
    ╰────
-  help: "Do not use mocks"
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `jest.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Do not use mocks
    ╭─[no_restricted_jest_methods.tsx:1:6]
  1 │ jest["mock"]()
    ·      ──────
    ╰────
-  help: "Do not use mocks"
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `jest.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Use of `advanceTimersByTime` is not allowed
    ╭─[no_restricted_jest_methods.tsx:3:22]
  2 │                 import { jest } from '@jest/globals';
  3 │                 jest.advanceTimersByTime();
    ·                      ───────────────────
  4 │             
    ╰────
-  help: Use of `"advanceTimersByTime"` is disallowed
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `vi.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:4]
  1 │ vi.fn()
    ·    ──
    ╰────
-  help: Use of `"fn"` is disallowed
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `vi.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Do not use mocks
    ╭─[no_restricted_jest_methods.tsx:1:4]
  1 │ vi.mock()
    ·    ────
    ╰────
-  help: "Do not use mocks"
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `vi.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Use of `advanceTimersByTime` is not allowed
    ╭─[no_restricted_jest_methods.tsx:3:12]
  2 │                  import { vi } from 'vitest';
  3 │                  vi.advanceTimersByTime();
    ·                     ───────────────────
  4 │                 
    ╰────
-  help: Use of `"advanceTimersByTime"` is disallowed
 
-  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Disallow specific `vi.` methods
+  ⚠ eslint-plugin-vitest(no-restricted-jest-methods): Use of `fn` is not allowed
    ╭─[no_restricted_jest_methods.tsx:1:4]
  1 │ vi["fn"]()
    ·    ────
    ╰────
-  help: Use of `"fn"` is disallowed

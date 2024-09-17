@@ -5,9 +5,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_caller_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of arguments.caller or arguments.callee")
-        .with_help("'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them")
+fn no_caller_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use `arguments.{method_name}`"))
+        .with_help("'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them.")
         .with_label(span)
 }
 
@@ -79,7 +79,7 @@ impl Rule for NoCaller {
             if (expr.property.name == "callee" || expr.property.name == "caller")
                 && expr.object.is_specific_id("arguments")
             {
-                ctx.diagnostic(no_caller_diagnostic(expr.property.span));
+                ctx.diagnostic(no_caller_diagnostic(expr.property.span, &expr.property.name));
             }
         }
     }

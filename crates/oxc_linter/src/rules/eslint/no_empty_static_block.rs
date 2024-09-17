@@ -6,8 +6,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_static_block_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow empty static blocks")
-        .with_help("Unexpected empty static block.")
+    OxcDiagnostic::warn("Unexpected empty static blocks")
+        .with_help("Remove this empty block or add content to it.")
         .with_label(span)
 }
 
@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEmptyStaticBlock,
-    correctness
+    correctness,
+    pending // TODO: add a safe suggestion
 );
 
 impl Rule for NoEmptyStaticBlock {

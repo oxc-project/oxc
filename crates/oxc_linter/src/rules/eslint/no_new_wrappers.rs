@@ -6,10 +6,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_new_wrappers_diagnostic(builtin_name: &str, new_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow new operators with the String, Number, and Boolean objects")
-        .with_help(format!(
-            "do not use {builtin_name} as a constructor, consider removing the new operator."
-        ))
+    OxcDiagnostic::warn(format!("Do not use `{builtin_name}` as a constructor"))
+        .with_help("Remove the `new` operator.")
         .with_label(new_span)
 }
 
@@ -48,7 +46,8 @@ declare_oxc_lint!(
     /// var booleanObject = Boolean(value);
     /// ```
     NoNewWrappers,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoNewWrappers {

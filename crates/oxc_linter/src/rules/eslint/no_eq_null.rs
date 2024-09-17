@@ -8,9 +8,9 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_eq_null_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use '===' to compare with null")
-        .with_help("Disallow `null` comparisons without type-checking operators.")
+fn no_eq_null_diagnostic(span: Span, suggested_operator: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use `null` comparisons without type-checking operators.")
+        .with_help(format!("Use '{suggested_operator}' to compare with null"))
         .with_label(span)
 }
 
@@ -72,22 +72,25 @@ impl Rule for NoEqNull {
                     & binary_expression.left.is_null()
                     & bad_operator
             {
+                let suggested_operator = if binary_expression.operator == BinaryOperator::Equality {
+                    " === "
+                } else {
+                    " !== "
+                };
                 ctx.diagnostic_with_dangerous_fix(
-                    no_eq_null_diagnostic(Span::new(
-                        binary_expression.span.start,
-                        binary_expression.span.end,
-                    )),
+                    no_eq_null_diagnostic(
+                        //     Span::new(
+                        //     binary_expression.span.start,
+                        //     binary_expression.span.end,
+                        // )
+                        binary_expression.span,
+                        suggested_operator.trim(),
+                    ),
                     |fixer| {
                         let start = binary_expression.left.span().end;
                         let end = binary_expression.right.span().start;
                         let span = Span::new(start, end);
-                        let new_operator_str =
-                            if binary_expression.operator == BinaryOperator::Equality {
-                                " === "
-                            } else {
-                                " !== "
-                            };
-                        fixer.replace(span, new_operator_str)
+                        fixer.replace(span, suggested_operator)
                     },
                 );
             }

@@ -16,8 +16,8 @@ use crate::{
 };
 
 fn no_duplicate_hooks_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow duplicate setup and teardown hooks.")
-        .with_help(format!("Duplicate {x0:?} in describe block."))
+    OxcDiagnostic::warn(format!("Duplicate {x0:?} in describe block."))
+        .with_help("Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.")
         .with_label(span)
 }
 

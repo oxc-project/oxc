@@ -1,74 +1,65 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:5]
  1 │ var {} = foo
-   ·     ─┬
-   ·      ╰── Empty object binding pattern
+   ·     ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
    ╭─[no_empty_pattern.tsx:1:5]
  1 │ var [] = foo
-   ·     ─┬
-   ·      ╰── Empty array binding pattern
+   ·     ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:9]
  1 │ var {a: {}} = foo
-   ·         ─┬
-   ·          ╰── Empty object binding pattern
+   ·         ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:12]
  1 │ var {a, b: {}} = foo
-   ·            ─┬
-   ·             ╰── Empty object binding pattern
+   ·            ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
    ╭─[no_empty_pattern.tsx:1:9]
  1 │ var {a: []} = foo
-   ·         ─┬
-   ·          ╰── Empty array binding pattern
+   ·         ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:14]
  1 │ function foo({}) {}
-   ·              ─┬
-   ·               ╰── Empty object binding pattern
+   ·              ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
    ╭─[no_empty_pattern.tsx:1:14]
  1 │ function foo([]) {}
-   ·              ─┬
-   ·               ╰── Empty array binding pattern
+   ·              ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:18]
  1 │ function foo({a: {}}) {}
-   ·                  ─┬
-   ·                   ╰── Empty object binding pattern
+   ·                  ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
 
-  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns.
+  ⚠ eslint(no-empty-pattern): Empty array binding pattern
    ╭─[no_empty_pattern.tsx:1:18]
  1 │ function foo({a: []}) {}
-   ·                  ─┬
-   ·                   ╰── Empty array binding pattern
+   ·                  ──
    ╰────
   help: Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.
