@@ -11,6 +11,13 @@ use crate::{
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
+
+    for decorator in &class.decorators {
+        parts.push(ss!("@"));
+        parts.push(decorator.expression.format(p));
+        parts.extend(hardline!());
+    }
+
     if class.r#abstract {
         parts.push(ss!("abstract "));
     }
@@ -31,6 +38,25 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         parts.push(ss!("extends "));
         parts.push(super_class.format(p));
         parts.push(space!());
+    }
+
+    if let Some(implements) = &class.implements {
+        if implements.len() > 0 {
+            parts.push(ss!("implements "));
+
+            let mut print_comma = false;
+            for implementation in implements {
+                if print_comma {
+                    parts.push(ss!(", "));
+                } else {
+                    print_comma = true;
+                }
+
+                parts.push(implementation.format(p));
+            }
+
+            parts.push(space!());
+        }
     }
 
     parts.push(class.body.format(p));
@@ -126,7 +152,7 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
     fn is_readonly(&self) -> bool {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => property_definition.readonly,
-            ClassMemberish::AccessorProperty(_) => false,
+            ClassMemberish::AccessorProperty(_) => true,
         }
     }
 
@@ -227,10 +253,6 @@ pub(super) fn print_class_property<'a>(
 
     if node.is_abstract() {
         parts.push(ss!("abstract "));
-    }
-
-    if matches!(node, ClassMemberish::AccessorProperty(_)) {
-        parts.push(ss!("readonly "));
     }
 
     parts.push(node.format_key(p));
