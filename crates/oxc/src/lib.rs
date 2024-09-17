@@ -29,6 +29,7 @@ pub mod index {
 }
 
 pub mod parser {
+    #![doc = include_str!("../../oxc_parser/README.md")]
     #[doc(inline)]
     pub use oxc_parser::*;
 }
