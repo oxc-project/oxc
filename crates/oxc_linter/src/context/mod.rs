@@ -343,4 +343,5 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "typescript" => "typescript-eslint",
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",
+    "node" => "eslint-plugin-node",
 };
