@@ -98,6 +98,12 @@ impl<'a> From<&'a str> for Atom<'a> {
     }
 }
 
+impl<'a> From<Atom<'a>> for &'a str {
+    fn from(s: Atom<'a>) -> Self {
+        s.as_str()
+    }
+}
+
 impl<'a> From<Atom<'a>> for CompactStr {
     #[inline]
     fn from(val: Atom<'a>) -> Self {
