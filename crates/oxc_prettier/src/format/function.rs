@@ -47,6 +47,12 @@ pub(super) fn print_function<'a>(
             func.params.format(p)
         }
     }));
+
+    if let Some(return_type) = &func.return_type {
+        parts.push(ss!(": "));
+        parts.push(return_type.type_annotation.format(p));
+    }
+
     if let Some(body) = &func.body {
         parts.push(space!());
         parts.push(body.format(p));

@@ -1,4 +1,4 @@
-ts compatibility: 152/526 (28.90%)
+ts compatibility: 159/526 (30.23%)
 
 # Failed
 
@@ -137,9 +137,6 @@ ts compatibility: 152/526 (28.90%)
 * conditional-types/new-ternary-spec.ts
 * conditional-types/parentheses.ts
 
-### conformance/ambient
-* conformance/ambient/ambientDeclarations.ts
-
 ### conformance/classes
 * conformance/classes/mixinAccessModifiers.ts
 * conformance/classes/mixinClassesAnnotated.ts
@@ -197,11 +194,7 @@ ts compatibility: 152/526 (28.90%)
 * conformance/types/firstTypeNode/firstTypeNode.ts
 
 ### conformance/types/functions
-* conformance/types/functions/functionImplementationErrors.ts
 * conformance/types/functions/functionImplementations.ts
-* conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts
-* conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts
-* conformance/types/functions/functionOverloadCompatibilityWithVoid03.ts
 * conformance/types/functions/functionOverloadErrorsSyntax.ts
 
 ### conformance/types/intersectionType
@@ -354,9 +347,6 @@ ts compatibility: 152/526 (28.90%)
 
 ### export-default
 * export-default/function_as.ts
-
-### function
-* function/single_expand.ts
 
 ### function-type
 * function-type/consistent.ts
@@ -543,9 +533,6 @@ ts compatibility: 152/526 (28.90%)
 
 ### static-blocks
 * static-blocks/nested.ts
-
-### template-literal-types
-* template-literal-types/template-literal-types.ts
 
 ### template-literals
 * template-literals/as-expression.ts
