@@ -1,7 +1,10 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{Expression, TSEnumMember},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -10,10 +13,22 @@ use crate::{
     AstNode,
 };
 
-fn no_duplicate_enum_values_diagnostic(span: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow duplicate enum member values")
-        .with_help("Duplicate values can lead to bugs that are hard to track down")
-        .with_labels([span, span1])
+fn no_duplicate_enum_values_diagnostic(
+    first_init_span: Span,
+    second_member: &TSEnumMember,
+    value: &str,
+) -> OxcDiagnostic {
+    let second_name = second_member.id.static_name().unwrap_or("the second member");
+    // Unwrap will never panic since violations are only reported for members
+    // with initializers.
+    let second_init_span = second_member.initializer.as_ref().map(GetSpan::span).unwrap();
+
+    OxcDiagnostic::warn(format!("Duplicate enum value `{value}`"))
+        .with_help(format!("Give {second_name} a unique value"))
+        .with_labels([
+            first_init_span.label(format!("{value} is first used as an initializer here")),
+            second_init_span.label("and is re-used here"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -28,15 +43,46 @@ declare_oxc_lint!(
     /// usually expect members to have unique values within the same enum.
     /// Duplicate values can lead to bugs that are hard to track down.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// This rule disallows defining an enum with multiple members initialized
+    /// to the same value. Members without initializers will not be checked.
+    ///
+    /// Example of **incorrect** code:
     /// ```ts
     /// enum E {
     ///     A = 0,
     ///     B = 0,
     /// }
     /// ```
+    /// ```ts
+    /// enum E {
+    ///     A = 'A',
+    ///     B = 'A',
+    /// }
+    /// ```
+    ///
+    /// Example of **correct** code:
+    /// ```ts
+    /// enum E {
+    ///    A = 0,
+    ///    B = 1,
+    /// }
+    /// ```
+    /// ```ts
+    /// enum E {
+    ///    A = 'A',
+    ///    B = 'B',
+    /// }
+    /// ```
+    /// ```ts
+    /// enum E {
+    ///    A,
+    ///    B,
+    /// }
+    /// ```
     NoDuplicateEnumValues,
-    pedantic
+    correctness
 );
 
 impl Rule for NoDuplicateEnumValues {
@@ -56,14 +102,25 @@ impl Rule for NoDuplicateEnumValues {
                     if let Some((_, old_span)) =
                         seen_number_values.iter().find(|(v, _)| *v == num.value)
                     {
-                        ctx.diagnostic(no_duplicate_enum_values_diagnostic(*old_span, num.span));
+                        ctx.diagnostic(no_duplicate_enum_values_diagnostic(
+                            *old_span,
+                            enum_member,
+                            num.raw,
+                        ));
                     } else {
                         seen_number_values.push((num.value, num.span));
                     }
                 }
                 Expression::StringLiteral(s) => {
                     if let Some(old_span) = seen_string_values.insert(s.value.as_str(), s.span) {
-                        ctx.diagnostic(no_duplicate_enum_values_diagnostic(old_span, s.span));
+                        // Formatting here for prettier messages. This makes it
+                        // look like "Duplicate enum value 'A'"
+                        let v = format!("'{}'", s.value);
+                        ctx.diagnostic(no_duplicate_enum_values_diagnostic(
+                            old_span,
+                            enum_member,
+                            &v,
+                        ));
                     }
                 }
                 _ => {}
