@@ -406,6 +406,16 @@ pub enum TSTypeOperatorOperator {
     Readonly = 2,
 }
 
+impl TSTypeOperatorOperator {
+    pub fn to_str(self) -> &'static str {
+        match self {
+            TSTypeOperatorOperator::Keyof => "keyof",
+            TSTypeOperatorOperator::Readonly => "readonly",
+            TSTypeOperatorOperator::Unique => "unique",
+        }
+    }
+}
+
 /// TypeScript Array Type
 ///
 /// Does not include tuple types, which are stored as [`TSTupleType`].

@@ -17,6 +17,13 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     parts.push(ss!("class "));
     if let Some(id) = &class.id {
         parts.push(id.format(p));
+    }
+
+    if let Some(params) = &class.type_parameters {
+        parts.push(params.format(p));
+    }
+
+    if class.id.is_some() || class.type_parameters.is_some() {
         parts.push(space!());
     }
 

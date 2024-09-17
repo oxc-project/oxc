@@ -628,8 +628,17 @@ impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
 
+        if self.declare {
+            parts.push(ss!("declare "));
+        }
+
         parts.push(ss!("type "));
         parts.push(format!(p, self.id));
+
+        if let Some(params) = &self.type_parameters {
+            parts.push(params.format(p));
+        }
+
         parts.push(ss!(" = "));
         parts.push(format!(p, self.type_annotation));
 
@@ -860,7 +869,45 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
 
 impl<'a> Format<'a> for TSMappedType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts: Vec<'_, Doc<'_>> = p.vec();
+
+        match self.readonly {
+            TSMappedTypeModifierOperator::Plus => parts.push(ss!("+readonly ")),
+            TSMappedTypeModifierOperator::Minus => parts.push(ss!("-readonly ")),
+            TSMappedTypeModifierOperator::True => parts.push(ss!("readonly ")),
+            TSMappedTypeModifierOperator::None => (),
+        }
+
+        parts.push(ss!("["));
+        parts.push(self.type_parameter.format(p));
+
+        if let Some(name_type) = &self.name_type {
+            parts.push(ss!(" as "));
+            parts.push(name_type.format(p));
+        }
+
+        parts.push(ss!("]"));
+
+        match self.optional {
+            TSMappedTypeModifierOperator::Plus => parts.push(ss!("+?")),
+            TSMappedTypeModifierOperator::Minus => parts.push(ss!("-?")),
+            TSMappedTypeModifierOperator::True => parts.push(ss!("?")),
+            TSMappedTypeModifierOperator::None => (),
+        }
+
+        if let Some(type_annotation) = &self.type_annotation {
+            parts.push(ss!(": "));
+            parts.push(type_annotation.format(p));
+        }
+
+        let mut result = p.vec();
+        result.push(ss!("{ "));
+
+        // ToDo: check ident/grouping in method/method-signature.ts
+        result.push(Doc::Group(Group::new(parts)));
+        result.push(ss!(" }"));
+
+        Doc::Array(result)
     }
 }
 
@@ -919,7 +966,13 @@ impl<'a> Format<'a> for TSTypeLiteral<'a> {
 
 impl<'a> Format<'a> for TSTypeOperator<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(ss!(self.operator.to_str()));
+        parts.push(space!());
+        parts.push(self.type_annotation.format(p));
+
+        Doc::Array(parts)
     }
 }
 
@@ -999,6 +1052,11 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
 
         parts.push(ss!("interface "));
         parts.push(format!(p, self.id));
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(type_parameters.format(p));
+        }
+
         parts.push(space!());
 
         if let Some(extends) = &self.extends {
@@ -1207,19 +1265,36 @@ impl<'a> Format<'a> for TSExternalModuleReference<'a> {
 
 impl<'a> Format<'a> for TSTypeParameter<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        if self.r#in {
+            parts.push(ss!("in "));
+        }
+
+        if self.out {
+            parts.push(ss!("out "));
+        }
+
+        parts.push(self.name.format(p));
+
+        if let Some(constraint) = &self.constraint {
+            parts.push(space!());
+            parts.push(constraint.format(p));
+        }
+
+        if let Some(default) = &self.default {
+            parts.push(ss!(" = "));
+            parts.push(default.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
-    }
-}
-
-impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
-    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
+        let mut print_comma = false;
 
         if self.params.len() == 0 {
             return Doc::Array(parts);
@@ -1228,6 +1303,39 @@ impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
         parts.push(ss!("<"));
 
         for param in &self.params {
+            if print_comma {
+                parts.push(ss!(", "));
+            } else {
+                print_comma = true;
+            }
+
+            parts.push(param.format(p));
+        }
+
+        parts.push(ss!(">"));
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        let mut print_comma = false;
+
+        if self.params.len() == 0 {
+            return Doc::Array(parts);
+        }
+
+        parts.push(ss!("<"));
+
+        for param in &self.params {
+            if print_comma {
+                parts.push(ss!(", "));
+            } else {
+                print_comma = true;
+            }
+
             parts.push(param.format(p));
         }
 

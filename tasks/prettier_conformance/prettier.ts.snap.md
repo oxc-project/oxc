@@ -1,4 +1,4 @@
-ts compatibility: 95/526 (18.06%)
+ts compatibility: 107/526 (20.34%)
 
 # Failed
 
@@ -76,7 +76,6 @@ ts compatibility: 95/526 (18.06%)
 
 ### class
 * class/constructor.ts
-* class/dunder.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
 * class/generics.ts
@@ -158,7 +157,6 @@ ts compatibility: 95/526 (18.06%)
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractFactoryFunction.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractImportInstantiation.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
@@ -175,8 +173,6 @@ ts compatibility: 95/526 (18.06%)
 * conformance/classes/constructorDeclarations/constructorParameters/constructorDefaultValuesReferencingThis.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithDefaultValues.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithOptionalParameters.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties2.ts
 * conformance/classes/constructorDeclarations/constructorParameters/declarationEmitReadonly.ts
@@ -285,9 +281,6 @@ ts compatibility: 95/526 (18.06%)
 * conformance/types/typeParameters/typeParameterLists/staticMembersUsingClassTypeParameter.ts
 * conformance/types/typeParameters/typeParameterLists/typeParametersAvailableInNestedScope2.ts
 
-### conformance/types/typeReference
-* conformance/types/typeReference/typeReference.ts
-
 ### conformance/types/union
 * conformance/types/union/unionTypeCallSignatures.ts
 * conformance/types/union/unionTypeCallSignatures3.ts
@@ -296,9 +289,6 @@ ts compatibility: 95/526 (18.06%)
 * conformance/types/union/unionTypeEquivalence.ts
 * conformance/types/union/unionTypeFromArrayLiteral.ts
 * conformance/types/union/unionTypeIndexSignature.ts
-
-### conformance/types/variableDeclarator
-* conformance/types/variableDeclarator/variableDeclarator.ts
 
 ### const
 * const/initializer-ambient-context.ts
@@ -425,7 +415,6 @@ ts compatibility: 95/526 (18.06%)
 ### generic
 * generic/arrow-return-type.ts
 * generic/issue-6899.ts
-* generic/object-method.ts
 * generic/ungrouped-parameters.ts
 
 ### import-export
@@ -509,7 +498,6 @@ ts compatibility: 95/526 (18.06%)
 
 ### method
 * method/issue-10352-consistency.ts
-* method/method-signature-with-wrapped-return-type.ts
 * method/method-signature.ts
 * method/semi.ts
 * method/type_literal_optional_method.ts
@@ -615,9 +603,6 @@ ts compatibility: 95/526 (18.06%)
 ### static-blocks
 * static-blocks/nested.ts
 
-### symbol
-* symbol/symbol.ts
-
 ### template-literal-types
 * template-literal-types/template-literal-types.ts
 
@@ -689,10 +674,6 @@ ts compatibility: 95/526 (18.06%)
 * typeparams/long-function-arg.ts
 * typeparams/tagged-template-expression.ts
 
-### typeparams/consistent
-* typeparams/consistent/issue-9501.ts
-* typeparams/consistent/template-literal-types.ts
-
 ### typeparams/empty-parameters-with-arrow-function
 * typeparams/empty-parameters-with-arrow-function/issue-13817.ts
 
@@ -717,9 +698,6 @@ ts compatibility: 95/526 (18.06%)
 
 ### union/single-type
 * union/single-type/single-type.ts
-
-### unique-symbol
-* unique-symbol/unique-symbol.ts
 
 ### update-expression
 * update-expression/update-expressions.ts
