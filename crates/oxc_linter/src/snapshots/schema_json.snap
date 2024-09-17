@@ -4,7 +4,7 @@ expression: json
 ---
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "OxlintConfig",
+  "title": "Oxlintrc",
   "description": "Oxlint Configuration File\n\nThis configuration is aligned with ESLint v8's configuration schema (`eslintrc.json`).\n\nUsage: `oxlint -c oxlintrc.json --import-plugin`\n\n::: danger NOTE\n\nOnly the `.json` format is supported. You can use comments in configuration files.\n\n:::\n\nExample\n\n`.oxlintrc.json`\n\n```json { \"env\": { \"browser\": true }, \"globals\": { \"foo\": \"readonly\" }, \"settings\": { }, \"rules\": { \"eqeqeq\": \"warn\", \"import/no-cycle\": \"error\" } } ```",
   "type": "object",
   "properties": {

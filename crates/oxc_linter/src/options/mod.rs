@@ -13,7 +13,7 @@ pub use filter::{InvalidFilterKind, LintFilter};
 pub use plugins::{LintPluginOptions, LintPlugins};
 
 use crate::{
-    config::{LintConfig, OxlintConfig},
+    config::{LintConfig, Oxlintrc},
     fixer::FixKind,
     rules::RULES,
     utils::is_jest_rule_adapted_to_vitest,
@@ -188,8 +188,7 @@ impl OxlintOptions {
     pub(crate) fn derive_rules_and_config(
         &self,
     ) -> Result<(Vec<RuleWithSeverity>, LintConfig), Error> {
-        let config =
-            self.config_path.as_ref().map(|path| OxlintConfig::from_file(path)).transpose()?;
+        let config = self.config_path.as_ref().map(|path| Oxlintrc::from_file(path)).transpose()?;
 
         let mut rules: FxHashSet<RuleWithSeverity> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();
