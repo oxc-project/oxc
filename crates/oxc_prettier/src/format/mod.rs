@@ -629,7 +629,7 @@ impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
         let mut parts = p.vec();
 
         if self.declare {
-            parts.push(ss!("delcare "));
+            parts.push(ss!("declare "));
         }
 
         parts.push(ss!("type "));
