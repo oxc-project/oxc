@@ -583,6 +583,11 @@ impl<'a> Format<'a> for VariableDeclaration<'a> {
             let kind = self.kind.as_str();
 
             let mut parts = p.vec();
+
+            if self.declare {
+                parts.push(ss!("declare "));
+            }
+
             parts.push(ss!(kind));
             parts.push(space!());
 
@@ -806,7 +811,39 @@ impl<'a> Format<'a> for TSConstructorType<'a> {
 
 impl<'a> Format<'a> for TSFunctionType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(type_parameters.format(p));
+        }
+
+        // parts.push(ss!("("));
+
+        // ToDo: this param should be inside of params "(" and ")"
+        if let Some(this_param) = &self.this_param {
+            parts.push(this_param.format(p));
+            parts.push(ss!(", "));
+        }
+
+        parts.push(self.params.format(p));
+        // parts.push(ss!(")"));
+        parts.push(ss!(" => "));
+        parts.push(self.return_type.type_annotation.format(p));
+
+        Doc::Array(parts)
+    }
+}
+impl<'a> Format<'a> for TSThisParameter<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+        parts.push(ss!("this"));
+
+        if let Some(type_annoation) = &self.type_annotation {
+            parts.push(ss!(": "));
+            parts.push(type_annoation.type_annotation.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
@@ -919,7 +956,7 @@ impl<'a> Format<'a> for TSNamedTupleMember<'a> {
 
 impl<'a> Format<'a> for TSQualifiedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, self.left.format(p), ss!("."), self.right.format(p))
     }
 }
 
@@ -984,7 +1021,25 @@ impl<'a> Format<'a> for TSTypePredicate<'a> {
 
 impl<'a> Format<'a> for TSTypeQuery<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(ss!("typeof "));
+
+        match &self.expr_name {
+            TSTypeQueryExprName::TSImportType(import_type) => parts.push(import_type.format(p)),
+            TSTypeQueryExprName::IdentifierReference(identifier_reference) => {
+                parts.push(identifier_reference.format(p))
+            }
+            TSTypeQueryExprName::QualifiedName(qualified_name) => {
+                parts.push(qualified_name.format(p))
+            }
+        }
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(type_parameters.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
@@ -1278,7 +1333,7 @@ impl<'a> Format<'a> for TSTypeParameter<'a> {
         parts.push(self.name.format(p));
 
         if let Some(constraint) = &self.constraint {
-            parts.push(space!());
+            parts.push(ss!(" extends "));
             parts.push(constraint.format(p));
         }
 

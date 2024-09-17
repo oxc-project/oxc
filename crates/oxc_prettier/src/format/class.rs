@@ -18,9 +18,14 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
         parts.extend(hardline!());
     }
 
+    if class.declare {
+        parts.push(ss!("declare "));
+    }
+
     if class.r#abstract {
         parts.push(ss!("abstract "));
     }
+
     parts.push(ss!("class "));
     if let Some(id) = &class.id {
         parts.push(id.format(p));
@@ -37,6 +42,11 @@ pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a
     if let Some(super_class) = &class.super_class {
         parts.push(ss!("extends "));
         parts.push(super_class.format(p));
+
+        if let Some(super_type_parameters) = &class.super_type_parameters {
+            parts.push(super_type_parameters.format(p));
+        }
+
         parts.push(space!());
     }
 

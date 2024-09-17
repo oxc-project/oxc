@@ -1,7 +1,6 @@
 use oxc_ast::ast::*;
 
 use crate::{
-    array,
     doc::{Doc, DocBuilder},
     format::function_parameters::should_group_function_parameters,
     group, if_break, indent, softline, space, ss, Format, Prettier,
@@ -13,6 +12,11 @@ pub(super) fn print_function<'a>(
     property_name: Option<&str>,
 ) -> Doc<'a> {
     let mut parts = p.vec();
+
+    if func.declare {
+        parts.push(ss!("declare "));
+    }
+
     if func.r#async {
         parts.push(ss!("async "));
     }
@@ -28,11 +32,12 @@ pub(super) fn print_function<'a>(
         parts.push(p.str(" "));
     }
 
-    if let Some(type_params) = &func.type_parameters {
-        parts.push(type_params.format(p));
-    }
     if let Some(id) = &func.id {
         parts.push(p.str(id.name.as_str()));
+    }
+
+    if let Some(type_params) = &func.type_parameters {
+        parts.push(type_params.format(p));
     }
     // Prettier has `returnTypeDoc` to group together, write this for keep same with prettier.
     parts.push(group!(p, {
@@ -63,12 +68,12 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
         parts.push(space!());
     }
 
-    if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
-        parts.push(ss!("abstract "));
-    }
-
     if method.r#static {
         parts.push(ss!("static "));
+    }
+
+    if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
+        parts.push(ss!("abstract "));
     }
 
     match method.kind {
@@ -91,6 +96,10 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
 
     parts.push(method.key.format(p));
 
+    if method.optional {
+        parts.push(ss!("?"));
+    }
+
     parts.push(print_method_value(p, &method.value));
 
     Doc::Array(parts)
@@ -102,10 +111,16 @@ fn print_method_value<'a>(p: &mut Prettier<'a>, function: &Function<'a>) -> Doc<
     let should_group_parameters = should_group_function_parameters(function);
     let parameters_doc =
         if should_group_parameters { group!(p, parameters_doc) } else { parameters_doc };
+
+    if let Some(type_parameters) = &function.type_parameters {
+        parts.push(type_parameters.format(p));
+    }
+
     parts.push(group!(p, parameters_doc));
 
     if let Some(ret_typ) = &function.return_type {
-        parts.push(array![p, ss!(": "), ret_typ.type_annotation.format(p)]);
+        parts.push(ss!(": "));
+        parts.push(ret_typ.type_annotation.format(p));
     }
 
     if let Some(body) = &function.body {

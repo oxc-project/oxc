@@ -19,8 +19,18 @@ pub(super) fn print_arrow_function<'a>(
         parts.push(ss!("async "));
     }
 
+    if let Some(type_params) = &expr.type_parameters {
+        parts.push(type_params.format(p));
+    }
+
     let parameters = expr.params.format(p);
     parts.push(group!(p, parameters));
+
+    if let Some(return_type) = &expr.return_type {
+        parts.push(ss!(": "));
+        parts.push(return_type.type_annotation.format(p));
+    }
+
     parts.push(ss!(" => "));
 
     if expr.expression {
