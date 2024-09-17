@@ -508,9 +508,6 @@ impl<'a> Gen for TryStatement<'a> {
             }
             p.print_soft_space();
             p.print_block_statement(&handler.body, ctx);
-            if self.finalizer.is_some() {
-                p.print_soft_newline();
-            }
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_soft_space();
@@ -1426,7 +1423,7 @@ impl<'a> Gen for ArrayExpressionElement<'a> {
                 self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
             }
             Self::SpreadElement(elem) => elem.print(p, ctx),
-            Self::Elision(_span) => p.print_comma(),
+            Self::Elision(_span) => {}
         }
     }
 }
@@ -1441,19 +1438,34 @@ impl<'a> Gen for SpreadElement<'a> {
 
 impl<'a> Gen for ArrayExpression<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
+        let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span.start);
         p.print_char(b'[');
-        for (index, item) in self.elements.iter().enumerate() {
-            item.print(p, ctx);
-            if index != self.elements.len() - 1 {
-                if !matches!(item, ArrayExpressionElement::Elision(_)) {
-                    p.print_comma();
-                }
+        if is_multi_line {
+            p.indent();
+        }
+        for (i, item) in self.elements.iter().enumerate() {
+            if i != 0 {
+                p.print_comma();
+            }
+            if is_multi_line {
+                p.print_soft_newline();
+                p.print_indent();
+            } else if i != 0 {
                 p.print_soft_space();
             }
+            item.print(p, ctx);
+            if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
+                p.print_comma();
+            }
         }
-        p.print_char(b']');
+        if is_multi_line {
+            p.print_soft_newline();
+            p.dedent();
+            p.print_indent();
+        }
         p.add_source_mapping(self.span.end);
+        p.print_char(b']');
     }
 }
 
@@ -2629,7 +2641,9 @@ impl<'a> Gen for ObjectPattern<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'{');
-        p.print_soft_space();
+        if !self.is_empty() {
+            p.print_soft_space();
+        }
         p.print_list(&self.properties, ctx);
         if let Some(rest) = &self.rest {
             if !self.properties.is_empty() {
@@ -2637,7 +2651,9 @@ impl<'a> Gen for ObjectPattern<'a> {
             }
             rest.print(p, ctx);
         }
-        p.print_soft_space();
+        if !self.is_empty() {
+            p.print_soft_space();
+        }
         p.print_char(b'}');
         p.add_source_mapping(self.span.end);
     }
@@ -2911,19 +2927,19 @@ impl<'a> Gen for TSIndexedAccessType<'a> {
 impl<'a> Gen for TSMappedType<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("{");
+        p.print_soft_space();
         match self.readonly {
             TSMappedTypeModifierOperator::True => {
-                p.print_str("readonly");
+                p.print_str("readonly ");
             }
             TSMappedTypeModifierOperator::Plus => {
-                p.print_str("+readonly");
+                p.print_str("+readonly ");
             }
             TSMappedTypeModifierOperator::Minus => {
-                p.print_str("-readonly");
+                p.print_str("-readonly ");
             }
             TSMappedTypeModifierOperator::None => {}
         }
-        p.print_hard_space();
         p.print_str("[");
         self.type_parameter.name.print(p, ctx);
         if let Some(constraint) = &self.type_parameter.constraint {
@@ -2957,6 +2973,7 @@ impl<'a> Gen for TSMappedType<'a> {
             p.print_soft_space();
             type_annotation.print(p, ctx);
         }
+        p.print_soft_space();
         p.print_str("}");
     }
 }
@@ -3061,9 +3078,15 @@ impl<'a> Gen for TSTypeLiteral<'a> {
         let single_line = self.members.len() <= 1;
         p.print_curly_braces(self.span, single_line, |p| {
             for item in &self.members {
-                p.print_indent();
+                if single_line {
+                    p.print_soft_space();
+                } else {
+                    p.print_indent();
+                }
                 item.print(p, ctx);
-                if !single_line {
+                if single_line {
+                    p.print_soft_space();
+                } else {
                     p.print_semicolon();
                     p.print_soft_newline();
                 }

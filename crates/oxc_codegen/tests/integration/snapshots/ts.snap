@@ -18,12 +18,20 @@ function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): 
 ########## 2
 let x: string[] = ['abc', 'def', 'ghi'];
 ----------
-let x: string[] = ['abc', 'def', 'ghi'];
+let x: string[] = [
+	'abc',
+	'def',
+	'ghi'
+];
 
 ########## 3
 let x: Array<string> = ['abc', 'def', 'ghi',];
 ----------
-let x: Array<string> = ['abc', 'def', 'ghi'];
+let x: Array<string> = [
+	'abc',
+	'def',
+	'ghi'
+];
 
 ########## 4
 let x: [string, number] = ['abc', 123];
@@ -91,7 +99,7 @@ export { Foo, type Bar } from 'foo';
 ########## 15
 type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }
 ----------
-type A<T> = { [K in keyof T as K extends string ? B<K> : K] : T[K]};
+type A<T> = { [K in keyof T as K extends string ? B<K> : K] : T[K] };
 
 ########## 16
 class A {readonly type = 'frame'}
@@ -103,12 +111,12 @@ class A {
 ########## 17
 let foo: { <T>(t: T): void }
 ----------
-let foo: {<T>(t: T): void};
+let foo: { <T>(t: T): void };
 
 ########## 18
 let foo: { new <T>(t: T): void }
 ----------
-let foo: {new <T>(t: T): void};
+let foo: { new <T>(t: T): void };
 
 ########## 19
 function <const T>(){}

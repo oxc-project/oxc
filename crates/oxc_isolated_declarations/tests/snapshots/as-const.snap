@@ -18,5 +18,5 @@ declare const F: {
 		readonly a: "a";
 		readonly b: "b";
 	};
-	readonly array: readonly ["a", undefined, {	readonly b: "\n"}];
+	readonly array: readonly ["a", undefined, { readonly b: "\n" }];
 };

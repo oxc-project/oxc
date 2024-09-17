@@ -50,7 +50,7 @@ pub trait Suite<T: Case> {
         self.read_test_cases(name, args);
         self.get_test_cases_mut().par_iter_mut().for_each(|case| {
             if args.debug {
-                println!("{:?}", case.path());
+                println!("{}", case.path().to_string_lossy());
             }
             case.run();
         });

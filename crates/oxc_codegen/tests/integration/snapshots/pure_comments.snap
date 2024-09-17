@@ -14,7 +14,16 @@ x([
   /* #__NO_SIDE_EFFECTS__ */ async function* y() {},
 ])
 ----------
-x([/* #__NO_SIDE_EFFECTS__ */ function() {}, /* #__NO_SIDE_EFFECTS__ */ function y() {}, /* #__NO_SIDE_EFFECTS__ */ function* () {}, /* #__NO_SIDE_EFFECTS__ */ function* y() {}, /* #__NO_SIDE_EFFECTS__ */ async function() {}, /* #__NO_SIDE_EFFECTS__ */ async function y() {}, /* #__NO_SIDE_EFFECTS__ */ async function* () {}, /* #__NO_SIDE_EFFECTS__ */ async function* y() {}]);
+x([
+	/* #__NO_SIDE_EFFECTS__ */ function() {},
+	/* #__NO_SIDE_EFFECTS__ */ function y() {},
+	/* #__NO_SIDE_EFFECTS__ */ function* () {},
+	/* #__NO_SIDE_EFFECTS__ */ function* y() {},
+	/* #__NO_SIDE_EFFECTS__ */ async function() {},
+	/* #__NO_SIDE_EFFECTS__ */ async function y() {},
+	/* #__NO_SIDE_EFFECTS__ */ async function* () {},
+	/* #__NO_SIDE_EFFECTS__ */ async function* y() {}
+]);
 
 ########## 1
 
@@ -27,7 +36,14 @@ x([
   /* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
 ])
 ----------
-x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y]);
+x([
+	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ () => {},
+	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ async (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ async () => {},
+	/* #__NO_SIDE_EFFECTS__ */ async (y) => y
+]);
 
 ########## 2
 
@@ -40,7 +56,14 @@ x([
   /* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
 ])
 ----------
-x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y]);
+x([
+	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ () => {},
+	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ async (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ async () => {},
+	/* #__NO_SIDE_EFFECTS__ */ async (y) => y
+]);
 
 ########## 3
 
