@@ -112,12 +112,12 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
     /// ```ts
     /// function a(){
-    ///    () => console.log(this);
+    ///   return () => console.log(this);
     /// }
     /// // to
     /// function a(){
     ///   var _this = this;
-    ///  (function() { return console.log(_this); });
+    ///   return function() { return console.log(_this); };
     /// }
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
@@ -306,10 +306,7 @@ impl<'a> ArrowFunctions<'a> {
         );
         new_function.scope_id.set(scope_id);
 
-        let expr = Expression::FunctionExpression(self.ctx.ast.alloc(new_function));
-        // Avoid creating a function declaration.
-        // `() => {};` => `(function () {});`
-        self.ctx.ast.expression_parenthesized(SPAN, expr)
+        Expression::FunctionExpression(self.ctx.ast.alloc(new_function))
     }
 
     /// Insert `var _this = this;` at the top of the statements.
