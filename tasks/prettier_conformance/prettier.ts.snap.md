@@ -1,4 +1,4 @@
-ts compatibility: 107/526 (20.34%)
+ts compatibility: 109/526 (20.72%)
 
 # Failed
 
@@ -155,7 +155,6 @@ ts compatibility: 107/526 (20.34%)
 ### conformance/classes/classDeclarations/classAbstractKeyword
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractFactoryFunction.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractImportInstantiation.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
@@ -368,7 +367,6 @@ ts compatibility: 107/526 (20.34%)
 ### decorators-ts
 * decorators-ts/accessor-decorator.ts
 * decorators-ts/angular.ts
-* decorators-ts/class-decorator.ts
 * decorators-ts/method-decorator.ts
 * decorators-ts/mobx.ts
 * decorators-ts/multiple.ts

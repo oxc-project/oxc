@@ -58,6 +58,11 @@ pub(super) fn print_function<'a>(
 pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'a>) -> Doc<'a> {
     let mut parts = p.vec();
 
+    if let Some(accessibility) = &method.accessibility {
+        parts.push(ss!(accessibility.as_str()));
+        parts.push(space!());
+    }
+
     if matches!(method.r#type, MethodDefinitionType::TSAbstractMethodDefinition) {
         parts.push(ss!("abstract "));
     }

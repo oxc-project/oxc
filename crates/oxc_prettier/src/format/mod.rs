@@ -2340,6 +2340,20 @@ impl<'a> Format<'a> for ClassElement<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSClassImplements<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        let mut parts = p.vec();
+
+        parts.push(self.expression.format(p));
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(type_parameters.format(p));
+        }
+
+        Doc::Array(parts)
+    }
+}
+
 impl<'a> Format<'a> for JSXIdentifier<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
