@@ -138,10 +138,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_arrow_function_expression(
         &mut self,
-        expr: &mut ArrowFunctionExpression<'a>,
+        arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.enter_arrow_function_expression(expr, ctx);
+        self.x0_typescript.enter_arrow_function_expression(arrow, ctx);
+        self.x3_es2015.enter_arrow_function_expression(arrow, ctx);
     }
 
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -302,6 +303,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.x3_es2015.exit_arrow_function_expression(arrow, ctx);
+
         // Some plugins may add new statements to the ArrowFunctionExpression's body,
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.
@@ -343,11 +346,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_declaration(decl, ctx);
-        self.x3_es2015.enter_declaration(decl, ctx);
-    }
-
-    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.exit_declaration(decl, ctx);
     }
 
     fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
