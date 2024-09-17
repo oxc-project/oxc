@@ -80,6 +80,10 @@ pub(super) fn print_function_parameters<'a>(
             printed.push(space!());
         }
 
+        if param.r#override {
+            printed.push(ss!("override "));
+        }
+
         if param.readonly {
             printed.push(ss!("readonly "));
         }

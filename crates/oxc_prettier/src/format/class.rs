@@ -253,16 +253,16 @@ pub(super) fn print_class_property<'a>(
         parts.push(ss!("static "));
     }
 
+    if node.is_abstract() {
+        parts.push(ss!("abstract "));
+    }
+
     if node.is_override() {
         parts.push(ss!("override "));
     }
 
     if node.is_readonly() {
         parts.push(ss!("readonly "));
-    }
-
-    if node.is_abstract() {
-        parts.push(ss!("abstract "));
     }
 
     parts.push(node.format_key(p));
