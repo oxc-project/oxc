@@ -1,6 +1,7 @@
 Oxc Parser for JavaScript and TypeScript
 
 Oxc's [`Parser`] has full support for
+
 - The latest stable ECMAScript syntax
 - TypeScript
 - JSX and TSX
@@ -16,16 +17,18 @@ let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 ```
 
 # Abstract Syntax Tree (AST)
+
 Oxc's AST is located in a separate [`oxc_ast`] crate. You can find type definitions for AST
 nodes [here][`oxc_ast::ast`].
 
 # Performance
 
 The following optimization techniques are used:
-* AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
-* [`oxc_span::Span`] offsets uses `u32` instead of `usize`
-* Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
-they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
+
+- AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+- [`oxc_span::Span`] offsets uses `u32` instead of `usize`
+- Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
+  they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
 
 <div class="warning">
 Because [`oxc_span::Span`] uses `u32` instead of `usize`, Oxc can only parse files up
@@ -94,6 +97,7 @@ fn main() -> Result<(), String> {
 ```
 
 ### Parsing TSX
+
 ```rust
 use oxc_allocator::Allocator;
 use oxc_parser::{Parser, ParserReturn};

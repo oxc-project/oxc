@@ -28,6 +28,7 @@ pub mod index {
     pub use oxc_index::*;
 }
 
+#[allow(clippy::needless_doctest_main)]
 pub mod parser {
     #![doc = include_str!("../../oxc_parser/README.md")]
     #[doc(inline)]

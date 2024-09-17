@@ -1,3 +1,4 @@
+#![allow(clippy::needless_doctest_main)]
 #![doc = include_str!("../README.md")]
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
 
