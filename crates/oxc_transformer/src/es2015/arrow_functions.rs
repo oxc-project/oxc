@@ -273,22 +273,9 @@ impl<'a> ArrowFunctions<'a> {
             body.statements.push(return_statement);
         }
 
-        // There shouldn't need to be a conditional here. Every arrow function should have a scope ID.
-        // But at present TS transforms don't seem to set `scope_id` in some cases, so this test case
-        // fails if just unwrap `scope_id`:
-        // `typescript/tests/cases/compiler/classFieldSuperAccessible.ts`.
-        // ```ts
-        // class D {
-        //   accessor b = () => {}
-        // }
-        // ```
-        // TODO: Change to `arrow_function_expr.scope_id.get().unwrap()` once scopes are correct
-        // in TS transforms.
-        let scope_id = arrow_function_expr.scope_id.get();
-        if let Some(scope_id) = scope_id {
-            let flags = ctx.scopes_mut().get_flags_mut(scope_id);
-            *flags &= !ScopeFlags::Arrow;
-        }
+        let scope_id = arrow_function_expr.scope_id.get().unwrap();
+        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        *flags &= !ScopeFlags::Arrow;
 
         let new_function = ctx.ast.function(
             FunctionType::FunctionExpression,
@@ -303,7 +290,7 @@ impl<'a> ArrowFunctions<'a> {
             arrow_function_expr.return_type,
             Some(body),
         );
-        new_function.scope_id.set(scope_id);
+        new_function.scope_id.set(Some(scope_id));
 
         Expression::FunctionExpression(self.ctx.ast.alloc(new_function))
     }
