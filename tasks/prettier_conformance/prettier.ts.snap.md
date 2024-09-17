@@ -1,4 +1,4 @@
-ts compatibility: 150/526 (28.52%)
+ts compatibility: 152/526 (28.90%)
 
 # Failed
 
@@ -494,10 +494,6 @@ ts compatibility: 150/526 (28.52%)
 ### optional-variance
 * optional-variance/basic.ts
 * optional-variance/with-jsx.tsx
-
-### override-modifiers
-* override-modifiers/override-modifier.ts
-* override-modifiers/parameter-property.ts
 
 ### predicate-types
 * predicate-types/predicate-types.ts

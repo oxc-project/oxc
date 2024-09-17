@@ -1109,7 +1109,6 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
             parts.push(type_parameters.format(p));
         }
 
-
         if let Some(type_parameters) = &self.type_parameters {
             parts.push(type_parameters.format(p));
         }
@@ -1353,10 +1352,6 @@ impl<'a> Format<'a> for TSTypeParameterDeclaration<'a> {
         let mut parts = p.vec();
         let mut print_comma = false;
 
-        if self.params.len() == 0 {
-            return Doc::Array(parts);
-        }
-
         parts.push(ss!("<"));
 
         for param in &self.params {
@@ -1379,10 +1374,6 @@ impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         let mut parts = p.vec();
         let mut print_comma = false;
-
-        if self.params.len() == 0 {
-            return Doc::Array(parts);
-        }
 
         parts.push(ss!("<"));
 

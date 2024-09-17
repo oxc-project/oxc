@@ -76,6 +76,10 @@ pub(super) fn print_method<'a>(p: &mut Prettier<'a>, method: &MethodDefinition<'
         parts.push(ss!("abstract "));
     }
 
+    if method.r#override {
+        parts.push(ss!("override "));
+    }
+
     match method.kind {
         MethodDefinitionKind::Constructor | MethodDefinitionKind::Method => {}
         MethodDefinitionKind::Get => {
