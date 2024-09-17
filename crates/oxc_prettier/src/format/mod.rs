@@ -1025,10 +1025,10 @@ impl<'a> Format<'a> for TSTypeQuery<'a> {
         match &self.expr_name {
             TSTypeQueryExprName::TSImportType(import_type) => parts.push(import_type.format(p)),
             TSTypeQueryExprName::IdentifierReference(identifier_reference) => {
-                parts.push(identifier_reference.format(p))
+                parts.push(identifier_reference.format(p));
             }
             TSTypeQueryExprName::QualifiedName(qualified_name) => {
-                parts.push(qualified_name.format(p))
+                parts.push(qualified_name.format(p));
             }
         }
 
