@@ -29,7 +29,7 @@ use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
 pub use crate::{
-    config::OxlintConfig,
+    config::Oxlintrc,
     context::LintContext,
     fixer::FixKind,
     frameworks::FrameworkFlags,
@@ -142,7 +142,7 @@ impl Linter {
             }
         }
 
-        rules.into_iter().flat_map(|(_, ctx)| ctx.into_message()).collect::<Vec<_>>()
+        ctx_host.take_diagnostics()
     }
 
     /// # Panics
@@ -158,7 +158,7 @@ impl Linter {
 
 #[cfg(test)]
 mod test {
-    use super::{Linter, OxlintConfig};
+    use super::{Linter, Oxlintrc};
 
     #[test]
     fn print_rules() {
@@ -173,7 +173,7 @@ mod test {
 
         use project_root::get_project_root;
         let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
-        let schema = schemars::schema_for!(OxlintConfig);
+        let schema = schemars::schema_for!(Oxlintrc);
         let json = serde_json::to_string_pretty(&schema).unwrap();
         let existing_json = fs::read_to_string(&path).unwrap_or_default();
         if existing_json.trim() != json.trim() {

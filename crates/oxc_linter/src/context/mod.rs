@@ -1,7 +1,7 @@
 #![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
 mod host;
 
-use std::{cell::RefCell, path::Path, rc::Rc};
+use std::{path::Path, rc::Rc};
 
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
@@ -18,18 +18,13 @@ use crate::{
     AllowWarnDeny, FrameworkFlags, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
-pub use host::ContextHost;
+pub(crate) use host::ContextHost;
 
 #[derive(Clone)]
 #[must_use]
 pub struct LintContext<'a> {
     /// Shared context independent of the rule being linted.
     parent: Rc<ContextHost<'a>>,
-
-    /// Diagnostics reported by the linter.
-    ///
-    /// Contains diagnostics for all rules across all files.
-    diagnostics: RefCell<Vec<Message<'a>>>,
 
     // states
     current_plugin_name: &'static str,
@@ -158,10 +153,6 @@ impl<'a> LintContext<'a> {
 
     /* Diagnostics */
 
-    pub fn into_message(self) -> Vec<Message<'a>> {
-        self.diagnostics.into_inner()
-    }
-
     fn add_diagnostic(&self, mut message: Message<'a>) {
         if self.parent.disable_directives.contains(self.current_rule_name, message.span()) {
             return;
@@ -179,7 +170,7 @@ impl<'a> LintContext<'a> {
             message.error = message.error.with_severity(self.severity);
         }
 
-        self.diagnostics.borrow_mut().push(message);
+        self.parent.push_diagnostic(message);
     }
 
     /// Report a lint rule violation.
@@ -352,4 +343,5 @@ const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
     "typescript" => "typescript-eslint",
     "unicorn" => "eslint-plugin-unicorn",
     "vitest" => "eslint-plugin-vitest",
+    "node" => "eslint-plugin-node",
 };

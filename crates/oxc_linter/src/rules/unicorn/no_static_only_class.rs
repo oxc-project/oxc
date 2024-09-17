@@ -6,8 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_static_only_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow classes that only have static members.")
-        .with_help("A class with only static members could just be an object instead.")
+    OxcDiagnostic::warn("Use an object instead of a class with only static members.")
         .with_label(span)
 }
 
@@ -22,7 +21,6 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     ///
     /// A class with only static members could just be an object instead.
-    ///
     ///
     /// ### Example
     ///
@@ -41,8 +39,21 @@ declare_oxc_lint!(
     ///     constructor() {}
     /// }
     /// ```
+    /// ```javascript
+    /// const X = {
+    ///     foo: false,
+    ///     bar() {}
+    /// };
+    /// ```
+    /// ```javascript
+    /// class X {
+    ///     static #foo = false; // private field
+    ///     static bar() {}
+    /// }
+    /// ```
     NoStaticOnlyClass,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoStaticOnlyClass {

@@ -11,7 +11,7 @@ use serde_json::Value;
 
 use crate::{
     fixer::FixKind, options::LintPluginOptions, rules::RULES, AllowWarnDeny, Fixer, LintService,
-    LintServiceOptions, Linter, OxlintConfig, OxlintOptions, RuleEnum, RuleWithSeverity,
+    LintServiceOptions, Linter, OxlintOptions, Oxlintrc, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Eq, PartialEq)]
@@ -362,7 +362,7 @@ impl Tester {
             .with_node_plugin(self.plugins.node);
         let eslint_config = eslint_config
             .as_ref()
-            .map_or_else(OxlintConfig::default, |v| OxlintConfig::deserialize(v).unwrap());
+            .map_or_else(Oxlintrc::default, |v| Oxlintrc::deserialize(v).unwrap());
         let linter = Linter::from_options(options)
             .unwrap()
             .with_rules(vec![RuleWithSeverity::new(rule, AllowWarnDeny::Warn)])

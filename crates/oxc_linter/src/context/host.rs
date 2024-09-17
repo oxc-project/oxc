@@ -5,7 +5,7 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 use crate::{
     config::LintConfig,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::FixKind,
+    fixer::{FixKind, Message},
     frameworks,
     options::{LintOptions, LintPlugins},
     utils, FrameworkFlags, RuleWithSeverity,
@@ -33,9 +33,13 @@ use super::{plugin_name_to_prefix, LintContext};
 /// - [Flyweight Pattern](https://en.wikipedia.org/wiki/Flyweight_pattern)
 #[must_use]
 #[non_exhaustive]
-pub struct ContextHost<'a> {
+pub(crate) struct ContextHost<'a> {
     pub(super) semantic: Rc<Semantic<'a>>,
     pub(super) disable_directives: DisableDirectives<'a>,
+    /// Diagnostics reported by the linter.
+    ///
+    /// Contains diagnostics for all rules across a single file.
+    diagnostics: RefCell<Vec<Message<'a>>>,
     /// Whether or not to apply code fixes during linting. Defaults to
     /// [`FixKind::None`] (no fixing).
     ///
@@ -56,6 +60,8 @@ impl<'a> ContextHost<'a> {
         semantic: Rc<Semantic<'a>>,
         options: LintOptions,
     ) -> Self {
+        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 512;
+
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
         assert!(
@@ -72,6 +78,7 @@ impl<'a> ContextHost<'a> {
         Self {
             semantic,
             disable_directives,
+            diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             fix: options.fix,
             file_path,
             config: Arc::new(LintConfig::default()),
@@ -82,7 +89,7 @@ impl<'a> ContextHost<'a> {
     }
 
     #[inline]
-    pub(crate) fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
+    pub fn with_config(mut self, config: &Arc<LintConfig>) -> Self {
         self.config = Arc::clone(config);
         self
     }
@@ -108,14 +115,26 @@ impl<'a> ContextHost<'a> {
         self.semantic.source_type()
     }
 
-    pub(crate) fn spawn(self: Rc<Self>, rule: &RuleWithSeverity) -> LintContext<'a> {
-        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 128;
+    #[inline]
+    pub(super) fn push_diagnostic(&self, diagnostic: Message<'a>) {
+        self.diagnostics.borrow_mut().push(diagnostic);
+    }
+
+    /// Take all diagnostics collected during linting.
+    pub fn take_diagnostics(&self) -> Vec<Message<'a>> {
+        // NOTE: diagnostics are only ever borrowed here and in push_diagnostic.
+        // The latter drops the reference as soon as the function returns, so
+        // this should never panic.
+        let mut messages = self.diagnostics.borrow_mut();
+        std::mem::take(&mut *messages)
+    }
+
+    pub fn spawn(self: Rc<Self>, rule: &RuleWithSeverity) -> LintContext<'a> {
         let rule_name = rule.name();
         let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
 
         LintContext {
             parent: self,
-            diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             current_rule_name: rule_name,
             current_plugin_name: plugin_name,
             current_plugin_prefix: plugin_name_to_prefix(plugin_name),
@@ -127,11 +146,8 @@ impl<'a> ContextHost<'a> {
 
     #[cfg(test)]
     pub(crate) fn spawn_for_test(self: Rc<Self>) -> LintContext<'a> {
-        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 128;
-
         LintContext {
             parent: Rc::clone(&self),
-            diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             current_rule_name: "",
             current_plugin_name: "eslint",
             current_plugin_prefix: "eslint",
@@ -173,5 +189,11 @@ impl<'a> ContextHost<'a> {
         }
 
         self
+    }
+}
+
+impl<'a> From<ContextHost<'a>> for Vec<Message<'a>> {
+    fn from(ctx_host: ContextHost<'a>) -> Self {
+        ctx_host.diagnostics.into_inner()
     }
 }
