@@ -61,12 +61,17 @@
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
-use oxc_span::SPAN;
-use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
+use oxc_span::{CompactStr, SPAN};
+use oxc_syntax::{
+    node::NodeId,
+    reference::ReferenceFlags,
+    scope::ScopeFlags,
+    symbol::{SymbolFlags, SymbolId},
+};
 use oxc_traverse::{Traverse, TraverseCtx};
 use serde::Deserialize;
 
-use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
+use crate::context::Ctx;
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -81,7 +86,8 @@ pub struct ArrowFunctionsOptions {
 pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
-    this_var_stack: std::vec::Vec<Option<BoundIdentifier<'a>>>,
+    this_var_name: Option<Atom<'a>>,
+    this_var_symbol_ids_stack: std::vec::Vec<Option<SymbolId>>,
     /// Stack to keep track of whether we are inside an arrow function or not.
     inside_arrow_function_stack: std::vec::Vec<bool>,
 }
@@ -91,8 +97,9 @@ impl<'a> ArrowFunctions<'a> {
         Self {
             ctx,
             _options: options,
+            this_var_name: None,
             // Initial entries for `Program` scope
-            this_var_stack: vec![None],
+            this_var_symbol_ids_stack: vec![None],
             inside_arrow_function_stack: vec![false],
         }
     }
@@ -103,16 +110,16 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert!(self.inside_arrow_function_stack.len() == 1);
 
-        assert!(self.this_var_stack.len() == 1);
-        let this_var = self.this_var_stack.pop().unwrap();
-        if let Some(this_var) = this_var {
-            self.insert_this_var_statement_at_the_top_of_statements(&mut program.body, &this_var);
+        assert!(self.this_var_symbol_ids_stack.len() == 1);
+        let symbol_id = self.this_var_symbol_ids_stack.pop().unwrap();
+        if let Some(symbol_id) = symbol_id {
+            self.insert_this_var_statement_at_the_top_of_statements(&mut program.body, symbol_id);
         }
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         if func.body.is_some() {
-            self.this_var_stack.push(None);
+            self.this_var_symbol_ids_stack.push(None);
             self.inside_arrow_function_stack.push(false);
         }
     }
@@ -133,11 +140,11 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             return;
         };
 
-        let this_var = self.this_var_stack.pop().unwrap();
-        if let Some(this_var) = this_var {
+        let symbol_id = self.this_var_symbol_ids_stack.pop().unwrap();
+        if let Some(symbol_id) = symbol_id {
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut body.statements,
-                &this_var,
+                symbol_id,
             );
         }
 
@@ -246,24 +253,52 @@ impl<'a> ArrowFunctions<'a> {
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        let this_var = self.this_var_stack.last_mut().unwrap();
-        if this_var.is_none() {
-            let target_scope_id =
-                ctx.scopes().ancestors(ctx.current_scope_id()).skip(1).find(|&scope_id| {
+        let symbol_id_ref = self.this_var_symbol_ids_stack.last_mut().unwrap();
+        let (this_atom, symbol_id) = if let Some(symbol_id) = symbol_id_ref {
+            // Symbol for `_this` in this scope has already been created
+            let this_atom = self.this_var_name.as_ref().unwrap().clone();
+            (this_atom, *symbol_id)
+        } else {
+            // No symbol for `_this` in this scope.
+            // Create UID for `_this` if not already created.
+            let (this_atom, this_compact_str) = if let Some(this_var_name) = &self.this_var_name {
+                let this_atom = this_var_name.clone();
+                let this_compact_str = CompactStr::from(this_atom.as_str());
+                (this_atom, this_compact_str)
+            } else {
+                let this_compact_str = ctx.generate_uid_name("this");
+                let this_atom = ctx.ast.atom(&this_compact_str);
+                self.this_var_name = Some(this_atom.clone());
+                (this_atom, this_compact_str)
+            };
+
+            // Create symbol and record it for later
+            let scope_id = ctx
+                .scopes()
+                .ancestors(ctx.current_scope_id())
+                .skip(1)
+                .find(|&scope_id| {
                     let scope_flags = ctx.scopes().get_flags(scope_id);
                     scope_flags.intersects(ScopeFlags::Function | ScopeFlags::Top)
                         && !scope_flags.contains(ScopeFlags::Arrow)
-                });
+                })
+                .unwrap();
 
-            this_var.replace(BoundIdentifier::new_uid(
-                "this",
-                target_scope_id.unwrap(),
+            let symbol_id = ctx.symbols_mut().create_symbol(
+                SPAN,
+                this_compact_str.clone(),
                 SymbolFlags::FunctionScopedVariable,
-                ctx,
-            ));
-        }
-        let this_var = this_var.as_ref().unwrap();
-        this_var.create_spanned_read_reference(span, ctx)
+                scope_id,
+                NodeId::DUMMY,
+            );
+            ctx.scopes_mut().add_binding(scope_id, this_compact_str, symbol_id);
+
+            *symbol_id_ref = Some(symbol_id);
+
+            (this_atom, symbol_id)
+        };
+
+        ctx.create_bound_reference_id(span, this_atom, symbol_id, ReferenceFlags::Read)
     }
 
     fn transform_arrow_function_expression(
@@ -308,12 +343,16 @@ impl<'a> ArrowFunctions<'a> {
     fn insert_this_var_statement_at_the_top_of_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
-        this_var: &BoundIdentifier<'a>,
+        symbol_id: SymbolId,
     ) {
+        let binding_id = BindingIdentifier::new_with_symbol_id(
+            SPAN,
+            self.this_var_name.as_ref().unwrap().clone(),
+            symbol_id,
+        );
+
         let binding_pattern = self.ctx.ast.binding_pattern(
-            self.ctx
-                .ast
-                .binding_pattern_kind_from_binding_identifier(this_var.create_binding_identifier()),
+            self.ctx.ast.binding_pattern_kind_from_binding_identifier(binding_id),
             NONE,
             false,
         );
