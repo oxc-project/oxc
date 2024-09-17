@@ -1,4 +1,4 @@
-ts compatibility: 89/526 (16.92%)
+ts compatibility: 95/526 (18.06%)
 
 # Failed
 
@@ -84,7 +84,6 @@ ts compatibility: 89/526 (16.92%)
 * class/optional.ts
 * class/parameter-properties.ts
 * class/quoted-property.ts
-* class/standard_private_fields.ts
 
 ### class-comment
 * class-comment/class-implements.ts
@@ -120,7 +119,6 @@ ts compatibility: 89/526 (16.92%)
 * comments-2/last-arg.ts
 
 ### compiler
-* compiler/anyIsAssignableToObject.ts
 * compiler/castOfAwait.ts
 * compiler/castParentheses.ts
 * compiler/castTest.ts
@@ -392,9 +390,6 @@ ts compatibility: 89/526 (16.92%)
 * definite/definite.ts
 * definite/without-annotation.ts
 
-### destructuring
-* destructuring/destructuring.ts
-
 ### end-of-line
 * end-of-line/multiline.ts
 
@@ -463,7 +458,6 @@ ts compatibility: 89/526 (16.92%)
 * interface/generic.ts
 * interface/ignore.ts
 * interface/long-extends.ts
-* interface/pattern-parameters.ts
 
 ### interface/long-type-parameters
 * interface/long-type-parameters/long-type-parameters.ts
@@ -471,7 +465,6 @@ ts compatibility: 89/526 (16.92%)
 ### interface2
 * interface2/comments-declare.ts
 * interface2/comments.ts
-* interface2/module.ts
 
 ### interface2/break
 * interface2/break/break.ts
@@ -666,7 +659,6 @@ ts compatibility: 89/526 (16.92%)
 * type-alias/conditional.ts
 * type-alias/issue-100857.ts
 * type-alias/issue-9874.ts
-* type-alias/pattern-parameter.ts
 
 ### type-arguments-bit-shift-left-like
 * type-arguments-bit-shift-left-like/1.ts
