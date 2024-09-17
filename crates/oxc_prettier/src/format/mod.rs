@@ -637,8 +637,17 @@ impl<'a> Format<'a> for TSTypeAliasDeclaration<'a> {
             parts.push(ss!("declare "));
         }
 
+        if self.declare {
+            parts.push(ss!("declare "));
+        }
+
         parts.push(ss!("type "));
         parts.push(format!(p, self.id));
+
+        if let Some(params) = &self.type_parameters {
+            parts.push(params.format(p));
+        }
+
 
         if let Some(params) = &self.type_parameters {
             parts.push(params.format(p));
@@ -1107,6 +1116,11 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
 
         parts.push(ss!("interface "));
         parts.push(format!(p, self.id));
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(type_parameters.format(p));
+        }
+
 
         if let Some(type_parameters) = &self.type_parameters {
             parts.push(type_parameters.format(p));
