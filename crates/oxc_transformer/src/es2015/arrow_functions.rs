@@ -245,8 +245,8 @@ impl<'a> ArrowFunctions<'a> {
         let this_var = self.this_var_stack.last_mut().unwrap();
         if this_var.is_none() {
             let target_scope_id =
-                ctx.scopes().ancestors(ctx.current_scope_id()).skip(1).find(|scope_id| {
-                    let scope_flags = ctx.scopes().get_flags(*scope_id);
+                ctx.scopes().ancestors(ctx.current_scope_id()).skip(1).find(|&scope_id| {
+                    let scope_flags = ctx.scopes().get_flags(scope_id);
                     scope_flags.intersects(ScopeFlags::Function | ScopeFlags::Top)
                         && !scope_flags.contains(ScopeFlags::Arrow)
                 });
