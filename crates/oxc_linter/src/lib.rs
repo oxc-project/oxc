@@ -142,7 +142,7 @@ impl Linter {
             }
         }
 
-        rules.into_iter().flat_map(|(_, ctx)| ctx.into_message()).collect::<Vec<_>>()
+        ctx_host.take_diagnostics()
     }
 
     /// # Panics
