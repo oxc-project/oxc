@@ -835,9 +835,9 @@ impl<'a> Format<'a> for TSThisParameter<'a> {
         let mut parts = p.vec();
         parts.push(ss!("this"));
 
-        if let Some(type_annoation) = &self.type_annotation {
+        if let Some(type_annotation) = &self.type_annotation {
             parts.push(ss!(": "));
-            parts.push(type_annoation.type_annotation.format(p));
+            parts.push(type_annotation.type_annotation.format(p));
         }
 
         Doc::Array(parts)
