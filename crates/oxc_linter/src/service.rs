@@ -32,6 +32,8 @@ pub struct LintServiceOptions {
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
     tsconfig: Option<PathBuf>,
+
+    cross_module: bool,
 }
 
 impl LintServiceOptions {
@@ -40,7 +42,7 @@ impl LintServiceOptions {
     where
         T: Into<Box<Path>>,
     {
-        Self { cwd: cwd.into(), paths, tsconfig: None }
+        Self { cwd: cwd.into(), paths, tsconfig: None, cross_module: false }
     }
 
     #[inline]
@@ -55,6 +57,13 @@ impl LintServiceOptions {
         debug_assert!(tsconfig.is_file());
 
         self.tsconfig = Some(tsconfig);
+        self
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_cross_module(mut self, cross_module: bool) -> Self {
+        self.cross_module = cross_module;
         self
     }
 
@@ -165,7 +174,7 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().plugins.has_import().then(|| {
+        let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
@@ -310,7 +319,7 @@ impl Runtime {
             .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
-        if self.linter.options().plugins.has_import() {
+        if self.resolver.is_some() {
             self.module_map.insert(
                 path.to_path_buf().into_boxed_path(),
                 ModuleState::Resolved(Arc::clone(&module_record)),
@@ -392,7 +401,7 @@ impl Runtime {
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {
-        if !self.linter.options().plugins.has_import() {
+        if self.resolver.is_none() {
             return false;
         }
 
@@ -447,7 +456,7 @@ impl Runtime {
     }
 
     fn ignore_path(&self, path: &Path) {
-        if self.linter.options().plugins.has_import() {
+        if self.resolver.is_some() {
             self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
             self.update_cache_state(path);
         }
