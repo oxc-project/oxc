@@ -2,7 +2,7 @@ use itertools::Itertools;
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -17,14 +17,17 @@ fn jsx_props_no_spread_multiple_identifiers_diagnostic(
     spans: Vec<Span>,
     prop_name: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow JSX prop spreading the same identifier multiple times.")
-        .with_help(format!("Prop '{prop_name}' is spread multiple times."))
+    OxcDiagnostic::warn(format!("Prop '{prop_name}' is spread multiple times."))
+        .with_help("Remove all but one spread.")
         .with_labels(spans)
 }
 
-fn jsx_props_no_spread_multiple_member_expressions_diagnostic(spans: Vec<Span>) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow JSX prop spreading the same member expression multiple times.")
-        .with_help("Remove the first spread.")
+fn jsx_props_no_spread_multiple_member_expressions_diagnostic(
+    spans: Vec<Span>,
+    member_name: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{member_name}' is spread multiple times."))
+        .with_help("Remove all but one spread.")
         .with_labels(spans)
 }
 
@@ -109,11 +112,13 @@ impl Rule for JsxPropsNoSpreadMulti {
             member_expressions.iter().tuple_combinations().for_each(
                 |((left, left_span), (right, right_span))| {
                     if is_same_member_expression(left, right, ctx) {
+                        // 'foo.bar'
+                        let member_prop_name = ctx.source_range(left.span());
                         ctx.diagnostic_with_fix(
-                            jsx_props_no_spread_multiple_member_expressions_diagnostic(vec![
-                                *left_span,
-                                *right_span,
-                            ]),
+                            jsx_props_no_spread_multiple_member_expressions_diagnostic(
+                                vec![*left_span, *right_span],
+                                member_prop_name,
+                            ),
                             |fixer| fixer.delete_range(*left_span),
                         );
                     }

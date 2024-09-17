@@ -6,8 +6,8 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_await_expression_member_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow member access from await expression")
-        .with_help("When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.")
+    OxcDiagnostic::warn("Do not access a member directly from an await expression.")
+        .with_help("Assign the result of the await expression to a variable, then access the member from that variable.")
         .with_label(span)
 }
 
@@ -17,12 +17,12 @@ pub struct NoAwaitExpressionMember;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule disallows member access from await expression
+    /// Disallows member access from `await` expressions.
     ///
     /// ### Why is this bad?
     ///
-    /// When accessing a member from an await expression,
-    /// the await expression has to be parenthesized, which is not readable.
+    /// When accessing a member from an `await` expression,
+    /// the `await` expression has to be parenthesized, which is not readable.
     ///
     /// ### Example
     /// ```javascript
@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoAwaitExpressionMember,
-    style
+    style,
+    pending
 );
 
 impl Rule for NoAwaitExpressionMember {

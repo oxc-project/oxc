@@ -10,9 +10,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_exports_assign(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the assignment to `exports`.")
+    OxcDiagnostic::warn("Unexpected assignment to 'exports'.")
         .with_label(span)
-        .with_help("Unexpected assignment to 'exports' variable. Use 'module.exports' instead.")
+        .with_help("Use 'module.exports' instead.")
 }
 
 fn is_exports(node: &AssignmentTarget, ctx: &LintContext) -> bool {
@@ -40,12 +40,18 @@ pub struct NoExportsAssign;
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
-    /// This rule is aimed at disallowing `exports = {}`, but allows `module.exports = exports = {}` to avoid conflict with `n/exports-style` rule's `allowBatchAssign` option.
+    /// Disallows assignment to `exports`.
     ///
     /// ### Why is this bad?
     ///
-    /// Directly using `exports = {}` can lead to confusion and potential bugs because it reassigns the `exports` object, which may break module exports. It is more predictable and clearer to use `module.exports` directly or in conjunction with `exports`.
+    /// Directly using `exports = {}` can lead to confusion and potential bugs
+    /// because it reassigns the `exports` object, which may break module
+    /// exports. It is more predictable and clearer to use `module.exports`
+    /// directly or in conjunction with `exports`.
+    ///
+    /// This rule is aimed at disallowing `exports = {}`, but allows
+    /// `module.exports = exports = {}` to avoid conflict with `n/exports-style`
+    /// rule's `allowBatchAssign` option.
     ///
     /// ### Examples
     ///
