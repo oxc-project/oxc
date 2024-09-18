@@ -81,9 +81,9 @@ pub struct ArrowFunctionsOptions {
 pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
-    this_vars: std::vec::Vec<Option<BoundIdentifier<'a>>>,
+    this_var_stack: std::vec::Vec<Option<BoundIdentifier<'a>>>,
     /// Stack to keep track of whether we are inside an arrow function or not.
-    stacks: std::vec::Vec<bool>,
+    inside_arrow_function_stack: std::vec::Vec<bool>,
 }
 
 impl<'a> ArrowFunctions<'a> {
@@ -92,8 +92,8 @@ impl<'a> ArrowFunctions<'a> {
             ctx,
             _options: options,
             // Reserve for the global scope
-            this_vars: vec![None],
-            stacks: vec![],
+            this_var_stack: vec![None],
+            inside_arrow_function_stack: vec![],
         }
     }
 }
@@ -106,7 +106,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         if func.body.is_some() {
-            self.this_vars.push(None);
+            self.this_var_stack.push(None);
         }
     }
 
@@ -171,9 +171,9 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 *expr = self.ctx.ast.expression_from_identifier_reference(ident);
             }
             Expression::ArrowFunctionExpression(_) => {
-                self.stacks.push(true);
+                self.inside_arrow_function_stack.push(true);
             }
-            Expression::FunctionExpression(_) => self.stacks.push(false),
+            Expression::FunctionExpression(_) => self.inside_arrow_function_stack.push(false),
             _ => {}
         }
     }
@@ -188,10 +188,10 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 };
 
                 *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
-                self.stacks.pop();
+                self.inside_arrow_function_stack.pop();
             }
             Expression::FunctionExpression(_) => {
-                self.stacks.pop();
+                self.inside_arrow_function_stack.pop();
             }
             _ => {}
         }
@@ -199,22 +199,22 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
         if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.push(false);
+            self.inside_arrow_function_stack.push(false);
         }
     }
 
     fn exit_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
         if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.pop();
+            self.inside_arrow_function_stack.pop();
         }
     }
 
     fn enter_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.stacks.push(false);
+        self.inside_arrow_function_stack.push(false);
     }
 
     fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.stacks.pop();
+        self.inside_arrow_function_stack.pop();
     }
 
     fn enter_variable_declarator(
@@ -234,11 +234,11 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
 impl<'a> ArrowFunctions<'a> {
     fn is_inside_arrow_function(&self) -> bool {
-        self.stacks.last().copied().unwrap_or(false)
+        self.inside_arrow_function_stack.last().copied().unwrap_or(false)
     }
 
     fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
-        let this_var = self.this_vars.last_mut().unwrap();
+        let this_var = self.this_var_stack.last_mut().unwrap();
         if this_var.is_none() {
             let target_scope_id =
                 ctx.scopes().ancestors(ctx.current_scope_id()).skip(1).find(|scope_id| {
@@ -300,7 +300,7 @@ impl<'a> ArrowFunctions<'a> {
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
     ) {
-        if let Some(id) = &self.this_vars.pop().unwrap() {
+        if let Some(id) = &self.this_var_stack.pop().unwrap() {
             let binding_pattern = self.ctx.ast.binding_pattern(
                 self.ctx
                     .ast
