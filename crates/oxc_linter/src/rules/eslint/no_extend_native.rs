@@ -16,20 +16,42 @@ pub struct NoExtendNative {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Prevents extending native global objects such as `Object`, `String`, or `Array` with new
+    /// properties.
     ///
     /// ### Why is this bad?
     ///
+    /// Extending native objects can cause unexpected behavior and conflicts with other code.
+    ///
+    /// For example:
+    /// ```js
+    /// // Adding a new property, which might seem okay
+    /// Object.prototype.extra = 55;
+    ///
+    /// // Defining a user object
+    /// const users = {
+    ///     "1": "user1",
+    ///     "2": "user2",
+    /// };
+    ///
+    /// for (const id in users) {
+    ///     // This will print "extra" as well as "1" and "2":
+    ///     console.log(id);
+    /// }
+    /// ```
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// Object.prototype.p = 0
+    /// Object.defineProperty(Array.prototype, 'p', {value: 0})
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// x.prototype.p = 0
+    /// Object.defineProperty(x.prototype, 'p', {value: 0})
     /// ```
     NoExtendNative,
     suspicious,
@@ -106,6 +128,8 @@ impl Rule for NoExtendNative {
     }
 }
 
+/// If this usage of `*.prototype` is a `Object.defineProperty` or `Object.defineProperties` call,
+/// then this function returns the `CallExpression` node.
 fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
@@ -127,6 +151,7 @@ fn get_define_property_call<'a>(
     }
 }
 
+/// Checks if a given `CallExpression` is a call to `Object.defineProperty` or `Object.defineProperties`.
 fn is_define_property_call(call_expr: &CallExpression) -> bool {
     let callee = call_expr.callee.without_parentheses();
 
@@ -208,34 +233,45 @@ fn get_prototype_property_accessed<'a>(
     let Some(grandparent_node) = ctx.nodes().parent_node(parent.id()) else {
         return None;
     };
-    if let AstKind::ChainExpression(chain_expr) = grandparent_node.kind() {
+
+    if let AstKind::ChainExpression(_) = grandparent_node.kind() {
         prototype_node = Some(grandparent_node);
         if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
             prototype_node = Some(grandparent_parent);
-        };
-        if let ChainElement::ComputedMemberExpression(computed) = &chain_expr.expression {
-            if computed
-                .object
-                .as_member_expression()
-                .is_some_and(|object| object.content_eq(prop_access_expr))
-            {
-                prototype_node = Some(grandparent_node);
-            }
         }
     }
-    // Expand the search to include computed member expressions like `Object['prototype']`
-    else if let AstKind::MemberExpression(expr) = grandparent_node.kind() {
-        if let MemberExpression::ComputedMemberExpression(computed) = expr {
-            if computed
-                .object
-                .as_member_expression()
-                .is_some_and(|object| object.content_eq(prop_access_expr))
-            {
-                prototype_node = Some(grandparent_node);
-            }
-        }
+
+    if is_computed_member_expression_matching(grandparent_node, prop_access_expr) {
+        prototype_node = Some(grandparent_node);
     }
+
     prototype_node
+}
+
+fn is_computed_member_expression_matching(
+    node: &AstNode,
+    prop_access_expr: &MemberExpression,
+) -> bool {
+    match node.kind() {
+        AstKind::ChainExpression(chain_expr) => {
+            if let ChainElement::ComputedMemberExpression(computed) = &chain_expr.expression {
+                return computed
+                    .object
+                    .as_member_expression()
+                    .is_some_and(|object| object.content_eq(prop_access_expr));
+            }
+        }
+        AstKind::MemberExpression(expr) => {
+            if let MemberExpression::ComputedMemberExpression(computed) = expr {
+                return computed
+                    .object
+                    .as_member_expression()
+                    .is_some_and(|object| object.content_eq(prop_access_expr));
+            }
+        }
+        _ => {}
+    }
+    false
 }
 
 #[test]
@@ -249,6 +285,7 @@ fn test() {
         ("Object.toString.bind = 0", None),
         ("Object['toString'].bind = 0", None),
         ("Object.defineProperty(x, 'p', {value: 0})", None),
+        ("Object.defineProperty(x.prototype, 'p', {value: 0})", None),
         ("Object.defineProperties(x, {p: {value: 0}})", None),
         ("global.Object.prototype.toString = 0", None),
         ("this.Object.prototype.toString = 0", None),
