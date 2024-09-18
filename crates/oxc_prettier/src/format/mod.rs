@@ -1400,7 +1400,48 @@ impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
 
 impl<'a> Format<'a> for TSTupleElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            TSTupleElement::TSOptionalType(it) => it.type_annotation.format(p),
+            TSTupleElement::TSRestType(it) => it.type_annotation.format(p),
+            TSTupleElement::TSAnyKeyword(it) => it.format(p),
+            TSTupleElement::TSBigIntKeyword(it) => it.format(p),
+            TSTupleElement::TSBooleanKeyword(it) => it.format(p),
+            TSTupleElement::TSIntrinsicKeyword(it) => it.format(p),
+            TSTupleElement::TSNeverKeyword(it) => it.format(p),
+            TSTupleElement::TSNullKeyword(it) => it.format(p),
+            TSTupleElement::TSNumberKeyword(it) => it.format(p),
+            TSTupleElement::TSObjectKeyword(it) => it.format(p),
+            TSTupleElement::TSStringKeyword(it) => it.format(p),
+            TSTupleElement::TSSymbolKeyword(it) => it.format(p),
+            TSTupleElement::TSUndefinedKeyword(it) => it.format(p),
+            TSTupleElement::TSUnknownKeyword(it) => it.format(p),
+            TSTupleElement::TSVoidKeyword(it) => it.format(p),
+            TSTupleElement::TSArrayType(it) => it.format(p),
+            TSTupleElement::TSConditionalType(it) => it.format(p),
+            TSTupleElement::TSConstructorType(it) => it.format(p),
+            TSTupleElement::TSFunctionType(it) => it.format(p),
+            TSTupleElement::TSImportType(it) => it.format(p),
+            TSTupleElement::TSIndexedAccessType(it) => it.format(p),
+            TSTupleElement::TSInferType(it) => it.format(p),
+            TSTupleElement::TSIntersectionType(it) => it.format(p),
+            TSTupleElement::TSLiteralType(it) => it.format(p),
+            TSTupleElement::TSMappedType(it) => it.format(p),
+            TSTupleElement::TSNamedTupleMember(it) => it.format(p),
+            TSTupleElement::TSQualifiedName(it) => it.format(p),
+            TSTupleElement::TSTemplateLiteralType(it) => it.format(p),
+            TSTupleElement::TSThisType(it) => it.format(p),
+            TSTupleElement::TSTupleType(it) => it.format(p),
+            TSTupleElement::TSTypeLiteral(it) => it.format(p),
+            TSTupleElement::TSTypeOperatorType(it) => it.format(p),
+            TSTupleElement::TSTypePredicate(it) => it.format(p),
+            TSTupleElement::TSTypeQuery(it) => it.format(p),
+            TSTupleElement::TSTypeReference(it) => it.format(p),
+            TSTupleElement::TSUnionType(it) => it.format(p),
+            TSTupleElement::TSParenthesizedType(it) => it.format(p),
+            TSTupleElement::JSDocNullableType(it) => it.format(p),
+            TSTupleElement::JSDocNonNullableType(it) => it.format(p),
+            TSTupleElement::JSDocUnknownType(it) => it.format(p),
+        }
     }
 }
 

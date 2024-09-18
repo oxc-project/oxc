@@ -1,4 +1,4 @@
-ts compatibility: 159/526 (30.23%)
+ts compatibility: 167/526 (31.75%)
 
 # Failed
 
@@ -219,14 +219,7 @@ ts compatibility: 159/526 (30.23%)
 ### conformance/types/tuple
 * conformance/types/tuple/contextualTypeWithTuple.ts
 * conformance/types/tuple/indexerWithTuple.ts
-* conformance/types/tuple/tupleElementTypes1.ts
-* conformance/types/tuple/tupleElementTypes2.ts
 * conformance/types/tuple/typeInferenceWithTupleType.ts
-* conformance/types/tuple/wideningTuples1.ts
-* conformance/types/tuple/wideningTuples2.ts
-* conformance/types/tuple/wideningTuples3.ts
-* conformance/types/tuple/wideningTuples4.ts
-* conformance/types/tuple/wideningTuples7.ts
 
 ### conformance/types/typeOperator
 * conformance/types/typeOperator/typeOperator.ts
@@ -501,9 +494,6 @@ ts compatibility: 159/526 (30.23%)
 * range/export-assignment.ts
 * range/issue-4926.ts
 * range/issue-7148.ts
-
-### readonly
-* readonly/array.ts
 
 ### rest-type
 * rest-type/complex.ts
