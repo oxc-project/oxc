@@ -91,9 +91,9 @@ impl<'a> ArrowFunctions<'a> {
         Self {
             ctx,
             _options: options,
-            // Initial entry for `Program` scope
+            // Initial entries for `Program` scope
             this_var_stack: vec![None],
-            inside_arrow_function_stack: vec![],
+            inside_arrow_function_stack: vec![false],
         }
     }
 }
@@ -101,7 +101,7 @@ impl<'a> ArrowFunctions<'a> {
 impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(self.inside_arrow_function_stack.is_empty());
+        debug_assert!(self.inside_arrow_function_stack.len() == 1);
 
         assert!(self.this_var_stack.len() == 1);
         let this_var = self.this_var_stack.pop().unwrap();
@@ -238,7 +238,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
 impl<'a> ArrowFunctions<'a> {
     fn is_inside_arrow_function(&self) -> bool {
-        self.inside_arrow_function_stack.last().copied().unwrap_or(false)
+        *self.inside_arrow_function_stack.last().unwrap()
     }
 
     fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
