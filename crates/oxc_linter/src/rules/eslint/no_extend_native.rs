@@ -75,16 +75,12 @@ impl Rule for NoExtendNative {
                     continue;
                 }
                 let node = ctx.nodes().get_node(reference.node_id());
-                dbg!(name);
-                dbg!(node);
                 // If this is not `*.prototype` access, skip it.
                 let Some(prop_access) = get_prototype_property_accessed(ctx, node) else {
                     continue;
                 };
-                dbg!(prop_access);
                 // Check if being used like `String.prototype.xyz = 0`
                 if let Some(prop_assign) = get_property_assignment(ctx, prop_access) {
-                    dbg!(prop_assign);
                     ctx.diagnostic(
                         OxcDiagnostic::error(format!(
                             "{} prototype is read-only, properties should not be added.",
@@ -114,12 +110,10 @@ fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    dbg!("get_define_property_call1", node);
     let Some(mut ancestor) = ctx.nodes().parent_node(node.id()) else {
         return None;
     };
     loop {
-        dbg!(ancestor);
         if let AstKind::CallExpression(call_expr) = ancestor.kind() {
             if !is_define_property_call(call_expr) {
                 return None;
@@ -134,11 +128,10 @@ fn get_define_property_call<'a>(
 }
 
 fn is_define_property_call(call_expr: &CallExpression) -> bool {
-    dbg!(call_expr.callee.without_parentheses());
     let callee = call_expr.callee.without_parentheses();
 
     let member_expression = if let Expression::ChainExpression(chain_expr) = callee {
-        dbg!(chain_expr.expression.as_member_expression())
+        chain_expr.expression.as_member_expression()
     } else {
         callee.as_member_expression()
     };
@@ -160,10 +153,8 @@ fn get_property_assignment<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    dbg!(node);
     let mut parent = ctx.nodes().parent_node(node.id())?;
     loop {
-        dbg!(parent);
         if let AstKind::AssignmentExpression(_) = parent.kind() {
             return Some(parent);
         } else if let AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) =
@@ -204,7 +195,6 @@ fn get_prototype_property_accessed<'a>(
     let Some(parent) = ctx.nodes().parent_node(node.id()) else {
         return None;
     };
-    dbg!(parent);
     let mut prototype_node = Some(parent);
     let AstKind::MemberExpression(prop_access_expr) = parent.kind() else {
         return None;
@@ -218,11 +208,9 @@ fn get_prototype_property_accessed<'a>(
     let Some(grandparent_node) = ctx.nodes().parent_node(parent.id()) else {
         return None;
     };
-    dbg!(grandparent_node);
     if let AstKind::ChainExpression(chain_expr) = grandparent_node.kind() {
         prototype_node = Some(grandparent_node);
         if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
-            dbg!(grandparent_parent);
             prototype_node = Some(grandparent_parent);
         };
         if let ChainElement::ComputedMemberExpression(computed) = &chain_expr.expression {
