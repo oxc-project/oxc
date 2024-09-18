@@ -178,7 +178,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 return;
             }
 
-            let ident = self.get_this_name(ctx).create_spanned_read_reference(this.span, ctx);
+            let ident = self.get_this_identifier(this.span, ctx);
             *element_name = self.ctx.ast.jsx_element_name_from_identifier_reference(ident);
         };
     }
@@ -193,7 +193,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 return;
             }
 
-            let ident = self.get_this_name(ctx).create_spanned_read_reference(this.span, ctx);
+            let ident = self.get_this_identifier(this.span, ctx);
             *object = self.ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
         }
     }
@@ -204,7 +204,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 return;
             }
 
-            let ident = self.get_this_name(ctx).create_spanned_read_reference(this_expr.span, ctx);
+            let ident = self.get_this_identifier(this_expr.span, ctx);
             *expr = self.ctx.ast.expression_from_identifier_reference(ident);
         }
     }
@@ -241,7 +241,11 @@ impl<'a> ArrowFunctions<'a> {
         *self.inside_arrow_function_stack.last().unwrap()
     }
 
-    fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
+    fn get_this_identifier(
+        &mut self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
         let this_var = self.this_var_stack.last_mut().unwrap();
         if this_var.is_none() {
             let target_scope_id =
@@ -258,7 +262,8 @@ impl<'a> ArrowFunctions<'a> {
                 ctx,
             ));
         }
-        this_var.as_ref().unwrap().clone()
+        let this_var = this_var.as_ref().unwrap();
+        this_var.create_spanned_read_reference(span, ctx)
     }
 
     fn transform_arrow_function_expression(
