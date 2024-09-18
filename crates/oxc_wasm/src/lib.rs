@@ -192,7 +192,12 @@ impl Oxc {
         self.ir = format!("{:#?}", program.body);
         self.ast = program.serialize(&self.serializer)?;
 
-        let semantic_ret = SemanticBuilder::new(source_text)
+        let mut semantic_builder = SemanticBuilder::new(source_text);
+        if run_options.transform.unwrap_or_default() {
+            // Estimate transformer will triple scopes, symbols, references
+            semantic_builder = semantic_builder.with_excess_capacity(2.0);
+        }
+        let semantic_ret = semantic_builder
             .with_trivias(trivias.clone())
             .with_check_syntax_error(true)
             .with_cfg(true)
@@ -415,8 +420,8 @@ impl Oxc {
             .comments()
             .map(|comment| Comment {
                 r#type: match comment.kind {
-                    CommentKind::SingleLine => CommentType::Line,
-                    CommentKind::MultiLine => CommentType::Block,
+                    CommentKind::Line => CommentType::Line,
+                    CommentKind::Block => CommentType::Block,
                 },
                 value: comment.span.source_text(source_text).to_string(),
                 start: comment.span.start,

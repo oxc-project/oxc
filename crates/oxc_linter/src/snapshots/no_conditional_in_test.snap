@@ -1,61 +1,55 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:21]
  2 │                     it('foo', () => {
  3 │                       expect(bar ? foo : baz).toBe(boo);
    ·                              ───────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:23]
  3 │                       const foo = function (bar) {
  4 │                         return foo ? bar : null;
    ·                                ────────────────
  5 │                       };
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:26]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
    ·                                   ───────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:26]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
    ·                                   ───────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:26]
  2 │                     it('foo', () => {
  3 │                       const foo = bar ? foo : baz;
    ·                                   ───────────────
  4 │                       const anotherFoo = anotherBar ? anotherFoo : anotherBaz;
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:33]
  3 │                       const foo = bar ? foo : baz;
  4 │                       const anotherFoo = anotherBar ? anotherFoo : anotherBaz;
    ·                                          ────────────────────────────────────
  5 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:4:16]
   3 │                           const values = something.map(thing => {
   4 │ ╭─▶                         switch (thing.isFoo) {
@@ -66,9 +60,8 @@ source: crates/oxc_linter/src/tester.rs
   9 │ ╰─▶                         }
  10 │                           });
     ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                         it('foo', () => {
  3 │ ╭─▶                       switch (true) {
@@ -76,144 +69,128 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                       }
  6 │                         })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.skip('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.only('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xit('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     fit('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.skip('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.only('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xtest('foo', () => {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xtest('foo', function () {
  3 │                       switch('bar') {}
    ·                       ────────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:5:16]
  4 │             
  5 │                         switch('bar') {}
    ·                         ────────────────
  6 │                       })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                       it('bar', () => {
  4 │                         switch('bar') {}
    ·                         ────────────────
  5 │                       })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:7:16]
  6 │                       it('baz', () => {
  7 │                         switch('qux') {}
    ·                         ────────────────
  8 │                         switch('quux') {}
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:8:16]
  7 │                         switch('qux') {}
  8 │                         switch('quux') {}
    ·                         ─────────────────
  9 │                       })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       switch ('bar') {}
    ·                       ─────────────────
  5 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:6:20]
   5 │                               const values = something.map((thing) => {
   6 │ ╭─▶                             switch (thing.isFoo) {
@@ -224,9 +201,8 @@ source: crates/oxc_linter/src/tester.rs
  11 │ ╰─▶                             }
  12 │                               });
     ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:14:18]
  13 │                 
  14 │ ╭─▶                           switch('invalid') {
@@ -235,9 +211,8 @@ source: crates/oxc_linter/src/tester.rs
  17 │ ╰─▶                           }
  18 │                             });
     ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                           const foo = function(bar) {
  4 │ ╭─▶                         if (bar) {
@@ -247,9 +222,8 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                         }
  9 │                           };
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                           function foo(bar) {
  4 │ ╭─▶                         if (bar) {
@@ -259,180 +233,160 @@ source: crates/oxc_linter/src/tester.rs
  8 │ ╰─▶                         }
  9 │                           };
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.skip('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.skip('foo', function () {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     it.only('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xit('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     fit('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.skip('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     test.only('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                     xtest('foo', () => {
  3 │                       if ('bar') {}
    ·                       ─────────────
  4 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                       it('bar', () => {
  4 │                         if ('bar') {}
    ·                         ─────────────
  5 │                       })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:16]
  3 │                       it('bar', () => {
  4 │                         if ('bar') {}
    ·                         ─────────────
  5 │                       })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:7:16]
  6 │                       it('baz', () => {
  7 │                         if ('qux') {}
    ·                         ─────────────
  8 │                         if ('quux') {}
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:8:16]
  7 │                         if ('qux') {}
  8 │                         if ('quux') {}
    ·                         ──────────────
  9 │                       })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
  5 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
  5 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
  5 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
  5 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:4:14]
  3 │                       callExpression()
  4 │                       if ('bar') {}
    ·                       ─────────────
  5 │                     })
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:6:20]
   5 │                               const values = something.map((thing) => {
   6 │ ╭─▶                             if (thing.isFoo) {
@@ -442,9 +396,8 @@ source: crates/oxc_linter/src/tester.rs
  10 │ ╰─▶                             }
  11 │                               });
     ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:13:18]
  12 │                 
  13 │ ╭─▶                           if ('invalid') {
@@ -452,9 +405,8 @@ source: crates/oxc_linter/src/tester.rs
  15 │ ╰─▶                           }
  16 │                             });
     ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:14]
  2 │                         test("shows error", () => {
  3 │ ╭─▶                       if (1 === 2) {
@@ -462,9 +414,8 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶                       }
  6 │                         });
    ╰────
-  help: Avoid having conditionals in tests.
 
-  ⚠ eslint-plugin-vitest(no-conditional-in-test): Disallow conditional logic in tests
+  ⚠ eslint-plugin-vitest(no-conditional-in-test): Avoid having conditionals in tests.
     ╭─[no_conditional_in_test.tsx:10:14]
   9 │                           setTimeout(() => console.log("noop"));
  10 │ ╭─▶                       if (1 === 2) {
@@ -472,4 +423,3 @@ source: crates/oxc_linter/src/tester.rs
  12 │ ╰─▶                       }
  13 │                         });
     ╰────
-  help: Avoid having conditionals in tests.

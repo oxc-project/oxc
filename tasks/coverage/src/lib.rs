@@ -32,7 +32,6 @@ use crate::{
         semantic::{
             SemanticBabelCase, SemanticMiscCase, SemanticTest262Case, SemanticTypeScriptCase,
         },
-        sourcemap::{SourcemapCase, SourcemapSuite},
         transformer::{
             TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
             TransformerTypeScriptCase,
@@ -91,7 +90,6 @@ impl AppArgs {
         BabelSuite::<CodegenBabelCase>::new().run("codegen_babel", self);
         TypeScriptSuite::<CodegenTypeScriptCase>::new().run("codegen_typescript", self);
         MiscSuite::<CodegenMiscCase>::new().run("codegen_misc", self);
-        SourcemapSuite::<SourcemapCase>::new().run("codegen_sourcemap", self);
     }
 
     pub fn run_prettier(&self) {

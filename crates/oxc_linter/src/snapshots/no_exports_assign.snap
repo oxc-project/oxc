@@ -1,9 +1,9 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ node(no-exports-assign): Disallow the assignment to `exports`.
+  ⚠ eslint-plugin-node(no-exports-assign): Unexpected assignment to 'exports'.
    ╭─[no_exports_assign.tsx:1:1]
  1 │ exports = {}
    · ───────
    ╰────
-  help: Unexpected assignment to 'exports' variable. Use 'module.exports' instead.
+  help: Use 'module.exports' instead.

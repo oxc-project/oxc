@@ -106,7 +106,7 @@ impl<'a> Codegen<'a> {
         }
         self.update_last_consumed_comment_end(real_span_end);
         match comment.kind() {
-            CommentKind::SingleLine => {
+            CommentKind::Line => {
                 self.print_str("//");
                 self.print_range_of_source_code(
                     comment_span.start as usize..comment_span.end as usize,
@@ -114,7 +114,7 @@ impl<'a> Codegen<'a> {
                 self.print_soft_newline();
                 self.print_indent();
             }
-            CommentKind::MultiLine => {
+            CommentKind::Block => {
                 self.print_str("/*");
                 self.print_range_of_source_code(
                     comment_span.start as usize..comment_span.end as usize,

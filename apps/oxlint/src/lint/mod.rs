@@ -98,7 +98,8 @@ impl Runner for LintRunner {
         let number_of_files = paths.len();
 
         let cwd = std::env::current_dir().unwrap();
-        let mut options = LintServiceOptions::new(cwd, paths);
+        let mut options =
+            LintServiceOptions::new(cwd, paths).with_cross_module(enable_plugins.import_plugin);
         let lint_options = OxlintOptions::default()
             .with_filter(filter)
             .with_config_path(basic_options.config)

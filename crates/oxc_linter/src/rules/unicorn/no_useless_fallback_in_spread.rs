@@ -7,7 +7,7 @@ use oxc_syntax::operator::LogicalOperator;
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_fallback_in_spread_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow useless fallback when spreading in object literals")
+    OxcDiagnostic::warn("Empty fallbacks in spreads are unnecessary")
         .with_help("Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.")
         .with_label(span)
 }

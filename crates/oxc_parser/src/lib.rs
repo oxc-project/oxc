@@ -1,26 +1,48 @@
 //! Oxc Parser for JavaScript and TypeScript
 //!
-//! # Performance
-//!
-//! The following optimization techniques are used:
-//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
-//! * [oxc_span::Span] offsets uses `u32` instead of `usize`
-//! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
-//! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
+//! Oxc's [`Parser`] has full support for
+//! - The latest stable ECMAScript syntax
+//! - TypeScript
+//! - JSX and TSX
+//! - [Stage 3 Decorators](https://github.com/tc39/proposal-decorator-metadata)
 //!
 //! # Usage
 //!
-//! The parser has a minimal API with three inputs and one return struct ([ParserReturn]).
+//! The parser has a minimal API with three inputs (a [memory arena](oxc_allocator::Allocator), a
+//! source string, and a [`SourceType`]) and one return struct (a [ParserReturn]).
 //!
 //! ```rust
 //! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 //! ```
 //!
-//! # Example
-//! <https://github.com/Boshen/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
+//! # Abstract Syntax Tree (AST)
+//! Oxc's AST is located in a separate [`oxc_ast`] crate. You can find type definitions for AST
+//! nodes [here][`oxc_ast::ast`].
+//!
+//! # Performance
+//!
+//! The following optimization techniques are used:
+//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+//! * [`oxc_span::Span`] offsets uses `u32` instead of `usize`
+//! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
+//! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
+//!
+//! <div class="warning">
+//! Because [`oxc_span::Span`] uses `u32` instead of `usize`, Oxc can only parse files up
+//! to 4 GiB in size. This shouldn't be a limitation in almost all cases.
+//! </div>
+//!
+//! # Examples
+//!
+//! <https://github.com/oxc-project/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
 //!
 //! ```rust
 #![doc = include_str!("../examples/parser.rs")]
+//! ```
+//!
+//! ### Parsing TSX
+//! ```rust
+#![doc = include_str!("../examples/parser_tsx.rs")]
 //! ```
 //!
 //! # Visitor
@@ -91,39 +113,91 @@ pub const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
     isize::MAX as usize
 };
 
-/// Return value of parser consisting of AST, errors and comments
+/// Return value of [`Parser::parse`] consisting of AST, errors and comments
 ///
-/// The parser always return a valid AST.
-/// When `panicked = true`, then program will always be empty.
-/// When `errors.len() > 0`, then program may or may not be empty due to error recovery.
+/// ## AST Validity
+///
+/// [`program`] will always contain a structurally valid AST, even if there are syntax errors.
+/// However, the AST may be semantically invalid. To ensure a valid AST,
+/// 1. Check that [`errors`] is empty
+/// 2. Run semantic analysis with [syntax error checking
+///    enabled](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error)
+///
+/// ## Errors
+/// Oxc's [`Parser`] is able to recover from some syntax errors and continue parsing. When this
+/// happens,
+/// 1. [`errors`] will be non-empty
+/// 2. [`program`] will contain a full AST
+/// 3. [`panicked`] will be false
+///
+/// When the parser cannot recover, it will abort and terminate parsing early. [`program`] will
+/// be empty and [`panicked`] will be `true`.
+///
+/// [`program`]: ParserReturn::program
+/// [`errors`]: ParserReturn::errors
+/// [`panicked`]: ParserReturn::panicked
 pub struct ParserReturn<'a> {
+    /// The parsed AST.
+    ///
+    /// Will be empty (e.g. no statements, directives, etc) if the parser panicked.
+    ///
+    /// ## Validity
+    /// It is possible for the AST to be present and semantically invalid. This will happen if
+    /// 1. The [`Parser`] encounters a recoverable syntax error
+    /// 2. The logic for checking the violation is in the semantic analyzer
+    ///
+    /// To ensure a valid AST, check that [`errors`](ParserReturn::errors) is empty. Then, run
+    /// semantic analysis with syntax error checking enabled.
     pub program: Program<'a>,
+
+    /// Syntax errors encountered while parsing.
+    ///
+    /// This list is not comprehensive. Oxc offloads more-expensive checks to [semantic
+    /// analysis](https://docs.rs/oxc_semantic), which can be enabled using
+    /// [`SemanticBuilder::with_check_syntax_error`](https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html#method.with_check_syntax_error).
     pub errors: Vec<OxcDiagnostic>,
+
+    /// Comments and whitespace
     pub trivias: Trivias,
+
+    /// Whether the parser panicked and terminated early.
+    ///
+    /// This will be `false` if parsing was successful, or if parsing was able to recover from a
+    /// syntax error. When `true`, [`program`] will be empty and [`errors`] will contain at least
+    /// one error.
+    ///
+    /// [`program`]: ParserReturn::program
+    /// [`errors`]: ParserReturn::errors
     pub panicked: bool,
 }
 
 /// Parse options
+///
+/// You may provide options to the [`Parser`] using [`Parser::with_options`].
 #[derive(Debug, Clone, Copy)]
 pub struct ParseOptions {
     /// Whether to parse regular expressions or not.
     ///
-    /// Default: false
+    /// Default: `false`
     pub parse_regular_expression: bool,
 
-    /// Allow return outside of function
+    /// Allow [`return`] statements outside of functions.
     ///
-    /// By default, a return statement at the top level raises an error.
-    /// Set this to true to accept such code.
+    /// By default, a return statement at the top level raises an error (`false`).
+    /// Set this to `true` to accept such code.
+    ///
+    /// [`return`]: oxc_ast::ast::ReturnStatement
     pub allow_return_outside_function: bool,
 
-    /// Emit `ParenthesizedExpression` in AST.
+    /// Emit [`ParenthesizedExpression`]s in AST.
     ///
-    /// If this option is true, parenthesized expressions are represented by
-    /// (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
+    /// If this option is `true`, parenthesized expressions are represented by
+    /// (non-standard) [`ParenthesizedExpression`] nodes that have a single `expression` property
     /// containing the expression inside parentheses.
     ///
-    /// Default: true
+    /// Default: `true`
+    ///
+    /// [`ParenthesizedExpression`]: oxc_ast::ast::ParenthesizedExpression
     pub preserve_parens: bool,
 }
 
@@ -148,12 +222,18 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    /// Create a new parser
+    /// Create a new [`Parser`]
+    ///
+    /// # Parameters
+    /// - `allocator`: [Memory arena](oxc_allocator::Allocator) for allocating AST nodes
+    /// - `source_text`: Source code to parse
+    /// - `source_type`: Source type (e.g. JavaScript, TypeScript, JSX, ESM Module, Script)
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         let options = ParseOptions::default();
         Self { allocator, source_text, source_type, options }
     }
 
+    /// Set parse options
     #[must_use]
     pub fn with_options(mut self, options: ParseOptions) -> Self {
         self.options = options;
@@ -176,24 +256,22 @@ mod parser_parse {
     ///
     /// `UniquePromise` is a zero-sized type and has no runtime cost. It's purely for the type-checker.
     ///
-    /// `UniquePromise::new_for_tests` is a backdoor for unit tests and benchmarks, so they can create a
+    /// `UniquePromise::new_for_benchmarks` is a backdoor for benchmarks, so they can create a
     /// `ParserImpl` or `Lexer`, and manipulate it directly, for testing/benchmarking purposes.
-    pub(crate) struct UniquePromise {
-        _dummy: (),
-    }
+    pub(crate) struct UniquePromise(());
 
     impl UniquePromise {
         #[inline]
         fn new() -> Self {
-            Self { _dummy: () }
+            Self(())
         }
 
         /// Backdoor for tests/benchmarks to create a `UniquePromise` (see above).
         /// This function must NOT be exposed outside of tests and benchmarks,
         /// as it allows circumventing safety invariants of the parser.
-        #[cfg(any(test, feature = "benchmarking"))]
-        pub fn new_for_tests() -> Self {
-            Self { _dummy: () }
+        #[cfg(feature = "benchmarking")]
+        pub fn new_for_benchmarks() -> Self {
+            Self(())
         }
     }
 
@@ -202,6 +280,8 @@ mod parser_parse {
         ///
         /// Returns an empty `Program` on unrecoverable error,
         /// Recoverable errors are stored inside `errors`.
+        ///
+        /// See the [module-level documentation](crate) for examples and more information.
         pub fn parse(self) -> ParserReturn<'a> {
             let unique = UniquePromise::new();
             let parser = ParserImpl::new(
@@ -214,11 +294,25 @@ mod parser_parse {
             parser.parse()
         }
 
-        /// Parse `Expression`
+        /// Parse a single [`Expression`].
+        ///
+        /// # Example
+        ///
+        /// ```rust
+        /// use oxc_allocator::Allocator;
+        /// use oxc_ast::ast::Expression;
+        /// use oxc_parser::Parser;
+        /// use oxc_span::SourceType;
+        ///
+        /// let src = "let x = 1 + 2;";
+        /// let allocator = Allocator::new();
+        /// let source_type = SourceType::default();
+        ///
+        /// let expr: Expression<'_> = Parser::new(&allocator, src, source_type).parse_expression().unwrap();
+        /// ```
         ///
         /// # Errors
-        ///
-        /// * Syntax Error
+        /// If the source code being parsed has syntax errors.
         pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
             let unique = UniquePromise::new();
             let parser = ParserImpl::new(
@@ -510,11 +604,11 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
         let sources = [
-            ("// line comment", CommentKind::SingleLine),
-            ("/* line comment */", CommentKind::MultiLine),
+            ("// line comment", CommentKind::Line),
+            ("/* line comment */", CommentKind::Block),
             (
                 "type Foo = ( /* Require properties which are not generated automatically. */ 'bar')",
-                CommentKind::MultiLine,
+                CommentKind::Block,
             ),
         ];
         for (source, kind) in sources {
@@ -523,6 +617,15 @@ mod test {
             assert_eq!(comments.len(), 1, "{source}");
             assert_eq!(comments.first().unwrap().kind, kind, "{source}");
         }
+    }
+
+    #[test]
+    fn hashbang() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = "#!/usr/bin/node\n;";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert_eq!(ret.program.hashbang.unwrap().value.as_str(), "/usr/bin/node");
     }
 
     #[test]

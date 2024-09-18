@@ -6,8 +6,8 @@ use oxc_span::Span;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn no_process_exit_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow `process.exit()`.")
-        .with_help("Only use `process.exit()` in CLI apps. Throw an error instead.")
+    OxcDiagnostic::warn("Don't use `process.exit()`")
+        .with_help("Throw an error instead.")
         .with_label(span)
 }
 
@@ -39,6 +39,7 @@ declare_oxc_lint!(
     /// ```
     NoProcessExit,
     restriction,
+    pending // TODO: suggestion
 );
 
 impl Rule for NoProcessExit {

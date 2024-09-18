@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.6] - 2024-09-18
+
+### Features
+
+- 3bf7b24 linter: Make `typescript/no-duplicate-enum-values` a `correctness` rule (#5810) (DonIsaac)
+- 7799c06 linter/react: Implement `no-danger-with-children` rule (#5420) (Cam McHenry)
+
+### Bug Fixes
+
+- f942485 linter: Remove all* remaining "Disallow <foo>" messages (#5812) (DonIsaac)
+- b5ad518 linter: Improve diagnostic messages for various lint rules (#5808) (DonIsaac)
+- 858f7af linter: Plugin prefix name for eslint-plugin-node (#5807) (DonIsaac)
+- 737ba1d linter: Fix some cases on ```AssignmentExpression``` for ```unicorn/consistent-function-scoping``` (#5675) (Arian94)
+- 148c7a8 linter: Replace bitwise AND (&) with logical AND (&&) in explici… (#5780) (kaykdm)
+- b4ed564 linter/no-unused-vars: Writes to members triggering false positive (#5744) (Dunqing)
+- e9c084a linter/no-unused-vars: False positive when a variable used as a computed member property (#5722) (Dunqing)
+
+### Performance
+
+- 3725d5d linter: Make all rules share a diagnostics vec (#5806) (DonIsaac)
+- e978567 linter: Shrink size of `DisableDirectives` (#5798) (DonIsaac)
+- 1bfa515 linter: Remove redundant clone of diagnostics in context (#5797) (DonIsaac)
+- e413cad linter: Move shared context info to `ContextHost` (#5795) (DonIsaac)
+
+### Refactor
+
+- 6dd6f7c ast: Change `Comment` struct (#5783) (Boshen)
+- 7caae5b codegen: Add `GetSpan` requirement to `Gen` trait (#5772) (Boshen)
+- 026ee6a linter: Decouple module resolution from import plugin (#5829) (dalaoshu)
+- 50834bc linter: Move `override_rule` to `OxlintRules` (#5708) (DonIsaac)
+- a438743 linter: Move `OxlintConfig` to `Oxlintrc` (#5707) (DonIsaac)
+- f61e8b5 linter: Impl serde and schemars traits for `LintPlugins` (#5706) (DonIsaac)
+- 20a7861 linter: Shorten `Option` syntax (#5735) (overlookmotel)
+- d8b612c oxc_linter: Prefer pass Enum instead of str `no_plus_plus` (#5730) (IWANABETHATGUY)
+- cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
+
 ## [0.9.5] - 2024-09-12
 
 ### Features

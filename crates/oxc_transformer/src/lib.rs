@@ -138,10 +138,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_arrow_function_expression(
         &mut self,
-        expr: &mut ArrowFunctionExpression<'a>,
+        arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.enter_arrow_function_expression(expr, ctx);
+        self.x0_typescript.enter_arrow_function_expression(arrow, ctx);
+        self.x3_es2015.enter_arrow_function_expression(arrow, ctx);
     }
 
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -164,6 +165,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_class_body(body, ctx);
+    }
+
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.enter_static_block(block, ctx);
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.exit_static_block(block, ctx);
     }
 
     fn enter_ts_module_declaration(
@@ -302,6 +311,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         arrow: &mut ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        self.x3_es2015.exit_arrow_function_expression(arrow, ctx);
+
         // Some plugins may add new statements to the ArrowFunctionExpression's body,
         // which can cause issues with the `() => x;` case, as it only allows a single statement.
         // To address this, we wrap the last statement in a return statement and set the expression to false.
@@ -343,11 +354,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_declaration(decl, ctx);
-        self.x3_es2015.enter_declaration(decl, ctx);
-    }
-
-    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.exit_declaration(decl, ctx);
     }
 
     fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -380,14 +386,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_catch_clause(&mut self, clause: &mut CatchClause<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x2_es2019.enter_catch_clause(clause, ctx);
-    }
-
-    fn enter_variable_declarator(
-        &mut self,
-        node: &mut VariableDeclarator<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.x3_es2015.enter_variable_declarator(node, ctx);
     }
 
     fn enter_import_declaration(

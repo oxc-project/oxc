@@ -10,9 +10,9 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
-        "Disallow renaming import, export, and destructured assignments to the same name",
+        "Do not rename import, export, or destructured assignments to the same name",
     )
-    .with_help("Either remove the renaming or rename the variable.")
+    .with_help("Use the variable's original name or rename it to a different name")
     .with_label(span)
 }
 

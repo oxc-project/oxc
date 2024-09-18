@@ -21,6 +21,17 @@ impl<'a> TSEnumDeclaration<'a> {
         Self { span, id, members, r#const, declare, scope_id: Cell::default() }
     }
 }
+impl<'a> TSEnumMemberName<'a> {
+    pub fn static_name(&self) -> Option<&'a str> {
+        match self {
+            Self::StaticIdentifier(ident) => Some(ident.name.as_str()),
+            Self::StaticStringLiteral(lit) => Some(lit.value.as_str()),
+            Self::NumericLiteral(lit) => Some(lit.raw),
+            Self::StaticTemplateLiteral(lit) => lit.quasi().map(Into::into),
+            _ => None,
+        }
+    }
+}
 
 impl<'a> TSType<'a> {
     pub fn get_identifier_reference(&self) -> Option<IdentifierReference<'a>> {

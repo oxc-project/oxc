@@ -5,6 +5,7 @@
 
 mod annotation_comment;
 mod binary_expr_visitor;
+mod comment;
 mod context;
 mod gen;
 mod operator;
@@ -25,10 +26,9 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashMap;
 
-use self::annotation_comment::AnnotationComment;
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
-    sourcemap_builder::SourcemapBuilder,
+    annotation_comment::AnnotationComment, binary_expr_visitor::BinaryExpressionVisitor,
+    comment::CommentsMap, operator::Operator, sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
     context::Context,
@@ -41,9 +41,13 @@ pub type CodeGenerator<'a> = Codegen<'a>;
 #[derive(Default, Clone, Copy)]
 pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
+    ///
+    /// Default is `false`.
     pub single_quote: bool,
 
     /// Remove whitespace.
+    ///
+    /// Default is `false`.
     pub minify: bool,
 }
 
@@ -53,8 +57,13 @@ pub struct CommentOptions {
     pub preserve_annotate_comments: bool,
 }
 
+/// Output from [`Codegen::build`]
 pub struct CodegenReturn {
+    /// The generated source code.
     pub source_text: String,
+    /// The source map from the input source code to the generated source code.
+    ///
+    /// You must use [`Codegen::enable_source_map`] for this to be [`Some`].
     pub source_map: Option<oxc_sourcemap::SourceMap>,
 }
 
@@ -66,6 +75,7 @@ pub struct Codegen<'a> {
     source_text: Option<&'a str>,
 
     trivias: Trivias,
+    leading_comments: CommentsMap,
 
     mangler: Option<Mangler>,
 
@@ -133,6 +143,7 @@ impl<'a> Codegen<'a> {
             comment_options: CommentOptions::default(),
             source_text: None,
             trivias: Trivias::default(),
+            leading_comments: CommentsMap::default(),
             mangler: None,
             code: vec![],
             needs_semicolon: false,
@@ -158,7 +169,9 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_capacity(mut self, source_text_len: usize) -> Self {
         let capacity = if self.options.minify { source_text_len / 2 } else { source_text_len };
-        self.code = Vec::with_capacity(capacity);
+        // ensure space for at least `capacity` additional bytes without clobbering existing
+        // allocations.
+        self.code.reserve(capacity);
         self
     }
 
@@ -169,12 +182,16 @@ impl<'a> Codegen<'a> {
         self
     }
 
-    /// Adds the source text of the original AST, It is used with comments or for improving the
-    /// generated output.
+    /// Adds the source text of the original AST.
+    ///
+    /// The source code will be used with comments or for improving the generated output. It also
+    /// pre-allocates memory for the output code using [`Codegen::with_capacity`]. Note that if you
+    /// use this method alongside your own call to [`Codegen::with_capacity`], the larger of the
+    /// two will be used.
     #[must_use]
     pub fn with_source_text(mut self, source_text: &'a str) -> Self {
         self.source_text = Some(source_text);
-        self
+        self.with_capacity(source_text.len())
     }
 
     /// Also sets the [Self::with_source_text]
@@ -185,6 +202,7 @@ impl<'a> Codegen<'a> {
         trivias: Trivias,
         options: CommentOptions,
     ) -> Self {
+        self.build_leading_comments(source_text, &trivias);
         self.trivias = trivias;
         self.comment_options = options;
         self.with_source_text(source_text)
@@ -206,7 +224,7 @@ impl<'a> Codegen<'a> {
 
     #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
-        program.gen(&mut self, Context::default());
+        program.print(&mut self, Context::default());
         let source_text = self.into_source_text();
         let source_map = self.sourcemap_builder.map(SourcemapBuilder::into_sourcemap);
         CodegenReturn { source_text, source_map }
@@ -233,7 +251,7 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::Lowest, Context::empty());
+        expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
 }
 
@@ -264,6 +282,11 @@ impl<'a> Codegen<'a> {
         if !self.options.minify {
             self.print_char(b'\n');
         }
+    }
+
+    #[inline]
+    fn print_hard_newline(&mut self) {
+        self.print_char(b'\n');
     }
 
     #[inline]
@@ -353,7 +376,7 @@ impl<'a> Codegen<'a> {
 
     fn print_sequence<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for item in items {
-            item.gen(self, ctx);
+            item.print(self, ctx);
             self.print_comma();
         }
     }
@@ -404,7 +427,7 @@ impl<'a> Codegen<'a> {
                     self.print_hard_space();
                 }
                 self.print_next_indent_as_space = true;
-                stmt.gen(self, ctx);
+                stmt.print(self, ctx);
             }
         }
     }
@@ -413,7 +436,7 @@ impl<'a> Codegen<'a> {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
             for stmt in &stmt.body {
                 p.print_semicolon_if_needed();
-                stmt.gen(p, ctx);
+                stmt.print(p, ctx);
             }
         });
         self.needs_semicolon = false;
@@ -423,11 +446,11 @@ impl<'a> Codegen<'a> {
     // ```
     // let mut iter = items.iter();
     // let Some(item) = iter.next() else { return };
-    // item.gen(self, ctx);
+    // item.print(self, ctx);
     // for item in iter {
     //     self.print_comma();
     //     self.print_soft_space();
-    //     item.gen(self, ctx);
+    //     item.print(self, ctx);
     // }
     // ```
     // But it turned out this was actually a bit slower.
@@ -438,7 +461,7 @@ impl<'a> Codegen<'a> {
                 self.print_comma();
                 self.print_soft_space();
             }
-            item.gen(self, ctx);
+            item.print(self, ctx);
         }
     }
 
@@ -448,7 +471,7 @@ impl<'a> Codegen<'a> {
                 self.print_comma();
                 self.print_soft_space();
             }
-            item.gen_expr(self, precedence, ctx);
+            item.print_expr(self, precedence, ctx);
         }
     }
 

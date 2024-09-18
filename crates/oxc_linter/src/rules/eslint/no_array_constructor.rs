@@ -6,8 +6,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_array_constructor_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow `Array` constructors")
-        .with_help("Use array literal instead")
+    OxcDiagnostic::warn("Do not use `new` to create arrays")
+        .with_help("Use an array literal instead")
         .with_label(span)
 }
 
@@ -16,19 +16,33 @@ pub struct NoArrayConstructor;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Disallow array constructor
+    /// Disallows creating arrays with the `Array` constructor.
     ///
     /// ### Why is this bad?
     ///
-    /// Use of the Array constructor to construct a new array is generally discouraged in favor of array literal notation because of the single-argument pitfall and because the Array global may be redefined.
-    /// The exception is when the Array constructor is used to intentionally create sparse arrays of a specified size by giving the constructor a single numeric argument.
+    /// Use of the `Array` constructor to construct a new array is generally
+    /// discouraged in favor of array literal notation because of the
+    /// single-argument pitfall and because the `Array` global may be redefined.
+    /// The exception is when the `Array` constructor is used to intentionally
+    /// create sparse arrays of a specified size by giving the constructor a
+    /// single numeric argument.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// let arr = new Array();
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// let arr = [];
+    /// let arr2 = Array.from(iterable);
+    /// let arr3 = new Array(9);
+    /// ```
     NoArrayConstructor,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoArrayConstructor {

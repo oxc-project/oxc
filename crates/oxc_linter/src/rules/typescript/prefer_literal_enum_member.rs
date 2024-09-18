@@ -4,7 +4,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_literal_enum_member_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -109,7 +113,7 @@ impl Rule for PreferLiteralEnumMember {
         ctx.diagnostic(prefer_literal_enum_member_diagnostic(decl.span));
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

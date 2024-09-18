@@ -51,9 +51,23 @@ impl<'a> Traverse<'a> for ES2015<'a> {
         }
     }
 
-    fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn enter_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.enter_declaration(decl, ctx);
+            self.arrow_functions.enter_arrow_function_expression(arrow, ctx);
+        }
+    }
+
+    fn exit_arrow_function_expression(
+        &mut self,
+        arrow: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.exit_arrow_function_expression(arrow, ctx);
         }
     }
 
@@ -69,12 +83,6 @@ impl<'a> Traverse<'a> for ES2015<'a> {
         }
     }
 
-    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.exit_declaration(decl, ctx);
-        }
-    }
-
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.enter_class(class, ctx);
@@ -87,13 +95,15 @@ impl<'a> Traverse<'a> for ES2015<'a> {
         }
     }
 
-    fn enter_variable_declarator(
-        &mut self,
-        node: &mut VariableDeclarator<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.enter_variable_declarator(node, ctx);
+            self.arrow_functions.enter_static_block(block, ctx);
+        }
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.exit_static_block(block, ctx);
         }
     }
 

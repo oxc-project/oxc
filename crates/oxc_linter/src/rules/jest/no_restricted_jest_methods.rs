@@ -13,16 +13,12 @@ use crate::{
     },
 };
 
-fn restricted_jest_method(method_name: &str, x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Disallow specific `{method_name}.` methods"))
-        .with_help(format!("Use of `{x0:?}` is disallowed"))
-        .with_label(span1)
+fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use of `{x0}` is not allowed")).with_label(span1)
 }
 
-fn restricted_jest_method_with_message(method_name: &str, x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Disallow specific `{method_name}.` methods"))
-        .with_help(format!("{x0:?}"))
-        .with_label(span1)
+fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(x0.to_string()).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -125,21 +121,15 @@ impl NoRestrictedJestMethods {
         };
 
         if self.contains(property_name) {
-            let method_name =
-                mem_expr.object().get_identifier_reference().map_or("jest", |id| id.name.as_str());
             self.get_message(property_name).map_or_else(
                 || {
-                    ctx.diagnostic(restricted_jest_method(method_name, property_name, span));
+                    ctx.diagnostic(restricted_jest_method(property_name, span));
                 },
                 |message| {
                     if message.trim() == "" {
-                        ctx.diagnostic(restricted_jest_method(method_name, property_name, span));
+                        ctx.diagnostic(restricted_jest_method(property_name, span));
                     } else {
-                        ctx.diagnostic(restricted_jest_method_with_message(
-                            method_name,
-                            &message,
-                            span,
-                        ));
+                        ctx.diagnostic(restricted_jest_method_with_message(&message, span));
                     }
                 },
             );

@@ -5,8 +5,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_import_node_test(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("disallow importing `node:test`".to_string())
-        .with_help("Import from `vitest` instead of `node:test`")
+    OxcDiagnostic::warn("Do not import from `node:test`")
+        .with_help("Import from `vitest` instead.")
         .with_label(span)
 }
 

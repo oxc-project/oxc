@@ -16,6 +16,7 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
+// TODO: re-word diagnostic messages
 fn no_snapshot(x0: usize, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow large snapshots.")
         .with_help(format!("`{x0:?}`s should begin with lowercase"))

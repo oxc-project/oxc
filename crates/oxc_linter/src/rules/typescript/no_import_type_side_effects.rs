@@ -6,7 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    fixer::Fix,
+    rule::Rule,
+    AstNode,
+};
 
 fn no_import_type_side_effects_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.")
@@ -117,7 +122,7 @@ impl Rule for NoImportTypeSideEffects {
         );
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

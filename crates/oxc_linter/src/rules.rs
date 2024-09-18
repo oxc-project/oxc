@@ -241,6 +241,7 @@ mod react {
     pub mod jsx_props_no_spread_multi;
     pub mod no_children_prop;
     pub mod no_danger;
+    pub mod no_danger_with_children;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
@@ -767,6 +768,7 @@ oxc_macros::declare_all_lint_rules! {
     react::jsx_props_no_spread_multi,
     react::no_children_prop,
     react::no_danger,
+    react::no_danger_with_children,
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_is_mounted,

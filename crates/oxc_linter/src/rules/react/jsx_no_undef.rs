@@ -6,12 +6,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn jsx_no_undef_diagnostic(ident_name: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow undeclared variables in JSX")
-        .with_help(format!("'{ident_name}' is not defined."))
-        .with_label(span1)
+    OxcDiagnostic::warn(format!("'{ident_name}' is not defined.")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -72,7 +74,7 @@ impl Rule for JsxNoUndef {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

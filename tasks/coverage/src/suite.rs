@@ -32,7 +32,6 @@ pub enum TestResult {
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
     GenericError(/* case */ &'static str, /* error */ String),
-    Snapshot(String),
 }
 
 pub struct CoverageReport<'a, T> {
@@ -51,7 +50,7 @@ pub trait Suite<T: Case> {
         self.read_test_cases(name, args);
         self.get_test_cases_mut().par_iter_mut().for_each(|case| {
             if args.debug {
-                println!("{:?}", case.path());
+                println!("{}", case.path().to_string_lossy());
             }
             case.run();
         });
@@ -391,9 +390,6 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             }
             TestResult::IncorrectlyPassed => {
                 writer.write_all(format!("Expect Syntax Error: {path}\n").as_bytes())?;
-            }
-            TestResult::Snapshot(snapshot) => {
-                writer.write_all(snapshot.as_bytes())?;
             }
             TestResult::Passed | TestResult::ToBeRun | TestResult::CorrectError(..) => {}
         }

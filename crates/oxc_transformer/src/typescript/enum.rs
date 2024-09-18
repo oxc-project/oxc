@@ -1,5 +1,3 @@
-use std::cell::Cell;
-
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut, NONE};
 use oxc_span::{Atom, Span, SPAN};
@@ -88,11 +86,12 @@ impl<'a> TypeScriptEnum<'a> {
             NodeId::DUMMY,
         );
         ctx.scopes_mut().add_binding(func_scope_id, enum_name.to_compact_str(), param_symbol_id);
-        let ident = BindingIdentifier {
-            span: decl.id.span,
-            name: decl.id.name.clone(),
-            symbol_id: Cell::new(Some(param_symbol_id)),
-        };
+
+        let ident = BindingIdentifier::new_with_symbol_id(
+            decl.id.span,
+            decl.id.name.clone(),
+            param_symbol_id,
+        );
         let kind = ast.binding_pattern_kind_from_binding_identifier(ident.clone());
         let id = ast.binding_pattern(kind, NONE, false);
 
@@ -111,20 +110,21 @@ impl<'a> TypeScriptEnum<'a> {
 
         let statements = self.transform_ts_enum_members(&mut decl.members, &ident, ctx);
         let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
-        let callee = Expression::FunctionExpression(ctx.alloc(Function {
-            r#type: FunctionType::FunctionExpression,
-            span: SPAN,
-            id: None,
-            generator: false,
-            r#async: false,
-            declare: false,
-            this_param: None,
+        let function = ctx.ast.function(
+            FunctionType::FunctionExpression,
+            SPAN,
+            None,
+            false,
+            false,
+            false,
+            None::<TSTypeParameterDeclaration>,
+            None::<TSThisParameter>,
             params,
-            body: Some(body),
-            type_parameters: None,
-            return_type: None,
-            scope_id: Cell::new(Some(func_scope_id)),
-        }));
+            None::<TSTypeAnnotation>,
+            Some(body),
+        );
+        function.scope_id.set(Some(func_scope_id));
+        let callee = ctx.ast.expression_from_function(function);
 
         let var_symbol_id = decl.id.symbol_id.get().unwrap();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {

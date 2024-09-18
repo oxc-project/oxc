@@ -6,7 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    fixer::Fix,
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnostic {
     // FIXME: use imperative message phrasing
@@ -173,12 +178,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                     [span.start as usize..span.end as usize];
 
                                                 match comment_interface.kind {
-                                                    CommentKind::SingleLine => {
+                                                    CommentKind::Line => {
                                                         let single_line_comment: String =
                                                             format!("//{comment}\n");
                                                         comments_vec.push(single_line_comment);
                                                     }
-                                                    CommentKind::MultiLine => {
+                                                    CommentKind::Block => {
                                                         let multi_line_comment: String =
                                                             format!("/*{comment}*/\n");
                                                         comments_vec.push(multi_line_comment);
@@ -397,7 +402,7 @@ impl Rule for PreferFunctionType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

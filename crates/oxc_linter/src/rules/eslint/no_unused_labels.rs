@@ -6,9 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_labels_diagnostic(label_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow unused labels")
-        .with_help(format!("'{label_name}:' is defined but never used."))
-        .with_label(span)
+    OxcDiagnostic::warn(format!("'{label_name}:' is defined but never used.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -6,15 +6,14 @@ use std::{convert::From, path::PathBuf};
 
 use filter::LintFilterKind;
 use oxc_diagnostics::Error;
-use plugins::LintPlugins;
 use rustc_hash::FxHashSet;
 
 pub use allow_warn_deny::AllowWarnDeny;
 pub use filter::{InvalidFilterKind, LintFilter};
-pub use plugins::LintPluginOptions;
+pub use plugins::{LintPluginOptions, LintPlugins};
 
 use crate::{
-    config::{LintConfig, OxlintConfig},
+    config::{LintConfig, Oxlintrc},
     fixer::FixKind,
     rules::RULES,
     utils::is_jest_rule_adapted_to_vitest,
@@ -26,7 +25,7 @@ use crate::{
 /// outside of this crate.
 ///
 /// [`Linter`]: crate::Linter
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy)]
 #[cfg_attr(test, derive(PartialEq))]
 pub(crate) struct LintOptions {
     pub fix: FixKind,
@@ -189,8 +188,7 @@ impl OxlintOptions {
     pub(crate) fn derive_rules_and_config(
         &self,
     ) -> Result<(Vec<RuleWithSeverity>, LintConfig), Error> {
-        let config =
-            self.config_path.as_ref().map(|path| OxlintConfig::from_file(path)).transpose()?;
+        let config = self.config_path.as_ref().map(|path| Oxlintrc::from_file(path)).transpose()?;
 
         let mut rules: FxHashSet<RuleWithSeverity> = FxHashSet::default();
         let all_rules = self.get_filtered_rules();
@@ -251,7 +249,7 @@ impl OxlintOptions {
         }
 
         if let Some(config) = &config {
-            config.override_rules(&mut rules, &all_rules);
+            config.rules.override_rules(&mut rules, &all_rules);
         }
 
         let mut rules = rules.into_iter().collect::<Vec<_>>();

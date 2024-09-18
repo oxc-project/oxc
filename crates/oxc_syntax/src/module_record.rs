@@ -34,8 +34,12 @@ pub struct ModuleRecord {
 
     /// `[[LoadedModules]]`
     ///
-    /// A map from the specifier strings used by the module represented by this record to request the importation of a module to the resolved Module Record.
-    /// The list does not contain two different Records with the same `[[Specifier]]`.
+    /// A map from the specifier strings used by the module represented by this record to request
+    /// the importation of a module to the resolved Module Record. The list does not contain two
+    /// different Records with the same `[[Specifier]]`.
+    ///
+    /// Note that Oxc does not support cross-file analysis, so this map will be empty after
+    /// [`ModuleRecord`] is created. You must link the module records yourself.
     pub loaded_modules: DashMap<CompactStr, Arc<ModuleRecord>, BuildHasherDefault<FxHasher>>,
 
     /// `[[ImportEntries]]`
@@ -45,22 +49,22 @@ pub struct ModuleRecord {
 
     /// `[[LocalExportEntries]]`
     ///
-    /// A List of ExportEntry records derived from the code of this module
+    /// A List of [`ExportEntry`] records derived from the code of this module
     /// that correspond to declarations that occur within the module
     pub local_export_entries: Vec<ExportEntry>,
 
     /// `[[IndirectExportEntries]]`
     ///
-    /// A List of ExportEntry records derived from the code of this module
+    /// A List of [`ExportEntry`] records derived from the code of this module
     /// that correspond to reexported imports that occur within the module
-    /// or exports from export * as namespace declarations.
+    /// or exports from `export * as namespace` declarations.
     pub indirect_export_entries: Vec<ExportEntry>,
 
     /// `[[StarExportEntries]]`
     ///
-    /// A List of ExportEntry records derived from the code of this module
-    /// that correspond to export * declarations that occur within the module,
-    /// not including export * as namespace declarations.
+    /// A List of [`ExportEntry`] records derived from the code of this module
+    /// that correspond to `export *` declarations that occur within the module,
+    /// not including `export * as namespace` declarations.
     pub star_export_entries: Vec<ExportEntry>,
 
     /// Local exported bindings
@@ -136,17 +140,72 @@ impl NameSpan {
 }
 
 /// [`ImportEntry`](https://tc39.es/ecma262/#importentry-record)
+///
+/// ## Examples
+///
+/// ```ts
+/// //     _ local_name
+/// import v from "mod";
+/// //             ^^^ module_request
+///
+/// //     ____ is_type will be `true`
+/// import type { foo as bar } from "mod";
+/// // import_name^^^    ^^^ local_name
+///
+/// import * as ns from "mod";
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportEntry {
     /// String value of the ModuleSpecifier of the ImportDeclaration.
+    ///
+    /// ## Examples
+    ///
+    /// ```ts
+    /// import { foo } from "mod";
+    /// //                   ^^^
+    /// ```
     pub module_request: NameSpan,
 
     /// The name under which the desired binding is exported by the module identified by `[[ModuleRequest]]`.
+    ///
+    /// ## Examples
+    ///
+    /// ```ts
+    /// import { foo } from "mod";
+    /// //       ^^^
+    /// import { foo as bar } from "mod";
+    /// //       ^^^
+    /// ```
     pub import_name: ImportImportName,
 
     /// The name that is used to locally access the imported value from within the importing module.
+    ///
+    /// ## Examples
+    ///
+    /// ```ts
+    /// import { foo } from "mod";
+    /// //       ^^^
+    /// import { foo as bar } from "mod";
+    /// //              ^^^
+    /// ```
     pub local_name: NameSpan,
 
+    /// Whether this binding is for a TypeScript type-only import. This is a non-standard field.
+    /// When creating a [`ModuleRecord`] for a JavaScript file, this will always be false.
+    ///
+    /// ## Examples
+    ///
+    /// `is_type` will be `true` for the following imports:
+    /// ```ts
+    /// import type { foo } from "mod";
+    /// import { type foo } from "mod";
+    /// ```
+    ///
+    /// and will be `false` for these imports:
+    /// ```ts
+    /// import { foo } from "mod";
+    /// import { foo as type } from "mod";
+    /// ```
     pub is_type: bool,
 }
 
@@ -169,6 +228,24 @@ impl ImportImportName {
 }
 
 /// [`ExportEntry`](https://tc39.es/ecma262/#exportentry-record)
+///
+/// Describes a single exported binding from a module. Named export statements that contain more
+/// than one binding produce multiple ExportEntry records.
+///
+/// ## Examples
+///
+/// ```ts
+/// // foo's ExportEntry nas no `module_request` or `import_name.
+/// //       ___ local_name
+/// export { foo };
+/// //       ^^^ export_name. Since there's no alias, it's the same as local_name.
+///
+/// // re-exports do not produce local bindings, so `local_name` is null.
+/// //       ___ import_name    __ module_request
+/// export { foo as bar } from "mod";
+/// //              ^^^ export_name
+///
+/// ```
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct ExportEntry {
     /// Span for the entire export entry

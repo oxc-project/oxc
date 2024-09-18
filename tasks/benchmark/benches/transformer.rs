@@ -6,7 +6,7 @@ use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
-use oxc_transformer::{TransformOptions, Transformer};
+use oxc_transformer::{ArrowFunctionsOptions, TransformOptions, Transformer};
 
 fn bench_transformer(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("transformer");
@@ -30,6 +30,8 @@ fn bench_transformer(criterion: &mut Criterion) {
                     Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(program);
                 let (symbols, scopes) = SemanticBuilder::new(source_text)
+                    // Estimate transformer will triple scopes, symbols, references
+                    .with_excess_capacity(2.0)
                     .build(program)
                     .semantic
                     .into_symbol_table_and_scope_tree();
@@ -40,6 +42,10 @@ fn bench_transformer(criterion: &mut Criterion) {
                 // in measure.
                 let trivias_copy = trivias.clone();
 
+                // `enable_all` enables all transforms except arrow functions transform
+                let mut options = TransformOptions::enable_all();
+                options.es2015.arrow_function = Some(ArrowFunctionsOptions { spec: true });
+
                 runner.run(|| {
                     let ret = Transformer::new(
                         &allocator,
@@ -47,7 +53,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                         source_type,
                         source_text,
                         trivias,
-                        TransformOptions::enable_all(),
+                        options,
                     )
                     .build_with_symbols_and_scopes(symbols, scopes, program);
 

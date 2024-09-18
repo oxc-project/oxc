@@ -1,0 +1,140 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         <div dangerouslySetInnerHTML={{ __html: "HTML" }}>
+ 3 │ │               Children
+ 4 │ ╰─▶         </div>
+ 5 │             
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:1:1]
+ 1 │ <div dangerouslySetInnerHTML={{ __html: "HTML" }} children="Children" />
+   · ────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:3:9]
+ 2 │         const props = { dangerouslySetInnerHTML: { __html: "HTML" } };
+ 3 │         <div {...props}>Children</div>
+   ·         ──────────────────────────────
+ 4 │         
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:3:9]
+ 2 │         const props = { children: "Children", dangerouslySetInnerHTML: { __html: "HTML" } };
+ 3 │         <div {...props} />
+   ·         ──────────────────
+ 4 │         
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         <Hello dangerouslySetInnerHTML={{ __html: "HTML" }}>
+ 3 │ │               Children
+ 4 │ ╰─▶         </Hello>
+ 5 │             
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:1:1]
+ 1 │ <Hello dangerouslySetInnerHTML={{ __html: "HTML" }} children="Children" />
+   · ──────────────────────────────────────────────────────────────────────────
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:1:1]
+ 1 │ <Hello dangerouslySetInnerHTML={{ __html: "HTML" }}> </Hello>
+   · ─────────────────────────────────────────────────────────────
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         React.createElement(
+ 3 │ │               "div",
+ 4 │ │               { dangerouslySetInnerHTML: { __html: "HTML" } },
+ 5 │ │               "Children"
+ 6 │ ╰─▶         );
+ 7 │             
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         React.createElement(
+ 3 │ │               "div",
+ 4 │ │               {
+ 5 │ │                   dangerouslySetInnerHTML: { __html: "HTML" },
+ 6 │ │                   children: "Children",
+ 7 │ │               }
+ 8 │ ╰─▶         );
+ 9 │             
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         React.createElement(
+ 3 │ │               "Hello",
+ 4 │ │               { dangerouslySetInnerHTML: { __html: "HTML" } },
+ 5 │ │               "Children"
+ 6 │ ╰─▶         );
+ 7 │             
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:2:9]
+ 1 │     
+ 2 │ ╭─▶         React.createElement(
+ 3 │ │               "Hello",
+ 4 │ │               {
+ 5 │ │                   dangerouslySetInnerHTML: { __html: "HTML" },
+ 6 │ │                   children: "Children",
+ 7 │ │               }
+ 8 │ ╰─▶         );
+ 9 │             
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:3:9]
+ 2 │         const props = { dangerouslySetInnerHTML: { __html: "HTML" } };
+ 3 │         React.createElement("div", props, "Children");
+   ·         ─────────────────────────────────────────────
+ 4 │         
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:3:9]
+ 2 │         const props = { children: "Children", dangerouslySetInnerHTML: { __html: "HTML" } };
+ 3 │         React.createElement("div", props);
+   ·         ─────────────────────────────────
+ 4 │         
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.
+
+  ⚠ eslint-plugin-react(no-danger-with-children): Only set one of `children` or `props.dangerouslySetInnerHTML`
+   ╭─[no_danger_with_children.tsx:5:9]
+ 4 │         const props = { ...otherProps, dangerouslySetInnerHTML: { __html: "HTML" } };
+ 5 │         React.createElement("div", props);
+   ·         ─────────────────────────────────
+ 6 │         
+   ╰────
+  help: `dangerouslySetInnerHTML` is not compatible with also passing children and React will throw a warning at runtime.

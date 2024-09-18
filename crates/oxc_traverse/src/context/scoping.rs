@@ -1,4 +1,4 @@
-use std::{cell::Cell, str};
+use std::str;
 
 use compact_str::CompactString;
 use itoa::Buffer as ItoaBuffer;
@@ -140,10 +140,9 @@ impl TraverseScoping {
         new_scope_id
     }
 
-    /// Generate UID.
+    /// Generate UID var name.
     ///
     /// Finds a unique variable name which does clash with any other variables used in the program.
-    /// Generates a binding for it in scope provided.
     ///
     /// Based on Babel's `scope.generateUid` logic.
     /// <https://github.com/babel/babel/blob/3b1a3c0be9df65140260a316c1a21adcf948645d/packages/babel-traverse/src/scope/index.ts#L501-L523>
@@ -216,9 +215,27 @@ impl TraverseScoping {
     ///   what was found in AST.
     /// i.e. if source contains identifiers `_foo` and `__bar`, create UIDs names `___0`, `___1`,
     /// `___2` etc. They'll all be unique within the program.
+    #[allow(clippy::missing_panics_doc)]
+    pub fn generate_uid_name(&mut self, name: &str) -> CompactStr {
+        // If `uid_names` is not already populated, initialize it
+        if self.uid_names.is_none() {
+            self.init_uid_names();
+        }
+        let uid_names = self.uid_names.as_mut().unwrap();
+
+        let base = get_uid_name_base(name);
+        let uid = get_unique_name(base, uid_names);
+        uid_names.insert(uid.clone());
+        uid
+    }
+
+    /// Generate UID in provided scope.
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
     pub fn generate_uid(&mut self, name: &str, scope_id: ScopeId, flags: SymbolFlags) -> SymbolId {
         // Get name for UID
-        let name = self.find_uid_name(name);
+        let name = self.generate_uid_name(name);
 
         // Add binding to scope
         let symbol_id =
@@ -228,11 +245,17 @@ impl TraverseScoping {
     }
 
     /// Generate UID in current scope.
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
     pub fn generate_uid_in_current_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
         self.generate_uid(name, self.current_scope_id, flags)
     }
 
     /// Generate UID in root scope.
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
     pub fn generate_uid_in_root_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
         self.generate_uid(name, self.scopes.root_scope_id(), flags)
     }
@@ -243,6 +266,9 @@ impl TraverseScoping {
     ///
     /// Based on Babel's `scope.generateUidBasedOnNode` logic.
     /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L543>
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
     pub fn generate_uid_based_on_node<'a, T>(
         &mut self,
         node: &T,
@@ -264,6 +290,9 @@ impl TraverseScoping {
     }
 
     /// Generate UID in current scope based on node.
+    ///
+    /// See also comments on [`TraverseScoping::generate_uid_name`] for important information
+    /// on how UIDs are generated. There are some potential "gotchas".
     pub fn generate_uid_in_current_scope_based_on_node<'a, T>(
         &mut self,
         node: &T,
@@ -296,7 +325,7 @@ impl TraverseScoping {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_bound_reference(symbol_id, flags);
-        IdentifierReference { span, name, reference_id: Cell::new(Some(reference_id)) }
+        IdentifierReference::new_with_reference_id(span, name, Some(reference_id))
     }
 
     /// Create an unbound reference
@@ -319,7 +348,7 @@ impl TraverseScoping {
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
         let reference_id = self.create_unbound_reference(name.to_compact_str(), flags);
-        IdentifierReference { span, name, reference_id: Cell::new(Some(reference_id)) }
+        IdentifierReference::new_with_reference_id(span, name, Some(reference_id))
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -451,20 +480,6 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
         self.current_scope_id = scope_id;
-    }
-
-    /// Find a variable name which can be used as a UID
-    fn find_uid_name(&mut self, name: &str) -> CompactStr {
-        // If `uid_names` is not already populated, initialize it
-        if self.uid_names.is_none() {
-            self.init_uid_names();
-        }
-        let uid_names = self.uid_names.as_mut().unwrap();
-
-        let base = get_uid_name_base(name);
-        let uid = get_unique_name(base, uid_names);
-        uid_names.insert(uid.clone());
-        uid
     }
 
     /// Initialize `uid_names`.

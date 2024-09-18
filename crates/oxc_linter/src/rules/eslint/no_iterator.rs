@@ -7,7 +7,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_iterator_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Reserved name '__iterator__'")
-        .with_help("Disallow the use of the `__iterator__` property.")
+        .with_help("Consider using [Symbol.iterator] instead")
         .with_label(span)
 }
 
@@ -53,7 +53,8 @@ declare_oxc_lint!(
     /// };
     /// ```
     NoIterator,
-    restriction
+    restriction,
+    pending // TODO: suggestion
 );
 
 impl Rule for NoIterator {

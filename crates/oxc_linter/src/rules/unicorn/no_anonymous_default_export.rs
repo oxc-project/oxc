@@ -11,8 +11,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_anonymous_default_export_diagnostic(span: Span, kind: ErrorNodeKind) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow anonymous functions and classes as the default export")
-        .with_help(format!("The {kind} should be named."))
+    OxcDiagnostic::warn(format!("This {kind} default export is missing a name"))
+        // TODO: suggest a name. https://github.com/sindresorhus/eslint-plugin-unicorn/blob/d3e4b805da31c6ed7275e2e2e770b6b0fbcf11c2/rules/no-anonymous-default-export.js#L41
         .with_label(span)
 }
 
@@ -24,7 +24,9 @@ declare_oxc_lint!(
     /// Disallow anonymous functions and classes as the default export
     ///
     /// ### Why is this bad?
-    /// Naming default exports improves codebase searchability by ensuring consistent identifier use for a module's default export, both where it's declared and where it's imported.
+    /// Naming default exports improves codebase searchability by ensuring
+    /// consistent identifier use for a module's default export, both where it's
+    /// declared and where it's imported.
     ///
     /// ### Example
     ///

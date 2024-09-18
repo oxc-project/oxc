@@ -7,9 +7,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of undeclared variables.")
-        .with_help(format!("'{name}' is not defined."))
-        .with_label(span)
+    OxcDiagnostic::warn(format!("'{name}' is not defined.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

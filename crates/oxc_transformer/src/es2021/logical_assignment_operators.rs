@@ -53,8 +53,6 @@
 //! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-logical-assignment-operators>
 //! * Logical Assignment TC39 proposal: <https://github.com/tc39/proposal-logical-assignment>
 
-use std::cell::Cell;
-
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::{ast::*, NONE};
 use oxc_semantic::{ReferenceFlags, SymbolFlags};
@@ -360,11 +358,9 @@ impl<'a> LogicalAssignmentOperators<'a> {
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         // var _name;
-        let binding_identifier = BindingIdentifier {
-            span: SPAN,
-            name: symbol_name.clone(),
-            symbol_id: Cell::new(Some(symbol_id)),
-        };
+        let binding_identifier =
+            BindingIdentifier::new_with_symbol_id(SPAN, symbol_name.clone(), symbol_id);
+
         let kind = VariableDeclarationKind::Var;
         let id = ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
         let id = ctx.ast.binding_pattern(id, NONE, false);

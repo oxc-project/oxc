@@ -6,9 +6,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow empty block statements")
-        .with_help(format!("Add comment inside empty {stmt_kind} statement"))
-        .with_label(span.label(format!("Empty {stmt_kind} statement")))
+    OxcDiagnostic::warn("Unexpected empty block statements")
+        .with_help(format!("Remove this {stmt_kind} or add a comment inside it"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

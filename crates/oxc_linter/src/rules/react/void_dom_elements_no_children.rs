@@ -10,15 +10,18 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_create_element_call,
+    AstNode,
+};
 
 fn void_dom_elements_no_children_diagnostic(tag: &str, span: Span) -> OxcDiagnostic {
     // TODO: use imperative phrasing
-    OxcDiagnostic::warn(
-        "Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.",
-    )
-    .with_help(format!("Void DOM element <{tag:?} /> cannot receive children."))
-    .with_label(span)
+    OxcDiagnostic::warn(format!("Void DOM element <{tag:?} /> cannot receive children."))
+        .with_help("Remove this element's children or use a non-void element.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,6 +29,9 @@ pub struct VoidDomElementsNoChildren;
 
 declare_oxc_lint!(
     /// ### What it does
+    /// Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+    ///
+    /// ### Why is this bad?
     /// There are some HTML elements that are only self-closing (e.g. img, br, hr). These are collectively known as void DOM elements.
     /// This rule checks that children are not passed to void DOM elements.
     ///
@@ -142,7 +148,7 @@ impl Rule for VoidDomElementsNoChildren {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

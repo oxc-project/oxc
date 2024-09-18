@@ -38,11 +38,22 @@ fn main() {
     println!("{source_text}\n");
 
     let mut program = ret.program;
+    let trivias = ret.trivias;
 
-    let (symbols, scopes) = SemanticBuilder::new(&source_text)
-        .build(&program)
-        .semantic
-        .into_symbol_table_and_scope_tree();
+    let ret = SemanticBuilder::new(&source_text)
+        // Estimate transformer will triple scopes, symbols, references
+        .with_excess_capacity(2.0)
+        .build(&program);
+
+    if !ret.errors.is_empty() {
+        println!("Semantic Errors:");
+        for error in ret.errors {
+            let error = error.with_source_code(source_text.clone());
+            println!("{error:?}");
+        }
+    }
+
+    let (symbols, scopes) = ret.semantic.into_symbol_table_and_scope_tree();
 
     let transform_options = if let Some(targets) = &targets {
         TransformOptions::from_preset_env(&EnvOptions {
@@ -54,15 +65,23 @@ fn main() {
         TransformOptions::enable_all()
     };
 
-    let _ = Transformer::new(
+    let ret = Transformer::new(
         &allocator,
         path,
         source_type,
         &source_text,
-        ret.trivias.clone(),
+        trivias.clone(),
         transform_options,
     )
     .build_with_symbols_and_scopes(symbols, scopes, &mut program);
+
+    if !ret.errors.is_empty() {
+        println!("Transformer Errors:");
+        for error in ret.errors {
+            let error = error.with_source_code(source_text.clone());
+            println!("{error:?}");
+        }
+    }
 
     let printed = CodeGenerator::new().build(&program).source_text;
     println!("Transformed:\n");

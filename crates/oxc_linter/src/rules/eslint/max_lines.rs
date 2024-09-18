@@ -83,7 +83,7 @@ impl Rule for MaxLines {
         let comment_lines = if self.skip_comments {
             let mut comment_lines: usize = 0;
             for comment in ctx.semantic().trivias().comments() {
-                if comment.kind.is_single_line() {
+                if comment.is_line() {
                     let comment_line = ctx.source_text()[..comment.span.start as usize]
                         .lines()
                         .next_back()

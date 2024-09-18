@@ -5,7 +5,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn comment(ts_comment_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -155,10 +158,10 @@ impl Rule for BanTsComment {
         let comments = ctx.semantic().trivias().comments();
         for comm in comments {
             let raw = ctx.source_range(comm.span);
-            if let Some(captures) = find_ts_comment_directive(raw, comm.kind.is_single_line()) {
+            if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
                 let (directive, description) = (captures.0, captures.1);
-                if CommentKind::MultiLine == comm.kind
+                if CommentKind::Block == comm.kind
                     && (directive == "check" || directive == "nocheck")
                 {
                     continue;
@@ -213,7 +216,7 @@ impl Rule for BanTsComment {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

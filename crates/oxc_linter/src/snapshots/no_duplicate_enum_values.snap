@@ -1,46 +1,54 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+  ⚠ typescript-eslint(no-duplicate-enum-values): Duplicate enum value `1`
    ╭─[no_duplicate_enum_values.tsx:3:10]
  2 │             enum E {
  3 │               A = 1,
-   ·                   ─
+   ·                   ┬
+   ·                   ╰── 1 is first used as an initializer here
  4 │               B = 1,
-   ·                   ─
+   ·                   ┬
+   ·                   ╰── and is re-used here
  5 │             }
    ╰────
-  help: Duplicate values can lead to bugs that are hard to track down
+  help: Give B a unique value
 
-  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+  ⚠ typescript-eslint(no-duplicate-enum-values): Duplicate enum value `'A'`
    ╭─[no_duplicate_enum_values.tsx:3:10]
  2 │             enum E {
  3 │               A = 'A',
-   ·                   ───
+   ·                   ─┬─
+   ·                    ╰── 'A' is first used as an initializer here
  4 │               B = 'A',
-   ·                   ───
+   ·                   ─┬─
+   ·                    ╰── and is re-used here
  5 │             }
    ╰────
-  help: Duplicate values can lead to bugs that are hard to track down
+  help: Give B a unique value
 
-  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+  ⚠ typescript-eslint(no-duplicate-enum-values): Duplicate enum value `'A'`
    ╭─[no_duplicate_enum_values.tsx:3:10]
  2 │             enum E {
  3 │               A = 'A',
-   ·                   ───
+   ·                   ─┬─
+   ·                    ╰── 'A' is first used as an initializer here
  4 │               B = 'A',
-   ·                   ───
+   ·                   ─┬─
+   ·                    ╰── and is re-used here
  5 │               C = 1,
    ╰────
-  help: Duplicate values can lead to bugs that are hard to track down
+  help: Give B a unique value
 
-  ⚠ typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values
+  ⚠ typescript-eslint(no-duplicate-enum-values): Duplicate enum value `1`
    ╭─[no_duplicate_enum_values.tsx:5:10]
  4 │               B = 'A',
  5 │               C = 1,
-   ·                   ─
+   ·                   ┬
+   ·                   ╰── 1 is first used as an initializer here
  6 │               D = 1,
-   ·                   ─
+   ·                   ┬
+   ·                   ╰── and is re-used here
  7 │             }
    ╰────
-  help: Duplicate values can lead to bugs that are hard to track down
+  help: Give D a unique value

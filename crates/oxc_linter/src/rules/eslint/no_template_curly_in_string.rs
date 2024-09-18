@@ -6,8 +6,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_template_curly_in_string_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected template string expression")
-        .with_help("Disallow template literal placeholder syntax in regular strings")
+    OxcDiagnostic::warn("Template placeholders will not interpolate in regular strings")
+        .with_help("Did you mean to use a template string literal?")
         .with_label(span)
 }
 
@@ -19,9 +19,17 @@ declare_oxc_lint!(
     /// Disallow template literal placeholder syntax in regular strings
     ///
     /// ### Why is this bad?
-    /// ECMAScript 6 allows programmers to create strings containing variable or expressions using template literals, instead of string concatenation, by writing expressions like ${variable} between two backtick quotes (`). It can be easy to use the wrong quotes when wanting to use template literals, by writing "${variable}", and end up with the literal value "${variable}" instead of a string containing the value of the injected expressions.
+    /// ECMAScript 6 allows programmers to create strings containing variable or
+    /// expressions using template literals, instead of string concatenation, by
+    /// writing expressions like `${variable}` between two backtick quotes. It
+    /// can be easy to use the wrong quotes when wanting to use template
+    /// literals, by writing `"${variable}"`, and end up with the literal value
+    /// `"${variable}"` instead of a string containing the value of the injected
+    /// expressions.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// /*eslint no-template-curly-in-string: "error"*/
     /// "Hello ${name}!";
@@ -29,7 +37,8 @@ declare_oxc_lint!(
     /// "Time: ${12 * 60 * 60 * 1000}";
     /// ```
     NoTemplateCurlyInString,
-    style
+    style,
+    pending // TODO: conditional_fix
 );
 
 impl Rule for NoTemplateCurlyInString {

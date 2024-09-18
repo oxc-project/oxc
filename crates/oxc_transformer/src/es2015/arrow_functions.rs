@@ -4,6 +4,17 @@
 //!
 //! > This plugin is included in `preset-env`, in ES2015
 //!
+//! ## Missing features
+//!
+//! Implementation is incomplete at present. Still TODO:
+//!
+//! * Handle `arguments` in arrow functions.
+//! * Handle `new.target` in arrow functions.
+//! * Error on arrow functions in class properties.
+//!   <https://babeljs.io/repl#?code_lz=MYGwhgzhAEDC0G8BQ1oDMD2HoF5oAoBKXAPmgBcALASwgG4kBfJIA&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
+//! * Error on `super` in arrow functions.
+//!   <https://babeljs.io/repl#?code_lz=MYGwhgzhAEBiD29oG8C-AoUkYCEwCdoBTADwBciA7AExgSWXWmgFsiyALeagCgEoUTZtHzsArvkrR-0ALwA-aBDEAHIvgB0AM0QBuIRgxA&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
+//!
 //! ## Example
 //!
 //! Input:
@@ -52,14 +63,12 @@
 //!
 //! ## Implementation
 //!
-//! Implementation based on [@babel/plugin-transform-exponentiation-operator](https://babel.dev/docs/babel-plugin-transform-arrow-functions).
+//! Implementation based on [@babel/plugin-transform-arrow-functions](https://babel.dev/docs/babel-plugin-transform-arrow-functions).
 //!
 //! ## References:
 //!
 //! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-arrow-functions>
 //! * Arrow function specification: <https://tc39.es/ecma262/#sec-arrow-function-definitions>
-
-use std::cell::Cell;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
@@ -83,9 +92,9 @@ pub struct ArrowFunctionsOptions {
 pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
-    this_vars: std::vec::Vec<Option<BoundIdentifier<'a>>>,
+    this_var_stack: std::vec::Vec<Option<BoundIdentifier<'a>>>,
     /// Stack to keep track of whether we are inside an arrow function or not.
-    stacks: std::vec::Vec<bool>,
+    inside_arrow_function_stack: std::vec::Vec<bool>,
 }
 
 impl<'a> ArrowFunctions<'a> {
@@ -93,33 +102,43 @@ impl<'a> ArrowFunctions<'a> {
         Self {
             ctx,
             _options: options,
-            // Reserve for the global scope
-            this_vars: vec![None],
-            stacks: vec![],
+            // Initial entries for `Program` scope
+            this_var_stack: vec![None],
+            inside_arrow_function_stack: vec![false],
         }
     }
 }
 
 impl<'a> Traverse<'a> for ArrowFunctions<'a> {
+    // Note: No visitors for `TSModuleBlock` because `this` is not legal in TS module blocks.
+    // <https://www.typescriptlang.org/play/?#code/HYQwtgpgzgDiDGEAEAxA9mpBvAsAKCSXjWCgBckANJAXiQAoBKWgPiTIAsBLKAbnwC++fGDQATAK4AbZACEQAJ2z5CxUhWp0mrdtz6D8QA>
+
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.insert_this_var_statement_at_the_top_of_statements(&mut program.body);
+        debug_assert!(self.inside_arrow_function_stack.len() == 1);
+
+        assert!(self.this_var_stack.len() == 1);
+        let this_var = self.this_var_stack.pop().unwrap();
+        if let Some(this_var) = this_var {
+            self.insert_this_var_statement_at_the_top_of_statements(&mut program.body, &this_var);
+        }
     }
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         if func.body.is_some() {
-            self.this_vars.push(None);
+            self.this_var_stack.push(None);
+            self.inside_arrow_function_stack.push(false);
         }
     }
 
     /// ```ts
     /// function a(){
-    ///    () => console.log(this);
+    ///   return () => console.log(this);
     /// }
     /// // to
     /// function a(){
     ///   var _this = this;
-    ///  (function() { return console.log(_this); });
+    ///   return function() { return console.log(_this); };
     /// }
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
@@ -128,7 +147,51 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             return;
         };
 
-        self.insert_this_var_statement_at_the_top_of_statements(&mut body.statements);
+        let this_var = self.this_var_stack.pop().unwrap();
+        if let Some(this_var) = this_var {
+            self.insert_this_var_statement_at_the_top_of_statements(
+                &mut body.statements,
+                &this_var,
+            );
+        }
+
+        self.inside_arrow_function_stack.pop().unwrap();
+    }
+
+    fn enter_arrow_function_expression(
+        &mut self,
+        _arrow: &mut ArrowFunctionExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.inside_arrow_function_stack.push(true);
+    }
+
+    fn exit_arrow_function_expression(
+        &mut self,
+        _arrow: &mut ArrowFunctionExpression<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.inside_arrow_function_stack.pop().unwrap();
+    }
+
+    fn enter_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.inside_arrow_function_stack.push(false);
+    }
+
+    fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.inside_arrow_function_stack.pop().unwrap();
+    }
+
+    fn enter_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.this_var_stack.push(None);
+        // No need to push to `inside_arrow_function_stack` because `enter_class` already pushed `false`
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        let this_var = self.this_var_stack.pop().unwrap();
+        if let Some(this_var) = this_var {
+            self.insert_this_var_statement_at_the_top_of_statements(&mut block.body, &this_var);
+        }
     }
 
     fn enter_jsx_element_name(
@@ -141,7 +204,7 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 return;
             }
 
-            let ident = self.get_this_name(ctx).create_spanned_read_reference(this.span, ctx);
+            let ident = self.get_this_identifier(this.span, ctx);
             *element_name = self.ctx.ast.jsx_element_name_from_identifier_reference(ident);
         };
     }
@@ -156,196 +219,145 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 return;
             }
 
-            let ident = self.get_this_name(ctx).create_spanned_read_reference(this.span, ctx);
+            let ident = self.get_this_identifier(this.span, ctx);
             *object = self.ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
         }
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::ThisExpression(this_expr) => {
-                if !self.is_inside_arrow_function() {
-                    return;
-                }
+        if let Expression::ThisExpression(this_expr) = expr {
+            if !self.is_inside_arrow_function() {
+                return;
+            }
 
-                let ident =
-                    self.get_this_name(ctx).create_spanned_read_reference(this_expr.span, ctx);
-                *expr = self.ctx.ast.expression_from_identifier_reference(ident);
-            }
-            Expression::ArrowFunctionExpression(_) => {
-                self.stacks.push(true);
-            }
-            Expression::FunctionExpression(_) => self.stacks.push(false),
-            _ => {}
+            let ident = self.get_this_identifier(this_expr.span, ctx);
+            *expr = self.ctx.ast.expression_from_identifier_reference(ident);
         }
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        match expr {
-            Expression::ArrowFunctionExpression(arrow_function_expr) => {
-                *expr = self.transform_arrow_function_expression(arrow_function_expr, ctx);
-                self.stacks.pop();
-            }
-            Expression::FunctionExpression(_) => {
-                self.stacks.pop();
-            }
-            _ => {}
+        if let Expression::ArrowFunctionExpression(_) = expr {
+            let Expression::ArrowFunctionExpression(arrow_function_expr) =
+                ctx.ast.move_expression(expr)
+            else {
+                unreachable!()
+            };
+
+            *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
         }
-    }
-
-    fn enter_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.push(false);
-        }
-    }
-
-    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.pop();
-        }
-    }
-
-    fn enter_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.stacks.push(false);
-    }
-
-    fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.stacks.pop();
-    }
-
-    fn enter_variable_declarator(
-        &mut self,
-        node: &mut VariableDeclarator<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !matches!(node.init, Some(Expression::ArrowFunctionExpression(_))) {
-            return;
-        }
-
-        let Some(id) = node.id.get_binding_identifier() else { return };
-        *ctx.symbols_mut().get_flags_mut(id.symbol_id.get().unwrap()) &=
-            !SymbolFlags::ArrowFunction;
     }
 }
 
 impl<'a> ArrowFunctions<'a> {
     fn is_inside_arrow_function(&self) -> bool {
-        self.stacks.last().copied().unwrap_or(false)
+        *self.inside_arrow_function_stack.last().unwrap()
     }
 
-    fn get_this_name(&mut self, ctx: &mut TraverseCtx<'a>) -> BoundIdentifier<'a> {
-        let this_var = self.this_vars.last_mut().unwrap();
+    fn get_this_identifier(
+        &mut self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        // TODO(improve-on-babel): We create a new UID for every scope. This is pointless, as only one
+        // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
+        // scope. But this does not match output for some of Babel's test cases.
+        // <https://github.com/oxc-project/oxc/pull/5840>
+        let this_var = self.this_var_stack.last_mut().unwrap();
         if this_var.is_none() {
-            let target_scope_id =
-                ctx.scopes().ancestors(ctx.current_scope_id()).skip(1).find(|scope_id| {
-                    let scope_flags = ctx.scopes().get_flags(*scope_id);
-                    scope_flags.intersects(ScopeFlags::Function | ScopeFlags::Top)
-                        && !scope_flags.contains(ScopeFlags::Arrow)
-                });
+            let target_scope_id = ctx
+                .scopes()
+                .ancestors(ctx.current_scope_id())
+                // We're inside arrow function, so parent scope can't be what we're looking for.
+                // It's either the arrow function, or a block nested within arrow function.
+                .skip(1)
+                .find(|&scope_id| {
+                    let scope_flags = ctx.scopes().get_flags(scope_id);
+                    scope_flags.intersects(
+                        ScopeFlags::Function | ScopeFlags::Top | ScopeFlags::ClassStaticBlock,
+                    ) && !scope_flags.contains(ScopeFlags::Arrow)
+                })
+                .unwrap();
 
             this_var.replace(BoundIdentifier::new_uid(
                 "this",
-                target_scope_id.unwrap(),
+                target_scope_id,
                 SymbolFlags::FunctionScopedVariable,
                 ctx,
             ));
         }
-        this_var.as_ref().unwrap().clone()
+        let this_var = this_var.as_ref().unwrap();
+        this_var.create_spanned_read_reference(span, ctx)
     }
 
     fn transform_arrow_function_expression(
         &mut self,
-        arrow_function_expr: &mut ArrowFunctionExpression<'a>,
+        arrow_function_expr: ArrowFunctionExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        // SAFETY: `ast.copy` is unsound! We need to fix.
-        let mut body = unsafe { self.ctx.ast.copy(&arrow_function_expr.body) };
+        let mut body = arrow_function_expr.body;
 
         if arrow_function_expr.expression {
-            let first_stmt = body.statements.remove(0);
-            if let Statement::ExpressionStatement(stmt) = first_stmt {
-                let return_statement = self.ctx.ast.statement_return(
-                    stmt.span,
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    Some(unsafe { self.ctx.ast.copy(&stmt.expression) }),
-                );
-                body.statements.push(return_statement);
-            }
+            assert!(body.statements.len() == 1);
+            let stmt = body.statements.pop().unwrap();
+            let Statement::ExpressionStatement(stmt) = stmt else { unreachable!() };
+            let stmt = stmt.unbox();
+            let return_statement = self.ctx.ast.statement_return(stmt.span, Some(stmt.expression));
+            body.statements.push(return_statement);
         }
 
-        // There shouldn't need to be a conditional here. Every arrow function should have a scope ID.
-        // But at present TS transforms don't seem to set `scope_id` in some cases, so this test case
-        // fails if just unwrap `scope_id`:
-        // `typescript/tests/cases/compiler/classFieldSuperAccessible.ts`.
-        // ```ts
-        // class D {
-        //   accessor b = () => {}
-        // }
-        // ```
-        // TODO: Change to `arrow_function_expr.scope_id.get().unwrap()` once scopes are correct
-        // in TS transforms.
-        let scope_id = arrow_function_expr.scope_id.get();
-        if let Some(scope_id) = scope_id {
-            let flags = ctx.scopes_mut().get_flags_mut(scope_id);
-            *flags &= !ScopeFlags::Arrow;
-        }
+        let scope_id = arrow_function_expr.scope_id.get().unwrap();
+        let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+        *flags &= !ScopeFlags::Arrow;
 
-        let new_function = Function {
-            r#type: FunctionType::FunctionExpression,
-            span: arrow_function_expr.span,
-            id: None,
-            generator: false,
-            r#async: arrow_function_expr.r#async,
-            declare: false,
-            this_param: None,
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            params: unsafe { self.ctx.ast.copy(&arrow_function_expr.params) },
-            body: Some(body),
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            type_parameters: unsafe { self.ctx.ast.copy(&arrow_function_expr.type_parameters) },
-            // SAFETY: `ast.copy` is unsound! We need to fix.
-            return_type: unsafe { self.ctx.ast.copy(&arrow_function_expr.return_type) },
-            scope_id: Cell::new(scope_id),
-        };
+        let new_function = ctx.ast.function(
+            FunctionType::FunctionExpression,
+            arrow_function_expr.span,
+            None,
+            false,
+            arrow_function_expr.r#async,
+            false,
+            arrow_function_expr.type_parameters,
+            None::<TSThisParameter<'a>>,
+            arrow_function_expr.params,
+            arrow_function_expr.return_type,
+            Some(body),
+        );
+        new_function.scope_id.set(Some(scope_id));
 
-        let expr = Expression::FunctionExpression(self.ctx.ast.alloc(new_function));
-        // Avoid creating a function declaration.
-        // `() => {};` => `(function () {});`
-        self.ctx.ast.expression_parenthesized(SPAN, expr)
+        Expression::FunctionExpression(self.ctx.ast.alloc(new_function))
     }
 
     /// Insert `var _this = this;` at the top of the statements.
     fn insert_this_var_statement_at_the_top_of_statements(
         &mut self,
         statements: &mut Vec<'a, Statement<'a>>,
+        this_var: &BoundIdentifier<'a>,
     ) {
-        if let Some(id) = &self.this_vars.pop().unwrap() {
-            let binding_pattern = self.ctx.ast.binding_pattern(
-                self.ctx
-                    .ast
-                    .binding_pattern_kind_from_binding_identifier(id.create_binding_identifier()),
-                NONE,
-                false,
-            );
+        let binding_pattern = self.ctx.ast.binding_pattern(
+            self.ctx
+                .ast
+                .binding_pattern_kind_from_binding_identifier(this_var.create_binding_identifier()),
+            NONE,
+            false,
+        );
 
-            let variable_declarator = self.ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                binding_pattern,
-                Some(self.ctx.ast.expression_this(SPAN)),
-                false,
-            );
+        let variable_declarator = self.ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            binding_pattern,
+            Some(self.ctx.ast.expression_this(SPAN)),
+            false,
+        );
 
-            let stmt = self.ctx.ast.alloc_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                self.ctx.ast.vec1(variable_declarator),
-                false,
-            );
+        let stmt = self.ctx.ast.alloc_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            self.ctx.ast.vec1(variable_declarator),
+            false,
+        );
 
-            let stmt = Statement::VariableDeclaration(stmt);
+        let stmt = Statement::VariableDeclaration(stmt);
 
-            statements.insert(0, stmt);
-        }
+        statements.insert(0, stmt);
     }
 }

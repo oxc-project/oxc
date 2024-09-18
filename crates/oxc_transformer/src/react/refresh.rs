@@ -1,4 +1,4 @@
-use std::{cell::Cell, iter::once};
+use std::iter::once;
 
 use base64::prelude::{Engine, BASE64_STANDARD};
 use oxc_allocator::CloneIn;
@@ -150,12 +150,7 @@ impl<'a> Traverse<'a> for ReactRefresh<'a> {
         let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
         for (symbol_id, persistent_id) in self.registrations.drain(..) {
             let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
-            let binding_identifier = BindingIdentifier {
-                name: name.clone(),
-                symbol_id: Cell::new(Some(symbol_id)),
-                span: SPAN,
-            };
-
+            let binding_identifier = BindingIdentifier::new_with_symbol_id(SPAN, name, symbol_id);
             variable_declarator_items.push(
                 ctx.ast.variable_declarator(
                     SPAN,
@@ -690,11 +685,8 @@ impl<'a> ReactRefresh<'a> {
 
         let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
-        let binding_identifier = BindingIdentifier {
-            span: SPAN,
-            name: symbol_name.clone(),
-            symbol_id: Cell::new(Some(symbol_id)),
-        };
+        let binding_identifier =
+            BindingIdentifier::new_with_symbol_id(SPAN, symbol_name.clone(), symbol_id);
 
         // _s();
         let call_expression = ctx.ast.statement_expression(

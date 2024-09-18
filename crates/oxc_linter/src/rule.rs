@@ -7,7 +7,10 @@ use std::{
 
 use oxc_semantic::SymbolId;
 
-use crate::{context::LintContext, AllowWarnDeny, AstNode, FixKind, RuleEnum};
+use crate::{
+    context::{ContextHost, LintContext},
+    AllowWarnDeny, AstNode, FixKind, RuleEnum,
+};
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
@@ -39,7 +42,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// [`linter`]: crate::Linter
     #[expect(unused_variables)]
     #[inline]
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         true
     }
 }

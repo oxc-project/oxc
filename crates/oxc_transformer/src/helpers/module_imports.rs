@@ -1,4 +1,4 @@
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 
 use indexmap::IndexMap;
 use oxc_allocator::{Allocator, Vec};
@@ -90,19 +90,12 @@ impl<'a> ModuleImports<'a> {
     ) -> Statement<'a> {
         let specifiers = self.ast.vec_from_iter(names.into_iter().map(|name| {
             let local = name.local.unwrap_or_else(|| name.imported.clone());
-            ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
-                span: SPAN,
-                imported: ModuleExportName::IdentifierName(IdentifierName::new(
-                    SPAN,
-                    name.imported,
-                )),
-                local: BindingIdentifier {
-                    span: SPAN,
-                    name: local,
-                    symbol_id: Cell::new(Some(name.symbol_id)),
-                },
-                import_kind: ImportOrExportKind::Value,
-            }))
+            ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc_import_specifier(
+                SPAN,
+                ModuleExportName::IdentifierName(IdentifierName::new(SPAN, name.imported)),
+                BindingIdentifier::new_with_symbol_id(SPAN, local, name.symbol_id),
+                ImportOrExportKind::Value,
+            ))
         }));
         let import_stmt = self.ast.module_declaration_import_declaration(
             SPAN,
@@ -132,11 +125,7 @@ impl<'a> ModuleImports<'a> {
         };
         let name = names.into_iter().next().unwrap();
         let id = {
-            let ident = BindingIdentifier {
-                span: SPAN,
-                name: name.imported,
-                symbol_id: Cell::new(Some(name.symbol_id)),
-            };
+            let ident = BindingIdentifier::new_with_symbol_id(SPAN, name.imported, name.symbol_id);
             self.ast.binding_pattern(
                 self.ast.binding_pattern_kind_from_binding_identifier(ident),
                 NONE,

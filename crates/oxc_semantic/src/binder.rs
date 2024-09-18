@@ -23,7 +23,7 @@ pub(crate) trait Binder<'a> {
 
 impl<'a> Binder<'a> for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>) {
-        let (mut includes, excludes) = match self.kind {
+        let (includes, excludes) = match self.kind {
             VariableDeclarationKind::Const => (
                 SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
                 SymbolFlags::BlockScopedVariableExcludes,
@@ -37,12 +37,6 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };
-
-        if self.init.as_ref().is_some_and(|init| {
-            matches!(init.get_inner_expression(), Expression::ArrowFunctionExpression(_))
-        }) {
-            includes |= SymbolFlags::ArrowFunction;
-        }
 
         if self.kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
