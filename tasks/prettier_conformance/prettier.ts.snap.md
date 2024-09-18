@@ -1,4 +1,4 @@
-ts compatibility: 167/526 (31.75%)
+ts compatibility: 170/526 (32.32%)
 
 # Failed
 
@@ -472,7 +472,6 @@ ts compatibility: 167/526 (31.75%)
 
 ### optional-type
 * optional-type/complex.ts
-* optional-type/simple.ts
 
 ### optional-variance
 * optional-variance/basic.ts
@@ -498,7 +497,6 @@ ts compatibility: 167/526 (31.75%)
 ### rest-type
 * rest-type/complex.ts
 * rest-type/infer-type.ts
-* rest-type/simple.ts
 
 ### satisfies-operators
 * satisfies-operators/argument-expansion.ts
@@ -555,7 +553,6 @@ ts compatibility: 167/526 (31.75%)
 * tuple/trailing-comma-trailing-rest.ts
 * tuple/trailing-comma.ts
 * tuple/tuple-labeled.ts
-* tuple/tuple-rest-not-last.ts
 * tuple/tuple.ts
 
 ### type-alias

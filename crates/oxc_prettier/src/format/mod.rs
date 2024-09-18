@@ -952,7 +952,30 @@ impl<'a> Format<'a> for TSMappedType<'a> {
 
 impl<'a> Format<'a> for TSNamedTupleMember<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(self.label.format(p));
+
+        if self.optional {
+            parts.push(ss!("?"));
+        }
+
+        parts.push(ss!(": "));
+        parts.push(self.element_type.format(p));
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSRestType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array!(p, ss!("..."), self.type_annotation.format(p))
+    }
+}
+
+impl<'a> Format<'a> for TSOptionalType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array!(p, self.type_annotation.format(p), ss!("?"))
     }
 }
 
@@ -1401,8 +1424,8 @@ impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
 impl<'a> Format<'a> for TSTupleElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            TSTupleElement::TSOptionalType(it) => it.type_annotation.format(p),
-            TSTupleElement::TSRestType(it) => it.type_annotation.format(p),
+            TSTupleElement::TSOptionalType(it) => it.format(p),
+            TSTupleElement::TSRestType(it) => it.format(p),
             TSTupleElement::TSAnyKeyword(it) => it.format(p),
             TSTupleElement::TSBigIntKeyword(it) => it.format(p),
             TSTupleElement::TSBooleanKeyword(it) => it.format(p),
