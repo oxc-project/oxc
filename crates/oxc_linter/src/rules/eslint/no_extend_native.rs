@@ -105,8 +105,7 @@ impl Rule for NoExtendNative {
                 if let Some(prop_assign) = get_property_assignment(ctx, prop_access) {
                     ctx.diagnostic(
                         OxcDiagnostic::error(format!(
-                            "{} prototype is read-only, properties should not be added.",
-                            name
+                            "{name} prototype is read-only, properties should not be added."
                         ))
                         .with_label(prop_assign.span()),
                     );
@@ -117,8 +116,7 @@ impl Rule for NoExtendNative {
                 {
                     ctx.diagnostic(
                         OxcDiagnostic::error(format!(
-                            "{} prototype is read-only, properties should not be added.",
-                            name
+                            "{name} prototype is read-only, properties should not be added."
                         ))
                         .with_label(define_property_call.span()),
                     );
