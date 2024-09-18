@@ -82,24 +82,22 @@ bitflags! {
         const CatchVariable           = 1 << 6;
         /// A function declaration or expression
         const Function                = 1 << 7;
-        /// A function or block-scoped variable initialized to an arrow function
-        const ArrowFunction           = 1 << 8;
         /// Imported ESM binding
-        const Import                  = 1 << 9;
+        const Import                  = 1 << 8;
         /// Imported ESM type-only binding
-        const TypeImport              = 1 << 10;
+        const TypeImport              = 1 << 9;
         // Type specific symbol flags
-        const TypeAlias               = 1 << 11;
-        const Interface               = 1 << 12;
-        const RegularEnum             = 1 << 13;
-        const ConstEnum               = 1 << 14;
-        const EnumMember              = 1 << 15;
-        const TypeLiteral             = 1 << 16;
-        const TypeParameter           = 1 << 17;
-        const NameSpaceModule         = 1 << 18;
-        const ValueModule             = 1 << 19;
+        const TypeAlias               = 1 << 10;
+        const Interface               = 1 << 11;
+        const RegularEnum             = 1 << 12;
+        const ConstEnum               = 1 << 13;
+        const EnumMember              = 1 << 14;
+        const TypeLiteral             = 1 << 15;
+        const TypeParameter           = 1 << 16;
+        const NameSpaceModule         = 1 << 17;
+        const ValueModule             = 1 << 18;
         // In a dts file or there is a declare flag
-        const Ambient                 = 1 << 20;
+        const Ambient                 = 1 << 19;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
@@ -158,22 +156,9 @@ impl SymbolFlags {
     }
 
     /// Returns `true` if this symbol is a function declaration or expression.
-    ///
-    /// Use [`SymbolFlags::is_function_like`] to check if this symbol is a function or an arrow function.
     #[inline]
     pub fn is_function(&self) -> bool {
         self.contains(Self::Function)
-    }
-
-    #[inline]
-    pub fn is_arrow_function(&self) -> bool {
-        self.contains(Self::ArrowFunction)
-    }
-
-    /// Returns `true` if this symbol is an arrow function or a function declaration/expression.
-    #[inline]
-    pub fn is_function_like(&self) -> bool {
-        self.intersects(Self::Function | Self::ArrowFunction)
     }
 
     #[inline]

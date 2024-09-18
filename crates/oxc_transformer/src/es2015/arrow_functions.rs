@@ -246,20 +246,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
         }
     }
-
-    fn enter_variable_declarator(
-        &mut self,
-        node: &mut VariableDeclarator<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if !matches!(node.init, Some(Expression::ArrowFunctionExpression(_))) {
-            return;
-        }
-
-        let Some(id) = node.id.get_binding_identifier() else { return };
-        *ctx.symbols_mut().get_flags_mut(id.symbol_id.get().unwrap()) &=
-            !SymbolFlags::ArrowFunction;
-    }
 }
 
 impl<'a> ArrowFunctions<'a> {

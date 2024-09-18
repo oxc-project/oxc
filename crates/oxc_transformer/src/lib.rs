@@ -388,14 +388,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x2_es2019.enter_catch_clause(clause, ctx);
     }
 
-    fn enter_variable_declarator(
-        &mut self,
-        node: &mut VariableDeclarator<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.x3_es2015.enter_variable_declarator(node, ctx);
-    }
-
     fn enter_import_declaration(
         &mut self,
         node: &mut ImportDeclaration<'a>,

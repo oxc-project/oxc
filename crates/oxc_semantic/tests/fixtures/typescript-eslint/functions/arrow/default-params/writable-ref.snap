@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(BlockScopedVariable | ArrowFunction)",
+        "flags": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "foo",
         "node": "VariableDeclarator(foo)",

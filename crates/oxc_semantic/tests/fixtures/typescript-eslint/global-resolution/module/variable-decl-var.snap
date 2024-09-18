@@ -18,7 +18,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/global-resoluti
     "node": "Program",
     "symbols": [
       {
-        "flags": "SymbolFlags(FunctionScopedVariable | ArrowFunction)",
+        "flags": "SymbolFlags(FunctionScopedVariable)",
         "id": 0,
         "name": "top",
         "node": "VariableDeclarator(top)",

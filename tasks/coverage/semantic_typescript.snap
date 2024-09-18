@@ -8272,8 +8272,8 @@ Bindings mismatch:
 after transform: ScopeId(4): ["a", "b", "p"]
 rebuilt        : ScopeId(2): ["a", "b"]
 Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | ArrowFunction | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | ArrowFunction)
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 17, end: 22 }
 rebuilt        : SymbolId(0): Span { start: 171, end: 176 }
@@ -8284,8 +8284,8 @@ Symbol redeclarations mismatch:
 after transform: SymbolId(0): [Span { start: 171, end: 176 }]
 rebuilt        : SymbolId(0): []
 Symbol flags mismatch:
-after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Export | ArrowFunction | Interface)
-rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable | Export | ArrowFunction)
+after transform: SymbolId(1): SymbolFlags(BlockScopedVariable | ConstVariable | Export | Interface)
+rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
 Symbol span mismatch:
 after transform: SymbolId(1): Span { start: 93, end: 97 }
 rebuilt        : SymbolId(3): Span { start: 237, end: 241 }
@@ -17662,8 +17662,8 @@ semantic error: Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): [ScopeId(1)]
 Symbol flags mismatch:
-after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | ArrowFunction | Interface)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | ArrowFunction)
+after transform: SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export | Interface)
+rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable | ConstVariable | Export)
 Symbol span mismatch:
 after transform: SymbolId(0): Span { start: 10, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 52, end: 62 }
@@ -39879,8 +39879,8 @@ Symbol reference IDs mismatch:
 after transform: SymbolId(2): [ReferenceId(1), ReferenceId(5)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 Symbol flags mismatch:
-after transform: SymbolId(9): SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction | Interface)
-rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction)
+after transform: SymbolId(9): SymbolFlags(BlockScopedVariable | ConstVariable | Interface)
+rebuilt        : SymbolId(7): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch:
 after transform: SymbolId(9): Span { start: 247, end: 256 }
 rebuilt        : SymbolId(7): Span { start: 287, end: 296 }
@@ -59054,8 +59054,8 @@ Bindings mismatch:
 after transform: ScopeId(20): ["T", "f"]
 rebuilt        : ScopeId(9): ["f"]
 Symbol flags mismatch:
-after transform: SymbolId(70): SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction | TypeAlias)
-rebuilt        : SymbolId(32): SymbolFlags(BlockScopedVariable | ConstVariable | ArrowFunction)
+after transform: SymbolId(70): SymbolFlags(BlockScopedVariable | ConstVariable | TypeAlias)
+rebuilt        : SymbolId(32): SymbolFlags(BlockScopedVariable | ConstVariable)
 Symbol span mismatch:
 after transform: SymbolId(70): Span { start: 1594, end: 1596 }
 rebuilt        : SymbolId(32): Span { start: 1621, end: 1627 }
