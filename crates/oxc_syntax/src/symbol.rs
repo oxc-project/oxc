@@ -170,12 +170,6 @@ impl SymbolFlags {
         self.contains(Self::ArrowFunction)
     }
 
-    /// Returns `true` if this symbol is an arrow function or a function declaration/expression.
-    #[inline]
-    pub fn is_function_like(&self) -> bool {
-        self.intersects(Self::Function | Self::ArrowFunction)
-    }
-
     #[inline]
     pub fn is_class(&self) -> bool {
         self.contains(Self::Class)
