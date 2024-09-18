@@ -1,6 +1,6 @@
 commit: 3bcfee23
 
-Passed: 44/54
+Passed: 46/56
 
 # All Passed:
 * babel-plugin-transform-nullish-coalescing-operator
