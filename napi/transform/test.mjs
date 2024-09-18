@@ -4,23 +4,38 @@ import oxc from './index.js';
 console.log(`Testing on ${process.platform}-${process.arch}`);
 
 function test(ret, expected) {
-  console.log(ret.code);
-  console.log(ret.map);
-  for (const error of ret.errors) {
-    console.log(error);
-  }
   assert.equal(ret.code, expected.code);
   assert.deepEqual(ret.map, expected.map);
   assert(ret.errors.length == 0);
 }
 
-test(oxc.isolatedDeclaration('test.ts', 'class A {}', { sourcemap: true }), {
-  code: 'declare class A {}\n',
+const id = `
+/**
+ * jsdoc 1
+ */
+export class A {
+  /**
+   * jsdoc 2
+   */
+  foo = "bar";
+}
+`;
+
+test(oxc.isolatedDeclaration('test.ts', id, { sourcemap: true }), {
+  code: '/**\n' +
+    '* jsdoc 1\n' +
+    '*/\n' +
+    'export declare class A {\n' +
+    '\t/**\n' +
+    '\t* jsdoc 2\n' +
+    '\t*/\n' +
+    '\tfoo: string;\n' +
+    '}\n',
   map: {
-    mappings: 'AAAA,cAAM,EAAE,CAAE',
+    mappings: ';;;AAIA,OAAO,cAAM,EAAE;;;;CAIb;AACD',
     names: [],
     sources: ['test.ts'],
-    sourcesContent: ['class A {}'],
+    sourcesContent: [id],
     version: 3,
   },
 });
@@ -67,3 +82,5 @@ test(
       '$RefreshReg$(_c, "App");\n',
   },
 );
+
+console.log('Success.');

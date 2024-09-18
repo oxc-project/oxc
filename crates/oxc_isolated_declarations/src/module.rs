@@ -8,12 +8,12 @@ use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_export_named_declaration(
         &mut self,
-        decl: &ExportNamedDeclaration<'a>,
+        prev_decl: &ExportNamedDeclaration<'a>,
     ) -> Option<ExportNamedDeclaration<'a>> {
-        let decl = self.transform_declaration(decl.declaration.as_ref()?, false)?;
+        let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
 
         Some(self.ast.export_named_declaration(
-            decl.span(),
+            prev_decl.span,
             Some(decl),
             self.ast.vec(),
             None,

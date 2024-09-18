@@ -3550,6 +3550,7 @@ impl<'a> Gen for TSInterfaceDeclaration<'a> {
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
             for item in &self.body.body {
                 p.print_indent();
+                p.print_leading_comments(item.span().start);
                 item.print(p, ctx);
                 p.print_semicolon();
                 p.print_soft_newline();

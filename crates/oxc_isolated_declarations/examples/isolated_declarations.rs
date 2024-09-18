@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
+use oxc_codegen::{CodeGenerator, CommentOptions};
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -32,8 +32,15 @@ fn main() {
     println!("Original:\n");
     println!("{source_text}\n");
 
-    let ret = IsolatedDeclarations::new(&allocator).build(&ret.program);
-    let printed = CodeGenerator::new().build(&ret.program).source_text;
+    let id_ret = IsolatedDeclarations::new(&allocator).build(&ret.program);
+    let printed = CodeGenerator::new()
+        .enable_comment(
+            &source_text,
+            ret.trivias,
+            CommentOptions { preserve_annotate_comments: false },
+        )
+        .build(&id_ret.program)
+        .source_text;
 
     println!("Dts Emit:\n");
     println!("{printed}\n");

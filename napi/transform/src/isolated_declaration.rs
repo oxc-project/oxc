@@ -1,6 +1,6 @@
 use napi_derive::napi;
 use oxc_allocator::Allocator;
-use oxc_codegen::CodegenReturn;
+use oxc_codegen::{CodegenReturn, CommentOptions};
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_span::SourceType;
 
@@ -47,5 +47,11 @@ pub fn isolated_declaration(
 pub(crate) fn build_declarations(ctx: &TransformContext<'_>) -> CodegenReturn {
     let transformed_ret = IsolatedDeclarations::new(ctx.allocator).build(&ctx.program());
     ctx.add_diagnostics(transformed_ret.errors);
-    ctx.codegen().build(&transformed_ret.program)
+    ctx.codegen()
+        .enable_comment(
+            ctx.source_text(),
+            ctx.trivias.clone(),
+            CommentOptions { preserve_annotate_comments: false },
+        )
+        .build(&transformed_ret.program)
 }
