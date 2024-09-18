@@ -1,8 +1,9 @@
+use oxc_ast::ast::{CallExpression, Expression};
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::cmp::ContentEq;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -76,22 +77,73 @@ impl Rule for NoExtendNative {
                 let Some(prop_access) = get_prototype_property_accessed(ctx, node) else {
                     continue;
                 };
-                dbg!(prop_access);
-                let Some(prop_assign) = get_property_assignment(ctx, prop_access) else {
+                if !ctx.env_contains_var(name) {
                     continue;
-                };
-                dbg!(prop_assign);
-                if ctx.env_contains_var(name) {
+                }
+                dbg!(prop_access);
+                // Check if being used like `String.prototype.xyz = 0`
+                if let Some(prop_assign) = get_property_assignment(ctx, prop_access) {
+                    dbg!(prop_assign);
                     ctx.diagnostic(
                         OxcDiagnostic::error(format!(
                             "{} prototype is read only, properties should not be added.",
                             name
                         ))
-                        .with_label(ctx.semantic().reference_span(reference)),
+                        .with_label(prop_assign.span()),
+                    );
+                }
+                // Check if being used like `Object.defineProperty(String.prototype, 'xyz', 0)`
+                else if let Some(define_property_call) =
+                    get_define_property_call(ctx, prop_access)
+                {
+                    ctx.diagnostic(
+                        OxcDiagnostic::error(format!(
+                            "{} prototype is read only, properties should not be added.",
+                            name
+                        ))
+                        .with_label(define_property_call.span()),
                     );
                 }
             }
         }
+    }
+}
+
+fn get_define_property_call<'a>(
+    ctx: &'a LintContext,
+    node: &AstNode<'a>,
+) -> Option<&'a AstNode<'a>> {
+    dbg!(node);
+    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+        return None;
+    };
+    dbg!(parent);
+    let AstKind::Argument(_) = parent.kind() else {
+        return None;
+    };
+    let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
+        return None;
+    };
+    let AstKind::CallExpression(call_expr) = grandparent.kind() else {
+        return None;
+    };
+    if !is_define_property_call(call_expr) {
+        return None;
+    }
+    Some(grandparent)
+}
+
+fn is_define_property_call(call_expr: &CallExpression) -> bool {
+    match call_expr.callee.as_member_expression() {
+        Some(me) => {
+            let prop_name = me.static_property_name();
+            me.object()
+                .get_identifier_reference()
+                .map_or(false, |ident_ref| ident_ref.name == "Object")
+                && (prop_name == Some("defineProperty") || prop_name == Some("defineProperties"))
+                && !me.optional()
+        }
+        _ => false,
     }
 }
 
@@ -195,6 +247,8 @@ fn test() {
         ("String['prototype'].p = 0", None),
         ("Number['prototype']['p'] = 0", None),
         ("Object.defineProperty(Array.prototype, 'p', {value: 0})", None),
+        ("Object['defineProperty'](Array.prototype, 'p', {value: 0})", None),
+        ("Object['defineProperty'](Array['prototype'], 'p', {value: 0})", None),
         ("Object.defineProperties(Array.prototype, {p: {value: 0}})", None),
         ("Object.defineProperties(Array.prototype, {p: {value: 0}, q: {value: 0}})", None),
         ("Number['prototype']['p'] = 0", Some(serde_json::json!([{ "exceptions": ["Object"] }]))),
@@ -203,6 +257,7 @@ fn test() {
         ("(Object?.prototype).p = 0", None), // { "ecmaVersion": 2020 },
         ("Object.defineProperty(Object?.prototype, 'p', { value: 0 })", None), // { "ecmaVersion": 2020 },
         ("Object?.defineProperty(Object.prototype, 'p', { value: 0 })", None), // { "ecmaVersion": 2020 },
+        ("Object?.['defineProperty'](Object?.['prototype'], 'p', {value: 0})", None),
         ("(Object?.defineProperty)(Object.prototype, 'p', { value: 0 })", None), // { "ecmaVersion": 2020 },
         ("Array.prototype.p &&= 0", None), // { "ecmaVersion": 2021 },
         ("Array.prototype.p ||= 0", None), // { "ecmaVersion": 2021 },
