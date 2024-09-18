@@ -52,7 +52,7 @@
 //!
 //! ## Implementation
 //!
-//! Implementation based on [@babel/plugin-transform-exponentiation-operator](https://babel.dev/docs/babel-plugin-transform-arrow-functions).
+//! Implementation based on [@babel/plugin-transform-arrow-functions](https://babel.dev/docs/babel-plugin-transform-arrow-functions).
 //!
 //! ## References:
 //!
