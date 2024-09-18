@@ -167,6 +167,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.enter_class_body(body, ctx);
     }
 
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.enter_static_block(block, ctx);
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.exit_static_block(block, ctx);
+    }
+
     fn enter_ts_module_declaration(
         &mut self,
         decl: &mut TSModuleDeclaration<'a>,

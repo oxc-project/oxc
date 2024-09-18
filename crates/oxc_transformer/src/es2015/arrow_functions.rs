@@ -99,6 +99,9 @@ impl<'a> ArrowFunctions<'a> {
 }
 
 impl<'a> Traverse<'a> for ArrowFunctions<'a> {
+    // Note: No visitors for `TSModuleBlock` because `this` is not legal in TS module blocks.
+    // <https://www.typescriptlang.org/play/?#code/HYQwtgpgzgDiDGEAEAxA9mpBvAsAKCSXjWCgBckANJAXiQAoBKWgPiTIAsBLKAbnwC++fGDQATAK4AbZACEQAJ2z5CxUhWp0mrdtz6D8QA>
+
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
         debug_assert!(self.inside_arrow_function_stack.len() == 1);
@@ -166,6 +169,18 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
     fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.inside_arrow_function_stack.pop().unwrap();
+    }
+
+    fn enter_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.this_var_stack.push(None);
+        // No need to push to `inside_arrow_function_stack` because `enter_class` already pushed `false`
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
+        let this_var = self.this_var_stack.pop().unwrap();
+        if let Some(this_var) = this_var {
+            self.insert_this_var_statement_at_the_top_of_statements(&mut block.body, &this_var);
+        }
     }
 
     fn enter_jsx_element_name(
@@ -255,13 +270,16 @@ impl<'a> ArrowFunctions<'a> {
             let target_scope_id = ctx
                 .scopes()
                 .ancestors(ctx.current_scope_id())
+                // We're inside arrow function, so parent scope can't be what we're looking for.
+                // It's either the arrow function, or a block nested within arrow function.
                 .skip(1)
                 .find(|&scope_id| {
                     let scope_flags = ctx.scopes().get_flags(scope_id);
-                    // Function but not arrow function
-                    scope_flags & (ScopeFlags::Function | ScopeFlags::Arrow) == ScopeFlags::Function
+                    scope_flags.intersects(
+                        ScopeFlags::Function | ScopeFlags::Top | ScopeFlags::ClassStaticBlock,
+                    ) && !scope_flags.contains(ScopeFlags::Arrow)
                 })
-                .unwrap_or(ctx.scopes().root_scope_id());
+                .unwrap();
 
             this_var.replace(BoundIdentifier::new_uid(
                 "this",
