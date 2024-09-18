@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Default, Clone)]
 pub struct NoExtendNative {
     /// A list of objects which are allowed to be exceptions to the rule.
-    exceptions: Vec<CompactStr>,
+    exceptions: Box<Vec<CompactStr>>,
 }
 
 declare_oxc_lint!(
@@ -62,14 +62,15 @@ impl Rule for NoExtendNative {
         let obj = value.get(0);
 
         Self {
-            exceptions: obj
-                .and_then(|v| v.get("exceptions"))
-                .and_then(serde_json::Value::as_array)
-                .unwrap_or(&vec![])
-                .iter()
-                .filter_map(serde_json::Value::as_str)
-                .map(CompactStr::from)
-                .collect(),
+            exceptions: Box::new(
+                obj.and_then(|v| v.get("exceptions"))
+                    .and_then(serde_json::Value::as_array)
+                    .unwrap_or(&vec![])
+                    .iter()
+                    .filter_map(serde_json::Value::as_str)
+                    .map(CompactStr::from)
+                    .collect(),
+            ),
         }
     }
 
