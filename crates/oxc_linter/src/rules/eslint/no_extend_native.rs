@@ -1,4 +1,4 @@
-use oxc_ast::ast::{CallExpression, Expression};
+use oxc_ast::ast::{CallExpression, ChainElement, Expression};
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -58,6 +58,10 @@ impl Rule for NoExtendNative {
             for reference_id in reference_id_list {
                 let reference = symbols.get_reference(reference_id);
                 let name = ctx.semantic().reference_name(reference);
+                // If the referenced name does not appear to be a global object, skip it.
+                if !ctx.env_contains_var(name) {
+                    continue;
+                }
                 // If the referenced name is explicitly allowed, skip it.
                 let compact_name = CompactStr::from(name);
                 if self.exceptions.contains(&compact_name) {
@@ -77,9 +81,6 @@ impl Rule for NoExtendNative {
                 let Some(prop_access) = get_prototype_property_accessed(ctx, node) else {
                     continue;
                 };
-                if !ctx.env_contains_var(name) {
-                    continue;
-                }
                 dbg!(prop_access);
                 // Check if being used like `String.prototype.xyz = 0`
                 if let Some(prop_assign) = get_property_assignment(ctx, prop_access) {
@@ -113,11 +114,9 @@ fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    dbg!(node);
     let Some(parent) = ctx.nodes().parent_node(node.id()) else {
         return None;
     };
-    dbg!(parent);
     let AstKind::Argument(_) = parent.kind() else {
         return None;
     };
@@ -153,16 +152,27 @@ fn get_property_assignment<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
+    dbg!(node);
     let mut parent = ctx.nodes().parent_node(node.id())?;
     loop {
+        dbg!(parent);
         if let AstKind::AssignmentExpression(_) | AstKind::SimpleAssignmentTarget(_) = parent.kind()
         {
             return Some(parent);
-        } else if let AstKind::MemberExpression(expr) = parent.kind() {
-            dbg!(expr);
-            // Ignore computed member expressions like `obj[Object.prototype] = 0`
-            if let MemberExpression::ComputedMemberExpression(_) = expr {
-                return None;
+        } else if let AstKind::MemberExpression(member_expr) = parent.kind() {
+            if let MemberExpression::ComputedMemberExpression(computed) = member_expr {
+                if let AstKind::MemberExpression(node_expr) = node.kind() {
+                    // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
+                    // given node is the `expression` of the computed member expression)
+                    if computed
+                        .expression
+                        .as_member_expression()
+                        .is_some_and(|expression| expression.content_eq(node_expr))
+                    {
+                        return None;
+                    }
+                    return None;
+                }
             }
             parent = ctx.nodes().parent_node(parent.id())?;
         } else {
@@ -171,6 +181,8 @@ fn get_property_assignment<'a>(
     }
 }
 
+/// Returns the ASTNode that represents a prototype property access, such as
+/// `Object?.['prototype']`
 fn get_prototype_property_accessed<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
@@ -181,30 +193,46 @@ fn get_prototype_property_accessed<'a>(
     let Some(parent) = ctx.nodes().parent_node(node.id()) else {
         return None;
     };
+    dbg!(parent);
     let mut prototype_node = Some(parent);
     let AstKind::MemberExpression(prop_access_expr) = parent.kind() else {
         return None;
     };
-    dbg!(prop_access_expr);
     let Some(prop_name) = prop_access_expr.static_property_name() else {
         return None;
     };
     if prop_name != "prototype" {
         return None;
     }
-    let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
+    let Some(grandparent_node) = ctx.nodes().parent_node(parent.id()) else {
         return None;
     };
-    dbg!(grandparent);
-    // Expand the search to include computed member expressions like `Object.prototype['p']`
-    if let AstKind::MemberExpression(expr) = grandparent.kind() {
+    dbg!(grandparent_node);
+    if let AstKind::ChainExpression(chain_expr) = grandparent_node.kind() {
+        prototype_node = Some(grandparent_node);
+        if let Some(grandparent_parent) = ctx.nodes().parent_node(grandparent_node.id()) {
+            dbg!(grandparent_parent);
+            prototype_node = Some(grandparent_parent);
+        };
+        if let ChainElement::ComputedMemberExpression(computed) = &chain_expr.expression {
+            if computed
+                .object
+                .as_member_expression()
+                .is_some_and(|object| object.content_eq(prop_access_expr))
+            {
+                prototype_node = Some(grandparent_node);
+            }
+        }
+    }
+    // Expand the search to include computed member expressions like `Object['prototype']`
+    else if let AstKind::MemberExpression(expr) = grandparent_node.kind() {
         if let MemberExpression::ComputedMemberExpression(computed) = expr {
             if computed
                 .object
                 .as_member_expression()
                 .is_some_and(|object| object.content_eq(prop_access_expr))
             {
-                prototype_node = Some(grandparent);
+                prototype_node = Some(grandparent_node);
             }
         }
     }
@@ -255,6 +283,7 @@ fn test() {
         ("Object.prototype.p = 0; Object.prototype.q = 0", None),
         ("function foo() { Object.prototype.p = 0 }", None),
         ("(Object?.prototype).p = 0", None), // { "ecmaVersion": 2020 },
+        ("(Object?.['prototype'])['p'] = 0", None),
         ("Object.defineProperty(Object?.prototype, 'p', { value: 0 })", None), // { "ecmaVersion": 2020 },
         ("Object?.defineProperty(Object.prototype, 'p', { value: 0 })", None), // { "ecmaVersion": 2020 },
         ("Object?.['defineProperty'](Object?.['prototype'], 'p', {value: 0})", None),
