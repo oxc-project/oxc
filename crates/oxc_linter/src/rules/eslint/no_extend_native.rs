@@ -142,19 +142,14 @@ fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    let mut ancestor = ctx.nodes().parent_node(node.id())?;
-    loop {
-        if let AstKind::CallExpression(call_expr) = ancestor.kind() {
-            if !is_define_property_call(call_expr) {
-                return None;
+    for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
+        if let AstKind::CallExpression(call_expr) = parent.kind() {
+            if is_define_property_call(call_expr) {
+                return Some(parent);
             }
-            return Some(ancestor);
-        } else if let AstKind::ChainExpression(_) | AstKind::Argument(_) = ancestor.kind() {
-            ancestor = ctx.nodes().parent_node(ancestor.id())?;
-        } else {
-            return None;
         }
     }
+    None
 }
 
 /// Checks if a given `CallExpression` is a call to `Object.defineProperty` or `Object.defineProperties`.
@@ -184,34 +179,29 @@ fn get_property_assignment<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    let mut parent = ctx.nodes().parent_node(node.id())?;
-    loop {
-        if let AstKind::AssignmentExpression(_) = parent.kind() {
-            return Some(parent);
-        } else if let AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) =
-            parent.kind()
-        {
-            parent = ctx.nodes().parent_node(parent.id())?;
-        } else if let AstKind::MemberExpression(member_expr) = parent.kind() {
-            if let MemberExpression::ComputedMemberExpression(computed) = member_expr {
-                if let AstKind::MemberExpression(node_expr) = node.kind() {
-                    // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
-                    // given node is the `expression` of the computed member expression)
-                    if computed
-                        .expression
-                        .as_member_expression()
-                        .is_some_and(|expression| expression.content_eq(node_expr))
-                    {
+    for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
+        match parent.kind() {
+            AstKind::AssignmentExpression(_) => return Some(parent),
+            AstKind::MemberExpression(member_expr) => {
+                if let MemberExpression::ComputedMemberExpression(computed) = member_expr {
+                    if let AstKind::MemberExpression(node_expr) = node.kind() {
+                        // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
+                        // given node is the `expression` of the computed member expression)
+                        if computed
+                            .expression
+                            .as_member_expression()
+                            .is_some_and(|expression| expression.content_eq(node_expr))
+                        {
+                            return None;
+                        }
                         return None;
                     }
-                    return None;
                 }
             }
-            parent = ctx.nodes().parent_node(parent.id())?;
-        } else {
-            return None;
+            _ => {}
         }
     }
+    None
 }
 
 /// Returns the ASTNode that represents a prototype property access, such as
