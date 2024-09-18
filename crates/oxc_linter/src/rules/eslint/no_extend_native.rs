@@ -8,9 +8,20 @@ use oxc_span::{CompactStr, GetSpan};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
-pub struct NoExtendNative {
+pub struct NoExtendNative(Box<NoExtendNativeConfig>);
+
+#[derive(Debug, Default, Clone)]
+pub struct NoExtendNativeConfig {
     /// A list of objects which are allowed to be exceptions to the rule.
-    exceptions: Box<Vec<CompactStr>>,
+    exceptions: Vec<CompactStr>,
+}
+
+impl std::ops::Deref for NoExtendNative {
+    type Target = NoExtendNativeConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 declare_oxc_lint!(
@@ -61,17 +72,16 @@ impl Rule for NoExtendNative {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
 
-        Self {
-            exceptions: Box::new(
-                obj.and_then(|v| v.get("exceptions"))
-                    .and_then(serde_json::Value::as_array)
-                    .unwrap_or(&vec![])
-                    .iter()
-                    .filter_map(serde_json::Value::as_str)
-                    .map(CompactStr::from)
-                    .collect(),
-            ),
-        }
+        Self(Box::new(NoExtendNativeConfig {
+            exceptions: obj
+                .and_then(|v| v.get("exceptions"))
+                .and_then(serde_json::Value::as_array)
+                .unwrap_or(&vec![])
+                .iter()
+                .filter_map(serde_json::Value::as_str)
+                .map(CompactStr::from)
+                .collect(),
+        }))
     }
 
     fn run_once(&self, ctx: &LintContext) {
