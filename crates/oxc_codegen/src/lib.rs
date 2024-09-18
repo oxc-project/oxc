@@ -41,9 +41,13 @@ pub type CodeGenerator<'a> = Codegen<'a>;
 #[derive(Default, Clone, Copy)]
 pub struct CodegenOptions {
     /// Use single quotes instead of double quotes.
+    ///
+    /// Default is `false`.
     pub single_quote: bool,
 
     /// Remove whitespace.
+    ///
+    /// Default is `false`.
     pub minify: bool,
 }
 
@@ -53,8 +57,13 @@ pub struct CommentOptions {
     pub preserve_annotate_comments: bool,
 }
 
+/// Output from [`Codegen::build`]
 pub struct CodegenReturn {
+    /// The generated source code.
     pub source_text: String,
+    /// The source map from the input source code to the generated source code.
+    ///
+    /// You must use [`Codegen::enable_source_map`] for this to be [`Some`].
     pub source_map: Option<oxc_sourcemap::SourceMap>,
 }
 
@@ -158,7 +167,9 @@ impl<'a> Codegen<'a> {
     #[must_use]
     pub fn with_capacity(mut self, source_text_len: usize) -> Self {
         let capacity = if self.options.minify { source_text_len / 2 } else { source_text_len };
-        self.code = Vec::with_capacity(capacity);
+        // ensure space for at least `capacity` additional bytes without clobbering existing
+        // allocations.
+        self.code.reserve(capacity);
         self
     }
 
@@ -169,12 +180,16 @@ impl<'a> Codegen<'a> {
         self
     }
 
-    /// Adds the source text of the original AST, It is used with comments or for improving the
-    /// generated output.
+    /// Adds the source text of the original AST.
+    ///
+    /// The source code will be used with comments or for improving the generated output. It also
+    /// pre-allocates memory for the output code using [`Codegen::with_capacity`]. Note that if you
+    /// use this method alongside your own call to [`Codegen::with_capacity`], the larger of the
+    /// two will be used.
     #[must_use]
     pub fn with_source_text(mut self, source_text: &'a str) -> Self {
         self.source_text = Some(source_text);
-        self
+        self.with_capacity(source_text.len())
     }
 
     /// Also sets the [Self::with_source_text]
