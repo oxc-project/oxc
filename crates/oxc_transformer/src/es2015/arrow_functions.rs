@@ -4,6 +4,17 @@
 //!
 //! > This plugin is included in `preset-env`, in ES2015
 //!
+//! ## Missing features
+//!
+//! Implementation is incomplete at present. Still TODO:
+//!
+//! * Handle `arguments` in arrow functions.
+//! * Handle `new.target` in arrow functions.
+//! * Error on arrow functions in class properties.
+//!   <https://babeljs.io/repl#?code_lz=MYGwhgzhAEDC0G8BQ1oDMD2HoF5oAoBKXAPmgBcALASwgG4kBfJIA&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
+//! * Error on `super` in arrow functions.
+//!   <https://babeljs.io/repl#?code_lz=MYGwhgzhAEBiD29oG8C-AoUkYCEwCdoBTADwBciA7AExgSWXWmgFsiyALeagCgEoUTZtHzsArvkrR-0ALwA-aBDEAHIvgB0AM0QBuIRgxA&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
+//!
 //! ## Example
 //!
 //! Input:
