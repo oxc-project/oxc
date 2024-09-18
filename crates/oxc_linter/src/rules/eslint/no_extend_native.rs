@@ -142,9 +142,7 @@ fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    let Some(mut ancestor) = ctx.nodes().parent_node(node.id()) else {
-        return None;
-    };
+    let mut ancestor = ctx.nodes().parent_node(node.id())?;
     loop {
         if let AstKind::CallExpression(call_expr) = ancestor.kind() {
             if !is_define_property_call(call_expr) {
@@ -225,22 +223,16 @@ fn get_prototype_property_accessed<'a>(
     let AstKind::IdentifierReference(_) = node.kind() else {
         return None;
     };
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
-        return None;
-    };
+    let parent = ctx.nodes().parent_node(node.id())?;
     let mut prototype_node = Some(parent);
     let AstKind::MemberExpression(prop_access_expr) = parent.kind() else {
         return None;
     };
-    let Some(prop_name) = prop_access_expr.static_property_name() else {
-        return None;
-    };
+    let prop_name = prop_access_expr.static_property_name()?;
     if prop_name != "prototype" {
         return None;
     }
-    let Some(grandparent_node) = ctx.nodes().parent_node(parent.id()) else {
-        return None;
-    };
+    let grandparent_node = ctx.nodes().parent_node(parent.id())?;
 
     if let AstKind::ChainExpression(_) = grandparent_node.kind() {
         prototype_node = Some(grandparent_node);
@@ -269,13 +261,11 @@ fn is_computed_member_expression_matching(
                     .is_some_and(|object| object.content_eq(prop_access_expr));
             }
         }
-        AstKind::MemberExpression(expr) => {
-            if let MemberExpression::ComputedMemberExpression(computed) = expr {
-                return computed
-                    .object
-                    .as_member_expression()
-                    .is_some_and(|object| object.content_eq(prop_access_expr));
-            }
+        AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
+            return computed
+                .object
+                .as_member_expression()
+                .is_some_and(|object| object.content_eq(prop_access_expr));
         }
         _ => {}
     }
