@@ -89,7 +89,7 @@ impl Rule for NoExtendNative {
                 if self.exceptions.contains(&compact_name) {
                     continue;
                 }
-                // If the first letter is capital, like `Object`, we will assume it is a native obejct
+                // If the first letter is capital, like `Object`, we will assume it is a native object
                 let Some(first_char) = name.chars().next() else {
                     continue;
                 };
