@@ -3,7 +3,7 @@ use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::cmp::ContentEq;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -87,7 +87,7 @@ impl Rule for NoExtendNative {
                     dbg!(prop_assign);
                     ctx.diagnostic(
                         OxcDiagnostic::error(format!(
-                            "{} prototype is read only, properties should not be added.",
+                            "{} prototype is read-only, properties should not be added.",
                             name
                         ))
                         .with_label(prop_assign.span()),
@@ -99,7 +99,7 @@ impl Rule for NoExtendNative {
                 {
                     ctx.diagnostic(
                         OxcDiagnostic::error(format!(
-                            "{} prototype is read only, properties should not be added.",
+                            "{} prototype is read-only, properties should not be added.",
                             name
                         ))
                         .with_label(define_property_call.span()),
@@ -114,33 +114,41 @@ fn get_define_property_call<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+    dbg!("get_define_property_call1", node);
+    let Some(mut ancestor) = ctx.nodes().parent_node(node.id()) else {
         return None;
     };
-    let AstKind::Argument(_) = parent.kind() else {
-        return None;
-    };
-    let Some(grandparent) = ctx.nodes().parent_node(parent.id()) else {
-        return None;
-    };
-    let AstKind::CallExpression(call_expr) = grandparent.kind() else {
-        return None;
-    };
-    if !is_define_property_call(call_expr) {
-        return None;
+    loop {
+        dbg!(ancestor);
+        if let AstKind::CallExpression(call_expr) = ancestor.kind() {
+            if !is_define_property_call(call_expr) {
+                return None;
+            }
+            return Some(ancestor);
+        } else if let AstKind::ChainExpression(_) | AstKind::Argument(_) = ancestor.kind() {
+            ancestor = ctx.nodes().parent_node(ancestor.id())?;
+        } else {
+            return None;
+        }
     }
-    Some(grandparent)
 }
 
 fn is_define_property_call(call_expr: &CallExpression) -> bool {
-    match call_expr.callee.as_member_expression() {
+    dbg!(call_expr.callee.without_parentheses());
+    let callee = call_expr.callee.without_parentheses();
+
+    let member_expression = if let Expression::ChainExpression(chain_expr) = callee {
+        dbg!(chain_expr.expression.as_member_expression())
+    } else {
+        callee.as_member_expression()
+    };
+    match member_expression {
         Some(me) => {
             let prop_name = me.static_property_name();
             me.object()
                 .get_identifier_reference()
-                .map_or(false, |ident_ref| ident_ref.name == "Object")
+                .is_some_and(|ident_ref| ident_ref.name == "Object")
                 && (prop_name == Some("defineProperty") || prop_name == Some("defineProperties"))
-                && !me.optional()
         }
         _ => false,
     }
@@ -156,9 +164,12 @@ fn get_property_assignment<'a>(
     let mut parent = ctx.nodes().parent_node(node.id())?;
     loop {
         dbg!(parent);
-        if let AstKind::AssignmentExpression(_) | AstKind::SimpleAssignmentTarget(_) = parent.kind()
-        {
+        if let AstKind::AssignmentExpression(_) = parent.kind() {
             return Some(parent);
+        } else if let AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) =
+            parent.kind()
+        {
+            parent = ctx.nodes().parent_node(parent.id())?;
         } else if let AstKind::MemberExpression(member_expr) = parent.kind() {
             if let MemberExpression::ComputedMemberExpression(computed) = member_expr {
                 if let AstKind::MemberExpression(node_expr) = node.kind() {
