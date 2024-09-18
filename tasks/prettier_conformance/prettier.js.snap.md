@@ -1,4 +1,4 @@
-js compatibility: 267/593 (45.03%)
+js compatibility: 268/593 (45.19%)
 
 # Failed
 
@@ -461,7 +461,6 @@ js compatibility: 267/593 (45.03%)
 ### throw_statement
 * throw_statement/binaryish.js
 * throw_statement/comment.js
-* throw_statement/jsx.js
 
 ### trailing-comma
 * trailing-comma/es5.js

@@ -1,4 +1,4 @@
-ts compatibility: 170/526 (32.32%)
+ts compatibility: 173/526 (32.89%)
 
 # Failed
 
@@ -539,12 +539,9 @@ ts compatibility: 170/526 (32.32%)
 * trailing-comma/type-parameters-vs-arguments.ts
 
 ### tsx
-* tsx/generic-component.tsx
-* tsx/keyword.tsx
 * tsx/member-expression.tsx
 * tsx/not-react.ts
 * tsx/react.tsx
-* tsx/this.tsx
 * tsx/type-parameters.tsx
 * tsx/url.tsx
 
