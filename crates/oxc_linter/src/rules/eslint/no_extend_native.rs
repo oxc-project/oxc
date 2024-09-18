@@ -107,6 +107,7 @@ fn get_property_assignment<'a>(
         {
             return Some(parent);
         } else if let AstKind::MemberExpression(expr) = parent.kind() {
+            dbg!(expr);
             // Ignore computed member expressions like `obj[Object.prototype] = 0`
             if let MemberExpression::ComputedMemberExpression(_) = expr {
                 return None;
@@ -132,9 +133,7 @@ fn get_prototype_property_accessed<'a>(
     let AstKind::MemberExpression(prop_access_expr) = parent.kind() else {
         return None;
     };
-    let MemberExpression::StaticMemberExpression(_) = prop_access_expr else {
-        return None;
-    };
+    dbg!(prop_access_expr);
     let Some(prop_name) = prop_access_expr.static_property_name() else {
         return None;
     };
