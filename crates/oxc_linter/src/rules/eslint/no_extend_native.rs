@@ -67,10 +67,9 @@ impl Rule for NoExtendNative {
                 .and_then(serde_json::Value::as_array)
                 .unwrap_or(&vec![])
                 .iter()
-                .map(serde_json::Value::as_str)
-                .filter(Option::is_some)
-                .map(|x| x.unwrap().into())
-                .collect::<Vec<CompactStr>>(),
+                .filter_map(serde_json::Value::as_str)
+                .map(CompactStr::from)
+                .collect(),
         }
     }
 
