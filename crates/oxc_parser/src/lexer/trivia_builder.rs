@@ -178,7 +178,7 @@ token
             kind: CommentKind::Block,
             position: CommentPosition::Leading,
             attached_to: 36,
-            preceded_by_newline: false, // hashbang comment always end in newline
+            preceded_by_newline: true,
             followed_by_newline: true,
         }];
         assert_eq!(comments, expected);

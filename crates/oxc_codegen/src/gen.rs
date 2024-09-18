@@ -52,6 +52,7 @@ impl<'a> Gen for Hashbang<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("#!");
         p.print_str(self.value.as_str());
+        p.print_hard_newline();
     }
 }
 

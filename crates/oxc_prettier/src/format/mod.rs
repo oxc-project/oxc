@@ -30,7 +30,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
-use oxc_syntax::identifier::is_identifier_name;
+use oxc_syntax::identifier::{is_identifier_name, is_line_terminator};
 
 use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
 use crate::{
@@ -60,10 +60,6 @@ impl<'a> Format<'a> for Program<'a> {
         let mut parts = p.vec();
         if let Some(hashbang) = &self.hashbang {
             parts.push(hashbang.format(p));
-            let c = p.source_text[..hashbang.span.end as usize].chars().last().unwrap();
-            if p.is_next_line_empty_after_index(hashbang.span.end - c.len_utf8() as u32) {
-                parts.extend(hardline!());
-            }
         }
         if let Some(doc) = block::print_block_body(
             p,
@@ -81,7 +77,16 @@ impl<'a> Format<'a> for Program<'a> {
 
 impl<'a> Format<'a> for Hashbang<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        Doc::Str(self.span.source_text(p.source_text))
+        let mut parts = p.vec();
+        parts.push(ss!(self.span.source_text(p.source_text)));
+        parts.extend(hardline!());
+        // Preserve original newline
+        if let Some(c) = p.source_text[self.span.end as usize..].chars().nth(1) {
+            if is_line_terminator(c) {
+                parts.extend(hardline!());
+            }
+        }
+        Doc::Array(parts)
     }
 }
 

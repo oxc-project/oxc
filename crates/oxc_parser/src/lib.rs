@@ -524,6 +524,15 @@ mod test {
     }
 
     #[test]
+    fn hashbang() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = "#!/usr/bin/node\n;";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert_eq!(ret.program.hashbang.unwrap().value.as_str(), "/usr/bin/node");
+    }
+
+    #[test]
     fn unambiguous() {
         let allocator = Allocator::default();
         let source_type = SourceType::unambiguous();

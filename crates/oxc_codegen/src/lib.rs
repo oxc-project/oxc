@@ -282,6 +282,11 @@ impl<'a> Codegen<'a> {
     }
 
     #[inline]
+    fn print_hard_newline(&mut self) {
+        self.print_char(b'\n');
+    }
+
+    #[inline]
     fn print_semicolon(&mut self) {
         self.print_char(b';');
     }
