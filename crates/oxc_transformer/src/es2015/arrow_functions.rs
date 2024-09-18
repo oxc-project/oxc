@@ -160,6 +160,14 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         self.inside_arrow_function_stack.pop().unwrap();
     }
 
+    fn enter_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.inside_arrow_function_stack.push(false);
+    }
+
+    fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.inside_arrow_function_stack.pop().unwrap();
+    }
+
     fn enter_jsx_element_name(
         &mut self,
         element_name: &mut JSXElementName<'a>,
@@ -211,14 +219,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
             *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
         }
-    }
-
-    fn enter_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.inside_arrow_function_stack.push(false);
-    }
-
-    fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.inside_arrow_function_stack.pop().unwrap();
     }
 
     fn enter_variable_declarator(
