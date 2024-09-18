@@ -1,6 +1,7 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_span::cmp::ContentEq;
 use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -121,20 +122,22 @@ fn get_prototype_property_accessed<'a>(
     ctx: &'a LintContext,
     node: &AstNode<'a>,
 ) -> Option<&'a AstNode<'a>> {
-    let AstKind::IdentifierReference(ident) = node.kind() else {
+    let AstKind::IdentifierReference(_) = node.kind() else {
         return None;
     };
     let Some(parent) = ctx.nodes().parent_node(node.id()) else {
         return None;
     };
     let mut prototype_node = Some(parent);
-    let AstKind::MemberExpression(prop_access) = parent.kind() else {
+    let AstKind::MemberExpression(prop_access_expr) = parent.kind() else {
         return None;
     };
-    let MemberExpression::StaticMemberExpression(prop_access) = prop_access else {
+    let MemberExpression::StaticMemberExpression(_) = prop_access_expr else {
         return None;
     };
-    let prop_name = prop_access.property.name.as_str();
+    let Some(prop_name) = prop_access_expr.static_property_name() else {
+        return None;
+    };
     if prop_name != "prototype" {
         return None;
     }
@@ -145,7 +148,11 @@ fn get_prototype_property_accessed<'a>(
     // Expand the search to include computed member expressions like `Object.prototype['p']`
     if let AstKind::MemberExpression(expr) = grandparent.kind() {
         if let MemberExpression::ComputedMemberExpression(computed) = expr {
-            if computed.object == prop_access {
+            if computed
+                .object
+                .as_member_expression()
+                .is_some_and(|object| object.content_eq(prop_access_expr))
+            {
                 prototype_node = Some(grandparent);
             }
         }
