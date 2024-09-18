@@ -75,6 +75,19 @@ pub(super) fn print_function_parameters<'a>(
     let len = params.items.len();
     let has_rest = params.rest.is_some();
     for (i, param) in params.items.iter().enumerate() {
+        if let Some(accessibility) = &param.accessibility {
+            printed.push(ss!(accessibility.as_str()));
+            printed.push(space!());
+        }
+
+        if param.r#override {
+            printed.push(ss!("override "));
+        }
+
+        if param.readonly {
+            printed.push(ss!("readonly "));
+        }
+
         printed.push(param.format(p));
         if i == len - 1 && !has_rest {
             break;
