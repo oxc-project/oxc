@@ -2790,9 +2790,29 @@ impl<'a> Gen for TSClassImplements<'a> {
 
 impl<'a> Gen for TSTypeParameterDeclaration<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
-        p.print_str("<");
-        p.print_list(&self.params, ctx);
-        p.print_str(">");
+        let is_multi_line = self.params.len() >= 2;
+        p.print_char(b'<');
+        if is_multi_line {
+            p.indent();
+        }
+        for (index, item) in self.params.iter().enumerate() {
+            if index != 0 {
+                p.print_comma();
+            }
+            if is_multi_line {
+                p.print_soft_newline();
+                p.print_indent();
+            } else if index != 0 {
+                p.print_soft_space();
+            }
+            item.print(p, ctx);
+        }
+        if is_multi_line {
+            p.print_soft_newline();
+            p.dedent();
+            p.print_indent();
+        }
+        p.print_char(b'>');
     }
 }
 

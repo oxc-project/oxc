@@ -37,6 +37,20 @@ fn ts() {
         "d = x satisfies y;",
         "export @x declare abstract class C {}",
         "div<T>``",
+        "export type Component<Props = any> = Foo;",
+        "
+export type Component<
+  Props = any,
+  RawBindings = any,
+  D = any,
+  C extends ComputedOptions = ComputedOptions,
+  M extends MethodOptions = MethodOptions,
+  E extends EmitsOptions | Record<string, any[]> = {},
+  S extends Record<string, any> = any,
+> =
+  | ConcreteComponent<Props, RawBindings, D, C, M, E, S>
+  | ComponentPublicInstanceConstructor<Props>
+"
     ];
 
     snapshot("ts", &cases);
