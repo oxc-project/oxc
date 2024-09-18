@@ -182,20 +182,18 @@ fn get_property_assignment<'a>(
     for parent in ctx.nodes().iter_parents(node.id()).skip(1) {
         match parent.kind() {
             AstKind::AssignmentExpression(_) => return Some(parent),
-            AstKind::MemberExpression(member_expr) => {
-                if let MemberExpression::ComputedMemberExpression(computed) = member_expr {
-                    if let AstKind::MemberExpression(node_expr) = node.kind() {
-                        // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
-                        // given node is the `expression` of the computed member expression)
-                        if computed
-                            .expression
-                            .as_member_expression()
-                            .is_some_and(|expression| expression.content_eq(node_expr))
-                        {
-                            return None;
-                        }
+            AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(computed)) => {
+                if let AstKind::MemberExpression(node_expr) = node.kind() {
+                    // Ignore computed member expressions like `obj[Object.prototype] = 0` (i.e., the
+                    // given node is the `expression` of the computed member expression)
+                    if computed
+                        .expression
+                        .as_member_expression()
+                        .is_some_and(|expression| expression.content_eq(node_expr))
+                    {
                         return None;
                     }
+                    return None;
                 }
             }
             _ => {}
