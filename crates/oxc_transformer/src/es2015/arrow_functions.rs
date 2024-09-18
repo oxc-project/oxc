@@ -252,16 +252,20 @@ impl<'a> ArrowFunctions<'a> {
         // <https://github.com/oxc-project/oxc/pull/5840>
         let this_var = self.this_var_stack.last_mut().unwrap();
         if this_var.is_none() {
-            let target_scope_id =
-                ctx.scopes().ancestors(ctx.current_scope_id()).skip(1).find(|&scope_id| {
+            let target_scope_id = ctx
+                .scopes()
+                .ancestors(ctx.current_scope_id())
+                .skip(1)
+                .find(|&scope_id| {
                     let scope_flags = ctx.scopes().get_flags(scope_id);
-                    scope_flags.intersects(ScopeFlags::Function | ScopeFlags::Top)
-                        && !scope_flags.contains(ScopeFlags::Arrow)
-                });
+                    // Function but not arrow function
+                    scope_flags & (ScopeFlags::Function | ScopeFlags::Arrow) == ScopeFlags::Function
+                })
+                .unwrap_or(ctx.scopes().root_scope_id());
 
             this_var.replace(BoundIdentifier::new_uid(
                 "this",
-                target_scope_id.unwrap(),
+                target_scope_id,
                 SymbolFlags::FunctionScopedVariable,
                 ctx,
             ));
