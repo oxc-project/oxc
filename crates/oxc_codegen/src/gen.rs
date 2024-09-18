@@ -73,6 +73,7 @@ impl<'a> Gen for Directive<'a> {
 
 impl<'a> Gen for Statement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_leading_comments(self.span().start);
         match self {
             Self::BlockStatement(stmt) => stmt.print(p, ctx),
             Self::BreakStatement(stmt) => stmt.print(p, ctx),
@@ -468,6 +469,7 @@ impl<'a> Gen for ReturnStatement<'a> {
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("return");
         if let Some(arg) = &self.argument {
             p.print_hard_space();
@@ -2204,22 +2206,27 @@ impl<'a> Gen for ClassElement<'a> {
     fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::StaticBlock(elem) => {
+                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::MethodDefinition(elem) => {
+                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::PropertyDefinition(elem) => {
+                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::AccessorProperty(elem) => {
+                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::TSIndexSignature(elem) => {
+                p.print_leading_comments(elem.span.start);
                 elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }

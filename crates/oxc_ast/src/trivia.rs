@@ -104,6 +104,10 @@ impl Comment {
     pub fn real_span_start(&self) -> u32 {
         self.span.start - 2
     }
+
+    pub fn is_jsdoc(&self, source_text: &str) -> bool {
+        self.is_leading() && self.is_block() && self.span.source_text(source_text).starts_with('*')
+    }
 }
 
 /// Sorted set of unique trivia comments, in ascending order by starting position.

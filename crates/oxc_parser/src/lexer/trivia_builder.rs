@@ -1,7 +1,7 @@
 use oxc_ast::{Comment, CommentKind, CommentPosition, Trivias};
 use oxc_span::Span;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct TriviaBuilder {
     // This is a set of unique comments. Duplicated
     // comments could be generated in case of rewind; they are
@@ -16,6 +16,12 @@ pub struct TriviaBuilder {
 
     /// Saw a newline before this position
     saw_newline: bool,
+}
+
+impl Default for TriviaBuilder {
+    fn default() -> Self {
+        Self { comments: vec![], irregular_whitespaces: vec![], processed: 0, saw_newline: true }
+    }
 }
 
 impl TriviaBuilder {
@@ -44,6 +50,9 @@ impl TriviaBuilder {
         let len = self.comments.len();
         if self.processed < len {
             self.comments[len - 1].followed_by_newline = true;
+            if !self.saw_newline {
+                self.processed = self.comments.len();
+            }
         }
         self.saw_newline = true;
     }
@@ -51,7 +60,7 @@ impl TriviaBuilder {
     pub fn handle_token(&mut self, token_start: u32) {
         let len = self.comments.len();
         if self.processed < len {
-            // All unprocess preceding comments are leading comments attached to this token start.
+            // All unprocessed preceding comments are leading comments attached to this token start.
             for comment in &mut self.comments[self.processed..] {
                 comment.position = CommentPosition::Leading;
                 comment.attached_to = token_start;
@@ -94,18 +103,22 @@ mod test {
     use oxc_ast::{Comment, CommentKind, CommentPosition};
     use oxc_span::{SourceType, Span};
 
-    #[test]
-    fn comment_attachments() {
+    fn get_comments(source_text: &str) -> Vec<Comment> {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        ret.trivias.comments().copied().collect::<Vec<_>>()
+    }
+
+    #[test]
+    fn comment_attachments() {
         let source_text = "
         /* Leading 1 */
         // Leading 2
         /* Leading 3 */ token /* Trailing 1 */ // Trailing 2
         // Leading of EOF token
         ";
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        let comments = ret.trivias.comments().copied().collect::<Vec<_>>();
+        let comments = get_comments(source_text);
         let expected = [
             Comment {
                 span: Span::new(11, 22),
@@ -165,22 +178,62 @@ mod test {
 
     #[test]
     fn comment_attachments2() {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
         let source_text = "#!/usr/bin/env node
 /* Leading 1 */
-token
+token /* Trailing 1 */
         ";
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        let comments = ret.trivias.comments().copied().collect::<Vec<_>>();
-        let expected = vec![Comment {
-            span: Span::new(22, 33),
-            kind: CommentKind::Block,
-            position: CommentPosition::Leading,
-            attached_to: 36,
-            preceded_by_newline: true,
-            followed_by_newline: true,
-        }];
+        let comments = get_comments(source_text);
+        let expected = vec![
+            Comment {
+                span: Span::new(22, 33),
+                kind: CommentKind::Block,
+                position: CommentPosition::Leading,
+                attached_to: 36,
+                preceded_by_newline: true,
+                followed_by_newline: true,
+            },
+            Comment {
+                span: Span::new(44, 56),
+                kind: CommentKind::Block,
+                position: CommentPosition::Trailing,
+                attached_to: 0,
+                preceded_by_newline: false,
+                followed_by_newline: true,
+            },
+        ];
+        assert_eq!(comments, expected);
+    }
+
+    #[test]
+    fn comment_attachments3() {
+        let source_text = "
+/**
+ * A
+ **/
+/**
+ * B
+ **/
+ token
+        ";
+        let comments = get_comments(source_text);
+        let expected = vec![
+            Comment {
+                span: Span::new(3, 12),
+                kind: CommentKind::Block,
+                position: CommentPosition::Leading,
+                attached_to: 30,
+                preceded_by_newline: true,
+                followed_by_newline: true,
+            },
+            Comment {
+                span: Span::new(17, 26),
+                kind: CommentKind::Block,
+                position: CommentPosition::Leading,
+                attached_to: 30,
+                preceded_by_newline: true,
+                followed_by_newline: true,
+            },
+        ];
         assert_eq!(comments, expected);
     }
 }

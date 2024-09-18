@@ -5,6 +5,7 @@
 
 mod annotation_comment;
 mod binary_expr_visitor;
+mod comment;
 mod context;
 mod gen;
 mod operator;
@@ -25,10 +26,9 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashMap;
 
-use self::annotation_comment::AnnotationComment;
 use crate::{
-    binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
-    sourcemap_builder::SourcemapBuilder,
+    annotation_comment::AnnotationComment, binary_expr_visitor::BinaryExpressionVisitor,
+    comment::CommentsMap, operator::Operator, sourcemap_builder::SourcemapBuilder,
 };
 pub use crate::{
     context::Context,
@@ -75,6 +75,7 @@ pub struct Codegen<'a> {
     source_text: Option<&'a str>,
 
     trivias: Trivias,
+    leading_comments: CommentsMap,
 
     mangler: Option<Mangler>,
 
@@ -142,6 +143,7 @@ impl<'a> Codegen<'a> {
             comment_options: CommentOptions::default(),
             source_text: None,
             trivias: Trivias::default(),
+            leading_comments: CommentsMap::default(),
             mangler: None,
             code: vec![],
             needs_semicolon: false,
@@ -200,6 +202,7 @@ impl<'a> Codegen<'a> {
         trivias: Trivias,
         options: CommentOptions,
     ) -> Self {
+        self.build_leading_comments(source_text, &trivias);
         self.trivias = trivias;
         self.comment_options = options;
         self.with_source_text(source_text)
