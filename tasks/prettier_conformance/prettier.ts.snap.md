@@ -1,4 +1,4 @@
-ts compatibility: 159/526 (30.23%)
+ts compatibility: 173/526 (32.89%)
 
 # Failed
 
@@ -219,14 +219,7 @@ ts compatibility: 159/526 (30.23%)
 ### conformance/types/tuple
 * conformance/types/tuple/contextualTypeWithTuple.ts
 * conformance/types/tuple/indexerWithTuple.ts
-* conformance/types/tuple/tupleElementTypes1.ts
-* conformance/types/tuple/tupleElementTypes2.ts
 * conformance/types/tuple/typeInferenceWithTupleType.ts
-* conformance/types/tuple/wideningTuples1.ts
-* conformance/types/tuple/wideningTuples2.ts
-* conformance/types/tuple/wideningTuples3.ts
-* conformance/types/tuple/wideningTuples4.ts
-* conformance/types/tuple/wideningTuples7.ts
 
 ### conformance/types/typeOperator
 * conformance/types/typeOperator/typeOperator.ts
@@ -479,7 +472,6 @@ ts compatibility: 159/526 (30.23%)
 
 ### optional-type
 * optional-type/complex.ts
-* optional-type/simple.ts
 
 ### optional-variance
 * optional-variance/basic.ts
@@ -502,13 +494,9 @@ ts compatibility: 159/526 (30.23%)
 * range/issue-4926.ts
 * range/issue-7148.ts
 
-### readonly
-* readonly/array.ts
-
 ### rest-type
 * rest-type/complex.ts
 * rest-type/infer-type.ts
-* rest-type/simple.ts
 
 ### satisfies-operators
 * satisfies-operators/argument-expansion.ts
@@ -551,12 +539,9 @@ ts compatibility: 159/526 (30.23%)
 * trailing-comma/type-parameters-vs-arguments.ts
 
 ### tsx
-* tsx/generic-component.tsx
-* tsx/keyword.tsx
 * tsx/member-expression.tsx
 * tsx/not-react.ts
 * tsx/react.tsx
-* tsx/this.tsx
 * tsx/type-parameters.tsx
 * tsx/url.tsx
 
@@ -565,7 +550,6 @@ ts compatibility: 159/526 (30.23%)
 * tuple/trailing-comma-trailing-rest.ts
 * tuple/trailing-comma.ts
 * tuple/tuple-labeled.ts
-* tuple/tuple-rest-not-last.ts
 * tuple/tuple.ts
 
 ### type-alias

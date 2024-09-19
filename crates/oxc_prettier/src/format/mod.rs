@@ -952,7 +952,30 @@ impl<'a> Format<'a> for TSMappedType<'a> {
 
 impl<'a> Format<'a> for TSNamedTupleMember<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(self.label.format(p));
+
+        if self.optional {
+            parts.push(ss!("?"));
+        }
+
+        parts.push(ss!(": "));
+        parts.push(self.element_type.format(p));
+
+        Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSRestType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array!(p, ss!("..."), self.type_annotation.format(p))
+    }
+}
+
+impl<'a> Format<'a> for TSOptionalType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        array!(p, self.type_annotation.format(p), ss!("?"))
     }
 }
 
@@ -1109,10 +1132,6 @@ impl<'a> Format<'a> for TSInterfaceDeclaration<'a> {
 
         parts.push(ss!("interface "));
         parts.push(format!(p, self.id));
-
-        if let Some(type_parameters) = &self.type_parameters {
-            parts.push(type_parameters.format(p));
-        }
 
         if let Some(type_parameters) = &self.type_parameters {
             parts.push(type_parameters.format(p));
@@ -1400,7 +1419,48 @@ impl<'a> Format<'a> for TSTypeParameterInstantiation<'a> {
 
 impl<'a> Format<'a> for TSTupleElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            TSTupleElement::TSOptionalType(it) => it.format(p),
+            TSTupleElement::TSRestType(it) => it.format(p),
+            TSTupleElement::TSAnyKeyword(it) => it.format(p),
+            TSTupleElement::TSBigIntKeyword(it) => it.format(p),
+            TSTupleElement::TSBooleanKeyword(it) => it.format(p),
+            TSTupleElement::TSIntrinsicKeyword(it) => it.format(p),
+            TSTupleElement::TSNeverKeyword(it) => it.format(p),
+            TSTupleElement::TSNullKeyword(it) => it.format(p),
+            TSTupleElement::TSNumberKeyword(it) => it.format(p),
+            TSTupleElement::TSObjectKeyword(it) => it.format(p),
+            TSTupleElement::TSStringKeyword(it) => it.format(p),
+            TSTupleElement::TSSymbolKeyword(it) => it.format(p),
+            TSTupleElement::TSUndefinedKeyword(it) => it.format(p),
+            TSTupleElement::TSUnknownKeyword(it) => it.format(p),
+            TSTupleElement::TSVoidKeyword(it) => it.format(p),
+            TSTupleElement::TSArrayType(it) => it.format(p),
+            TSTupleElement::TSConditionalType(it) => it.format(p),
+            TSTupleElement::TSConstructorType(it) => it.format(p),
+            TSTupleElement::TSFunctionType(it) => it.format(p),
+            TSTupleElement::TSImportType(it) => it.format(p),
+            TSTupleElement::TSIndexedAccessType(it) => it.format(p),
+            TSTupleElement::TSInferType(it) => it.format(p),
+            TSTupleElement::TSIntersectionType(it) => it.format(p),
+            TSTupleElement::TSLiteralType(it) => it.format(p),
+            TSTupleElement::TSMappedType(it) => it.format(p),
+            TSTupleElement::TSNamedTupleMember(it) => it.format(p),
+            TSTupleElement::TSQualifiedName(it) => it.format(p),
+            TSTupleElement::TSTemplateLiteralType(it) => it.format(p),
+            TSTupleElement::TSThisType(it) => it.format(p),
+            TSTupleElement::TSTupleType(it) => it.format(p),
+            TSTupleElement::TSTypeLiteral(it) => it.format(p),
+            TSTupleElement::TSTypeOperatorType(it) => it.format(p),
+            TSTupleElement::TSTypePredicate(it) => it.format(p),
+            TSTupleElement::TSTypeQuery(it) => it.format(p),
+            TSTupleElement::TSTypeReference(it) => it.format(p),
+            TSTupleElement::TSUnionType(it) => it.format(p),
+            TSTupleElement::TSParenthesizedType(it) => it.format(p),
+            TSTupleElement::JSDocNullableType(it) => it.format(p),
+            TSTupleElement::JSDocNonNullableType(it) => it.format(p),
+            TSTupleElement::JSDocUnknownType(it) => it.format(p),
+        }
     }
 }
 
@@ -2403,135 +2463,279 @@ impl<'a> Format<'a> for TSClassImplements<'a> {
     }
 }
 
-impl<'a> Format<'a> for JSXIdentifier<'a> {
+impl<'a> Format<'a> for TSTypeAssertion<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
+    }
+}
+
+impl<'a> Format<'a> for TSSatisfiesExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSInstantiationExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for TSNonNullExpression<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for JSXIdentifier<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        ss!(self.name.as_str())
     }
 }
 
 impl<'a> Format<'a> for JSXMemberExpressionObject<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            JSXMemberExpressionObject::IdentifierReference(it) => it.format(p),
+            JSXMemberExpressionObject::MemberExpression(it) => it.format(p),
+            JSXMemberExpressionObject::ThisExpression(it) => it.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for JSXMemberExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, self.object.format(p), ss!("."), self.property.format(p))
     }
 }
 
 impl<'a> Format<'a> for JSXElementName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            JSXElementName::Identifier(it) => it.format(p),
+            JSXElementName::IdentifierReference(it) => it.format(p),
+            JSXElementName::MemberExpression(it) => it.format(p),
+            JSXElementName::NamespacedName(it) => it.format(p),
+            JSXElementName::ThisExpression(it) => it.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for JSXNamespacedName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, self.namespace.format(p), ss!(":"), self.property.format(p))
     }
 }
 
 impl<'a> Format<'a> for JSXAttributeName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            JSXAttributeName::Identifier(it) => it.format(p),
+            JSXAttributeName::NamespacedName(it) => it.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for JSXAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+        parts.push(self.name.format(p));
+
+        if let Some(value) = &self.value {
+            parts.push(ss!("="));
+            parts.push(value.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for JSXEmptyExpression {
     fn format(&self, _: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        ss!("")
     }
 }
 
 impl<'a> Format<'a> for JSXExpression<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            JSXExpression::EmptyExpression(it) => it.format(p),
+            match_member_expression!(Self) => self.to_member_expression().format(p),
+            JSXExpression::BooleanLiteral(it) => it.format(p),
+            JSXExpression::NullLiteral(it) => it.format(p),
+            JSXExpression::NumericLiteral(it) => it.format(p),
+            JSXExpression::BigIntLiteral(it) => it.format(p),
+            JSXExpression::RegExpLiteral(it) => it.format(p),
+            JSXExpression::StringLiteral(it) => it.format(p),
+            JSXExpression::TemplateLiteral(it) => it.format(p),
+            JSXExpression::Identifier(it) => it.format(p),
+            JSXExpression::MetaProperty(it) => it.format(p),
+            JSXExpression::Super(it) => it.format(p),
+            JSXExpression::ArrayExpression(it) => it.format(p),
+            JSXExpression::ArrowFunctionExpression(it) => it.format(p),
+            JSXExpression::AssignmentExpression(it) => it.format(p),
+            JSXExpression::AwaitExpression(it) => it.format(p),
+            JSXExpression::BinaryExpression(it) => it.format(p),
+            JSXExpression::CallExpression(it) => it.format(p),
+            JSXExpression::ChainExpression(it) => it.format(p),
+            JSXExpression::ClassExpression(it) => it.format(p),
+            JSXExpression::ConditionalExpression(it) => it.format(p),
+            JSXExpression::FunctionExpression(it) => it.format(p),
+            JSXExpression::ImportExpression(it) => it.format(p),
+            JSXExpression::LogicalExpression(it) => it.format(p),
+            JSXExpression::NewExpression(it) => it.format(p),
+            JSXExpression::ObjectExpression(it) => it.format(p),
+            JSXExpression::ParenthesizedExpression(it) => it.format(p),
+            JSXExpression::SequenceExpression(it) => it.format(p),
+            JSXExpression::TaggedTemplateExpression(it) => it.format(p),
+            JSXExpression::ThisExpression(it) => it.format(p),
+            JSXExpression::UnaryExpression(it) => it.format(p),
+            JSXExpression::UpdateExpression(it) => it.format(p),
+            JSXExpression::YieldExpression(it) => it.format(p),
+            JSXExpression::PrivateInExpression(it) => it.format(p),
+            JSXExpression::JSXElement(it) => it.format(p),
+            JSXExpression::JSXFragment(it) => it.format(p),
+            JSXExpression::TSAsExpression(it) => it.format(p),
+            JSXExpression::TSSatisfiesExpression(it) => it.format(p),
+            JSXExpression::TSTypeAssertion(it) => it.format(p),
+            JSXExpression::TSNonNullExpression(it) => it.format(p),
+            JSXExpression::TSInstantiationExpression(it) => it.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for JSXExpressionContainer<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, ss!("{"), self.expression.format(p), ss!("}"))
     }
 }
 
 impl<'a> Format<'a> for JSXAttributeValue<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            JSXAttributeValue::Element(it) => it.format(p),
+            JSXAttributeValue::ExpressionContainer(it) => it.format(p),
+            JSXAttributeValue::Fragment(it) => it.format(p),
+            JSXAttributeValue::StringLiteral(it) => it.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for JSXSpreadAttribute<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, ss!("..."), self.argument.format(p))
     }
 }
 
 impl<'a> Format<'a> for JSXAttributeItem<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            JSXAttributeItem::Attribute(it) => it.format(p),
+            JSXAttributeItem::SpreadAttribute(it) => it.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for JSXOpeningElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(ss!("<"));
+        parts.push(self.name.format(p));
+
+        if let Some(type_parameters) = &self.type_parameters {
+            parts.push(type_parameters.format(p));
+        }
+
+        for attribute in &self.attributes {
+            parts.push(space!());
+            parts.push(attribute.format(p));
+        }
+
+        if self.self_closing {
+            parts.push(space!());
+            parts.push(ss!("/"));
+        }
+
+        parts.push(ss!(">"));
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for JSXClosingElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, ss!("</"), self.name.format(p), ss!(">"))
     }
 }
 
 impl<'a> Format<'a> for JSXElement<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(self.opening_element.format(p));
+
+        for child in &self.children {
+            parts.push(child.format(p));
+        }
+
+        if let Some(closing_element) = &self.closing_element {
+            parts.push(closing_element.format(p));
+        }
+
+        Doc::Array(parts)
     }
 }
 
 impl<'a> Format<'a> for JSXOpeningFragment {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        ss!("<>")
     }
 }
 
 impl<'a> Format<'a> for JSXClosingFragment {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        ss!("</>")
     }
 }
 
 impl<'a> Format<'a> for JSXText<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        ss!(self.value.as_str())
     }
 }
 
 impl<'a> Format<'a> for JSXSpreadChild<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        array!(p, ss!("..."), self.expression.format(p))
     }
 }
 
 impl<'a> Format<'a> for JSXChild<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        match self {
+            JSXChild::Element(it) => it.format(p),
+            JSXChild::ExpressionContainer(it) => it.format(p),
+            JSXChild::Fragment(it) => it.format(p),
+            JSXChild::Spread(it) => it.format(p),
+            JSXChild::Text(it) => it.format(p),
+        }
     }
 }
 
 impl<'a> Format<'a> for JSXFragment<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        line!()
+        let mut parts = p.vec();
+
+        parts.push(self.opening_fragment.format(p));
+
+        for child in &self.children {
+            parts.push(child.format(p));
+        }
+
+        parts.push(self.closing_fragment.format(p));
+
+        Doc::Array(parts)
     }
 }
 
