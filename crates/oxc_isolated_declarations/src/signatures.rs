@@ -1,5 +1,6 @@
 use oxc_allocator::{CloneIn, Vec};
 use oxc_ast::ast::{TSMethodSignatureKind, TSSignature};
+use oxc_span::GetSpan;
 use rustc_hash::FxHashMap;
 
 use crate::IsolatedDeclarations;
@@ -12,6 +13,9 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_ts_signatures(&mut self, signatures: &mut Vec<'a, TSSignature<'a>>) {
         // <name, (requires_inference, first_param_annotation, return_type)>
         let mut method_annotations: FxHashMap<_, (bool, _, _)> = FxHashMap::default();
+
+        // Strip internal signatures
+        signatures.retain(|signature| !self.has_internal_annotation(signature.span()));
 
         signatures.iter_mut().for_each(|signature| {
             if let TSSignature::TSMethodSignature(method) = signature {

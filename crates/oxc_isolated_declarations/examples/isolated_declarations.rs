@@ -3,7 +3,7 @@ use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CommentOptions};
-use oxc_isolated_declarations::IsolatedDeclarations;
+use oxc_isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -32,7 +32,13 @@ fn main() {
     println!("Original:\n");
     println!("{source_text}\n");
 
-    let id_ret = IsolatedDeclarations::new(&allocator).build(&ret.program);
+    let id_ret = IsolatedDeclarations::new(
+        &allocator,
+        &source_text,
+        &ret.trivias,
+        IsolatedDeclarationsOptions { strip_internal: true },
+    )
+    .build(&ret.program);
     let printed = CodeGenerator::new()
         .enable_comment(
             &source_text,

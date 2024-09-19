@@ -21,6 +21,15 @@ export interface Es2015BindingOptions {
 export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
 
 export interface IsolatedDeclarationsOptions {
+  /**
+   * Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
+   * This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
+   *
+   * Default: `false`
+   *
+   * See <https://www.typescriptlang.org/tsconfig/#stripInternal>
+   */
+  stripInternal?: boolean
   sourcemap?: boolean
 }
 
@@ -251,7 +260,7 @@ export interface TypeScriptBindingOptions {
    *
    * @default false
    */
-  declaration?: boolean
+  declaration?: IsolatedDeclarationsOptions
   /**
    * Rewrite or remove TypeScript import/export declaration extensions.
    *

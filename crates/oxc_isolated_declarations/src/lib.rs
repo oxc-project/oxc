@@ -24,12 +24,20 @@ use std::{cell::RefCell, collections::VecDeque, mem};
 use diagnostics::function_with_assigning_properties;
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ast::{ast::*, AstBuilder, Trivias, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, SourceType, SPAN};
+use oxc_span::{Atom, GetSpan, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::scope::ScopeTree;
+
+#[derive(Debug, Clone, Copy)]
+pub struct IsolatedDeclarationsOptions {
+    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
+    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
+    /// <https://www.typescriptlang.org/tsconfig/#stripInternal>
+    pub strip_internal: bool,
+}
 
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
@@ -38,15 +46,34 @@ pub struct IsolatedDeclarationsReturn<'a> {
 
 pub struct IsolatedDeclarations<'a> {
     ast: AstBuilder<'a>,
+
     // state
     scope: ScopeTree<'a>,
     errors: RefCell<Vec<OxcDiagnostic>>,
+
+    // options
+    strip_internal: bool,
+
+    /// Start position of `@internal` jsdoc annotations.
+    internal_annotations: FxHashSet<u32>,
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_text: &str,
+        trivias: &Trivias,
+        options: IsolatedDeclarationsOptions,
+    ) -> Self {
+        let strip_internal = options.strip_internal;
+        let is_internal_set = strip_internal
+            .then(|| Self::build_internal_annotations(source_text, trivias))
+            .unwrap_or_default();
+
         Self {
             ast: AstBuilder::new(allocator),
+            strip_internal,
+            internal_annotations: is_internal_set,
             scope: ScopeTree::new(allocator),
             errors: RefCell::new(vec![]),
         }
@@ -70,6 +97,27 @@ impl<'a> IsolatedDeclarations<'a> {
     /// Add an Error
     fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error);
+    }
+
+    /// Build the lookup table for jsdoc `@internal`.
+    fn build_internal_annotations(source_text: &str, trivias: &Trivias) -> FxHashSet<u32> {
+        let mut set = FxHashSet::default();
+        for comment in trivias.comments() {
+            let has_internal = comment.span.source_text(source_text).contains("@internal");
+            // Use the first jsdoc comment if there are multiple jsdoc comments for the same node.
+            if has_internal && !set.contains(&comment.attached_to) {
+                set.insert(comment.attached_to);
+            }
+        }
+        set
+    }
+
+    /// Check if the node has an `@internal` annotation.
+    fn has_internal_annotation(&self, span: Span) -> bool {
+        if !self.strip_internal {
+            return false;
+        }
+        self.internal_annotations.contains(&span.start)
     }
 }
 
@@ -104,6 +152,9 @@ impl<'a> IsolatedDeclarations<'a> {
         for stmt in Self::remove_function_overloads_implementation(unsafe { self.ast.copy(stmts) })
         {
             if let Some(decl) = stmt.as_declaration() {
+                if self.has_internal_annotation(decl.span()) {
+                    continue;
+                }
                 if let Some(decl) = self.transform_declaration(decl, false) {
                     new_ast_stmts.push(Statement::from(decl));
                 } else {
@@ -138,6 +189,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 match_declaration!(Statement) => {
                     match stmt.to_declaration() {
                         Declaration::VariableDeclaration(decl) => {
+                            if self.has_internal_annotation(decl.span) {
+                                continue;
+                            }
                             variables_declarations.push_back(
                                 // SAFETY: `ast.copy` is unsound! We need to fix.
                                 unsafe { self.ast.copy(&decl.declarations) }
@@ -147,6 +201,9 @@ impl<'a> IsolatedDeclarations<'a> {
                             variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::TSModuleDeclaration(decl) => {
+                            if self.has_internal_annotation(decl.span) {
+                                continue;
+                            }
                             // declare global { ... } or declare module "foo" { ... }
                             // We need to emit it anyway
                             if decl.kind.is_global() || decl.id.is_string_literal() {
@@ -157,11 +214,16 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         _ => {}
                     }
-                    new_stmts.push(stmt);
+                    if !self.has_internal_annotation(stmt.span()) {
+                        new_stmts.push(stmt);
+                    }
                 }
                 match_module_declaration!(Statement) => {
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
+                            if self.has_internal_annotation(decl.span) {
+                                continue;
+                            }
                             transformed_indexes.insert(new_stmts.len());
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
@@ -187,6 +249,9 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                            if self.has_internal_annotation(decl.span) {
+                                continue;
+                            }
                             transformed_indexes.insert(new_stmts.len());
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_declaration(
@@ -205,6 +270,9 @@ impl<'a> IsolatedDeclarations<'a> {
                             // We must transform this in the end, because we need to know all references
                         }
                         module_declaration => {
+                            if self.has_internal_annotation(module_declaration.span()) {
+                                continue;
+                            }
                             transformed_indexes.insert(new_stmts.len());
                             self.scope.visit_module_declaration(module_declaration);
                         }
