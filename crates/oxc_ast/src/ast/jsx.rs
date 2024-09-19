@@ -41,7 +41,6 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
-#[non_exhaustive]
 pub struct JSXElement<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -73,7 +72,6 @@ pub struct JSXElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
-#[non_exhaustive]
 pub struct JSXOpeningElement<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -108,7 +106,6 @@ pub struct JSXOpeningElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXClosingElement<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -128,7 +125,6 @@ pub struct JSXClosingElement<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
-#[non_exhaustive]
 pub struct JSXFragment<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -146,7 +142,6 @@ pub struct JSXFragment<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXOpeningFragment {
     #[serde(flatten)]
     pub span: Span,
@@ -158,7 +153,6 @@ pub struct JSXOpeningFragment {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXClosingFragment {
     #[serde(flatten)]
     pub span: Span,
@@ -194,7 +188,6 @@ pub enum JSXElementName<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXNamespacedName<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -224,7 +217,6 @@ pub struct JSXNamespacedName<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXMemberExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -262,7 +254,6 @@ pub enum JSXMemberExpressionObject<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXExpressionContainer<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -295,7 +286,6 @@ pub enum JSXExpression<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXEmptyExpression {
     #[serde(flatten)]
     pub span: Span,
@@ -340,7 +330,6 @@ pub enum JSXAttributeItem<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXAttribute<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -364,7 +353,6 @@ pub struct JSXAttribute<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXSpreadAttribute<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -438,7 +426,6 @@ pub enum JSXAttributeValue<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXIdentifier<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -477,7 +464,6 @@ pub enum JSXChild<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXSpreadChild<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -500,7 +486,6 @@ pub struct JSXSpreadChild<'a> {
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
-#[non_exhaustive]
 pub struct JSXText<'a> {
     #[serde(flatten)]
     pub span: Span,
