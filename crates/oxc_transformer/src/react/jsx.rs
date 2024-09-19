@@ -464,17 +464,17 @@ impl<'a> ReactJsx<'a> {
             for attribute in attributes {
                 match attribute {
                     // optimize `{...prop}` to `prop` in static mode
-                    JSXAttributeItem::SpreadAttribute(spread)
-                        if is_classic && attributes.len() == 1 =>
-                    {
-                        // deopt if spreading an object with `__proto__` key
-                        if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
-                        {
-                            arguments.push(Argument::from({
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                unsafe { self.ast().copy(&spread.argument) }
-                            }));
-                            continue;
+                    JSXAttributeItem::SpreadAttribute(spread) => {
+                        if is_classic && attributes.len() == 1 {
+                            // deopt if spreading an object with `__proto__` key
+                            if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
+                            {
+                                arguments.push(Argument::from({
+                                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                                    unsafe { self.ast().copy(&spread.argument) }
+                                }));
+                                continue;
+                            }
                         }
                     }
                     JSXAttributeItem::Attribute(attr) => {
@@ -496,7 +496,6 @@ impl<'a> ReactJsx<'a> {
                             }
                         }
                     }
-                    JSXAttributeItem::SpreadAttribute(_) => {}
                 }
 
                 // Add attribute to prop object
