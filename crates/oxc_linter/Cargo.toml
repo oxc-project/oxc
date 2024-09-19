@@ -34,6 +34,7 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true, features = ["schemars", "serialize"] }
 oxc_syntax = { workspace = true }
 
+aho-corasick = { workspace = true }
 bitflags = { workspace = true }
 convert_case = { workspace = true }
 cow-utils = { workspace = true }
