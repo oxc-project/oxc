@@ -34,31 +34,56 @@ impl<'a> AstNode<'a> {
         Self { id, kind, scope_id, cfg_id, flags }
     }
 
+    /// This node's unique identifier.
     #[inline]
     pub fn id(&self) -> NodeId {
         self.id
     }
 
+    /// ID of the control flow graph node this node is in.
+    ///
+    /// See [oxc_cfg::ControlFlowGraph] for more information.
     #[inline]
     pub fn cfg_id(&self) -> BasicBlockId {
         self.cfg_id
     }
 
+    /// Access the underlying struct from [`oxc_ast`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use oxc_semantic::AstNode;
+    ///
+    /// fn get_function_name<'a>(node: AstNode<'a>) -> Option<&'a str> {
+    ///     match node.kind() {
+    ///        AstKind::Function(func) => Some(func.name()),
+    ///        _ => None,
+    ///     }
+    /// }
+    /// ```
     #[inline]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
     }
 
+    /// The scope in which this node was declared.
+    ///
+    /// It is important to note that this is _not_ the scope created _by_ the
+    /// node. For example, given a function declaration, this is the scope where
+    /// the function is declared, not the scope created by its body.
     #[inline]
     pub fn scope_id(&self) -> ScopeId {
         self.scope_id
     }
 
+    /// Flags providing additional information about the node.
     #[inline]
     pub fn flags(&self) -> NodeFlags {
         self.flags
     }
 
+    /// Get a mutable reference to this node's flags.
     #[inline]
     pub fn flags_mut(&mut self) -> &mut NodeFlags {
         &mut self.flags
@@ -80,6 +105,7 @@ pub struct AstNodes<'a> {
     /// users should beware.
     root: Option<NodeId>,
     nodes: IndexVec<NodeId, AstNode<'a>>,
+    /// `node` -> `parent`
     parent_ids: IndexVec<NodeId, Option<NodeId>>,
 }
 
@@ -88,11 +114,13 @@ impl<'a> AstNodes<'a> {
         self.nodes.iter()
     }
 
+    /// Returns the number of node in this AST.
     #[inline]
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
 
+    /// Returns `true` if there are no nodes in this AST.
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.nodes.is_empty()
@@ -107,20 +135,37 @@ impl<'a> AstNodes<'a> {
         AstNodeParentIter { current_node_id: Some(node_id), nodes: self }
     }
 
+    /// Access the underlying struct from [`oxc_ast`].
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// use oxc_semantic::AstNodes;
+    /// use oxc_ast::AstKind;
+    ///
+    /// let ast: AstNodes<'_> = get_ast_in_some_way();
+    /// assert!(matches!(
+    ///     ast.kind(ast.root().unwrap()),
+    ///     AstKind::Program(_)
+    /// ));
+    /// ```
     #[inline]
     pub fn kind(&self, ast_node_id: NodeId) -> AstKind<'a> {
         self.nodes[ast_node_id].kind
     }
 
+    /// Get id of this node's parent.
     #[inline]
     pub fn parent_id(&self, ast_node_id: NodeId) -> Option<NodeId> {
         self.parent_ids[ast_node_id]
     }
 
+    /// Get the kind of the parent node.
     pub fn parent_kind(&self, ast_node_id: NodeId) -> Option<AstKind<'a>> {
         self.parent_id(ast_node_id).map(|node_id| self.kind(node_id))
     }
 
+    /// Get a reference to a node's parent.
     pub fn parent_node(&self, ast_node_id: NodeId) -> Option<&AstNode<'a>> {
         self.parent_id(ast_node_id).map(|node_id| self.get_node(node_id))
     }
@@ -135,22 +180,34 @@ impl<'a> AstNodes<'a> {
         &mut self.nodes[ast_node_id]
     }
 
-    /// Get the root `NodeId`, It is always pointing to a `Program`.
-    /// Returns `None` if root node isn't set.
+    /// Get the root [`NodeId`]. This always points to a [`Program`] node.
+    ///
+    /// Returns [`None`] if root node isn't set. This will never happen if you
+    /// are obtaining an [`AstNodes`] that has already been constructed.
+    ///
+    /// [`Program`]: oxc_ast::ast::Program
     #[inline]
     pub fn root(&self) -> Option<NodeId> {
         self.root
     }
 
-    /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
-    /// Returns `None` if root node isn't set.
+    /// Get the root node as immutable reference, It is always guaranteed to be a [`Program`].
+    ///
+    /// Returns [`None`] if root node isn't set. This will never happen if you
+    /// are obtaining an [`AstNodes`] that has already been constructed.
+    ///
+    /// [`Program`]: oxc_ast::ast::Program
     #[inline]
     pub fn root_node(&self) -> Option<&AstNode<'a>> {
         self.root().map(|id| self.get_node(id))
     }
 
-    /// Get the root node as mutable reference, It is always guaranteed to be a `Program`.
-    /// Returns `None` if root node isn't set.
+    /// Get the root node as mutable reference, It is always guaranteed to be a [`Program`].
+    ///
+    /// Returns [`None`] if root node isn't set. This will never happen if you
+    /// are obtaining an [`AstNodes`] that has already been constructed.
+    ///
+    /// [`Program`]: oxc_ast::ast::Program
     #[inline]
     pub fn root_node_mut(&mut self) -> Option<&mut AstNode<'a>> {
         self.root().map(|id| self.get_node_mut(id))
@@ -159,14 +216,19 @@ impl<'a> AstNodes<'a> {
     /// Walk up the AST, iterating over each parent node.
     ///
     /// The first node produced by this iterator is the first parent of the node
-    /// pointed to by `node_id`. The last node will usually be a `Program`.
+    /// pointed to by `node_id`. The last node will always be a [`Program`].
+    ///
+    /// [`Program`]: oxc_ast::ast::Program
     pub fn ancestors(&self, ast_node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
         let parent_ids = &self.parent_ids;
         std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
     }
 
-    /// Create and add an `AstNode` to the `AstNodes` tree and returns its `NodeId`.
-    /// Node must not be `Program`. Use `add_program_node` instead.
+    /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
+    /// Node must not be [`Program`]; if it is, use [`add_program_node`] instead.
+    ///
+    /// [`Program`]: oxc_ast::ast::Program
+    /// [`add_program_node`]: AstNodes::add_program_node
     #[inline]
     pub fn add_node(
         &mut self,
@@ -182,7 +244,7 @@ impl<'a> AstNodes<'a> {
         ast_node_id
     }
 
-    /// Create and add an `AstNode` to the `AstNodes` tree and returns its `NodeId`.
+    /// Create and add an [`AstNode`] to the [`AstNodes`] tree and get its [`NodeId`].
     pub fn add_program_node(
         &mut self,
         kind: AstKind<'a>,
@@ -197,6 +259,7 @@ impl<'a> AstNodes<'a> {
         ast_node_id
     }
 
+    /// Reserve space for at least `additional` more nodes.
     pub fn reserve(&mut self, additional: usize) {
         self.nodes.reserve(additional);
         self.parent_ids.reserve(additional);
