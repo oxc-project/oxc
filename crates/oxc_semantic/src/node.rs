@@ -266,9 +266,9 @@ impl<'a> AstNodes<'a> {
     }
 }
 
-impl<'ast, 'a> IntoIterator for &'ast AstNodes<'a> {
-    type Item = &'ast AstNode<'a>;
-    type IntoIter = std::slice::Iter<'ast, AstNode<'a>>;
+impl<'a, 'n> IntoIterator for &'n AstNodes<'a> {
+    type Item = &'n AstNode<'a>;
+    type IntoIter = std::slice::Iter<'n, AstNode<'a>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.nodes.iter()
