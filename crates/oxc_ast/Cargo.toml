@@ -1,16 +1,16 @@
 [package]
-name                   = "oxc_ast"
-version                = "0.24.0"
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxc_ast"
+version = "0.29.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
-include                = ["/src"]
+description.workspace = true
 
 [lints]
 workspace = true
@@ -19,22 +19,20 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_allocator  = { workspace = true }
+oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
-oxc_span       = { workspace = true }
-oxc_syntax     = { workspace = true }
+oxc_regular_expression = { workspace = true }
+oxc_span = { workspace = true }
+oxc_syntax = { workspace = true }
 
-bitflags   = { workspace = true }
+bitflags = { workspace = true }
 num-bigint = { workspace = true }
 
-serde      = { workspace = true, features = ["derive"], optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 
-tsify        = { workspace = true, optional = true }
+tsify = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
-
-[dev-dependencies]
-static_assertions = { workspace = true }
 
 [features]
 default = []
@@ -44,6 +42,7 @@ serialize = [
   "dep:tsify",
   "dep:wasm-bindgen",
   "oxc_allocator/serialize",
+  "oxc_regular_expression/serialize",
   "oxc_span/serialize",
   "oxc_syntax/serialize",
   "oxc_syntax/to_js_string",

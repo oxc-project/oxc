@@ -5,30 +5,36 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn set(span0: Span, x1: &str) -> OxcDiagnostic {
+fn set(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `setAttribute`.")
-        .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1} = ...;`"))
-        .with_label(span0)
+        .with_help(format!(
+            "Access the `.dataset` object directly: `element.dataset.{method_name} = ...;`"
+        ))
+        .with_label(span)
 }
 
-fn get(span0: Span, x1: &str) -> OxcDiagnostic {
+fn get(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `getAttribute`.")
-        .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1}`"))
-        .with_label(span0)
+        .with_help(format!(
+            "Access the `.dataset` object directly: `element.dataset.{method_name}`"
+        ))
+        .with_label(span)
 }
 
-fn has(span0: Span, x1: &str) -> OxcDiagnostic {
+fn has(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `hasAttribute`.")
         .with_help(format!(
-            "Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{x1}')"
+            "Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{method_name}')"
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn remove(span0: Span, x1: &str) -> OxcDiagnostic {
+fn remove(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer using `dataset` over `removeAttribute`.")
-        .with_help(format!("Access the `.dataset` object directly: `delete element.dataset.{x1};"))
-        .with_label(span0)
+        .with_help(format!(
+            "Access the `.dataset` object directly: `delete element.dataset.{method_name};"
+        ))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,15 +50,19 @@ declare_oxc_lint!(
     /// The `dataset` property is a map of strings that contains all the `data-*` attributes from the element. It is a convenient way to access all of them at once.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// element.setAttribute('data-unicorn', '🦄');
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// element.setAttribute('data-unicorn', '🦄');
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// element.dataset.unicorn = '🦄';
     /// ```
     PreferDomNodeDataset,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferDomNodeDataset {

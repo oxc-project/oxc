@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{CallExpression, Expression, Statement},
     AstKind,
@@ -18,10 +19,10 @@ use crate::{
     },
 };
 
-fn expect_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+fn expect_expect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Test has no assertions")
         .with_help("Add assertion(s) in this Test")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -273,7 +274,13 @@ fn convert_pattern(pattern: &str) -> String {
     // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
     let pattern = pattern
         .split('.')
-        .map(|p| if p == "**" { String::from("[a-z\\d\\.]*") } else { p.replace('*', "[a-z\\d]*") })
+        .map(|p| {
+            if p == "**" {
+                String::from("[a-z\\d\\.]*")
+            } else {
+                p.cow_replace('*', "[a-z\\d]*").into_owned()
+            }
+        })
         .collect::<Vec<_>>()
         .join("\\.");
 
@@ -281,6 +288,32 @@ fn convert_pattern(pattern: &str) -> String {
     format!("(?ui)^{pattern}(\\.|$)")
 }
 
+#[test]
+fn debug() {
+    use crate::tester::Tester;
+
+    let mut pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+
+    let mut fail = vec![];
+
+    let pass_vitest = vec![(
+        "
+                import { test } from 'vitest';
+                test.skip(\"skipped test\", () => {})
+            ",
+        None,
+    )];
+
+    let fail_vitest = vec![];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
+    Tester::new(ExpectExpect::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test();
+}
 #[test]
 fn test() {
     use crate::tester::Tester;

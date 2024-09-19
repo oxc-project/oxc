@@ -1,78 +1,78 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <br>Foo</br>;
    ·  ──
    ╰────
-  help: Void DOM element <"br" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <br children='Foo' />;
    ·  ──
    ╰────
-  help: Void DOM element <"br" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <img {...props} children='Foo' />;
    ·  ───
    ╰────
-  help: Void DOM element <"img" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:2]
  1 │ <br dangerouslySetInnerHTML={{ __html: 'Foo' }} />;
    ·  ──
    ╰────
-  help: Void DOM element <"br" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:21]
  1 │ React.createElement('br', {}, 'Foo');
    ·                     ────
    ╰────
-  help: Void DOM element <"br" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:21]
  1 │ React.createElement('br', { children: 'Foo' });
    ·                     ────
    ╰────
-  help: Void DOM element <"br" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"br" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:1:21]
  1 │ React.createElement('br', { dangerouslySetInnerHTML: { __html: 'Foo' } });
    ·                     ────
    ╰────
-  help: Void DOM element <"br" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:3:31]
  2 │                 import React, {createElement} from 'react';
  3 │                 createElement('img', {}, 'Foo');
    ·                               ─────
  4 │             
    ╰────
-  help: Void DOM element <"img" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:3:31]
  2 │                 import React, {createElement} from 'react';
  3 │                 createElement('img', { children: 'Foo' });
    ·                               ─────
  4 │             
    ╰────
-  help: Void DOM element <"img" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.
 
-  ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
+  ⚠ eslint-plugin-react(void-dom-elements-no-children): Void DOM element <"img" /> cannot receive children.
    ╭─[void_dom_elements_no_children.tsx:3:31]
  2 │                 import React, {createElement} from 'react';
  3 │                 createElement('img', { dangerouslySetInnerHTML: { __html: 'Foo' } });
    ·                               ─────
  4 │             
    ╰────
-  help: Void DOM element <"img" /> cannot receive children.
+  help: Remove this element's children or use a non-void element.

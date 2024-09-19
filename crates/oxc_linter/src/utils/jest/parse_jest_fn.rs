@@ -1,5 +1,6 @@
 use std::{borrow::Cow, cmp::Ordering};
 
+use cow_utils::CowUtils;
 use oxc_ast::{
     ast::{
         match_member_expression, Argument, CallExpression, Expression, IdentifierName,
@@ -12,7 +13,10 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{
+        jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+        vitest::VALID_VITEST_FN_CALL_CHAINS,
+    },
 };
 
 pub fn parse_jest_fn_call<'a>(
@@ -88,7 +92,8 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest)) {
+        if matches!(kind, JestFnKind::General(JestGeneralFnKind::Jest | JestGeneralFnKind::Vitest))
+        {
             return parse_jest_jest_fn_call(members, name, resolved.local);
         }
 
@@ -99,7 +104,12 @@ pub fn parse_jest_fn_call<'a>(
 
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
-        if !is_valid_jest_call(&call_chains) {
+
+        if ctx.frameworks().is_jest() && !is_valid_jest_call(&call_chains) {
+            return None;
+        }
+
+        if ctx.frameworks().is_vitest() && !is_valid_vitest_call(&call_chains) {
             return None;
         }
 
@@ -137,8 +147,10 @@ fn parse_jest_expect_fn_call<'a>(
         }
     }
 
+    let kind = if is_type_of { JestFnKind::ExpectTypeOf } else { JestFnKind::Expect };
+
     let parsed_expect_fn = ParsedExpectFnCall {
-        kind: JestFnKind::Expect,
+        kind,
         head,
         members,
         name: Cow::Borrowed(name),
@@ -244,12 +256,17 @@ fn parse_jest_jest_fn_call<'a>(
     name: &'a str,
     local: &'a str,
 ) -> Option<ParsedJestFnCall<'a>> {
-    if !name.to_ascii_lowercase().eq_ignore_ascii_case("jest") {
+    let lowercase_name = name.cow_to_ascii_lowercase();
+
+    if !(lowercase_name == "jest" || lowercase_name == "vi") {
         return None;
     }
 
+    let kind =
+        if lowercase_name == "jest" { JestGeneralFnKind::Jest } else { JestGeneralFnKind::Vitest };
+
     return Some(ParsedJestFnCall::GeneralJest(ParsedGeneralJestFnCall {
-        kind: JestFnKind::General(JestGeneralFnKind::Jest),
+        kind: JestFnKind::General(kind),
         members,
         name: Cow::Borrowed(name),
         local: Cow::Borrowed(local),
@@ -292,6 +309,10 @@ fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
         .is_ok()
 }
 
+fn is_valid_vitest_call(members: &[Cow<str>]) -> bool {
+    VALID_VITEST_FN_CALL_CHAINS.contains(&members.join("."))
+}
+
 fn resolve_to_jest_fn<'a>(
     call_expr: &'a CallExpression<'a>,
     original: Option<&'a str>,
@@ -312,6 +333,7 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
     }
 }
 
+#[derive(Debug)]
 pub enum ParsedJestFnCall<'a> {
     GeneralJest(ParsedGeneralJestFnCall<'a>),
     Expect(ParsedExpectFnCall<'a>),
@@ -327,6 +349,7 @@ impl<'a> ParsedJestFnCall<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,

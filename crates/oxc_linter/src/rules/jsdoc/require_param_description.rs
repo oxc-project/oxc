@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn missing_type_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@param` description.")
         .with_help("Add description to `@param` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -24,19 +24,24 @@ pub struct RequireParamDescription;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that each `@param` tag has a description value.
     ///
     /// ### Why is this bad?
+    ///
     /// The description of a param should be documented.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @param foo Foo. */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @param foo */
+    /// function quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @param foo Foo. */
     /// function quux (foo) {}
     /// ```
     RequireParamDescription,

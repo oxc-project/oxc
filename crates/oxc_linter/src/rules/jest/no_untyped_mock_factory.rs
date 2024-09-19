@@ -14,7 +14,7 @@ use crate::{
 
 fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
-        "Disallow using `jest.mock()` factories without an explicit type parameter.",
+        "`jest.mock()` factories should not be used without an explicit type parameter.",
     )
     .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
     .with_label(span1)
@@ -116,7 +116,7 @@ impl NoUntypedMockFactory {
             return;
         };
 
-        if call_expr.arguments.len() != 2 && (property_name != "mock" || property_name != "doMock")
+        if call_expr.arguments.len() != 2 || (property_name != "mock" && property_name != "doMock")
         {
             return;
         }
@@ -277,6 +277,7 @@ fn test() {
             ",
             None,
         ),
+        ("test.skip('basic', async () => {});", None),
     ];
 
     let fail = vec![

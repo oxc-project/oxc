@@ -9,10 +9,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn approx_constant_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Approximate value of `{x1}` found."))
-        .with_help(format!("Use `Math.{x1}` instead"))
-        .with_label(span0)
+fn approx_constant_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Approximate value of `{method_name}` found."))
+        .with_help(format!("Use `Math.{method_name}` instead"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,11 +30,13 @@ declare_oxc_lint!(
     ///
     /// ### Example
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// let log10e = 0.434294
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let log10e = Math.LOG10E
     /// ```
     ApproxConstant,

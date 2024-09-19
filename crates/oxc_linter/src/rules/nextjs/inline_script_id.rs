@@ -9,12 +9,12 @@ use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn inline_script_id_diagnostic(span0: Span) -> OxcDiagnostic {
+fn inline_script_id_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "`next/script` components with inline content must specify an `id` attribute.",
     )
     .with_help("See https://nextjs.org/docs/messages/inline-script-id")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -79,7 +79,7 @@ impl Rule for InlineScriptId {
                     }
                     JSXAttributeItem::SpreadAttribute(spread_attr) => {
                         if let Expression::ObjectExpression(obj_expr) =
-                            spread_attr.argument.without_parenthesized()
+                            spread_attr.argument.without_parentheses()
                         {
                             for prop in &obj_expr.properties {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {

@@ -6,67 +6,75 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 #[derive(Debug, Clone)]
-struct ImportSpecifier {
-    n: Option<String>,
-    s: u32,
-    e: u32,
-    ss: u32,
-    se: u32,
-    d: ImportType,
-    a: Option<u32>,
+pub struct ImportSpecifier {
+    pub n: Option<String>,
+    pub s: u32,
+    pub e: u32,
+    pub ss: u32,
+    pub se: u32,
+    pub d: ImportType,
+    pub a: Option<u32>,
+    pub t: bool,
+}
+
+impl From<oxc_module_lexer::ImportSpecifier<'_>> for ImportSpecifier {
+    fn from(value: oxc_module_lexer::ImportSpecifier) -> Self {
+        Self {
+            n: value.n.map(|n| n.to_string()),
+            s: value.s,
+            e: value.e,
+            ss: value.ss,
+            se: value.se,
+            d: value.d,
+            a: value.a,
+            t: value.t,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct ExportSpecifier {
-    n: String,
-    ln: Option<String>,
-    s: u32,
-    e: u32,
-    ls: Option<u32>,
-    le: Option<u32>,
+    pub n: String,
+    pub ln: Option<String>,
+    pub s: u32,
+    pub e: u32,
+    pub ls: Option<u32>,
+    pub le: Option<u32>,
+    pub t: bool,
+}
+
+impl From<oxc_module_lexer::ExportSpecifier<'_>> for ExportSpecifier {
+    fn from(value: oxc_module_lexer::ExportSpecifier) -> Self {
+        Self {
+            n: value.n.to_string(),
+            ln: value.ln.map(|ln| ln.to_string()),
+            s: value.s,
+            e: value.e,
+            ls: value.ls,
+            le: value.le,
+            t: value.t,
+        }
+    }
 }
 
 #[non_exhaustive]
-struct ModuleLexer {
-    imports: Vec<ImportSpecifier>,
-    exports: Vec<ExportSpecifier>,
-    has_module_syntax: bool,
-    facade: bool,
+pub struct ModuleLexer {
+    pub imports: Vec<ImportSpecifier>,
+    pub exports: Vec<ExportSpecifier>,
+    pub has_module_syntax: bool,
+    pub facade: bool,
 }
 
 fn parse(source: &str) -> ModuleLexer {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true);
+    let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(ret.errors.is_empty(), "{source} should not produce errors.\n{:?}", ret.errors);
     let module_lexer = oxc_module_lexer::ModuleLexer::new().build(&ret.program);
     // Copy data over because `ModuleLexer<'a>` can't be returned
     ModuleLexer {
-        imports: module_lexer
-            .imports
-            .into_iter()
-            .map(|i| ImportSpecifier {
-                n: i.n.map(|n| n.to_string()),
-                s: i.s,
-                e: i.e,
-                ss: i.ss,
-                se: i.se,
-                d: i.d,
-                a: i.a,
-            })
-            .collect(),
-        exports: module_lexer
-            .exports
-            .into_iter()
-            .map(|e| ExportSpecifier {
-                n: e.n.to_string(),
-                ln: e.ln.map(|ln| ln.to_string()),
-                s: e.s,
-                e: e.e,
-                ls: e.ls,
-                le: e.le,
-            })
-            .collect(),
+        imports: module_lexer.imports.into_iter().map(Into::into).collect(),
+        exports: module_lexer.exports.into_iter().map(Into::into).collect(),
         has_module_syntax: module_lexer.has_module_syntax,
         facade: module_lexer.facade,
     }
@@ -1507,7 +1515,7 @@ fn export_default() {
 
 fn expect_parse_error(source: &str) {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true);
+    let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source, source_type).parse();
     assert!(!ret.errors.is_empty());
 }

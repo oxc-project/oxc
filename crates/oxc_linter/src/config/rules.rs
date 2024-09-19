@@ -1,19 +1,25 @@
 use std::{borrow::Cow, fmt, ops::Deref};
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
 use serde::{
     de::{self, Deserializer, Visitor},
-    Deserialize,
+    ser::SerializeMap,
+    Deserialize, Serialize,
 };
 
-use crate::AllowWarnDeny;
+use crate::{
+    rules::{RuleEnum, RULES},
+    utils::is_jest_rule_adapted_to_vitest,
+    AllowWarnDeny, RuleWithSeverity,
+};
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
 //   - type RuleConf = SeverityConf | [SeverityConf, ...any[]];
 // <https://github.com/eslint/eslint/blob/ce838adc3b673e52a151f36da0eedf5876977514/lib/shared/types.js#L12>
+// Note: when update document comment, also update `DummyRuleMap`'s description in this file.
 #[derive(Debug, Clone, Default)]
 pub struct OxlintRules(Vec<ESLintRule>);
 
@@ -23,6 +29,110 @@ pub struct ESLintRule {
     pub rule_name: String,
     pub severity: AllowWarnDeny,
     pub config: Option<serde_json::Value>,
+}
+
+impl Deref for OxlintRules {
+    type Target = Vec<ESLintRule>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl IntoIterator for OxlintRules {
+    type Item = ESLintRule;
+    type IntoIter = <Vec<ESLintRule> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl OxlintRules {
+    #[allow(clippy::option_if_let_else)]
+    pub(crate) fn override_rules(
+        &self,
+        rules_for_override: &mut FxHashSet<RuleWithSeverity>,
+        all_rules: &[RuleEnum],
+    ) {
+        use itertools::Itertools;
+        let mut rules_to_replace: Vec<RuleWithSeverity> = vec![];
+        let mut rules_to_remove: Vec<RuleWithSeverity> = vec![];
+
+        // Rules can have the same name but different plugin names
+        let lookup = self.iter().into_group_map_by(|r| r.rule_name.as_str());
+
+        for (name, rule_configs) in &lookup {
+            match rule_configs.len() {
+                0 => unreachable!(),
+                1 => {
+                    let rule_config = &rule_configs[0];
+                    let (rule_name, plugin_name) = transform_rule_and_plugin_name(
+                        &rule_config.rule_name,
+                        &rule_config.plugin_name,
+                    );
+                    let severity = rule_config.severity;
+                    match severity {
+                        AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
+                            if let Some(rule) = all_rules
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
+                                let config = rule_config.config.clone().unwrap_or_default();
+                                let rule = rule.read_json(config);
+                                rules_to_replace.push(RuleWithSeverity::new(rule, severity));
+                            }
+                        }
+                        AllowWarnDeny::Allow => {
+                            if let Some(rule) = rules_for_override
+                                .iter()
+                                .find(|r| r.name() == rule_name && r.plugin_name() == plugin_name)
+                            {
+                                let rule = rule.clone();
+                                rules_to_remove.push(rule);
+                            }
+                        }
+                    }
+                }
+                _ => {
+                    // For overlapping rule names, use the "error" one
+                    // "no-loss-of-precision": "off",
+                    // "@typescript-eslint/no-loss-of-precision": "error"
+                    if let Some(rule_config) =
+                        rule_configs.iter().find(|r| r.severity.is_warn_deny())
+                    {
+                        if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
+                            let config = rule_config.config.clone().unwrap_or_default();
+                            rules_to_replace
+                                .push(RuleWithSeverity::new(rule.read_json(config), rule.severity));
+                        }
+                    } else if rule_configs.iter().all(|r| r.severity.is_allow()) {
+                        if let Some(rule) = rules_for_override.iter().find(|r| r.name() == *name) {
+                            rules_to_remove.push(rule.clone());
+                        }
+                    }
+                }
+            }
+        }
+
+        for rule in rules_to_remove {
+            rules_for_override.remove(&rule);
+        }
+        for rule in rules_to_replace {
+            rules_for_override.replace(rule);
+        }
+    }
+}
+
+fn transform_rule_and_plugin_name<'a>(
+    rule_name: &'a str,
+    plugin_name: &'a str,
+) -> (&'a str, &'a str) {
+    if plugin_name == "vitest" && is_jest_rule_adapted_to_vitest(rule_name) {
+        return (rule_name, "jest");
+    }
+
+    (rule_name, plugin_name)
 }
 
 impl JsonSchema for OxlintRules {
@@ -42,7 +152,41 @@ impl JsonSchema for OxlintRules {
             Toggle(AllowWarnDeny),
             ToggleAndConfig(Vec<serde_json::Value>),
         }
-        gen.subschema_for::<FxHashMap<String, DummyRule>>()
+
+        #[allow(unused)]
+        #[derive(Debug, JsonSchema)]
+        #[schemars(
+            description = "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)"
+        )]
+        struct DummyRuleMap(pub FxHashMap<String, DummyRule>);
+
+        gen.subschema_for::<DummyRuleMap>()
+    }
+}
+
+impl Serialize for OxlintRules {
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut rules = s.serialize_map(Some(self.len()))?;
+
+        for rule in &self.0 {
+            let key = rule.full_name();
+            match rule.config.as_ref() {
+                // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
+                Some(config) if !config.is_null() => {
+                    let value = (rule.severity.as_str(), config);
+                    rules.serialize_entry(&key, &value)?;
+                }
+                // e.g. unicorn/some-rule: "warn"
+                _ => {
+                    rules.serialize_entry(&key, rule.severity.as_str())?;
+                }
+            }
+        }
+
+        rules.end()
     }
 }
 
@@ -85,7 +229,14 @@ impl<'de> Deserialize<'de> for OxlintRules {
 
 fn parse_rule_key(name: &str) -> (String, String) {
     let Some((plugin_name, rule_name)) = name.split_once('/') else {
-        return ("eslint".to_string(), name.to_string());
+        return (
+            RULES
+                .iter()
+                .find(|r| r.name() == name)
+                .map_or("unknown_plugin", RuleEnum::plugin_name)
+                .to_string(),
+            name.to_string(),
+        );
     };
 
     let (oxlint_plugin_name, rule_name) = match plugin_name {
@@ -143,16 +294,20 @@ fn parse_rule_value(
     }
 }
 
-impl Deref for OxlintRules {
-    type Target = Vec<ESLintRule>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Failed to rule value {value:?} with error {err:?}"))
+}
+
+impl ESLintRule {
+    /// Returns `<plugin_name>/<rule_name>` for non-eslint rules. For eslint rules, returns
+    /// `<rule_name>`. This is effectively the inverse operation for [`parse_rule_key`].
+    fn full_name(&self) -> Cow<'_, str> {
+        if self.plugin_name == "eslint" {
+            Cow::Borrowed(self.rule_name.as_str())
+        } else {
+            Cow::Owned(format!("{}/{}", self.plugin_name, self.rule_name))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -186,7 +341,7 @@ mod test {
 
         let r3 = rules.next().unwrap();
         assert_eq!(r3.rule_name, "dummy");
-        assert_eq!(r3.plugin_name, "eslint");
+        assert_eq!(r3.plugin_name, "unknown_plugin");
         assert!(r3.severity.is_warn_deny());
         assert_eq!(r3.config, Some(serde_json::json!(["arg1", "args2"])));
 

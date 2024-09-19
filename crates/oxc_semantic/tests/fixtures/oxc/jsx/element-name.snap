@@ -1,0 +1,42 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/element-name.jsx
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
+        "id": 1,
+        "node": "ArrowFunctionExpression",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "Component",
+        "node": "VariableDeclarator(Component)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
+            "name": "Component",
+            "node_id": 19
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "Component",
+            "node_id": 22
+          }
+        ]
+      }
+    ]
+  }
+]

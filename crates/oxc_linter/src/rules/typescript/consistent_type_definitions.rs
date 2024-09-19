@@ -6,12 +6,20 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn consistent_type_definitions_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use an `{x0}` instead of a `{x1}`"))
-        .with_help(format!("Use an `{x0}` instead of a `{x1}`"))
-        .with_label(span2)
+fn consistent_type_definitions_diagnostic(
+    preferred_type_kind: &str,
+    bad_type_kind: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use an `{preferred_type_kind}` instead of a `{bad_type_kind}`"))
+        .with_help(format!("Use an `{preferred_type_kind}` instead of a `{bad_type_kind}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -216,7 +224,7 @@ impl Rule for ConsistentTypeDefinitions {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

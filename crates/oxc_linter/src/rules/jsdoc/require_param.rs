@@ -13,7 +13,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_params, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
+        collect_params, default_true, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
         should_ignore_as_internal, should_ignore_as_private, ParamKind,
     },
 };
@@ -23,20 +23,25 @@ pub struct RequireParam(Box<RequireParamConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that all function parameters are documented with JSDoc `@param` tags.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is aimed at enforcing code quality and maintainability by requiring that all function parameters are documented.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @param foo */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @param foo */
     /// function quux (foo, bar) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @param foo */
+    /// function quux (foo) {}
     /// ```
     RequireParam,
     pedantic,
@@ -80,9 +85,6 @@ impl Default for RequireParamConfig {
 }
 fn default_exempted_by() -> Vec<String> {
     vec!["inheritdoc".to_string()]
-}
-fn default_true() -> bool {
-    true
 }
 fn default_check_types_pattern() -> String {
     "^(?:[oO]bject|[aA]rray|PlainObject|Generic(?:Object|Array))$".to_string() // spellchecker:disable-line

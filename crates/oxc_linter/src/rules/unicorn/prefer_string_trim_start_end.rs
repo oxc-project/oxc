@@ -5,10 +5,14 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_string_trim_start_end_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`"))
-        .with_help(format!("Replace with `{x1}`"))
-        .with_label(span0)
+fn prefer_string_trim_start_end_diagnostic(
+    span: Span,
+    good_trim: &str,
+    bad_trim: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{good_trim}` over `{bad_trim}`"))
+        .with_help(format!("Replace with `{good_trim}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -24,12 +28,15 @@ declare_oxc_lint!(
     /// The `trimLeft` and `trimRight` names are confusing and inconsistent with the rest of the language.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// str.trimLeft();
     /// str.trimRight();
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// str.trimStart();
     /// str.trimEnd();
     /// ```

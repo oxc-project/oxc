@@ -7,16 +7,16 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
     AstNode,
 };
 
-fn no_direct_mutation_state_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("never mutate this.state directly.")
         .with_help("calling setState() afterwards may replace the mutation you made.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -118,7 +118,7 @@ impl Rule for NoDirectMutationState {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

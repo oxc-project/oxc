@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{Argument, RegExpFlags},
+    ast::{Argument, RegExpFlags, RegExpPattern},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -10,10 +10,10 @@ use regex::{Matches, Regex};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
-fn no_control_regex_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn no_control_regex_diagnostic(regex: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected control character(s)")
-        .with_help(format!("Unexpected control character(s) in regular expression: \"{x0}\""))
-        .with_label(span1)
+        .with_help(format!("Unexpected control character(s) in regular expression: \"{regex}\""))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -66,18 +66,19 @@ impl Rule for NoControlRegex {
     fn run<'a>(&self, node: &AstNode<'a>, context: &LintContext<'a>) {
         if let Some(RegexPatternData { pattern, flags, span }) = regex_pattern(node) {
             let mut violations: Vec<&str> = Vec::new();
-
-            for matched_ctl_pattern in control_patterns(pattern) {
+            let pattern = pattern.as_ref();
+            let pattern_text = pattern.source_text(context.source_text());
+            for matched_ctl_pattern in control_patterns(pattern_text.as_ref()) {
                 let ctl = matched_ctl_pattern.as_str();
 
                 // check for an even number of backslashes, since these will
                 // prevent the pattern from being a control sequence
                 if ctl.starts_with('\\') && matched_ctl_pattern.start() > 0 {
-                    let pattern_chars: Vec<char> = pattern.chars().collect(); // ew
+                    let pattern_chars: Vec<char> = pattern_text.chars().collect(); // ew
 
                     // Convert byte index to char index
                     let byte_start = matched_ctl_pattern.start();
-                    let char_start = pattern[..byte_start].chars().count();
+                    let char_start = pattern_text[..byte_start].chars().count();
 
                     let mut first_backslash = char_start;
                     while first_backslash > 0 && pattern_chars[first_backslash] == '\\' {
@@ -136,10 +137,25 @@ impl Rule for NoControlRegex {
     }
 }
 
+/// Since we don't implement `ToOwned` trait.
+enum PatRef<'a> {
+    Owned(RegExpPattern<'a>),
+    Borrowed(&'a RegExpPattern<'a>),
+}
+
+impl<'a> AsRef<RegExpPattern<'a>> for PatRef<'a> {
+    fn as_ref(&self) -> &RegExpPattern<'a> {
+        match self {
+            Self::Owned(pat) => pat,
+            Self::Borrowed(pat) => pat,
+        }
+    }
+}
+
 struct RegexPatternData<'a> {
     /// A regex pattern, either from a literal (`/foo/`) a RegExp constructor
     /// (`new RegExp("foo")`), or a RegExp function call (`RegExp("foo"))
-    pattern: &'a str,
+    pattern: PatRef<'a>,
     /// Regex flags, if found. It's possible for this to be `Some` but have
     /// no flags.
     ///
@@ -166,7 +182,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
     match kind {
         // regex literal
         AstKind::RegExpLiteral(reg) => Some(RegexPatternData {
-            pattern: reg.regex.pattern.as_ref(),
+            pattern: PatRef::Borrowed(&reg.regex.pattern),
             flags: Some(reg.regex.flags),
             span: reg.span,
         }),
@@ -187,7 +203,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // Note that we're intentionally reporting the entire "new
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
-                        pattern: pattern.value.as_ref(),
+                        pattern: PatRef::Owned(RegExpPattern::Raw(pattern.value.as_ref())),
                         flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })
@@ -215,7 +231,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // Note that we're intentionally reporting the entire "new
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
-                        pattern: pattern.value.as_ref(),
+                        pattern: PatRef::Owned(RegExpPattern::Raw(pattern.value.as_ref())),
                         flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })

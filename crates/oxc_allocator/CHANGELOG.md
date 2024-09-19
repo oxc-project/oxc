@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- e8bdd12 allocator: Add `AsMut` impl for `Box` (#5515) (overlookmotel)
+
+## [0.25.0] - 2024-08-23
+
+### Refactor
+
+- a4247e9 allocator: Move `Box` and `Vec` into separate files (#5034) (overlookmotel)
+
+## [0.24.3] - 2024-08-18
+
+### Refactor
+
+- a6967b3 allocator: Correct code comment (#4904) (overlookmotel)
+- 90d0b2b allocator, ast, span, ast_tools: Use `allocator` as var name for `Allocator` (#4900) (overlookmotel)
+
+## [0.24.2] - 2024-08-12
+
+### Features
+
+- 8e10e25 allocator: Introduce `Address` (#4810) (overlookmotel)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

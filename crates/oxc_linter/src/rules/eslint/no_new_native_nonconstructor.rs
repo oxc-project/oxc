@@ -5,8 +5,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_new_native_nonconstructor_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("`{x0}` cannot be called as a constructor.")).with_label(span1)
+fn no_new_native_nonconstructor_diagnostic(fn_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{fn_name}` cannot be called as a constructor.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -15,20 +15,30 @@ pub struct NoNewNativeNonconstructor;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow new operators with global non-constructor functions (Symbol, BigInt)
+    /// Disallow `new` operators with global non-constructor functions (`Symbol`, `BigInt`)
     ///
     /// ### Why is this bad?
     ///
-    /// Both new Symbol and new BigInt throw a type error because they are functions and not classes.
-    /// It is easy to make this mistake by assuming the uppercase letters indicate classes.
+    /// Both `new Symbol` and `new BigInt` throw a type error because they are
+    /// functions and not classes.  It is easy to make this mistake by assuming
+    /// the uppercase letters indicate classes.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// // throws a TypeError
     /// let foo = new Symbol("foo");
     ///
     /// // throws a TypeError
     /// let result = new BigInt(9007199254740991);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// let foo = Symbol("foo");
+    ///
+    /// let result = BigInt(9007199254740991);
     /// ```
     NoNewNativeNonconstructor,
     correctness,

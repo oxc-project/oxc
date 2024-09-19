@@ -18,24 +18,24 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - '**/*.rs'
-      - 'napi/parser/**/*.js'
-      - 'napi/parser/**/*.mjs'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - '.github/workflows/benchmark.yml'
-      - 'tasks/benchmark/codspeed/*.mjs'
+      - "**/*.rs"
+      - "napi/parser/**/*.js"
+      - "napi/parser/**/*.mjs"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/benchmark.yml"
+      - "tasks/benchmark/codspeed/*.mjs"
   push:
     branches:
       - main
     paths:
-      - '**/*.rs'
-      - 'napi/parser/**/*.js'
-      - 'napi/parser/**/*.mjs'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - '.github/workflows/benchmark.yml'
-      - 'tasks/benchmark/codspeed/*.mjs'
+      - "**/*.rs"
+      - "napi/parser/**/*.js"
+      - "napi/parser/**/*.mjs"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/benchmark.yml"
+      - "tasks/benchmark/codspeed/*.mjs"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -73,20 +73,13 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+      - uses: ./.github/actions/pnpm
 
       - name: Start bench results interceptor server
         working-directory: ./tasks/benchmark/codspeed
         env:
           COMPONENT: ${{ matrix.component }}
-        run: |
-          corepack enable
-          pnpm install
-          node capture.mjs &
+        run: pnpm run start &
 
       - name: Build benchmark
         env:
@@ -183,21 +176,14 @@ jobs:
         with:
           tool: cargo-codspeed
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+      - uses: ./.github/actions/pnpm
 
       - name: Start bench results interceptor server
         working-directory: ./tasks/benchmark/codspeed
         env:
           COMPONENT: linter
           FIXTURE: ${{ matrix.fixture }}
-        run: |
-          corepack enable
-          pnpm install
-          node capture.mjs &
+        run: node capture.mjs &
 
       - name: Run benchmark
         uses: CodSpeedHQ/action@v3
@@ -219,79 +205,74 @@ jobs:
           retention-days: 1
 
   # benchmark-napi:
-    # name: Benchmark NAPI parser
-    # runs-on: ubuntu-latest
-    # if: false
-    # steps:
-      # - name: Checkout Branch
-        # uses: taiki-e/checkout-action@v1
+  # name: Benchmark NAPI parser
+  # runs-on: ubuntu-latest
+  # if: false
+  # steps:
+  # - name: Checkout Branch
+  # uses: taiki-e/checkout-action@v1
 
-      # - uses: Boshen/setup-rust@main
-        # with:
-          # shared-key: benchmark_napi
-          # save-cache: ${{ github.ref_name == 'main' }}
+  # - uses: Boshen/setup-rust@main
+  # with:
+  # shared-key: benchmark_napi
+  # save-cache: ${{ github.ref_name == 'main' }}
 
-      # - name: Install codspeed
-        # uses: taiki-e/install-action@v2
-        # with:
-          # tool: cargo-codspeed
+  # - name: Install codspeed
+  # uses: taiki-e/install-action@v2
+  # with:
+  # tool: cargo-codspeed
 
-      # - name: Install Node.js
-        # uses: actions/setup-node@v4
-        # with:
-          # node-version-file: .node-version
-          # registry-url: 'https://registry.npmjs.org'
+  # - uses: ./.github/actions/pnpm
 
-      # - name: Start bench results interceptor server
-        # working-directory: ./tasks/benchmark/codspeed
-        # env:
-          # COMPONENT: 'parser_napi'
-        # run: |
-          # corepack enable
-          # pnpm install
-          # node capture.mjs &
+  # - name: Start bench results interceptor server
+  # working-directory: ./tasks/benchmark/codspeed
+  # env:
+  # COMPONENT: 'parser_napi'
+  # run: |
+  # pnpm install
+  # node capture.mjs &
 
-      # # CodSpeed gets measurements completely off for NAPI if run in `CodSpeedHQ/action`,
-      # # so instead run real benchmark without CodSpeed's instrumentation and save the results.
-      # # Then "Run Rust benchmark" step below runs a loop of some simple Rust code the number
-      # # of times required to take same amount of time as the real benchmark took.
-      # # This is all a workaround for https://github.com/CodSpeedHQ/action/issues/96
-      # - name: Build NAPI Benchmark
-        # working-directory: ./napi/parser
-        # run: |
-          # corepack enable
-          # pnpm install
-          # pnpm build
+  # # CodSpeed gets measurements completely off for NAPI if run in `CodSpeedHQ/action`,
+  # # so instead run real benchmark without CodSpeed's instrumentation and save the results.
+  # # Then "Run Rust benchmark" step below runs a loop of some simple Rust code the number
+  # # of times required to take same amount of time as the real benchmark took.
+  # # This is all a workaround for https://github.com/CodSpeedHQ/action/issues/96
+  # - name: Build NAPI Benchmark
+  # working-directory: ./napi/parser
+  # run: |
+  # corepack enable
+  # pnpm install
+  # pnpm build
 
-      # - name: Run NAPI Benchmark
-        # working-directory: ./napi/parser
-        # run: node parse.bench.mjs
+  # - name: Run NAPI Benchmark
+  # working-directory: ./napi/parser
+  # run: node parse.bench.mjs
 
-      # - name: Build Rust benchmark
-        # env:
-          # RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
-        # run: |
-          # cargo build --release -p oxc_benchmark --bench parser_napi --no-default-features --features codspeed_napi
-          # mkdir -p target/codspeed/oxc_benchmark/
-          # mv target/release/deps/parser_napi-* target/codspeed/oxc_benchmark
-          # rm -rf target/codspeed/oxc_benchmark/*.d
+  # - name: Build Rust benchmark
+  # env:
+  # RUSTFLAGS: "-C debuginfo=2 -C strip=none -g --cfg codspeed"
+  # run: |
+  # cargo build --release -p oxc_benchmark --bench parser_napi --no-default-features --features codspeed_napi
+  # mkdir -p target/codspeed/oxc_benchmark/
+  # mv target/release/deps/parser_napi-* target/codspeed/oxc_benchmark
+  # rm -rf target/codspeed/oxc_benchmark/*.d
 
-      # - name: Run Rust benchmark
-        # uses: CodSpeedHQ/action@v2
-        # timeout-minutes: 30
-        # with:
-          # run: cargo codspeed run
-          # # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
-          # token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
-          # upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
+  # - name: Run Rust benchmark
+  # uses: CodSpeedHQ/action@v2
+  # timeout-minutes: 30
+  # with:
+  # run: cargo codspeed run
+  # # Dummy token for tokenless runs, to suppress logging hash of metadata JSON (see `upload.mjs`)
+  # token: ${{ secrets.CODSPEED_TOKEN || 'dummy' }}
+  # upload-url: http://localhost:${{ env.INTERCEPT_PORT }}/upload
 
-      # - name: Upload bench data artefact
-        # uses: actions/upload-artifact@v4
-        # with:
-          # name: 'parser_napi'
-          # path: ${{ env.DATA_DIR }}
-          # if-no-files-found: error
-          # retention-days: 1
+  # - name: Upload bench data artefact
+  # uses: actions/upload-artifact@v4
+  # with:
+  # name: 'parser_napi'
+  # path: ${{ env.DATA_DIR }}
+  # if-no-files-found: error
+  # retention-days: 1
 
   # Upload combined benchmark results to CodSpeed
   upload:
@@ -303,18 +284,11 @@ jobs:
       - name: Checkout Branch
         uses: taiki-e/checkout-action@v1
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          registry-url: 'https://registry.npmjs.org'
+      - uses: ./.github/actions/pnpm
 
       - name: Create temp dir
         working-directory: ./tasks/benchmark/codspeed
-        run: |
-          corepack enable
-          pnpm install
-          node create_temp_dir.mjs
+        run: node create_temp_dir.mjs
 
       - name: Download artefacts
         uses: actions/download-artifact@v4

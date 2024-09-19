@@ -1,0 +1,47 @@
+name: Check PR
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - synchronize
+
+jobs:
+  pr:
+    if: github.repository == 'oxc-project/oxc'
+    name: Label and Check PR Title
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: actions/labeler@v5
+
+      - name: Validate PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          requireScope: true
+          disallowScopes: |
+            build
+            chore
+            ci
+            release
+            revert
+          types: |
+            build
+            chore
+            ci
+            docs
+            feat
+            fix
+            perf
+            refactor
+            release
+            revert
+            style
+            test

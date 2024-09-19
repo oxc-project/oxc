@@ -1,13 +1,13 @@
 /*
  * Test and bench against `es-module-lexer`
  */
-import fs from "fs";
-import assert from "assert";
+import assert from 'assert';
+import fs from 'fs';
 
-import oxc from "./index.js";
-import * as esModuleLexer from "es-module-lexer";
+import * as esModuleLexer from 'es-module-lexer';
+import oxc from './index.js';
 
-const root = "/Users/boshen/github/es-module-lexer/test/samples";
+const root = '/Users/boshen/github/es-module-lexer/test/samples';
 
 main();
 
@@ -16,7 +16,7 @@ async function main() {
 
   const files = fs
     .readdirSync(root)
-    .filter((x) => x.endsWith(".js"))
+    .filter((x) => x.endsWith('.js'))
     .map((file) => {
       const source = fs.readFileSync(`${root}/${file}`);
       return {
@@ -27,8 +27,7 @@ async function main() {
     });
 
   function test(source) {
-    const [imports, exports, facade, hasModuleSyntax] =
-      esModuleLexer.parse(source);
+    const [imports, exports, facade, hasModuleSyntax] = esModuleLexer.parse(source);
     const moduleLexer = oxc.moduleLexerSync(source);
     assert(moduleLexer.imports.length == imports.length);
     assert(moduleLexer.exports.length == exports.length);
@@ -46,11 +45,11 @@ async function main() {
 
   const n = 25;
 
-  bench("es-module-lexer", esModuleLexer.parse);
-  bench("oxc", oxc.moduleLexerSync);
+  bench('es-module-lexer', esModuleLexer.parse);
+  bench('oxc', oxc.moduleLexerSync);
 
   function bench(name, fn) {
-    console.log("-----------");
+    console.log('-----------');
     console.log(name);
 
     doRun();
@@ -63,7 +62,7 @@ async function main() {
     }
 
     function doRun() {
-      console.log("Cold Run, All Samples");
+      console.log('Cold Run, All Samples');
       let totalSize = 0;
       {
         let total = 0;
@@ -72,7 +71,7 @@ async function main() {
           total += timeRun(code);
         });
         console.log(`test/samples/*.js (${Math.round(totalSize / 1e3)} KiB)`);
-        console.log(`> ${total + "ms"}`);
+        console.log(`> ${total + 'ms'}`);
       }
 
       console.log(`\nWarm Runs (average of ${n} runs)`);
@@ -84,7 +83,7 @@ async function main() {
           total += timeRun(code);
         }
 
-        console.log(`> ${total / n + "ms"}`);
+        console.log(`> ${total / n + 'ms'}`);
       });
 
       console.log(`\nWarm Runs, All Samples (average of ${n} runs)`);
@@ -96,7 +95,7 @@ async function main() {
           });
         }
         console.log(`test/samples/*.js (${Math.round(totalSize / 1e3)} KiB)`);
-        console.log(`> ${total / n + "ms"}`);
+        console.log(`> ${total / n + 'ms'}`);
       }
     }
   }

@@ -9,18 +9,22 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn adjacent_overload_signatures_diagnostic(
-    x0: &str,
-    span1: Option<Span>,
-    span2: Span,
+    fn_name: &str,
+    first: Option<Span>,
+    second: Span,
 ) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("All {x0:?} signatures should be adjacent."));
-    if let Some(span) = span1 {
+    let mut d = OxcDiagnostic::warn(format!("All {fn_name:?} signatures should be adjacent."));
+    if let Some(span) = first {
         d = d.and_label(span);
     }
-    d.and_label(span2)
+    d.and_label(second)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -320,7 +324,7 @@ impl Rule for AdjacentOverloadSignatures {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

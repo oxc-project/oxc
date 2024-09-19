@@ -7,20 +7,21 @@
 
 /// <https://github.com/import-js/eslint-plugin-import>
 mod import {
+    // pub mod no_deprecated;
+    // pub mod no_unused_modules;
     pub mod default;
     pub mod export;
+    pub mod max_dependencies;
     pub mod named;
     pub mod namespace;
     pub mod no_amd;
     pub mod no_cycle;
     pub mod no_default_export;
-    // pub mod no_deprecated;
-    pub mod max_dependencies;
     pub mod no_duplicates;
+    pub mod no_dynamic_require;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
     pub mod no_self_import;
-    // pub mod no_unused_modules;
     pub mod no_webpack_loader_syntax;
 }
 
@@ -38,6 +39,7 @@ mod eslint {
     pub mod max_classes_per_file;
     pub mod max_lines;
     pub mod max_params;
+    pub mod no_alert;
     pub mod no_array_constructor;
     pub mod no_async_promise_executor;
     pub mod no_await_in_loop;
@@ -70,22 +72,27 @@ mod eslint {
     pub mod no_eq_null;
     pub mod no_eval;
     pub mod no_ex_assign;
+    pub mod no_extend_native;
     pub mod no_extra_boolean_cast;
     pub mod no_fallthrough;
     pub mod no_func_assign;
     pub mod no_global_assign;
     pub mod no_import_assign;
     pub mod no_inner_declarations;
+    pub mod no_invalid_regexp;
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_label_var;
     pub mod no_loss_of_precision;
+    pub mod no_magic_numbers;
     pub mod no_multi_str;
     pub mod no_new;
+    pub mod no_new_func;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
     pub mod no_nonoctal_decimal_escape;
     pub mod no_obj_calls;
+    pub mod no_plusplus;
     pub mod no_proto;
     pub mod no_prototype_builtins;
     pub mod no_redeclare;
@@ -123,6 +130,8 @@ mod eslint {
     pub mod require_await;
     pub mod require_yield;
     pub mod sort_imports;
+    pub mod sort_keys;
+    pub mod sort_vars;
     pub mod symbol_description;
     pub mod unicode_bom;
     pub mod use_isnan;
@@ -157,6 +166,7 @@ mod typescript {
     pub mod no_unsafe_declaration_merging;
     pub mod no_useless_empty_export;
     pub mod no_var_requires;
+    pub mod no_wrapper_object_types;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
     pub mod prefer_for_of;
@@ -175,6 +185,7 @@ mod jest {
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
+    pub mod no_conditional_in_test;
     pub mod no_confusing_set_timeout;
     pub mod no_deprecated_functions;
     pub mod no_disabled_tests;
@@ -228,8 +239,10 @@ mod react {
     pub mod jsx_no_target_blank;
     pub mod jsx_no_undef;
     pub mod jsx_no_useless_fragment;
+    pub mod jsx_props_no_spread_multi;
     pub mod no_children_prop;
     pub mod no_danger;
+    pub mod no_danger_with_children;
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
@@ -242,6 +255,7 @@ mod react {
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
+    pub mod self_closing_comp;
     pub mod void_dom_elements_no_children;
 }
 
@@ -254,6 +268,7 @@ mod react_perf {
 
 mod unicorn {
     pub mod catch_error_name;
+    pub mod consistent_function_scoping;
     pub mod empty_brace_spaces;
     pub mod error_message;
     pub mod escape_case;
@@ -331,6 +346,7 @@ mod unicorn {
     pub mod prefer_string_slice;
     pub mod prefer_string_starts_ends_with;
     pub mod prefer_string_trim_start_end;
+    pub mod prefer_structured_clone;
     pub mod prefer_type_error;
     pub mod require_array_join_separator;
     pub mod require_number_to_fixed_digits_argument;
@@ -353,6 +369,7 @@ mod jsx_a11y {
     pub mod html_has_lang;
     pub mod iframe_has_title;
     pub mod img_redundant_alt;
+    pub mod label_has_associated_control;
     pub mod lang;
     pub mod media_has_caption;
     pub mod mouse_events_have_key_events;
@@ -384,6 +401,7 @@ mod oxc {
     pub mod missing_throw;
     pub mod no_accumulating_spread;
     pub mod no_async_await;
+    pub mod no_async_endpoint_handlers;
     pub mod no_barrel_file;
     pub mod no_const_enum;
     pub mod no_optional_chaining;
@@ -444,20 +462,32 @@ mod tree_shaking {
 
 mod promise {
     pub mod avoid_new;
+    pub mod catch_or_return;
     pub mod no_new_statics;
     pub mod no_return_in_finally;
     pub mod param_names;
     pub mod prefer_await_to_then;
+    pub mod spec_only;
     pub mod valid_params;
 }
 
 mod vitest {
+    pub mod no_conditional_tests;
     pub mod no_import_node_test;
+    pub mod prefer_each;
     pub mod prefer_to_be_falsy;
+    pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
+    pub mod require_local_test_context_for_concurrent_snapshots;
+}
+
+mod node {
+    pub mod no_exports_assign;
 }
 
 oxc_macros::declare_all_lint_rules! {
+    // import::no_deprecated,
+    // import::no_unused_modules,
     eslint::array_callback_return,
     eslint::constructor_super,
     eslint::default_case,
@@ -471,24 +501,21 @@ oxc_macros::declare_all_lint_rules! {
     eslint::max_classes_per_file,
     eslint::max_lines,
     eslint::max_params,
-    eslint::no_ternary,
-    eslint::no_this_before_super,
-    eslint::no_template_curly_in_string,
+    eslint::no_alert,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
+    eslint::no_await_in_loop,
     eslint::no_bitwise,
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
-    eslint::no_multi_str,
-    eslint::no_label_var,
-    eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
     eslint::no_console,
     eslint::no_const_assign,
     eslint::no_constant_binary_expression,
     eslint::no_constant_condition,
+    eslint::no_constructor_return,
     eslint::no_continue,
     eslint::no_control_regex,
     eslint::no_debugger,
@@ -504,32 +531,44 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty_pattern,
     eslint::no_empty_static_block,
     eslint::no_else_return,
+    eslint::no_eq_null,
     eslint::no_eval,
     eslint::no_ex_assign,
+    eslint::no_extend_native,
     eslint::no_extra_boolean_cast,
-    eslint::no_eq_null,
     eslint::no_fallthrough,
     eslint::no_func_assign,
     eslint::no_global_assign,
     eslint::no_import_assign,
     eslint::no_inner_declarations,
+    eslint::no_invalid_regexp,
     eslint::no_irregular_whitespace,
     eslint::no_iterator,
+    eslint::no_label_var,
     eslint::no_loss_of_precision,
+    eslint::no_magic_numbers,
+    eslint::no_multi_str,
     eslint::no_new,
+    eslint::no_new_func,
+    eslint::no_new_native_nonconstructor,
     eslint::no_new_wrappers,
     eslint::no_nonoctal_decimal_escape,
     eslint::no_obj_calls,
+    eslint::no_plusplus,
     eslint::no_proto,
     eslint::no_prototype_builtins,
     eslint::no_redeclare,
     eslint::no_regex_spaces,
+    eslint::no_restricted_globals,
     eslint::no_script_url,
     eslint::no_self_assign,
     eslint::no_self_compare,
     eslint::no_setter_return,
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
+    eslint::no_template_curly_in_string,
+    eslint::no_ternary,
+    eslint::no_this_before_super,
     eslint::no_undef,
     eslint::no_undefined,
     eslint::no_unreachable,
@@ -537,64 +576,42 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
-    eslint::no_unused_vars,
     eslint::no_unused_private_class_members,
+    eslint::no_unused_vars,
     eslint::no_useless_catch,
-    eslint::no_useless_escape,
-    eslint::no_useless_rename,
     eslint::no_useless_concat,
     eslint::no_useless_constructor,
+    eslint::no_useless_escape,
+    eslint::no_useless_rename,
     eslint::no_var,
     eslint::no_void,
     eslint::no_with,
+    eslint::prefer_exponentiation_operator,
+    eslint::prefer_numeric_literals,
     eslint::radix,
+    eslint::require_await,
     eslint::require_yield,
-    eslint::symbol_description,
     eslint::sort_imports,
+    eslint::sort_keys,
+    eslint::sort_vars,
+    eslint::symbol_description,
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
-    eslint::no_await_in_loop,
-    eslint::no_new_native_nonconstructor,
-    eslint::no_restricted_globals,
-    eslint::prefer_exponentiation_operator,
-    eslint::prefer_numeric_literals,
-    eslint::no_constructor_return,
-    typescript::adjacent_overload_signatures,
-    typescript::array_type,
-    typescript::ban_ts_comment,
-    typescript::ban_tslint_comment,
-    typescript::prefer_enum_initializers,
-    typescript::ban_types,
-    typescript::consistent_type_definitions,
-    typescript::consistent_type_imports,
-    typescript::consistent_indexed_object_style,
-    typescript::no_duplicate_enum_values,
-    typescript::no_empty_interface,
-    typescript::no_explicit_any,
-    typescript::no_extra_non_null_assertion,
-    typescript::no_import_type_side_effects,
-    typescript::no_misused_new,
-    typescript::no_namespace,
-    typescript::no_non_null_asserted_optional_chain,
-    typescript::no_this_alias,
-    typescript::no_unnecessary_type_constraint,
-    typescript::no_unsafe_declaration_merging,
-    typescript::no_useless_empty_export,
-    typescript::no_var_requires,
-    typescript::prefer_as_const,
-    typescript::prefer_for_of,
-    typescript::prefer_function_type,
-    typescript::prefer_namespace_keyword,
-    typescript::prefer_ts_expect_error,
-    typescript::triple_slash_reference,
-    typescript::prefer_literal_enum_member,
-    typescript::explicit_function_return_type,
-    typescript::no_non_null_assertion,
-    typescript::no_non_null_asserted_nullish_coalescing,
-    typescript::no_confusing_non_null_assertion,
-    typescript::no_dynamic_delete,
-    typescript::no_extraneous_class,
+    import::default,
+    import::export,
+    import::max_dependencies,
+    import::named,
+    import::namespace,
+    import::no_amd,
+    import::no_cycle,
+    import::no_default_export,
+    import::no_duplicates,
+    import::no_dynamic_require,
+    import::no_named_as_default,
+    import::no_named_as_default_member,
+    import::no_self_import,
+    import::no_webpack_loader_syntax,
     jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
@@ -602,6 +619,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
+    jest::no_conditional_in_test,
     jest::no_confusing_set_timeout,
     jest::no_deprecated_functions,
     jest::no_disabled_tests,
@@ -642,7 +660,174 @@ oxc_macros::declare_all_lint_rules! {
     jest::valid_describe_callback,
     jest::valid_expect,
     jest::valid_title,
+    jsdoc::check_access,
+    jsdoc::check_property_names,
+    jsdoc::check_tag_names,
+    jsdoc::empty_tags,
+    jsdoc::implements_on_classes,
+    jsdoc::no_defaults,
+    jsdoc::require_param,
+    jsdoc::require_param_description,
+    jsdoc::require_param_name,
+    jsdoc::require_param_type,
+    jsdoc::require_property,
+    jsdoc::require_property_description,
+    jsdoc::require_property_name,
+    jsdoc::require_property_type,
+    jsdoc::require_returns,
+    jsdoc::require_returns_description,
+    jsdoc::require_returns_type,
+    jsdoc::require_yields,
+    jsx_a11y::alt_text,
+    jsx_a11y::anchor_has_content,
+    jsx_a11y::anchor_is_valid,
+    jsx_a11y::aria_activedescendant_has_tabindex,
+    jsx_a11y::aria_props,
+    jsx_a11y::aria_role,
+    jsx_a11y::aria_unsupported_elements,
+    jsx_a11y::autocomplete_valid,
+    jsx_a11y::click_events_have_key_events,
+    jsx_a11y::heading_has_content,
+    jsx_a11y::html_has_lang,
+    jsx_a11y::iframe_has_title,
+    jsx_a11y::img_redundant_alt,
+    jsx_a11y::label_has_associated_control,
+    jsx_a11y::lang,
+    jsx_a11y::media_has_caption,
+    jsx_a11y::mouse_events_have_key_events,
+    jsx_a11y::no_access_key,
+    jsx_a11y::no_aria_hidden_on_focusable,
+    jsx_a11y::no_autofocus,
+    jsx_a11y::no_distracting_elements,
+    jsx_a11y::no_redundant_roles,
+    jsx_a11y::prefer_tag_over_role,
+    jsx_a11y::role_has_required_aria_props,
+    jsx_a11y::role_supports_aria_props,
+    jsx_a11y::scope,
+    jsx_a11y::tabindex_no_positive,
+    nextjs::google_font_display,
+    nextjs::google_font_preconnect,
+    nextjs::inline_script_id,
+    nextjs::next_script_for_ga,
+    nextjs::no_assign_module_variable,
+    nextjs::no_async_client_component,
+    nextjs::no_before_interactive_script_outside_document,
+    nextjs::no_css_tags,
+    nextjs::no_document_import_in_page,
+    nextjs::no_duplicate_head,
+    nextjs::no_head_element,
+    nextjs::no_head_import_in_document,
+    nextjs::no_img_element,
+    nextjs::no_page_custom_font,
+    nextjs::no_script_component_in_head,
+    nextjs::no_styled_jsx_in_document,
+    nextjs::no_sync_scripts,
+    nextjs::no_title_in_document_head,
+    nextjs::no_typos,
+    nextjs::no_unwanted_polyfillio,
+    node::no_exports_assign,
+    oxc::approx_constant,
+    oxc::bad_array_method_on_arguments,
+    oxc::bad_bitwise_operator,
+    oxc::bad_char_at_comparison,
+    oxc::bad_comparison_sequence,
+    oxc::bad_min_max_func,
+    oxc::bad_object_literal_comparison,
+    oxc::bad_replace_all_arg,
+    oxc::const_comparisons,
+    oxc::double_comparisons,
+    oxc::erasing_op,
+    oxc::misrefactored_assign_op,
+    oxc::missing_throw,
+    oxc::no_accumulating_spread,
+    oxc::no_async_await,
+    oxc::no_async_endpoint_handlers,
+    oxc::no_barrel_file,
+    oxc::no_const_enum,
+    oxc::no_optional_chaining,
+    oxc::no_rest_spread_properties,
+    oxc::number_arg_out_of_range,
+    oxc::only_used_in_recursion,
+    oxc::uninvoked_array_callback,
+    promise::avoid_new,
+    promise::catch_or_return,
+    promise::no_new_statics,
+    promise::no_return_in_finally,
+    promise::param_names,
+    promise::prefer_await_to_then,
+    promise::spec_only,
+    promise::valid_params,
+    react::button_has_type,
+    react::checked_requires_onchange_or_readonly,
+    react::jsx_boolean_value,
+    react::jsx_curly_brace_presence,
+    react::jsx_key,
+    react::jsx_no_comment_textnodes,
+    react::jsx_no_duplicate_props,
+    react::jsx_no_target_blank,
+    react::jsx_no_undef,
+    react::jsx_no_useless_fragment,
+    react::jsx_props_no_spread_multi,
+    react::no_children_prop,
+    react::no_danger,
+    react::no_danger_with_children,
+    react::no_direct_mutation_state,
+    react::no_find_dom_node,
+    react::no_is_mounted,
+    react::no_render_return_value,
+    react::no_set_state,
+    react::no_string_refs,
+    react::no_unescaped_entities,
+    react::no_unknown_property,
+    react::prefer_es6_class,
+    react::react_in_jsx_scope,
+    react::require_render_return,
+    react::rules_of_hooks,
+    react::self_closing_comp,
+    react::void_dom_elements_no_children,
+    react_perf::jsx_no_jsx_as_prop,
+    react_perf::jsx_no_new_array_as_prop,
+    react_perf::jsx_no_new_function_as_prop,
+    react_perf::jsx_no_new_object_as_prop,
+    tree_shaking::no_side_effects_in_initialization,
+    typescript::adjacent_overload_signatures,
+    typescript::array_type,
+    typescript::ban_ts_comment,
+    typescript::ban_tslint_comment,
+    typescript::ban_types,
+    typescript::consistent_indexed_object_style,
+    typescript::consistent_type_definitions,
+    typescript::consistent_type_imports,
+    typescript::explicit_function_return_type,
+    typescript::no_confusing_non_null_assertion,
+    typescript::no_duplicate_enum_values,
+    typescript::no_dynamic_delete,
+    typescript::no_empty_interface,
+    typescript::no_explicit_any,
+    typescript::no_extra_non_null_assertion,
+    typescript::no_extraneous_class,
+    typescript::no_import_type_side_effects,
+    typescript::no_misused_new,
+    typescript::no_namespace,
+    typescript::no_non_null_asserted_nullish_coalescing,
+    typescript::no_non_null_asserted_optional_chain,
+    typescript::no_non_null_assertion,
+    typescript::no_this_alias,
+    typescript::no_unnecessary_type_constraint,
+    typescript::no_unsafe_declaration_merging,
+    typescript::no_useless_empty_export,
+    typescript::no_var_requires,
+    typescript::no_wrapper_object_types,
+    typescript::prefer_as_const,
+    typescript::prefer_enum_initializers,
+    typescript::prefer_for_of,
+    typescript::prefer_function_type,
+    typescript::prefer_literal_enum_member,
+    typescript::prefer_namespace_keyword,
+    typescript::prefer_ts_expect_error,
+    typescript::triple_slash_reference,
     unicorn::catch_error_name,
+    unicorn::consistent_function_scoping,
     unicorn::empty_brace_spaces,
     unicorn::error_message,
     unicorn::escape_case,
@@ -690,13 +875,12 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
     unicorn::prefer_add_event_listener,
-    unicorn::prefer_array_flat_map,
     unicorn::prefer_array_flat,
+    unicorn::prefer_array_flat_map,
     unicorn::prefer_array_some,
     unicorn::prefer_blob_reading_methods,
     unicorn::prefer_code_point,
     unicorn::prefer_date_now,
-    unicorn::prefer_node_protocol,
     unicorn::prefer_dom_node_append,
     unicorn::prefer_dom_node_dataset,
     unicorn::prefer_dom_node_remove,
@@ -708,6 +892,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_modern_dom_apis,
     unicorn::prefer_modern_math_apis,
     unicorn::prefer_native_coercion_functions,
+    unicorn::prefer_node_protocol,
     unicorn::prefer_number_properties,
     unicorn::prefer_optional_catch_binding,
     unicorn::prefer_prototype_methods,
@@ -720,150 +905,18 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::prefer_string_slice,
     unicorn::prefer_string_starts_ends_with,
     unicorn::prefer_string_trim_start_end,
+    unicorn::prefer_structured_clone,
     unicorn::prefer_type_error,
     unicorn::require_array_join_separator,
     unicorn::require_number_to_fixed_digits_argument,
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
-    react::button_has_type,
-    react::checked_requires_onchange_or_readonly,
-    react::jsx_no_target_blank,
-    react::jsx_curly_brace_presence,
-    react::jsx_boolean_value,
-    react::jsx_key,
-    react::jsx_no_comment_textnodes,
-    react::jsx_no_duplicate_props,
-    react::jsx_no_useless_fragment,
-    react::jsx_no_undef,
-    react::react_in_jsx_scope,
-    react::no_children_prop,
-    react::no_danger,
-    react::no_direct_mutation_state,
-    react::no_find_dom_node,
-    react::no_render_return_value,
-    react::no_set_state,
-    react::no_string_refs,
-    react::no_unescaped_entities,
-    react::no_is_mounted,
-    react::no_unknown_property,
-    react::prefer_es6_class,
-    react::require_render_return,
-    react::rules_of_hooks,
-    react::void_dom_elements_no_children,
-    react_perf::jsx_no_jsx_as_prop,
-    react_perf::jsx_no_new_array_as_prop,
-    react_perf::jsx_no_new_function_as_prop,
-    react_perf::jsx_no_new_object_as_prop,
-    import::default,
-    import::export,
-    import::max_dependencies,
-    import::named,
-    import::namespace,
-    import::no_amd,
-    import::no_cycle,
-    // import::no_deprecated,
-    import::no_named_as_default,
-    import::no_named_as_default_member,
-    import::no_self_import,
-    // import::no_unused_modules,
-    import::no_duplicates,
-    import::no_default_export,
-    import::no_webpack_loader_syntax,
-    jsx_a11y::alt_text,
-    jsx_a11y::anchor_has_content,
-    jsx_a11y::anchor_is_valid,
-    jsx_a11y::aria_activedescendant_has_tabindex,
-    jsx_a11y::aria_props,
-    jsx_a11y::aria_unsupported_elements,
-    jsx_a11y::click_events_have_key_events,
-    jsx_a11y::heading_has_content,
-    jsx_a11y::html_has_lang,
-    jsx_a11y::lang,
-    jsx_a11y::iframe_has_title,
-    jsx_a11y::img_redundant_alt,
-    jsx_a11y::media_has_caption,
-    jsx_a11y::mouse_events_have_key_events,
-    jsx_a11y::no_access_key,
-    jsx_a11y::no_aria_hidden_on_focusable,
-    jsx_a11y::no_autofocus,
-    jsx_a11y::no_redundant_roles,
-    jsx_a11y::prefer_tag_over_role,
-    jsx_a11y::role_has_required_aria_props,
-    jsx_a11y::scope,
-    jsx_a11y::tabindex_no_positive,
-    jsx_a11y::aria_role,
-    jsx_a11y::no_distracting_elements,
-    jsx_a11y::role_supports_aria_props,
-    jsx_a11y::autocomplete_valid,
-    oxc::approx_constant,
-    oxc::bad_array_method_on_arguments,
-    oxc::bad_bitwise_operator,
-    oxc::bad_char_at_comparison,
-    oxc::bad_comparison_sequence,
-    oxc::bad_min_max_func,
-    oxc::bad_object_literal_comparison,
-    oxc::bad_replace_all_arg,
-    oxc::const_comparisons,
-    oxc::double_comparisons,
-    oxc::erasing_op,
-    oxc::no_optional_chaining,
-    oxc::no_rest_spread_properties,
-    oxc::misrefactored_assign_op,
-    oxc::missing_throw,
-    oxc::no_accumulating_spread,
-    oxc::no_barrel_file,
-    oxc::no_const_enum,
-    oxc::number_arg_out_of_range,
-    oxc::only_used_in_recursion,
-    oxc::no_async_await,
-    oxc::uninvoked_array_callback,
-    nextjs::google_font_display,
-    nextjs::google_font_preconnect,
-    nextjs::inline_script_id,
-    nextjs::next_script_for_ga,
-    nextjs::no_assign_module_variable,
-    nextjs::no_async_client_component,
-    nextjs::no_css_tags,
-    nextjs::no_head_element,
-    nextjs::no_head_import_in_document,
-    nextjs::no_duplicate_head,
-    nextjs::no_img_element,
-    nextjs::no_script_component_in_head,
-    nextjs::no_sync_scripts,
-    nextjs::no_title_in_document_head,
-    nextjs::no_typos,
-    nextjs::no_document_import_in_page,
-    nextjs::no_unwanted_polyfillio,
-    nextjs::no_before_interactive_script_outside_document,
-    nextjs::no_page_custom_font,
-    nextjs::no_styled_jsx_in_document,
-    jsdoc::check_access,
-    jsdoc::check_property_names,
-    jsdoc::check_tag_names,
-    jsdoc::empty_tags,
-    jsdoc::implements_on_classes,
-    jsdoc::no_defaults,
-    jsdoc::require_param,
-    jsdoc::require_param_description,
-    jsdoc::require_param_name,
-    jsdoc::require_param_type,
-    jsdoc::require_property,
-    jsdoc::require_property_type,
-    jsdoc::require_property_name,
-    jsdoc::require_property_description,
-    jsdoc::require_returns,
-    jsdoc::require_returns_description,
-    jsdoc::require_returns_type,
-    jsdoc::require_yields,
-    tree_shaking::no_side_effects_in_initialization,
-    promise::avoid_new,
-    promise::no_new_statics,
-    promise::param_names,
-    promise::valid_params,
-    promise::no_return_in_finally,
-    promise::prefer_await_to_then,
+    vitest::no_conditional_tests,
     vitest::no_import_node_test,
+    vitest::prefer_each,
     vitest::prefer_to_be_falsy,
+    vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
+    vitest::require_local_test_context_for_concurrent_snapshots,
 }

@@ -1,131 +1,131 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty function `foo`
    ╭─[no_empty_function.tsx:1:16]
  1 │ function foo() {}
    ·                ──
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this function or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty function `bar`
    ╭─[no_empty_function.tsx:1:19]
  1 │ const bar = () => {};
    ·                   ──
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this function or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty generator function `baz`
    ╭─[no_empty_function.tsx:1:17]
  1 │ function* baz() {}
    ·                 ──
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this generator function or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty function
    ╭─[no_empty_function.tsx:3:29]
  2 │             const obj = {
  3 │ ╭─▶             foo: function() {
  4 │ ╰─▶             },
  5 │                 bar: function*() {
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this function or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty function
    ╭─[no_empty_function.tsx:5:30]
  4 │                 },
  5 │ ╭─▶             bar: function*() {
  6 │ ╰─▶             },
  7 │                 foobar() {
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this function or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty function
    ╭─[no_empty_function.tsx:7:22]
  6 │                 },
  7 │ ╭─▶             foobar() {
  8 │ ╰─▶             }
  9 │             };
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this function or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty constructor `constructor`
    ╭─[no_empty_function.tsx:3:27]
  2 │             class A {
  3 │ ╭─▶             constructor() {
  4 │ ╰─▶             }
  5 │                 foo() {
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this constructor or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo`
    ╭─[no_empty_function.tsx:5:19]
  4 │                 }
  5 │ ╭─▶             foo() {
  6 │ ╰─▶             }
  7 │                 *foo1() {
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this method or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty method `foo1`
    ╭─[no_empty_function.tsx:7:21]
  6 │                 }
  7 │ ╭─▶             *foo1() {
  8 │ ╰─▶             }
  9 │                 get fooz() {
    ╰────
-  help: Unexpected empty function block
+  help: Consider removing this method or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty getter `fooz`
     ╭─[no_empty_function.tsx:9:24]
   8 │                 }
   9 │ ╭─▶             get fooz() {
  10 │ ╰─▶             }
  11 │                 set fooz(value) {
     ╰────
-  help: Unexpected empty function block
+  help: Consider removing this getter or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty setter `fooz`
     ╭─[no_empty_function.tsx:11:29]
  10 │                 }
  11 │ ╭─▶             set fooz(value) {
  12 │ ╰─▶             }
  13 │                 static bar() {
     ╰────
-  help: Unexpected empty function block
+  help: Consider removing this setter or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty static method `bar`
     ╭─[no_empty_function.tsx:13:26]
  12 │                 }
  13 │ ╭─▶             static bar() {
  14 │ ╰─▶             }
  15 │                 static *barr() {
     ╰────
-  help: Unexpected empty function block
+  help: Consider removing this static method or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty static method `barr`
     ╭─[no_empty_function.tsx:15:28]
  14 │                 }
  15 │ ╭─▶             static *barr() {
  16 │ ╰─▶             }
  17 │                 static get baz() {
     ╰────
-  help: Unexpected empty function block
+  help: Consider removing this static method or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty getter `baz`
     ╭─[no_empty_function.tsx:17:30]
  16 │                 }
  17 │ ╭─▶             static get baz() {
  18 │ ╰─▶             }
  19 │                 static set baz(value) {
     ╰────
-  help: Unexpected empty function block
+  help: Consider removing this getter or adding logic to it.
 
-  ⚠ eslint(no-empty-function): Disallow empty functions
+  ⚠ eslint(no-empty-function): Unexpected empty setter `baz`
     ╭─[no_empty_function.tsx:19:35]
  18 │                 }
  19 │ ╭─▶             static set baz(value) {
  20 │ ╰─▶             }
  21 │             }
     ╰────
-  help: Unexpected empty function block
+  help: Consider removing this setter or adding logic to it.

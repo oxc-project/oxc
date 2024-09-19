@@ -3,12 +3,16 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn react_in_jsx_scope_diagnostic(span0: Span) -> OxcDiagnostic {
+fn react_in_jsx_scope_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'React' must be in scope when using JSX")
         .with_help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -25,11 +29,14 @@ declare_oxc_lint!(
     /// the `React` variable must be in scope.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// var a = <a />;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// var a = <a />;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// import React from "react";
     /// var a = <a />;
     ///
@@ -56,7 +63,7 @@ impl Rule for ReactInJsxScope {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

@@ -1,56 +1,56 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ typescript-eslint(no-useless-empty-export): Disallow empty exports that don't change anything in a module file
+  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:3:13]
  2 │             export const _ = {};
  3 │             export {};
    ·             ──────────
  4 │         
    ╰────
-  help: Empty export does nothing and can be removed.
+  help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Disallow empty exports that don't change anything in a module file
+  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:3:13]
  2 │             export * from '_';
  3 │             export {};
    ·             ──────────
  4 │         
    ╰────
-  help: Empty export does nothing and can be removed.
+  help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Disallow empty exports that don't change anything in a module file
+  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:2:13]
  1 │ 
  2 │             export {};
    ·             ──────────
  3 │             export * from '_';
    ╰────
-  help: Empty export does nothing and can be removed.
+  help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Disallow empty exports that don't change anything in a module file
+  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:4:13]
  3 │             export default _;
  4 │             export {};
    ·             ──────────
  5 │         
    ╰────
-  help: Empty export does nothing and can be removed.
+  help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Disallow empty exports that don't change anything in a module file
+  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:2:13]
  1 │ 
  2 │             export {};
    ·             ──────────
  3 │             const _ = {};
    ╰────
-  help: Empty export does nothing and can be removed.
+  help: Remove this empty export.
 
-  ⚠ typescript-eslint(no-useless-empty-export): Disallow empty exports that don't change anything in a module file
+  ⚠ typescript-eslint(no-useless-empty-export): Empty exports do nothing in module files
    ╭─[no_useless_empty_export.tsx:4:13]
  3 │             export { _ };
  4 │             export {};
    ·             ──────────
  5 │         
    ╰────
-  help: Empty export does nothing and can be removed.
+  help: Remove this empty export.

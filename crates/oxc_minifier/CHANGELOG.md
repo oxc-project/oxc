@@ -4,6 +4,100 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+- e968e9f minifier: Constant fold nullish coalescing operator (#5761) (Boshen)
+- 6bc13f6 minifier: Add `MinimizeConditions` pass (#5747) (Boshen)
+
+### Bug Fixes
+
+- 8ff013a minifier: Handle dce CallExpression::callee (#5752) (Boshen)
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+### Refactor
+
+- 2890c98 minifier: Add tests for `remove_syntax` (#5749) (Boshen)
+- 9a9d8f6 minifier: Replace `self.ast` with `ctx.ast` (#5748) (Boshen)
+- 746f7b3 minifier: Align code with closure compiler (#5717) (Boshen)
+- 21e2df5 minifier: Replace `VisitMut` with `Traverse` for inject and define plugins (#5705) (Boshen)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+- b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
+
+### Features
+
+- 68c3cf5 minifier: Fold `void 1` -> `void 0` (#5670) (Boshen)
+- c6bbf94 minifier: Constant fold unary expression (#5669) (Boshen)
+- 86256ea minifier: Constant fold `typeof` (#5666) (Boshen)
+
+### Bug Fixes
+
+- b8f8dd6 minifier/replace_global_defines: Do not replace shadowed identifiers (#5691) (Boshen)
+
+### Performance
+
+
+### Refactor
+
+- 067f9b5 semantic: Introduce `IsGlobalReference` trait (#5672) (Boshen)
+
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- ba4b68c minifier: Remove parenthesized expression for dce (#5439) (Boshen)
+
+## [0.25.0] - 2024-08-23
+
+- 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)
+
+- c4c08a7 ast: [**BREAKING**] Rename `IdentifierReference::reference_flags` field (#5024) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- ce4d469 codegen: [**BREAKING**] Remove const generic `MINIFY` (#5001) (Boshen)
+
+### Features
+
+- 2b21be3 oxc_minifier: Define plugin with postfix wildcard (#4979) (IWANABETHATGUY)
+
+### Refactor
+
+- 0f64d10 minifier: Remove duplicated helper `move_out_expression` (#5007) (IWANABETHATGUY)
+- b4407c4 oxc,mangler: `oxc` crate add mangler; mangler use options API (Boshen)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 46cb1c1 minifier: Handle `Object.definedPropert(exports` for @babel/types/lib/index.js (#4933) (Boshen)
+- 81fd637 minifier: Do not fold `0 && (module.exports = {})` for `cjs-module-lexer` (#4878) (Boshen)
+- 879a271 minifier: Do not join `require` calls for `cjs-module-lexer` (#4875) (Boshen)
+
+## [0.24.2] - 2024-08-12
+
+### Performance
+
+- 504ac0b minifier: `InjectGlobalVariables` only add to `replaced_dot_defines` once for each (#4803) (overlookmotel)
+- 35f2742 minifier: Avoid repeated `Atom` creation in `InjectGlobalVariables` (#4802) (overlookmotel)
+
+## [0.24.1] - 2024-08-10
+
+### Features
+
+- c519295 minifier: Add `InjectGlobalVariables` plugin (`@rollup/plugin-inject`) (#4759) (Boshen)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

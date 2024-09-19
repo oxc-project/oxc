@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
-fn prefer_regexp_test_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer RegExp#test() over String#match() and RegExp#exec()")
         .with_help("RegExp#test() exclusively returns a boolean and therefore is more efficient")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -28,19 +28,22 @@ declare_oxc_lint!(
     ///
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// if (string.match(/unicorn/)) { }
     /// if (/unicorn/.exec(string)) {}
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// if (/unicorn/.test(string)) {}
     /// Boolean(string.match(/unicorn/))
     ///
     /// ```
     PreferRegexpTest,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for PreferRegexpTest {
@@ -84,7 +87,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the for statement is the same node as the call expression.
-                if std::ptr::addr_of!(**call_expr2) != call_expr as *const _ {
+                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
                     return;
                 }
             }
@@ -94,7 +97,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the conditional expression is the same node as the call expression.
-                if std::ptr::addr_of!(**call_expr2) != call_expr as *const _ {
+                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
                     return;
                 }
             }
@@ -147,7 +150,9 @@ impl Rule for PreferRegexpTest {
             _ => unreachable!("match or test {:?}", name),
         }
 
-        ctx.diagnostic(prefer_regexp_test_diagnostic(span));
+        ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
+            fixer.replace(span, "test")
+        });
     }
 }
 
@@ -236,5 +241,36 @@ fn test() {
         r"!/a/v.exec(foo)",
     ];
 
-    Tester::new(PreferRegexpTest::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("const re = /a/; const bar = !foo.match(re)", "const re = /a/; const bar = !foo.test(re)"),
+        (
+            "const re = /a/; const bar = Boolean(foo.match(re))",
+            "const re = /a/; const bar = Boolean(foo.test(re))",
+        ),
+        ("const re = /a/; if (foo.match(re)) {}", "const re = /a/; if (foo.test(re)) {}"),
+        (
+            "const re = /a/; const bar = foo.match(re) ? 1 : 2",
+            "const re = /a/; const bar = foo.test(re) ? 1 : 2",
+        ),
+        (
+            "const re = /a/; while (foo.match(re)) foo = foo.slice(1);",
+            "const re = /a/; while (foo.test(re)) foo = foo.slice(1);",
+        ),
+        (
+            "const re = /a/; do {foo = foo.slice(1)} while (foo.match(re));",
+            "const re = /a/; do {foo = foo.slice(1)} while (foo.test(re));",
+        ),
+        (
+            "const re = /a/; for (; foo.match(re); ) foo = foo.slice(1);",
+            "const re = /a/; for (; foo.test(re); ) foo = foo.slice(1);",
+        ),
+        ("const re = /a/; const bar = !re.exec(foo)", "const re = /a/; const bar = !re.test(foo)"),
+        (
+            "const re = /a/; const bar = Boolean(re.exec(foo))",
+            "const re = /a/; const bar = Boolean(re.test(foo))",
+        ),
+        ("const re = /a/; if (re.exec(foo)) {}", "const re = /a/; if (re.test(foo)) {}"),
+    ];
+
+    Tester::new(PreferRegexpTest::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

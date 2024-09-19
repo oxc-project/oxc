@@ -1,24 +1,26 @@
 use napi_derive::napi;
-
-use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
 use oxc_allocator::Allocator;
 use oxc_codegen::CodegenReturn;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer::Transformer;
 
-// NOTE: use JSDoc syntax for all doc comments, not rustdoc.
+use crate::{context::TransformContext, isolated_declaration, SourceMap, TransformOptions};
+
+// NOTE: Use JSDoc syntax for all doc comments, not rustdoc.
+// NOTE: Types must be aligned with [@types/babel__core](https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/babel__core/index.d.ts).
 
 #[napi(object)]
 pub struct TransformResult {
     /// The transformed code.
     ///
     /// If parsing failed, this will be an empty string.
-    pub source_text: String,
+    pub code: String,
 
     /// The source map for the transformed code.
     ///
     /// This will be set if {@link TransformOptions#sourcemap} is `true`.
-    pub source_map: Option<SourceMap>,
+    pub map: Option<SourceMap>,
 
     /// The `.d.ts` declaration file for the transformed code. Declarations are
     /// only generated if `declaration` is set to `true` and a TypeScript file
@@ -53,7 +55,7 @@ pub struct TransformResult {
 ///
 /// @returns an object containing the transformed code, source maps, and any
 /// errors that occurred during parsing or transformation.
-#[allow(clippy::needless_pass_by_value, dead_code)]
+#[allow(clippy::needless_pass_by_value)]
 #[napi]
 pub fn transform(
     filename: String,
@@ -88,8 +90,8 @@ pub fn transform(
         .map_or((None, None), |d| (Some(d.source_text), d.source_map.map(Into::into)));
 
     TransformResult {
-        source_text: transpile_result.source_text,
-        source_map: transpile_result.source_map.map(Into::into),
+        code: transpile_result.source_text,
+        map: transpile_result.source_map.map(Into::into),
         declaration,
         declaration_map,
         errors: ctx.take_and_render_reports(),
@@ -97,6 +99,12 @@ pub fn transform(
 }
 
 fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
+    let (symbols, scopes) = SemanticBuilder::new(ctx.source_text())
+        // Estimate transformer will triple scopes, symbols, references
+        .with_excess_capacity(2.0)
+        .build(&ctx.program())
+        .semantic
+        .into_symbol_table_and_scope_tree();
     let ret = Transformer::new(
         ctx.allocator,
         ctx.file_path(),
@@ -105,8 +113,8 @@ fn transpile(ctx: &TransformContext<'_>) -> CodegenReturn {
         ctx.trivias.clone(),
         ctx.oxc_options(),
     )
-    .build(&mut ctx.program_mut());
+    .build_with_symbols_and_scopes(symbols, scopes, &mut ctx.program_mut());
 
     ctx.add_diagnostics(ret.errors);
-    ctx.codegen::<false>().build(&ctx.program())
+    ctx.codegen().build(&ctx.program())
 }

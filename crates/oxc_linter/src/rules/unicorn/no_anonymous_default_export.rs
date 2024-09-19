@@ -1,3 +1,5 @@
+use std::fmt;
+
 use oxc_ast::{
     ast::{AssignmentExpression, AssignmentTarget, ExportDefaultDeclarationKind, Expression},
     AstKind,
@@ -8,10 +10,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_anonymous_default_export_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow anonymous functions and classes as the default export")
-        .with_help(format!("The {x1} should be named."))
-        .with_label(span0)
+fn no_anonymous_default_export_diagnostic(span: Span, kind: ErrorNodeKind) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("This {kind} default export is missing a name"))
+        // TODO: suggest a name. https://github.com/sindresorhus/eslint-plugin-unicorn/blob/d3e4b805da31c6ed7275e2e2e770b6b0fbcf11c2/rules/no-anonymous-default-export.js#L41
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -22,19 +24,24 @@ declare_oxc_lint!(
     /// Disallow anonymous functions and classes as the default export
     ///
     /// ### Why is this bad?
-    /// Naming default exports improves codebase searchability by ensuring consistent identifier use for a module's default export, both where it's declared and where it's imported.
+    /// Naming default exports improves codebase searchability by ensuring
+    /// consistent identifier use for a module's default export, both where it's
+    /// declared and where it's imported.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// export default class {}
     /// export default function () {}
     /// export default () => {};
     /// module.exports = class {};
     /// module.exports = function () {};
     /// module.exports = () => {};
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// export default class Foo {}
     /// export default function foo () {}
     ///
@@ -101,7 +108,7 @@ impl Rule for NoAnonymousDefaultExport {
         };
 
         if let Some((span, error_kind)) = problem_node {
-            ctx.diagnostic(no_anonymous_default_export_diagnostic(span, error_kind.as_str()));
+            ctx.diagnostic(no_anonymous_default_export_diagnostic(span, error_kind));
         };
     }
 }
@@ -122,16 +129,17 @@ fn is_common_js_export(expr: &AssignmentExpression) -> bool {
     true
 }
 
+#[derive(Clone, Copy)]
 enum ErrorNodeKind {
     Function,
     Class,
 }
 
-impl ErrorNodeKind {
-    fn as_str(&self) -> &str {
+impl fmt::Display for ErrorNodeKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Function => "function",
-            Self::Class => "class",
+            Self::Function => "function".fmt(f),
+            Self::Class => "class".fmt(f),
         }
     }
 }

@@ -7,12 +7,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_set, Set};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
-fn use_jest_mocked(span0: Span) -> OxcDiagnostic {
+fn use_jest_mocked(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `jest.mocked()` over `fn as jest.Mock`.")
         .with_help("Prefer `jest.mocked()`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -51,17 +51,17 @@ declare_oxc_lint!(
     /// ```
     PreferJestMocked,
     style,
-    fix
+    conditional_fix
 );
 
 impl Rule for PreferJestMocked {
-    fn run(&self, node: &AstNode, ctx: &LintContext) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSAsExpression(ts_expr) = node.kind() {
             if !matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::TSAsExpression(_))) {
-                Self::check_ts_as_expression(ts_expr, ctx);
+                Self::check_ts_as_expression(node, ts_expr, ctx);
             }
         } else if let AstKind::TSTypeAssertion(assert_type) = node.kind() {
-            Self::check_assert_type(assert_type, ctx);
+            Self::check_assert_type(node, assert_type, ctx);
         }
     }
 }
@@ -74,23 +74,37 @@ const MOCK_TYPES: Set<&'static str> = phf_set! {
 };
 
 impl PreferJestMocked {
-    fn check_ts_as_expression(as_expr: &TSAsExpression, ctx: &LintContext) {
+    fn check_ts_as_expression<'a>(
+        node: &AstNode<'a>,
+        as_expr: &TSAsExpression,
+        ctx: &LintContext<'a>,
+    ) {
         let TSType::TSTypeReference(ts_reference) = &as_expr.type_annotation else {
             return;
         };
         let arg_span = as_expr.expression.get_inner_expression().span();
-        Self::check(ts_reference, arg_span, as_expr.span, ctx);
+        Self::check(node, ts_reference, arg_span, as_expr.span, ctx);
     }
 
-    fn check_assert_type(assert_type: &TSTypeAssertion, ctx: &LintContext) {
+    fn check_assert_type<'a>(
+        node: &AstNode<'a>,
+        assert_type: &TSTypeAssertion,
+        ctx: &LintContext<'a>,
+    ) {
         let TSType::TSTypeReference(ts_reference) = &assert_type.type_annotation else {
             return;
         };
         let arg_span = assert_type.expression.get_inner_expression().span();
-        Self::check(ts_reference, arg_span, assert_type.span, ctx);
+        Self::check(node, ts_reference, arg_span, assert_type.span, ctx);
     }
 
-    fn check(ts_reference: &TSTypeReference, arg_span: Span, span: Span, ctx: &LintContext) {
+    fn check<'a>(
+        node: &AstNode<'a>,
+        ts_reference: &TSTypeReference,
+        arg_span: Span,
+        span: Span,
+        ctx: &LintContext<'a>,
+    ) {
         let TSTypeName::QualifiedName(qualified_name) = &ts_reference.type_name else {
             return;
         };
@@ -104,17 +118,27 @@ impl PreferJestMocked {
             return;
         }
 
-        ctx.diagnostic_with_fix(use_jest_mocked(span), |fixer| {
-            let span_source_code = fixer.source_range(arg_span);
-            fixer.replace(span, format!("jest.mocked({span_source_code})"))
-        });
+        if can_fix(node, ctx) {
+            ctx.diagnostic_with_fix(use_jest_mocked(span), |fixer| {
+                let span_source_code = fixer.source_range(arg_span);
+                fixer.replace(span, format!("jest.mocked({span_source_code})"))
+            });
+        } else {
+            ctx.diagnostic(use_jest_mocked(span));
+        }
     }
+}
+
+fn can_fix<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    outermost_paren_parent(node, ctx)
+        .map_or(false, |parent| !matches!(parent.kind(), AstKind::SimpleAssignmentTarget(_)))
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("foo();", None, None, None),
@@ -320,6 +344,9 @@ fn test() {
                 ).mockReturnValue(1);
             ",
         ),
+        // we can't fix this case, as fixing it would result in a syntax error
+        // (we'd be attempting attempting to assign `jest.fn()` to invalid left-hand side)
+        ("(foo as jest.Mock) = jest.fn();", "(foo as jest.Mock) = jest.fn();"),
     ];
 
     Tester::new(PreferJestMocked::NAME, pass, fail)

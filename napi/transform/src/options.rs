@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
+use napi::Either;
 use napi_derive::napi;
-
 use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, TypeScriptOptions,
+    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, ReactRefreshOptions,
+    RewriteExtensionsMode, TypeScriptOptions,
 };
 
 #[napi(object)]
@@ -22,6 +23,16 @@ pub struct TypeScriptBindingOptions {
     ///
     /// @default false
     pub declaration: Option<bool>,
+    /// Rewrite or remove TypeScript import/export declaration extensions.
+    ///
+    /// - When set to `rewrite`, it will change `.ts`, `.mts`, `.cts` extensions to `.js`, `.mjs`, `.cjs` respectively.
+    /// - When set to `remove`, it will remove `.ts`/`.mts`/`.cts`/`.tsx` extension entirely.
+    /// - When set to `true`, it's equivalent to `rewrite`.
+    /// - When set to `false` or omitted, no changes will be made to the extensions.
+    ///
+    /// @default false
+    #[napi(ts_type = "'rewrite' | 'remove' | boolean")]
+    pub rewrite_import_extensions: Option<Either<bool, String>>,
 }
 
 impl From<TypeScriptBindingOptions> for TypeScriptOptions {
@@ -35,6 +46,23 @@ impl From<TypeScriptBindingOptions> for TypeScriptOptions {
                 .unwrap_or(ops.only_remove_type_imports),
             allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
             allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
+            optimize_const_enums: false,
+            rewrite_import_extensions: options.rewrite_import_extensions.and_then(|value| {
+                match value {
+                    Either::A(v) => {
+                        if v {
+                            Some(RewriteExtensionsMode::Rewrite)
+                        } else {
+                            None
+                        }
+                    }
+                    Either::B(v) => match v.as_str() {
+                        "rewrite" => Some(RewriteExtensionsMode::Rewrite),
+                        "remove" => Some(RewriteExtensionsMode::Remove),
+                        _ => None,
+                    },
+                }
+            }),
         }
     }
 }
@@ -112,6 +140,9 @@ pub struct ReactBindingOptions {
     ///
     /// @default false
     pub use_spread: Option<bool>,
+
+    /// Enable react fast refresh transform
+    pub refresh: Option<ReactRefreshBindingOptions>,
 }
 
 impl From<ReactBindingOptions> for ReactOptions {
@@ -130,7 +161,34 @@ impl From<ReactBindingOptions> for ReactOptions {
             pragma_frag: options.pragma_frag,
             use_built_ins: options.use_built_ins,
             use_spread: options.use_spread,
+            refresh: options.refresh.map(Into::into),
             ..Default::default()
+        }
+    }
+}
+
+#[napi(object)]
+pub struct ReactRefreshBindingOptions {
+    /// Specify the identifier of the refresh registration variable.
+    ///
+    /// @default `$RefreshReg$`.
+    pub refresh_reg: Option<String>,
+
+    /// Specify the identifier of the refresh signature variable.
+    ///
+    /// @default `$RefreshSig$`.
+    pub refresh_sig: Option<String>,
+
+    pub emit_full_signatures: Option<bool>,
+}
+
+impl From<ReactRefreshBindingOptions> for ReactRefreshOptions {
+    fn from(options: ReactRefreshBindingOptions) -> Self {
+        let ops = ReactRefreshOptions::default();
+        ReactRefreshOptions {
+            refresh_reg: options.refresh_reg.unwrap_or(ops.refresh_reg),
+            refresh_sig: options.refresh_sig.unwrap_or(ops.refresh_sig),
+            emit_full_signatures: options.emit_full_signatures.unwrap_or(ops.emit_full_signatures),
         }
     }
 }
@@ -168,6 +226,7 @@ impl From<ES2015BindingOptions> for ES2015Options {
 ///
 /// @see {@link transform}
 #[napi(object)]
+#[derive(Default)]
 pub struct TransformOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,

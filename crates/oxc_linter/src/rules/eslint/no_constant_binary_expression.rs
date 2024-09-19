@@ -22,13 +22,13 @@ declare_oxc_lint!(
     /// Disallow expressions where the operation doesn't affect the value
     ///
     /// ### Why is this bad?
-    /// Comparisons which will always evaluate to true or false and logical expressions (||, &&, ??) which either always
+    /// Comparisons which will always evaluate to true or false and logical expressions (`||`, `&&`, `??`) which either always
     /// short-circuit or never short-circuit are both likely indications of programmer error.
     ///
     /// These errors are especially common in complex expressions where operator precedence is easy to misjudge.
     ///
     /// Additionally, this rule detects comparisons to newly constructed objects/arrays/functions/etc.
-    /// In JavaScript, where objects are compared by reference, a newly constructed object can never === any other value.
+    /// In JavaScript, where objects are compared by reference, a newly constructed object can never `===` any other value.
     /// This can be surprising for programmers coming from languages where objects are compared by value.
     ///
     /// ### Example
@@ -48,30 +48,32 @@ declare_oxc_lint!(
     correctness
 );
 
-fn constant_short_circuit(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn constant_short_circuit(lhs_name: &str, expr_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Unexpected constant {x0:?} on the left-hand side of a {x1:?} expression"
+        "Unexpected constant {lhs_name:?} on the left-hand side of a {expr_name:?} expression"
     ))
     .with_help("This expression always evaluates to the constant on the left-hand side")
-    .with_label(span2)
+    .with_label(span)
 }
 
-fn constant_binary_operand(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn constant_binary_operand(left_or_right: &str, operator: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant binary expression")
-        .with_help(format!("This compares constantly with the {x0}-hand side of the {x1}"))
-        .with_label(span2)
+        .with_help(format!(
+            "This compares constantly with the {left_or_right}-hand side of the {operator}"
+        ))
+        .with_label(span)
 }
 
-fn constant_always_new(span0: Span) -> OxcDiagnostic {
+fn constant_always_new(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected comparison to newly constructed object")
         .with_help("These two values can never be equal")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn constant_both_always_new(span0: Span) -> OxcDiagnostic {
+fn constant_both_always_new(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected comparison of two newly constructed objects")
         .with_help("These two values can never be equal")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for NoConstantBinaryExpression {

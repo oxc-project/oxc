@@ -1,16 +1,8 @@
-use std::hash::{Hash, Hasher};
-
-use oxc_ast::AstKind;
-use oxc_semantic::{AstNode, SymbolId};
+use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_semantic::{AstNode, IsGlobalReference, NodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
-use rustc_hash::FxHasher;
 
-pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
-    let mut hasher = FxHasher::default();
-    t.hash(&mut hasher);
-    hasher.finish()
-}
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
@@ -37,7 +29,7 @@ pub fn is_static_boolean<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bo
 fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
     match expr {
         expr if expr.is_literal() => {
-            let boolean_value = expr.get_boolean_value();
+            let boolean_value = expr.to_boolean();
             (op == LogicalOperator::Or && boolean_value == Some(true))
                 || (op == LogicalOperator::And && boolean_value == Some(false))
         }
@@ -239,6 +231,36 @@ pub fn outermost_paren_parent<'a, 'b>(
         .find(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
 }
 
+pub fn nth_outermost_paren_parent<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+    n: usize,
+) -> Option<&'b AstNode<'a>> {
+    ctx.nodes()
+        .iter_parents(node.id())
+        .skip(1)
+        .filter(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
+        .nth(n)
+}
+/// Iterate over parents of `node`, skipping nodes that are also ignored by
+/// [`Expression::get_inner_expression`].
+pub fn iter_outer_expressions<'a, 'ctx>(
+    ctx: &'ctx LintContext<'a>,
+    node_id: NodeId,
+) -> impl Iterator<Item = &'ctx AstNode<'a>> + 'ctx {
+    ctx.nodes().iter_parents(node_id).skip(1).filter(|parent| {
+        !matches!(
+            parent.kind(),
+            AstKind::ParenthesizedExpression(_)
+                | AstKind::TSAsExpression(_)
+                | AstKind::TSSatisfiesExpression(_)
+                | AstKind::TSInstantiationExpression(_)
+                | AstKind::TSNonNullExpression(_)
+                | AstKind::TSTypeAssertion(_)
+        )
+    })
+}
+
 pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference,
     ctx: &'b LintContext<'a>,
@@ -294,12 +316,12 @@ pub fn is_method_call<'a>(
         }
     }
 
-    let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression() else {
+    let Some(member_expr) = call_expr.callee.without_parentheses().as_member_expression() else {
         return false;
     };
 
     if let Some(objects) = objects {
-        let Expression::Identifier(ident) = member_expr.object().without_parenthesized() else {
+        let Expression::Identifier(ident) = member_expr.object().without_parentheses() else {
             return false;
         };
         if !objects.contains(&ident.name.as_str()) {
@@ -336,7 +358,7 @@ pub fn is_new_expression<'a>(
         }
     }
 
-    let Expression::Identifier(ident) = new_expr.callee.without_parenthesized() else {
+    let Expression::Identifier(ident) = new_expr.callee.without_parentheses() else {
         return false;
     };
 
@@ -350,39 +372,23 @@ pub fn is_new_expression<'a>(
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
-    let member_expr = call_expr.callee.without_parenthesized().as_member_expression()?;
+    let member_expr = call_expr.callee.without_parentheses().as_member_expression()?;
     member_expr.static_property_info()
 }
 
 pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'a str> {
-    let Expression::Identifier(ident) = new_expr.callee.without_parenthesized() else {
+    let Expression::Identifier(ident) = new_expr.callee.without_parentheses() else {
         return None;
     };
 
     Some(ident.name.as_str())
 }
 
-/// Check if the given [IdentifierReference] is a global reference.
-/// Such as `window`, `document`, `globalThis`, etc.
-pub fn is_global_reference(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    let symbol_table = ctx.semantic().symbols();
-    let Some(reference_id) = ident.reference_id.get() else {
-        return false;
-    };
-    let reference = symbol_table.get_reference(reference_id);
-    reference.symbol_id().is_none()
-}
-
 pub fn is_global_require_call(call_expr: &CallExpression, ctx: &LintContext) -> bool {
     if call_expr.arguments.len() != 1 {
         return false;
     }
-
-    if let Expression::Identifier(id_ref) = &call_expr.callee {
-        id_ref.name == "require" && is_global_reference(id_ref, ctx)
-    } else {
-        false
-    }
+    call_expr.callee.is_global_reference_name("require", ctx.symbols())
 }
 
 pub fn is_function_node(node: &AstNode) -> bool {
@@ -392,4 +398,14 @@ pub fn is_function_node(node: &AstNode) -> bool {
         AstKind::ArrowFunctionExpression(_) => true,
         _ => false,
     }
+}
+
+pub fn get_function_like_declaration<'b>(
+    node: &AstNode<'b>,
+    ctx: &LintContext<'b>,
+) -> Option<&'b BindingIdentifier<'b>> {
+    let parent = outermost_paren_parent(node, ctx)?;
+    let decl = parent.kind().as_variable_declarator()?;
+
+    decl.id.get_binding_identifier()
 }

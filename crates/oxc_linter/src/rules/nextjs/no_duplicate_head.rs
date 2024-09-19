@@ -5,6 +5,11 @@ use oxc_span::GetSpan;
 
 use crate::{context::LintContext, rule::Rule};
 
+fn no_duplicate_head(labels: Vec<LabeledSpan>) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not include multiple instances of `<Head/>`")
+        .with_help("Only use a single `<Head />` component in your custom document in `pages/_document.js`. See: https://nextjs.org/docs/messages/no-duplicate-head")
+        .with_labels(labels)
+}
 #[derive(Debug, Default, Clone)]
 pub struct NoDuplicateHead;
 
@@ -47,8 +52,8 @@ impl Rule for NoDuplicateHead {
             return;
         }
 
-        let flag = symbols.get_flag(symbol_id);
-        if !flag.is_import() {
+        let flags = symbols.get_flags(symbol_id);
+        if !flags.is_import() {
             return;
         }
 
@@ -100,11 +105,7 @@ impl Rule for NoDuplicateHead {
             return;
         }
 
-        ctx.diagnostic(
-            OxcDiagnostic::warn("Do not include multiple instances of `<Head/>`")
-                .with_help("Only use a single `<Head />` component in your custom document in `pages/_document.js`. See: https://nextjs.org/docs/messages/no-duplicate-head")
-                .with_labels(labels),
-        );
+        ctx.diagnostic(no_duplicate_head(labels));
     }
 }
 

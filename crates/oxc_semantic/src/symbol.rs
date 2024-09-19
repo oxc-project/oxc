@@ -1,19 +1,20 @@
 #![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 
-use oxc_ast::ast::Expression;
+#[cfg(feature = "serialize")]
+use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
+
+use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 use crate::{
-    node::AstNodeId,
+    node::NodeId,
     reference::{Reference, ReferenceId},
 };
 
@@ -38,7 +39,7 @@ pub struct SymbolTable {
     pub flags: IndexVec<SymbolId, SymbolFlags>,
     pub scope_ids: IndexVec<SymbolId, ScopeId>,
     /// Pointer to the AST Node where this symbol is declared
-    pub declarations: IndexVec<SymbolId, AstNodeId>,
+    pub declarations: IndexVec<SymbolId, NodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
 
@@ -55,31 +56,17 @@ impl SymbolTable {
 
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.spans.is_empty()
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
         self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
-    }
-
-    pub fn iter_rev(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.spans.iter_enumerated().rev().map(|(symbol_id, _)| symbol_id)
     }
 
     pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
         self.spans
             .iter_enumerated()
             .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
-    }
-
-    pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
-        self.names.iter_enumerated().find_map(|(symbol, inner_name)| {
-            if inner_name.as_str() == name {
-                Some(symbol)
-            } else {
-                None
-            }
-        })
     }
 
     #[inline]
@@ -98,8 +85,13 @@ impl SymbolTable {
     }
 
     #[inline]
-    pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
+    pub fn get_flags(&self, symbol_id: SymbolId) -> SymbolFlags {
         self.flags[symbol_id]
+    }
+
+    #[inline]
+    pub fn get_flags_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolFlags {
+        &mut self.flags[symbol_id]
     }
 
     #[inline]
@@ -131,12 +123,8 @@ impl SymbolTable {
         self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 
-    pub fn get_scope_id_from_name(&self, name: &str) -> Option<ScopeId> {
-        self.get_symbol_id_from_name(name).map(|symbol_id| self.get_scope_id(symbol_id))
-    }
-
     #[inline]
-    pub fn get_declaration(&self, symbol_id: SymbolId) -> AstNodeId {
+    pub fn get_declaration(&self, symbol_id: SymbolId) -> NodeId {
         self.declarations[symbol_id]
     }
 
@@ -144,13 +132,13 @@ impl SymbolTable {
         &mut self,
         span: Span,
         name: CompactStr,
-        flag: SymbolFlags,
+        flags: SymbolFlags,
         scope_id: ScopeId,
-        node_id: AstNodeId,
+        node_id: NodeId,
     ) -> SymbolId {
         self.spans.push(span);
         self.names.push(name);
-        self.flags.push(flag);
+        self.flags.push(flags);
         self.scope_ids.push(scope_id);
         self.declarations.push(node_id);
         self.resolved_references.push(vec![]);
@@ -186,11 +174,6 @@ impl SymbolTable {
     }
 
     #[inline]
-    pub fn is_global_reference(&self, reference_id: ReferenceId) -> bool {
-        self.references[reference_id].symbol_id().is_none()
-    }
-
-    #[inline]
     pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {
         &self.resolved_references[symbol_id]
     }
@@ -204,29 +187,14 @@ impl SymbolTable {
             .map(|reference_id| &self.references[*reference_id])
     }
 
-    /// Determine whether evaluating the specific input `node` is a consequenceless reference. ie.
-    /// evaluating it won't result in potentially arbitrary code from being ran. The following are
-    /// allowed and determined not to cause side effects:
+    /// Delete a reference to a symbol.
     ///
-    ///  - `this` expressions
-    ///  - `super` expressions
-    ///  - Bound identifiers
-    ///
-    /// Reference:
-    /// <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L557>
-    pub fn is_static(&self, expr: &Expression) -> bool {
-        match expr {
-            Expression::ThisExpression(_) | Expression::Super(_) => true,
-            Expression::Identifier(ident) => {
-                ident.reference_id.get().map_or(false, |reference_id| {
-                    self.get_reference(reference_id).symbol_id().map_or_else(
-                        || self.has_binding(reference_id),
-                        |symbol_id| self.get_resolved_references(symbol_id).all(|r| !r.is_write()),
-                    )
-                })
-            }
-            _ => false,
-        }
+    /// # Panics
+    /// Panics if provided `reference_id` is not a resolved reference for `symbol_id`.
+    pub fn delete_resolved_reference(&mut self, symbol_id: SymbolId, reference_id: ReferenceId) {
+        let reference_ids = &mut self.resolved_references[symbol_id];
+        let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
+        reference_ids.swap_remove(index);
     }
 
     pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
@@ -239,5 +207,49 @@ impl SymbolTable {
         self.redeclarations.reserve(additional_symbols);
 
         self.references.reserve(additional_references);
+    }
+}
+
+/// Checks whether the a identifier reference is a global value or not.
+pub trait IsGlobalReference {
+    fn is_global_reference(&self, _symbols: &SymbolTable) -> bool;
+    fn is_global_reference_name(&self, name: &str, _symbols: &SymbolTable) -> bool;
+}
+
+impl IsGlobalReference for ReferenceId {
+    fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
+        symbols.references[*self].symbol_id().is_none()
+    }
+
+    fn is_global_reference_name(&self, _name: &str, _symbols: &SymbolTable) -> bool {
+        panic!("This function is pointless to be called.");
+    }
+}
+
+impl<'a> IsGlobalReference for IdentifierReference<'a> {
+    fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
+        self.reference_id
+            .get()
+            .is_some_and(|reference_id| reference_id.is_global_reference(symbols))
+    }
+
+    fn is_global_reference_name(&self, name: &str, symbols: &SymbolTable) -> bool {
+        self.name == name && self.is_global_reference(symbols)
+    }
+}
+
+impl<'a> IsGlobalReference for Expression<'a> {
+    fn is_global_reference(&self, symbols: &SymbolTable) -> bool {
+        if let Expression::Identifier(ident) = self {
+            return ident.is_global_reference(symbols);
+        }
+        false
+    }
+
+    fn is_global_reference_name(&self, name: &str, symbols: &SymbolTable) -> bool {
+        if let Expression::Identifier(ident) = self {
+            return ident.is_global_reference_name(name, symbols);
+        }
+        false
     }
 }

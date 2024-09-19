@@ -16,6 +16,7 @@ use crate::{
     },
 };
 
+// TODO: re-word diagnostic messages
 fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow specific matchers & modifiers")
         .with_help(format!("Use of `{x0:?}` is disallowed`"))

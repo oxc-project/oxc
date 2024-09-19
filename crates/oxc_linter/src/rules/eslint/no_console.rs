@@ -5,8 +5,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_console_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected console statement.").with_label(span0)
+fn no_console_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected console statement.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -68,21 +68,22 @@ impl Rule for NoConsole {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(mem) = call_expr.callee.as_member_expression() {
-                if let Expression::Identifier(ident) = mem.object() {
-                    if ctx.semantic().is_reference_to_global_variable(ident)
-                        && ident.name == "console"
-                        && !self
-                            .allow
-                            .iter()
-                            .any(|s| mem.static_property_name().is_some_and(|f| f == s))
-                    {
-                        if let Some(mem) = mem.static_property_info() {
-                            ctx.diagnostic(no_console_diagnostic(mem.0));
-                        }
-                    }
-                }
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+        let Some(mem) = call_expr.callee.as_member_expression() else {
+            return;
+        };
+        let Expression::Identifier(ident) = mem.object() else {
+            return;
+        };
+
+        if ctx.semantic().is_reference_to_global_variable(ident)
+            && ident.name == "console"
+            && !self.allow.iter().any(|s| mem.static_property_name().is_some_and(|f| f == s))
+        {
+            if let Some(mem) = mem.static_property_info() {
+                ctx.diagnostic(no_console_diagnostic(mem.0));
             }
         }
     }

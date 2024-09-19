@@ -8,6 +8,10 @@ use crate::ast_util::{is_method_call, is_new_expression};
 pub(super) enum ValueHint {
     NewObject,
     NewArray,
+    /// A non-array iterable.
+    ///
+    /// Note that typed arrays are considered arrays, not iterables.
+    NewIterable,
     Promise(Box<ValueHint>),
     Unknown,
 }
@@ -33,10 +37,14 @@ impl ValueHint {
 
 impl std::ops::BitAnd for ValueHint {
     type Output = Self;
+
     fn bitand(self, rhs: Self) -> Self::Output {
+        // NOTE: what about (NewArray, NewIterable), e.g. in
+        // `foo ? new Set() : []`
         match (self, rhs) {
             (Self::NewArray, Self::NewArray) => Self::NewArray,
             (Self::NewObject, Self::NewObject) => Self::NewObject,
+            (Self::NewIterable, Self::NewIterable) => Self::NewIterable,
             _ => Self::Unknown,
         }
     }
@@ -81,8 +89,10 @@ impl<'a> ConstEval for Argument<'a> {
 
 impl<'a> ConstEval for NewExpression<'a> {
     fn const_eval(&self) -> ValueHint {
-        if is_new_array(self) || is_new_map_or_set(self) || is_new_typed_array(self) {
+        if is_new_array(self) || is_new_typed_array(self) {
             ValueHint::NewArray
+        } else if is_new_map_or_set(self) {
+            ValueHint::NewIterable
         } else if is_new_object(self) {
             ValueHint::NewObject
         } else {

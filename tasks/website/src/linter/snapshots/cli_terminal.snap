@@ -2,7 +2,7 @@
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
-Usage: [-c=<./oxlintrc.json>] [--fix] [--fix-suggestions] [--fix-dangerously] [PATH]...
+Usage: [-c=<./oxlintrc.json>] [PATH]...
 
 Basic Configuration
     -c, --config=<./oxlintrc.json>  Oxlint configuration file (experimental)
@@ -15,13 +15,14 @@ Allowing / Denying Multiple Lints
    Accumulate rules and categories from left to right on the command-line.
    For example `-D correctness -A no-debugger` or `-A all -D no-debugger`.
    The categories are:
-   * `correctness` - code that is outright wrong or useless (default)
-   * `suspicious`  - code that is most likely wrong or useless
-   * `pedantic`    - lints which are rather strict or have occasional false positives
-   * `style`       - code that should be written in a more idiomatic way
-   * `nursery`     - new lints that are still under development
-   * `restriction` - lints which prevent the use of language and library features
-   * `all`         - all the categories listed above except nursery
+   * `correctness` - code that is outright wrong or useless (default).
+   * `suspicious`  - code that is most likely wrong or useless.
+   * `pedantic`    - lints which are rather strict or have occasional false positives.
+   * `style`       - code that should be written in a more idiomatic way.
+   * `nursery`     - new lints that are still under development.
+   * `restriction` - lints which prevent the use of language and library features.
+   * `all`         - all the categories listed above except nursery. Does not enable plugins
+  automatically.
     -A, --allow=NAME          Allow the rule or category (suppress the lint)
     -W, --warn=NAME           Deny the rule or category (emit a warning)
     -D, --deny=NAME           Deny the rule or category (emit an error)
@@ -41,6 +42,7 @@ Enable Plugins
         --react-perf-plugin   Enable the React performance plugin and detect rendering performance
                               problems
         --promise-plugin      Enable the promise plugin and detect promise usage problems
+        --node-plugin         Enable the node plugin and detect node usage problems
 
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in

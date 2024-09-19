@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_empty_static_block_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow empty static blocks")
-        .with_help("Unexpected empty static block.")
-        .with_label(span0)
+fn no_empty_static_block_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected empty static blocks")
+        .with_help("Remove this empty block or add content to it.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -19,20 +19,36 @@ declare_oxc_lint!(
     /// Disallows the usages of empty static blocks
     ///
     /// ### Why is this bad?
-    /// Empty block statements, while not technically errors, usually occur due to refactoring that wasn’t completed.
-    /// They can cause confusion when reading code.
+    /// Empty block statements, while not technically errors, usually occur due
+    /// to refactoring that wasn’t completed.  They can cause confusion when
+    /// reading code.
     ///
     /// ### Example
-    /// ```javascript
     ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// class Foo {
     ///     static {
     ///     }
     /// }
+    /// ```
     ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// class Foo {
+    ///     static {
+    ///         // blocks with comments are allowed
+    ///     }
+    /// }
+    /// class Bar {
+    ///     static {
+    ///         doSomething();
+    ///     }
+    /// }
     /// ```
     NoEmptyStaticBlock,
-    correctness
+    correctness,
+    pending // TODO: add a safe suggestion
 );
 
 impl Rule for NoEmptyStaticBlock {

@@ -1,51 +1,51 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:9]
  1 │ 'Hello, ${name}'
    ·         ───────
    ╰────
-  help: Disallow template literal placeholder syntax in regular strings
+  help: Did you mean to use a template string literal?
 
-  ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:9]
  1 │ "Hello, ${name}"
    ·         ───────
    ╰────
-  help: Disallow template literal placeholder syntax in regular strings
+  help: Did you mean to use a template string literal?
 
-  ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:2]
  1 │ '${greeting}, ${name}'
    ·  ───────────
    ╰────
-  help: Disallow template literal placeholder syntax in regular strings
+  help: Did you mean to use a template string literal?
 
-  ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:9]
  1 │ 'Hello, ${index + 1}'
    ·         ────────────
    ╰────
-  help: Disallow template literal placeholder syntax in regular strings
+  help: Did you mean to use a template string literal?
 
-  ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:9]
  1 │ 'Hello, ${name + " foo"}'
    ·         ────────────────
    ╰────
-  help: Disallow template literal placeholder syntax in regular strings
+  help: Did you mean to use a template string literal?
 
-  ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:9]
  1 │ 'Hello, ${name || "foo"}'
    ·         ────────────────
    ╰────
-  help: Disallow template literal placeholder syntax in regular strings
+  help: Did you mean to use a template string literal?
 
-  ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
+  ⚠ eslint(no-template-curly-in-string): Template placeholders will not interpolate in regular strings
    ╭─[no_template_curly_in_string.tsx:1:9]
  1 │ 'Hello, ${{foo: "bar"}.foo}'
    ·         ───────────────────
    ╰────
-  help: Disallow template literal placeholder syntax in regular strings
+  help: Did you mean to use a template string literal?

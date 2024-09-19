@@ -1,12 +1,13 @@
+use oxc_ast::{
+    ast::{DoWhileStatement, ForStatement, WhileStatement},
+    AstKind,
+};
+
 mod javascript;
 mod typescript;
 
 use javascript as js;
 pub use javascript::check_module_record;
-use oxc_ast::{
-    ast::{DoWhileStatement, ForStatement, WhileStatement},
-    AstKind,
-};
 use typescript as ts;
 
 use crate::{builder::SemanticBuilder, AstNode};
@@ -16,7 +17,6 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
 
     match kind {
         AstKind::Program(_) => {
-            js::check_labeled_statement(ctx);
             js::check_duplicate_class_elements(ctx);
         }
         AstKind::BindingIdentifier(ident) => {
@@ -47,6 +47,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::BreakStatement(stmt) => js::check_break_statement(stmt, node, ctx),
         AstKind::ContinueStatement(stmt) => js::check_continue_statement(stmt, node, ctx),
         AstKind::LabeledStatement(stmt) => {
+            js::check_labeled_statement(stmt, node, ctx);
             js::check_function_declaration(&stmt.body, true, ctx);
         }
         AstKind::ForInStatement(stmt) => {
@@ -77,7 +78,10 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
             ts::check_method_definition(method, ctx);
         }
         AstKind::PropertyDefinition(prop) => ts::check_property_definition(prop, ctx),
-        AstKind::ObjectProperty(prop) => js::check_object_property(prop, ctx),
+        AstKind::ObjectProperty(prop) => {
+            js::check_object_property(prop, ctx);
+            ts::check_object_property(prop, ctx);
+        }
         AstKind::Super(sup) => js::check_super(sup, node, ctx),
 
         AstKind::FormalParameters(params) => {
@@ -97,8 +101,10 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, node, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
+        AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, ctx),
         AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
+        AstKind::TSInterfaceDeclaration(decl) => ts::check_ts_interface_declaration(decl, ctx),
         AstKind::TSTypeParameterDeclaration(declaration) => {
             ts::check_ts_type_parameter_declaration(declaration, ctx);
         }

@@ -4,5 +4,5 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/readonly.ts
 ---
 ==================== .D.TS ====================
 
-export declare const EMPTY_OBJ: {readonly [key: string]: any};
+export declare const EMPTY_OBJ: { readonly [key: string]: any };
 export declare const EMPTY_ARR: readonly never[];

@@ -4,8 +4,8 @@ Experimental wasm package for the oxc parser, with full TypeScript typings suppo
 
 This package is built with different [wasm-pack's target](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html) builds:
 
-* `wasm-pack build --target web` for bundler (webpack / vite) consumption.
-* `wasm-pack build --target nodejs` for node.js
+- `wasm-pack build --target web` for bundler (webpack / vite) consumption.
+- `wasm-pack build --target nodejs` for node.js
 
 And exports the files as
 
@@ -22,13 +22,13 @@ Source code: https://github.com/oxc-project/oxc/tree/main/wasm/parser
 ## Usage
 
 ```js
-import initWasm, { parseSync } from "@oxc-parser/wasm";
+import initWasm, { parseSync } from '@oxc-parser/wasm';
 
 async function main() {
   await initWasm();
 
-  const code = "let foo";
-  const result = parseSync(code, { sourceFilename: "test.ts" });
+  const code = 'let foo';
+  const result = parseSync(code, { sourceFilename: 'test.ts' });
   console.log(result);
 }
 
@@ -46,13 +46,13 @@ let sourceTextUtf8 = new TextEncoder().encode(sourceText);
 
 const convertToUtf8 = (sourceTextUtf8, d) => {
   return new TextDecoder().decode(sourceTextUtf8.slice(0, d)).length;
-}
+};
 
 const diagnostics = result.errors.map((d) => ({
-    from: convertToUtf8(sourceTextUtf8, d.start),
-    to: convertToUtf8(sourceTextUtf8, d.end),
-    severity: d.severity.toLowerCase(),
-    message: d.message,
+  from: convertToUtf8(sourceTextUtf8, d.start),
+  to: convertToUtf8(sourceTextUtf8, d.end),
+  severity: d.severity.toLowerCase(),
+  message: d.message,
 }));
 ```
 

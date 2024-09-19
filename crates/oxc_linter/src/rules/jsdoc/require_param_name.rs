@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn missing_name_diagnostic(span0: Span) -> OxcDiagnostic {
+fn missing_name_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@param` name.")
         .with_help("Add name to `@param` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -21,19 +21,24 @@ pub struct RequireParamName;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that all `@param` tags have names.
     ///
     /// ### Why is this bad?
+    ///
     /// The name of a param should be documented.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // Passing
-    /// /** @param {SomeType} foo */
-    /// function quux (foo) {}
+    /// ### Examples
     ///
-    /// // Failing
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// /** @param {SomeType} */
+    /// function quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @param {SomeType} foo */
     /// function quux (foo) {}
     /// ```
     RequireParamName,

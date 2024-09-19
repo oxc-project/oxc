@@ -6,12 +6,18 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    fixer::Fix,
+    rule::Rule,
+    AstNode,
+};
 
-fn prefer_function_type_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn prefer_function_type_diagnostic(suggestion: &str, span: Span) -> OxcDiagnostic {
+    // FIXME: use imperative message phrasing
     OxcDiagnostic::warn("Enforce using function types instead of interfaces with call signatures.")
-        .with_help(format!("The function type form `{x0}` is generally preferred when possible for being more succinct."))
-        .with_label(span1)
+        .with_help(format!("The function type form `{suggestion}` is generally preferred when possible for being more succinct."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -172,12 +178,12 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                                     [span.start as usize..span.end as usize];
 
                                                 match comment_interface.kind {
-                                                    CommentKind::SingleLine => {
+                                                    CommentKind::Line => {
                                                         let single_line_comment: String =
                                                             format!("//{comment}\n");
                                                         comments_vec.push(single_line_comment);
                                                     }
-                                                    CommentKind::MultiLine => {
+                                                    CommentKind::Block => {
                                                         let multi_line_comment: String =
                                                             format!("/*{comment}*/\n");
                                                         comments_vec.push(multi_line_comment);
@@ -206,8 +212,10 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 
                                     Fix::new(
                                         format!(
-                                            "type {} = {};",
-                                            &interface_decl.id.name, &suggestion
+                                            "{} {} = {};",
+                                            if is_parent_exported { "export type" } else { "type" },
+                                            &interface_decl.id.name,
+                                            &suggestion
                                         ),
                                         Span::new(node_start, node_end),
                                     )
@@ -394,7 +402,7 @@ impl Rule for PreferFunctionType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }
@@ -716,6 +724,11 @@ type X = {} & { (): void; };
             r"
 type X = {} & (() => void);
                       ",
+            None,
+        ),
+        (
+            "export interface AnyFn { (...args: any[]): any }",
+            "export type AnyFn = (...args: any[]) => any;",
             None,
         ),
     ];

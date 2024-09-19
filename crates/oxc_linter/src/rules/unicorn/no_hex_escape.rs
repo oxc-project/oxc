@@ -8,8 +8,8 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_hex_escape_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Use Unicode escapes instead of hexadecimal escapes.").with_label(span0)
+fn no_hex_escape_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use Unicode escapes instead of hexadecimal escapes.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -20,13 +20,18 @@ declare_oxc_lint!(
     ///
     /// Enforces a convention of using [Unicode escapes](https://mathiasbynens.be/notes/javascript-escapes#unicode) instead of [hexadecimal escapes](https://mathiasbynens.be/notes/javascript-escapes#hexadecimal) for consistency and clarity.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // fail
     /// const foo = '\x1B';
     /// const foo = `\x1B${bar}`;
+    /// ```
     ///
-    /// // pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = '\u001B';
     /// const foo = `\u001B${bar}`;
     /// ```
@@ -85,10 +90,18 @@ impl Rule for NoHexEscape {
                 });
             }
             AstKind::RegExpLiteral(regex) => {
-                let text = regex.span.source_text(ctx.source_text());
-                if let Some(fixed) = check_escape(&text[1..text.len() - 1]) {
+                if let Some(fixed) =
+                    check_escape(regex.regex.pattern.source_text(ctx.source_text()).as_ref())
+                {
+                    #[allow(clippy::cast_possible_truncation)]
                     ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), |fixer| {
-                        fixer.replace(regex.span, format!("/{fixed}/"))
+                        fixer.replace(
+                            Span::new(
+                                regex.span.start,
+                                regex.span.end - regex.regex.flags.iter().count() as u32,
+                            ),
+                            format!("/{fixed}/"),
+                        )
                     });
                 }
             }
@@ -170,6 +183,16 @@ fn test() {
         (r"const foo = `42\x1242\x34`", r"const foo = `42\u001242\u0034`", None),
         (r"const foo = `42\\\x1242\\\x34`", r"const foo = `42\\\u001242\\\u0034`", None),
         (r"const foo = `\xb1${foo}\xb1${foo}`", r"const foo = `\u00b1${foo}\u00b1${foo}`", None),
+        (
+            r#"const unicodeMatch = "".toString().match(/[^\x00-\xFF]+/g);"#,
+            r#"const unicodeMatch = "".toString().match(/[^\u0000-\u00FF]+/g);"#,
+            None,
+        ),
+        (
+            r#"const unicodeMatch = "".toString().match(/[^\x00-\xFF]+/gim);"#,
+            r#"const unicodeMatch = "".toString().match(/[^\u0000-\u00FF]+/gim);"#,
+            None,
+        ),
     ];
 
     Tester::new(NoHexEscape::NAME, pass, fail).expect_fix(fix).test_and_snapshot();

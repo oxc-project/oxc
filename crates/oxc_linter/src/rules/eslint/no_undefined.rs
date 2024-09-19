@@ -8,10 +8,8 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Default, Clone)]
 pub struct NoUndefined;
 
-fn no_undefined_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow the use of `undefined` as an identifier")
-        .with_help("Unexpected use of undefined.")
-        .with_label(span0)
+fn no_undefined_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected use of `undefined`").with_label(span)
 }
 
 declare_oxc_lint!(
@@ -58,9 +56,9 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn diagnostic_undefined_keyword(name: &str, span0: Span, ctx: &LintContext) {
+fn diagnostic_undefined_keyword(name: &str, span: Span, ctx: &LintContext) {
     if name == "undefined" {
-        ctx.diagnostic(no_undefined_diagnostic(span0));
+        ctx.diagnostic(no_undefined_diagnostic(span));
     }
 }
 

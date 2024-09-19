@@ -1,4 +1,4 @@
-js compatibility: 264/586 (45.05%)
+js compatibility: 268/593 (45.19%)
 
 # Failed
 
@@ -43,7 +43,6 @@ js compatibility: 264/586 (45.05%)
 * assignment/issue-6922.js
 * assignment/issue-7572.js
 * assignment/lone-arg.js
-* assignment/sequence.js
 
 ### assignment-comments
 * assignment-comments/call.js
@@ -202,6 +201,10 @@ js compatibility: 264/586 (45.05%)
 * directives/newline.js
 * directives/test.js
 
+### dynamic-import
+* dynamic-import/import-phase.js
+* dynamic-import/template-literal.js
+
 ### empty-paren-comment
 * empty-paren-comment/class-property.js
 * empty-paren-comment/class.js
@@ -223,6 +226,7 @@ js compatibility: 264/586 (45.05%)
 * for/continue-and-break-comment-1.js
 * for/continue-and-break-comment-2.js
 * for/continue-and-break-comment-without-blocks.js
+* for/for-in-with-initializer.js
 
 ### function
 * function/issue-10277.js
@@ -265,6 +269,10 @@ js compatibility: 264/586 (45.05%)
 ### import-attributes
 * import-attributes/empty.js
 * import-attributes/keyword-detect.js
+* import-attributes/long-sources.js
+
+### import-attributes/quote-props
+* import-attributes/quote-props/quoted-keys.js
 
 ### label
 * label/comment.js
@@ -284,7 +292,6 @@ js compatibility: 264/586 (45.05%)
 * last-argument-expansion/issue-7518.js
 * last-argument-expansion/jsx.js
 * last-argument-expansion/number-only-array.js
-* last-argument-expansion/object.js
 * last-argument-expansion/overflow.js
 
 ### line-suffix-boundary
@@ -337,6 +344,9 @@ js compatibility: 264/586 (45.05%)
 
 ### no-semi-babylon-extensions
 * no-semi-babylon-extensions/no-semi.js
+
+### nullish-coalescing
+* nullish-coalescing/nullish_coalesing_operator.js
 
 ### object-prop-break-in
 * object-prop-break-in/short-keys.js
@@ -451,7 +461,6 @@ js compatibility: 264/586 (45.05%)
 ### throw_statement
 * throw_statement/binaryish.js
 * throw_statement/comment.js
-* throw_statement/jsx.js
 
 ### trailing-comma
 * trailing-comma/es5.js

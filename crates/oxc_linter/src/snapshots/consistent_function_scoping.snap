@@ -1,0 +1,412 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:3:30]
+ 2 │                 {
+ 3 │                     function doBar(bar) {
+   ·                              ─────
+ 4 │                         return bar;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ function doFoo(FooComponent) {
+ 2 │                 function Bar() {
+   ·                          ───
+ 3 │                     return <FooComponent />;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ function Foo() {
+ 2 │                 function Bar () {
+   ·                          ───
+ 3 │                     return <div />
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:27]
+ 1 │ function foo() { function bar() { return <JSX/>; } }
+   ·                           ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ function doFoo(Foo) { const doBar = () => arguments; return doBar(); };
+   ·                             ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:4:34]
+ 3 │             function outer() {
+ 4 │                 inner = function inner() {}
+   ·                                  ─────
+ 5 │             }
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ function doFoo(foo) {
+ 2 │                 function doBar(bar) {
+   ·                          ─────
+ 3 │                     return bar;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:3:26]
+ 2 │                 const foo = 'foo';
+ 3 │                 function doBar(bar) {
+   ·                          ─────
+ 4 │                     return bar;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ function doFoo() { function doBar(bar) { return bar; } }
+   ·                             ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:37]
+ 1 │ const doFoo = function() { function doBar(bar) { return bar; } };
+   ·                                     ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:31]
+ 1 │ const doFoo = function() {
+ 2 │                 const doBar = function(bar) {
+   ·                               ────────
+ 3 │                     return bar;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:34]
+ 1 │ function doFoo() { const doBar = function(bar) { return bar; }; }
+   ·                                  ────────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:34]
+ 1 │ function doFoo() { const doBar = function(bar) { return bar; }; doBar(); }
+   ·                                  ────────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ const doFoo = () => { const doBar = bar => { return bar; } }
+   ·                             ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:32]
+ 1 │ function doFoo(Foo) { function doBar() { return this; } return doBar(); };
+   ·                                ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ function doFoo(Foo) { const doBar = () => (function() {return this})(); return doBar(); };
+   ·                             ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:23]
+ 1 │ function doFoo(Foo) {
+ 2 │                 const doBar = () => (function() {return () => this})();
+   ·                       ─────
+ 3 │                 return doBar();
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ function doFoo(Foo) {
+ 2 │                 function doBar() {
+   ·                          ─────
+ 3 │                     return arguments;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:23]
+ 1 │ function doFoo(Foo) {
+ 2 │                 const doBar = () => (function() {return arguments})();
+   ·                       ─────
+ 3 │                 return doBar();
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ function doFoo(foo) {
+ 2 │                 function doBar(bar) {
+   ·                          ─────
+ 3 │                     return doBar(bar);
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ function doFoo(foo) {
+ 2 │                 function doBar(bar) {
+   ·                          ─────
+ 3 │                     return bar;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ function doFoo() { function doBar() {} }
+   ·                             ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:36]
+ 1 │ function doFoo(foo) { { { function doBar(bar) { return bar; } } } return foo; }
+   ·                                    ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:14]
+ 1 │ { { function doBar(bar) { return bar; } } }
+   ·              ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:46]
+ 1 │ for (let foo = 0; foo < 1; foo++) { function doBar(bar) { return bar; } }
+   ·                                              ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:27]
+ 1 │ function foo() { function bar() {} }
+   ·                           ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:33]
+ 1 │ function foo() { async function bar() {} }
+   ·                                 ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:28]
+ 1 │ function foo() { function* bar() {} }
+   ·                            ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:34]
+ 1 │ function foo() { async function* bar() {} }
+   ·                                  ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:24]
+ 1 │ function foo() { const bar = () => {} }
+   ·                        ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:24]
+ 1 │ function foo() { const bar = async () => {} }
+   ·                        ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:34]
+ 1 │ function foo() { async function* baz() {} }
+   ·                                  ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:3:30]
+ 2 │                 function foo() {
+ 3 │                     function bar() {
+   ·                              ───
+ 4 │                     }
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:3:30]
+ 2 │                 function foo() {
+ 3 │                     function bar() {
+   ·                              ───
+ 4 │                     }
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ process.nextTick(() => {
+ 2 │                 function returnsZero() {
+   ·                          ───────────
+ 3 │                     return true;
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:4:30]
+ 3 │                 function() {
+ 4 │                     function bar() {
+   ·                              ───
+ 5 │                     }
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:8:30]
+ 7 │                 function() {
+ 8 │                     function baz() {
+   ·                              ───
+ 9 │                     }
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:3:26]
+ 2 │                 const Bar = <div />
+ 3 │                 function doBaz() {
+   ·                          ─────
+ 4 │                     return 42
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:2:26]
+ 1 │ function Foo() {
+ 2 │                 function Bar () {
+   ·                          ───
+ 3 │                     return <div />
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:5:26]
+ 4 │                 }
+ 5 │                 function doBaz() {
+   ·                          ─────
+ 6 │                     return 42
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:5:26]
+ 4 │                 }
+ 5 │                 function b() {}
+   ·                          ─
+ 6 │                 function c() {}
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:6:26]
+ 5 │                 function b() {}
+ 6 │                 function c() {}
+   ·                          ─
+ 7 │             }
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+    ╭─[consistent_function_scoping.tsx:9:26]
+  8 │             function fn2() {
+  9 │                 function foo() {}
+    ·                          ───
+ 10 │             }
+    ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:32]
+ 1 │ const outer = () => { function inner() {} }
+   ·                                ─────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:27]
+ 1 │ function foo() { function bar() {} }
+   ·                           ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:33]
+ 1 │ function foo() { async function bar() {} }
+   ·                                 ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:29]
+ 1 │ function foo() { function * bar() {} }
+   ·                             ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:35]
+ 1 │ function foo() { async function * bar() {} }
+   ·                                   ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:24]
+ 1 │ function foo() { const bar = () => {} }
+   ·                        ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:24]
+ 1 │ function foo() { const bar = async () => {} }
+   ·                        ───
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:34]
+ 1 │ function doFoo() { const doBar = function(bar) { return bar; }; }
+   ·                                  ────────
+   ╰────
+  help: Move this function to the outer scope.
+
+  ⚠ eslint-plugin-unicorn(consistent-function-scoping): Function does not capture any variables from the outer scope.
+   ╭─[consistent_function_scoping.tsx:1:43]
+ 1 │ function outer() { const inner = function inner() {}; }
+   ·                                           ─────
+   ╰────
+  help: Move this function to the outer scope.

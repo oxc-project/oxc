@@ -11,11 +11,6 @@
       "ignoreDeps": ["syn", "ureq"]
     },
     {
-      "groupName": "website npm packages",
-      "matchFileNames": ["website/package.json"],
-      "matchManagers": ["npm"]
-    },
-    {
       "groupName": "vscode npm packages",
       "matchFileNames": ["editors/vscode/package.json"],
       "matchManagers": ["npm"],

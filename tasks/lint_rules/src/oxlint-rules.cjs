@@ -1,52 +1,52 @@
-const { resolve } = require("node:path");
-const { readFile } = require("node:fs/promises");
+const { resolve } = require('node:path');
+const { readFile } = require('node:fs/promises');
 
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(
-    resolve("crates/oxc_linter/src/rules.rs"),
-    "utf8",
+    resolve('crates/oxc_linter/src/rules.rs'),
+    'utf8',
   );
 
   /** @type {Set<string>} */
   const rules = new Set();
 
   let found = false;
-  for (let line of rulesFile.split("\n")) {
+  for (let line of rulesFile.split('\n')) {
     line = line.trim();
 
     // Skip commented out rules
-    if (line.startsWith("//")) continue;
+    if (line.startsWith('//')) continue;
 
-    if (line === "oxc_macros::declare_all_lint_rules! {") {
+    if (line === 'oxc_macros::declare_all_lint_rules! {') {
       found = true;
       continue;
     }
-    if (found && line === "}") {
+    if (found && line === '}') {
       return rules;
     }
 
     if (found) {
       const prefixedName = line
-        .replaceAll(",", "")
-        .replaceAll("::", "/")
-        .replaceAll("_", "-");
+        .replaceAll(',', '')
+        .replaceAll('::', '/')
+        .replaceAll('_', '-');
 
       // Ignore no reference rules
-      if (prefixedName.startsWith("oxc/")) continue;
+      if (prefixedName.startsWith('oxc/')) continue;
 
       rules.add(prefixedName);
     }
   }
 
-  throw new Error("Failed to find the end of the rules list");
+  throw new Error('Failed to find the end of the rules list');
 };
 
 const NOT_SUPPORTED_RULE_NAMES = new Set([
-  "eslint/no-dupe-args", // superseded by strict mode
-  "eslint/no-octal", // superseded by strict mode
-  "eslint/no-with", // superseded by strict mode
-  "eslint/no-new-symbol", // Deprecated as of ESLint v9, but for a while disable manually
-  "import/no-unresolved", // Will always contain false positives due to module resolution complexity
+  'eslint/no-dupe-args', // superseded by strict mode
+  'eslint/no-octal', // superseded by strict mode
+  'eslint/no-with', // superseded by strict mode
+  'eslint/no-new-symbol', // Deprecated as of ESLint v9, but for a while disable manually
+  'import/no-unresolved', // Will always contain false positives due to module resolution complexity
 ]);
 
 /**
@@ -67,9 +67,9 @@ exports.createRuleEntries = (loadedAllRules) => {
 
   for (const [name, rule] of loadedAllRules) {
     // Default eslint rules are not prefixed
-    const prefixedName = name.includes("/") ? name : `eslint/${name}`;
+    const prefixedName = name.includes('/') ? name : `eslint/${name}`;
 
-    const docsUrl = rule.meta?.docs?.url ?? "";
+    const docsUrl = rule.meta?.docs?.url ?? '';
     const isDeprecated = rule.meta?.deprecated ?? false;
     const isRecommended = rule.meta?.docs?.recommended ?? false;
 
@@ -117,10 +117,10 @@ exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = (
   ruleEntries,
 ) => {
   for (const [name, rule] of ruleEntries) {
-    if (!name.startsWith("typescript/")) continue;
+    if (!name.startsWith('typescript/')) continue;
 
     // This assumes that if the same name found, it implements the same rule.
-    const eslintRule = ruleEntries.get(name.replace("typescript/", "eslint/"));
+    const eslintRule = ruleEntries.get(name.replace('typescript/', 'eslint/'));
     if (!eslintRule) continue;
 
     rule.isImplemented = eslintRule.isImplemented;

@@ -8,16 +8,17 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn missing_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Pass a message to the {x0:1} constructor.")).with_label(span1)
+fn missing_message(ctor_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Pass a message to the {ctor_name:1} constructor."))
+        .with_label(span)
 }
 
-fn empty_message(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span0)
+fn empty_message(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span)
 }
 
-fn not_string(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Error message should be a string.").with_label(span0)
+fn not_string(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Error message should be a string.").with_label(span)
 }
 
 #[derive(Default, Debug, Clone)]
@@ -28,17 +29,20 @@ declare_oxc_lint!(
     ///
     /// This rule enforces a `message` value to be passed in when creating an instance of a built-in `Error` object, which leads to more readable and debuggable code.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Fail
     /// throw Error()
     /// throw new TypeError()
+    /// ```
     ///
-    /// // Pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// throw new Error('Unexpected token')
     /// throw new TypeError('Number expected')
-    ///
-    ///
     /// ```
     ErrorMessage,
     style

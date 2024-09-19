@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Prop 'props' is spread multiple times.
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
+ 2 │           const props = {};
+ 3 │           <App {...props} {...props} />
+   ·                ────────── ──────────
+ 4 │         
+   ╰────
+  help: Remove all but one spread.
+
+  ⚠ eslint-plugin-react(jsx-props-no-spread-multi): 'props.foo' is spread multiple times.
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
+ 2 │           const props = {};
+ 3 │           <App {...props.foo} {...props.foo} />
+   ·                ────────────── ──────────────
+ 4 │         
+   ╰────
+  help: Remove all but one spread.
+
+  ⚠ eslint-plugin-react(jsx-props-no-spread-multi): '(props.foo).baz' is spread multiple times.
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
+ 2 │           const props = {};
+ 3 │           <App {...(props.foo).baz} {...(props.foo.baz)} />
+   ·                ──────────────────── ────────────────────
+ 4 │         
+   ╰────
+  help: Remove all but one spread.
+
+  ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Prop 'props' is spread multiple times.
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
+ 2 │           const props = {};
+ 3 │           <div {...props} a="a" {...props} />
+   ·                ──────────       ──────────
+ 4 │         
+   ╰────
+  help: Remove all but one spread.
+
+  ⚠ eslint-plugin-react(jsx-props-no-spread-multi): Prop 'props' is spread multiple times.
+   ╭─[jsx_props_no_spread_multi.tsx:3:16]
+ 2 │           const props = {};
+ 3 │           <div {...props} {...props} {...props} />
+   ·                ────────── ────────── ──────────
+ 4 │         
+   ╰────
+  help: Remove all but one spread.

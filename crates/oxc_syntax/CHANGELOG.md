@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Bug Fixes
+
+- 042afa9 syntax: Correctly check for valid `RedeclarationId`s (#5759) (overlookmotel)
+
+### Refactor
+
+- cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
+
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- 90facd3 ast: Add `ContentHash` trait; remove noop `Hash` implementation from `Span` (#5451) (rzvxa)
+- 23285f4 ast: Add `ContentEq` trait. (#5427) (rzvxa)
+
+### Performance
+
+- bfabd8f syntax: Further optimize `is_identifier_name` (#5426) (overlookmotel)
+- aeda84f syntax: Optimize `is_identifier_name` (#5425) (overlookmotel)
+
+### Refactor
+
+- ccc8a27 ast, ast_tools: Use full method path for generated derives trait calls. (#5462) (rzvxa)
+- e4ed41d semantic: Change the reference flag to `ReferenceFlags::Type` if it is used within a `TSTypeQuery` (#5444) (Dunqing)
+- b47aca0 syntax: Use `generate_derive` for `CloneIn` in types outside of `oxc_ast` crate. (#5280) (rzvxa)
+
+## [0.25.0] - 2024-08-23
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+### Refactor
+
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- 48821c0 semantic,syntax: Add SymbolFlags::ArrowFunction (#4946) (DonIsaac)
+
+### Documentation
+
+- 0a01a47 semantic: Improve documentation (#4850) (DonIsaac)
+
+### Refactor
+
+- 48a1c32 syntax: Inline trivial bitflags methods (#4877) (overlookmotel)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

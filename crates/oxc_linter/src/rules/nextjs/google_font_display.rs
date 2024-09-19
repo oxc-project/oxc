@@ -10,18 +10,18 @@ use crate::{
     AstNode,
 };
 
-fn font_display_parameter_missing(span0: Span) -> OxcDiagnostic {
+fn font_display_parameter_missing(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "A font-display parameter is missing (adding `&display=optional` is recommended).",
     )
     .with_help("See https://nextjs.org/docs/messages/google-font-display")
-    .with_label(span0)
+    .with_label(span)
 }
 
-fn not_recommended_font_display_value(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("`{x1}` is not a recommended font-display value."))
+fn not_recommended_font_display_value(span: Span, font_display_value: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{font_display_value}` is not a recommended font-display value."))
         .with_help("See https://nextjs.org/docs/messages/google-font-display")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

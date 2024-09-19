@@ -1,14 +1,18 @@
-use oxc_ast::CommentKind;
+use cow_utils::CowUtils;
+use oxc_ast::Comment;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
-fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_ts_expect_error_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce using `@ts-expect-error` over `@ts-ignore`")
         .with_help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,16 +53,16 @@ impl Rule for PreferTsExpectError {
         for comment in comments {
             let raw = comment.span.source_text(ctx.semantic().source_text());
 
-            if !is_valid_ts_ignore_present(comment.kind, raw) {
+            if !is_valid_ts_ignore_present(*comment, raw) {
                 continue;
             }
 
-            if comment.kind.is_single_line() {
+            if comment.is_line() {
                 let comment_span = Span::new(comment.span.start - 2, comment.span.end);
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,
-                        format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
+                        format!("//{}", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             } else {
@@ -66,30 +70,30 @@ impl Rule for PreferTsExpectError {
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,
-                        format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
+                        format!("/*{}*/", raw.cow_replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             }
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }
 
-fn get_last_comment_line(comment: CommentKind, raw: &str) -> String {
-    if comment.is_single_line() {
+fn get_last_comment_line(comment: Comment, raw: &str) -> String {
+    if comment.is_line() {
         return String::from(raw);
     }
 
     return String::from(raw.lines().last().unwrap_or(raw));
 }
 
-fn is_valid_ts_ignore_present(comment: CommentKind, raw: &str) -> bool {
+fn is_valid_ts_ignore_present(comment: Comment, raw: &str) -> bool {
     let line = get_last_comment_line(comment, raw);
 
-    if comment.is_single_line() {
+    if comment.is_line() {
         test_single_line_comment(&line)
     } else {
         test_multi_line_comment(&line)

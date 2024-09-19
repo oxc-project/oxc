@@ -7,53 +7,53 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
     "children": [
       {
         "children": [],
-        "flag": "ScopeFlags(StrictMode | Function | Arrow)",
+        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
         "id": 1,
         "node": "ArrowFunctionExpression",
         "symbols": []
       }
     ],
-    "flag": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(StrictMode | Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "foo",
         "node": "VariableDeclarator(foo)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "flags": "ReferenceFlags(Read)",
+            "id": 0,
             "name": "foo",
-            "node_id": 15
+            "node_id": 13
           },
           {
-            "flag": "ReferenceFlag(Read)",
-            "id": 3,
+            "flags": "ReferenceFlags(Read)",
+            "id": 2,
             "name": "foo",
-            "node_id": 21
+            "node_id": 19
           }
         ]
       },
       {
-        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "a",
         "node": "VariableDeclarator(a)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
             "name": "a",
-            "node_id": 14
+            "node_id": 15
           },
           {
-            "flag": "ReferenceFlag(Read)",
-            "id": 2,
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
             "name": "a",
-            "node_id": 20
+            "node_id": 21
           }
         ]
       }

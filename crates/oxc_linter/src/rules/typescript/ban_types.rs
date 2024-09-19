@@ -1,30 +1,37 @@
+use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn type_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not use {x0:?} as a type. Use \"{x1}\" instead"))
-        .with_label(span2)
+fn type_diagnostic(banned_type: &str, suggested_type: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Do not use {banned_type:?} as a type. Use \"{suggested_type}\" instead"
+    ))
+    .with_label(span2)
 }
 
-fn type_literal(span0: Span) -> OxcDiagnostic {
+fn type_literal(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer explicitly define the object shape")
         .with_help("This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn function(span0: Span) -> OxcDiagnostic {
+fn function(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Don't use `Function` as a type")
         .with_help("The `Function` type accepts any function-like value")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn object(span0: Span) -> OxcDiagnostic {
+fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'The `Object` type actually means \"any non-nullish value\"")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -46,7 +53,8 @@ declare_oxc_lint!(
     /// let bar: Boolean = true;
     /// ```
     BanTypes,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for BanTypes {
@@ -62,7 +70,7 @@ impl Rule for BanTypes {
                     "String" | "Boolean" | "Number" | "Symbol" | "BigInt" => {
                         ctx.diagnostic(type_diagnostic(
                             name.as_str(),
-                            &name.to_lowercase(),
+                            &name.as_str().cow_to_lowercase(),
                             typ.span,
                         ));
                     }
@@ -84,7 +92,7 @@ impl Rule for BanTypes {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

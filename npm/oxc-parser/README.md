@@ -5,8 +5,8 @@ See index.d.ts for `parseSync` and `parseAsync` API.
 ## ESM
 
 ```javascript
-import oxc from "oxc-parser";
-import assert from "assert";
+import assert from 'assert';
+import oxc from 'oxc-parser';
 
 function test(ret) {
   const program = JSON.parse(ret.program);
@@ -16,7 +16,7 @@ function test(ret) {
 
 const sourceText = "let foo: Foo = 'foo';";
 const options = {
-  sourceFilename: "text.tsx", // the extension is used to determine which dialect to parse
+  sourceFilename: 'text.tsx', // the extension is used to determine which dialect to parse
 };
 
 test(oxc.parseSync(sourceText, options));

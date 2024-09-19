@@ -11,10 +11,10 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
 
-fn media_has_caption_diagnostic(span0: Span) -> OxcDiagnostic {
+fn media_has_caption_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing <track> element with captions inside <audio> or <video> element")
         .with_help("Media elements such as <audio> and <video> must have a <track> for captions.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -47,14 +47,17 @@ declare_oxc_lint!(
     /// Captions are also useful for users in noisy environments or where audio is not available.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Good
-    /// <audio><track kind="captions" src="caption_file.vtt" /></audio>
-    /// <video><track kind="captions" src="caption_file.vtt" /></video>
     ///
-    /// // Bad
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
     /// <audio></audio>
     /// <video></video>
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <audio><track kind="captions" src="caption_file.vtt" /></audio>
+    /// <video><track kind="captions" src="caption_file.vtt" /></video>
     /// ```
     MediaHasCaption,
     correctness

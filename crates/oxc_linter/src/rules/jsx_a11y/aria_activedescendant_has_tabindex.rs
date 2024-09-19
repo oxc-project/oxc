@@ -14,12 +14,10 @@ use crate::{
     AstNode,
 };
 
-fn aria_activedescendant_has_tabindex_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Enforce elements with aria-activedescendant are tabbable.")
-        .with_help(
-            "An element that manages focus with `aria-activedescendant` must have a tabindex.",
-        )
-        .with_label(span0)
+fn aria_activedescendant_has_tabindex_diagnostic(span: Span, el_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Elements with `aria-activedescendant` must be tabbable.")
+        .with_help(format!("Add a `tabindex` attribute to this {el_name}."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -84,11 +82,12 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         }
 
-        let JSXElementName::Identifier(identifier) = &jsx_opening_el.name else {
-            return;
+        let (name, span) = match &jsx_opening_el.name {
+            JSXElementName::Identifier(id) => (id.name.as_str(), id.span),
+            JSXElementName::IdentifierReference(id) => (id.name.as_str(), id.span),
+            _ => return,
         };
-
-        ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(identifier.span));
+        ctx.diagnostic(aria_activedescendant_has_tabindex_diagnostic(span, name));
     }
 }
 

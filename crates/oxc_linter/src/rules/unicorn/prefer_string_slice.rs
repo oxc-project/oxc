@@ -5,8 +5,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_string_slice_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer String#slice() over String#{x1}()")).with_label(span0)
+fn prefer_string_slice_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer String#slice() over String#{method_name}()"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -34,7 +35,7 @@ declare_oxc_lint!(
     /// ```
     PreferStringSlice,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for PreferStringSlice {
@@ -47,17 +48,15 @@ impl Rule for PreferStringSlice {
             return;
         };
 
-        let (span, name) = match member_expr {
-            MemberExpression::StaticMemberExpression(v) => {
-                if !matches!(v.property.name.as_str(), "substr" | "substring") {
-                    return;
-                }
-                (v.property.span, &v.property.name)
+        if let MemberExpression::StaticMemberExpression(v) = member_expr {
+            if !matches!(v.property.name.as_str(), "substr" | "substring") {
+                return;
             }
-            _ => return,
-        };
-
-        ctx.diagnostic(prefer_string_slice_diagnostic(span, name.as_str()));
+            ctx.diagnostic_with_fix(
+                prefer_string_slice_diagnostic(v.property.span, v.property.name.as_str()),
+                |fixer| fixer.replace(v.property.span, "slice"),
+            );
+        }
     }
 }
 
@@ -130,5 +129,17 @@ fn test() {
         r"foo.substring((10, bar))",
     ];
 
-    Tester::new(PreferStringSlice::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("foo.substr()", "foo.slice()"),
+        ("foo?.substr()", "foo?.slice()"),
+        ("foo.bar?.substring()", "foo.bar?.slice()"),
+        ("foo?.[0]?.substring()", "foo?.[0]?.slice()"),
+        ("foo.bar.substr?.()", "foo.bar.slice?.()"),
+        ("foo.bar?.substring?.()", "foo.bar?.slice?.()"),
+        ("foo.bar?.baz?.substr()", "foo.bar?.baz?.slice()"),
+        ("foo.bar?.baz.substring()", "foo.bar?.baz.slice()"),
+        ("foo.bar.baz?.substr()", "foo.bar.baz?.slice()"),
+    ];
+
+    Tester::new(PreferStringSlice::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

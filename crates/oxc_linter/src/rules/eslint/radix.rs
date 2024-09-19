@@ -4,25 +4,26 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn missing_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing parameters.").with_label(span0)
+fn missing_parameters(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing parameters.").with_label(span)
 }
 
-fn missing_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Missing radix parameter.").with_label(span0)
+fn missing_radix(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing radix parameter.").with_label(span)
 }
 
-fn redundant_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Redundant radix parameter.").with_label(span0)
+fn redundant_radix(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Redundant radix parameter.").with_label(span)
 }
 
-fn invalid_radix(span0: Span) -> OxcDiagnostic {
+fn invalid_radix(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid radix parameter, must be an integer between 2 and 36.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -66,48 +67,37 @@ impl Rule for Radix {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            match &call_expr.callee.without_parenthesized() {
-                Expression::Identifier(ident) if ident.name == "parseInt" => {
-                    if ctx.symbols().get_symbol_id_from_name("parseInt").is_none() {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
+
+        match call_expr.callee.without_parentheses() {
+            Expression::Identifier(ident) => {
+                if ident.is_global_reference_name("parseInt", ctx.symbols()) {
+                    Self::check_arguments(self, call_expr, ctx);
+                }
+            }
+            Expression::StaticMemberExpression(member_expr) => {
+                if let Expression::Identifier(ident) = member_expr.object.without_parentheses() {
+                    if ident.is_global_reference_name("Number", ctx.symbols())
+                        && member_expr.property.name == "parseInt"
+                    {
                         Self::check_arguments(self, call_expr, ctx);
                     }
                 }
-                Expression::StaticMemberExpression(member_expr) => {
-                    if let Expression::Identifier(ident) = &member_expr.object {
-                        if ident.name == "Number"
-                            && member_expr.property.name == "parseInt"
-                            && ctx.symbols().get_symbol_id_from_name("Number").is_none()
+            }
+            Expression::ChainExpression(chain_expr) => {
+                if let Some(member_expr) = chain_expr.expression.as_member_expression() {
+                    if let Expression::Identifier(ident) = member_expr.object() {
+                        if ident.is_global_reference_name("Number", ctx.symbols())
+                            && member_expr.static_property_name() == Some("parseInt")
                         {
                             Self::check_arguments(self, call_expr, ctx);
                         }
-                    } else if let Expression::ParenthesizedExpression(paren_expr) =
-                        &member_expr.object
-                    {
-                        if let Expression::Identifier(ident) = &paren_expr.expression {
-                            if ident.name == "Number"
-                                && member_expr.property.name == "parseInt"
-                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
-                            {
-                                Self::check_arguments(self, call_expr, ctx);
-                            }
-                        }
                     }
                 }
-                Expression::ChainExpression(chain_expr) => {
-                    if let Some(member_expr) = chain_expr.expression.as_member_expression() {
-                        if let Expression::Identifier(ident) = &member_expr.object() {
-                            if ident.name == "Number"
-                                && member_expr.static_property_name() == Some("parseInt")
-                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
-                            {
-                                Self::check_arguments(self, call_expr, ctx);
-                            }
-                        }
-                    }
-                }
-                _ => {}
             }
+            _ => {}
         }
     }
 }
@@ -231,6 +221,9 @@ fn test() {
         (r#"Number?.parseInt("10");"#, None),
         (r#"(Number?.parseInt)("10");"#, None),
         ("function *f(){ yield(Number).parseInt() }", None), // { "ecmaVersion": 6 },
+        ("{ let parseInt; } parseInt();", None),
+        ("{ let Number; } Number.parseInt();", None),
+        ("{ let Number; } (Number?.parseInt)();", None),
     ];
 
     Tester::new(Radix::NAME, pass, fail).test_and_snapshot();

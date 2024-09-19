@@ -8,7 +8,7 @@ use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
 use oxc_ast::CommentKind;
 use oxc_diagnostics::{Error, NamedSource};
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
 pub use crate::module_lexer::*;
@@ -64,7 +64,10 @@ fn parse<'a>(
         _ => source_type,
     };
     Parser::new(allocator, source_text, source_type)
-        .preserve_parens(options.preserve_parens.unwrap_or(true))
+        .with_options(ParseOptions {
+            preserve_parens: options.preserve_parens.unwrap_or(true),
+            ..ParseOptions::default()
+        })
         .parse()
 }
 
@@ -106,8 +109,8 @@ fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> Parse
         .comments()
         .map(|comment| Comment {
             r#type: match comment.kind {
-                CommentKind::SingleLine => "Line",
-                CommentKind::MultiLine => "Block",
+                CommentKind::Line => "Line",
+                CommentKind::Block => "Block",
             },
             value: comment.span.source_text(source_text).to_string(),
             start: comment.span.start,
@@ -136,8 +139,8 @@ pub struct ResolveTask {
 
 #[napi]
 impl Task for ResolveTask {
-    type Output = ParseResult;
     type JsValue = ParseResult;
+    type Output = ParseResult;
 
     fn compute(&mut self) -> napi::Result<Self::Output> {
         Ok(parse_with_return(&self.source_text, &self.options))

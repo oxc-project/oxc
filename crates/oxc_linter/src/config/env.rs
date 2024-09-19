@@ -1,12 +1,16 @@
-use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
-use serde::Deserialize;
 use std::{borrow::Borrow, hash::Hash};
 
+use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 /// Predefine global variables.
-// TODO: list the keys we support
-// <https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments>
-#[derive(Debug, Clone, Deserialize, JsonSchema)]
+///
+/// Environments specify what global variables are predefined. See [ESLint's
+/// list of
+/// environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
+/// for what environments are available and what each one provides.
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct OxlintEnv(FxHashMap<String, bool>);
 
 impl OxlintEnv {

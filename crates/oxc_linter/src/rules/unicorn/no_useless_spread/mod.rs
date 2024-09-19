@@ -1,5 +1,6 @@
 mod const_eval;
 
+use const_eval::{is_array_from, is_new_typed_array, ConstEval};
 use oxc_ast::{
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
@@ -20,21 +21,22 @@ use crate::{
     rule::Rule,
     AstNode,
 };
-use const_eval::{is_array_from, is_new_typed_array, ConstEval};
 
-fn spread_in_list(span: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Using a spread operator here creates a new {x1} unnecessarily."))
-        .with_help("Consider removing the spread operator.")
-        .with_label(span)
+fn spread_in_list(span: Span, arr_or_obj: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Using a spread operator here creates a new {arr_or_obj} unnecessarily."
+    ))
+    .with_help("Consider removing the spread operator.")
+    .with_label(span)
 }
 
 fn spread_in_arguments(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_label(span)
 }
 
-fn iterable_to_array(span: Span, x1: &str) -> OxcDiagnostic {
+fn iterable_to_array(span: Span, ctor_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "`{x1}` accepts an iterable, so it's unnecessary to convert the iterable to an array."
+        "`{ctor_name}` accepts an iterable, so it's unnecessary to convert the iterable to an array."
     ))
     .with_help("Consider removing the spread operator.")
     .with_label(span)
@@ -52,12 +54,12 @@ fn iterable_to_array_in_yield_star(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn clone(span: Span, is_array: bool, x1: Option<&str>) -> OxcDiagnostic {
+fn clone(span: Span, is_array: bool, method_name: Option<&str>) -> OxcDiagnostic {
     let noun = if is_array { "array" } else { "object" };
     OxcDiagnostic::warn(format!("Using a spread operator here creates a new {noun} unnecessarily."))
         .with_help(
-            if let Some(x1) = x1 {
-                format!("`{x1}` returns a new {noun}. Spreading it into an {noun} expression to create a new {noun} is redundant.")
+            if let Some(method_name) = method_name {
+                format!("`{method_name}` returns a new {noun}. Spreading it into an {noun} expression to create a new {noun} is redundant.")
             } else {
 
                 format!("This expression returns a new {noun}. Spreading it into an {noun} expression to create a new {noun} is redundant.")
@@ -274,7 +276,7 @@ fn diagnose_array_in_array_spread<'a>(
                     codegen.print_expression(el.to_expression());
                     if i < n - 1 {
                         codegen.print_char(b',');
-                        codegen.print_hard_space();
+                        codegen.print_char(b' ');
                     }
                 }
                 codegen.print_char(b']');
@@ -307,7 +309,7 @@ fn check_useless_iterable_to_array<'a>(
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
-            if for_of_stmt.right.without_parenthesized().span() == array_expr.span {
+            if for_of_stmt.right.without_parentheses().span() == array_expr.span {
                 ctx.diagnostic(iterable_to_array_in_for_of(span));
                 return true;
             }
@@ -493,23 +495,6 @@ fn get_method_name(call_expr: &CallExpression) -> Option<String> {
 }
 
 #[test]
-fn test_debug() {
-    use crate::tester::Tester;
-
-    let pass = vec![];
-
-    let fail = vec![
-        // "[...arr.reduce(f, new Set())]",
-        "const obj = { a, ...{ b, c } }",
-        // "const promise = Promise.all([...iterable])",
-        // "const obj = { ...(foo ? { a: 1 } : { a: 2 }) }",
-        // "const array = [...[a]]",
-    ];
-
-    Tester::new(NoUselessSpread::NAME, pass, fail).test();
-}
-
-#[test]
 fn test() {
     use crate::tester::Tester;
 
@@ -570,6 +555,7 @@ fn test() {
         r"[...not.array]",
         r"[...not.array()]",
         r"[...array.unknown()]",
+        r"const arr = [1, 2, 3]; const unique = [...arr];", // valid method to shallow-clone an array
         r"[...Object.notReturningArray(foo)]",
         r"[...NotObject.keys(foo)]",
         // NOTE (@DonIsaac) these are pathological, should really not be done,
@@ -578,6 +564,8 @@ fn test() {
         // r"[...Int8Array.from(foo)]",
         // r"[...Int8Array.of()]",
         // r"[...new Int8Array(3)]",
+        r"[...new Set(iter)]",
+        r"const set = new Set([1, 2, 3]); const unique = [...set];",
         r"[...Promise.all(foo)]",
         r"[...Promise.allSettled(foo)]",
         r"[...await Promise.all(foo, extraArgument)]",
@@ -585,6 +573,10 @@ fn test() {
         r"const obj = { ...obj, ...(addFoo ? { foo: 'foo' } : {}) }",
         r"<Button {...(isLoading ? { data: undefined } : { data: dataFromApi })} />",
         r"const obj = { ...(foo ? getObjectInOpaqueManner() : { a: 2 }) }",
+        "[...arr.reduce((set, b) => set.add(b), new Set())]",
+        "[...arr.reduce((set, b) => set.add(b), new Set(iter))]",
+        // NOTE: we may want to consider this a violation in the future
+        "[...(foo ? new Set() : [])]",
     ];
 
     let fail = vec![
@@ -707,8 +699,6 @@ fn test() {
         "[...arr.reduce((a, b) => a.push(b), Array.from(iter))]",
         "[...arr.reduce((a, b) => a.push(b), foo.map(x => x))]",
         "[...arr.reduce((a, b) => a.push(b), await Promise.all(promises))]",
-        "[...arr.reduce((set, b) => set.add(b), new Set())]",
-        "[...arr.reduce((set, b) => set.add(b), new Set(iter))]",
         // useless object clones with complex expressions
         r"const obj = { ...(foo ? { a: 1 } : { a: 2 }) }",
         r"const obj = { ...(foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 }) }",
@@ -736,7 +726,6 @@ fn test() {
         ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
         ("[...new Array()]", "new Array()"),
         ("[...new Array(1, 2, 3)]", "new Array(1, 2, 3)"),
-        // usel
         // useless clones - complex
         (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),
         (r"[...Array.from(iterable)]", r"Array.from(iterable)"),

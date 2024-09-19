@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, clippy::print_stderr)]
+#![allow(clippy::print_stdout, clippy::print_stderr, clippy::disallowed_methods)]
 mod ignore_list;
 mod spec;
 
@@ -9,7 +9,7 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
@@ -63,8 +63,8 @@ fn fixtures_root() -> PathBuf {
     project_root().join(root()).join("prettier/tests/format")
 }
 
-const SNAP_NAME: &str = "jsfmt.spec.js";
-const SNAP_RELATIVE_PATH: &str = "__snapshots__/jsfmt.spec.js.snap";
+const SNAP_NAME: &str = "format.test.js";
+const SNAP_RELATIVE_PATH: &str = "__snapshots__/format.test.js.snap";
 const LF: char = '\u{a}';
 const CR: char = '\u{d}';
 
@@ -82,7 +82,7 @@ impl TestRunner {
     }
 
     /// # Panics
-    #[allow(clippy::cast_precision_loss)]
+    #[expect(clippy::cast_precision_loss)]
     pub fn run(mut self) {
         let fixture_root = &self.fixtures_root;
         // Read the first level of directories that contain `__snapshots__`
@@ -382,7 +382,9 @@ impl TestRunner {
     fn prettier(path: &Path, source_text: &str, prettier_options: PrettierOptions) -> String {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
-        let ret = Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
+        let ret = Parser::new(&allocator, source_text, source_type)
+            .with_options(ParseOptions { preserve_parens: false, ..ParseOptions::default() })
+            .parse();
         Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
     }
 }

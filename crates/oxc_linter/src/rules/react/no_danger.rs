@@ -7,16 +7,16 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{has_jsx_prop, is_create_element_call},
     AstNode,
 };
 
-fn no_danger_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_danger_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `dangerouslySetInnerHTML` prop")
         .with_help("`dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -91,7 +91,7 @@ impl Rule for NoDanger {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

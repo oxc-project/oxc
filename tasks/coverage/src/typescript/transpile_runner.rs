@@ -2,20 +2,18 @@
 
 use std::path::{Path, PathBuf};
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_isolated_declarations::IsolatedDeclarations;
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc::{
+    allocator::Allocator, codegen::CodeGenerator, diagnostics::OxcDiagnostic,
+    isolated_declarations::IsolatedDeclarations, parser::Parser, span::SourceType,
+};
 
 use super::{
     meta::{Baseline, BaselineFile},
     TypeScriptCase, TESTS_ROOT,
 };
 use crate::{
-    project_root,
     suite::{Case, Suite, TestResult},
+    workspace_root,
 };
 
 pub struct TranspileRunner<T: Case> {
@@ -26,7 +24,7 @@ pub struct TranspileRunner<T: Case> {
 impl<T: Case> TranspileRunner<T> {
     pub fn new() -> Self {
         Self {
-            test_root: project_root().join(TESTS_ROOT).join("cases").join("transpile"),
+            test_root: workspace_root().join(TESTS_ROOT).join("cases").join("transpile"),
             test_cases: vec![],
         }
     }
@@ -98,9 +96,10 @@ impl Case for TypeScriptTranspileCase {
 impl TypeScriptTranspileCase {
     fn compare(&self, kind: TranspileKind) -> TestResult {
         // get expected text by reading its .d.ts file
-        let filename = change_extension(self.path().to_str().unwrap());
+        let path = self.path().strip_prefix("typescript/tests/cases/transpile").unwrap();
+        let filename = change_extension(path.to_str().unwrap());
         let path =
-            project_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(filename);
+            workspace_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(filename);
         let expected = BaselineFile::parse(&path);
 
         let baseline = self.run_kind(kind);
@@ -109,13 +108,17 @@ impl TypeScriptTranspileCase {
         let baseline_text = baseline.print();
 
         if expected.files.len() != baseline.files.len() {
-            return TestResult::Mismatch(baseline_text, expected_text);
+            return TestResult::Mismatch("Mismatch", baseline_text, expected_text);
         }
 
         for (base, expected) in baseline.files.iter().zip(expected.files) {
             if expected.original_diagnostic.is_empty() {
                 if base.oxc_printed != expected.oxc_printed {
-                    return TestResult::Mismatch(base.oxc_printed.clone(), expected.oxc_printed);
+                    return TestResult::Mismatch(
+                        "Mismatch",
+                        base.oxc_printed.clone(),
+                        expected.oxc_printed,
+                    );
                 }
             } else {
                 let matched = base.oxc_diagnostics.iter().zip(expected.original_diagnostic).all(

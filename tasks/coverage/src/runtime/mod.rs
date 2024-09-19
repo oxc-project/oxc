@@ -5,10 +5,7 @@ use std::{
     time::Duration,
 };
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc::{allocator::Allocator, codegen::CodeGenerator, parser::Parser, span::SourceType};
 use oxc_tasks_common::{agent, project_root};
 use phf::{phf_set, Set};
 use serde_json::json;
@@ -16,14 +13,15 @@ use serde_json::json;
 use crate::{
     suite::{Case, TestResult},
     test262::{Test262Case, TestFlag},
+    workspace_root,
 };
 
-pub const V8_TEST_262_FAILED_TESTS_PATH: &str = "tasks/coverage/src/runtime/v8_test262.status";
+pub const V8_TEST_262_FAILED_TESTS_PATH: &str = "src/runtime/v8_test262.status";
 
 lazy_static::lazy_static! {
     static ref V8_TEST_262_FAILED_TESTS: HashSet<String> = {
         let mut set = HashSet::default();
-        fs::read_to_string(project_root().join(V8_TEST_262_FAILED_TESTS_PATH))
+        fs::read_to_string(workspace_root().join(V8_TEST_262_FAILED_TESTS_PATH))
             .expect("Failed to read v8_test262.status")
             .lines()
             .for_each(|line| {
@@ -107,9 +105,10 @@ impl Case for CodegenRuntimeTest262Case {
     fn skip_test_case(&self) -> bool {
         let base_path = self.base.path().to_string_lossy();
         self.base.should_fail()
-            || base_path.starts_with("built-ins")
-            || base_path.starts_with("staging")
-            || base_path.starts_with("intl402")
+            || self.base.skip_test_case()
+            || base_path.contains("built-ins")
+            || base_path.contains("staging")
+            || base_path.contains("intl402")
             // skip v8 test-262 failed tests
             || V8_TEST_262_FAILED_TESTS.iter().any(|test| base_path.contains(test))
             || self
@@ -190,10 +189,10 @@ impl CodegenRuntimeTest262Case {
                             return TestResult::Passed;
                         }
                     }
-                    TestResult::RuntimeError(output)
+                    TestResult::GenericError("runtime", output)
                 }
             }
-            Err(error) => TestResult::RuntimeError(error),
+            Err(error) => TestResult::GenericError("runtime", error),
         }
     }
 }

@@ -8,12 +8,12 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_useless_rename_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_useless_rename_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
-        "Disallow renaming import, export, and destructured assignments to the same name",
+        "Do not rename import, export, or destructured assignments to the same name",
     )
-    .with_help("Either remove the renaming or rename the variable.")
-    .with_label(span0)
+    .with_help("Use the variable's original name or rename it to a different name")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -45,13 +45,16 @@ declare_oxc_lint!(
     /// It is unnecessary to rename a variable to the same name.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// import { foo as foo } from 'foo';
     /// const { bar: bar } = obj;
     /// export { baz as baz };
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// import { foo } from 'foo';
     /// const { bar: renamed } = obj;
     /// export { baz };

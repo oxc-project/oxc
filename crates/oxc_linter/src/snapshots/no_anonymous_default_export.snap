@@ -1,58 +1,50 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:1]
  1 │ export default class {}
    · ───────────────────────
    ╰────
-  help: The class should be named.
 
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:1]
  1 │ export default function () {}
    · ─────────────────────────────
    ╰────
-  help: The function should be named.
 
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:1]
  1 │ export default () => {};
    · ────────────────────────
    ╰────
-  help: The function should be named.
 
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:1]
  1 │ module.exports = class {}
    · ─────────────────────────
    ╰────
-  help: The class should be named.
 
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:1]
  1 │ module.exports = function () {}
    · ───────────────────────────────
    ╰────
-  help: The function should be named.
 
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:1]
  1 │ module.exports = () => {}
    · ─────────────────────────
    ╰────
-  help: The function should be named.
 
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:17]
  1 │ export default (async function * () {})
    ·                 ──────────────────────
    ╰────
-  help: The function should be named.
 
-  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
+  ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This class default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:17]
  1 │ export default (class extends class {} {})
    ·                 ─────────────────────────
    ╰────
-  help: The class should be named.

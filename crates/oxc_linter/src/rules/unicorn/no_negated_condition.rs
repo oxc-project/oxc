@@ -9,10 +9,10 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_negated_condition_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_negated_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected negated condition.")
         .with_help("Remove the negation operator and switch the consequent and alternate branches.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -28,8 +28,9 @@ declare_oxc_lint!(
     /// Negated conditions are more difficult to understand. Code can be made more readable by inverting the condition.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     ///
     /// if (!a) {
     /// 	doSomethingC();
@@ -38,9 +39,10 @@ declare_oxc_lint!(
     /// }
     ///
     /// !a ? doSomethingC() : doSomethingB()
+    /// ```
     ///
-    /// // Good
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// if (a) {
     /// 	doSomethingB();
     /// } else {
@@ -50,7 +52,8 @@ declare_oxc_lint!(
     /// a ? doSomethingB() : doSomethingC()
     /// ```
     NoNegatedCondition,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoNegatedCondition {
@@ -65,10 +68,10 @@ impl Rule for NoNegatedCondition {
                     return;
                 }
 
-                if_stmt.test.without_parenthesized()
+                if_stmt.test.without_parentheses()
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                conditional_expr.test.without_parenthesized()
+                conditional_expr.test.without_parentheses()
             }
             _ => {
                 return;

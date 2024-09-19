@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+### Features
+
+
+### Bug Fixes
+
+- b9bf544 isolated-declarations: False positive for setter method in `interface` (#5681) (Dunqing)
+- 6e8409a isolated-declarations: Bindings referenced in `TSModuleDeclaration` are removed incorrectly (#5680) (Dunqing)
+
+### Performance
+
+
+### Testing
+- dc92489 Add trailing line breaks to conformance fixtures (#5541) (overlookmotel)
+
+## [0.26.0] - 2024-09-03
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 180b1a1 ast: Add `Function::name()` (#5361) (DonIsaac)
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+
+### Bug Fixes
+
+
+### Refactor
+
+- 946c867 ast: Box `TSThisParameter` (#5325) (overlookmotel)
+
+## [0.25.0] - 2024-08-23
+
+### Bug Fixes
+
+- 185eb20 isolated_declarations: Namespaces that are default exported should be considered for expando functions (#4935) (michaelm)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- d3bbc62 isolated-declarations: Declare modifier of PropertyDefinition should not be retained (#4941) (Dunqing)
+- 8e80f59 isolated_declarations: Class properties should still be lifted from private constructors (#4934) (michaelm)
+- b3ec9e5 isolated_declarations: Always emit module declarations that perform augmentation (#4919) (michaelm)
+- 0fb0b71 isolated_declarations: Always emit module declarations (#4911) (michaelm)
+- 4a16916 isolated_declarations: Support expando functions (#4910) (michaelm)
+
+### Refactor
+
+- 1eb59d2 ast, isolated_declarations, transformer: Mark `AstBuilder::copy` as an unsafe function (#4907) (overlookmotel)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

@@ -1,9 +1,11 @@
+#![allow(non_snake_case)]
+
 use std::{
     cell::RefCell,
     fmt::{self, Write},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct HtmlWriter {
     inner: RefCell<String>,
 }
@@ -33,22 +35,34 @@ impl From<HtmlWriter> for String {
 }
 
 impl HtmlWriter {
-    pub fn new() -> Self {
-        Self { inner: RefCell::new(String::new()) }
-    }
-
     pub fn with_capacity(capacity: usize) -> Self {
         Self { inner: RefCell::new(String::with_capacity(capacity)) }
     }
 
+    /// Similar to [`Write::write_str`], but doesn't require a mutable borrow.
+    ///
+    /// Useful when nesting [`HtmlWriter::html`] calls.
     pub fn writeln<S: AsRef<str>>(&self, line: S) -> fmt::Result {
         writeln!(self.inner.borrow_mut(), "{}", line.as_ref())
     }
 
+    /// Finalize this writer's internal buffer and return it as a [`String`].
     pub fn into_inner(self) -> String {
         self.inner.into_inner()
     }
 
+    /// Render an HTML tag with some children.
+    ///
+    /// In most cases, you shouldn't use this method directly. Instead, prefer one of the
+    /// tag-specific convenience methods like [`HtmlWriter::div`]. Feel free to add any missing
+    /// implementations that you need.
+    ///
+    /// Also works with JSX (or really any XML). Does not support self-closing tags.
+    ///
+    /// - `tag`:   The HTML tag name
+    /// - `attrs`: Raw `attr="value"` string to insert into the opening tag
+    /// - `inner`: A closure that produces content to render in between the opening and closing
+    ///            tags
     pub fn html<F>(&self, tag: &'static str, attrs: &str, inner: F) -> fmt::Result
     where
         F: FnOnce(&Self) -> fmt::Result,
@@ -84,10 +98,14 @@ impl HtmlWriter {
     }
 }
 
+/// Implements a tag factory on [`HtmlWriter`] with optional documentation.
 macro_rules! make_tag {
-    ($name:ident) => {
+    ($name:ident, $($docs:expr),+) => {
         impl HtmlWriter {
-            #[inline]
+            // create a #[doc = $doc] for each item in $docs
+            $(
+                #[doc = $docs]
+            )+
             pub fn $name<F>(&self, attrs: &str, inner: F) -> fmt::Result
             where
                 F: FnOnce(&Self) -> fmt::Result,
@@ -96,10 +114,16 @@ macro_rules! make_tag {
             }
         }
     };
+    ($name:ident) => {
+        make_tag!(
+            $name,
+            "Render a tag with the same name as this method."
+        );
+    }
 }
 
-make_tag!(div);
-make_tag!(span);
+make_tag!(div, "Render a `<div>` tag.");
+make_tag!(Alert);
 
 #[cfg(test)]
 mod test {
@@ -107,7 +131,7 @@ mod test {
 
     #[test]
     fn test_div() {
-        let html = HtmlWriter::new();
+        let html = HtmlWriter::default();
         html.div("", |html| html.writeln("Hello, world!")).unwrap();
 
         assert_eq!(

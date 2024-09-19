@@ -5,7 +5,8 @@ use oxc_traverse::TraverseCtx;
 
 use crate::{
     ast_passes::{
-        Collapse, FoldConstants, RemoveDeadCode, RemoveSyntax, SubstituteAlternateSyntax,
+        Collapse, FoldConstants, MinimizeConditions, RemoveDeadCode, RemoveSyntax,
+        SubstituteAlternateSyntax,
     },
     CompressOptions, CompressorPass,
 };
@@ -21,10 +22,8 @@ impl<'a> Compressor<'a> {
     }
 
     pub fn build(self, program: &mut Program<'a>) {
-        let (symbols, scopes) = SemanticBuilder::new("", program.source_type)
-            .build(program)
-            .semantic
-            .into_symbol_table_and_scope_tree();
+        let (symbols, scopes) =
+            SemanticBuilder::new("").build(program).semantic.into_symbol_table_and_scope_tree();
         self.build_with_symbols_and_scopes(symbols, scopes, program);
     }
 
@@ -39,6 +38,7 @@ impl<'a> Compressor<'a> {
         // TODO: inline variables
         self.remove_syntax(program, &mut ctx);
         self.fold_constants(program, &mut ctx);
+        self.minimize_conditions(program, &mut ctx);
         self.remove_dead_code(program, &mut ctx);
         // TODO: StatementFusion
         self.substitute_alternate_syntax(program, &mut ctx);
@@ -47,31 +47,37 @@ impl<'a> Compressor<'a> {
 
     fn remove_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_syntax {
-            RemoveSyntax::new(ctx.ast, self.options).build(program, ctx);
+            RemoveSyntax::new(self.options).build(program, ctx);
+        }
+    }
+
+    fn minimize_conditions(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.minimize_conditions {
+            MinimizeConditions::new().build(program, ctx);
         }
     }
 
     fn fold_constants(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.fold_constants {
-            FoldConstants::new(ctx.ast).with_evaluate(self.options.evaluate).build(program, ctx);
+            FoldConstants::new().with_evaluate(self.options.evaluate).build(program, ctx);
         }
     }
 
     fn substitute_alternate_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.substitute_alternate_syntax {
-            SubstituteAlternateSyntax::new(ctx.ast, self.options).build(program, ctx);
+            SubstituteAlternateSyntax::new(self.options).build(program, ctx);
         }
     }
 
     fn remove_dead_code(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_dead_code {
-            RemoveDeadCode::new(ctx.ast).build(program, ctx);
+            RemoveDeadCode::new().build(program, ctx);
         }
     }
 
     fn collapse(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.collapse {
-            Collapse::new(ctx.ast, self.options).build(program, ctx);
+            Collapse::new(self.options).build(program, ctx);
         }
     }
 }

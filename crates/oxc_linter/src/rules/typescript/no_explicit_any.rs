@@ -4,12 +4,16 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn no_explicit_any_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_explicit_any_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected any. Specify a different type.")
         .with_help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -114,7 +118,7 @@ impl Rule for NoExplicitAny {
         Self { fix_to_unknown, ignore_rest_args }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

@@ -1,16 +1,15 @@
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
-use oxc_transformer::BabelOptions;
+use oxc::{span::SourceType, transformer::BabelOptions};
 use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
 
 use crate::{
-    project_root,
     suite::{Case, Suite, TestResult},
+    workspace_root,
 };
 
-const FIXTURES_PATH: &str = "tasks/coverage/babel/packages/babel-parser/test/fixtures";
+const FIXTURES_PATH: &str = "babel/packages/babel-parser/test/fixtures";
 
 /// output.json
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -25,7 +24,7 @@ pub struct BabelSuite<T: Case> {
 
 impl<T: Case> BabelSuite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
+        Self { test_root: PathBuf::from(FIXTURES_PATH), test_cases: vec![] }
     }
 }
 
@@ -45,6 +44,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "v8intrinsic",
             "async-do-expression",
             "export-ns-from",
+            "annex-b/disabled",
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
@@ -98,7 +98,7 @@ impl BabelCase {
     }
 
     fn read_output_json(path: &Path) -> Option<BabelOutput> {
-        let dir = project_root().join(FIXTURES_PATH).join(path);
+        let dir = workspace_root().join(path);
         if let Some(json) = Self::read_file::<BabelOutput>(&dir, "output.json") {
             return Some(json);
         }
@@ -127,15 +127,19 @@ impl BabelCase {
 impl Case for BabelCase {
     /// # Panics
     fn new(path: PathBuf, code: String) -> Self {
-        let dir = project_root().join(FIXTURES_PATH).join(&path);
+        let dir = workspace_root().join(&path);
         let options = BabelOptions::from_test_path(dir.parent().unwrap());
-        let source_type = SourceType::from_path(&path)
+        let mut source_type = SourceType::from_path(&path)
             .unwrap()
             .with_script(true)
             .with_jsx(options.is_jsx())
             .with_typescript(options.is_typescript())
-            .with_typescript_definition(options.is_typescript_definition())
-            .with_module(options.is_module());
+            .with_typescript_definition(options.is_typescript_definition());
+        if options.is_unambiguous() {
+            source_type = source_type.with_unambiguous(true);
+        } else if options.is_module() {
+            source_type = source_type.with_module(true);
+        }
         let should_fail = Self::determine_should_fail(&path, &options);
         Self { path, code, source_type, options, should_fail, result: TestResult::ToBeRun }
     }

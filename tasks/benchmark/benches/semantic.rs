@@ -1,7 +1,7 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use oxc_benchmark::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -17,13 +17,19 @@ fn bench_semantic(criterion: &mut Criterion) {
             |b, source_text| {
                 let allocator = Allocator::default();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let program = allocator.alloc(ret.program);
+                let program = allocator.alloc(black_box(ret.program));
                 b.iter_with_large_drop(|| {
-                    SemanticBuilder::new(source_text, source_type)
+                    // We drop `Semantic` inside this closure as drop time is part of cost of using this API.
+                    // We return `error`s to be dropped outside of the measured section, as usually
+                    // code would have no errors. One of our benchmarks `cal.com.tsx` has a lot of errors,
+                    // but that's atypical, so don't want to include it in benchmark time.
+                    let ret = SemanticBuilder::new(source_text)
                         .with_trivias(ret.trivias.clone())
                         .with_build_jsdoc(true)
-                        .build_module_record(PathBuf::new(), program)
-                        .build(program)
+                        .build_module_record(Path::new(""), program)
+                        .build(program);
+                    let ret = black_box(ret);
+                    ret.errors
                 });
             },
         );

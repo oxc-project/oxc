@@ -1,8 +1,11 @@
-use std::io::{BufWriter, Stdout, Write};
+use std::io::{BufWriter, ErrorKind, Stdout, Write};
 
 use super::{writer, DiagnosticReporter};
 use crate::{Error, GraphicalReportHandler};
 
+/// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
+///
+/// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
 pub struct GraphicalReporter {
     handler: GraphicalReportHandler,
     writer: BufWriter<Stdout>,
@@ -16,11 +19,31 @@ impl Default for GraphicalReporter {
 
 impl DiagnosticReporter for GraphicalReporter {
     fn finish(&mut self) {
-        self.writer.flush().unwrap();
+        self.writer
+            .flush()
+            .or_else(|e| {
+                // Do not panic when the process is skill (e.g. piping into `less`).
+                if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+                    Ok(())
+                } else {
+                    Err(e)
+                }
+            })
+            .unwrap();
     }
 
     fn render_diagnostics(&mut self, s: &[u8]) {
-        self.writer.write_all(s).unwrap();
+        self.writer
+            .write_all(s)
+            .or_else(|e| {
+                // Do not panic when the process is skill (e.g. piping into `less`).
+                if matches!(e.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
+                    Ok(())
+                } else {
+                    Err(e)
+                }
+            })
+            .unwrap();
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {

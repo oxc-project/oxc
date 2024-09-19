@@ -8,11 +8,15 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Curly braces are unnecessary here.").with_label(span)
@@ -36,6 +40,7 @@ enum Allowed {
 
 impl TryFrom<&str> for Allowed {
     type Error = ();
+
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "always" => Ok(Self::Always),
@@ -50,6 +55,7 @@ impl Allowed {
     pub fn is_never(self) -> bool {
         matches!(self, Self::Never)
     }
+
     #[inline]
     pub fn is_always(self) -> bool {
         matches!(self, Self::Always)
@@ -327,6 +333,7 @@ impl Rule for JsxCurlyBracePresence {
             _ => default,
         }
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(el) => {
@@ -347,7 +354,7 @@ impl Rule for JsxCurlyBracePresence {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }
@@ -467,7 +474,7 @@ fn is_allowed_string_like<'a>(
     ctx: &LintContext<'a>,
     s: &'a str,
     container: &JSXExpressionContainer<'a>,
-    node_id: AstNodeId,
+    node_id: NodeId,
     is_prop: bool,
 ) -> bool {
     is_whitespace(s)
@@ -527,7 +534,7 @@ fn report_unnecessary_curly<'a>(
 fn has_adjacent_jsx_expression_containers<'a>(
     ctx: &LintContext<'a>,
     container: &JSXExpressionContainer<'a>,
-    node_id: AstNodeId,
+    node_id: NodeId,
     // element: &JSXElement<'a>,
 ) -> bool {
     let Some(parent) = ctx.semantic().nodes().parent_kind(node_id) else { return false };
@@ -559,8 +566,9 @@ fn has_adjacent_jsx_expression_containers<'a>(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("<App {...props}>foo</App>", None),

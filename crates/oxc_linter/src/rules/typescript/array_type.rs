@@ -7,7 +7,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct ArrayType(Box<ArrayTypeConfig>);
@@ -29,29 +32,37 @@ declare_oxc_lint!(
     fix
 );
 
-fn generic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+fn generic(readonly_prefix: &str, name: &str, type_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Array type using '{x0}{x2}[]' is forbidden. Use '{x1}<{x2}>' instead."
+        "Array type using '{readonly_prefix}{type_name}[]' is forbidden. Use '{name}<{type_name}>' instead."
     ))
-    .with_label(span3)
+    .with_label(span)
 }
 
-fn generic_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Array type using '{x0}{x2}[]' is forbidden for non-simple types. Use '{x1}<{x2}>' instead.")).with_label(span3)
+fn generic_simple(readonly_prefix: &str, name: &str, type_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Array type using '{readonly_prefix}{type_name}[]' is forbidden for non-simple types. Use '{name}<{type_name}>' instead."
+    ))
+    .with_label(span)
 }
 
-fn array(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+fn array(readonly_prefix: &str, type_name: &str, generic_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Array type using '{x1}<{x2}>' is forbidden. Use '{x0}{x2}[]' instead."
+        "Array type using '{type_name}<{generic_name}>' is forbidden. Use '{readonly_prefix}{generic_name}[]' instead."
     ))
-    .with_label(span3)
+    .with_label(span)
 }
 
-fn array_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+fn array_simple(
+    readonly_prefix: &str,
+    type_name: &str,
+    generic_name: &str,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Array type using '{x1}<{x2}>' is forbidden for simple types. Use '{x0}{x2}[]' instead."
+        "Array type using '{type_name}<{generic_name}>' is forbidden for simple types. Use '{readonly_prefix}{generic_name}[]' instead."
     ))
-    .with_label(span3)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -128,7 +139,7 @@ impl Rule for ArrayType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

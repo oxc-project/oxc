@@ -16,22 +16,22 @@ use crate::{
     AstNode,
 };
 
-fn missing_yields(span0: Span) -> OxcDiagnostic {
+fn missing_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing JSDoc `@yields` declaration for generator function.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn duplicate_yields(span0: Span) -> OxcDiagnostic {
+fn duplicate_yields(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Duplicate `@yields` tags.")
         .with_help("Remove redundunt `@yields` tag.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn missing_yields_with_generator(span0: Span) -> OxcDiagnostic {
+fn missing_yields_with_generator(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`@yields` tag is required when using `@generator` tag.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -39,25 +39,31 @@ pub struct RequireYields(Box<RequireYieldsConfig>);
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Requires that yields are documented.
     /// Will also report if multiple `@yields` tags are present.
     ///
     /// ### Why is this bad?
+    ///
     /// The rule is intended to prevent the omission of `@yields` tags when they are necessary.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
-    /// /** * @yields Foo */
     /// function * quux (foo) { yield foo; }
     ///
-    /// // Failing
-    /// function * quux (foo) { yield foo; }
     /// /**
     ///  * @yields {undefined}
     ///  * @yields {void}
     ///  */
     /// function * quux (foo) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** * @yields Foo */
+    /// function * quux (foo) { yield foo; }
     /// ```
     RequireYields,
     correctness

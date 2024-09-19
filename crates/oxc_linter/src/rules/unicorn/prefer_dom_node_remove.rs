@@ -10,10 +10,10 @@ use crate::{
     AstNode,
 };
 
-fn prefer_dom_node_remove_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_dom_node_remove_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.")
         .with_help("Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -28,12 +28,15 @@ declare_oxc_lint!(
     ///
     /// The DOM function [`Node#remove()`](https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove) is preferred over the indirect removal of an object with [`Node#removeChild()`](https://developer.mozilla.org/en-US/docs/Web/API/Node/removeChild).
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// parentNode.removeChild(childNode);
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// parentNode.removeChild(childNode);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// childNode.remove();
     /// ```
     PreferDomNodeRemove,
@@ -58,7 +61,7 @@ impl Rule for PreferDomNodeRemove {
             return;
         };
 
-        let expr = expr.without_parenthesized();
+        let expr = expr.without_parentheses();
         if matches!(
             expr,
             Expression::ArrayExpression(_)

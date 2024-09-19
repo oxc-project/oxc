@@ -6,7 +6,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("A {a} is preferred over an {b}."))
@@ -28,28 +32,27 @@ enum ConsistentIndexedObjectStyleConfig {
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Require or disallow the `Record` type.
     ///
     /// ### Why is this bad?
+    ///
     /// Inconsistent style for indexed object types can harm readability in a project.
     ///
-    /// ### Example
-    /// With "record":
+    /// ### Examples
     ///
+    /// Examples of **incorrect** code for this rule:
     /// ```ts
-    /// // bad
     /// interface Foo {
     ///  [key: string]: unknown;
-    ///}
+    /// }
     /// type Foo = {
     ///  [key: string]: unknown;
-    ///};
+    /// };
     /// ```
     ///
-    /// With "index-signature":
-    ///
+    /// Examples of **correct** code for this rule:
     /// ```ts
-    /// // bad
     /// type Foo = Record<string, unknown>;
     /// ```
     ConsistentIndexedObjectStyle,
@@ -246,7 +249,7 @@ impl Rule for ConsistentIndexedObjectStyle {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

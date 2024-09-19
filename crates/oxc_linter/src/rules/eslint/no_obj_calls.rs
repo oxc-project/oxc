@@ -12,10 +12,10 @@ use crate::{context::LintContext, rule::Rule};
 const GLOBAL_THIS: &str = "globalThis";
 const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
-fn no_obj_calls_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow calling some global objects as functions")
-        .with_help(format!("{x0} is not a function."))
-        .with_label(span1)
+fn no_obj_calls_diagnostic(obj_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{obj_name}` is not a function and cannot be called"))
+        .with_help("This call will throw a TypeError at runtime.")
+        .with_label(span)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,8 +36,9 @@ declare_oxc_lint! {
     /// Calling them as functions will usually result in a TypeError being thrown.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// let math = Math();
     /// let newMath = new Math();
     ///
@@ -52,8 +53,10 @@ declare_oxc_lint! {
     ///
     /// let reflect = Reflect();
     /// let newReflect = new Reflect();
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// let area = r => 2 * Math.PI * r * r;
     /// let object = JSON.parse("{}");
     /// let first = Atomics.load(sharedArray, 0);
@@ -113,7 +116,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
                 }
                 // handles "let a = globalThis.JSON; let b = a; a();"
                 Some(parent_expr) if parent_expr.is_member_expression() => {
-                    return global_this_member(parent_expr.to_member_expression())
+                    return global_this_member(parent_expr.to_member_expression());
                 }
                 _ => None,
             }

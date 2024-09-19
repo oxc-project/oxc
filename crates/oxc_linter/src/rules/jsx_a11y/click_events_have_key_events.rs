@@ -14,10 +14,10 @@ use crate::{
     AstNode,
 };
 
-fn click_events_have_key_events_diagnostic(span0: Span) -> OxcDiagnostic {
+fn click_events_have_key_events_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce a clickable non-interactive element has at least one keyboard event listener.")
         .with_help("Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -34,12 +34,15 @@ declare_oxc_lint!(
     /// This does not apply for interactive or hidden elements.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Good
-    /// <div onClick={() => void 0} onKeyDown={() => void 0} />
     ///
-    /// // Bad
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
     /// <div onClick={() => void 0} />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <div onClick={() => void 0} onKeyDown={() => void 0} />
     /// ```
     ClickEventsHaveKeyEvents,
     correctness

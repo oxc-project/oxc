@@ -9,8 +9,13 @@ use phf::phf_map;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-fn prefer_modern_dom_apis_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer using `{x0}` over `{x1}`.")).with_label(span2)
+fn prefer_modern_dom_apis_diagnostic(
+    good_method: &str,
+    bad_method: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer using `{good_method}` over `{bad_method}`."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -45,15 +50,19 @@ declare_oxc_lint!(
     /// - Both `DOMString` and DOM node objects can be manipulated.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// oldChildNode.replaceWith(newChildNode);
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// oldChildNode.replaceWith(newChildNode);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// parentNode.replaceChild(newChildNode, oldChildNode);
     /// ```
     PreferModernDomApis,
-    style
+    style,
+    pending
 );
 
 impl Rule for PreferModernDomApis {

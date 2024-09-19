@@ -4,6 +4,112 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- 4a8aec1 span: [**BREAKING**] Change `SourceType::js` to `SourceType::cjs` and `SourceType::mjs` (#5606) (Boshen)
+
+- 603817b oxc: [**BREAKING**] Add `SourceType::Unambiguous`; parse `.js` as unambiguous (#5557) (Boshen)
+
+### Features
+
+
+### Performance
+
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+### Features
+
+- 59abf27 ast, parser: Add `oxc_regular_expression` types to the parser and AST. (#5256) (rzvxa)
+- 10279f5 parser: Add syntax error for hyphen in `JSXMemberExpression` `<Foo.bar-baz />` (#5440) (Boshen)
+
+### Refactor
+
+- d9d7e7c ast: Remove `IdentifierName` from `TSThisParameter` (#5327) (overlookmotel)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 234a24c ast: [**BREAKING**] Merge `UsingDeclaration` into `VariableDeclaration` (#5270) (Kevin Deng 三咲智子)
+
+### Features
+
+- 5505749 ast: Add `accessibility` field to `AccessorProperty` (#5290) (Dunqing)
+- 49cd5db ast,parser: Add `definite` flag to `AccessorProperty` node (#5182) (DonIsaac)
+- c2fa725 ast,parser: Parse `TSTypeAnnotations` on `AccessorProperty` (#5179) (DonIsaac)
+- 7dfd51a parser: Report class properties that are both definite and optional (#5181) (DonIsaac)
+- a563968 parser: Report errors on optional accessor properties (#5180) (DonIsaac)
+
+### Bug Fixes
+
+- d4c06ef parser: Revert "check for `@flow` with recoverable errors as well" (#5297) (overlookmotel)
+- e1d8b92 parser: Check for `@flow` with recoverable errors as well (Boshen)
+- e6fd52e parser: Change unterminated regex error to be non-recoverable (#5285) (Boshen)
+- 1686920 parser: Span for invalid regex flags (#5225) (leaysgur)
+
+### Refactor
+
+- d236554 parser: Move `JSXIdentifier` conversion code into parser (#5345) (overlookmotel)
+- bc59dd2 parser: Improve example for `byte_search!` macro usage (#5234) (overlookmotel)
+- a3ddfdd parser: Improve lexer pointer maths (#5233) (overlookmotel)
+
+### Testing
+
+- 7009177 parser: Fix incorrect flow error test (Boshen)
+
+## [0.25.0] - 2024-08-23
+
+- b2ff2df parser: [**BREAKING**] Remove builder pattern from `Parser` struct (#5000) (Boshen)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 6800e69 oxc: Add `Compiler` and `CompilerInterface` (#4954) (Boshen)
+- afe728a parser: Parse regular expression with regex parser (#4998) (Boshen)
+
+### Bug Fixes
+
+- efbdced parser: Only show flow error if it's a flow file (#5069) (Boshen)
+
+### Refactor
+
+- ca70cc7 linter, mangler, parser, semantic, transformer, traverse, wasm: Rename various `flag` vars to `flags` (#5028) (overlookmotel)
+
+## [0.24.3] - 2024-08-18
+
+### Bug Fixes
+
+- 21f5762 codegen: Minify large numbers (#4889) (Boshen)
+- 1bdde2c parser: Detect @flow in `/** @flow */ comment (#4861) (Boshen)
+
+## [0.24.2] - 2024-08-12
+
+### Documentation
+
+- 559baa5 parser: Clean up doc regarding performance; remove conformance (Boshen)
+
 ## [0.24.0] - 2024-08-08
 
 ### Bug Fixes

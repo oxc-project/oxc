@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_this_assignment_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not assign `this` to `{x1}`"))
+fn no_this_assignment_diagnostic(span: Span, ident_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not assign `this` to `{ident_name}`"))
         .with_help("Reference `this` directly instead of assigning it to a variable.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,9 +26,10 @@ declare_oxc_lint!(
     ///
     /// Assigning `this` to a variable is unnecessary and confusing.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // fail
     /// const foo = this;
     /// class Bar {
     /// 	method() {
@@ -37,8 +38,10 @@ declare_oxc_lint!(
     /// }
     ///
     /// new Bar().method();
+    /// ```
     ///
-    /// // pass
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// class Bar {
     /// 	constructor(fooInstance) {
     /// 		this.fooInstance = fooInstance;
@@ -62,7 +65,7 @@ impl Rule for NoThisAssignment {
                     return;
                 };
 
-                if !matches!(init.without_parenthesized(), Expression::ThisExpression(_)) {
+                if !matches!(init.without_parentheses(), Expression::ThisExpression(_)) {
                     return;
                 }
 
@@ -78,7 +81,7 @@ impl Rule for NoThisAssignment {
             }
             AstKind::AssignmentExpression(assignment_expr) => {
                 if !matches!(
-                    assignment_expr.right.without_parenthesized(),
+                    assignment_expr.right.without_parentheses(),
                     Expression::ThisExpression(_)
                 ) {
                     return;

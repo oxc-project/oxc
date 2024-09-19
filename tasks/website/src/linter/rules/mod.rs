@@ -8,10 +8,10 @@ use std::{
     borrow::Cow,
     env, fs,
     path::{Path, PathBuf},
-    process,
 };
 
 use doc_page::render_rule_docs_page;
+use html::HtmlWriter;
 use oxc_linter::table::RuleTable;
 use pico_args::Arguments;
 use table::render_rules_table;
@@ -43,21 +43,16 @@ pub fn print_rules(mut args: Arguments) {
     let table_path = args.opt_value_from_str::<_, PathBuf>(["-t", "--table"]).unwrap();
     let rules_dir = args.opt_value_from_str::<_, PathBuf>(["-r", "--rule-docs"]).unwrap();
 
-    let (prefix, root) = rules_dir.as_ref().and_then(|p| p.as_os_str().to_str()).map_or(
-        (Cow::Borrowed(""), None),
-        |p| {
+    let prefix =
+        rules_dir.as_ref().and_then(|p| p.as_os_str().to_str()).map_or(Cow::Borrowed(""), |p| {
             if p.contains("src/docs") {
                 let split = p.split("src/docs").collect::<Vec<_>>();
                 assert!(split.len() > 1);
-                let root = split[0];
-                let root = pwd.join(root).canonicalize().unwrap();
-                let prefix = Cow::Owned("/docs".to_string() + split.last().unwrap());
-                (prefix, Some(root))
+                Cow::Owned("/docs".to_string() + split.last().unwrap())
             } else {
-                (Cow::Borrowed(p), None)
+                Cow::Borrowed(p)
             }
-        },
-    );
+        });
 
     if let Some(table_path) = table_path {
         let table_path = pwd.join(table_path).canonicalize().unwrap();
@@ -79,14 +74,6 @@ pub fn print_rules(mut args: Arguments) {
             "Cannot write rule docs to a file. Please specify a directory."
         );
         write_rule_doc_pages(&table, &rules_dir);
-
-        // auto-fix code and natural language issues
-        if let Some(root) = root {
-            println!("Formatting rule doc pages...");
-            prettier(&root, &rules_dir);
-            println!("Fixing textlint issues...");
-            textlint(&root);
-        }
     }
 
     println!("Done.");
@@ -104,30 +91,4 @@ fn write_rule_doc_pages(table: &RuleTable, outdir: &Path) {
         let docs = render_rule_docs_page(rule).unwrap();
         fs::write(&page_path, docs).unwrap();
     }
-}
-
-/// Run prettier and fix style issues in generated rule doc pages.
-fn prettier(website_root: &Path, rule_docs_path: &Path) {
-    assert!(rule_docs_path.is_dir(), "Rule docs path must be a directory.");
-    assert!(rule_docs_path.is_absolute(), "Rule docs path must be an absolute path.");
-    let relative_path = rule_docs_path.strip_prefix(website_root).unwrap();
-    let path_str =
-        relative_path.to_str().expect("Invalid rule docs path: could not convert to str");
-    let generated_md_glob = format!("{path_str}/**/*.md");
-
-    process::Command::new("pnpm")
-        .current_dir(website_root)
-        .args(["run", "fmt", "--write", &generated_md_glob])
-        .status()
-        .unwrap();
-}
-
-/// Run textlint and fix any issues it finds.
-fn textlint(website_root: &Path) {
-    assert!(website_root.is_dir(), "Rule docs path must be a directory.");
-    process::Command::new("pnpm")
-        .current_dir(website_root)
-        .args(["run", "textlint:fix"])
-        .status()
-        .unwrap();
 }

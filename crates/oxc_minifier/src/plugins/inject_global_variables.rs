@@ -1,9 +1,12 @@
 use std::sync::Arc;
 
+use cow_utils::CowUtils;
+
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
+use oxc_ast::{ast::*, AstBuilder, NONE};
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
+use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
 use super::replace_global_defines::{DotDefine, ReplaceGlobalDefines};
 
@@ -58,7 +61,7 @@ impl InjectImport {
     fn replace_name(local: &str) -> Option<CompactStr> {
         local
             .contains('.')
-            .then(|| CompactStr::from(format!("$inject_{}", local.replace('.', "_"))))
+            .then(|| CompactStr::from(format!("$inject_{}", local.cow_replace('.', "_"))))
     }
 }
 
@@ -83,12 +86,27 @@ impl InjectImportSpecifier {
     }
 }
 
-impl From<&InjectImport> for DotDefine {
+/// Wrapper around `DotDefine` which caches the `Atom` to replace with.
+/// `value_atom` is populated lazily when first replacement happens.
+/// If no replacement is made, `value_atom` remains `None`.
+struct DotDefineState<'a> {
+    dot_define: DotDefine,
+    value_atom: Option<Atom<'a>>,
+}
+
+impl<'a> From<&InjectImport> for DotDefineState<'a> {
     fn from(inject: &InjectImport) -> Self {
         let parts = inject.specifier.local().split('.').map(CompactStr::from).collect::<Vec<_>>();
         let value = inject.replace_value.clone().unwrap();
-        Self { parts, value }
+        let dot_define = DotDefine { parts, value };
+        Self { dot_define, value_atom: None }
     }
+}
+
+#[must_use]
+pub struct InjectGlobalVariablesReturn {
+    pub symbols: SymbolTable,
+    pub scopes: ScopeTree,
 }
 
 /// Injects import statements for global variables.
@@ -102,17 +120,16 @@ pub struct InjectGlobalVariables<'a> {
 
     // states
     /// Dot defines derived from the config.
-    dot_defines: Vec<DotDefine>,
+    dot_defines: Vec<DotDefineState<'a>>,
 
     /// Identifiers for which dot define replaced a member expression.
     replaced_dot_defines:
         Vec<(/* identifier of member expression */ CompactStr, /* local */ CompactStr)>,
 }
 
-impl<'a> VisitMut<'a> for InjectGlobalVariables<'a> {
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        self.replace_dot_defines(expr);
-        walk_mut::walk_expression(self, expr);
+impl<'a> Traverse<'a> for InjectGlobalVariables<'a> {
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.replace_dot_defines(expr, ctx);
     }
 }
 
@@ -128,22 +145,24 @@ impl<'a> InjectGlobalVariables<'a> {
 
     pub fn build(
         &mut self,
-        _symbols: &mut SymbolTable, // will be used to keep symbols in sync
-        scopes: &mut ScopeTree,
+        symbols: SymbolTable,
+        scopes: ScopeTree,
         program: &mut Program<'a>,
-    ) {
+    ) -> InjectGlobalVariablesReturn {
+        let mut symbols = symbols;
+        let mut scopes = scopes;
         // Step 1: slow path where visiting the AST is required to replace dot defines.
         let dot_defines = self
             .config
             .injects
             .iter()
             .filter(|i| i.replace_value.is_some())
-            .map(DotDefine::from)
+            .map(DotDefineState::from)
             .collect::<Vec<_>>();
 
         if !dot_defines.is_empty() {
             self.dot_defines = dot_defines;
-            self.visit_program(program);
+            (symbols, scopes) = traverse_mut(self, self.ast.allocator, program, symbols, scopes);
         }
 
         // Step 2: find all the injects that are referenced.
@@ -165,10 +184,12 @@ impl<'a> InjectGlobalVariables<'a> {
             .collect::<Vec<_>>();
 
         if injects.is_empty() {
-            return;
+            return InjectGlobalVariablesReturn { symbols, scopes };
         }
 
         self.inject_imports(&injects, program);
+
+        InjectGlobalVariablesReturn { symbols, scopes }
     }
 
     fn inject_imports(&self, injects: &[InjectImport], program: &mut Program<'a>) {
@@ -178,7 +199,7 @@ impl<'a> InjectGlobalVariables<'a> {
             let kind = ImportOrExportKind::Value;
             let import_decl = self
                 .ast
-                .module_declaration_import_declaration(SPAN, specifiers, source, None, kind);
+                .module_declaration_import_declaration(SPAN, specifiers, source, NONE, kind);
             self.ast.statement_module_declaration(import_decl)
         });
         program.body.splice(0..0, imports);
@@ -209,15 +230,22 @@ impl<'a> InjectGlobalVariables<'a> {
         }
     }
 
-    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>) {
+    fn replace_dot_defines(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if let Expression::StaticMemberExpression(member) = expr {
-            for dot_define in &self.dot_defines {
-                if ReplaceGlobalDefines::is_dot_define(dot_define, member) {
-                    let value =
-                        self.ast.expression_identifier_reference(SPAN, dot_define.value.as_str());
+            for DotDefineState { dot_define, value_atom } in &mut self.dot_defines {
+                if ReplaceGlobalDefines::is_dot_define(ctx.symbols(), dot_define, member) {
+                    // If this is first replacement made for this dot define,
+                    // create `Atom` for replacement, and record in `replaced_dot_defines`
+                    if value_atom.is_none() {
+                        *value_atom = Some(self.ast.atom(dot_define.value.as_str()));
+
+                        self.replaced_dot_defines
+                            .push((dot_define.parts[0].clone(), dot_define.value.clone()));
+                    }
+                    let value_atom = value_atom.as_ref().unwrap().clone();
+
+                    let value = self.ast.expression_identifier_reference(SPAN, value_atom);
                     *expr = value;
-                    self.replaced_dot_defines
-                        .push((dot_define.parts[0].clone(), dot_define.value.clone()));
                     break;
                 }
             }

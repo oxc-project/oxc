@@ -7,7 +7,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn jsx_no_duplicate_props_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("No duplicate props allowed. The prop \"{x0}\" is duplicated."))
@@ -29,15 +33,17 @@ declare_oxc_lint!(
     /// Creating JSX elements with duplicate props can cause unexpected behavior in your application.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <App a a />;
     /// <App foo={2} bar baz foo={3} />;
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <App a />;
     /// <App bar baz foo={3} />;
-    ///
     /// ```
     JsxNoDuplicateProps,
     correctness
@@ -70,7 +76,7 @@ impl Rule for JsxNoDuplicateProps {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

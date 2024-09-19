@@ -2,12 +2,11 @@
 //! consider variables ignored by name pattern, but by where they are declared.
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
-use oxc_semantic::{AstNode, AstNodeId, Semantic};
+use oxc_semantic::{AstNode, NodeId, Semantic};
 use oxc_span::GetSpan;
 
-use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
-
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
+use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
 
 impl<'s, 'a> Symbol<'s, 'a> {
     /// Returns `true` if this function is use.
@@ -42,6 +41,9 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 // e.g. var foo = function bar() { }
                 // we don't want to check for violations on `bar`, just `foo`
                 | AstKind::VariableDeclarator(_)
+                // new (class CustomRenderer{})
+                // new (function() {})
+                | AstKind::NewExpression(_)
                 => {
                     return true;
                 }
@@ -52,7 +54,15 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 AstKind::AssignmentExpression(assignment) if assignment.right.span().contains_inclusive(self.span()) => {
                     return self != &assignment.left;
                 }
+                AstKind::ExpressionStatement(_) => {
+                    // implicit return in arrow function expression
+                    let Some(AstKind::FunctionBody(body)) = self.nodes().parent_kind(parent.id()) else {
+                        return false;
+                    };
+                    return body.span.contains_inclusive(self.span()) && body.statements.len() == 1 && !self.get_snippet(body.span).starts_with('{')
+                }
                 _ => {
+                    parent.kind().debug_name();
                     return false;
                 }
             }
@@ -76,7 +86,7 @@ impl<'s, 'a> Symbol<'s, 'a> {
                         return b
                             .body
                             .first()
-                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)))
+                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)));
                     }
                     _ => return false,
                 },
@@ -144,7 +154,7 @@ impl NoUnusedVars {
     pub(super) fn is_allowed_type_parameter(
         &self,
         symbol: &Symbol<'_, '_>,
-        declaration_id: AstNodeId,
+        declaration_id: NodeId,
     ) -> bool {
         matches!(symbol.nodes().parent_kind(declaration_id), Some(AstKind::TSMappedType(_)))
     }
@@ -165,11 +175,8 @@ impl NoUnusedVars {
         // find FormalParameters. Should be the next parent of param, but this
         // is safer.
         let Some((params, params_id)) = symbol.iter_parents().find_map(|p| {
-            if let AstKind::FormalParameters(params) = p.kind() {
-                Some((params, p.id()))
-            } else {
-                None
-            }
+            let params = p.kind().as_formal_parameters()?;
+            Some((params, p.id()))
         }) else {
             debug_assert!(false, "FormalParameter should always have a parent FormalParameters");
             return false;
@@ -227,7 +234,7 @@ impl NoUnusedVars {
             .any(|p| p.has_modifier() || p.pattern.has_any_used_binding(ctx))
     }
 
-    /// `params_id` is the [`AstNodeId`] to a [`AstKind::FormalParameters`] node.
+    /// `params_id` is the [`NodeId`] to a [`AstKind::FormalParameters`] node.
     ///
     /// The following allowed conditions are handled:
     /// 1. setter parameters - removing them causes a syntax error.
@@ -235,7 +242,7 @@ impl NoUnusedVars {
     fn is_allowed_param_because_of_method<'a>(
         semantic: &Semantic<'a>,
         param: &FormalParameter<'a>,
-        params_id: AstNodeId,
+        params_id: NodeId,
     ) -> bool {
         let mut parents_iter = semantic.nodes().iter_parents(params_id).skip(1).map(AstNode::kind);
 
@@ -286,5 +293,20 @@ impl NoUnusedVars {
             AstKind::MethodDefinition(method) if method.r#type.is_abstract() => true,
             _ => false,
         }
+    }
+
+    /// Returns `true` if this binding rest element should be allowed (i.e. not
+    /// reported). Currently, this handles the case where a rest element is part
+    /// of a TS function declaration.
+    pub(super) fn is_allowed_binding_rest_element(symbol: &Symbol) -> bool {
+        for parent in symbol.iter_parents() {
+            // If this is a binding rest element that is part of a TS function parameter,
+            // for example: `function foo(...messages: string[]) {}`, then we will allow it.
+            if let AstKind::Function(f) = parent.kind() {
+                return f.is_typescript_syntax();
+            }
+        }
+
+        false
     }
 }

@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_code_point_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`"))
-        .with_help(format!("Unicode is better supported in `{x1}` than `{x2}`"))
-        .with_label(span0)
+fn prefer_code_point_diagnostic(span: Span, good_method: &str, bad_method: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{good_method}` over `{bad_method}`"))
+        .with_help(format!("Unicode is better supported in `{good_method}` than `{bad_method}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,13 +26,16 @@ declare_oxc_lint!(
     ///
     /// [Difference between `String.fromCodePoint()` and `String.fromCharCode()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/fromCodePoint#compared_to_fromcharcode)
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// '🦄'.charCodeAt(0);
     /// String.fromCharCode(0x1f984);
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// '🦄'.codePointAt(0);
     /// String.fromCodePoint(0x1f984);
     /// ```

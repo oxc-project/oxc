@@ -18,10 +18,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn getter_return_diagnostic(span0: Span) -> OxcDiagnostic {
+fn getter_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected to always return a value in getter.")
         .with_help("Return a value from all code paths in getter.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -95,7 +95,7 @@ impl GetterReturn {
     }
 
     fn handle_actual_expression<'a>(callee: &'a Expression<'a>) -> bool {
-        match callee.without_parenthesized() {
+        match callee.without_parentheses() {
             expr @ match_member_expression!(Expression) => {
                 Self::handle_member_expression(expr.to_member_expression())
             }
@@ -112,79 +112,73 @@ impl GetterReturn {
     }
 
     fn handle_paren_expr<'a>(expr: &'a Expression<'a>) -> bool {
-        match expr.without_parenthesized() {
+        match expr.without_parentheses() {
             Expression::CallExpression(ce) => Self::handle_actual_expression(&ce.callee),
             _ => false,
         }
     }
 
     /// Checks whether it is necessary to check the node
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
-            match parent.kind() {
-                AstKind::MethodDefinition(mdef) => {
-                    if matches!(mdef.kind, MethodDefinitionKind::Get) {
-                        return true;
-                    }
+    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> Option<bool> {
+        let parent = ctx.nodes().parent_node(node.id())?;
+        match parent.kind() {
+            AstKind::MethodDefinition(mdef) => {
+                if matches!(mdef.kind, MethodDefinitionKind::Get) {
+                    return Some(true);
                 }
-                AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
-                    if matches!(kind, PropertyKind::Get) {
-                        return true;
-                    }
-                    if prop_key.name().is_some_and(|key| key != "get") {
-                        return false;
-                    }
+            }
+            AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
+                if matches!(kind, PropertyKind::Get) {
+                    return Some(true);
+                }
+                if prop_key.name().is_some_and(|key| key != "get") {
+                    return Some(false);
+                }
 
-                    if let Some(parent_2) = ctx.nodes().parent_node(parent.id()) {
-                        if let Some(parent_3) = ctx.nodes().parent_node(parent_2.id()) {
-                            if let Some(parent_4) = ctx.nodes().parent_node(parent_3.id()) {
-                                // handle (X())
-                                match parent_4.kind() {
-                                    AstKind::ParenthesizedExpression(p) => {
-                                        if Self::handle_paren_expr(&p.expression) {
-                                            return true;
-                                        }
-                                    }
-                                    AstKind::CallExpression(ce) => {
-                                        if Self::handle_actual_expression(&ce.callee) {
-                                            return true;
-                                        }
-                                    }
-                                    _ => {}
-                                }
-
-                                if let Some(parent_5) = ctx.nodes().parent_node(parent_4.id()) {
-                                    if let Some(parent_6) = ctx.nodes().parent_node(parent_5.id()) {
-                                        match parent_6.kind() {
-                                            AstKind::ParenthesizedExpression(p) => {
-                                                if Self::handle_paren_expr(&p.expression) {
-                                                    return true;
-                                                }
-                                            }
-                                            AstKind::CallExpression(ce) => {
-                                                if Self::handle_actual_expression(&ce.callee) {
-                                                    return true;
-                                                }
-                                            }
-                                            _ => {
-                                                return false;
-                                            }
-                                        };
-                                    }
-                                }
-                            }
+                let parent_2 = ctx.nodes().parent_node(parent.id())?;
+                let parent_3 = ctx.nodes().parent_node(parent_2.id())?;
+                let parent_4 = ctx.nodes().parent_node(parent_3.id())?;
+                // handle (X())
+                match parent_4.kind() {
+                    AstKind::ParenthesizedExpression(p) => {
+                        if Self::handle_paren_expr(&p.expression) {
+                            return Some(true);
                         }
                     }
+                    AstKind::CallExpression(ce) => {
+                        if Self::handle_actual_expression(&ce.callee) {
+                            return Some(true);
+                        }
+                    }
+                    _ => {}
                 }
-                _ => {}
+
+                let parent_5 = ctx.nodes().parent_node(parent_4.id())?;
+                let parent_6 = ctx.nodes().parent_node(parent_5.id())?;
+                match parent_6.kind() {
+                    AstKind::ParenthesizedExpression(p) => {
+                        if Self::handle_paren_expr(&p.expression) {
+                            return Some(true);
+                        }
+                    }
+                    AstKind::CallExpression(ce) => {
+                        if Self::handle_actual_expression(&ce.callee) {
+                            return Some(true);
+                        }
+                    }
+                    _ => {
+                        return Some(false);
+                    }
+                };
             }
+            _ => {}
         }
 
-        false
+        Some(false)
     }
 
     fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, span: Span) {
-        if !Self::is_wanted_node(node, ctx) {
+        if !Self::is_wanted_node(node, ctx).unwrap_or_default() {
             return;
         }
 
@@ -263,6 +257,7 @@ impl GetterReturn {
                                 e.weight(),
                                 EdgeType::Jump
                                     | EdgeType::Normal
+                                    | EdgeType::Backedge
                                     | EdgeType::Error(ErrorEdgeKind::Explicit)
                             )
                         }) {
@@ -357,6 +352,45 @@ fn test() {
             }
         };
         ", None),
+        // adapted from: https://github.com/1024pix/pix/blob/1352bd8d7f6070f1ff8da79867f543c1c1926e59/mon-pix/app/components/progress-bar.js#L29-L43
+        ("
+        export default class ProgressBar extends Component {
+            get steps() {
+                const steps = [];
+
+                for (let i = 0; i < this.maxStepsNumber; i++) {
+                    steps.push({
+                        stepnum: i + 1,
+                    });
+                }
+
+                return steps;
+            }
+        }", None),
+        ("
+        var foo = {
+            get bar() {
+                for (let i = 0; i<10; i++) {
+                    if (i === 5) {
+                        return i;
+                    }
+                }
+                return 0;
+            }
+        }", None),
+        ("
+        var foo = {
+            get bar() {
+                let i = 0;
+                while (i < 10) {
+                    if (i === 5) {
+                        return i;
+                    }
+                    i++;
+                }
+                return 0;
+            }
+        }", None),
     ];
 
     let fail = vec![
@@ -432,6 +466,29 @@ fn test() {
         ),
         ("var foo = { get bar() { try { return a(); } catch {} } };", None),
         ("var foo = { get bar() { try { return a(); } catch {  } finally {  } } };", None),
+        (
+            "
+        var foo = {
+            get bar() {
+                for (let i = 0; i<10; i++) {
+                    return i;
+                }
+            }
+        }",
+            None,
+        ),
+        (
+            "
+        var foo = {
+            get bar() {
+                let i = 0;
+                while (i < 10) {
+                    return i;
+                }
+            }
+        }",
+            None,
+        ),
     ];
 
     Tester::new(GetterReturn::NAME, pass, fail)

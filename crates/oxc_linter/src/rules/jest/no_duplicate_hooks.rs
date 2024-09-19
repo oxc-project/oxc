@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{
@@ -15,10 +15,10 @@ use crate::{
     },
 };
 
-fn no_duplicate_hooks_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow duplicate setup and teardown hooks.")
-        .with_help(format!("Duplicate {x0:?} in describe block."))
-        .with_label(span0)
+fn no_duplicate_hooks_diagnostic(x0: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Duplicate {x0:?} in describe block."))
+        .with_help("Describe blocks can only have one of each hook. Consider consolidating the duplicate hooks into a single call.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -104,7 +104,7 @@ impl Rule for NoDuplicateHooks {
         let Some(root_node) = ctx.nodes().root_node() else {
             return;
         };
-        let mut hook_contexts: HashMap<AstNodeId, Vec<HashMap<String, i32>>> = HashMap::new();
+        let mut hook_contexts: HashMap<NodeId, Vec<HashMap<String, i32>>> = HashMap::new();
         hook_contexts.insert(root_node.id(), Vec::new());
 
         let mut possibles_jest_nodes = collect_possible_jest_call_node(ctx);
@@ -119,8 +119,8 @@ impl Rule for NoDuplicateHooks {
 impl NoDuplicateHooks {
     fn run<'a>(
         possible_jest_node: &PossibleJestNode<'a, '_>,
-        root_node_id: AstNodeId,
-        hook_contexts: &mut HashMap<AstNodeId, Vec<HashMap<String, i32>>>,
+        root_node_id: NodeId,
+        hook_contexts: &mut HashMap<NodeId, Vec<HashMap<String, i32>>>,
         ctx: &LintContext<'a>,
     ) {
         let node = possible_jest_node.node;

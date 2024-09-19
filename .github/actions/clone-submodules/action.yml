@@ -7,24 +7,28 @@ runs:
   steps:
     - uses: actions/checkout@v4
       with:
+        show-progress: false
         repository: tc39/test262
         path: tasks/coverage/test262
-        ref: a15874163e6a4f19ee7cd3e47592af382af0f5fd
+        ref: d62fa93c8f9ce5e687c0bbaa5d2b59670ab2ff60
 
     - uses: actions/checkout@v4
       with:
+        show-progress: false
         repository: babel/babel
         path: tasks/coverage/babel
-        ref: 12619ffe5b0777edb0223304da1fdf8770d93e7c
+        ref: 3bcfee232506a4cebe410f02042fb0f0adeeb0b1
 
     - uses: actions/checkout@v4
       with:
+        show-progress: false
         repository: microsoft/TypeScript
         path: tasks/coverage/typescript
-        ref: d8086f14b6b97c0df34a0cc2f56d4b5926a0c299
+        ref: a709f9899c2a544b6de65a0f2623ecbbe1394eab
 
     - uses: actions/checkout@v4
       with:
+        show-progress: false
         repository: prettier/prettier
         path: tasks/prettier_conformance/prettier
-        ref: 7142cf354cce2558f41574f44b967baf11d5b603 # v3.2.5
+        ref: 52829385bcc4d785e58ae2602c0b098a643523c9 # v3.3.3

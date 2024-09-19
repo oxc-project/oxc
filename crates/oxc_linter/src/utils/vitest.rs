@@ -1,4 +1,3 @@
-use crate::LintContext;
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
@@ -10,6 +9,10 @@ use super::{
     is_equality_matcher, parse_jest_fn_call, ParsedExpectFnCall, ParsedJestFnCallNew,
     PossibleJestNode,
 };
+use crate::LintContext;
+
+mod valid_vitest_fn;
+pub use crate::utils::vitest::valid_vitest_fn::VALID_VITEST_FN_CALL_CHAINS;
 
 pub fn parse_expect_and_typeof_vitest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,

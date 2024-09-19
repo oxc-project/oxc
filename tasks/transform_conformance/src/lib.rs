@@ -13,7 +13,7 @@ use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 use test_case::TestCaseKind;
 use walkdir::WalkDir;
 
-mod semantic;
+mod driver;
 mod test_case;
 
 #[test]
@@ -101,7 +101,7 @@ impl TestRunner {
         root: &Path,
         filter: Option<&String>,
     ) -> (IndexMap<String, Vec<TestCaseKind>>, IndexMap<String, Vec<TestCaseKind>>) {
-        let cwd = babel_root();
+        let cwd = root.parent().unwrap_or(root);
         // use `IndexMap` to keep the order of the test cases the same in insert order.
         let mut transform_files = IndexMap::<String, Vec<TestCaseKind>>::new();
         let mut exec_files = IndexMap::<String, Vec<TestCaseKind>>::new();
@@ -119,8 +119,7 @@ impl TestRunner {
                                 return None;
                             }
                         }
-                        TestCaseKind::new(&cwd, path)
-                            .filter(|test_case| !test_case.skip_test_case())
+                        TestCaseKind::new(cwd, path).filter(|test_case| !test_case.skip_test_case())
                     })
                     .partition(|p| matches!(p, TestCaseKind::Transform(_)));
 
@@ -153,7 +152,11 @@ impl TestRunner {
             // Run the test
             let (passed, failed): (Vec<TestCaseKind>, Vec<TestCaseKind>) = test_cases
                 .into_iter()
-                .partition(|test_case| test_case.test(self.options.filter.is_some()));
+                .map(|mut test_case| {
+                    test_case.test(self.options.filter.is_some());
+                    test_case
+                })
+                .partition(|test_case| test_case.errors().is_empty());
             all_passed_count += passed.len();
 
             // Snapshot
@@ -168,7 +171,15 @@ impl TestRunner {
                     snapshot.push_str(&normalize_path(
                         test_case.path().strip_prefix(&case_root).unwrap(),
                     ));
-                    snapshot.push('\n');
+                    let errors = test_case.errors();
+                    if !errors.is_empty() {
+                        snapshot.push('\n');
+                        for error in errors {
+                            snapshot.push_str(&error.message);
+                            snapshot.push('\n');
+                        }
+                        snapshot.push('\n');
+                    }
                 }
                 snapshot.push('\n');
             }

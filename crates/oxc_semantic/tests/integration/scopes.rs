@@ -4,6 +4,29 @@ use oxc_semantic::{ScopeFlags, SymbolFlags};
 use crate::util::{Expect, SemanticTester};
 
 #[test]
+fn test_only_program() {
+    let tester = SemanticTester::js("let x = 1;");
+    tester.has_root_symbol("x").is_in_scope(ScopeFlags::Top).test();
+
+    let semantic = tester.build();
+    let scopes = semantic.scopes();
+    let root = semantic.scopes().root_scope_id();
+
+    // ScopeTree contains a single root scope
+    assert_eq!(scopes.len(), 1);
+    assert!(!scopes.is_empty());
+
+    // Root scope is associated with the Program
+    let root_node_id = scopes.get_node_id(root);
+    let root_node = semantic.nodes().get_node(root_node_id);
+    assert!(matches!(root_node.kind(), AstKind::Program(_)));
+
+    // ancestors
+    assert_eq!(scopes.ancestors(root).count(), 1);
+    assert!(scopes.get_parent_id(root).is_none());
+}
+
+#[test]
 fn test_top_level_strict() {
     // Module with top-level "use strict"
     SemanticTester::js(
@@ -165,11 +188,8 @@ fn test_enums() {
         .nodes()
         .iter()
         .find_map(|node| {
-            if let AstKind::TSEnumDeclaration(e) = node.kind() {
-                Some((node, e))
-            } else {
-                None
-            }
+            let e = node.kind().as_ts_enum_declaration()?;
+            Some((node, e))
         })
         .expect("Expected TS test case to have an enum declaration for A.");
 
@@ -179,7 +199,11 @@ fn test_enums() {
         "Expected `enum A` to be created in the top-level scope."
     );
     let enum_decl_scope_id = enum_decl.scope_id.get().expect("Enum declaration has no scope id");
-    assert_ne!(enum_node.scope_id(), enum_decl_scope_id, "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in.");
+    assert_ne!(
+        enum_node.scope_id(),
+        enum_decl_scope_id,
+        "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in."
+    );
     assert_eq!(enum_decl.members.len(), 3);
 }
 
@@ -196,4 +220,22 @@ fn var_hoisting() {
     // `e` was hoisted to the top scope so the symbol's scope is also the top scope
     .is_in_scope(ScopeFlags::Top)
     .test();
+}
+
+#[test]
+fn get_child_ids() {
+    let test = SemanticTester::js(
+        "
+            function foo() {
+            }
+        ",
+    )
+    .with_scope_tree_child_ids(true);
+    let semantic = test.build();
+    let (_symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
+
+    let child_scope_ids = scopes.get_child_ids(scopes.root_scope_id());
+    assert_eq!(child_scope_ids.len(), 1);
+    let child_scope_ids = scopes.get_child_ids(child_scope_ids[0]);
+    assert!(child_scope_ids.is_empty());
 }

@@ -11,16 +11,17 @@ use crate::{
     ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
 };
 
-fn prefer_math_abs(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives").with_label(span0)
+fn prefer_math_abs(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives").with_label(span)
 }
 
-fn prefer_math_hypot(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span0)
+fn prefer_math_hypot(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span)
 }
 
-fn prefer_math_log_n(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Math.{x1}(x)` over `{x2}`")).with_label(span0)
+fn prefer_math_log_n(span: Span, good_method: &str, bad_method: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Math.{good_method}(x)` over `{bad_method}`"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -40,12 +41,15 @@ declare_oxc_lint!(
     ///  - Prefer `Math.hypot(…)` over alternatives
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// Math.log(x) * Math.LOG10E;
     /// Math.sqrt(a * a + b * b);
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// Math.log10(x);
     /// Math.hypot(a, b);
     /// ```
@@ -217,7 +221,7 @@ fn check_multiplication<'a, 'b>(
 fn flat_plus_expression<'a>(expression: &'a Expression<'a>) -> Vec<&'a Expression<'a>> {
     let mut expressions = Vec::new();
 
-    match expression.without_parenthesized() {
+    match expression.without_parentheses() {
         Expression::BinaryExpression(bin_expr) => {
             if matches!(bin_expr.operator, BinaryOperator::Addition) {
                 expressions.append(&mut flat_plus_expression(&bin_expr.left));
@@ -233,11 +237,11 @@ fn flat_plus_expression<'a>(expression: &'a Expression<'a>) -> Vec<&'a Expressio
 }
 
 fn is_pow_2_expression(expression: &Expression, ctx: &LintContext<'_>) -> bool {
-    if let Expression::BinaryExpression(bin_expr) = expression.without_parenthesized() {
+    if let Expression::BinaryExpression(bin_expr) = expression.without_parentheses() {
         match bin_expr.operator {
             BinaryOperator::Exponential => {
                 if let Expression::NumericLiteral(number_lit) =
-                    &bin_expr.right.without_parenthesized()
+                    &bin_expr.right.without_parentheses()
                 {
                     (number_lit.value - 2_f64).abs() < f64::EPSILON
                 } else {

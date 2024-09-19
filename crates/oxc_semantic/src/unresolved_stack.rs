@@ -1,11 +1,11 @@
 use assert_unchecked::assert_unchecked;
-use oxc_span::Atom;
 use rustc_hash::FxHashMap;
 
-use crate::scope::UnresolvedReference;
+use oxc_span::Atom;
+use oxc_syntax::reference::ReferenceId;
 
 /// The difference with Scope's `UnresolvedReferences` is that this type uses Atom as the key. its clone is very cheap!
-type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<UnresolvedReference>>;
+type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<ReferenceId>>;
 
 // Stack used to accumulate unresolved refs while traversing scopes.
 // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal
@@ -21,16 +21,16 @@ pub(crate) struct UnresolvedReferencesStack<'a> {
 }
 
 impl<'a> UnresolvedReferencesStack<'a> {
+    // Initial scope depth.
+    // Start on 1 (`Program` scope depth).
+    // SAFETY: Must be >= 1 to ensure soundness of `current_and_parent_mut`.
+    const INITIAL_DEPTH: usize = 1;
     // Most programs will have at least 1 place where scope depth reaches 16,
     // so initialize `stack` with this length, to reduce reallocations as it grows.
     // This is just an estimate of a good initial size, but certainly better than
     // `Vec`'s default initial capacity of 4.
     // SAFETY: Must be >= 2 to ensure soundness of `current_and_parent_mut`.
     const INITIAL_SIZE: usize = 16;
-    // Initial scope depth.
-    // Start on 1 (`Program` scope depth).
-    // SAFETY: Must be >= 1 to ensure soundness of `current_and_parent_mut`.
-    const INITIAL_DEPTH: usize = 1;
     #[allow(clippy::assertions_on_constants)]
     const _SIZE_CHECK: () = assert!(Self::INITIAL_SIZE > Self::INITIAL_DEPTH);
 

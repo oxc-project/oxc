@@ -1,4 +1,4 @@
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
@@ -145,8 +145,7 @@ impl<'a> ParserImpl<'a> {
                 shorthand = true;
                 let identifier =
                     self.ast.binding_pattern_kind_binding_identifier(ident.span, &ident.name);
-                let left =
-                    self.ast.binding_pattern(identifier, Option::<TSTypeAnnotation>::None, false);
+                let left = self.ast.binding_pattern(identifier, NONE, false);
                 self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, left))?
             } else {
                 return Err(self.unexpected());
@@ -172,7 +171,7 @@ impl<'a> ParserImpl<'a> {
             let expr = self.parse_assignment_expression_or_higher()?;
             Ok(self.ast.binding_pattern(
                 self.ast.binding_pattern_kind_assignment_pattern(self.end_span(span), left, expr),
-                Option::<TSTypeAnnotation>::None,
+                NONE,
                 false,
             ))
         } else {

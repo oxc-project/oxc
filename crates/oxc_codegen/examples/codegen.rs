@@ -2,8 +2,8 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
-use oxc_parser::Parser;
+use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
+use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 use pico_args::Arguments;
 
@@ -20,58 +20,53 @@ fn main() -> std::io::Result<()> {
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
-    let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let mut allocator = Allocator::default();
 
-    if !ret.errors.is_empty() {
-        for error in ret.errors {
-            let error = error.with_source_code(source_text.to_string());
-            println!("{error:?}");
-        }
-        return Ok(());
-    }
-
-    println!("Original:");
-    println!("{source_text}");
-
+    let printed = {
+        let Some(ret) = parse(&allocator, &source_text, source_type) else { return Ok(()) };
+        codegen(&source_text, &ret, minify)
+    };
     println!("First time:");
-    let printed = CodeGenerator::new()
-        .enable_comment(
-            &source_text,
-            ret.trivias.clone(),
-            CommentOptions { preserve_annotate_comments: true },
-        )
-        .build(&ret.program)
-        .source_text;
     println!("{printed}");
 
     if twice {
-        println!("Second time:");
-        let ret = Parser::new(&allocator, &printed, source_type).parse();
-        if !ret.errors.is_empty() {
-            for error in ret.errors {
-                println!("{:?}", error.with_source_code(printed.to_string()));
-            }
-            return Ok(());
-        }
-        let printed = CodeGenerator::new()
-            .enable_comment(
-                &printed,
-                ret.trivias.clone(),
-                CommentOptions { preserve_annotate_comments: true },
-            )
-            .build(&ret.program)
-            .source_text;
-        println!("{printed}");
-    }
+        // Reset the allocator as we don't need the first AST any more
+        allocator.reset();
 
-    if minify {
-        let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let minified = WhitespaceRemover::new().build(&ret.program).source_text;
-        println!("Minified:");
-        println!("{minified}");
+        let Some(ret) = parse(&allocator, &printed, source_type) else { return Ok(()) };
+        println!("Second time:");
+        let printed = codegen(&printed, &ret, minify);
+        println!("{printed}");
+        // Check syntax error
+        parse(&allocator, &printed, source_type);
     }
 
     Ok(())
+}
+
+fn parse<'a>(
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    source_type: SourceType,
+) -> Option<ParserReturn<'a>> {
+    let ret = Parser::new(allocator, source_text, source_type).parse();
+    if !ret.errors.is_empty() {
+        for error in ret.errors {
+            println!("{:?}", error.with_source_code(source_text.to_string()));
+        }
+        return None;
+    }
+    Some(ret)
+}
+
+fn codegen(source_text: &str, ret: &ParserReturn<'_>, minify: bool) -> String {
+    CodeGenerator::new()
+        .enable_comment(
+            source_text,
+            ret.trivias.clone(),
+            CommentOptions { preserve_annotate_comments: true },
+        )
+        .with_options(CodegenOptions { minify, ..CodegenOptions::default() })
+        .build(&ret.program)
+        .source_text
 }

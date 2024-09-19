@@ -1,9 +1,8 @@
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_index::Idx;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
-
-use oxc_index::Idx;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SymbolId(NonMaxU32);
@@ -37,7 +36,9 @@ pub struct RedeclarationId(NonMaxU32);
 impl Idx for RedeclarationId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
-        Self(NonMaxU32::new(idx as u32).unwrap())
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
     fn index(self) -> usize {
@@ -77,10 +78,14 @@ bitflags! {
         /// Is this symbol inside an export declaration
         const Export                  = 1 << 4;
         const Class                   = 1 << 5;
-        const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
+        /// `try {} catch(catch_variable) {}`
+        const CatchVariable           = 1 << 6;
+        /// A function declaration or expression
         const Function                = 1 << 7;
-        const Import             = 1 << 8; // Imported ESM binding
-        const TypeImport              = 1 << 9; // Imported ESM type-only binding
+        /// Imported ESM binding
+        const Import                  = 1 << 8;
+        /// Imported ESM type-only binding
+        const TypeImport              = 1 << 9;
         // Type specific symbol flags
         const TypeAlias               = 1 << 10;
         const Interface               = 1 << 11;
@@ -123,78 +128,97 @@ bitflags! {
 }
 
 impl SymbolFlags {
+    #[inline]
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
     }
 
+    #[inline]
     pub fn is_type_parameter(&self) -> bool {
         self.contains(Self::TypeParameter)
     }
 
     /// If true, then the symbol is a type, such as a TypeAlias, Interface, or Enum
+    #[inline]
     pub fn is_type(&self) -> bool {
         self.intersects((Self::TypeImport | Self::Type) - Self::Value)
     }
 
     /// If true, then the symbol is a value, such as a Variable, Function, or Class
+    #[inline]
     pub fn is_value(&self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function)
     }
 
+    #[inline]
     pub fn is_const_variable(&self) -> bool {
         self.contains(Self::ConstVariable)
     }
 
+    /// Returns `true` if this symbol is a function declaration or expression.
+    #[inline]
     pub fn is_function(&self) -> bool {
         self.contains(Self::Function)
     }
 
+    #[inline]
     pub fn is_class(&self) -> bool {
         self.contains(Self::Class)
     }
 
+    #[inline]
     pub fn is_interface(&self) -> bool {
         self.contains(Self::Interface)
     }
 
+    #[inline]
     pub fn is_type_alias(&self) -> bool {
         self.contains(Self::TypeAlias)
     }
 
+    #[inline]
     pub fn is_enum(&self) -> bool {
         self.intersects(Self::Enum)
     }
 
+    #[inline]
     pub fn is_enum_member(&self) -> bool {
         self.contains(Self::EnumMember)
     }
 
+    #[inline]
     pub fn is_catch_variable(&self) -> bool {
         self.contains(Self::CatchVariable)
     }
 
+    #[inline]
     pub fn is_function_scoped_declaration(&self) -> bool {
         self.contains(Self::FunctionScopedVariable)
     }
 
+    #[inline]
     pub fn is_export(&self) -> bool {
         self.contains(Self::Export)
     }
 
+    #[inline]
     pub fn is_import(&self) -> bool {
         self.intersects(Self::Import | Self::TypeImport)
     }
 
+    #[inline]
     pub fn is_type_import(&self) -> bool {
         self.contains(Self::TypeImport)
     }
 
     /// If true, then the symbol can be referenced by a type
+    #[inline]
     pub fn can_be_referenced_by_type(&self) -> bool {
         self.intersects(Self::Type | Self::TypeImport | Self::Import)
     }
 
     /// If true, then the symbol can be referenced by a value
+    #[inline]
     pub fn can_be_referenced_by_value(&self) -> bool {
         self.intersects(Self::Value | Self::Import | Self::Function)
     }

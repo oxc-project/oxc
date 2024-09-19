@@ -45,8 +45,6 @@ jobs:
     if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
-    outputs:
-      version: ${{ env.version }}
     strategy:
       matrix:
         include:
@@ -73,22 +71,11 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
 
-      - name: Install pnpm
-        working-directory: editors/vscode
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache-dependency-path: ./editors/vscode/package.json
-          cache: pnpm
+      - uses: ./.github/actions/pnpm
 
       - name: Build JS
         working-directory: editors/vscode
-        run: |
-          pnpm install
-          pnpm run compile
+        run: pnpm run compile
 
       - name: Install cross
         uses: taiki-e/install-action@cross
@@ -147,20 +134,7 @@ jobs:
           merge-multiple: true
           path: editors/vscode
 
-      - name: Install pnpm
-        working-directory: editors/vscode
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache-dependency-path: ./editors/vscode/package.json
-          cache: pnpm
-
-      - name: Install
-        working-directory: editors/vscode
-        run: pnpm install
+      - uses: ./.github/actions/pnpm
 
       - name: Publish to Microsoft Marketplace
         working-directory: editors/vscode

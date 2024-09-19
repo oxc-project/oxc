@@ -2,6 +2,9 @@
 
 use std::fmt;
 
+/// Lexer token kind
+///
+/// Exported for other oxc crates to use. You generally don't need to use this directly.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Kind {
@@ -244,8 +247,11 @@ impl Kind {
         matches!(self, Ident) || self.is_all_keyword()
     }
 
-    /// Check the succeeding token of a `let` keyword
-    // let { a, b } = c, let [a, b] = c, let ident
+    /// Check the succeeding token of a `let` keyword.
+    ///
+    /// ```javascript
+    /// let { a, b } = c, let [a, b] = c, let ident
+    /// ```
     pub fn is_after_let(self) -> bool {
         self != Self::In && (matches!(self, LCurly | LBrack | Ident) || self.is_all_keyword())
     }

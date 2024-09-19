@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_amd_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn no_amd_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use AMD `require` and `define` calls.")
-        .with_help(format!("Expected imports instead of AMD {x1}()"))
-        .with_label(span0)
+        .with_help(format!("Expected imports instead of AMD {name}()"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -22,12 +22,18 @@ declare_oxc_lint!(
     ///
     /// Forbid AMD `require` and `define` calls.
     ///
-    /// ### Example
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     ///
     /// ```javascript
-    /// // fail
     /// require([a, b], function() {} );
-    /// // pass
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// require('../name');
     /// require(`../name`);
     /// ```

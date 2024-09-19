@@ -6,12 +6,16 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn no_namespace_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("ES2015 module syntax is preferred over namespaces.")
         .with_help("Replace the namespace with an ES2015 module or use `declare module`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -99,7 +103,7 @@ impl Rule for NoNamespace {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

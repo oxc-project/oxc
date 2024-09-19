@@ -16,21 +16,25 @@ use crate::{
     AstNode,
 };
 
-fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is not zero."))
-        .with_label(span0);
-    if let Some(x) = x3 {
+fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn(format!(
+        "Use `.{prop_name} {op_and_rhs}` when checking {prop_name} is not zero."
+    ))
+    .with_label(span);
+    if let Some(x) = help {
         d = d.with_help(x);
     }
     d
 }
 
-fn zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("Use `.{x1} {x2}` when checking {x1} is zero."));
-    if let Some(x) = x3 {
+fn zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn(format!(
+        "Use `.{prop_name} {op_and_rhs}` when checking {prop_name} is zero."
+    ));
+    if let Some(x) = help {
         d = d.with_help(x);
     }
-    d.with_label(span0)
+    d.with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -61,19 +65,26 @@ declare_oxc_lint!(
     ///     Enforces non-zero to be checked with: foo.length > 0
     /// not-equal
     ///     Enforces non-zero to be checked with: foo.length !== 0
-    /// ### Example
+    ///
+    /// ### Why is this bad?
+    ///
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // fail
-    /// const isEmpty = !foo.length;
     /// const isEmpty = foo.length == 0;
     /// const isEmpty = foo.length < 1;
     /// const isEmpty = 0 === foo.length;
     /// const isEmpty = 0 == foo.length;
     /// const isEmpty = 1 > foo.length;
-    /// // Negative style is disallowed too
+    ///
+    /// const isEmpty = !foo.length;
     /// const isEmpty = !(foo.length > 0);
     /// const isEmptySet = !foo.size;
-    /// // pass
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const isEmpty = foo.length === 0;
     /// ```
     ExplicitLengthCheck,
@@ -221,7 +232,7 @@ impl ExplicitLengthCheck {
         let diagnostic = if is_zero_length_check {
             zero(span, property.as_str(), check_code, help)
         } else {
-            none_zero(span, property.as_str(), check_code, help)
+            non_zero(span, property.as_str(), check_code, help)
         };
         if auto_fix {
             ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(span, fixed));

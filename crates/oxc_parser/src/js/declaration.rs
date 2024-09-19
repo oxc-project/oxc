@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
@@ -39,7 +39,7 @@ impl<'a> ParserImpl<'a> {
 
         self.asi()?;
 
-        Ok(Statement::UsingDeclaration(self.ast.alloc(using_decl)))
+        Ok(Statement::VariableDeclaration(self.ast.alloc(using_decl)))
     }
 
     pub(crate) fn parse_variable_declaration(
@@ -113,7 +113,7 @@ impl<'a> ParserImpl<'a> {
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, Option::<TSTypeAnnotation>::None, false), false)
+            (self.ast.binding_pattern(binding_kind, NONE, false), false)
         };
 
         let init =
@@ -141,7 +141,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_using_declaration(
         &mut self,
         statement_ctx: StatementContext,
-    ) -> Result<UsingDeclaration<'a>> {
+    ) -> Result<VariableDeclaration<'a>> {
         let span = self.start_span();
 
         let is_await = self.eat(Kind::Await);
@@ -191,6 +191,11 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.using_declaration(self.end_span(span), is_await, declarations))
+        let kind = if is_await {
+            VariableDeclarationKind::AwaitUsing
+        } else {
+            VariableDeclarationKind::Using
+        };
+        Ok(self.ast.variable_declaration(self.end_span(span), kind, declarations, false))
     }
 }

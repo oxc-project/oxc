@@ -7,7 +7,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConfusingNonNullAssertion;
@@ -27,7 +31,7 @@ declare_oxc_lint!(
     /// ```
     NoConfusingNonNullAssertion,
     suspicious,
-    // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    pending
 );
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
@@ -111,7 +115,7 @@ impl Rule for NoConfusingNonNullAssertion {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

@@ -50,17 +50,27 @@ bb10: {
 }
 
 digraph {
-    0 [ label = "" ]
-    1 [ label = "WhileStatement" ]
-    2 [ label = "Condition(IdentifierReference(a))" ]
-    3 [ label = "BlockStatement\nSwitchStatement" ]
-    4 [ label = "Condition(0)" ]
-    5 [ label = "ExpressionStatement\ncontinue" ]
-    6 [ label = "unreachable" ]
-    7 [ label = "Condition(1)" ]
-    8 [ label = "ExpressionStatement" ]
-    9 [ label = "" ]
-    10 [ label = "" ]
+    0 [ label = "bb0" shape = box]
+    1 [ label = "bb1
+WhileStatement" shape = box]
+    2 [ label = "bb2
+Condition(IdentifierReference(a))" shape = box]
+    3 [ label = "bb3
+BlockStatement
+SwitchStatement" shape = box]
+    4 [ label = "bb4
+Condition(0)" shape = box]
+    5 [ label = "bb5
+ExpressionStatement
+continue" shape = box]
+    6 [ label = "bb6
+unreachable" shape = box]
+    7 [ label = "bb7
+Condition(1)" shape = box]
+    8 [ label = "bb8
+ExpressionStatement" shape = box]
+    9 [ label = "bb9" shape = box]
+    10 [ label = "bb10" shape = box]
     1 -> 0 [ label = "Error(Implicit)" ]
     2 -> 0 [ label = "Error(Implicit)" ]
     3 -> 0 [ label = "Error(Implicit)" ]

@@ -1,65 +1,65 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: var foo = 0;
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A: var foo = 0;` with `var foo = 0;`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: { foo(); bar(); }
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A: { foo(); bar(); }` with `{ foo(); bar(); }`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: if (a) { foo(); bar(); }
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A: if (a) { foo(); bar(); }` with `if (a) { foo(); bar(); }`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A: for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }` with `for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }` with `for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:35]
  1 │ A: for (var i = 0; i < 10; ++i) { B: break A; }
    ·                                   ─
    ╰────
-  help: 'B:' is defined but never used.
+  help: Replace `B: break A;` with `break A;`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: { var A = 0; console.log(A); }
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A: { var A = 0; console.log(A); }` with `{ var A = 0; console.log(A); }`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A: /* comment */ foo
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A: /* comment */ foo` with `foo`.
 
-  ⚠ eslint(no-unused-labels): Disallow unused labels
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
  1 │ A /* comment */: foo
    · ─
    ╰────
-  help: 'A:' is defined but never used.
+  help: Replace `A /* comment */: foo` with `foo`.

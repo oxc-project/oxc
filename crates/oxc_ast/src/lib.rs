@@ -42,6 +42,8 @@ mod generated {
     pub mod ast_builder;
     pub mod ast_kind;
     pub mod derive_clone_in;
+    pub mod derive_content_eq;
+    pub mod derive_content_hash;
     pub mod derive_get_span;
     pub mod derive_get_span_mut;
     pub mod visit;
@@ -49,19 +51,17 @@ mod generated {
 }
 
 pub mod visit {
-    pub use crate::generated::visit::*;
-    pub use crate::generated::visit_mut::*;
+    pub use crate::generated::{visit::*, visit_mut::*};
 }
 
-pub use generated::ast_builder;
-pub use generated::ast_kind;
-
+pub use generated::{ast_builder, ast_kind};
 pub use num_bigint::BigUint;
 
 pub use crate::{
     ast_builder::AstBuilder,
+    ast_builder_impl::NONE,
     ast_kind::{AstKind, AstType},
-    trivia::{Comment, CommentKind, SortedComments, Trivias},
+    trivia::{Comment, CommentKind, CommentPosition, SortedComments, Trivias},
     visit::{Visit, VisitMut},
 };
 
@@ -90,22 +90,22 @@ pub use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use static_assertions::assert_eq_size;
+    use std::mem::size_of;
 
     use crate::ast;
 
-    assert_eq_size!(ast::Statement, [u8; 16]);
-    assert_eq_size!(ast::Expression, [u8; 16]);
-    assert_eq_size!(ast::Declaration, [u8; 16]);
-    assert_eq_size!(ast::BindingPatternKind, [u8; 16]);
-    assert_eq_size!(ast::ModuleDeclaration, [u8; 16]);
-    assert_eq_size!(ast::ClassElement, [u8; 16]);
-    assert_eq_size!(ast::ExportDefaultDeclarationKind, [u8; 16]);
-    assert_eq_size!(ast::AssignmentTargetPattern, [u8; 16]);
-    assert_eq_size!(ast::AssignmentTargetMaybeDefault, [u8; 16]);
-    assert_eq_size!(ast::AssignmentTargetProperty, [u8; 16]);
-    assert_eq_size!(ast::TSLiteral, [u8; 16]);
-    assert_eq_size!(ast::TSType, [u8; 16]);
+    assert!(size_of::<ast::Statement>() == 16);
+    assert!(size_of::<ast::Expression>() == 16);
+    assert!(size_of::<ast::Declaration>() == 16);
+    assert!(size_of::<ast::BindingPatternKind>() == 16);
+    assert!(size_of::<ast::ModuleDeclaration>() == 16);
+    assert!(size_of::<ast::ClassElement>() == 16);
+    assert!(size_of::<ast::ExportDefaultDeclarationKind>() == 16);
+    assert!(size_of::<ast::AssignmentTargetPattern>() == 16);
+    assert!(size_of::<ast::AssignmentTargetMaybeDefault>() == 16);
+    assert!(size_of::<ast::AssignmentTargetProperty>() == 16);
+    assert!(size_of::<ast::TSLiteral>() == 16);
+    assert!(size_of::<ast::TSType>() == 16);
 }
 
 #[test]

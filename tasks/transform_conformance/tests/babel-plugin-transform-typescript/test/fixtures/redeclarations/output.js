@@ -9,4 +9,3 @@ export { T };
 // CASE 3: redeclaration of VariableDeclaration and TypeAlias
 const B = 0;
 export { B };
-

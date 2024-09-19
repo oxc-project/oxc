@@ -16,8 +16,8 @@ use crate::{
     },
 };
 
-fn use_to_have_length(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span0)
+fn use_to_have_length(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -138,19 +138,20 @@ impl PreferToHaveLength {
         let Some(matcher) = parsed_expect_call.matcher() else {
             return;
         };
-
         if expect_property_name != "length" || !is_equality_matcher(matcher) {
             return;
         }
 
         ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
             let code = Self::build_code(fixer, static_mem_expr, kind, property_name);
-            let end = if call_expr.arguments.len() > 0 {
-                call_expr.arguments.first().unwrap().span().start
-            } else {
-                matcher.span.end
-            };
-            fixer.replace(Span::new(call_expr.span.start, end - 1), code)
+            let offset = u32::try_from(
+                fixer
+                    .source_range(Span::new(matcher.span.end, call_expr.span().end))
+                    .find('(')
+                    .unwrap(),
+            )
+            .unwrap();
+            fixer.replace(Span::new(call_expr.span.start, matcher.span.end + offset), code)
         });
     }
 
@@ -161,12 +162,11 @@ impl PreferToHaveLength {
         property_name: Option<&str>,
     ) -> String {
         let mut formatter = fixer.codegen();
-        let Expression::Identifier(prop_ident) = mem_expr.object() else {
-            return formatter.into_source_text();
-        };
 
         formatter.print_str("expect(");
-        formatter.print_str(prop_ident.name.as_str());
+        formatter.print_str(
+            fixer.source_range(Span::new(mem_expr.span().start, mem_expr.object().span().end)),
+        );
         formatter.print_str(")");
 
         if let Some(kind_val) = kind {
@@ -215,6 +215,16 @@ fn tests() {
         ("expect(files.length).toEqual(1);", None),
         ("expect(files.length).toStrictEqual(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", None),
+        (
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);",
+            None,
+        ),
+        (
+            "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+          0,
+        );",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -240,6 +250,20 @@ fn tests() {
         ("expect(files.length).toEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).toStrictEqual(1);", "expect(files).toHaveLength(1);", None),
         ("expect(files.length).not.toStrictEqual(1);", "expect(files).not.toHaveLength(1);", None),
+        (
+            "expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);",
+            "expect((meta.get('pages') as YArray<unknown>)).toHaveLength((originalMeta.get('pages') as YArray<unknown>).length);",
+            None,
+        ),
+        (
+            "expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+          0,
+        );",
+            "expect(assetTypeContainer.getElementsByTagName('time')).toHaveLength(
+          0,
+        );",
+            None,
+        ),
     ];
 
     Tester::new(PreferToHaveLength::NAME, pass, fail)

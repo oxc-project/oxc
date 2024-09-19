@@ -6,18 +6,18 @@ use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_internal};
 
-fn invalid_access_level(span0: Span) -> OxcDiagnostic {
+fn invalid_access_level(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid access level is specified or missing.")
         .with_help("Valid access levels are `package`, `private`, `protected`, and `public`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn redundant_access_tags(span0: Span) -> OxcDiagnostic {
+fn redundant_access_tags(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Mixing of @access with @public, @private, @protected, or @package on the same doc block.",
     )
     .with_help("There should be only one instance of access tag in a JSDoc comment.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -25,6 +25,7 @@ pub struct CheckAccess;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// Checks that `@access` tags use one of the following values:
     /// - "package", "private", "protected", "public"
     ///
@@ -33,19 +34,23 @@ declare_oxc_lint!(
     /// - Use of multiple instances of `@access` (or the `@public`, etc) on the same doc block.
     ///
     /// ### Why is this bad?
+    ///
     /// It is important to have a consistent way of specifying access levels.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Passing
-    /// /** @access private */
-    ///
-    /// /** @private */
-    ///
-    /// // Failing
     /// /** @access private @public */
     ///
     /// /** @access invalidlevel */
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// /** @access private */
+    ///
+    /// /** @private */
     /// ```
     CheckAccess,
     restriction

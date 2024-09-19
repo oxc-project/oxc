@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -5,10 +6,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_script_url_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Script URL is a form of eval")
-        .with_help("Disallow `javascript:` urls")
-        .with_label(span0)
+fn no_script_url_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpeced `javascript:` url")
+        .with_help("Execute the code directly instead.")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -19,9 +20,14 @@ declare_oxc_lint!(
     /// Disallow javascript: urls
     ///
     /// ### Why is this bad?
-    /// Using javascript: URLs is considered by some as a form of eval. Code passed in javascript: URLs has to be parsed and evaluated by the browser in the same way that eval is processed.
+    /// Using `javascript:` URLs is considered by some as a form of `eval`. Code
+    /// passed in `javascript:` URLs must be parsed and evaluated by the browser
+    /// in the same way that `eval` is processed. This can lead to security and
+    /// performance issues.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule
     /// ```javascript
     /// /*eslint no-script-url: "error"*/
     ///
@@ -37,7 +43,7 @@ impl Rule for NoScriptUrl {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
-                if literal.value.to_lowercase().starts_with("javascript:") =>
+                if literal.value.cow_to_lowercase().starts_with("javascript:") =>
             {
                 emit_diagnostic(ctx, literal.span);
             }
@@ -51,7 +57,7 @@ impl Rule for NoScriptUrl {
                         .unwrap()
                         .value
                         .raw
-                        .to_lowercase()
+                        .cow_to_lowercase()
                         .starts_with("javascript:")
                 {
                     emit_diagnostic(ctx, literal.span);

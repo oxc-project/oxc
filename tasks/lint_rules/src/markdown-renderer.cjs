@@ -9,7 +9,7 @@ const renderIntroduction = ({ npm }) => `
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
 
-This is tracking issue for ${npm.map((n) => "`" + n + "`").join(", ")}.
+This is tracking issue for ${npm.map((n) => '`' + n + '`').join(', ')}.
 `;
 
 /**
@@ -24,11 +24,9 @@ This is tracking issue for ${npm.map((n) => "`" + n + "`").join(", ")}.
 const renderCounters = ({
   counters: { recommended, notRecommended, deprecated },
 }) => {
-  const recommendedTodos =
-    recommended.total -
+  const recommendedTodos = recommended.total -
     (recommended.isImplemented + recommended.isNotSupported);
-  const notRecommendedTodos =
-    notRecommended.total -
+  const notRecommendedTodos = notRecommended.total -
     (notRecommended.isImplemented + notRecommended.isNotSupported);
 
   const countersList = [
@@ -38,7 +36,7 @@ const renderCounters = ({
     notRecommendedTodos === 0 && `  - All done! 🎉`,
   ]
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
 
   return `
 There are ${recommended.total + notRecommended.total}(+ ${deprecated.total} deprecated) rules.
@@ -68,19 +66,20 @@ Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_
 const renderRulesList = ({ title, counters, views, defaultOpen = true }) => `
 ## ${title}
 
-<details ${defaultOpen ? "open" : ""}>
+<details ${defaultOpen ? 'open' : ''}>
 <summary>
   ✨: ${counters.isImplemented}, 🚫: ${counters.isNotSupported} / total: ${counters.total}
 </summary>
 
 | Status | Name | Docs |
 | :----: | :--- | :--- |
-${views
-  .map(
-    (v) =>
-      `| ${v.isImplemented ? "✨" : ""}${v.isNotSupported ? "🚫" : ""} | ${v.name} | ${v.docsUrl} |`,
-  )
-  .join("\n")}
+${
+  views
+    .map(
+      (v) => `| ${v.isImplemented ? '✨' : ''}${v.isNotSupported ? '🚫' : ''} | ${v.name} | ${v.docsUrl} |`,
+    )
+    .join('\n')
+}
 
 ✨ = Implemented, 🚫 = Not supported
 
@@ -139,25 +138,25 @@ exports.renderMarkdown = (pluginName, pluginMeta, ruleEntries) => {
     renderCounters({ counters }),
     renderGettingStarted({ pluginName }),
     0 < views.recommended.length &&
-      renderRulesList({
-        title: "Recommended rules",
-        counters: counters.recommended,
-        views: views.recommended,
-      }),
+    renderRulesList({
+      title: 'Recommended rules',
+      counters: counters.recommended,
+      views: views.recommended,
+    }),
     0 < views.notRecommended.length &&
-      renderRulesList({
-        title: "Not recommended rules",
-        counters: counters.notRecommended,
-        views: views.notRecommended,
-      }),
+    renderRulesList({
+      title: 'Not recommended rules',
+      counters: counters.notRecommended,
+      views: views.notRecommended,
+    }),
     0 < views.deprecated.length &&
-      renderRulesList({
-        title: "Deprecated rules",
-        counters: counters.deprecated,
-        views: views.deprecated,
-        defaultOpen: false,
-      }),
+    renderRulesList({
+      title: 'Deprecated rules',
+      counters: counters.deprecated,
+      views: views.deprecated,
+      defaultOpen: false,
+    }),
   ]
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
 };

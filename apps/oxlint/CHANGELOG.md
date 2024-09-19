@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.9.6] - 2024-09-18
+
+### Refactor
+
+- 026ee6a linter: Decouple module resolution from import plugin (#5829) (dalaoshu)
+
+## [0.9.4] - 2024-09-12
+
+### Refactor
+
+- 9e9435f linter: Add `LintFilter` (#5685) (DonIsaac)
+- 5ae9b48 linter: Start internal/external split of `OxlintOptions` (#5659) (DonIsaac)
+- bac03e3 linter: Make fields of `LintServiceOptions` private (#5593) (DonIsaac)
+- 20d0068 oxlint: Move cli-related exports to `cli` module (#5139) (DonIsaac)
+
+## [0.9.3] - 2024-09-07
+
+### Features
+
+- 4473779 linter/node: Implement no-exports-assign (#5370) (dalaoshu)
+
+### Styling
+- d8b29e7 Add trailing line breaks to JSON files (#5544) (overlookmotel)
+
+## [0.9.0] - 2024-08-26
+
+- b894d3b linter: [**BREAKING**] Make `no-unused-vars` correctness (#5081) (DonIsaac)
+
+### Features
+
+
+## [0.7.2] - 2024-08-15
+
+### Documentation
+
+- 955a4b4 oxlint: Improve cli doc regarding fix and `-D all` (Boshen)
+
 ## [0.7.0] - 2024-08-05
 
 ### Features

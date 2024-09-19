@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_dom_node_text_content_diagnostic(span0: Span) -> OxcDiagnostic {
+fn prefer_dom_node_text_content_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `.textContent` over `.innerText`.")
         .with_help("Replace `.innerText` with `.textContent`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,11 +27,14 @@ declare_oxc_lint!(
     /// - `.innerText` is not standard, for example, it is not present in Firefox.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// const text = foo.innerText;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const text = foo.innerText;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const text = foo.textContent;
     /// ```
     PreferDomNodeTextContent,

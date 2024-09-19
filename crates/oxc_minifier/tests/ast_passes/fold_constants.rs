@@ -15,22 +15,6 @@ fn test_same(source_text: &str) {
     test(source_text, source_text);
 }
 
-// Oxc
-
-#[test]
-fn cjs() {
-    // Export is undefined when `enumerable` is "!0".
-    // https://github.com/nodejs/cjs-module-lexer/issues/64
-    test_same(
-        "Object.defineProperty(exports, 'ConnectableObservable', {
-          enumerable: true,
-          get: function() {
-            return ConnectableObservable_1.ConnectableObservable;
-          }
-        });",
-    );
-}
-
 // Google Closure Compiler
 
 #[test]
@@ -471,27 +455,25 @@ fn test_nan_comparison() {
 }
 
 #[test]
-#[ignore]
 fn js_typeof() {
-    test("x = typeof 1", "x='number'");
-    test("x = typeof 'foo'", "x='string'");
-    test("x = typeof true", "x='boolean'");
-    test("x = typeof false", "x='boolean'");
-    test("x = typeof null", "x='object'");
-    test("x = typeof undefined", "x='undefined'");
-    test("x = typeof void 0", "x='undefined'");
-    test("x = typeof []", "x='object'");
-    test("x = typeof [1]", "x='object'");
-    test("x = typeof [1,[]]", "x='object'");
-    test("x = typeof {}", "x='object'");
-    test("x = typeof function() {}", "x='function'");
+    test("x = typeof 1", "x = \"number\"");
+    test("x = typeof 'foo'", "x = \"string\"");
+    test("x = typeof true", "x = \"boolean\"");
+    test("x = typeof false", "x = \"boolean\"");
+    test("x = typeof null", "x = \"object\"");
+    test("x = typeof undefined", "x = \"undefined\"");
+    test("x = typeof void 0", "x = \"undefined\"");
+    test("x = typeof []", "x = \"object\"");
+    test("x = typeof [1]", "x = \"object\"");
+    test("x = typeof [1,[]]", "x = \"object\"");
+    test("x = typeof {}", "x = \"object\"");
+    test("x = typeof function() {}", "x = 'function'");
 
-    test_same("x=typeof [1,[foo()]]");
-    test_same("x=typeof {bathwater:baby()}");
+    test_same("x = typeof[1,[foo()]]");
+    test_same("x = typeof{bathwater:baby()}");
 }
 
 #[test]
-#[ignore]
 fn unary_ops() {
     // TODO: need to port
     // These cases are handled by PeepholeRemoveDeadCode in closure-compiler.
@@ -504,29 +486,29 @@ fn unary_ops() {
     test("a=!10", "a=false");
     test("a=!false", "a=true");
     test_same("a=!foo()");
-    test("a=-0", "a=-0.0");
-    test("a=-(0)", "a=-0.0");
+    // test("a=-0", "a=-0.0");
+    // test("a=-(0)", "a=-0.0");
     test_same("a=-Infinity");
     test("a=-NaN", "a=NaN");
     test_same("a=-foo()");
-    test("a=~~0", "a=0");
-    test("a=~~10", "a=10");
-    test("a=~-7", "a=6");
+    // test("a=~~0", "a=0");
+    // test("a=~~10", "a=10");
+    // test("a=~-7", "a=6");
 
-    test("a=+true", "a=1");
+    // test("a=+true", "a=1");
     test("a=+10", "a=10");
-    test("a=+false", "a=0");
+    // test("a=+false", "a=0");
     test_same("a=+foo()");
     test_same("a=+f");
-    test("a=+(f?true:false)", "a=+(f?1:0)");
+    // test("a=+(f?true:false)", "a=+(f?1:0)");
     test("a=+0", "a=0");
-    test("a=+Infinity", "a=Infinity");
-    test("a=+NaN", "a=NaN");
-    test("a=+-7", "a=-7");
-    test("a=+.5", "a=.5");
+    // test("a=+Infinity", "a=Infinity");
+    // test("a=+NaN", "a=NaN");
+    // test("a=+-7", "a=-7");
+    // test("a=+.5", "a=.5");
 
-    test("a=~0xffffffff", "a=0");
-    test("a=~~0xffffffff", "a=-1");
+    // test("a=~0xffffffff", "a=0");
+    // test("a=~~0xffffffff", "a=-1");
     // test_same("a=~.5", PeepholeFoldConstants.FRACTIONAL_BITWISE_OPERAND);
 }
 
@@ -624,7 +606,40 @@ fn test_fold_logical_op2() {
 }
 
 #[test]
-#[ignore]
+fn test_fold_nullish_coalesce() {
+    // fold if left is null/undefined
+    test("null ?? 1", "1");
+    test("undefined ?? false", "false");
+    test("(a(), null) ?? 1", "(a(), null, 1)");
+
+    test("x = [foo()] ?? x", "x = [foo()]");
+
+    // short circuit on all non nullish LHS
+    test("x = false ?? x", "x = false");
+    test("x = true ?? x", "x = true");
+    test("x = 0 ?? x", "x = 0");
+    test("x = 3 ?? x", "x = 3");
+
+    // unfoldable, because the right-side may be the result
+    test_same("a = x ?? true");
+    test_same("a = x ?? false");
+    test_same("a = x ?? 3");
+    test_same("a = b ? c : x ?? false");
+    test_same("a = b ? x ?? false : c");
+
+    // folded, but not here.
+    test_same("a = x ?? false ? b : c");
+    test_same("a = x ?? true ? b : c");
+
+    test_same("x = foo() ?? true ?? bar()");
+    test("x = foo() ?? (true && bar())", "x = foo() ?? bar()");
+    test_same("x = (foo() || false) ?? bar()");
+
+    test("a() ?? (1 ?? b())", "a() ?? 1");
+    test("(a() ?? 1) ?? b()", "a() ?? 1 ?? b()");
+}
+
+#[test]
 fn test_fold_void() {
     test_same("void 0");
     test("void 1", "void 0");

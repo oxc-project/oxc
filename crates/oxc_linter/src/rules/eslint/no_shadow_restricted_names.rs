@@ -2,13 +2,14 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::symbol::SymbolId;
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
-fn no_shadow_restricted_names_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+fn no_shadow_restricted_names_diagnostic(shadowed_name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Shadowing of global properties such as 'undefined' is not allowed.")
-        .with_help(format!("Shadowing of global properties '{x0}'."))
-        .with_label(span1)
+        .with_help(format!("Shadowing of global properties '{shadowed_name}'."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -37,36 +38,34 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoShadowRestrictedNames {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        ctx.symbols().iter().for_each(|symbol_id| {
-            let name = ctx.symbols().get_name(symbol_id);
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+        let name = ctx.symbols().get_name(symbol_id);
 
-            if !PRE_DEFINE_VAR.contains_key(name) {
-                return;
-            }
+        if !PRE_DEFINE_VAR.contains_key(name) {
+            return;
+        }
 
-            if name == "undefined" {
-                // Allow to declare `undefined` variable but not allow to assign value to it.
-                let node_id = ctx.semantic().symbols().get_declaration(symbol_id);
-                if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
-                    if declarator.init.is_none()
-                        && ctx
-                            .symbols()
-                            .get_resolved_references(symbol_id)
-                            .all(|reference| !reference.is_write())
-                    {
-                        return;
-                    }
+        if name == "undefined" {
+            // Allow to declare `undefined` variable but not allow to assign value to it.
+            let node_id = ctx.semantic().symbols().get_declaration(symbol_id);
+            if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
+                if declarator.init.is_none()
+                    && ctx
+                        .symbols()
+                        .get_resolved_references(symbol_id)
+                        .all(|reference| !reference.is_write())
+                {
+                    return;
                 }
             }
+        }
 
-            let span = ctx.symbols().get_span(symbol_id);
+        let span = ctx.symbols().get_span(symbol_id);
+        ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
+
+        for &span in ctx.symbols().get_redeclarations(symbol_id) {
             ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
-
-            for &span in ctx.symbols().get_redeclarations(symbol_id) {
-                ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
-            }
-        });
+        }
     }
 }
 

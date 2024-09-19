@@ -6,20 +6,9 @@ use oxc_span::CompactStr;
 
 type Slot = usize;
 
-#[derive(Debug)]
-pub struct Mangler {
-    symbol_table: SymbolTable,
-}
-
-impl Mangler {
-    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
-        self.symbol_table.get_name(symbol_id)
-    }
-
-    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
-        let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id()?;
-        Some(self.symbol_table.get_name(symbol_id))
-    }
+#[derive(Default)]
+pub struct MangleOptions {
+    pub debug: bool,
 }
 
 /// # Name Mangler / Symbol Minification
@@ -63,21 +52,37 @@ impl Mangler {
 ///     }
 /// }
 /// ```
-#[derive(Debug, Default)]
-pub struct ManglerBuilder {
-    debug: bool,
+#[derive(Default)]
+pub struct Mangler {
+    symbol_table: SymbolTable,
+
+    options: MangleOptions,
 }
 
-impl ManglerBuilder {
+impl Mangler {
     #[must_use]
-    pub fn debug(mut self, yes: bool) -> Self {
-        self.debug = yes;
-        self
+    pub fn new() -> Self {
+        Self::default()
     }
 
     #[must_use]
-    pub fn build<'a>(self, program: &'a Program<'a>) -> Mangler {
-        let semantic = SemanticBuilder::new("", program.source_type).build(program).semantic;
+    pub fn with_options(mut self, options: MangleOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
+        self.symbol_table.get_name(symbol_id)
+    }
+
+    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&str> {
+        let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id()?;
+        Some(self.symbol_table.get_name(symbol_id))
+    }
+
+    #[must_use]
+    pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
+        let semantic = SemanticBuilder::new("").build(program).semantic;
 
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
@@ -123,7 +128,7 @@ impl ManglerBuilder {
 
         let mut names = Vec::with_capacity(total_number_of_slots);
 
-        let generate_name = if self.debug { debug_name } else { base54 };
+        let generate_name = if self.options.debug { debug_name } else { base54 };
         let mut count = 0;
         for _ in 0..total_number_of_slots {
             names.push(loop {
@@ -182,7 +187,8 @@ impl ManglerBuilder {
             }
         }
 
-        Mangler { symbol_table }
+        self.symbol_table = symbol_table;
+        self
     }
 
     fn tally_slot_frequencies(
@@ -192,9 +198,9 @@ impl ManglerBuilder {
     ) -> Vec<SlotFrequency> {
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            let symbol_flag = symbol_table.get_flag(symbol_id);
+            let symbol_flags = symbol_table.get_flags(symbol_id);
             // omit renaming `export { x }`
-            if !symbol_flag.is_variable() || symbol_flag.is_export() {
+            if !symbol_flags.is_variable() || symbol_flags.is_export() {
                 continue;
             }
             let index = *slot;

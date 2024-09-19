@@ -10,12 +10,12 @@ use crate::{
     AstNode,
 };
 
-fn heading_has_content_diagnostic(span0: Span) -> OxcDiagnostic {
+fn heading_has_content_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "Headings must have content and the content must be accessible by a screen reader.",
     )
     .with_help("Provide screen reader accessible content when using heading elements.")
-    .with_label(span0)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,11 +49,14 @@ declare_oxc_lint!(
     /// from accessing information on the page's structure.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <h1 />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <h1 />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <h1>Foo</h1>
     /// ```
     HeadingHasContent,

@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.27.0] - 2024-09-06
+
+### Features
+
+- 90facd3 ast: Add `ContentHash` trait; remove noop `Hash` implementation from `Span` (#5451) (rzvxa)
+- 23285f4 ast: Add `ContentEq` trait. (#5427) (rzvxa)
+
+### Refactor
+
+- 9f6e0ed ast: Simplify `ContentEq` trait definition. (#5468) (rzvxa)
+- b47aca0 syntax: Use `generate_derive` for `CloneIn` in types outside of `oxc_ast` crate. (#5280) (rzvxa)
+
+## [0.24.3] - 2024-08-18
+
+### Documentation
+
+- 47c9552 ast, ast_macros, ast_tools: Better documentation for `Ast` helper attributes. (#4856) (rzvxa)
+
+## [0.24.2] - 2024-08-12
+
+### Refactor
+
+- 0ea697b ast, ast_codegen: `CloneIn` implementations now initialize semantic related cells with `Default` value. (#4819) (rzvxa)
+
+## [0.24.1] - 2024-08-10
+
+### Bug Fixes
+
+- f5eeebd ast_macros: Raise compile error on invalid `generate_derive` input. (#4766) (rzvxa)
+
+### Refactor
+
+- 7ea058d ast_codegen: Replace Windows-style line breaks with Unix-style (#4769) (overlookmotel)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Performance
+
+- d18c896 rust: Use `cow_utils` instead (#5664) (dalaoshu)
+
+## [0.28.0] - 2024-09-11
+
+### Documentation
+
+- fefbbc1 sourcemap: Add trailing newline to README (#5539) (overlookmotel)
+
+## [0.24.3] - 2024-08-18
+
+### Refactor
+
+- 5fd1701 sourcemap: Lower the `msrv`. (#4873) (rzvxa)
+
 ## [0.24.0] - 2024-08-08
 
 ### Features

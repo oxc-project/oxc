@@ -1,6 +1,7 @@
+use std::{hash, path::Path};
+
 use bitflags::bitflags;
 use oxc_semantic::ModuleRecord;
-use std::{hash, path::Path};
 
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,6 +62,11 @@ impl FrameworkFlags {
     pub const fn is_vitest(self) -> bool {
         self.contains(Self::Vitest)
     }
+
+    #[inline]
+    pub const fn is_jest(self) -> bool {
+        self.contains(Self::Jest)
+    }
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
@@ -82,4 +88,8 @@ pub(crate) fn is_jestlike_file(path: &Path) -> bool {
 
 pub(crate) fn has_vitest_imports(module_record: &ModuleRecord) -> bool {
     module_record.import_entries.iter().any(|entry| entry.module_request.name() == "vitest")
+}
+
+pub(crate) fn has_jest_imports(module_record: &ModuleRecord) -> bool {
+    module_record.import_entries.iter().any(|entry| entry.module_request.name() == "@jest/globals")
 }

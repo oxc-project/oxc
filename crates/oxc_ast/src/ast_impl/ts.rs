@@ -3,7 +3,7 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-use std::{cell::Cell, fmt, hash::Hash};
+use std::{cell::Cell, fmt};
 
 use oxc_allocator::Vec;
 use oxc_span::{Atom, Span};
@@ -21,13 +21,15 @@ impl<'a> TSEnumDeclaration<'a> {
         Self { span, id, members, r#const, declare, scope_id: Cell::default() }
     }
 }
-
-impl<'a> Hash for TSEnumDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-        self.members.hash(state);
-        self.r#const.hash(state);
-        self.declare.hash(state);
+impl<'a> TSEnumMemberName<'a> {
+    pub fn static_name(&self) -> Option<&'a str> {
+        match self {
+            Self::StaticIdentifier(ident) => Some(ident.name.as_str()),
+            Self::StaticStringLiteral(lit) => Some(lit.value.as_str()),
+            Self::NumericLiteral(lit) => Some(lit.raw),
+            Self::StaticTemplateLiteral(lit) => lit.quasi().map(Into::into),
+            _ => None,
+        }
     }
 }
 
@@ -168,12 +170,13 @@ impl<'a> TSModuleDeclaration<'a> {
     }
 }
 
-impl<'a> Hash for TSModuleDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-        self.body.hash(state);
-        self.kind.hash(state);
-        self.declare.hash(state);
+impl TSModuleDeclarationKind {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Self::Global => "global",
+            Self::Module => "module",
+            Self::Namespace => "namespace",
+        }
     }
 }
 
@@ -248,70 +251,5 @@ impl ImportOrExportKind {
 
     pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
-    }
-}
-
-impl<'a> Hash for TSMappedType<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.type_parameter.hash(state);
-        self.name_type.hash(state);
-        self.type_annotation.hash(state);
-        self.optional.hash(state);
-        self.readonly.hash(state);
-    }
-}
-
-impl<'a> Hash for TSConditionalType<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.check_type.hash(state);
-        self.extends_type.hash(state);
-        self.true_type.hash(state);
-        self.false_type.hash(state);
-    }
-}
-
-impl<'a> Hash for TSInterfaceDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.id.hash(state);
-        self.type_parameters.hash(state);
-        self.extends.hash(state);
-        self.body.hash(state);
-        self.declare.hash(state);
-    }
-}
-
-impl<'a> Hash for TSTypeAliasDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.id.hash(state);
-        self.type_parameters.hash(state);
-        self.type_annotation.hash(state);
-        self.declare.hash(state);
-    }
-}
-
-impl<'a> Hash for TSMethodSignature<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.key.hash(state);
-        self.computed.hash(state);
-        self.optional.hash(state);
-        self.kind.hash(state);
-        self.this_param.hash(state);
-        self.params.hash(state);
-        self.return_type.hash(state);
-        self.type_parameters.hash(state);
-    }
-}
-
-impl<'a> Hash for TSConstructSignatureDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.span.hash(state);
-        self.params.hash(state);
-        self.return_type.hash(state);
-        self.type_parameters.hash(state);
     }
 }

@@ -1,0 +1,91 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:1:49]
+ 1 │ var contentContainer = <div className="content"></div>;
+   ·                                                 ──────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:1:49]
+ 1 │ var contentContainer = <div className="content"></div>;
+   ·                                                 ──────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:1:36]
+ 1 │ var HelloJohn = <Hello name="John"></Hello>;
+   ·                                    ────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:1:53]
+ 1 │ var CompoundHelloJohn = <Hello.Compound name="John"></Hello.Compound>;
+   ·                                                     ─────────────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:2:4]
+ 1 │ const HelloJohn = <Hello name="John">
+ 2 │             </Hello>;
+   ·             ────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:2:4]
+ 1 │ var HelloJohn = <Hello.Compound name="John">
+ 2 │             </Hello.Compound>;
+   ·             ─────────────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:1:36]
+ 1 │ var HelloJohn = <Hello name="John"></Hello>;
+   ·                                    ────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:1:45]
+ 1 │ var HelloJohn = <Hello.Compound name="John"></Hello.Compound>;
+   ·                                             ─────────────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:2:4]
+ 1 │ var HelloJohn = <Hello name="John">
+ 2 │             </Hello>;
+   ·             ────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:2:4]
+ 1 │ var HelloJohn = <Hello.Compound name="John">
+ 2 │             </Hello.Compound>;
+   ·             ─────────────────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:1:49]
+ 1 │ var contentContainer = <div className="content"></div>;
+   ·                                                 ──────
+   ╰────
+  help: Make the component self closing
+
+  ⚠ eslint-plugin-react(self-closing-comp): Unnecessary closing tag
+   ╭─[self_closing_comp.tsx:2:4]
+ 1 │ var contentContainer = <div className="content">
+ 2 │             </div>;
+   ·             ──────
+   ╰────
+  help: Make the component self closing

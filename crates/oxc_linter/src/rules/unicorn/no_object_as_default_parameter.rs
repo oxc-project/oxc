@@ -8,13 +8,13 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn identifier(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not use an object literal as default for parameter `{x1}`."))
-        .with_label(span0)
+fn identifier(span: Span, param: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use an object literal as default for parameter `{param}`."))
+        .with_label(span)
 }
 
-fn non_identifier(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use an object literal as default").with_label(span0)
+fn non_identifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use an object literal as default").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,11 +30,14 @@ declare_oxc_lint!(
     /// Default parameters should not be passed to a function through an object literal. The `foo = {a: false}` parameter works fine if only used with one option. As soon as additional options are added, you risk replacing the whole `foo = {a: false, b: true}` object when passing only one option: `{a: true}`. For this reason, object destructuring should be used instead.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// function foo(foo = {a: false}) {}
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// function foo(foo = {a: false}) {}
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// function foo({a = false} = {}) {}
     /// ```
     NoObjectAsDefaultParameter,
@@ -47,8 +50,7 @@ impl Rule for NoObjectAsDefaultParameter {
             return;
         };
 
-        let Expression::ObjectExpression(object_expr) =
-            &assignment_pat.right.without_parenthesized()
+        let Expression::ObjectExpression(object_expr) = &assignment_pat.right.without_parentheses()
         else {
             return;
         };

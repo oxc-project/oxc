@@ -2,10 +2,12 @@ use std::borrow::Cow;
 
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+use crate::utils::default_true;
 
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
-#[derive(Debug, Deserialize, JsonSchema)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
     #[serde(default, rename = "ignorePrivate")]
@@ -178,13 +180,7 @@ impl JSDocPluginSettings {
     }
 }
 
-// Deserialize helper types
-
-fn default_true() -> bool {
-    true
-}
-
-#[derive(Clone, Debug, Deserialize, JsonSchema)]
+#[derive(Clone, Debug, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),
@@ -201,8 +197,9 @@ enum TagNamePreference {
 
 #[cfg(test)]
 mod test {
-    use serde::Deserialize;
     use std::borrow::Cow;
+
+    use serde::Deserialize;
 
     use super::JSDocPluginSettings;
 

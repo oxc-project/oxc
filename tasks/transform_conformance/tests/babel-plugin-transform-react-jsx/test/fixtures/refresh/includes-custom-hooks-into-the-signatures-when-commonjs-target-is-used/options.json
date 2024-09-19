@@ -1,0 +1,14 @@
+{
+  "plugins": [
+    [
+      "transform-react-jsx",
+      {
+        "refresh": {}
+      }
+    ],
+    [
+      "transform-modules-commonjs"
+    ]
+  ],
+  "sourceType": "module"
+}

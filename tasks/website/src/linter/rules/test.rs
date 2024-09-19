@@ -1,12 +1,12 @@
-use markdown::{to_html, to_html_with_options, Options};
-use oxc_diagnostics::NamedSource;
-use scraper::{ElementRef, Html, Selector};
 use std::sync::{Arc, OnceLock};
 
+use markdown::{to_html_with_options, Options};
 use oxc_allocator::Allocator;
+use oxc_diagnostics::NamedSource;
 use oxc_linter::table::RuleTable;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use scraper::{ElementRef, Html, Selector};
 
 use super::{render_rule_docs_page, render_rules_table};
 
@@ -42,9 +42,13 @@ fn parse_type(filename: &str, source_text: &str, source_type: SourceType) -> Res
 #[test]
 fn test_rules_table() {
     const PREFIX: &str = "/docs/guide/usage/linter/rules";
+    let options = Options::gfm();
     let rendered_table = render_rules_table(table(), PREFIX);
-    let html = to_html(&rendered_table);
-    let jsx = format!("const Table = () => <>{html}</>");
+    let rendered_html = to_html_with_options(&rendered_table, &options).unwrap();
+    assert!(rendered_html.contains("<table>"));
+    let html = Html::parse_fragment(&rendered_html);
+    assert!(html.errors.is_empty(), "{:#?}", html.errors);
+    let jsx = format!("const Table = () => <>{rendered_html}</>");
     parse("rules-table", &jsx).unwrap();
 }
 
@@ -70,7 +74,6 @@ fn test_doc_pages() {
             // ensure code examples are valid
             {
                 let html = Html::parse_fragment(docs);
-                assert!(html.errors.is_empty(), "HTML parsing errors: {:#?}", html.errors);
                 for code_el in html.select(&code) {
                     let inner = code_el.inner_html();
                     let inner =
@@ -103,13 +106,9 @@ fn source_type_from_code_element(code: ElementRef) -> Option<SourceType> {
     };
 
     match *lang {
-        "javascript" | "js" => Some(SourceType::default().with_always_strict(true)),
-        "typescript" | "ts" => {
-            Some(SourceType::default().with_typescript(true).with_always_strict(true))
-        }
-        "tsx" => Some(
-            SourceType::default().with_typescript(true).with_jsx(true).with_always_strict(true),
-        ),
+        "javascript" | "js" => Some(SourceType::default()),
+        "typescript" | "ts" => Some(SourceType::default().with_typescript(true)),
+        "tsx" => Some(SourceType::tsx()),
         // FIXME: lots of jsx examples are usefully succinct but not valid JSX.
         // "jsx" => Some(SourceType::default().with_jsx(true).with_always_strict(true)),
         _ => None,

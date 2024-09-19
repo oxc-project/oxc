@@ -2,13 +2,13 @@ use memchr::memmem;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unnecessary escape character {x0:?}")).with_label(span1)
+fn no_useless_escape_diagnostic(escape_char: char, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unnecessary escape character {escape_char:?}")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -103,7 +103,7 @@ impl Rule for NoUselessEscape {
     }
 }
 
-fn is_within_jsx_attribute_item(id: AstNodeId, ctx: &LintContext) -> bool {
+fn is_within_jsx_attribute_item(id: NodeId, ctx: &LintContext) -> bool {
     if matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttributeItem(_))) {
         return true;
     }
@@ -111,7 +111,7 @@ fn is_within_jsx_attribute_item(id: AstNodeId, ctx: &LintContext) -> bool {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize]) {
+fn check(ctx: &LintContext<'_>, node_id: NodeId, start: u32, offsets: &[usize]) {
     let source_text = ctx.source_text();
     for offset in offsets {
         let offset = start as usize + offset;

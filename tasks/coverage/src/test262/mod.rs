@@ -2,15 +2,12 @@ mod meta;
 
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
+use oxc::span::SourceType;
 
 pub use self::meta::{MetaData, Phase, TestFlag};
-use crate::{
-    project_root,
-    suite::{Case, Suite, TestResult},
-};
+use crate::suite::{Case, Suite, TestResult};
 
-const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
+const FIXTURES_PATH: &str = "test262/test";
 
 pub struct Test262Suite<T: Case> {
     test_root: PathBuf,
@@ -19,7 +16,7 @@ pub struct Test262Suite<T: Case> {
 
 impl<T: Case> Test262Suite<T> {
     pub fn new() -> Self {
-        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
+        Self { test_root: PathBuf::from(FIXTURES_PATH), test_cases: vec![] }
     }
 }
 
@@ -33,9 +30,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
         // ignore markdown files
         path.ends_with(".md") ||
         // ignore fixtures
-        path.contains("_FIXTURE") ||
-        // ignore regexp as we don't have a regexp parser for now
-        (path.contains("literals") && path.contains("regexp"))
+        path.contains("_FIXTURE")
     }
 
     fn save_test_cases(&mut self, cases: Vec<T>) {
@@ -56,6 +51,7 @@ pub struct Test262Case {
     code: String,
     meta: MetaData,
     should_fail: bool,
+    always_strict: bool,
     result: TestResult,
 }
 
@@ -84,7 +80,7 @@ impl Case for Test262Case {
     fn new(path: PathBuf, code: String) -> Self {
         let meta = Self::read_metadata(&code);
         let should_fail = Self::compute_should_fail(&meta);
-        Self { path, code, meta, should_fail, result: TestResult::ToBeRun }
+        Self { path, code, meta, should_fail, always_strict: false, result: TestResult::ToBeRun }
     }
 
     fn code(&self) -> &str {
@@ -103,11 +99,21 @@ impl Case for Test262Case {
         self.should_fail
     }
 
+    fn always_strict(&self) -> bool {
+        self.always_strict
+    }
+
     fn skip_test_case(&self) -> bool {
         [
-            // Regex parser is required. See https://github.com/oxc-project/oxc/issues/385#issuecomment-1755566240
-            "regexp-v-flag",
-            "regexp-unicode-property-escapes",
+            // ES2025 https://github.com/tc39/proposal-duplicate-named-capturing-groups
+            "regexp-duplicate-named-groups",
+            // stage 3 https://github.com/tc39/proposal-regexp-modifiers
+            "regexp-modifiers",
+            // stage 3 https://github.com/tc39/proposal-json-modules
+            // ignored due to https://github.com/tc39/proposal-json-modules/issues/27
+            "json-modules",
+            // stage 3 https://github.com/tc39/proposal-source-phase-imports
+            "source-phase-imports",
         ]
         .iter()
         .any(|feature| self.meta.features.iter().any(|f| **f == **feature))
@@ -123,51 +129,21 @@ impl Case for Test262Case {
         let source_type = SourceType::default().with_script(true);
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
-            self.execute(source_type.with_always_strict(true))
+            self.always_strict = true;
+            self.execute(source_type)
         } else if flags.contains(&TestFlag::Module) {
             self.execute(source_type.with_module(true))
         } else if flags.contains(&TestFlag::NoStrict) || flags.contains(&TestFlag::Raw) {
             self.execute(source_type)
         } else {
-            let res = self.execute(source_type.with_always_strict(true));
+            self.always_strict = true;
+            let res = self.execute(source_type);
             if matches!(res, TestResult::Passed) {
-                self.execute(source_type.with_always_strict(false))
+                self.always_strict = false;
+                self.execute(source_type)
             } else {
                 res
             }
         };
     }
-
-    fn check_semantic(&self, semantic: &oxc_semantic::Semantic<'_>) -> Option<TestResult> {
-        if are_all_identifiers_resolved(semantic) {
-            None
-        } else {
-            Some(TestResult::ParseError("Unset symbol / reference".to_string(), true))
-        }
-    }
-}
-
-fn are_all_identifiers_resolved(semantic: &oxc_semantic::Semantic<'_>) -> bool {
-    use oxc_ast::AstKind;
-    use oxc_semantic::AstNode;
-
-    let ast_nodes = semantic.nodes();
-    let has_non_resolved = ast_nodes.iter().any(|node| {
-        match node.kind() {
-            AstKind::BindingIdentifier(id) => {
-                let mut parents = ast_nodes.iter_parents(node.id()).map(AstNode::kind);
-                parents.next(); // Exclude BindingIdentifier itself
-                if let (Some(AstKind::Function(_)), Some(AstKind::IfStatement(_))) =
-                    (parents.next(), parents.next())
-                {
-                    return false;
-                }
-                id.symbol_id.get().is_none()
-            }
-            AstKind::IdentifierReference(ref_id) => ref_id.reference_id.get().is_none(),
-            _ => false,
-        }
-    });
-
-    !has_non_resolved
 }

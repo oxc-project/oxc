@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::is_empty_stmt, AstNode};
 
-fn no_useless_switch_case_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_useless_switch_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Useless case in switch statement.")
         .with_help("Consider removing this case or removing the `default` case.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -23,16 +23,20 @@ declare_oxc_lint!(
     ///
     /// An empty case before the last default case is useless.
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// switch (foo) {
     /// 	case 1:
     /// 	default:
     /// 		handleDefaultCase();
     /// 		break;
     /// }
-    /// // good:
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// switch (foo) {
     ///	case 1:
     ///	case 2:
@@ -41,7 +45,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUselessSwitchCase,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for NoUselessSwitchCase {
@@ -61,7 +66,7 @@ impl Rule for NoUselessSwitchCase {
         let default_case = default_cases[0];
 
         // Check if the `default` case is the last case
-        if default_case as *const _ != cases.last().unwrap() as *const _ {
+        if !std::ptr::eq(default_case, cases.last().unwrap()) {
             return;
         }
 

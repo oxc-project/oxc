@@ -9,22 +9,22 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn prefer_date_now(span0: Span) -> OxcDiagnostic {
+fn prefer_date_now(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Date.now()` over `new Date()`")
         .with_help("Change to `Date.now()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `Date.now()` over `new Date().{x1}()`"))
+fn prefer_date_now_over_methods(span: Span, bad_method: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Date.now()` over `new Date().{bad_method}()`"))
         .with_help("Change to `Date.now()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn prefer_date_now_over_number_date_object(span0: Span) -> OxcDiagnostic {
+fn prefer_date_now_over_number_date_object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `Date.now()` over `Number(new Date())`")
         .with_help("Change to `Date.now()`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -39,19 +39,20 @@ declare_oxc_lint!(
     ///
     /// Using `Date.now()` is shorter and nicer than `new Date().getTime()`, and avoids unnecessary instantiation of `Date` objects.
     ///
-    ///
-    /// ### Example
+    /// ### Examples
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// const ts = new Date().getTime();
     /// const ts = new Date().valueOf();
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const ts = Date.now();
     /// ```
     PreferDateNow,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for PreferDateNow {
@@ -60,17 +61,20 @@ impl Rule for PreferDateNow {
             AstKind::CallExpression(call_expr) => {
                 // `new Date().{getTime,valueOf}()`
                 if let Some(member_expr) =
-                    call_expr.callee.without_parenthesized().as_member_expression()
+                    call_expr.callee.get_inner_expression().as_member_expression()
                 {
                     if call_expr.arguments.is_empty()
                         && !member_expr.is_computed()
                         && matches!(member_expr.static_property_name(), Some("getTime" | "valueOf"))
-                        && is_new_date(member_expr.object().without_parenthesized())
+                        && is_new_date(member_expr.object().get_inner_expression())
                     {
-                        ctx.diagnostic(prefer_date_now_over_methods(
-                            call_expr.span,
-                            member_expr.static_property_name().unwrap(),
-                        ));
+                        ctx.diagnostic_with_fix(
+                            prefer_date_now_over_methods(
+                                call_expr.span,
+                                member_expr.static_property_name().unwrap(),
+                            ),
+                            |fixer| fixer.replace(call_expr.span, "Date.now()"),
+                        );
                     }
                 }
 
@@ -82,10 +86,11 @@ impl Rule for PreferDateNow {
                         if let Some(expr) =
                             call_expr.arguments.first().and_then(Argument::as_expression)
                         {
-                            if is_new_date(expr.without_parenthesized()) {
-                                ctx.diagnostic(prefer_date_now_over_number_date_object(
-                                    call_expr.span,
-                                ));
+                            if is_new_date(expr.get_inner_expression()) {
+                                ctx.diagnostic_with_fix(
+                                    prefer_date_now_over_number_date_object(call_expr.span),
+                                    |fixer| fixer.replace(call_expr.span, "Date.now()"),
+                                );
                             }
                         }
                     }
@@ -99,7 +104,9 @@ impl Rule for PreferDateNow {
                     return;
                 }
                 if is_new_date(&unary_expr.argument) {
-                    ctx.diagnostic(prefer_date_now(unary_expr.argument.span()));
+                    ctx.diagnostic_with_fix(prefer_date_now(unary_expr.argument.span()), |fixer| {
+                        fixer.replace(unary_expr.span, "Date.now()")
+                    });
                 }
             }
             AstKind::AssignmentExpression(assignment_expr) => {
@@ -143,7 +150,7 @@ impl Rule for PreferDateNow {
 }
 
 fn is_new_date(expr: &Expression) -> bool {
-    let Expression::NewExpression(new_expr) = expr.without_parenthesized() else {
+    let Expression::NewExpression(new_expr) = expr.get_inner_expression() else {
         return false;
     };
 
@@ -217,5 +224,19 @@ fn test() {
         r"function foo(){return-new Date}",
     ];
 
-    Tester::new(PreferDateNow::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("new Date().getTime()", "Date.now()"),
+        ("new Date().valueOf()", "Date.now()"),
+        ("Number(new Date())", "Date.now()"),
+        ("BigInt(new Date())", "Date.now()"),
+        ("(new Date() as number).getTime()", "Date.now()"),
+        ("(new Date().valueOf() as string)", "(Date.now() as string)"),
+        ("(new Date()     ).     getTime()", "Date.now()"),
+        ("(new Date().valueOf()       )", "(Date.now()       )"),
+        ("Number(new Date()        )", "Date.now()"),
+        ("BigInt(new             Date());", "Date.now();"),
+        ("BigInt(new Date());", "Date.now();"),
+    ];
+
+    Tester::new(PreferDateNow::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

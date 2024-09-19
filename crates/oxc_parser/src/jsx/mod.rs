@@ -154,7 +154,31 @@ impl<'a> ParserImpl<'a> {
                 .map(JSXElementName::MemberExpression);
         }
 
-        Ok(JSXElementName::Identifier(self.ast.alloc(identifier)))
+        // References begin with a capital letter, `_` or `$` e.g. `<Foo>`, `<_foo>`, `<$foo>`.
+        // https://babeljs.io/repl#?code_lz=DwMQ9mAED0B8DcAoYAzCMHIPpqnJwAJLhkkA&presets=react
+        // The identifier has already been checked to be valid, so when first char is ASCII, it can only
+        // be `a-z`, `A-Z`, `_` or `$`. But compiler doesn't know that, so we can help it create faster
+        // code by taking that invariant into account.
+        // `b < b'a'` matches `A-Z`, `_` and `$`.
+        // Use a fast path for common case of ASCII characters, to avoid the more expensive
+        // `char::is_uppercase` in most cases.
+        let name = identifier.name.as_str();
+        let is_reference = match name.as_bytes()[0] {
+            b if b.is_ascii() => b < b'a',
+            _ => name.chars().next().unwrap().is_uppercase(),
+        };
+
+        let element_name = if is_reference {
+            let identifier = self.ast.identifier_reference(identifier.span, identifier.name);
+            JSXElementName::IdentifierReference(self.ast.alloc(identifier))
+        } else if name == "this" {
+            JSXElementName::ThisExpression(
+                self.ast.alloc(self.ast.this_expression(identifier.span)),
+            )
+        } else {
+            JSXElementName::Identifier(self.ast.alloc(identifier))
+        };
+        Ok(element_name)
     }
 
     /// `JSXMemberExpression` :
@@ -165,8 +189,15 @@ impl<'a> ParserImpl<'a> {
         span: Span,
         object: JSXIdentifier<'a>,
     ) -> Result<Box<'a, JSXMemberExpression<'a>>> {
+        let mut object = if object.name == "this" {
+            let object = self.ast.this_expression(object.span);
+            JSXMemberExpressionObject::ThisExpression(self.ast.alloc(object))
+        } else {
+            let object = self.ast.identifier_reference(object.span, object.name);
+            JSXMemberExpressionObject::IdentifierReference(self.ast.alloc(object))
+        };
+
         let mut span = span;
-        let mut object = JSXMemberExpressionObject::Identifier(self.ast.alloc(object));
         let mut property = None;
 
         while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
@@ -177,7 +208,12 @@ impl<'a> ParserImpl<'a> {
             }
 
             // <foo.bar>
-            property = Some(self.parse_jsx_identifier()?);
+            let ident = self.parse_jsx_identifier()?;
+            // `<foo.bar- />` is a syntax error.
+            if ident.name.contains('-') {
+                return Err(diagnostics::unexpected_token(ident.span));
+            }
+            property = Some(ident);
             span = self.end_span(span);
         }
 
@@ -398,12 +434,17 @@ impl<'a> ParserImpl<'a> {
             (JSXElementName::Identifier(lhs), JSXElementName::Identifier(rhs)) => {
                 lhs.name == rhs.name
             }
+            (
+                JSXElementName::IdentifierReference(lhs),
+                JSXElementName::IdentifierReference(rhs),
+            ) => lhs.name == rhs.name,
             (JSXElementName::NamespacedName(lhs), JSXElementName::NamespacedName(rhs)) => {
                 lhs.namespace.name == rhs.namespace.name && lhs.property.name == rhs.property.name
             }
             (JSXElementName::MemberExpression(lhs), JSXElementName::MemberExpression(rhs)) => {
                 Self::jsx_member_expression_eq(lhs, rhs)
             }
+            (JSXElementName::ThisExpression(_), JSXElementName::ThisExpression(_)) => true,
             _ => false,
         }
     }
@@ -417,13 +458,17 @@ impl<'a> ParserImpl<'a> {
         }
         match (&lhs.object, &rhs.object) {
             (
-                JSXMemberExpressionObject::Identifier(lhs),
-                JSXMemberExpressionObject::Identifier(rhs),
+                JSXMemberExpressionObject::IdentifierReference(lhs),
+                JSXMemberExpressionObject::IdentifierReference(rhs),
             ) => lhs.name == rhs.name,
             (
                 JSXMemberExpressionObject::MemberExpression(lhs),
                 JSXMemberExpressionObject::MemberExpression(rhs),
             ) => Self::jsx_member_expression_eq(lhs, rhs),
+            (
+                JSXMemberExpressionObject::ThisExpression(_),
+                JSXMemberExpressionObject::ThisExpression(_),
+            ) => true,
             _ => false,
         }
     }

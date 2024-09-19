@@ -181,7 +181,8 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
             return left_num.raw == right_num.raw;
         }
         (Expression::RegExpLiteral(left_regexp), Expression::RegExpLiteral(right_regexp)) => {
-            return left_regexp.regex.pattern == right_regexp.regex.pattern
+            return left_regexp.regex.pattern.source_text(ctx.source_text())
+                == right_regexp.regex.pattern.source_text(ctx.source_text())
                 && left_regexp.regex.flags == right_regexp.regex.flags;
         }
         (Expression::BooleanLiteral(left_bool), Expression::BooleanLiteral(right_bool)) => {
@@ -236,10 +237,18 @@ pub fn is_same_member_expression(
         MemberExpression::ComputedMemberExpression(right),
     ) = (left, right)
     {
-        if !is_same_reference(&left.expression, &right.expression, ctx) {
+        if !is_same_reference(
+            left.expression.get_inner_expression(),
+            right.expression.get_inner_expression(),
+            ctx,
+        ) {
             return false;
         }
     }
 
-    return is_same_reference(left.object(), right.object(), ctx);
+    return is_same_reference(
+        left.object().get_inner_expression(),
+        right.object().get_inner_expression(),
+        ctx,
+    );
 }

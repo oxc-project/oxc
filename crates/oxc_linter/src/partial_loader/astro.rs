@@ -43,11 +43,7 @@ impl<'a> AstroPartialLoader<'a> {
 
         let js_code =
             Span::new(start + ASTRO_SPLIT.len() as u32, end).source_text(self.source_text);
-        Some(JavaScriptSource::new(
-            js_code,
-            SourceType::default().with_typescript(true).with_module(true),
-            start as usize,
-        ))
+        Some(JavaScriptSource::new(js_code, SourceType::ts(), start as usize))
     }
 
     /// In .astro files, you can add client-side JavaScript by adding one (or more) `<script>` tags.
@@ -89,7 +85,7 @@ impl<'a> AstroPartialLoader<'a> {
             };
             results.push(JavaScriptSource::new(
                 &self.source_text[js_start..js_end],
-                SourceType::default().with_typescript(true).with_module(true),
+                SourceType::ts(),
                 js_start,
             ));
         }

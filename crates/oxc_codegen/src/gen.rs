@@ -1,72 +1,63 @@
-use std::ops::Not;
+use std::{borrow::Cow, ops::Not};
 
-use oxc_allocator::{Box, Vec};
+use cow_utils::CowUtils;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
-    number::NumberBase,
-    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
+    operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
 
 use crate::{
+    annotation_comment::AnnotationKind,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
     Codegen, Context, Operator,
 };
 
-pub trait Gen<const MINIFY: bool> {
-    fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
-}
+pub trait Gen: GetSpan {
+    fn gen(&self, p: &mut Codegen, ctx: Context);
 
-pub trait GenExpr<const MINIFY: bool> {
-    fn gen_expr(&self, _p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, _ctx: Context) {}
-}
-
-impl<'a, const MINIFY: bool, T> Gen<MINIFY> for Box<'a, T>
-where
-    T: Gen<MINIFY>,
-{
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        (**self).gen(p, ctx);
+    fn print(&self, p: &mut Codegen, ctx: Context) {
+        self.gen(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool, T> GenExpr<MINIFY> for Box<'a, T>
-where
-    T: GenExpr<MINIFY>,
-{
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        (**self).gen_expr(p, precedence, ctx);
+pub trait GenExpr: GetSpan {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context);
+
+    fn print_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        self.gen_expr(p, precedence, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Program<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for Program<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if let Some(hashbang) = &self.hashbang {
-            hashbang.gen(p, ctx);
+            hashbang.print(p, ctx);
         }
         for directive in &self.directives {
-            directive.gen(p, ctx);
+            directive.print(p, ctx);
         }
         for stmt in &self.body {
-            stmt.gen(p, ctx);
+            stmt.print(p, ctx);
             p.print_semicolon_if_needed();
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Hashbang<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for Hashbang<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("#!");
         p.print_str(self.value.as_str());
+        p.print_hard_newline();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Directive<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for Directive<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
@@ -80,86 +71,82 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Directive<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for Statement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_leading_comments(self.span().start);
         match self {
-            Self::BlockStatement(stmt) => stmt.gen(p, ctx),
-            Self::BreakStatement(stmt) => stmt.gen(p, ctx),
-            Self::ContinueStatement(stmt) => stmt.gen(p, ctx),
-            Self::DebuggerStatement(stmt) => stmt.gen(p, ctx),
-            Self::DoWhileStatement(stmt) => stmt.gen(p, ctx),
-            Self::EmptyStatement(stmt) => stmt.gen(p, ctx),
-            Self::ExpressionStatement(stmt) => stmt.gen(p, ctx),
-            Self::ForInStatement(stmt) => stmt.gen(p, ctx),
-            Self::ForOfStatement(stmt) => stmt.gen(p, ctx),
-            Self::ForStatement(stmt) => stmt.gen(p, ctx),
-            Self::IfStatement(stmt) => stmt.gen(p, ctx),
-            Self::LabeledStatement(stmt) => stmt.gen(p, ctx),
-            Self::ReturnStatement(stmt) => stmt.gen(p, ctx),
-            Self::SwitchStatement(stmt) => stmt.gen(p, ctx),
-            Self::ThrowStatement(stmt) => stmt.gen(p, ctx),
-            Self::TryStatement(stmt) => stmt.gen(p, ctx),
-            Self::WhileStatement(stmt) => stmt.gen(p, ctx),
-            Self::WithStatement(stmt) => stmt.gen(p, ctx),
+            Self::BlockStatement(stmt) => stmt.print(p, ctx),
+            Self::BreakStatement(stmt) => stmt.print(p, ctx),
+            Self::ContinueStatement(stmt) => stmt.print(p, ctx),
+            Self::DebuggerStatement(stmt) => stmt.print(p, ctx),
+            Self::DoWhileStatement(stmt) => stmt.print(p, ctx),
+            Self::EmptyStatement(stmt) => stmt.print(p, ctx),
+            Self::ExpressionStatement(stmt) => stmt.print(p, ctx),
+            Self::ForInStatement(stmt) => stmt.print(p, ctx),
+            Self::ForOfStatement(stmt) => stmt.print(p, ctx),
+            Self::ForStatement(stmt) => stmt.print(p, ctx),
+            Self::IfStatement(stmt) => stmt.print(p, ctx),
+            Self::LabeledStatement(stmt) => stmt.print(p, ctx),
+            Self::ReturnStatement(stmt) => stmt.print(p, ctx),
+            Self::SwitchStatement(stmt) => stmt.print(p, ctx),
+            Self::ThrowStatement(stmt) => stmt.print(p, ctx),
+            Self::TryStatement(stmt) => stmt.print(p, ctx),
+            Self::WhileStatement(stmt) => stmt.print(p, ctx),
+            Self::WithStatement(stmt) => stmt.print(p, ctx),
 
-            Self::ImportDeclaration(decl) => decl.gen(p, ctx),
-            Self::ExportAllDeclaration(decl) => decl.gen(p, ctx),
-            Self::ExportDefaultDeclaration(decl) => decl.gen(p, ctx),
-            Self::ExportNamedDeclaration(decl) => decl.gen(p, ctx),
-            Self::TSExportAssignment(decl) => decl.gen(p, ctx),
-            Self::TSNamespaceExportDeclaration(decl) => decl.gen(p, ctx),
+            Self::ImportDeclaration(decl) => decl.print(p, ctx),
+            Self::ExportAllDeclaration(decl) => decl.print(p, ctx),
+            Self::ExportDefaultDeclaration(decl) => decl.print(p, ctx),
+            Self::ExportNamedDeclaration(decl) => decl.print(p, ctx),
+            Self::TSExportAssignment(decl) => decl.print(p, ctx),
+            Self::TSNamespaceExportDeclaration(decl) => decl.print(p, ctx),
 
             Self::VariableDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::ClassDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_soft_newline();
-            }
-            Self::UsingDeclaration(decl) => {
-                p.print_indent();
-                decl.gen(p, ctx);
-                p.print_semicolon_after_statement();
             }
             Self::TSModuleDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::TSTypeAliasDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::TSInterfaceDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::TSEnumDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::TSImportEqualsDeclaration(decl) => {
                 p.print_indent();
-                decl.gen(p, ctx);
+                decl.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ExpressionStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for ExpressionStatement<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.start_of_stmt = p.code_len();
@@ -172,19 +159,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExpressionStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for IfStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for IfStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         print_if(self, p, ctx);
     }
 }
 
-fn print_if<const MINIFY: bool>(
-    if_stmt: &IfStatement<'_>,
-    p: &mut Codegen<{ MINIFY }>,
-    ctx: Context,
-) {
+fn print_if(if_stmt: &IfStatement<'_>, p: &mut Codegen, ctx: Context) {
     p.print_str("if");
     p.print_soft_space();
     p.print_char(b'(');
@@ -204,7 +187,7 @@ fn print_if<const MINIFY: bool>(
         stmt if wrap_to_avoid_ambiguous_else(stmt) => {
             p.print_soft_space();
             p.print_block_start(stmt.span().start);
-            stmt.gen(p, ctx);
+            stmt.print(p, ctx);
             p.needs_semicolon = false;
             p.print_block_end(stmt.span().end);
             if if_stmt.alternate.is_some() {
@@ -257,16 +240,16 @@ fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BlockStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for BlockStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         p.print_block_statement(self, ctx);
         p.print_soft_newline();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ForStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("for");
@@ -274,7 +257,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
         p.print_char(b'(');
 
         if let Some(init) = &self.init {
-            init.gen(p, Context::FORBID_IN);
+            init.print(p, Context::FORBID_IN);
         }
 
         p.print_semicolon();
@@ -296,14 +279,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ForInStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ForInStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("for");
         p.print_soft_space();
         p.print_char(b'(');
-        self.left.gen(p, Context::empty().and_forbid_in(false));
+        self.left.print(p, Context::empty().and_forbid_in(false));
         p.print_soft_space();
         p.print_space_before_identifier();
         p.print_str("in");
@@ -314,8 +297,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForInStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ForOfStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ForOfStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("for");
@@ -324,46 +307,44 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForOfStatement<'a> {
             p.print_str(" await");
         }
         p.print_char(b'(');
-        self.left.gen(p, ctx);
+        self.left.print(p, ctx);
         p.print_soft_space();
         p.print_space_before_identifier();
         p.print_str("of ");
-        self.right.gen_expr(p, Precedence::Comma, Context::empty());
+        self.right.print_expr(p, Precedence::Comma, Context::empty());
         p.print_char(b')');
         p.print_body(&self.body, false, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatementInit<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ForStatementInit<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::UsingDeclaration(decl) => decl.gen(p, ctx),
             match_expression!(ForStatementInit) => {
-                self.to_expression().gen_expr(p, Precedence::Lowest, ctx);
+                self.to_expression().print_expr(p, Precedence::Lowest, ctx);
             }
-            Self::VariableDeclaration(var) => var.gen(p, ctx),
+            Self::VariableDeclaration(var) => var.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatementLeft<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ForStatementLeft<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            ForStatementLeft::UsingDeclaration(var) => var.gen(p, ctx),
-            ForStatementLeft::VariableDeclaration(var) => var.gen(p, ctx),
+            ForStatementLeft::VariableDeclaration(var) => var.print(p, ctx),
             ForStatementLeft::AssignmentTargetIdentifier(identifier) => {
                 let wrap = identifier.name == "async";
-                p.wrap(wrap, |p| self.to_assignment_target().gen(p, ctx));
+                p.wrap(wrap, |p| self.to_assignment_target().print(p, ctx));
             }
             match_assignment_target!(ForStatementLeft) => {
-                p.wrap(false, |p| self.to_assignment_target().gen(p, ctx));
+                p.wrap(false, |p| self.to_assignment_target().print(p, ctx));
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for WhileStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for WhileStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("while");
@@ -375,8 +356,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WhileStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for DoWhileStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for DoWhileStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("do ");
@@ -386,7 +367,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for DoWhileStatement<'a> {
         } else {
             p.print_soft_newline();
             p.indent();
-            self.body.gen(p, ctx);
+            self.body.print(p, ctx);
             p.print_semicolon_if_needed();
             p.dedent();
             p.print_indent();
@@ -400,8 +381,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for DoWhileStatement<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for EmptyStatement {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for EmptyStatement {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_semicolon();
@@ -409,34 +390,34 @@ impl<const MINIFY: bool> Gen<MINIFY> for EmptyStatement {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ContinueStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ContinueStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("continue");
         if let Some(label) = &self.label {
             p.print_hard_space();
-            label.gen(p, ctx);
+            label.print(p, ctx);
         }
         p.print_semicolon_after_statement();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BreakStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for BreakStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("break");
         if let Some(label) = &self.label {
             p.print_hard_space();
-            label.gen(p, ctx);
+            label.print(p, ctx);
         }
         p.print_semicolon_after_statement();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for SwitchStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("switch");
@@ -448,7 +429,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchStatement<'a> {
         p.print_curly_braces(self.span, self.cases.is_empty(), |p| {
             for case in &self.cases {
                 p.add_source_mapping(case.span.start);
-                case.gen(p, ctx);
+                case.print(p, ctx);
             }
         });
         p.print_soft_newline();
@@ -456,8 +437,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchCase<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for SwitchCase<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_semicolon_if_needed();
         p.print_indent();
         match &self.test {
@@ -478,16 +459,17 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchCase<'a> {
         p.indent();
         for item in &self.consequent {
             p.print_semicolon_if_needed();
-            item.gen(p, ctx);
+            item.print(p, ctx);
         }
         p.dedent();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ReturnStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for ReturnStatement<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
+        p.print_space_before_identifier();
         p.print_str("return");
         if let Some(arg) = &self.argument {
             p.print_hard_space();
@@ -497,21 +479,21 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ReturnStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for LabeledStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !MINIFY && (p.indent > 0 || p.print_next_indent_as_space) {
+impl<'a> Gen for LabeledStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        if !p.options.minify && (p.indent > 0 || p.print_next_indent_as_space) {
             p.add_source_mapping(self.span.start);
             p.print_indent();
         }
         p.print_space_before_identifier();
-        self.label.gen(p, ctx);
+        self.label.print(p, ctx);
         p.print_colon();
         p.print_body(&self.body, false, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TryStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TryStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_space_before_identifier();
@@ -524,14 +506,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TryStatement<'a> {
             if let Some(param) = &handler.param {
                 p.print_soft_space();
                 p.print_str("(");
-                param.pattern.gen(p, ctx);
+                param.pattern.print(p, ctx);
                 p.print_str(")");
             }
             p.print_soft_space();
             p.print_block_statement(&handler.body, ctx);
-            if self.finalizer.is_some() {
-                p.print_soft_newline();
-            }
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_soft_space();
@@ -543,8 +522,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TryStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ThrowStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for ThrowStatement<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("throw ");
@@ -553,8 +532,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ThrowStatement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for WithStatement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for WithStatement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("with");
@@ -565,8 +544,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WithStatement<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for DebuggerStatement {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for DebuggerStatement {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("debugger");
@@ -574,18 +553,8 @@ impl<const MINIFY: bool> Gen<MINIFY> for DebuggerStatement {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.is_await {
-            p.print_str("await ");
-        }
-        p.print_str("using ");
-        p.print_list(&self.declarations, ctx);
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for VariableDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         if self.declare {
             p.print_str("declare ");
@@ -596,10 +565,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
         {
             if let Some(declarator) = self.declarations.first() {
                 if let Some(ref init) = declarator.init {
-                    if let Some(leading_annotate_comment) =
-                        p.get_leading_annotate_comment(self.span.start)
-                    {
-                        p.move_comment(init.span().start, leading_annotate_comment);
+                    let leading_annotate_comments =
+                        p.get_leading_annotate_comments(self.span.start);
+                    if !leading_annotate_comments.is_empty() {
+                        p.move_comments(init.span().start, leading_annotate_comments);
                     }
                 }
             }
@@ -608,6 +577,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
             VariableDeclarationKind::Const => "const",
             VariableDeclarationKind::Let => "let",
             VariableDeclarationKind::Var => "var",
+            VariableDeclarationKind::Using => "using",
+            VariableDeclarationKind::AwaitUsing => "await using",
         });
         if !self.declarations.is_empty() {
             p.print_hard_space();
@@ -616,23 +587,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.id.gen(p, ctx);
+impl<'a> Gen for VariableDeclarator<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.id.print(p, ctx);
         if let Some(init) = &self.init {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.gen_expr(p, Precedence::Comma, ctx);
+            init.print_expr(p, Precedence::Comma, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for Function<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
-        p.gen_comment(self.span.start);
+        p.gen_comments(self.span.start);
         p.wrap(wrap, |p| {
             p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
@@ -649,28 +620,28 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
             }
             if let Some(id) = &self.id {
                 p.print_space_before_identifier();
-                id.gen(p, ctx);
+                id.print(p, ctx);
             }
             if let Some(type_parameters) = &self.type_parameters {
-                type_parameters.gen(p, ctx);
+                type_parameters.print(p, ctx);
             }
             p.print_char(b'(');
             if let Some(this_param) = &self.this_param {
-                this_param.gen(p, ctx);
+                this_param.print(p, ctx);
                 if !self.params.is_empty() || self.params.rest.is_some() {
                     p.print_str(",");
                 }
                 p.print_soft_space();
             }
-            self.params.gen(p, ctx);
+            self.params.print(p, ctx);
             p.print_char(b')');
             if let Some(return_type) = &self.return_type {
                 p.print_str(": ");
-                return_type.gen(p, ctx);
+                return_type.print(p, ctx);
             }
             if let Some(body) = &self.body {
                 p.print_soft_space();
-                body.gen(p, ctx);
+                body.print(p, ctx);
             } else {
                 p.print_semicolon();
             }
@@ -678,49 +649,53 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for FunctionBody<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.is_empty(), |p| {
             for directive in &self.directives {
-                directive.gen(p, ctx);
+                directive.print(p, ctx);
             }
             for stmt in &self.statements {
                 p.print_semicolon_if_needed();
-                stmt.gen(p, ctx);
+                stmt.print(p, ctx);
             }
         });
         p.needs_semicolon = false;
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameter<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.decorators.gen(p, ctx);
+impl<'a> Gen for FormalParameter<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        for decorator in &self.decorators {
+            decorator.print(p, ctx);
+            p.print_hard_space();
+        }
         if let Some(accessibility) = self.accessibility {
-            accessibility.gen(p, ctx);
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.readonly {
             p.print_str("readonly ");
         }
-        self.pattern.gen(p, ctx);
+        self.pattern.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameters<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for FormalParameters<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_list(&self.items, ctx);
         if let Some(rest) = &self.rest {
             if !self.items.is_empty() {
                 p.print_comma();
                 p.print_soft_space();
             }
-            rest.gen(p, ctx);
+            rest.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ImportDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("import ");
@@ -736,10 +711,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                 p.print_char(b'"');
                 p.print_str(self.source.value.as_str());
                 p.print_char(b'"');
-                if self.with_clause.is_some() {
+                if let Some(with_clause) = &self.with_clause {
                     p.print_hard_space();
+                    with_clause.print(p, ctx);
                 }
-                self.with_clause.gen(p, ctx);
                 p.print_semicolon_after_statement();
                 return;
             }
@@ -756,7 +731,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                             p.print_comma();
                             p.print_soft_space();
                         }
-                        spec.local.gen(p, ctx);
+                        spec.local.print(p, ctx);
                     }
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
                         if in_block {
@@ -768,7 +743,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                             p.print_soft_space();
                         }
                         p.print_str("* as ");
-                        spec.local.gen(p, ctx);
+                        spec.local.print(p, ctx);
                     }
                     ImportDeclarationSpecifier::ImportSpecifier(spec) => {
                         if in_block {
@@ -790,15 +765,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
 
                         let imported_name = match &spec.imported {
                             ModuleExportName::IdentifierName(identifier) => {
-                                identifier.gen(p, ctx);
+                                identifier.print(p, ctx);
                                 identifier.name.as_str()
                             }
                             ModuleExportName::IdentifierReference(identifier) => {
-                                identifier.gen(p, ctx);
+                                identifier.print(p, ctx);
                                 identifier.name.as_str()
                             }
                             ModuleExportName::StringLiteral(literal) => {
-                                literal.gen(p, ctx);
+                                literal.print(p, ctx);
                                 literal.value.as_str()
                             }
                         };
@@ -807,7 +782,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
 
                         if imported_name != local_name {
                             p.print_str(" as ");
-                            spec.local.gen(p, ctx);
+                            spec.local.print(p, ctx);
                         }
                     }
                 }
@@ -818,28 +793,20 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
             }
             p.print_str(" from ");
         }
-        self.source.gen(p, ctx);
-        if self.with_clause.is_some() {
+        self.source.print(p, ctx);
+        if let Some(with_clause) = &self.with_clause {
             p.print_hard_space();
+            with_clause.print(p, ctx);
         }
-        self.with_clause.gen(p, ctx);
         p.add_source_mapping(self.span.end);
         p.print_semicolon_after_statement();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Option<WithClause<'a>> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if let Some(with_clause) = self {
-            with_clause.gen(p, ctx);
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for WithClause<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for WithClause<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.attributes_keyword.gen(p, ctx);
+        self.attributes_keyword.print(p, ctx);
         p.print_soft_space();
         p.print_block_start(self.span.start);
         p.print_sequence(&self.with_entries, ctx);
@@ -847,38 +814,39 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WithClause<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportAttribute<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ImportAttribute<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
                 p.print_str(identifier.name.as_str());
             }
-            ImportAttributeKey::StringLiteral(literal) => literal.gen(p, ctx),
+            ImportAttributeKey::StringLiteral(literal) => literal.print(p, ctx),
         };
         p.print_colon();
         p.print_soft_space();
-        self.value.gen(p, ctx);
+        self.value.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ExportNamedDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
+
         if p.comment_options.preserve_annotate_comments {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
-                    p.gen_comment(self.span.start);
+                    p.gen_comments(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
                     if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
                 {
                     if let Some(declarator) = var_decl.declarations.first() {
                         if let Some(ref init) = declarator.init {
-                            if let Some(leading_annotate_comment) =
-                                p.get_leading_annotate_comment(self.span.start)
-                            {
-                                p.move_comment(init.span().start, leading_annotate_comment);
+                            let leading_annotate_comments =
+                                p.get_leading_annotate_comments(self.span.start);
+                            if !leading_annotate_comments.is_empty() {
+                                p.move_comments(init.span().start, leading_annotate_comments);
                             }
                         }
                     }
@@ -893,20 +861,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
         match &self.declaration {
             Some(decl) => {
                 match decl {
-                    Declaration::VariableDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::FunctionDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::ClassDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::UsingDeclaration(declaration) => declaration.gen(p, ctx),
-                    Declaration::TSModuleDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::TSTypeAliasDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::TSInterfaceDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::TSEnumDeclaration(decl) => decl.gen(p, ctx),
-                    Declaration::TSImportEqualsDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::VariableDeclaration(decl) => decl.print(p, ctx),
+                    Declaration::FunctionDeclaration(decl) => decl.print(p, ctx),
+                    Declaration::ClassDeclaration(decl) => decl.print(p, ctx),
+                    Declaration::TSModuleDeclaration(decl) => decl.print(p, ctx),
+                    Declaration::TSTypeAliasDeclaration(decl) => decl.print(p, ctx),
+                    Declaration::TSInterfaceDeclaration(decl) => decl.print(p, ctx),
+                    Declaration::TSEnumDeclaration(decl) => decl.print(p, ctx),
+                    Declaration::TSImportEqualsDeclaration(decl) => decl.print(p, ctx),
                 }
                 if matches!(
                     decl,
                     Declaration::VariableDeclaration(_)
-                        | Declaration::UsingDeclaration(_)
                         | Declaration::TSTypeAliasDeclaration(_)
                         | Declaration::TSImportEqualsDeclaration(_)
                 ) {
@@ -928,7 +894,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
                     p.print_soft_space();
                     p.print_str("from");
                     p.print_soft_space();
-                    source.gen(p, ctx);
+                    source.print(p, ctx);
                 }
                 p.print_semicolon_after_statement();
             }
@@ -936,49 +902,49 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSExportAssignment<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSExportAssignment<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         p.print_str("export = ");
-        self.expression.gen_expr(p, Precedence::Lowest, ctx);
+        self.expression.print_expr(p, Precedence::Lowest, ctx);
         p.print_semicolon_after_statement();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamespaceExportDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSNamespaceExportDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         p.print_str("export as namespace ");
-        self.id.gen(p, ctx);
+        self.id.print(p, ctx);
         p.print_semicolon_after_statement();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportSpecifier<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ExportSpecifier<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.export_kind.is_type() {
             p.print_str("type ");
         }
-        self.local.gen(p, ctx);
+        self.local.print(p, ctx);
         if self.local.name() != self.exported.name() {
             p.print_str(" as ");
-            self.exported.gen(p, ctx);
+            self.exported.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleExportName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ModuleExportName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::IdentifierName(identifier) => p.print_str(identifier.name.as_str()),
-            Self::IdentifierReference(identifier) => identifier.gen(p, ctx),
-            Self::StringLiteral(literal) => literal.gen(p, ctx),
+            Self::IdentifierReference(identifier) => identifier.print(p, ctx),
+            Self::StringLiteral(literal) => literal.print(p, ctx),
         };
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ExportAllDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("export ");
@@ -989,121 +955,105 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
 
         if let Some(exported) = &self.exported {
             p.print_str(" as ");
-            exported.gen(p, ctx);
+            exported.print(p, ctx);
         }
 
         p.print_str(" from ");
-        self.source.gen(p, ctx);
-        if self.with_clause.is_some() {
+        self.source.print(p, ctx);
+        if let Some(with_clause) = &self.with_clause {
             p.print_hard_space();
+            with_clause.print(p, ctx);
         }
-        self.with_clause.gen(p, ctx);
         p.print_semicolon_after_statement();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ExportDefaultDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("export default ");
-        self.declaration.gen(p, ctx);
+        self.declaration.print(p, ctx);
     }
 }
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ExportDefaultDeclarationKind<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_expression!(Self) => {
                 p.start_of_default_export = p.code_len();
-                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
+                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(fun) => {
-                fun.gen(p, ctx);
+                fun.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::ClassDeclaration(class) => {
-                class.gen(p, ctx);
+                class.print(p, ctx);
                 p.print_soft_newline();
             }
-            Self::TSInterfaceDeclaration(interface) => interface.gen(p, ctx),
+            Self::TSInterfaceDeclaration(interface) => interface.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for Expression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         match self {
-            Self::BooleanLiteral(lit) => lit.gen(p, ctx),
-            Self::NullLiteral(lit) => lit.gen(p, ctx),
-            Self::NumericLiteral(lit) => lit.gen(p, ctx),
-            Self::BigIntLiteral(lit) => lit.gen(p, ctx),
-            Self::RegExpLiteral(lit) => lit.gen(p, ctx),
-            Self::StringLiteral(lit) => lit.gen(p, ctx),
-            Self::Identifier(ident) => ident.gen(p, ctx),
-            Self::ThisExpression(expr) => expr.gen(p, ctx),
+            Self::BooleanLiteral(lit) => lit.print(p, ctx),
+            Self::NullLiteral(lit) => lit.print(p, ctx),
+            Self::NumericLiteral(lit) => lit.print(p, ctx),
+            Self::BigIntLiteral(lit) => lit.print(p, ctx),
+            Self::RegExpLiteral(lit) => lit.print(p, ctx),
+            Self::StringLiteral(lit) => lit.print(p, ctx),
+            Self::Identifier(ident) => ident.print(p, ctx),
+            Self::ThisExpression(expr) => expr.print(p, ctx),
             match_member_expression!(Self) => {
-                self.to_member_expression().gen_expr(p, precedence, ctx);
+                self.to_member_expression().print_expr(p, precedence, ctx);
             }
-            Self::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::ArrayExpression(expr) => expr.gen(p, ctx),
-            Self::ObjectExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::FunctionExpression(expr) => expr.gen(p, ctx),
-            Self::ArrowFunctionExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::YieldExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::UpdateExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::UnaryExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::BinaryExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::PrivateInExpression(expr) => expr.gen(p, ctx),
-            Self::LogicalExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::ConditionalExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::AssignmentExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::SequenceExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::ImportExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::TemplateLiteral(literal) => literal.gen(p, ctx),
-            Self::TaggedTemplateExpression(expr) => expr.gen(p, ctx),
-            Self::Super(sup) => sup.gen(p, ctx),
-            Self::AwaitExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::ChainExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::NewExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::MetaProperty(expr) => expr.gen(p, ctx),
-            Self::ClassExpression(expr) => expr.gen(p, ctx),
-            Self::JSXElement(el) => el.gen(p, ctx),
-            Self::JSXFragment(fragment) => fragment.gen(p, ctx),
-            Self::ParenthesizedExpression(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSSatisfiesExpression(e) => {
-                e.expression.gen_expr(p, precedence, ctx);
-                p.print_str(" satisfies ");
-                e.type_annotation.gen(p, ctx);
-            }
-            Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
-            Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
+            Self::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::ArrayExpression(expr) => expr.print(p, ctx),
+            Self::ObjectExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::FunctionExpression(expr) => expr.print(p, ctx),
+            Self::ArrowFunctionExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::YieldExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::UpdateExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::UnaryExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::BinaryExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::PrivateInExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::LogicalExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::ConditionalExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::AssignmentExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::SequenceExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::ImportExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::TemplateLiteral(literal) => literal.print(p, ctx),
+            Self::TaggedTemplateExpression(expr) => expr.print(p, ctx),
+            Self::Super(sup) => sup.print(p, ctx),
+            Self::AwaitExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::ChainExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::NewExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::MetaProperty(expr) => expr.print(p, ctx),
+            Self::ClassExpression(expr) => expr.print(p, ctx),
+            Self::JSXElement(el) => el.print(p, ctx),
+            Self::JSXFragment(fragment) => fragment.print(p, ctx),
+            Self::ParenthesizedExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::TSAsExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
+            Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::TSInstantiationExpression(e) => e.print_expr(p, precedence, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.print_char(b'(');
-        p.print_char(b'(');
-        self.expression.gen_expr(p, precedence, ctx);
-        p.print_char(b')');
-        p.print_str(" as ");
-        self.type_annotation.gen(p, ctx);
-        p.print_char(b')');
+impl<'a> GenExpr for ParenthesizedExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        self.expression.print_expr(p, precedence, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        self.expression.gen_expr(p, precedence, ctx);
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for IdentifierReference<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         let name = p.get_identifier_reference_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
@@ -1111,38 +1061,38 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for IdentifierName<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str(self.name.as_str());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingIdentifier<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for BindingIdentifier<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         let name = p.get_binding_identifier_name(self);
         p.add_source_mapping_for_name(self.span, name);
         p.print_str(name);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for LabelIdentifier<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for LabelIdentifier<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_str());
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BooleanLiteral {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for BooleanLiteral {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_space_before_identifier();
         p.print_str(self.as_str());
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for NullLiteral {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for NullLiteral {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping(self.span.start);
         p.print_str("null");
@@ -1150,17 +1100,17 @@ impl<const MINIFY: bool> Gen<MINIFY> for NullLiteral {
 }
 
 // Need a space before "." if it could be parsed as a decimal point.
-fn need_space_before_dot<const MINIFY: bool>(s: &str, p: &mut Codegen<{ MINIFY }>) {
+fn need_space_before_dot(s: &str, p: &mut Codegen) {
     if !s.bytes().any(|b| matches!(b, b'.' | b'e' | b'x')) {
         p.need_space_before_dot = p.code_len();
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
+impl<'a> Gen for NumericLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.value != f64::INFINITY && (MINIFY || self.raw.is_empty()) {
+        if self.value != f64::INFINITY && (p.options.minify || self.raw.is_empty()) {
             p.print_space_before_identifier();
             let abs_value = self.value.abs();
 
@@ -1169,26 +1119,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
                 p.print_str("-");
             }
 
-            let result = if self.base == NumberBase::Float {
-                print_non_negative_float(abs_value, p)
-            } else {
-                let value = abs_value as u64;
-                // If integers less than 1000, we know that exponential notation will always be longer than
-                // the integer representation. This is not the case for 1000 which is "1e3".
-                if value < 1000 {
-                    format!("{value}")
-                } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
-                    let hex = format!("{value:#x}");
-                    let result = print_non_negative_float(abs_value, p);
-                    if hex.len() < result.len() {
-                        hex
-                    } else {
-                        result
-                    }
-                } else {
-                    print_non_negative_float(abs_value, p)
-                }
-            };
+            let result = print_non_negative_float(abs_value, p);
             let bytes = result.as_str();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
@@ -1204,15 +1135,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
 
 // TODO: refactor this with less allocations
 // <https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_printer/js_printer.go#L3472>
-fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIFY }>) -> String {
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+fn print_non_negative_float(value: f64, p: &Codegen) -> String {
     use oxc_syntax::number::ToJsString;
-    let mut result = value.to_js_string();
+    if value < 1000.0 && value.fract() == 0.0 {
+        return value.to_js_string();
+    }
+    let mut result = format!("{value:e}");
     let chars = result.as_bytes();
     let len = chars.len();
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-
         unsafe { String::from_utf8_unchecked(num.to_vec()) }
     };
 
@@ -1260,35 +1194,49 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
         }
     }
 
+    if p.options.minify && value.fract() == 0.0 {
+        let value = value as u64;
+        if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
+            let hex = format!("{value:#x}");
+            if hex.len() < result.len() {
+                result = hex;
+            }
+        }
+    }
+
     result
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BigIntLiteral<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for BigIntLiteral<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str(self.raw.as_str());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for RegExpLiteral<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for RegExpLiteral<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         let last = p.peek_nth(0);
+        let pattern_text = p.source_text.map_or_else(
+            || Cow::Owned(self.regex.pattern.to_string()),
+            |src| self.regex.pattern.source_text(src),
+        );
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
-            || (Some('<') == last && self.regex.pattern.to_lowercase().starts_with("script"))
+            || (Some('<') == last && pattern_text.cow_to_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }
         p.print_char(b'/');
-        p.print_str(self.regex.pattern.as_str());
+        p.print_str(pattern_text.as_ref());
         p.print_char(b'/');
         p.print_str(self.regex.flags.to_string().as_str());
         p.prev_reg_exp_end = p.code().len();
     }
 }
 
-fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: u8, p: &mut Codegen<{ MINIFY }>) {
+fn print_unquoted_str(s: &str, quote: u8, p: &mut Codegen) {
     let mut chars = s.chars().peekable();
 
     while let Some(c) = chars.next() {
@@ -1370,8 +1318,8 @@ fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: u8, p: &mut Codegen<{ 
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for StringLiteral<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for StringLiteral<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         let s = self.value.as_str();
         p.wrap_quote(|p, quote| {
@@ -1380,39 +1328,39 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StringLiteral<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for ThisExpression {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for ThisExpression {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_space_before_identifier();
         p.print_str("this");
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for MemberExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for MemberExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         match self {
-            Self::ComputedMemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::StaticMemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
-            Self::PrivateFieldExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            Self::ComputedMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::StaticMemberExpression(expr) => expr.print_expr(p, precedence, ctx),
+            Self::PrivateFieldExpression(expr) => expr.print_expr(p, precedence, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ComputedMemberExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+impl<'a> GenExpr for ComputedMemberExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_str("?.");
         }
         p.print_char(b'[');
-        self.expression.gen_expr(p, Precedence::Lowest, Context::empty());
+        self.expression.print_expr(p, Precedence::Lowest, Context::empty());
         p.print_char(b']');
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for StaticMemberExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
+impl<'a> GenExpr for StaticMemberExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_char(b'?');
         } else if p.need_space_before_dot == p.code_len() {
@@ -1420,39 +1368,37 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for StaticMemberExpression<'a> {
             p.print_hard_space();
         }
         p.print_char(b'.');
-        self.property.gen(p, ctx);
+        self.property.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+impl<'a> GenExpr for PrivateFieldExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_str("?");
         }
         p.print_char(b'.');
-        self.field.gen(p, ctx);
+        self.field.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for CallExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
-        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
-        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+        let annotate_comments = p.get_leading_annotate_comments(self.span.start);
+        if !annotate_comments.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            if let Some(comment) = annotate_comment {
-                p.print_comment(comment);
-            }
+            p.print_comments(&annotate_comments, &mut AnnotationKind::empty());
             p.add_source_mapping(self.span.start);
-            self.callee.gen_expr(p, Precedence::Postfix, Context::empty());
+            self.callee.print_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
                 p.print_str("?.");
             }
             if let Some(type_parameters) = &self.type_parameters {
-                type_parameters.gen(p, ctx);
+                type_parameters.print(p, ctx);
             }
             p.print_char(b'(');
             p.print_list(&self.arguments, ctx);
@@ -1462,52 +1408,72 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Argument<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for Argument<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::SpreadElement(elem) => elem.gen(p, ctx),
+            Self::SpreadElement(elem) => elem.print(p, ctx),
             match_expression!(Self) => {
-                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
+                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayExpressionElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ArrayExpressionElement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_expression!(Self) => {
-                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
+                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
             }
-            Self::SpreadElement(elem) => elem.gen(p, ctx),
+            Self::SpreadElement(elem) => elem.print(p, ctx),
             Self::Elision(_span) => {}
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for SpreadElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for SpreadElement<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_ellipsis();
-        self.argument.gen_expr(p, Precedence::Comma, Context::empty());
+        self.argument.print_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ArrayExpression<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span.start);
         p.print_char(b'[');
-        p.print_list(&self.elements, ctx);
-        if self.trailing_comma.is_some() {
-            p.print_comma();
+        if is_multi_line {
+            p.indent();
         }
-        p.print_char(b']');
+        for (i, item) in self.elements.iter().enumerate() {
+            if i != 0 {
+                p.print_comma();
+            }
+            if is_multi_line {
+                p.print_soft_newline();
+                p.print_indent();
+            } else if i != 0 {
+                p.print_soft_space();
+            }
+            item.print(p, ctx);
+            if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
+                p.print_comma();
+            }
+        }
+        if is_multi_line {
+            p.print_soft_newline();
+            p.dedent();
+            p.print_indent();
+        }
         p.add_source_mapping(self.span.end);
+        p.print_char(b']');
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for ObjectExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
         let n = p.code_len();
         let len = self.properties.len();
         let is_multi_line = len > 1;
@@ -1528,7 +1494,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
                 } else {
                     p.print_soft_space();
                 }
-                item.gen(p, ctx);
+                item.print(p, ctx);
             }
             if is_multi_line {
                 p.print_soft_newline();
@@ -1543,17 +1509,17 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPropertyKind<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ObjectPropertyKind<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::ObjectProperty(prop) => prop.gen(p, ctx),
-            Self::SpreadProperty(elem) => elem.gen(p, ctx),
+            Self::ObjectProperty(prop) => prop.print(p, ctx),
+            Self::SpreadProperty(elem) => elem.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ObjectProperty<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
             p.add_source_mapping(self.span.start);
             let is_accessor = match &self.kind {
@@ -1579,19 +1545,19 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
                 if self.computed {
                     p.print_char(b'[');
                 }
-                self.key.gen(p, ctx);
+                self.key.print(p, ctx);
                 if self.computed {
                     p.print_char(b']');
                 }
                 if let Some(type_parameters) = &func.type_parameters {
-                    type_parameters.gen(p, ctx);
+                    type_parameters.print(p, ctx);
                 }
                 p.print_char(b'(');
-                func.params.gen(p, ctx);
+                func.params.print(p, ctx);
                 p.print_char(b')');
                 if let Some(body) = &func.body {
                     p.print_soft_space();
-                    body.gen(p, ctx);
+                    body.print(p, ctx);
                 }
                 return;
             }
@@ -1599,7 +1565,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if let Expression::Identifier(ident) = self.value.without_parenthesized() {
+            if let Expression::Identifier(ident) = self.value.without_parentheses() {
                 if key.name == p.get_identifier_reference_name(ident) && key.name != "__proto__" {
                     shorthand = true;
                 }
@@ -1610,7 +1576,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
             p.print_char(b'[');
         }
         if !shorthand {
-            self.key.gen(p, ctx);
+            self.key.print(p, ctx);
         }
         if self.computed {
             p.print_char(b']');
@@ -1619,26 +1585,26 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
             p.print_colon();
             p.print_soft_space();
         }
-        self.value.gen_expr(p, Precedence::Comma, Context::empty());
+        self.value.print_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for PropertyKey<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::StaticIdentifier(ident) => ident.gen(p, ctx),
-            Self::PrivateIdentifier(ident) => ident.gen(p, ctx),
+            Self::StaticIdentifier(ident) => ident.print(p, ctx),
+            Self::PrivateIdentifier(ident) => ident.print(p, ctx),
             match_expression!(Self) => {
-                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
+                self.to_expression().print_expr(p, Precedence::Comma, Context::empty());
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for ArrowFunctionExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
-            p.gen_comment(self.span.start);
+            p.gen_comments(self.span.start);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
                 p.print_str("async");
@@ -1649,16 +1615,16 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
             }
 
             if let Some(type_parameters) = &self.type_parameters {
-                type_parameters.gen(p, ctx);
+                type_parameters.print(p, ctx);
             }
             p.add_source_mapping(self.span.start);
             p.print_char(b'(');
-            self.params.gen(p, ctx);
+            self.params.print(p, ctx);
             p.print_char(b')');
             if let Some(return_type) = &self.return_type {
                 p.print_str(":");
                 p.print_soft_space();
-                return_type.gen(p, ctx);
+                return_type.print(p, ctx);
             }
             p.print_soft_space();
             p.print_str("=>");
@@ -1666,17 +1632,17 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
             if self.expression {
                 if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
                     p.start_of_arrow_expr = p.code_len();
-                    stmt.expression.gen_expr(p, Precedence::Comma, ctx.and_forbid_in(true));
+                    stmt.expression.print_expr(p, Precedence::Comma, ctx.and_forbid_in(true));
                 }
             } else {
-                self.body.gen(p, ctx);
+                self.body.print(p, ctx);
             }
         });
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for YieldExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, _ctx: Context) {
+impl<'a> GenExpr for YieldExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
         p.wrap(precedence >= Precedence::Assign, |p| {
             p.add_source_mapping(self.span.start);
             p.print_space_before_identifier();
@@ -1689,14 +1655,14 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for YieldExpression<'a> {
                 if !self.delegate {
                     p.print_hard_space();
                 }
-                argument.gen_expr(p, Precedence::Yield, Context::empty());
+                argument.print_expr(p, Precedence::Yield, Context::empty());
             }
         });
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UpdateExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for UpdateExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let operator = self.operator.as_str();
         p.wrap(precedence >= self.precedence(), |p| {
             if self.prefix {
@@ -1705,10 +1671,10 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UpdateExpression<'a> {
                 p.print_str(operator);
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
-                self.argument.gen_expr(p, Precedence::Prefix, ctx);
+                self.argument.print_expr(p, Precedence::Prefix, ctx);
             } else {
                 p.print_space_before_operator(self.operator.into());
-                self.argument.gen_expr(p, Precedence::Postfix, ctx);
+                self.argument.print_expr(p, Precedence::Postfix, ctx);
                 p.print_str(operator);
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
@@ -1717,8 +1683,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UpdateExpression<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UnaryExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for UnaryExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
             let operator = self.operator.as_str();
             if self.operator.is_keyword() {
@@ -1731,13 +1697,13 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UnaryExpression<'a> {
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
             }
-            self.argument.gen_expr(p, Precedence::Exponentiation, ctx);
+            self.argument.print_expr(p, Precedence::Exponentiation, ctx);
         });
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for BinaryExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let v = BinaryExpressionVisitor {
             // SAFETY:
             // The pointer is stored on the heap and all will be consumed in the binary expression visitor.
@@ -1756,38 +1722,18 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for LogicalOperator {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_str(self.as_str());
+impl<'a> GenExpr for PrivateInExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        p.wrap(precedence >= Precedence::Compare, |p| {
+            self.left.print(p, ctx);
+            p.print_str(" in ");
+            self.right.print_expr(p, Precedence::Equals, Context::empty());
+        });
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BinaryOperator {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        let operator = self.as_str();
-        if self.is_keyword() {
-            p.print_space_before_identifier();
-            p.print_str(operator);
-        } else {
-            let op: Operator = (*self).into();
-            p.print_space_before_operator(op);
-            p.print_str(operator);
-            p.prev_op = Some(op);
-            p.prev_op_end = p.code().len();
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateInExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.left.gen(p, ctx);
-        p.print_str(" in ");
-        self.right.gen_expr(p, Precedence::Shift, Context::empty());
-    }
-}
-
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for LogicalExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for LogicalExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let v = BinaryExpressionVisitor {
             // SAFETY:
             // The pointer is stored on the heap and all will be consumed in the binary expression visitor.
@@ -1806,29 +1752,29 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for LogicalExpression<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ConditionalExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for ConditionalExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut ctx = ctx;
         let wrap = precedence >= self.precedence();
         if wrap {
             ctx &= Context::FORBID_IN.not();
         }
         p.wrap(wrap, |p| {
-            self.test.gen_expr(p, Precedence::Conditional, ctx & Context::FORBID_IN);
+            self.test.print_expr(p, Precedence::Conditional, ctx & Context::FORBID_IN);
             p.print_soft_space();
             p.print_char(b'?');
             p.print_soft_space();
-            self.consequent.gen_expr(p, Precedence::Yield, Context::empty());
+            self.consequent.print_expr(p, Precedence::Yield, Context::empty());
             p.print_soft_space();
             p.print_colon();
             p.print_soft_space();
-            self.alternate.gen_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
+            self.alternate.print_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for AssignmentExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         // Destructuring assignment
         let n = p.code_len();
 
@@ -1855,64 +1801,76 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
             && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_)))
             || identifier_is_keyword;
         p.wrap(wrap || precedence >= self.precedence(), |p| {
-            self.left.gen(p, ctx);
+            self.left.print(p, ctx);
             p.print_soft_space();
             p.print_str(self.operator.as_str());
             p.print_soft_space();
-            self.right.gen_expr(p, Precedence::Comma, ctx);
+            self.right.print_expr(p, Precedence::Comma, ctx);
         });
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTarget<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AssignmentTarget<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_simple_assignment_target!(Self) => {
-                self.to_simple_assignment_target().gen_expr(p, Precedence::Comma, Context::empty());
+                self.to_simple_assignment_target().print_expr(
+                    p,
+                    Precedence::Comma,
+                    Context::empty(),
+                );
             }
             match_assignment_target_pattern!(Self) => {
-                self.to_assignment_target_pattern().gen(p, ctx);
+                self.to_assignment_target_pattern().print(p, ctx);
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SimpleAssignmentTarget<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for SimpleAssignmentTarget<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         match self {
-            Self::AssignmentTargetIdentifier(ident) => ident.gen(p, ctx),
+            Self::AssignmentTargetIdentifier(ident) => ident.print(p, ctx),
             match_member_expression!(Self) => {
-                self.to_member_expression().gen_expr(p, precedence, ctx);
+                self.to_member_expression().print_expr(p, precedence, ctx);
             }
-            Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSSatisfiesExpression(e) => e.expression.gen_expr(p, precedence, ctx),
-            Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
-            Self::TSTypeAssertion(e) => e.gen_expr(p, precedence, ctx),
-            Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
+            Self::TSAsExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::TSSatisfiesExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::TSNonNullExpression(e) => e.print_expr(p, precedence, ctx),
+            Self::TSTypeAssertion(e) => e.print_expr(p, precedence, ctx),
+            Self::TSInstantiationExpression(e) => e.print_expr(p, precedence, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPattern<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AssignmentTargetPattern<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::ArrayAssignmentTarget(target) => target.gen(p, ctx),
-            Self::ObjectAssignmentTarget(target) => target.gen(p, ctx),
+            Self::ArrayAssignmentTarget(target) => target.print(p, ctx),
+            Self::ObjectAssignmentTarget(target) => target.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayAssignmentTarget<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ArrayAssignmentTarget<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'[');
-        p.print_list(&self.elements, ctx);
+        for (index, item) in self.elements.iter().enumerate() {
+            if index != 0 {
+                p.print_comma();
+                p.print_soft_space();
+            }
+            if let Some(item) = item {
+                item.print(p, ctx);
+            }
+        }
         if let Some(target) = &self.rest {
             if !self.elements.is_empty() {
                 p.print_comma();
             }
             p.add_source_mapping(self.span.start);
-            target.gen(p, ctx);
+            target.print(p, ctx);
         }
         if self.trailing_comma.is_some() {
             p.print_comma();
@@ -1922,16 +1880,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayAssignmentTarget<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Option<AssignmentTargetMaybeDefault<'a>> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if let Some(arg) = self {
-            arg.gen(p, ctx);
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectAssignmentTarget<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ObjectAssignmentTarget<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'{');
         p.print_list(&self.properties, ctx);
@@ -1940,46 +1890,46 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectAssignmentTarget<'a> {
                 p.print_comma();
             }
             p.add_source_mapping(self.span.start);
-            target.gen(p, ctx);
+            target.print(p, ctx);
         }
         p.print_char(b'}');
         p.add_source_mapping(self.span.end);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetMaybeDefault<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AssignmentTargetMaybeDefault<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            match_assignment_target!(Self) => self.to_assignment_target().gen(p, ctx),
-            Self::AssignmentTargetWithDefault(target) => target.gen(p, ctx),
+            match_assignment_target!(Self) => self.to_assignment_target().print(p, ctx),
+            Self::AssignmentTargetWithDefault(target) => target.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetWithDefault<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.binding.gen(p, ctx);
+impl<'a> Gen for AssignmentTargetWithDefault<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.binding.print(p, ctx);
         p.print_soft_space();
         p.print_equal();
         p.print_soft_space();
-        self.init.gen_expr(p, Precedence::Comma, Context::empty());
+        self.init.print_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetProperty<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AssignmentTargetProperty<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::AssignmentTargetPropertyIdentifier(ident) => ident.gen(p, ctx),
-            Self::AssignmentTargetPropertyProperty(prop) => prop.gen(p, ctx),
+            Self::AssignmentTargetPropertyIdentifier(ident) => ident.print(p, ctx),
+            Self::AssignmentTargetPropertyProperty(prop) => prop.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyIdentifier<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AssignmentTargetPropertyIdentifier<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         let ident_name = p.get_identifier_reference_name(&self.binding).to_owned();
         if ident_name == self.binding.name.as_str() {
-            self.binding.gen(p, ctx);
+            self.binding.print(p, ctx);
         } else {
             // `({x: a} = y);`
             p.print_str(self.binding.name.as_str());
@@ -1991,54 +1941,54 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyIdentifier<
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            expr.gen_expr(p, Precedence::Comma, Context::empty());
+            expr.print_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyProperty<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.name {
             PropertyKey::StaticIdentifier(ident) => {
-                ident.gen(p, ctx);
+                ident.print(p, ctx);
             }
             PropertyKey::PrivateIdentifier(ident) => {
-                ident.gen(p, ctx);
+                ident.print(p, ctx);
             }
             key @ match_expression!(PropertyKey) => {
                 p.print_char(b'[');
-                key.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
+                key.to_expression().print_expr(p, Precedence::Comma, Context::empty());
                 p.print_char(b']');
             }
         }
         p.print_colon();
         p.print_soft_space();
-        self.binding.gen(p, ctx);
+        self.binding.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetRest<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AssignmentTargetRest<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_ellipsis();
-        self.target.gen(p, ctx);
+        self.target.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SequenceExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, _ctx: Context) {
+impl<'a> GenExpr for SequenceExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
             p.print_expressions(&self.expressions, Precedence::Lowest, Context::empty());
         });
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ImportExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for ImportExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         p.wrap(wrap, |p| {
             p.add_source_mapping(self.span.start);
             p.print_str("import(");
-            self.source.gen_expr(p, Precedence::Comma, Context::empty());
+            self.source.print_expr(p, Precedence::Comma, Context::empty());
             if !self.arguments.is_empty() {
                 p.print_comma();
                 p.print_expressions(&self.arguments, Precedence::Comma, Context::empty());
@@ -2048,8 +1998,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ImportExpression<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TemplateLiteral<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for TemplateLiteral<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_char(b'`');
         let mut expressions = self.expressions.iter();
 
@@ -2068,56 +2018,58 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TemplateLiteral<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TaggedTemplateExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TaggedTemplateExpression<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.tag.gen_expr(p, Precedence::Postfix, Context::empty());
-        self.quasi.gen(p, ctx);
+        self.tag.print_expr(p, Precedence::Postfix, Context::empty());
+        if let Some(type_parameters) = &self.type_parameters {
+            type_parameters.print(p, ctx);
+        }
+        self.quasi.print(p, ctx);
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for Super {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for Super {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str("super");
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AwaitExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for AwaitExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         p.wrap(precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span.start);
             p.print_str("await ");
-            self.argument.gen_expr(p, Precedence::Exponentiation, ctx);
+            self.argument.print_expr(p, Precedence::Exponentiation, ctx);
         });
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for ChainExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         match &self.expression {
-            ChainElement::CallExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            ChainElement::CallExpression(expr) => expr.print_expr(p, precedence, ctx),
             match_member_expression!(ChainElement) => {
-                self.expression.to_member_expression().gen_expr(p, precedence, ctx);
+                self.expression.to_member_expression().print_expr(p, precedence, ctx);
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+impl<'a> GenExpr for NewExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         let mut wrap = precedence >= self.precedence();
-        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
-        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+        let annotate_comment = p.get_leading_annotate_comments(self.span.start);
+        if !annotate_comment.is_empty() && precedence >= Precedence::Postfix {
             wrap = true;
         }
         p.wrap(wrap, |p| {
-            if let Some(comment) = annotate_comment {
-                p.print_comment(comment);
-            }
+            p.print_comments(&annotate_comment, &mut AnnotationKind::empty());
+            p.print_space_before_identifier();
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
-            self.callee.gen_expr(p, Precedence::New, Context::FORBID_CALL);
+            self.callee.print_expr(p, Precedence::New, Context::FORBID_CALL);
             p.print_char(b'(');
             p.print_list(&self.arguments, ctx);
             p.print_char(b')');
@@ -2125,41 +2077,106 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for MetaProperty<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.add_source_mapping(self.span.start);
-        self.meta.gen(p, ctx);
-        p.print_char(b'.');
-        self.property.gen(p, ctx);
+impl<'a> GenExpr for TSAsExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        p.print_char(b'(');
+        p.print_char(b'(');
+        self.expression.print_expr(p, precedence, Context::default());
+        p.print_char(b')');
+        p.print_str(" as ");
+        self.type_annotation.print(p, ctx);
+        p.print_char(b')');
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> GenExpr for TSSatisfiesExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        p.print_char(b'(');
+        p.print_char(b'(');
+        self.expression.print_expr(p, precedence, Context::default());
+        p.print_char(b')');
+        p.print_str(" satisfies ");
+        self.type_annotation.print(p, ctx);
+        p.print_char(b')');
+    }
+}
+
+impl<'a> GenExpr for TSNonNullExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        p.wrap(matches!(self.expression, Expression::ParenthesizedExpression(_)), |p| {
+            self.expression.print_expr(p, precedence, ctx);
+        });
+        p.print_char(b'!');
+        if p.options.minify {
+            p.print_hard_space();
+        }
+    }
+}
+
+impl<'a> GenExpr for TSInstantiationExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        self.expression.print_expr(p, precedence, ctx);
+        self.type_parameters.print(p, ctx);
+        if p.options.minify {
+            p.print_hard_space();
+        }
+    }
+}
+
+impl<'a> GenExpr for TSTypeAssertion<'a> {
+    fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
+        p.wrap(precedence >= self.precedence(), |p| {
+            p.print_str("<");
+            // var r = < <T>(x: T) => T > ((x) => { return null; });
+            //          ^ make sure space is printed here.
+            if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
+                p.print_hard_space();
+            }
+            self.type_annotation.print(p, ctx);
+            p.print_str(">");
+            self.expression.print_expr(p, Precedence::Member, ctx);
+        });
+    }
+}
+
+impl<'a> Gen for MetaProperty<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.declare {
-            p.print_str("declare ");
-        }
-        if self.r#abstract {
-            p.print_str("abstract ");
-        }
+        self.meta.print(p, ctx);
+        p.print_char(b'.');
+        self.property.print(p, ctx);
+    }
+}
+
+impl<'a> Gen for Class<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        p.add_source_mapping(self.span.start);
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
-            self.decorators.gen(p, ctx);
+            for decorator in &self.decorators {
+                decorator.print(p, ctx);
+                p.print_hard_space();
+            }
+            if self.declare {
+                p.print_str("declare ");
+            }
+            if self.r#abstract {
+                p.print_str("abstract ");
+            }
             p.print_str("class");
             if let Some(id) = &self.id {
                 p.print_hard_space();
-                id.gen(p, ctx);
+                id.print(p, ctx);
                 if let Some(type_parameters) = self.type_parameters.as_ref() {
-                    type_parameters.gen(p, ctx);
+                    type_parameters.print(p, ctx);
                 }
             }
             if let Some(super_class) = self.super_class.as_ref() {
                 p.print_str(" extends ");
-                super_class.gen_expr(p, Precedence::Call, Context::empty());
+                super_class.print_expr(p, Precedence::Call, Context::empty());
                 if let Some(super_type_parameters) = &self.super_type_parameters {
-                    super_type_parameters.gen(p, ctx);
+                    super_type_parameters.print(p, ctx);
                 }
             }
             if let Some(implements) = self.implements.as_ref() {
@@ -2167,171 +2184,179 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
                 p.print_list(implements, ctx);
             }
             p.print_soft_space();
-            self.body.gen(p, ctx);
+            self.body.print(p, ctx);
             p.needs_semicolon = false;
         });
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ClassBody<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ClassBody<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for item in &self.body {
                 p.print_semicolon_if_needed();
                 p.print_indent();
-                item.gen(p, ctx);
+                item.print(p, ctx);
             }
         });
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ClassElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ClassElement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::StaticBlock(elem) => {
-                elem.gen(p, ctx);
+                p.print_leading_comments(elem.span.start);
+                elem.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::MethodDefinition(elem) => {
-                elem.gen(p, ctx);
+                p.print_leading_comments(elem.span.start);
+                elem.print(p, ctx);
                 p.print_soft_newline();
             }
             Self::PropertyDefinition(elem) => {
-                elem.gen(p, ctx);
+                p.print_leading_comments(elem.span.start);
+                elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::AccessorProperty(elem) => {
-                elem.gen(p, ctx);
+                p.print_leading_comments(elem.span.start);
+                elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::TSIndexSignature(elem) => {
-                elem.gen(p, ctx);
+                p.print_leading_comments(elem.span.start);
+                elem.print(p, ctx);
                 p.print_semicolon_after_statement();
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXIdentifier<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for JSXIdentifier<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping_for_name(self.span, &self.name);
         p.print_str(self.name.as_str());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXMemberExpressionObject<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXMemberExpressionObject<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::Identifier(ident) => ident.gen(p, ctx),
-            Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::IdentifierReference(ident) => ident.print(p, ctx),
+            Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
+            Self::ThisExpression(expr) => expr.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXMemberExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.object.gen(p, ctx);
+impl<'a> Gen for JSXMemberExpression<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.object.print(p, ctx);
         p.print_char(b'.');
-        self.property.gen(p, ctx);
+        self.property.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXElementName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXElementName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::Identifier(identifier) => identifier.gen(p, ctx),
-            Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
-            Self::MemberExpression(member_expr) => member_expr.gen(p, ctx),
+            Self::Identifier(identifier) => identifier.print(p, ctx),
+            Self::IdentifierReference(identifier) => identifier.print(p, ctx),
+            Self::NamespacedName(namespaced_name) => namespaced_name.print(p, ctx),
+            Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
+            Self::ThisExpression(expr) => expr.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXNamespacedName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.namespace.gen(p, ctx);
+impl<'a> Gen for JSXNamespacedName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.namespace.print(p, ctx);
         p.print_colon();
-        self.property.gen(p, ctx);
+        self.property.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXAttributeName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::Identifier(ident) => ident.gen(p, ctx),
-            Self::NamespacedName(namespaced_name) => namespaced_name.gen(p, ctx),
+            Self::Identifier(ident) => ident.print(p, ctx),
+            Self::NamespacedName(namespaced_name) => namespaced_name.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttribute<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.name.gen(p, ctx);
+impl<'a> Gen for JSXAttribute<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.name.print(p, ctx);
         if let Some(value) = &self.value {
             p.print_equal();
-            value.gen(p, ctx);
+            value.print(p, ctx);
         }
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for JSXEmptyExpression {
-    fn gen(&self, _: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
+impl Gen for JSXEmptyExpression {
+    fn gen(&self, _: &mut Codegen, _ctx: Context) {}
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXExpression<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXExpression<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             match_expression!(Self) => p.print_expression(self.to_expression()),
-            Self::EmptyExpression(expr) => expr.gen(p, ctx),
+            Self::EmptyExpression(expr) => expr.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXExpressionContainer<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXExpressionContainer<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_char(b'{');
-        self.expression.gen(p, ctx);
+        self.expression.print(p, ctx);
         p.print_char(b'}');
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXAttributeValue<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::Fragment(fragment) => fragment.gen(p, ctx),
-            Self::Element(el) => el.gen(p, ctx),
+            Self::Fragment(fragment) => fragment.print(p, ctx),
+            Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
                 let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
                 p.print_char(quote);
                 p.print_str(&lit.value);
                 p.print_char(quote);
             }
-            Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
+            Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXSpreadAttribute<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for JSXSpreadAttribute<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("{...");
-        self.argument.gen_expr(p, Precedence::Comma, Context::empty());
+        self.argument.print_expr(p, Precedence::Comma, Context::empty());
         p.print_char(b'}');
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeItem<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXAttributeItem<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::Attribute(attr) => attr.gen(p, ctx),
-            Self::SpreadAttribute(spread_attr) => spread_attr.gen(p, ctx),
+            Self::Attribute(attr) => attr.print(p, ctx),
+            Self::SpreadAttribute(spread_attr) => spread_attr.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXOpeningElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXOpeningElement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'<');
-        self.name.gen(p, ctx);
+        self.name.print(p, ctx);
         for attr in &self.attributes {
             match attr {
                 JSXAttributeItem::Attribute(_) => {
@@ -2341,7 +2366,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXOpeningElement<'a> {
                     p.print_soft_space();
                 }
             }
-            attr.gen(p, ctx);
+            attr.print(p, ctx);
         }
         if self.self_closing {
             p.print_soft_space();
@@ -2351,99 +2376,103 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXOpeningElement<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXClosingElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXClosingElement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str("</");
-        self.name.gen(p, ctx);
+        self.name.print(p, ctx);
         p.print_char(b'>');
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.opening_element.gen(p, ctx);
+impl<'a> Gen for JSXElement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.opening_element.print(p, ctx);
         for child in &self.children {
-            child.gen(p, ctx);
+            child.print(p, ctx);
         }
         if let Some(closing_element) = &self.closing_element {
-            closing_element.gen(p, ctx);
+            closing_element.print(p, ctx);
         }
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for JSXOpeningFragment {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for JSXOpeningFragment {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str("<>");
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for JSXClosingFragment {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl Gen for JSXClosingFragment {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str("</>");
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXText<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for JSXText<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str(self.value.as_str());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXSpreadChild<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for JSXSpreadChild<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_str("...");
         p.print_expression(&self.expression);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXChild<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSXChild<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::Fragment(fragment) => fragment.gen(p, ctx),
-            Self::Element(el) => el.gen(p, ctx),
+            Self::Fragment(fragment) => fragment.print(p, ctx),
+            Self::Element(el) => el.print(p, ctx),
             Self::Spread(spread) => p.print_expression(&spread.expression),
-            Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
-            Self::Text(text) => text.gen(p, ctx),
+            Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
+            Self::Text(text) => text.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXFragment<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.opening_fragment.gen(p, ctx);
+impl<'a> Gen for JSXFragment<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.opening_fragment.print(p, ctx);
         for child in &self.children {
-            child.gen(p, ctx);
+            child.print(p, ctx);
         }
-        self.closing_fragment.gen(p, ctx);
+        self.closing_fragment.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for StaticBlock<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str("static");
         p.print_soft_space();
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for stmt in &self.body {
                 p.print_semicolon_if_needed();
-                stmt.gen(p, ctx);
+                stmt.print(p, ctx);
             }
         });
         p.needs_semicolon = false;
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for MethodDefinition<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.decorators.gen(p, ctx);
+        for decorator in &self.decorators {
+            decorator.print(p, ctx);
+            p.print_hard_space();
+        }
 
         if let Some(accessibility) = &self.accessibility {
-            accessibility.gen(p, ctx);
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.r#type == MethodDefinitionType::TSAbstractMethodDefinition {
             p.print_str("abstract ");
@@ -2473,7 +2502,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
         if self.computed {
             p.print_char(b'[');
         }
-        self.key.gen(p, ctx);
+        self.key.print(p, ctx);
         if self.computed {
             p.print_char(b']');
         }
@@ -2481,31 +2510,38 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
             p.print_char(b'?');
         }
         if let Some(type_parameters) = self.value.type_parameters.as_ref() {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
         p.print_char(b'(');
-        self.value.params.gen(p, ctx);
+        self.value.params.print(p, ctx);
         p.print_char(b')');
         if let Some(return_type) = &self.value.return_type {
             p.print_colon();
             p.print_soft_space();
-            return_type.gen(p, ctx);
+            return_type.print(p, ctx);
         }
         if let Some(body) = &self.value.body {
             p.print_soft_space();
-            body.gen(p, ctx);
+            body.print(p, ctx);
         } else {
             p.print_semicolon();
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for PropertyDefinition<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.decorators.gen(p, ctx);
-        if let Some(accessibility) = &self.accessibility {
-            accessibility.gen(p, ctx);
+        for decorator in &self.decorators {
+            decorator.print(p, ctx);
+            p.print_hard_space();
+        }
+        if self.declare {
+            p.print_str("declare ");
+        }
+        if let Some(accessibility) = self.accessibility {
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
             p.print_str("abstract ");
@@ -2519,7 +2555,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
         if self.computed {
             p.print_char(b'[');
         }
-        self.key.gen(p, ctx);
+        self.key.print(p, ctx);
         if self.computed {
             p.print_char(b']');
         }
@@ -2529,22 +2565,30 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
             p.print_soft_space();
-            type_annotation.gen(p, ctx);
+            type_annotation.print(p, ctx);
         }
         if let Some(value) = &self.value {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            value.gen_expr(p, Precedence::Comma, Context::empty());
+            value.print_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for AccessorProperty<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
+        for decorator in &self.decorators {
+            decorator.print(p, ctx);
+            p.print_hard_space();
+        }
         if self.r#type.is_abstract() {
             p.print_str("abstract ");
+        }
+        if let Some(accessibility) = self.accessibility {
+            p.print_str(accessibility.as_str());
+            p.print_hard_space();
         }
         if self.r#static {
             p.print_str("static ");
@@ -2556,32 +2600,39 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
         } else {
             p.print_hard_space();
         }
-        self.key.gen(p, ctx);
+        self.key.print(p, ctx);
         if self.computed {
             p.print_char(b']');
         }
+        if let Some(type_annotation) = &self.type_annotation {
+            p.print_colon();
+            p.print_soft_space();
+            type_annotation.print(p, ctx);
+        }
         if let Some(value) = &self.value {
+            p.print_soft_space();
             p.print_equal();
-            value.gen_expr(p, Precedence::Comma, Context::empty());
+            p.print_soft_space();
+            value.print_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateIdentifier<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for PrivateIdentifier<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping_for_name(self.span, &self.name);
         p.print_char(b'#');
         p.print_str(self.name.as_str());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingPattern<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for BindingPattern<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.gen(p, ctx),
-            BindingPatternKind::ObjectPattern(pattern) => pattern.gen(p, ctx),
-            BindingPatternKind::ArrayPattern(pattern) => pattern.gen(p, ctx),
-            BindingPatternKind::AssignmentPattern(pattern) => pattern.gen(p, ctx),
+            BindingPatternKind::BindingIdentifier(ident) => ident.print(p, ctx),
+            BindingPatternKind::ObjectPattern(pattern) => pattern.print(p, ctx),
+            BindingPatternKind::ArrayPattern(pattern) => pattern.print(p, ctx),
+            BindingPatternKind::AssignmentPattern(pattern) => pattern.print(p, ctx),
         }
         if self.optional {
             p.print_str("?");
@@ -2589,31 +2640,35 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingPattern<'a> {
         if let Some(type_annotation) = &self.type_annotation {
             p.print_colon();
             p.print_soft_space();
-            type_annotation.gen(p, ctx);
+            type_annotation.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
-    fn gen(&self, p: &mut Codegen<MINIFY>, ctx: Context) {
+impl<'a> Gen for ObjectPattern<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'{');
-        p.print_soft_space();
+        if !self.is_empty() {
+            p.print_soft_space();
+        }
         p.print_list(&self.properties, ctx);
         if let Some(rest) = &self.rest {
             if !self.properties.is_empty() {
                 p.print_comma();
             }
-            rest.gen(p, ctx);
+            rest.print(p, ctx);
         }
-        p.print_soft_space();
+        if !self.is_empty() {
+            p.print_soft_space();
+        }
         p.print_char(b'}');
         p.add_source_mapping(self.span.end);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for BindingProperty<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         if self.computed {
             p.print_char(b'[');
@@ -2641,7 +2696,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
         }
 
         if !shorthand {
-            self.key.gen(p, ctx);
+            self.key.print(p, ctx);
         }
         if self.computed {
             p.print_char(b']');
@@ -2650,20 +2705,20 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
             p.print_colon();
             p.print_soft_space();
         }
-        self.value.gen(p, ctx);
+        self.value.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingRestElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for BindingRestElement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_ellipsis();
-        self.argument.gen(p, ctx);
+        self.argument.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayPattern<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for ArrayPattern<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_char(b'[');
         for (index, item) in self.elements.iter().enumerate() {
@@ -2672,7 +2727,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayPattern<'a> {
                 p.print_soft_space();
             }
             if let Some(item) = item {
-                item.gen(p, ctx);
+                item.print(p, ctx);
             }
             if index == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
                 p.print_comma();
@@ -2680,34 +2735,25 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayPattern<'a> {
         }
         if let Some(rest) = &self.rest {
             p.print_soft_space();
-            rest.gen(p, ctx);
+            rest.print(p, ctx);
         }
         p.print_char(b']');
         p.add_source_mapping(self.span.end);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentPattern<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.left.gen(p, ctx);
+impl<'a> Gen for AssignmentPattern<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.left.print(p, ctx);
         p.print_soft_space();
         p.print_equal();
         p.print_soft_space();
-        self.right.gen_expr(p, Precedence::Comma, Context::empty());
+        self.right.print_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Vec<'a, Decorator<'a>> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        for decorator in self {
-            decorator.gen(p, ctx);
-            p.print_hard_space();
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Decorator<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+impl<'a> Gen for Decorator<'a> {
+    fn gen(&self, p: &mut Codegen, _ctx: Context) {
         fn need_wrap(expr: &Expression) -> bool {
             match expr {
                 // "@foo"
@@ -2728,52 +2774,72 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Decorator<'a> {
         p.print_char(b'@');
         let wrap = need_wrap(&self.expression);
         p.wrap(wrap, |p| {
-            self.expression.gen_expr(p, Precedence::Lowest, Context::empty());
+            self.expression.print_expr(p, Precedence::Lowest, Context::empty());
         });
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSClassImplements<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.expression.gen(p, ctx);
+impl<'a> Gen for TSClassImplements<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.expression.print(p, ctx);
         if let Some(type_parameters) = self.type_parameters.as_ref() {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.print_str("<");
-        p.print_list(&self.params, ctx);
-        p.print_str(">");
+impl<'a> Gen for TSTypeParameterDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        let is_multi_line = self.params.len() >= 2;
+        p.print_char(b'<');
+        if is_multi_line {
+            p.indent();
+        }
+        for (index, item) in self.params.iter().enumerate() {
+            if index != 0 {
+                p.print_comma();
+            }
+            if is_multi_line {
+                p.print_soft_newline();
+                p.print_indent();
+            } else if index != 0 {
+                p.print_soft_space();
+            }
+            item.print(p, ctx);
+        }
+        if is_multi_line {
+            p.print_soft_newline();
+            p.dedent();
+            p.print_indent();
+        }
+        p.print_char(b'>');
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAnnotation<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.type_annotation.gen(p, ctx);
+impl<'a> Gen for TSTypeAnnotation<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.type_annotation.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::TSFunctionType(ty) => ty.gen(p, ctx),
-            Self::TSConstructorType(ty) => ty.gen(p, ctx),
-            Self::TSArrayType(ty) => ty.gen(p, ctx),
-            Self::TSTupleType(ty) => ty.gen(p, ctx),
-            Self::TSUnionType(ty) => ty.gen(p, ctx),
-            Self::TSParenthesizedType(ty) => ty.gen(p, ctx),
-            Self::TSIntersectionType(ty) => ty.gen(p, ctx),
-            Self::TSConditionalType(ty) => ty.gen(p, ctx),
-            Self::TSInferType(ty) => ty.gen(p, ctx),
-            Self::TSIndexedAccessType(ty) => ty.gen(p, ctx),
-            Self::TSMappedType(ty) => ty.gen(p, ctx),
-            Self::TSNamedTupleMember(ty) => ty.gen(p, ctx),
-            Self::TSLiteralType(ty) => ty.literal.gen(p, ctx),
-            Self::TSImportType(ty) => ty.gen(p, ctx),
-            Self::TSQualifiedName(ty) => ty.gen(p, ctx),
+            Self::TSFunctionType(ty) => ty.print(p, ctx),
+            Self::TSConstructorType(ty) => ty.print(p, ctx),
+            Self::TSArrayType(ty) => ty.print(p, ctx),
+            Self::TSTupleType(ty) => ty.print(p, ctx),
+            Self::TSUnionType(ty) => ty.print(p, ctx),
+            Self::TSParenthesizedType(ty) => ty.print(p, ctx),
+            Self::TSIntersectionType(ty) => ty.print(p, ctx),
+            Self::TSConditionalType(ty) => ty.print(p, ctx),
+            Self::TSInferType(ty) => ty.print(p, ctx),
+            Self::TSIndexedAccessType(ty) => ty.print(p, ctx),
+            Self::TSMappedType(ty) => ty.print(p, ctx),
+            Self::TSNamedTupleMember(ty) => ty.print(p, ctx),
+            Self::TSLiteralType(ty) => ty.literal.print(p, ctx),
+            Self::TSImportType(ty) => ty.print(p, ctx),
+            Self::TSQualifiedName(ty) => ty.print(p, ctx),
             Self::TSAnyKeyword(_) => p.print_str("any"),
             Self::TSBigIntKeyword(_) => p.print_str("bigint"),
             Self::TSBooleanKeyword(_) => p.print_str("boolean"),
@@ -2788,38 +2854,38 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             Self::TSUndefinedKeyword(_) => p.print_str("undefined"),
             Self::TSUnknownKeyword(_) => p.print_str("unknown"),
             Self::TSVoidKeyword(_) => p.print_str("void"),
-            Self::TSTemplateLiteralType(ty) => ty.gen(p, ctx),
-            Self::TSTypeLiteral(ty) => ty.gen(p, ctx),
-            Self::TSTypeOperatorType(ty) => ty.gen(p, ctx),
-            Self::TSTypePredicate(ty) => ty.gen(p, ctx),
-            Self::TSTypeQuery(ty) => ty.gen(p, ctx),
-            Self::TSTypeReference(ty) => ty.gen(p, ctx),
-            Self::JSDocNullableType(ty) => ty.gen(p, ctx),
-            Self::JSDocNonNullableType(ty) => ty.gen(p, ctx),
+            Self::TSTemplateLiteralType(ty) => ty.print(p, ctx),
+            Self::TSTypeLiteral(ty) => ty.print(p, ctx),
+            Self::TSTypeOperatorType(ty) => ty.print(p, ctx),
+            Self::TSTypePredicate(ty) => ty.print(p, ctx),
+            Self::TSTypeQuery(ty) => ty.print(p, ctx),
+            Self::TSTypeReference(ty) => ty.print(p, ctx),
+            Self::JSDocNullableType(ty) => ty.print(p, ctx),
+            Self::JSDocNonNullableType(ty) => ty.print(p, ctx),
             Self::JSDocUnknownType(_ty) => p.print_str("unknown"),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSArrayType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.element_type.gen(p, ctx);
+impl<'a> Gen for TSArrayType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.element_type.print(p, ctx);
         p.print_str("[]");
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTupleType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("[");
         p.print_list(&self.element_types, ctx);
         p.print_str("]");
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSUnionType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSUnionType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.types.len() == 1 {
-            self.types[0].gen(p, ctx);
+            self.types[0].print(p, ctx);
             return;
         }
         for (index, item) in self.types.iter().enumerate() {
@@ -2828,23 +2894,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSUnionType<'a> {
                 p.print_str("|");
                 p.print_soft_space();
             }
-            item.gen(p, ctx);
+            item.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSParenthesizedType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSParenthesizedType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_char(b'(');
-        self.type_annotation.gen(p, ctx);
+        self.type_annotation.print(p, ctx);
         p.print_char(b')');
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIntersectionType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSIntersectionType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.types.len() == 1 {
-            self.types[0].gen(p, ctx);
+            self.types[0].print(p, ctx);
             return;
         }
         for (index, item) in self.types.iter().enumerate() {
@@ -2853,68 +2919,68 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIntersectionType<'a> {
                 p.print_str("&");
                 p.print_soft_space();
             }
-            item.gen(p, ctx);
+            item.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSConditionalType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.check_type.gen(p, ctx);
+impl<'a> Gen for TSConditionalType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.check_type.print(p, ctx);
         p.print_str(" extends ");
-        self.extends_type.gen(p, ctx);
+        self.extends_type.print(p, ctx);
         p.print_str(" ? ");
-        self.true_type.gen(p, ctx);
+        self.true_type.print(p, ctx);
         p.print_str(" : ");
-        self.false_type.gen(p, ctx);
+        self.false_type.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInferType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSInferType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("infer ");
-        self.type_parameter.gen(p, ctx);
+        self.type_parameter.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexedAccessType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.object_type.gen(p, ctx);
+impl<'a> Gen for TSIndexedAccessType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.object_type.print(p, ctx);
         p.print_str("[");
-        self.index_type.gen(p, ctx);
+        self.index_type.print(p, ctx);
         p.print_str("]");
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSMappedType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSMappedType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("{");
+        p.print_soft_space();
         match self.readonly {
             TSMappedTypeModifierOperator::True => {
-                p.print_str("readonly");
+                p.print_str("readonly ");
             }
             TSMappedTypeModifierOperator::Plus => {
-                p.print_str("+readonly");
+                p.print_str("+readonly ");
             }
             TSMappedTypeModifierOperator::Minus => {
-                p.print_str("-readonly");
+                p.print_str("-readonly ");
             }
             TSMappedTypeModifierOperator::None => {}
         }
-        p.print_hard_space();
         p.print_str("[");
-        self.type_parameter.name.gen(p, ctx);
+        self.type_parameter.name.print(p, ctx);
         if let Some(constraint) = &self.type_parameter.constraint {
             p.print_str(" in ");
-            constraint.gen(p, ctx);
+            constraint.print(p, ctx);
         }
         if let Some(default) = &self.type_parameter.default {
             p.print_str(" = ");
-            default.gen(p, ctx);
+            default.print(p, ctx);
         }
         if let Some(name_type) = &self.name_type {
             p.print_str(" as ");
-            name_type.gen(p, ctx);
+            name_type.print(p, ctx);
         }
         p.print_str("]");
         match self.optional {
@@ -2933,22 +2999,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSMappedType<'a> {
         if let Some(type_annotation) = &self.type_annotation {
             p.print_str(":");
             p.print_soft_space();
-            type_annotation.gen(p, ctx);
+            type_annotation.print(p, ctx);
         }
+        p.print_soft_space();
         p.print_str("}");
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSQualifiedName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.left.gen(p, ctx);
+impl<'a> Gen for TSQualifiedName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.left.print(p, ctx);
         p.print_str(".");
-        self.right.gen(p, ctx);
+        self.right.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeOperator<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeOperator<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self.operator {
             TSTypeOperatorOperator::Keyof => {
                 p.print_str("keyof ");
@@ -2960,18 +3027,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeOperator<'a> {
                 p.print_str("readonly ");
             }
         }
-        self.type_annotation.gen(p, ctx);
+        self.type_annotation.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypePredicate<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypePredicate<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.asserts {
             p.print_str("asserts ");
         }
         match &self.parameter_name {
             TSTypePredicateName::Identifier(ident) => {
-                ident.gen(p, ctx);
+                ident.print(p, ctx);
             }
             TSTypePredicateName::This(_ident) => {
                 p.print_str("this");
@@ -2979,52 +3046,52 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypePredicate<'a> {
         }
         if let Some(type_annotation) = &self.type_annotation {
             p.print_str(" is ");
-            type_annotation.gen(p, ctx);
+            type_annotation.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeReference<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.type_name.gen(p, ctx);
+impl<'a> Gen for TSTypeReference<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.type_name.print(p, ctx);
         if let Some(type_parameters) = &self.type_parameters {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSDocNullableType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSDocNullableType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.postfix {
-            self.type_annotation.gen(p, ctx);
+            self.type_annotation.print(p, ctx);
             p.print_str("?");
         } else {
             p.print_str("?");
-            self.type_annotation.gen(p, ctx);
+            self.type_annotation.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for JSDocNonNullableType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for JSDocNonNullableType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.postfix {
-            self.type_annotation.gen(p, ctx);
+            self.type_annotation.print(p, ctx);
             p.print_str("!");
         } else {
             p.print_str("!");
-            self.type_annotation.gen(p, ctx);
+            self.type_annotation.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTemplateLiteralType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTemplateLiteralType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("`");
         for (index, item) in self.quasis.iter().enumerate() {
             if index != 0 {
                 if let Some(types) = self.types.get(index - 1) {
                     p.print_str("${");
-                    types.gen(p, ctx);
+                    types.print(p, ctx);
                     p.print_str("}");
                 }
             }
@@ -3034,14 +3101,20 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTemplateLiteralType<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeLiteral<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeLiteral<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         let single_line = self.members.len() <= 1;
         p.print_curly_braces(self.span, single_line, |p| {
             for item in &self.members {
-                p.print_indent();
-                item.gen(p, ctx);
-                if !single_line {
+                if single_line {
+                    p.print_soft_space();
+                } else {
+                    p.print_indent();
+                }
+                item.print(p, ctx);
+                if single_line {
+                    p.print_soft_space();
+                } else {
                     p.print_semicolon();
                     p.print_soft_newline();
                 }
@@ -3050,107 +3123,107 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeLiteral<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::IdentifierReference(ident) => {
-                ident.gen(p, ctx);
+                ident.print(p, ctx);
             }
             Self::QualifiedName(decl) => {
-                decl.left.gen(p, ctx);
+                decl.left.print(p, ctx);
                 p.print_str(".");
-                decl.right.gen(p, ctx);
+                decl.right.print(p, ctx);
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSLiteral<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::BooleanLiteral(decl) => decl.gen(p, ctx),
-            Self::NullLiteral(decl) => decl.gen(p, ctx),
-            Self::NumericLiteral(decl) => decl.gen(p, ctx),
-            Self::BigIntLiteral(decl) => decl.gen(p, ctx),
-            Self::RegExpLiteral(decl) => decl.gen(p, ctx),
-            Self::StringLiteral(decl) => decl.gen(p, ctx),
-            Self::TemplateLiteral(decl) => decl.gen(p, ctx),
-            Self::UnaryExpression(decl) => decl.gen_expr(p, Precedence::Comma, ctx),
+            Self::BooleanLiteral(decl) => decl.print(p, ctx),
+            Self::NullLiteral(decl) => decl.print(p, ctx),
+            Self::NumericLiteral(decl) => decl.print(p, ctx),
+            Self::BigIntLiteral(decl) => decl.print(p, ctx),
+            Self::RegExpLiteral(decl) => decl.print(p, ctx),
+            Self::StringLiteral(decl) => decl.print(p, ctx),
+            Self::TemplateLiteral(decl) => decl.print(p, ctx),
+            Self::UnaryExpression(decl) => decl.print_expr(p, Precedence::Comma, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameter<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeParameter<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.r#const {
             p.print_str("const ");
         }
-        self.name.gen(p, ctx);
+        self.name.print(p, ctx);
         if let Some(constraint) = &self.constraint {
             p.print_str(" extends ");
-            constraint.gen(p, ctx);
+            constraint.print(p, ctx);
         }
         if let Some(default) = &self.default {
             p.print_str(" = ");
-            default.gen(p, ctx);
+            default.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSFunctionType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSFunctionType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if let Some(type_parameters) = &self.type_parameters {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
         p.print_str("(");
         if let Some(this_param) = &self.this_param {
-            this_param.gen(p, ctx);
+            this_param.print(p, ctx);
             if !self.params.is_empty() || self.params.rest.is_some() {
                 p.print_str(",");
             }
             p.print_soft_space();
         }
-        self.params.gen(p, ctx);
+        self.params.print(p, ctx);
         p.print_str(")");
         p.print_soft_space();
         p.print_str("=>");
         p.print_soft_space();
-        self.return_type.gen(p, ctx);
+        self.return_type.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSThisParameter<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.this.gen(p, ctx);
+impl<'a> Gen for TSThisParameter<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        p.print_str("this");
         if let Some(type_annotation) = &self.type_annotation {
             p.print_str(": ");
-            type_annotation.gen(p, ctx);
+            type_annotation.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSSignature<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::TSIndexSignature(signature) => signature.gen(p, ctx),
+            Self::TSIndexSignature(signature) => signature.print(p, ctx),
             Self::TSPropertySignature(signature) => {
                 if signature.readonly {
                     p.print_str("readonly ");
                 }
                 if signature.computed {
                     p.print_char(b'[');
-                    signature.key.gen(p, ctx);
+                    signature.key.print(p, ctx);
                     p.print_char(b']');
                 } else {
                     match &signature.key {
                         PropertyKey::StaticIdentifier(key) => {
-                            key.gen(p, ctx);
+                            key.print(p, ctx);
                         }
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_str());
                         }
                         key @ match_expression!(PropertyKey) => {
-                            key.to_expression().gen_expr(p, Precedence::Comma, ctx);
+                            key.to_expression().print_expr(p, Precedence::Comma, ctx);
                         }
                     }
                 }
@@ -3160,41 +3233,41 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                 if let Some(type_annotation) = &signature.type_annotation {
                     p.print_colon();
                     p.print_soft_space();
-                    type_annotation.gen(p, ctx);
+                    type_annotation.print(p, ctx);
                 }
             }
             Self::TSCallSignatureDeclaration(signature) => {
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
-                    type_parameters.gen(p, ctx);
+                    type_parameters.print(p, ctx);
                 }
                 p.print_str("(");
                 if let Some(this_param) = &signature.this_param {
-                    this_param.gen(p, ctx);
+                    this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
                         p.print_str(",");
                     }
                     p.print_soft_space();
                 }
-                signature.params.gen(p, ctx);
+                signature.params.print(p, ctx);
                 p.print_str(")");
                 if let Some(return_type) = &signature.return_type {
                     p.print_colon();
                     p.print_soft_space();
-                    return_type.gen(p, ctx);
+                    return_type.print(p, ctx);
                 }
             }
             Self::TSConstructSignatureDeclaration(signature) => {
                 p.print_str("new ");
                 if let Some(type_parameters) = signature.type_parameters.as_ref() {
-                    type_parameters.gen(p, ctx);
+                    type_parameters.print(p, ctx);
                 }
                 p.print_str("(");
-                signature.params.gen(p, ctx);
+                signature.params.print(p, ctx);
                 p.print_str(")");
                 if let Some(return_type) = &signature.return_type {
                     p.print_colon();
                     p.print_soft_space();
-                    return_type.gen(p, ctx);
+                    return_type.print(p, ctx);
                 }
             }
             Self::TSMethodSignature(signature) => {
@@ -3205,18 +3278,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                 }
                 if signature.computed {
                     p.print_char(b'[');
-                    signature.key.gen(p, ctx);
+                    signature.key.print(p, ctx);
                     p.print_char(b']');
                 } else {
                     match &signature.key {
                         PropertyKey::StaticIdentifier(key) => {
-                            key.gen(p, ctx);
+                            key.print(p, ctx);
                         }
                         PropertyKey::PrivateIdentifier(key) => {
                             p.print_str(key.name.as_str());
                         }
                         key @ match_expression!(PropertyKey) => {
-                            key.to_expression().gen_expr(p, Precedence::Comma, ctx);
+                            key.to_expression().print_expr(p, Precedence::Comma, ctx);
                         }
                     }
                 }
@@ -3224,74 +3297,74 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                     p.print_str("?");
                 }
                 if let Some(type_parameters) = &signature.type_parameters {
-                    type_parameters.gen(p, ctx);
+                    type_parameters.print(p, ctx);
                 }
                 p.print_str("(");
                 if let Some(this_param) = &signature.this_param {
-                    this_param.gen(p, ctx);
+                    this_param.print(p, ctx);
                     if !signature.params.is_empty() || signature.params.rest.is_some() {
                         p.print_str(",");
                     }
                     p.print_soft_space();
                 }
-                signature.params.gen(p, ctx);
+                signature.params.print(p, ctx);
                 p.print_str(")");
                 if let Some(return_type) = &signature.return_type {
                     p.print_colon();
                     p.print_soft_space();
-                    return_type.gen(p, ctx);
+                    return_type.print(p, ctx);
                 }
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQuery<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeQuery<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("typeof ");
-        self.expr_name.gen(p, ctx);
+        self.expr_name.print(p, ctx);
         if let Some(type_params) = &self.type_parameters {
-            type_params.gen(p, ctx);
+            type_params.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeQueryExprName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
-            Self::TSImportType(decl) => decl.gen(p, ctx),
+            match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
+            Self::TSImportType(decl) => decl.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSImportType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.is_type_of {
             p.print_str("typeof ");
         }
         p.print_str("import(");
-        self.parameter.gen(p, ctx);
+        self.parameter.print(p, ctx);
         if let Some(attributes) = &self.attributes {
             p.print_str(", ");
-            attributes.gen(p, ctx);
+            attributes.print(p, ctx);
         }
         p.print_str(")");
         if let Some(qualifier) = &self.qualifier {
             p.print_char(b'.');
-            qualifier.gen(p, ctx);
+            qualifier.print(p, ctx);
         }
         if let Some(type_parameters) = &self.type_parameters {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttributes<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSImportAttributes<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_char(b'{');
         p.print_soft_space();
-        self.attributes_keyword.gen(p, ctx);
+        self.attributes_keyword.print(p, ctx);
         p.print_str(":");
         p.print_soft_space();
         p.print_char(b'{');
@@ -3304,33 +3377,33 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttributes<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttribute<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.name.gen(p, ctx);
+impl<'a> Gen for TSImportAttribute<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.name.print(p, ctx);
         p.print_str(": ");
-        self.value.gen_expr(p, Precedence::Member, ctx);
+        self.value.print_expr(p, Precedence::Member, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttributeName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSImportAttributeName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            TSImportAttributeName::Identifier(ident) => ident.gen(p, ctx),
-            TSImportAttributeName::StringLiteral(literal) => literal.gen(p, ctx),
+            TSImportAttributeName::Identifier(ident) => ident.print(p, ctx),
+            TSImportAttributeName::StringLiteral(literal) => literal.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterInstantiation<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeParameterInstantiation<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("<");
         p.print_list(&self.params, ctx);
         p.print_str(">");
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexSignature<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSIndexSignature<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.readonly {
             p.print_str("readonly ");
         }
@@ -3342,53 +3415,53 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexSignature<'a> {
             p.print_str(parameter.name.as_str());
             p.print_colon();
             p.print_soft_space();
-            parameter.type_annotation.gen(p, ctx);
+            parameter.type_annotation.print(p, ctx);
         }
         p.print_str("]");
         p.print_colon();
         p.print_soft_space();
-        self.type_annotation.gen(p, ctx);
+        self.type_annotation.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTupleElement<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            match_ts_type!(TSTupleElement) => self.to_ts_type().gen(p, ctx),
+            match_ts_type!(TSTupleElement) => self.to_ts_type().print(p, ctx),
             TSTupleElement::TSOptionalType(ts_type) => {
-                ts_type.type_annotation.gen(p, ctx);
+                ts_type.type_annotation.print(p, ctx);
                 p.print_str("?");
             }
             TSTupleElement::TSRestType(ts_type) => {
                 p.print_str("...");
-                ts_type.type_annotation.gen(p, ctx);
+                ts_type.type_annotation.print(p, ctx);
             }
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamedTupleMember<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.label.gen(p, ctx);
+impl<'a> Gen for TSNamedTupleMember<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.label.print(p, ctx);
         if self.optional {
             p.print_str("?");
         }
         p.print_str(":");
         p.print_soft_space();
-        self.element_type.gen(p, ctx);
+        self.element_type.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSModuleDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
             p.print_str("declare ");
         }
-        self.kind.gen(p, ctx);
+        p.print_str(self.kind.as_str());
         // If the kind is global, then the id is also `global`, so we don't need to print it
         if !self.kind.is_global() {
             p.print_space_before_identifier();
-            self.id.gen(p, ctx);
+            self.id.print(p, ctx);
         }
 
         if let Some(body) = &self.body {
@@ -3397,7 +3470,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
                 match body {
                     TSModuleDeclarationBody::TSModuleDeclaration(b) => {
                         p.print_char(b'.');
-                        b.id.gen(p, ctx);
+                        b.id.print(p, ctx);
                         if let Some(b) = &b.body {
                             body = b;
                         } else {
@@ -3406,7 +3479,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
                     }
                     TSModuleDeclarationBody::TSModuleBlock(body) => {
                         p.print_soft_space();
-                        body.gen(p, ctx);
+                        body.print(p, ctx);
                         break;
                     }
                 }
@@ -3416,72 +3489,56 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
     }
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for TSModuleDeclarationKind {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _: Context) {
+impl<'a> Gen for TSModuleDeclarationName<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            TSModuleDeclarationKind::Global => {
-                p.print_str("global");
-            }
-            TSModuleDeclarationKind::Module => {
-                p.print_str("module");
-            }
-            TSModuleDeclarationKind::Namespace => {
-                p.print_str("namespace");
-            }
+            Self::Identifier(ident) => ident.print(p, ctx),
+            Self::StringLiteral(s) => s.print(p, ctx),
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclarationName<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        match self {
-            Self::Identifier(ident) => ident.gen(p, ctx),
-            Self::StringLiteral(s) => s.gen(p, ctx),
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleBlock<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSModuleBlock<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         let is_empty = self.directives.is_empty() && self.body.is_empty();
         p.print_curly_braces(self.span, is_empty, |p| {
             for directive in &self.directives {
-                directive.gen(p, ctx);
+                directive.print(p, ctx);
             }
             for stmt in &self.body {
                 p.print_semicolon_if_needed();
-                stmt.gen(p, ctx);
+                stmt.print(p, ctx);
             }
         });
         p.needs_semicolon = false;
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAliasDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSTypeAliasDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.declare {
             p.print_str("declare ");
         }
         p.print_str("type");
         p.print_space_before_identifier();
-        self.id.gen(p, ctx);
+        self.id.print(p, ctx);
         if let Some(type_parameters) = &self.type_parameters {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
         p.print_soft_space();
         p.print_str("=");
         p.print_soft_space();
-        self.type_annotation.gen(p, ctx);
+        self.type_annotation.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSInterfaceDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("interface");
         p.print_hard_space();
-        self.id.gen(p, ctx);
+        self.id.print(p, ctx);
         if let Some(type_parameters) = &self.type_parameters {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
         if let Some(extends) = &self.extends {
             if !extends.is_empty() {
@@ -3493,7 +3550,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
             for item in &self.body.body {
                 p.print_indent();
-                item.gen(p, ctx);
+                p.print_leading_comments(item.span().start);
+                item.print(p, ctx);
                 p.print_semicolon();
                 p.print_soft_newline();
             }
@@ -3501,17 +3559,17 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceHeritage<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.expression.gen_expr(p, Precedence::Call, ctx);
+impl<'a> Gen for TSInterfaceHeritage<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
+        self.expression.print_expr(p, Precedence::Call, ctx);
         if let Some(type_parameters) = &self.type_parameters {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSEnumDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_indent();
         if self.declare {
             p.print_str("declare ");
@@ -3521,12 +3579,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
         }
         p.print_space_before_identifier();
         p.print_str("enum ");
-        self.id.gen(p, ctx);
+        self.id.print(p, ctx);
         p.print_space_before_identifier();
         p.print_curly_braces(self.span, self.members.is_empty(), |p| {
             for member in &self.members {
                 p.print_indent();
-                member.gen(p, ctx);
+                member.print(p, ctx);
                 p.print_comma();
                 p.print_soft_newline();
             }
@@ -3534,16 +3592,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSEnumMember<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match &self.id {
-            TSEnumMemberName::StaticIdentifier(decl) => decl.gen(p, ctx),
-            TSEnumMemberName::StaticStringLiteral(decl) => decl.gen(p, ctx),
-            TSEnumMemberName::StaticTemplateLiteral(decl) => decl.gen(p, ctx),
-            TSEnumMemberName::StaticNumericLiteral(decl) => decl.gen(p, ctx),
+            TSEnumMemberName::StaticIdentifier(decl) => decl.print(p, ctx),
+            TSEnumMemberName::StaticStringLiteral(decl) => decl.print(p, ctx),
+            TSEnumMemberName::StaticTemplateLiteral(decl) => decl.print(p, ctx),
+            TSEnumMemberName::StaticNumericLiteral(decl) => decl.print(p, ctx),
             decl @ match_expression!(TSEnumMemberName) => {
                 p.print_str("[");
-                decl.to_expression().gen_expr(p, Precedence::Lowest, ctx);
+                decl.to_expression().print_expr(p, Precedence::Lowest, ctx);
                 p.print_str("]");
             }
         }
@@ -3551,74 +3609,48 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.gen_expr(p, Precedence::Lowest, ctx);
+            init.print_expr(p, Precedence::Lowest, ctx);
         }
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSConstructorType<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSConstructorType<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         if self.r#abstract {
             p.print_str("abstract ");
         }
         p.print_str("new ");
         if let Some(type_parameters) = &self.type_parameters {
-            type_parameters.gen(p, ctx);
+            type_parameters.print(p, ctx);
         }
         p.print_str("(");
-        self.params.gen(p, ctx);
+        self.params.print(p, ctx);
         p.print_str(")");
         p.print_soft_space();
         p.print_str("=>");
         p.print_soft_space();
-        self.return_type.gen(p, ctx);
+        self.return_type.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportEqualsDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSImportEqualsDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import ");
-        self.id.gen(p, ctx);
+        self.id.print(p, ctx);
         p.print_str(" = ");
-        self.module_reference.gen(p, ctx);
+        self.module_reference.print(p, ctx);
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+impl<'a> Gen for TSModuleReference<'a> {
+    fn gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::ExternalModuleReference(decl) => {
                 p.print_str("require(");
-                decl.expression.gen(p, ctx);
+                decl.expression.print(p, ctx);
                 p.print_str(")");
             }
-            match_ts_type_name!(Self) => self.to_ts_type_name().gen(p, ctx),
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= self.precedence(), |p| {
-            p.print_str("<");
-            // var r = < <T>(x: T) => T > ((x) => { return null; });
-            //          ^ make sure space is printed here.
-            if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
-                p.print_hard_space();
-            }
-            self.type_annotation.gen(p, ctx);
-            p.print_str(">");
-            self.expression.gen_expr(p, Precedence::Member, ctx);
-        });
-    }
-}
-
-impl<const MINIFY: bool> Gen<MINIFY> for TSAccessibility {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        match self {
-            Self::Public => p.print_str("public "),
-            Self::Private => p.print_str("private "),
-            Self::Protected => p.print_str("protected "),
+            match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
         }
     }
 }

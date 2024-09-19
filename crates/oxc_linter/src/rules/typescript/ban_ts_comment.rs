@@ -1,34 +1,44 @@
+use cow_utils::CowUtils;
 use oxc_ast::CommentKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
-fn comment(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not use @ts-{x0} because it alters compilation errors."))
-        .with_label(span1)
+fn comment(ts_comment_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Do not use @ts-{ts_comment_name} because it alters compilation errors."
+    ))
+    .with_label(span)
 }
 
-fn ignore_instead_of_expect_error(span1: Span) -> OxcDiagnostic {
+fn ignore_instead_of_expect_error(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use \"@ts-expect-error\" instead of @ts-ignore, as \"@ts-ignore\" will do nothing if the following line is error-free.")
         .with_help("Replace \"@ts-ignore\" with \"@ts-expect-error\".")
-        .with_label(span1)
+        .with_label(span)
 }
 
-fn comment_requires_description(x0: &str, x1: u64, span2: Span) -> OxcDiagnostic {
+fn comment_requires_description(ts_comment_name: &str, min_len: u64, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Include a description after the @ts-{x0} directive to explain why the @ts-{x0} is necessary. The description must be {x1} characters or longer."
+        "Include a description after the @ts-{ts_comment_name} directive to explain why the @ts-{ts_comment_name} is necessary. The description must be {min_len} characters or longer."
     ))
-    .with_label(span2)
+    .with_label(span)
 }
 
-fn comment_description_not_match_pattern(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn comment_description_not_match_pattern(
+    ts_comment_name: &str,
+    pattern: &str,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "The description for the @ts-{x0} directive must match the {x1} format."
+        "The description for the @ts-{ts_comment_name} directive must match the {pattern} format."
     ))
-    .with_label(span2)
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -148,10 +158,10 @@ impl Rule for BanTsComment {
         let comments = ctx.semantic().trivias().comments();
         for comm in comments {
             let raw = ctx.source_range(comm.span);
-            if let Some(captures) = find_ts_comment_directive(raw, comm.kind.is_single_line()) {
+            if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
                 let (directive, description) = (captures.0, captures.1);
-                if CommentKind::MultiLine == comm.kind
+                if CommentKind::Block == comm.kind
                     && (directive == "check" || directive == "nocheck")
                 {
                     continue;
@@ -172,7 +182,7 @@ impl Rule for BanTsComment {
                                     |fixer| {
                                         fixer.replace(
                                             comm.span,
-                                            raw.replace("@ts-ignore", "@ts-expect-error"),
+                                            raw.cow_replace("@ts-ignore", "@ts-expect-error"),
                                         )
                                     },
                                 );
@@ -206,7 +216,7 @@ impl Rule for BanTsComment {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

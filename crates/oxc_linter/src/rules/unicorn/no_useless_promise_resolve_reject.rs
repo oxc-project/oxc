@@ -14,16 +14,16 @@ use crate::{
     AstNode,
 };
 
-fn resolve(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `{x1} value` over `{x1} Promise.resolve(value)`."))
+fn resolve(span: Span, preferred: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{preferred} value` over `{preferred} Promise.resolve(value)`."))
         .with_help("Wrapping the return value in `Promise.Resolve` is needlessly verbose. All return values in async functions are already wrapped in a `Promise`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn reject(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `throw error` over `{x1} Promise.reject(error)`."))
+fn reject(span: Span, preferred: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `throw error` over `{preferred} Promise.reject(error)`."))
         .with_help("Wrapping the error in `Promise.reject` is needlessly verbose. All errors thrown in async functions are already wrapped in a `Promise`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -38,12 +38,15 @@ declare_oxc_lint!(
     ///
     /// Wrapping a return value in `Promise.resolve` in an async function or a `Promise#then`/`catch`/`finally` callback is unnecessary as all return values in async functions and promise callback functions are already wrapped in a `Promise`. Similarly, returning an error wrapped in `Promise.reject` is equivalent to simply `throw`ing the error. This is the same for `yield`ing in async generators as well.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// async () => Promise.resolve(bar);
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// async () => Promise.resolve(bar);
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async () => bar;
     /// ```
     NoUselessPromiseResolveReject,
@@ -72,17 +75,31 @@ impl Rule for NoUselessPromiseResolveReject {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+        let Some(parent) = outermost_paren_parent(node, ctx) else {
             return;
         };
 
         let mut is_yield = false;
 
-        if let AstKind::YieldExpression(yield_expr) = parent.kind() {
-            is_yield = true;
-            if yield_expr.delegate {
-                return;
+        match parent.kind() {
+            AstKind::ArrowFunctionExpression(_) | AstKind::ReturnStatement(_) => {}
+            AstKind::ExpressionStatement(_) => {
+                let Some(grand_parent) = outermost_paren_parent(parent, ctx) else {
+                    return;
+                };
+                let AstKind::FunctionBody(function_body) = grand_parent.kind() else { return };
+
+                if function_body.statements.len() != 1 {
+                    return;
+                }
             }
+            AstKind::YieldExpression(yield_expr) => {
+                is_yield = true;
+                if yield_expr.delegate {
+                    return;
+                }
+            }
+            _ => return,
         }
 
         let Some((is_async, function_node, is_in_try_statement)) =
@@ -445,6 +462,10 @@ fn test() {
         r"promise.catch(x, () => Promise.resolve(foo))",
         r"promise.finally(x, () => Promise.resolve(foo))",
         r"promise[then](() => Promise.resolve(foo))",
+        // additional cases:
+        r"(async () => { Promise.resolve().then(() => console.log('foo')); })();",
+        // TODO: enhance to report this case?
+        r#"fs.promises.readFile("foo", 'utf8').then(undefined, err => err.code === 'ENOENT' ? Promise.resolve('{}') : Promise.reject(err))"#,
     ];
 
     let fail = vec![

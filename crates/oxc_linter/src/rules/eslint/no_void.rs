@@ -6,10 +6,10 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_void_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow `void` operators")
-        .with_help("Expected 'undefined' and instead saw 'void'.")
-        .with_label(span0)
+fn no_void_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected `void` operator")
+        .with_help("Use `undefined` instead")
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// ```
     NoVoid,
     restriction,
+    pending // TODO: suggestion
 );
 
 impl Rule for NoVoid {

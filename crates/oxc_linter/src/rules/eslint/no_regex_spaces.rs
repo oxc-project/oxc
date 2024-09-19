@@ -9,10 +9,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_regex_spaces_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_regex_spaces_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Spaces are hard to count.")
         .with_help("Use a quantifier, e.g. {2}")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,7 +44,7 @@ impl Rule for NoRegexSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
-                if let Some(span) = Self::find_literal_to_report(lit) {
+                if let Some(span) = Self::find_literal_to_report(lit, ctx) {
                     ctx.diagnostic(no_regex_spaces_diagnostic(span)); // /a  b/
                 }
             }
@@ -67,14 +67,14 @@ impl Rule for NoRegexSpaces {
 }
 
 impl NoRegexSpaces {
-    fn find_literal_to_report(literal: &RegExpLiteral) -> Option<Span> {
-        if Self::has_exempted_char_class(&literal.regex.pattern) {
+    fn find_literal_to_report(literal: &RegExpLiteral, ctx: &LintContext) -> Option<Span> {
+        let pattern_text = literal.regex.pattern.source_text(ctx.source_text());
+        let pattern_text = pattern_text.as_ref();
+        if Self::has_exempted_char_class(pattern_text) {
             return None;
         }
 
-        if let Some((idx_start, idx_end)) =
-            Self::find_consecutive_spaces_indices(&literal.regex.pattern)
-        {
+        if let Some((idx_start, idx_end)) = Self::find_consecutive_spaces_indices(pattern_text) {
             let start = literal.span.start + u32::try_from(idx_start).unwrap() + 1;
             let end = literal.span.start + u32::try_from(idx_end).unwrap() + 2;
 

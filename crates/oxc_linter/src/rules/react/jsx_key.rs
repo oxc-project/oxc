@@ -1,30 +1,35 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
+    ast::{Expression, JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn missing_key_prop_for_element_in_array(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span0)
+fn missing_key_prop_for_element_in_array(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span)
 }
 
-fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiagnostic {
+fn missing_key_prop_for_element_in_iterator(iter_span: Span, el_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"Missing "key" prop for element in iterator."#)
         .with_help(r#"Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."#)
         .with_labels([
-            span0.label("Iterator starts here."),
-            span1.label("Element generated here."),
+            iter_span.label("Iterator starts here."),
+            el_span.label("Element generated here."),
         ])
 }
 
-fn key_prop_must_be_placed_before_spread(span0: Span) -> OxcDiagnostic {
+fn key_prop_must_be_placed_before_spread(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#""key" prop must be placed before any `{...spread}`"#)
         .with_help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -36,12 +41,15 @@ declare_oxc_lint!(
     /// Enforce `key` prop for elements in array
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// [1, 2, 3].map(x => <App />);
     /// [1, 2, 3]?.map(x => <BabelEslintApp />)
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// [1, 2, 3].map(x => <App key={x} />);
     /// [1, 2, 3]?.map(x => <BabelEslintApp key={x} />)
     /// ```
@@ -64,9 +72,79 @@ impl Rule for JsxKey {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
+}
+
+pub fn is_to_array(node: &AstNode<'_>) -> bool {
+    const TOARRAY: &str = "toArray";
+
+    let AstKind::CallExpression(call) = node.kind() else { return false };
+
+    let Some(subject) = call.callee_name() else { return false };
+
+    if subject != TOARRAY {
+        return false;
+    }
+
+    true
+}
+
+pub fn import_matcher<'a>(
+    ctx: &LintContext<'a>,
+    actual_local_name: &'a str,
+    expected_module_name: &'a str,
+) -> bool {
+    let expected_module_name = expected_module_name.cow_to_lowercase();
+    ctx.semantic().module_record().import_entries.iter().any(|import| {
+        import.module_request.name().as_str() == expected_module_name
+            && import.local_name.name().as_str() == actual_local_name
+    })
+}
+
+pub fn is_import<'a>(
+    ctx: &LintContext<'a>,
+    actual_local_name: &'a str,
+    expected_local_name: &'a str,
+    expected_module_name: &'a str,
+) -> bool {
+    if ctx.semantic().module_record().requested_modules.is_empty()
+        && ctx.scopes().get_bindings(ctx.scopes().root_scope_id()).is_empty()
+    {
+        return actual_local_name == expected_local_name;
+    }
+
+    import_matcher(ctx, actual_local_name, expected_module_name)
+}
+
+pub fn is_children<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    const REACT: &str = "React";
+    const CHILDREN: &str = "Children";
+
+    let AstKind::CallExpression(call) = node.kind() else { return false };
+
+    let Some(member) = call.callee.as_member_expression() else { return false };
+
+    if let Expression::Identifier(ident) = member.object() {
+        return is_import(ctx, ident.name.as_str(), CHILDREN, REACT);
+    }
+
+    let Some(inner_member) = member.object().get_inner_expression().as_member_expression() else {
+        return false;
+    };
+
+    let Some(ident) = inner_member.object().get_identifier_reference() else { return false };
+
+    let Some(local_name) = inner_member.static_property_name() else { return false };
+
+    return is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN;
+}
+fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+    let parents_iter = ctx.nodes().iter_parents(node.id()).skip(2);
+    parents_iter
+        .filter(|parent_node| matches!(parent_node.kind(), AstKind::CallExpression(_)))
+        .any(|parent_node| is_children(parent_node, ctx) && is_to_array(parent_node))
 }
 
 enum InsideArrayOrIterator {
@@ -124,7 +202,7 @@ fn is_in_array_or_iter<'a, 'b>(
                 return Some(InsideArrayOrIterator::Array);
             }
             AstKind::CallExpression(v) => {
-                let callee = &v.callee.without_parenthesized();
+                let callee = &v.callee.without_parentheses();
 
                 if let Some(v) = callee.as_member_expression() {
                     if let Some((span, ident)) = v.static_property_info() {
@@ -151,6 +229,9 @@ fn is_in_array_or_iter<'a, 'b>(
 
 fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
+        if is_within_children_to_array(node, ctx) {
+            return;
+        }
         if !jsx_elem.opening_element.attributes.iter().any(|attr| {
             let JSXAttributeItem::Attribute(attr) = attr else {
                 return false;
@@ -196,6 +277,9 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
 
 fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
+        if is_within_children_to_array(node, ctx) {
+            return;
+        }
         ctx.diagnostic(gen_diagnostic(fragment.opening_fragment.span, &outer));
     }
 }
@@ -400,6 +484,28 @@ fn test() {
           }
         ];
         ",
+        r"{React.Children.toArray(items.map((item) => {
+            return (
+              <div>
+             {item}
+             </div>
+              );}))}
+        ",
+        r#"import { Children } from "react";
+        Children.toArray([1, 2 ,3].map(x => <App />));
+        "#,
+        r#"import React from "react";
+        React.Children.toArray([1, 2 ,3].map(x => <App />));
+        "#,
+        r"React.Children.toArray([1, 2 ,3].map(x => <App />));",
+        r"{React.Children.toArray(items.map((item) => {
+           return (
+             <>
+              {item}
+             </>
+            );
+           }))}
+        ",
     ];
 
     let fail = vec![
@@ -500,6 +606,19 @@ fn test() {
                   );
                 };
           ",
+        r"foo.Children.toArray([1, 2 ,3].map(x => <App />));",
+        r"
+        import Act from 'react';
+        import { Children as ReactChildren } from 'react';
+
+        const { Children } = Act;
+        const { toArray } = Children;
+
+        Act.Children.toArray([1, 2 ,3].map(x => <App />));
+        Act.Children.toArray(Array.from([1, 2 ,3], x => <App />));
+        Children.toArray([1, 2 ,3].map(x => <App />));
+        Children.toArray(Array.from([1, 2 ,3], x => <App />));
+        ",
     ];
 
     Tester::new(JsxKey::NAME, pass, fail).test_and_snapshot();

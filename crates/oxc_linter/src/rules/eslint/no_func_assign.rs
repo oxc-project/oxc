@@ -6,9 +6,9 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_func_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("'{x0}' is a function."))
-        .with_label(span1.label(format!("{x0} is re-assigned here")))
+fn no_func_assign_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{name}' is a function."))
+        .with_label(span.label(format!("{name} is re-assigned here")))
 }
 
 #[derive(Debug, Default, Clone)]

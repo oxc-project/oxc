@@ -7,7 +7,10 @@ use std::{
 
 use oxc_semantic::SymbolId;
 
-use crate::{context::LintContext, AllowWarnDeny, AstNode, FixKind, RuleEnum};
+use crate::{
+    context::{ContextHost, LintContext},
+    AllowWarnDeny, AstNode, FixKind, RuleEnum,
+};
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
@@ -16,13 +19,19 @@ pub trait Rule: Sized + Default + fmt::Debug {
     }
 
     /// Visit each AST Node
-    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    #[expect(unused_variables)]
+    #[inline]
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
 
     /// Visit each symbol
-    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_>) {}
+    #[expect(unused_variables)]
+    #[inline]
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
-    fn run_once(&self, _ctx: &LintContext) {}
+    #[expect(unused_variables)]
+    #[inline]
+    fn run_once(&self, ctx: &LintContext) {}
 
     /// Check if a rule should be run at all.
     ///
@@ -31,7 +40,9 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// enabled/disabled; this is handled by the [`linter`].
     ///
     /// [`linter`]: crate::Linter
-    fn should_run(&self, _ctx: &LintContext) -> bool {
+    #[expect(unused_variables)]
+    #[inline]
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         true
     }
 }
@@ -73,19 +84,6 @@ pub enum RuleCategory {
 }
 
 impl RuleCategory {
-    pub fn from(input: &str) -> Option<Self> {
-        match input {
-            "correctness" => Some(Self::Correctness),
-            "suspicious" => Some(Self::Suspicious),
-            "pedantic" => Some(Self::Pedantic),
-            "perf" => Some(Self::Perf),
-            "style" => Some(Self::Style),
-            "restriction" => Some(Self::Restriction),
-            "nursery" => Some(Self::Nursery),
-            _ => None,
-        }
-    }
-
     pub fn description(self) -> &'static str {
         match self {
             Self::Correctness => "Code that is outright wrong or useless.",
@@ -97,6 +95,22 @@ impl RuleCategory {
                 "Lints which prevent the use of language and library features. Must not be enabled as a whole, should be considered on a case-by-case basis before enabling."
             }
             Self::Nursery => "New lints that are still under development.",
+        }
+    }
+}
+
+impl TryFrom<&str> for RuleCategory {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "correctness" => Ok(Self::Correctness),
+            "suspicious" => Ok(Self::Suspicious),
+            "pedantic" => Ok(Self::Pedantic),
+            "perf" => Ok(Self::Perf),
+            "style" => Ok(Self::Style),
+            "restriction" => Ok(Self::Restriction),
+            "nursery" => Ok(Self::Nursery),
+            _ => Err(()),
         }
     }
 }
@@ -137,6 +151,20 @@ impl RuleFixMeta {
         matches!(self, Self::None)
     }
 
+    #[inline]
+    pub const fn fix_kind(self) -> FixKind {
+        match self {
+            Self::Conditional(kind) | Self::Fixable(kind) => {
+                debug_assert!(
+                    !kind.is_none(),
+                    "This lint rule indicates that it provides an auto-fix but its FixKind is None. This is a bug. If this rule does not provide a fix, please use RuleFixMeta::None. Otherwise, please provide a valid FixKind"
+                );
+                kind
+            }
+            RuleFixMeta::None | RuleFixMeta::FixPending => FixKind::None,
+        }
+    }
+
     /// Does this `Rule` have some kind of auto-fix available?
     ///
     /// Also returns `true` for suggestions.
@@ -168,7 +196,9 @@ impl RuleFixMeta {
                     (true, true) => "auto-fix and a suggestion are available for this rule",
                     (true, false) => "auto-fix is available for this rule",
                     (false, true) => "suggestion is available for this rule",
-                    _ => unreachable!(),
+                    _ => unreachable!(
+                        "Fix kinds must contain Fix and/or Suggestion, but {self:?} has neither."
+                    ),
                 };
                 let mut message =
                     if kind.is_dangerous() { format!("dangerous {noun}") } else { noun.into() };
@@ -187,14 +217,19 @@ impl RuleFixMeta {
             }
         }
     }
+
+    pub fn emoji(self) -> Option<&'static str> {
+        match self {
+            Self::None => None,
+            Self::Conditional(kind) | Self::Fixable(kind) => Some(kind.emoji()),
+            Self::FixPending => Some("🚧"),
+        }
+    }
 }
 
 impl From<RuleFixMeta> for FixKind {
     fn from(value: RuleFixMeta) -> Self {
-        match value {
-            RuleFixMeta::None | RuleFixMeta::FixPending => FixKind::None,
-            RuleFixMeta::Fixable(kind) | RuleFixMeta::Conditional(kind) => kind,
-        }
+        value.fix_kind()
     }
 }
 
@@ -234,8 +269,9 @@ impl RuleWithSeverity {
 
 #[cfg(test)]
 mod test {
-    use crate::rules::RULES;
     use markdown::{to_html_with_options, Options};
+
+    use crate::rules::RULES;
 
     #[test]
     fn ensure_documentation() {

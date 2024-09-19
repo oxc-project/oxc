@@ -6,12 +6,17 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    utils::is_create_element_call,
+    AstNode,
+};
 
-fn no_children_prop_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_children_prop_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid passing children using a prop.")
         .with_help("The canonical way to pass children in React is to use JSX elements")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,16 +32,18 @@ declare_oxc_lint!(
     /// When not using JSX, the children should be passed as additional arguments to `React.createElement`.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <div children='Children' />
     ///
     /// <MyComponent children={<AnotherComponent />} />
     /// <MyComponent children={['Child 1', 'Child 2']} />
     /// React.createElement("div", { children: 'Children' })
+    /// ```
     ///
-    /// // Good
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <div>Children</div>
     /// <MyComponent>Children</MyComponent>
     ///
@@ -47,8 +54,6 @@ declare_oxc_lint!(
     ///
     /// React.createElement("div", {}, 'Children')
     /// React.createElement("div", 'Child 1', 'Child 2')
-    ///
-    ///
     /// ```
     NoChildrenProp,
     correctness
@@ -86,7 +91,7 @@ impl Rule for NoChildrenProp {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

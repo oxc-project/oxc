@@ -19,6 +19,9 @@ and the
 
 You can create your own custom graphical theme using this type, or you can use
 one of the predefined ones using the methods below.
+
+When created by [`Default::default`], themes are automatically selected based on the `NO_COLOR`
+environment variable and whether the process is running in a terminal.
 */
 #[derive(Debug, Clone)]
 pub struct GraphicalTheme {

@@ -11,10 +11,10 @@ use crate::{
     rule::Rule, AstNode,
 };
 
-fn no_document_cookie_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_document_cookie_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `document.cookie` directly")
         .with_help("Use the Cookie Store API or a cookie library instead")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -35,17 +35,20 @@ declare_oxc_lint!(
     /// API](https://developer.mozilla.org/en-US/docs/Web/API/Cookie_Store_API)
     /// or a [cookie library](https://www.npmjs.com/search?q=cookie).
     ///
-    /// ### Example
+    /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // bad
     /// document.cookie =
     ///     'foo=bar' +
     ///     '; Path=/' +
     ///     '; Domain=example.com' +
     ///     '; expires=Fri, 31 Dec 9999 23:59:59 GMT' +
     ///     '; Secure';
+    /// ```
     ///
-    /// // good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// async function storeCookies() {
     ///     await cookieStore.set({
     ///         name: 'foo',
@@ -117,7 +120,7 @@ fn is_document_cookie_reference<'a, 'b>(
                 return false;
             }
 
-            if let Expression::Identifier(ident) = member_expr.object().without_parenthesized() {
+            if let Expression::Identifier(ident) = member_expr.object().without_parentheses() {
                 if !GLOBAL_OBJECT_NAMES.contains(ident.name.as_str()) {
                     return false;
                 }

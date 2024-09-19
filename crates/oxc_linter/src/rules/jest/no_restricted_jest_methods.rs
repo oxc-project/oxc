@@ -14,15 +14,11 @@ use crate::{
 };
 
 fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow specific `jest.` methods")
-        .with_help(format!("Use of `{x0:?}` is disallowed"))
-        .with_label(span1)
+    OxcDiagnostic::warn(format!("Use of `{x0}` is not allowed")).with_label(span1)
 }
 
 fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow specific `jest.` methods")
-        .with_help(format!("{x0:?}"))
-        .with_label(span1)
+    OxcDiagnostic::warn(x0.to_string()).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,7 +40,7 @@ impl std::ops::Deref for NoRestrictedJestMethods {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Restrict the use of specific `jest` methods.
+    /// Restrict the use of specific `jest` and `vi` methods.
     ///
     /// ### Example
     /// ```javascript
@@ -62,7 +58,7 @@ declare_oxc_lint!(
     ///
     ///   // ...
     /// });
-    ///
+    /// ```
     NoRestrictedJestMethods,
     style,
 );
@@ -106,7 +102,10 @@ impl NoRestrictedJestMethods {
             call_expr,
             possible_jest_node,
             ctx,
-            &[JestFnKind::General(JestGeneralFnKind::Jest)],
+            &[
+                JestFnKind::General(JestGeneralFnKind::Jest),
+                JestFnKind::General(JestGeneralFnKind::Vitest),
+            ],
         ) {
             return;
         }
@@ -156,7 +155,7 @@ impl NoRestrictedJestMethods {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("jest", None),
         ("jest()", None),
         ("jest.mock()", None),
@@ -172,7 +171,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("jest.fn()", Some(serde_json::json!([{ "fn": null }]))),
         ("jest[\"fn\"]()", Some(serde_json::json!([{ "fn": null }]))),
         ("jest.mock()", Some(serde_json::json!([{ "mock": "Do not use mocks" }]))),
@@ -186,7 +185,39 @@ fn test() {
         ),
     ];
 
+    let pass_vitest = vec![
+        ("vi", None),
+        ("vi()", None),
+        ("vi.mock()", None),
+        ("expect(a).rejects;", None),
+        ("expect(a);", None),
+        (
+            "
+			     import { vi } from 'vitest';
+			     vi;
+			    ",
+            None,
+        ), // { "parserOptions": { "sourceType": "module" } }
+    ];
+
+    let fail_vitest = vec![
+        ("vi.fn()", Some(serde_json::json!([{ "fn": null }]))),
+        ("vi.mock()", Some(serde_json::json!([{ "mock": "Do not use mocks" }]))),
+        (
+            "
+			     import { vi } from 'vitest';
+			     vi.advanceTimersByTime();
+			    ",
+            Some(serde_json::json!([{ "advanceTimersByTime": null }])),
+        ), // { "parserOptions": { "sourceType": "module" } },
+        (r#"vi["fn"]()"#, Some(serde_json::json!([{ "fn": null }]))),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
     Tester::new(NoRestrictedJestMethods::NAME, pass, fail)
         .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .test_and_snapshot();
 }

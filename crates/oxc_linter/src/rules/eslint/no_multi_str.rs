@@ -1,13 +1,13 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_multi_str_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Unexpected multi string.").with_label(span0)
+fn no_multi_str_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected multi string.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -37,8 +37,7 @@ impl Rule for NoMultiStr {
         if let AstKind::StringLiteral(literal) = node.kind() {
             let source = literal.span.source_text(ctx.source_text());
             // https://github.com/eslint/eslint/blob/9e6d6405c3ee774c2e716a3453ede9696ced1be7/lib/shared/ast-utils.js#L12
-            let position =
-                source.find(|ch| matches!(ch, '\r' | '\n' | '\u{2028}' | '\u{2029}')).unwrap_or(0);
+            let position = source.find(['\r', '\n', '\u{2028}', '\u{2029}']).unwrap_or(0);
             if position != 0 && !is_within_jsx_attribute_item(node.id(), ctx) {
                 // We found the "newline" character but want to highlight the '\', so go back one
                 // character.
@@ -53,7 +52,7 @@ impl Rule for NoMultiStr {
     }
 }
 
-fn is_within_jsx_attribute_item(id: AstNodeId, ctx: &LintContext) -> bool {
+fn is_within_jsx_attribute_item(id: NodeId, ctx: &LintContext) -> bool {
     if matches!(ctx.nodes().parent_kind(id), Some(AstKind::JSXAttributeItem(_))) {
         return true;
     }

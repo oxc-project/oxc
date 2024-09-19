@@ -1,16 +1,16 @@
 [package]
-name                   = "oxc_allocator"
-version                = "0.24.0"
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxc_allocator"
+version = "0.29.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
-include                = ["/src"]
+description.workspace = true
 
 [lints]
 workspace = true
@@ -19,13 +19,13 @@ workspace = true
 doctest = false
 
 [dependencies]
-bumpalo        = { workspace = true, features = ["allocator-api2", "collections"] }
 allocator-api2 = { workspace = true }
+bumpalo = { workspace = true, features = ["allocator-api2", "collections"] }
 
 serde = { workspace = true, optional = true }
 
 [dev-dependencies]
-serde      = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]

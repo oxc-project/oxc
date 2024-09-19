@@ -3,12 +3,16 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn no_render_return_value_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_render_return_value_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not depend on the return value from ReactDOM.render.")
         .with_help("Using the return value is a legacy feature.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -20,14 +24,17 @@ declare_oxc_lint!(
     /// This rule will warn you if you try to use the ReactDOM.render() return value.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// vaa inst =ReactDOM.render(<App />, document.body);
     /// function render() {
     ///  return ReactDOM.render(<App />, document.body);
     /// }
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// ReactDOM.render(<App />, document.body);
     /// ```
     NoRenderReturnValue,
@@ -79,7 +86,7 @@ impl Rule for NoRenderReturnValue {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

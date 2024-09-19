@@ -1,11 +1,11 @@
 use language_tags::LanguageTag;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -14,10 +14,10 @@ use crate::{
     AstNode,
 };
 
-fn lang_diagnostic(span0: Span) -> OxcDiagnostic {
+fn lang_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Lang attribute must have a valid value.")
         .with_help("Set a valid value for lang attribute.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -36,19 +36,19 @@ declare_oxc_lint!(
     /// and access website in more than one language.
     ///
     ///
-    /// ### Example
+    /// ### Examples
     ///
-    /// // good
-    /// ```jsx
-    /// <html lang="en">
-    /// <html lang="en-US">
-    /// ```
-    ///
-    /// // bad
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
     /// <html>
     /// <html lang="foo">
     /// ````
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <html lang="en">
+    /// <html lang="en-US">
+    /// ```
     ///
     /// ### Resources
     /// - [eslint-plugin-jsx-a11y/lang](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/lang.md)
@@ -71,12 +71,8 @@ impl Rule for Lang {
             return;
         }
 
-        let JSXElementName::Identifier(identifier) = &jsx_el.name else {
-            return;
-        };
-
         has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(lang_diagnostic(identifier.span)),
+            || ctx.diagnostic(lang_diagnostic(jsx_el.name.span())),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
                     if let JSXAttributeItem::Attribute(attr) = lang_prop {

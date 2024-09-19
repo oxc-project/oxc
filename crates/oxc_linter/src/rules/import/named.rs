@@ -5,10 +5,10 @@ use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 
 use crate::{context::LintContext, rule::Rule};
 
-fn named_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("named import {x0:?} not found"))
-        .with_help(format!("does {x1:?} have the export {x0:?}?"))
-        .with_label(span2)
+fn named_diagnostic(imported_name: &str, module_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("named import {imported_name:?} not found"))
+        .with_help(format!("does {module_name:?} have the export {imported_name:?}?"))
+        .with_label(span)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/named.md>

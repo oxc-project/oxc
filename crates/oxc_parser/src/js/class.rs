@@ -263,8 +263,18 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) =
             if let Some(result) = key_name { result } else { self.parse_class_element_name()? };
 
-        let optional = self.eat(Kind::Question);
+        let (optional, optional_span) = if self.at(Kind::Question) {
+            let span = self.start_span();
+            self.bump_any();
+            (true, self.end_span(span))
+        } else {
+            (false, oxc_span::SPAN)
+        };
         let definite = self.eat(Kind::Bang);
+
+        if optional && definite {
+            self.error(diagnostics::optional_definite_property(optional_span.expand_right(1)));
+        }
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             // `private #foo`, etc. is illegal
@@ -281,8 +291,19 @@ impl<'a> ParserImpl<'a> {
         }
 
         if accessor {
-            self.parse_ts_type_annotation()?;
-            self.parse_class_accessor_property(span, key, computed, r#static, r#abstract).map(Some)
+            if optional {
+                self.error(diagnostics::optional_accessor_property(optional_span));
+            }
+            self.parse_class_accessor_property(
+                span,
+                key,
+                computed,
+                r#static,
+                r#abstract,
+                definite,
+                accessibility,
+            )
+            .map(Some)
         } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             // LAngle for start of type parameters `foo<T>`
             //                                         ^
@@ -400,20 +421,19 @@ impl<'a> ParserImpl<'a> {
         } else {
             MethodDefinitionType::MethodDefinition
         };
-        let method_definition = MethodDefinition {
+        Ok(self.ast.class_element_method_definition(
             r#type,
-            span: self.end_span(span),
+            self.end_span(span),
+            decorators,
             key,
             value,
             kind,
             computed,
             r#static,
             r#override,
-            accessibility,
             optional,
-            decorators,
-        };
-        Ok(ClassElement::MethodDefinition(self.ast.alloc(method_definition)))
+            accessibility,
+        ))
     }
 
     /// `FieldDefinition`[?Yield, ?Await] ;
@@ -443,23 +463,22 @@ impl<'a> ParserImpl<'a> {
         } else {
             PropertyDefinitionType::PropertyDefinition
         };
-        let property_definition = PropertyDefinition {
+        Ok(self.ast.class_element_property_definition(
             r#type,
-            span: self.end_span(span),
+            self.end_span(span),
+            decorators,
             key,
             value,
             computed,
             r#static,
             declare,
             r#override,
+            optional,
+            definite,
             readonly,
             type_annotation,
             accessibility,
-            optional,
-            definite,
-            decorators,
-        };
-        Ok(ClassElement::PropertyDefinition(self.ast.alloc(property_definition)))
+        ))
     }
 
     /// `ClassStaticBlockStatementList` :
@@ -471,6 +490,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// <https://github.com/tc39/proposal-decorators>
+    #[allow(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_accessor_property(
         &mut self,
         span: Span,
@@ -478,7 +498,11 @@ impl<'a> ParserImpl<'a> {
         computed: bool,
         r#static: bool,
         r#abstract: bool,
+        definite: bool,
+        accessibility: Option<TSAccessibility>,
     ) -> Result<ClassElement<'a>> {
+        let type_annotation =
+            if self.ts_enabled() { self.parse_ts_type_annotation()? } else { None };
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_or_higher()).transpose()?;
         let r#type = if r#abstract {
@@ -496,6 +520,9 @@ impl<'a> ParserImpl<'a> {
             value,
             computed,
             r#static,
+            definite,
+            type_annotation,
+            accessibility,
         ))
     }
 }

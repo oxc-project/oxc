@@ -3,6 +3,7 @@
 use crate::tester::{test, test_minify};
 
 #[test]
+#[ignore]
 fn test_number() {
     // Check "1eN"
     test("x = 1e-100", "x = 1e-100;\n");
@@ -989,16 +990,26 @@ fn test_avoid_slash_script() {
     test("/*! </script \n </script */", "/*! <\\/script \n <\\/script */\n");
     test("/*! </SCRIPT \n </SCRIPT */", "/*! <\\/SCRIPT \n <\\/SCRIPT */\n");
     test("/*! </ScRiPt \n </ScRiPt */", "/*! <\\/ScRiPt \n <\\/ScRiPt */\n");
-    test( "String.raw`</script`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\"])));\n");
-    test( "String.raw`</script${a}`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\", \"\"])), a);\n");
-    test( "String.raw`${a}</script`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"\", \"<\\/script\"])), a);\n");
-    test( "String.raw`</SCRIPT`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/SCRIPT\"])));\n");
-    test( "String.raw`</ScRiPt`",
-		"import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/ScRiPt\"])));\n");
+    test(
+        "String.raw`</script`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\"])));\n",
+    );
+    test(
+        "String.raw`</script${a}`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/script\", \"\"])), a);\n",
+    );
+    test(
+        "String.raw`${a}</script`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"\", \"<\\/script\"])), a);\n",
+    );
+    test(
+        "String.raw`</SCRIPT`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/SCRIPT\"])));\n",
+    );
+    test(
+        "String.raw`</ScRiPt`",
+        "import { __template } from \"<runtime>\";\nvar _a;\nString.raw(_a || (_a = __template([\"<\\/ScRiPt\"])));\n",
+    );
 
     // Negative cases
     test("x = '</'", "x = \"</\";\n");

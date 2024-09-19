@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn no_aria_hidden_on_focusable_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_aria_hidden_on_focusable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`aria-hidden` must not be true on focusable elements.")
         .with_help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,11 +30,14 @@ declare_oxc_lint!(
     /// `aria-hidden="true"` on focusable elements can lead to confusion or unexpected behavior for screen reader users.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <div aria-hidden="true" tabIndex="0" />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <div aria-hidden="true" tabIndex="0" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <div aria-hidden="true" />
     /// ```
     NoAriaHiddenOnFocusable,

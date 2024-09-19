@@ -4,6 +4,233 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.29.0] - 2024-09-13
+
+### Features
+
+- 953fe17 ast: Provide `NONE` type for AST builder calls (#5737) (overlookmotel)
+
+### Bug Fixes
+
+- 77d9170 transformer/react: IsStaticChildren should be false when there is only one child (#5745) (Dunqing)
+
+### Refactor
+
+- 4bdc202 rust: Remove some #[allow(unused)] (#5716) (Boshen)
+- cc0408b semantic: S/AstNodeId/NodeId (#5740) (Boshen)
+
+## [0.28.0] - 2024-09-11
+
+- ee4fb42 ast: [**BREAKING**] Reduce size of `WithClause` by `Box`ing it (#5677) (Boshen)
+
+- b060525 semantic: [**BREAKING**] Remove `source_type` argument from `SemanticBuilder::new` (#5553) (Boshen)
+
+### Features
+
+- 95a6d99 transformer: Enable the react refresh plugin in enable_all (#5630) (Dunqing)
+- 7b543df transformer/react: Handle `refresh_sig` and `refresh_reg` options correctly (#5638) (Dunqing)
+
+### Bug Fixes
+
+- 1bc08e2 coverage: Parse babel unambiguously (#5579) (Boshen)
+- 919d17f transform_conformance: Only print semantic mismatch errors when output is correct (#5589) (Boshen)
+- 505d064 transformer: JSX transform delete references for `JSXClosingElement`s (#5560) (overlookmotel)
+- 9b7ecc7 transformer: RegExp transform only set span on final expression (#5508) (overlookmotel)
+- d1ece19 transformer: RegExp transform handle `Term::Quantifier` (#5501) (overlookmotel)
+- a1afd48 transformer/react: Incorrect scope_id for var hoisted in fast refresh plugin (#5695) (Dunqing)
+- f2f5e5a transformer/react: Missing scope_id for function in fast refresh plugin (#5693) (Dunqing)
+- a891c31 transformer/react: Refresh plugin has incorrect reference flags (#5656) (Dunqing)
+- 3e8b96f transformer/react: The refresh plugin cannot handle member expressions with React hooks (#5655) (Dunqing)
+- 0739b5f transformer/react: Don't transform declaration of function overloads (#5642) (Dunqing)
+- 3bf6aaf transformer/react: Support `emit_full_signatures` option in refresh plugin (#5629) (Dunqing)
+- 36d864a transformer/react: Don't transform if the variable does not have a value reference (#5528) (Dunqing)
+
+### Performance
+
+
+### Documentation
+
+- 9282647 transformer: Comment on RegExp transform for potential improvement (#5514) (overlookmotel)
+
+### Refactor
+
+- 0ac420d linter: Use meaningful names for diagnostic parameters (#5564) (Don Isaac)
+- ce71982 transformer: Shorten code in JSX transform (#5554) (overlookmotel)
+- 758a10c transformer: RegExp transform reuse var (#5527) (overlookmotel)
+- fad0a05 transformer: RegExp transform unbox early (#5504) (overlookmotel)
+
+## [0.27.0] - 2024-09-06
+
+- cba93f5 ast: [**BREAKING**] Add `ThisExpression` variants to `JSXElementName` and `JSXMemberExpressionObject` (#5466) (overlookmotel)
+
+### Features
+
+- 32d4bbb transformer: Add `TransformOptions::enable_all` method (#5495) (Boshen)
+- c59d8b3 transformer: Support all /regex/ to `new RegExp` transforms (#5387) (Dunqing)
+
+### Bug Fixes
+
+- 8f9627d transformer: RegExp transform do not transform invalid regexps (#5494) (overlookmotel)
+- 2060efc transformer: RegExp transform don't transform all RegExps (#5486) (overlookmotel)
+- cfe5497 transformer: Do not create double reference in JSX transform (#5414) (overlookmotel)
+- 0617249 transformer/nullish-coalescing-operator: Incorrect reference flags (#5408) (Dunqing)
+
+### Performance
+
+- ed8937e transformer: Memoize rope instance (#5518) (Dunqing)
+- bfab091 transformer: Store needed options only on `RegExp` (#5484) (overlookmotel)
+- b4765af transformer: Pre-calculate if unsupported patterns in RegExp transform (#5483) (overlookmotel)
+- 182ab91 transformer: Pre-calculate unsupported flags in RegExp transform (#5482) (overlookmotel)
+
+### Refactor
+
+- a96866d transformer: Re-order imports (#5499) (overlookmotel)
+- 6abde0a transformer: Clarify match in RegExp transform (#5498) (overlookmotel)
+- 09c522a transformer: RegExp transform report pattern parsing errors (#5496) (overlookmotel)
+- dd19823 transformer: RegExp transform do not take ownership of `Pattern` then reallocate it (#5492) (overlookmotel)
+- 2514cc9 transformer/react: Move all entry points to implementation of Traverse trait (#5473) (Dunqing)
+- c984219 transformer/typescript: Move all entry points to implementation of Traverse trait (#5422) (Dunqing)
+
+## [0.26.0] - 2024-09-03
+
+- 1aa49af ast: [**BREAKING**] Remove `JSXMemberExpressionObject::Identifier` variant (#5358) (Dunqing)
+
+- 32f7300 ast: [**BREAKING**] Add `JSXElementName::IdentifierReference` and `JSXMemberExpressionObject::IdentifierReference` (#5223) (Dunqing)
+
+- 23e8456 traverse: [**BREAKING**] `TraverseCtx::ancestor` with level 0 = equivalent to `parent` (#5294) (overlookmotel)
+
+- 582ce9e traverse: [**BREAKING**] `TraverseCtx::ancestor` return `Ancestor::None` if out of bounds (#5286) (overlookmotel)
+
+### Features
+
+- f81e8a1 linter: Add `oxc/no-async-endpoint-handlers` (#5364) (DonIsaac)
+- d04857b transformer: Support `Targets::from_query` method (#5336) (Dunqing)
+- 3d4a64c transformer: Make `Targets` public (#5335) (Dunqing)
+- 0eb7602 transformer: Support `TransformOptions::from_preset_env` API (#5323) (Dunqing)
+- 08dc0ad transformer: Add `object-spread` plugin (#3133) (magic-akari)
+- 01c0c3e transformer: Add remaining options to transformer options (#5169) (Boshen)
+- 056c667 transformer/arrow-functions: The output that uses `this` inside blocks doesn't match Babel (#5188) (Dunqing)
+- 0abfc50 transformer/typescript: Support `rewrite_import_extensions` option (#5399) (Dunqing)
+
+### Bug Fixes
+
+- 35f03db transformer: `ArrowfunctionExpression`'s expression is true but has more than one body statement (#5366) (Dunqing)
+- 8d6b05c transformer: Class property with typescript value should not be removed (#5298) (Boshen)
+- 47e69a8 transformer-optional-catch-binding: The `unused` binding is not in the correct scope (#5066) (Dunqing)
+- 94ff94c transformer/arrow-functions: Reaches `unreachable` when `<this.foo>` is inside an arrow function (#5356) (Dunqing)
+- f8bb022 transformer/arrow-functions: Remove `SymbolFlags::ArrowFunction` (#5190) (Dunqing)
+- d9ba5ad transformer/arrow-functions: Correct scope for `_this` (#5189) (Dunqing)
+- 3acb3f6 transformer/react: Mismatch output caused by incorrect transformation ordering (#5255) (Dunqing)
+- 5754c89 transformer/typescript: Remove accessibility from `AccessorProperty` (#5292) (Dunqing)
+
+### Performance
+
+- a1523c6 transformer: Remove an allocation from arrow functions transform (#5412) (overlookmotel)
+
+### Documentation
+
+- 8334bd4 transformer: Add documentation for `Targets::get_targets` (#5337) (Dunqing)
+- d51a954 transformer: Add documentation for arrow-functions plugin (#5186) (Dunqing)
+
+### Refactor
+
+- 960e1d5 ast: Rename `IdentifierReference::new_with_reference_id` (#5157) (overlookmotel)
+- 0de844d transformer: Remove unnecessary code from JSX transform (#5339) (overlookmotel)
+- 5136f01 transformer: Remove unnecessary type annotation (#5131) (overlookmotel)
+- 260c9d2 transformer/es2015: Move all entry points to implementation of Traverse trait (#5187) (Dunqing)
+- 1645115 transformer/object-reset-spread: Make plugin initialization unconditional (#5319) (Dunqing)
+- d2666fe transformer/object-rest-spread: Move plugin-relates files to `object_rest_spread` mod (#5320) (Dunqing)
+- 7e2a7af transformer/react: Remove `CalculateSignatureKey` implementation from refresh (#5289) (Dunqing)
+
+## [0.25.0] - 2024-08-23
+
+- 78f135d ast: [**BREAKING**] Remove `ReferenceFlag` from `IdentifierReference` (#5077) (Boshen)
+
+- 5f4c9ab semantic: [**BREAKING**] Rename `SymbolTable::get_flag` to `get_flags` (#5030) (overlookmotel)
+
+- 58bf215 semantic: [**BREAKING**] Rename `Reference::flag` and `flag_mut` methods to plural (#5025) (overlookmotel)
+
+- c4c08a7 ast: [**BREAKING**] Rename `IdentifierReference::reference_flags` field (#5024) (overlookmotel)
+
+- d262a58 syntax: [**BREAKING**] Rename `ReferenceFlag` to `ReferenceFlags` (#5023) (overlookmotel)
+
+- c30e2e9 semantic: [**BREAKING**] `Reference::flag` method return `ReferenceFlag` (#5019) (overlookmotel)
+
+- f88970b ast: [**BREAKING**] Change order of fields in CallExpression (#4859) (Burlin)
+
+### Features
+
+- 4b49cf8 transformer: Always pass in symbols and scopes (#5087) (Boshen)
+- f51d3f9 transformer/nullish-coalescing-operator: Handles nullish coalescing expression in the FormalParamter (#4975) (Dunqing)
+- f794870 transformer/nullish-coalescing-operator: Generate the correct binding name (#4974) (Dunqing)
+- 72ff2c6 transformer/nullish-coalescing-operator: Add comments in top of file (#4972) (Dunqing)
+
+### Bug Fixes
+
+- 6ffbd78 transformer: Remove an `AstBuilder::copy` call from TS namespace transform (#4987) (overlookmotel)
+- a8dfdda transformer: Remove an `AstBuilder::copy` call from TS module transform (#4986) (overlookmotel)
+- 1467eb3 transformer: Remove an `AstBuilder::copy` call from TS enum transform (#4985) (overlookmotel)
+- 1365feb transformer: Remove an `AstBuilder::copy` call for TS `AssignmentTarget` transform (#4984) (overlookmotel)
+- edacf93 transformer: Remove an `AstBuilder::copy` call (#4983) (overlookmotel)
+- 3b35332 transformer/logical-assignment-operators: Fix semantic errors (#5047) (Dunqing)
+
+### Documentation
+
+- 178d1bd transformer: Add documentation for exponentiation-operator plugin (#5084) (Dunqing)
+- d50eb72 transformer: Add documentation for `optional-catch-binding` plugin (#5064) (Dunqing)
+- 4425b17 transformer: Add documentation for `logical-assignment-operators` plugin (#5012) (Dunqing)
+- 1bd5853 transformer: Updated README re: order of methods (#4993) (overlookmotel)
+
+### Refactor
+
+- cca7440 ast: Replace `AstBuilder::move_statement_vec` with `move_vec` (#4988) (overlookmotel)
+- 96422b6 ast: Make AstBuilder non-exhaustive (#4925) (DonIsaac)
+- ca70cc7 linter, mangler, parser, semantic, transformer, traverse, wasm: Rename various `flag` vars to `flags` (#5028) (overlookmotel)
+- 8d15e65 transformer: Use `into_member_expression` (#5006) (overlookmotel)
+- 4796ece transformer: TS annotations transform use `move_expression` (#4982) (overlookmotel)
+- a9fcf29 transformer/es2016: Move all entry points to implementation of Traverse trait (#5085) (Dunqing)
+- deda6ac transformer/es2019: Move all entry points to implementation of Traverse trait (#5065) (Dunqing)
+- 9df2f80 transformer/es2020: Move all entry points to implementation of Traverse trait (#4973) (Dunqing)
+- 3f9433c transformer/es2021: Move all entry points to implementation of Traverse trait (#5013) (Dunqing)
+- c60a50d transformer/exponentiation-operator: Use built-in `ctx.clone_identifier_reference` (#5086) (Dunqing)
+- bcc8da9 transformer/logical-assignment-operator: Use `ctx.clone_identifier_reference` (#5014) (Dunqing)
+- 38d4434 transformer/nullish-coalescing-operator: Move internal methods to bottom of the file (#4996) (Dunqing)
+
+## [0.24.3] - 2024-08-18
+
+### Features
+
+- d49fb16 oxc_codegen: Support generate range leading comments (#4898) (IWANABETHATGUY)
+- f1fcdde transformer: Support react fast refresh (#4587) (Dunqing)
+- 0d79122 transformer: Support logical-assignment-operators plugin (#4890) (Dunqing)
+- ab1d08c transformer: Support `optional-catch-binding` plugin (#4885) (Dunqing)
+- 69da9fd transformer: Support nullish-coalescing-operator plugin (#4884) (Dunqing)
+- 3a66e58 transformer: Support exponentiation operator plugin (#4876) (Dunqing)
+- f88cbcd transformer: Add `BoundIdentifier::new_uid_in_current_scope` method (#4903) (overlookmotel)
+- 1e6d0fe transformer: Add methods to `BoundIdentifier` (#4897) (overlookmotel)
+
+### Bug Fixes
+
+- 2476dce transformer: Remove an `ast.copy` from `NullishCoalescingOperator` transform (#4913) (overlookmotel)
+- 248a757 transformer/typescript: Typescript syntax within `SimpleAssignmentTarget` with `MemberExpressions` is not stripped (#4920) (Dunqing)
+
+### Documentation
+
+- 9c700ed transformer: Add README including style guide (#4899) (overlookmotel)
+
+### Refactor
+
+- 1eb59d2 ast, isolated_declarations, transformer: Mark `AstBuilder::copy` as an unsafe function (#4907) (overlookmotel)
+- 452187a transformer: Rename `BoundIdentifier::new_uid_in_root_scope` (#4902) (overlookmotel)
+- 707a01f transformer: Re-order `BoundIdentifier` methods (#4896) (overlookmotel)
+- 117dff2 transformer: Improve comments for `BoundIdentifier` helper (#4895) (overlookmotel)
+
+## [0.24.2] - 2024-08-12
+
+### Bug Fixes
+
+- 62f759c transformer/typescript: Generated assignment for constructor arguments with access modifiers should be injected to the top of the constructor (#4808) (Dunqing)
+
 ## [0.24.0] - 2024-08-08
 
 - 75f2207 traverse: [**BREAKING**] Replace `find_scope` with `ancestor_scopes` returning iterator (#4693) (overlookmotel)

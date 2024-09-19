@@ -11,16 +11,16 @@ use crate::{
     AstNode,
 };
 
-fn miss_on_focus(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1} must be accompanied by onFocus for accessibility."))
+fn miss_on_focus(span: Span, attr_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{attr_name} must be accompanied by onFocus for accessibility."))
         .with_help("Try to add onFocus.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn miss_on_blur(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x1} must be accompanied by onBlur for accessibility."))
+fn miss_on_blur(span: Span, attr_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{attr_name} must be accompanied by onBlur for accessibility."))
         .with_help("Try to add onBlur.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,12 +52,15 @@ declare_oxc_lint!(
     /// AT compatibility, and screenreader users.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Good
-    /// <div onMouseOver={() => void 0} onFocus={() => void 0} />
     ///
-    /// // Bad
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
     /// <div onMouseOver={() => void 0} />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// <div onMouseOver={() => void 0} onFocus={() => void 0} />
     /// ```
     MouseEventsHaveKeyEvents,
     correctness

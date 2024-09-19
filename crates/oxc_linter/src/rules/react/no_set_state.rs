@@ -4,14 +4,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    utils::{get_parent_es5_component, get_parent_es6_component},
+    utils::get_parent_component,
     AstNode,
 };
 
-fn no_set_state_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use setState").with_label(span0)
+fn no_set_state_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use setState").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -63,8 +63,7 @@ impl Rule for NoSetState {
 
         if !matches!(member_expr.object(), Expression::ThisExpression(_))
             || !member_expr.static_property_name().is_some_and(|str| str == "setState")
-            || !(get_parent_es5_component(node, ctx).is_some()
-                || get_parent_es6_component(ctx).is_some())
+            || get_parent_component(node, ctx).is_none()
         {
             return;
         }
@@ -72,7 +71,7 @@ impl Rule for NoSetState {
         ctx.diagnostic(no_set_state_diagnostic(call_expr.callee.span()));
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }
@@ -104,6 +103,26 @@ fn test() {
 			            return <div>Hello {this.props.name}</div>;
 			          }
 			        });
+			      ",
+        "
+			        var Hello = function() {
+			          this.setState({})
+			        };
+			        createReactClass({
+			          render: function() {
+			            let x;
+			          }
+			        });
+			      ",
+        "
+			        var Hello = function() {
+			          this.setState({})
+			        };
+			        class Other extends React.Component {
+			          render() {
+			            let x;
+			          }
+			        };
 			      ",
     ];
 

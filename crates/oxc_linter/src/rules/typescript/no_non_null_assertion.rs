@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNonNullAssertion;
@@ -25,10 +29,10 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn no_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Forbidden non-null assertion.")
         .with_help("Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for NoNonNullAssertion {
@@ -37,7 +41,7 @@ impl Rule for NoNonNullAssertion {
         ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span));
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

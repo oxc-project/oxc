@@ -8,10 +8,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_ignore_case, AstNode};
 
-fn no_access_key_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_access_key_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("No access key attribute allowed.")
         .with_help("Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,11 +26,14 @@ declare_oxc_lint!(
     /// Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create accessibility complications so to avoid complications, access keys should not be used.
     ///
     /// ### Example
-    /// ```jsx
-    /// // Bad
-    /// <div accessKey="h" />
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```jsx
+    /// <div accessKey="h" />
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <div />
     /// ```
     NoAccessKey,

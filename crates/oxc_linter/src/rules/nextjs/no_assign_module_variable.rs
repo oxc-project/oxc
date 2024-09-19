@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_assign_module_variable_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_assign_module_variable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not assign to the variable `module`.")
         .with_help("See https://nextjs.org/docs/messages/no-assign-module-variable")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

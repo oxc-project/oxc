@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::is_in_app_dir, AstNode};
 
-fn no_head_element_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_head_element_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not use `<head>` element. Use `<Head />` from `next/head` instead.")
         .with_help("See https://nextjs.org/docs/messages/no-head-element")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -30,19 +30,20 @@ declare_oxc_lint!(
 
 impl Rule for NoHeadElement {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(full_file_path) = ctx.file_path().to_str() else {
-            return;
-        };
-        if is_in_app_dir(full_file_path) {
-            return;
-        }
         if let AstKind::JSXOpeningElement(elem) = node.kind() {
             let JSXElementName::Identifier(id) = &elem.name else {
                 return;
             };
-            if id.name == "head" {
-                ctx.diagnostic(no_head_element_diagnostic(elem.span));
+            if id.name != "head" {
+                return;
             }
+            let Some(full_file_path) = ctx.file_path().to_str() else {
+                return;
+            };
+            if is_in_app_dir(full_file_path) {
+                return;
+            }
+            ctx.diagnostic(no_head_element_diagnostic(elem.span));
         }
     }
 }

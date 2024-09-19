@@ -8,20 +8,24 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashSet;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn no_this_alias_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_this_alias_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected aliasing of 'this' to local variable.")
         .with_help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn no_this_destructure_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_this_destructure_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected aliasing of members of 'this' to local variables.")
         .with_help(
             "Disabling destructuring of this is not a default, consider allowing destructuring",
         )
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -153,7 +157,7 @@ impl Rule for NoThisAlias {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

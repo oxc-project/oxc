@@ -15,13 +15,13 @@ use crate::{
     AstNode,
 };
 
-fn over_method(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.").with_label(span0)
+fn over_method(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.").with_label(span)
 }
 
-fn non_zero_filter(span0: Span) -> OxcDiagnostic {
+fn non_zero_filter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `.some(…)` over non-zero length check from `.filter(…)`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -37,16 +37,19 @@ declare_oxc_lint!(
     /// Using `.some()` is more idiomatic and easier to read.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
-    /// const foo = array.find(fn) ? bar : baz;
     ///
-    /// // Good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const foo = array.find(fn) ? bar : baz;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const foo = array.some(fn) ? bar : baz;
     /// ```
     PreferArraySome,
     pedantic,
-    pending
+    fix
 );
 
 impl Rule for PreferArraySome {
@@ -62,10 +65,26 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                ctx.diagnostic(over_method(
-                    // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
-                    call_expr_method_callee_info(call_expr).unwrap().0,
-                ));
+                ctx.diagnostic_with_fix(
+                    over_method(
+                        // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
+                        call_expr_method_callee_info(call_expr).unwrap().0,
+                    ),
+                    |fixer| {
+                        let target_span = call_expr
+                            .callee
+                            .as_member_expression()
+                            .and_then(|v| v.static_property_info().map(|(span, _)| span));
+
+                        debug_assert!(target_span.is_some());
+
+                        if let Some(target_span) = target_span {
+                            fixer.replace(target_span, "some")
+                        } else {
+                            fixer.noop()
+                        }
+                    },
+                );
             }
             AstKind::BinaryExpression(bin_expr) => {
                 if !matches!(
@@ -84,7 +103,7 @@ impl Rule for PreferArraySome {
                 }
 
                 let Some(left_member_expr) =
-                    bin_expr.left.without_parenthesized().as_member_expression()
+                    bin_expr.left.without_parentheses().as_member_expression()
                 else {
                     return;
                 };
@@ -98,7 +117,7 @@ impl Rule for PreferArraySome {
                 }
 
                 let Expression::CallExpression(left_call_expr) =
-                    &left_member_expr.object().without_parenthesized()
+                    &left_member_expr.object().without_parentheses()
                 else {
                     return;
                 };
@@ -117,10 +136,26 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                ctx.diagnostic(non_zero_filter(
-                    // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
-                    call_expr_method_callee_info(left_call_expr).unwrap().0,
-                ));
+                ctx.diagnostic_with_fix(
+                    non_zero_filter(
+                        // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
+                        call_expr_method_callee_info(left_call_expr).unwrap().0,
+                    ),
+                    |fixer| {
+                        let target_span = left_call_expr
+                            .callee
+                            .as_member_expression()
+                            .and_then(|v| v.static_property_info().map(|(span, _)| span));
+
+                        debug_assert!(target_span.is_some());
+
+                        if let Some(target_span) = target_span {
+                            fixer.replace(target_span, "some")
+                        } else {
+                            fixer.noop()
+                        }
+                    },
+                );
             }
             _ => {}
         }
@@ -174,7 +209,7 @@ fn is_checking_undefined<'a, 'b>(
         return false;
     };
 
-    let right_without_paren = bin_expr.right.without_parenthesized();
+    let right_without_paren = bin_expr.right.without_parentheses();
 
     if matches!(
         bin_expr.operator,
@@ -182,7 +217,7 @@ fn is_checking_undefined<'a, 'b>(
             | BinaryOperator::Equality
             | BinaryOperator::StrictInequality
             | BinaryOperator::StrictEquality
-    ) && right_without_paren.without_parenthesized().is_undefined()
+    ) && right_without_paren.without_parentheses().is_undefined()
     {
         return true;
     }
@@ -264,5 +299,30 @@ fn test() {
         r#"a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";"#,
     ];
 
-    Tester::new(PreferArraySome::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r"if (foo.find(fn)) {}", r"if (foo.some(fn)) {}"),
+        (r"if (foo.findLast(fn)) {}", r"if (foo.some(fn)) {}"),
+        (
+            r#"if (array.find(element => element === "🦄")) {}"#,
+            r#"if (array.some(element => element === "🦄")) {}"#,
+        ),
+        (
+            r#"const foo = array.find(element => element === "🦄") ? bar : baz;"#,
+            r#"const foo = array.some(element => element === "🦄") ? bar : baz;"#,
+        ),
+        (r"array.filter(fn).length > 0", r"array.some(fn).length > 0"),
+        (r"array.filter(fn).length !== 0", r"array.some(fn).length !== 0"),
+        (r"foo.find(fn) == null", r"foo.some(fn) == null"),
+        (r"foo.find(fn) == undefined", r"foo.some(fn) == undefined"),
+        (r"foo.find(fn) === undefined", r"foo.some(fn) === undefined"),
+        (r"foo.find(fn) != null", r"foo.some(fn) != null"),
+        (r"foo.find(fn) != undefined", r"foo.some(fn) != undefined"),
+        (r"foo.find(fn) !== undefined", r"foo.some(fn) !== undefined"),
+        (
+            r#"a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";"#,
+            r#"a = (( ((foo.some(fn))) == ((null)) )) ? "no" : "yes";"#,
+        ),
+    ];
+
+    Tester::new(PreferArraySome::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

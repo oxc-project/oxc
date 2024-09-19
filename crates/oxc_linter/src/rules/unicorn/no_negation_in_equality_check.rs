@@ -7,7 +7,7 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_negation_in_equality_check_diagnostic(
-    span0: Span,
+    span: Span,
     current_operator: BinaryOperator,
     suggested_operator: BinaryOperator,
 ) -> OxcDiagnostic {
@@ -17,7 +17,7 @@ fn no_negation_in_equality_check_diagnostic(
             suggested_operator.as_str(),
             current_operator.as_str()
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,21 +33,23 @@ declare_oxc_lint!(
     /// A negated expression on the left of an (in)equality check is likely a mistake from trying to negate the whole condition.
     ///
     /// ### Example
-    /// ```javascript
-    /// // Bad
     ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
     /// if (!foo === bar) {}
     ///
     /// if (!foo !== bar) {}
+    /// ```
     ///
-    /// // Good
-    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// if (foo !== bar) {}
     ///
     /// if (!(foo === bar)) {}
     /// ```
     NoNegationInEqualityCheck,
     pedantic,
+    pending
 );
 
 impl Rule for NoNegationInEqualityCheck {

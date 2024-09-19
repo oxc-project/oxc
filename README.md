@@ -20,19 +20,21 @@
 
 The Oxidation Compiler is creating a collection of high-performance tools for JavaScript and TypeScript.
 
-Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
+Oxc is building a parser, linter, formatter, transformer, minifier, resolver ... all written in Rust.
 
 See more at [oxc.rs](https://oxc.rs)!
 
 ## 🙋Who's using Oxc?
 
-- [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transpiling.
-- [Rolldown][rolldown] and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transformation.
+- [Nova engine](https://trynova.dev) uses the [oxc][docs-oxc-url] crate for parsing.
+- [Rolldown][rolldown], [Biome][biome], [swc-node](https://github.com/swc-project/swc-node) and [Mako][mako] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
 - Projects and companies like [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json), [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint), ByteDance and Shopee uses oxlint for linting.
+- ...[and many more](https://oxc.rs/docs/guide/projects.html)
 
 ## ⚡️ Linter Quick Start
 
-The linter is ready to catch mistakes for you. It comes with 91 rules turned on by default (out of 340+ in total) and no configuration is required.
+The linter is ready to catch mistakes for you. It comes with 93 rules turned on by default (out of 400+ in total) and no configuration is required.
 
 To get started, run [oxlint][npm-oxlint] or via `npx`:
 
@@ -77,7 +79,7 @@ where warm runs complete in 3 minutes.
 
 ### Node.js
 
-- via napi: [oxc-parser][npm-napi]
+- via napi: [oxc-parser][npm-napi], [oxc-transform][npm-napi-transform]
 
 ### Wasm
 
@@ -92,7 +94,7 @@ where warm runs complete in 3 minutes.
 - [Resolver](#-resolver)
 - [Minifier](#-minifier)
 - [Formatter](#-formatter)
-- [Transpiler](#-transpiler)
+- [Transformer](#-transformer)
 
 ### 🔸 AST and Parser
 
@@ -163,10 +165,13 @@ To address this, we developed [oxc_resolver][docs-resolver-url].
 
 The resolver is production-ready and is currently being used in [Rolldown][rolldown]. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
 
-### 🔸 Transformer (Transpiler)
+### 🔸 Transformer
 
 A transformer is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
-We are currently focusing on the architecture. See [Milestone 1](https://github.com/oxc-project/oxc/issues/2859) for details.
+
+TypeScript and React transforms are complete. See [Milestone 2](https://github.com/oxc-project/oxc/issues/2859) for current goals.
+
+[oxc-transform][npm-napi-transform] can be used for experimentation.
 
 ### 🔸 Isolated Declarations
 
@@ -200,6 +205,24 @@ The [prototype](https://github.com/oxc-project/oxc/tree/main/crates/oxc_prettier
 
 ---
 
+## 🧪Test Infrastructure
+
+In Oxc, correctness and reliability are taken extremely seriously.
+
+We spend half of our time on strengthening the test infrastructure to prevent problems from propagating to downstream tools.
+
+[Test Infrastructure](https://oxc.rs/docs/learn/architecture/test.html) documents our test procedures:
+
+- Conformance suite on Test262, Babel, TypeScript
+- Lots of fuzzing
+- Linter snapshot diagnostics
+- oxlint ecosystem ci
+- Idempotency testing
+- Code coverage
+- End to end 3000 top npm packages
+
+---
+
 ## ✍️ Contribute
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidance.
@@ -229,8 +252,8 @@ This project was incubated with the assistance of these exceptional mentors and 
 
 Special thanks go to
 
-* [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
-* [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
+- [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
+- [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
 
 ## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 
@@ -261,7 +284,7 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [sponsors-badge]: https://img.shields.io/github/sponsors/Boshen
 [sponsors-url]: https://github.com/sponsors/Boshen
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
-[playground-url]: https://oxc-project.github.io/oxc/playground
+[playground-url]: https://playground.oxc.rs/
 [website-badge]: https://img.shields.io/badge/Website-blue
 [website-url]: https://oxc.rs
 [crate-oxc-url]: https://crates.io/crates/oxc
@@ -285,7 +308,8 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [estree]: https://github.com/estree/estree
 [google-closure-compiler]: https://github.com/google/closure-compiler
 [minification-benchmarks]: https://github.com/privatenumber/minification-benchmarks
-[npm-napi]: https://www.npmjs.com/package/oxc-parser
+[npm-napi-parser]: https://www.npmjs.com/package/oxc-parser
+[npm-napi-transform]: https://www.npmjs.com/package/oxc-transform
 [npm-oxlint]: https://www.npmjs.com/package/oxlint
 [parser-benchmark]: https://github.com/Boshen/bench-javascript-parser-written-in-rust
 [prettier]: https://prettier.io
@@ -297,3 +321,4 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [vscode]: https://github.com/microsoft/vscode
 [@typescript-eslint]: https://typescript-eslint.io
 [rolldown]: https://rolldown.rs
+[mako]: https://makojs.dev

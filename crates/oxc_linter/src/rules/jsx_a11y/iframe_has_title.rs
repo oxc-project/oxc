@@ -1,10 +1,10 @@
 use oxc_ast::{
-    ast::{JSXAttributeValue, JSXElementName, JSXExpression},
+    ast::{JSXAttributeValue, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -13,10 +13,10 @@ use crate::{
     AstNode,
 };
 
-fn iframe_has_title_diagnostic(span0: Span) -> OxcDiagnostic {
+fn iframe_has_title_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing `title` attribute for the `iframe` element.")
         .with_help("Provide title property for iframe element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -37,8 +37,9 @@ declare_oxc_lint!(
     /// This rule checks for title property on iframe element.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <iframe />
     /// <iframe {...props} />
     /// <iframe title="" />
@@ -48,8 +49,10 @@ declare_oxc_lint!(
     /// <iframe title={false} />
     /// <iframe title={true} />
     /// <iframe title={42} />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <iframe title="This is a unique title" />
     /// <iframe title={uniqueTitle} />
     /// ```
@@ -63,10 +66,6 @@ impl Rule for IframeHasTitle {
             return;
         };
 
-        let JSXElementName::Identifier(iden) = &jsx_el.name else {
-            return;
-        };
-
         let Some(name) = get_element_type(ctx, jsx_el) else {
             return;
         };
@@ -74,9 +73,8 @@ impl Rule for IframeHasTitle {
         if name != "iframe" {
             return;
         }
-
         let Some(alt_prop) = has_jsx_prop_ignore_case(jsx_el, "title") else {
-            ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
+            ctx.diagnostic(iframe_has_title_diagnostic(jsx_el.name.span()));
             return;
         };
 
@@ -112,7 +110,7 @@ impl Rule for IframeHasTitle {
             _ => {}
         }
 
-        ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
+        ctx.diagnostic(iframe_has_title_diagnostic(jsx_el.name.span()));
     }
 }
 

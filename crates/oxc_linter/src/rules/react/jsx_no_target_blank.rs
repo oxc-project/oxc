@@ -3,7 +3,7 @@ use std::ops::Deref;
 use oxc_ast::{
     ast::{
         match_expression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, JSXExpression, StringLiteral,
+        JSXExpression, StringLiteral,
     },
     AstKind,
 };
@@ -11,24 +11,28 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn target_blank_without_noreferrer(span0: Span) -> OxcDiagnostic {
+fn target_blank_without_noreferrer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
 .with_help("add rel=`noreferrer` to the element")
-.with_label(span0)
+.with_label(span)
 }
 
-fn target_blank_without_noopener(span0: Span) -> OxcDiagnostic {
+fn target_blank_without_noopener(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
 .with_help("add rel=`noreferrer` or rel=`noopener` to the element")
-.with_label(span0)
+.with_label(span)
 }
 
-fn explicit_props_in_spread_attributes(span0: Span) -> OxcDiagnostic {
+fn explicit_props_in_spread_attributes(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
 .with_help("add rel=`noreferrer` to the element")
-.with_label(span0)
+.with_label(span)
 }
 
 #[derive(Debug, Clone)]
@@ -91,15 +95,15 @@ impl JsxNoTargetBlank {
 declare_oxc_lint!(
     /// ### What it does
     /// This rule aims to prevent user generated link hrefs and form actions from creating security vulnerabilities by
-    /// requiring rel='noreferrer' for external link hrefs and form actions, and optionally any dynamically generated link
-    /// hrefs and form actions.
+    /// requiring `rel='noreferrer'` for external link hrefs and form actions, and optionally any dynamically generated
+    /// link hrefs and form actions.
     ///
     /// ### Why is this bad?
     ///
-    /// When creating a JSX element that has an a tag, it is often desired to have the link open in a new tab using the
-    /// target='_blank' attribute. Using this attribute unaccompanied by rel='noreferrer', however, is a severe security
-    /// vulnerability (see noreferrer docs and noopener docs for more details) This rules requires that you accompany
-    /// target='_blank' attributes with rel='noreferrer'.
+    /// When creating a JSX element that has an `a` tag, it is often desired to have the link open in a new tab using the
+    /// `target='_blank'` attribute. Using this attribute unaccompanied by `rel='noreferrer'`, however, is a severe security
+    /// vulnerability (see [`noreferrer` docs] and [`noopener` docs] for more details).
+    /// This rules requires that you accompany `target='_blank'` attributes with `rel='noreferrer'`.
     ///
     /// ### Example
     /// ```jsx
@@ -114,6 +118,9 @@ declare_oxc_lint!(
     /// var Hello = <a target='_blank' href="https://example.com/"></a>
     /// var Hello = <a target='_blank' href={dynamicLink}></a>
     /// ```
+    ///
+    /// [`noreferrer` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noreferrer
+    /// [`noopener` docs]: https://html.spec.whatwg.org/multipage/links.html#link-type-noopener
     JsxNoTargetBlank,
     correctness
 );
@@ -121,95 +128,87 @@ declare_oxc_lint!(
 impl Rule for JsxNoTargetBlank {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_ele) = node.kind() {
-            if let JSXElementName::Identifier(tag_identifier) = &jsx_ele.name {
-                let tag_name = tag_identifier.name.as_str();
-                if self.check_is_link(tag_name, ctx) || self.check_is_forms(tag_name, ctx) {
-                    let mut target_blank_tuple = (false, "", false, false);
-                    let mut rel_valid_tuple = (false, "", false, false);
-                    let mut is_href_valid = true;
-                    let mut has_href_value = false;
-                    let mut is_warn_on_spread_attributes = false;
-                    let mut target_span = None;
-                    let mut spread_span = Span::default();
+            let Some(tag_name) = &jsx_ele.name.get_identifier_name() else {
+                return;
+            };
+            if self.check_is_link(tag_name, ctx) || self.check_is_forms(tag_name, ctx) {
+                let mut target_blank_tuple = (false, "", false, false);
+                let mut rel_valid_tuple = (false, "", false, false);
+                let mut is_href_valid = true;
+                let mut has_href_value = false;
+                let mut is_warn_on_spread_attributes = false;
+                let mut target_span = None;
+                let mut spread_span = Span::default();
 
-                    jsx_ele.attributes.iter().for_each(|attribute| match attribute {
-                        JSXAttributeItem::Attribute(attribute) => {
-                            if let JSXAttributeName::Identifier(identifier) =
-                                &attribute.deref().name
+                jsx_ele.attributes.iter().for_each(|attribute| match attribute {
+                    JSXAttributeItem::Attribute(attribute) => {
+                        if let JSXAttributeName::Identifier(identifier) = &attribute.deref().name {
+                            let attribute_name = identifier.name.as_str();
+                            if attribute_name == "target" {
+                                if let Some(val) = attribute.deref().value.as_ref() {
+                                    target_blank_tuple = check_target(val);
+                                    target_span = attribute.value.as_ref().map(GetSpan::span);
+                                }
+                            } else if attribute_name == "href"
+                                || attribute_name == "action"
+                                || ctx.settings().react.get_link_component_attrs(tag_name).map_or(
+                                    false,
+                                    |link_attribute| {
+                                        link_attribute.contains(&CompactStr::new(attribute_name))
+                                    },
+                                )
+                                || ctx.settings().react.get_form_component_attrs(tag_name).map_or(
+                                    false,
+                                    |form_attribute| {
+                                        form_attribute.contains(&CompactStr::new(attribute_name))
+                                    },
+                                )
                             {
-                                let attribute_name = identifier.name.as_str();
-                                if attribute_name == "target" {
-                                    if let Some(val) = attribute.deref().value.as_ref() {
-                                        target_blank_tuple = check_target(val);
-                                        target_span = attribute.value.as_ref().map(GetSpan::span);
-                                    }
-                                } else if attribute_name == "href"
-                                    || attribute_name == "action"
-                                    || ctx
-                                        .settings()
-                                        .react
-                                        .get_link_component_attrs(tag_name)
-                                        .map_or(false, |link_attribute| {
-                                            link_attribute
-                                                .contains(&CompactStr::new(attribute_name))
-                                        })
-                                    || ctx
-                                        .settings()
-                                        .react
-                                        .get_form_component_attrs(tag_name)
-                                        .map_or(false, |form_attribute| {
-                                            form_attribute
-                                                .contains(&CompactStr::new(attribute_name))
-                                        })
-                                {
-                                    if let Some(val) = attribute.value.as_ref() {
-                                        has_href_value = true;
-                                        is_href_valid =
-                                            check_href(val, &self.enforce_dynamic_links);
-                                    }
-                                } else if attribute_name == "rel" {
-                                    if let Some(val) = attribute.value.as_ref() {
-                                        rel_valid_tuple = check_rel(val, self.allow_referrer);
-                                    }
-                                };
-                            }
-                        }
-                        JSXAttributeItem::SpreadAttribute(_) => {
-                            if self.warn_on_spread_attributes {
-                                is_warn_on_spread_attributes = true;
-                                spread_span = attribute.span();
-                                target_blank_tuple = (false, "", false, false);
-                                rel_valid_tuple = (false, "", false, false);
-                                is_href_valid = false;
-                                has_href_value = true;
+                                if let Some(val) = attribute.value.as_ref() {
+                                    has_href_value = true;
+                                    is_href_valid = check_href(val, &self.enforce_dynamic_links);
+                                }
+                            } else if attribute_name == "rel" {
+                                if let Some(val) = attribute.value.as_ref() {
+                                    rel_valid_tuple = check_rel(val, self.allow_referrer);
+                                }
                             };
                         }
-                    });
+                    }
+                    JSXAttributeItem::SpreadAttribute(_) => {
+                        if self.warn_on_spread_attributes {
+                            is_warn_on_spread_attributes = true;
+                            spread_span = attribute.span();
+                            target_blank_tuple = (false, "", false, false);
+                            rel_valid_tuple = (false, "", false, false);
+                            is_href_valid = false;
+                            has_href_value = true;
+                        };
+                    }
+                });
 
-                    if is_warn_on_spread_attributes {
-                        if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
-                            return;
+                if is_warn_on_spread_attributes {
+                    if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
+                        return;
+                    }
+                    ctx.diagnostic(explicit_props_in_spread_attributes(spread_span));
+                    return;
+                }
+
+                let span = target_span.unwrap_or(jsx_ele.span);
+                if !is_href_valid {
+                    if !target_blank_tuple.1.is_empty() && target_blank_tuple.1 == rel_valid_tuple.1
+                    {
+                        if (target_blank_tuple.2 && !rel_valid_tuple.2)
+                            || (target_blank_tuple.3 && !rel_valid_tuple.3)
+                        {
+                            self.diagnostic(span, ctx);
                         }
-                        ctx.diagnostic(explicit_props_in_spread_attributes(spread_span));
                         return;
                     }
 
-                    let span = target_span.unwrap_or(jsx_ele.span);
-                    if !is_href_valid {
-                        if !target_blank_tuple.1.is_empty()
-                            && target_blank_tuple.1 == rel_valid_tuple.1
-                        {
-                            if (target_blank_tuple.2 && !rel_valid_tuple.2)
-                                || (target_blank_tuple.3 && !rel_valid_tuple.3)
-                            {
-                                self.diagnostic(span, ctx);
-                            }
-                            return;
-                        }
-
-                        if target_blank_tuple.0 && !rel_valid_tuple.0 {
-                            self.diagnostic(span, ctx);
-                        }
+                    if target_blank_tuple.0 && !rel_valid_tuple.0 {
+                        self.diagnostic(span, ctx);
                     }
                 }
             }
@@ -246,7 +245,7 @@ impl Rule for JsxNoTargetBlank {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

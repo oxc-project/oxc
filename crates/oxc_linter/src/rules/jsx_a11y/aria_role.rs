@@ -14,10 +14,12 @@ use crate::{
     AstNode,
 };
 
-fn aria_role_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+fn aria_role_diagnostic(span: Span, help_suffix: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Elements with ARIA roles must use a valid, non-abstract ARIA role.")
-        .with_help(format!("Set a valid, non-abstract ARIA role for element with ARIA{x1}"))
-        .with_label(span0)
+        .with_help(format!(
+            "Set a valid, non-abstract ARIA role for element with ARIA{help_suffix}"
+        ))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -140,7 +142,7 @@ impl Rule for AriaRole {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
-            if let Option::Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role") {
+            if let Some(aria_role) = has_jsx_prop(&jsx_el.opening_element, "role") {
                 let Some(element_type) = get_element_type(ctx, &jsx_el.opening_element) else {
                     return;
                 };

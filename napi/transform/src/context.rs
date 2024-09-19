@@ -1,12 +1,12 @@
-use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, Trivias};
-use oxc_codegen::Codegen;
 use std::{
     cell::{OnceCell, Ref, RefCell, RefMut},
     path::Path,
     sync::Arc,
 };
 
+use oxc_allocator::Allocator;
+use oxc_ast::{ast::Program, Trivias};
+use oxc_codegen::Codegen;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
@@ -86,6 +86,7 @@ impl<'a> TransformContext<'a> {
     pub fn file_name(&self) -> &'a str {
         self.filename
     }
+
     #[inline]
     pub fn file_path(&self) -> &'a Path {
         Path::new(self.filename)
@@ -121,8 +122,8 @@ impl<'a> TransformContext<'a> {
         self.program.borrow_mut()
     }
 
-    pub fn codegen<const MINIFY: bool>(&self) -> Codegen<'a, MINIFY> {
-        let codegen = Codegen::<MINIFY>::new();
+    pub fn codegen(&self) -> Codegen<'a> {
+        let codegen = Codegen::new();
         if self.source_map {
             codegen.enable_source_map(self.file_name(), self.source_text())
         } else {

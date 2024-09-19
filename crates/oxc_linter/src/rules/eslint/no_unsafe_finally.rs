@@ -8,10 +8,10 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_unsafe_finally_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_unsafe_finally_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe finally block")
         .with_help("Control flow inside try or catch blocks will be overwritten by this statement")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

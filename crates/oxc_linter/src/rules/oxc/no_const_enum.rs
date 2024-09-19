@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_const_enum_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_const_enum_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected const enum")
         .with_help("Const enums are not supported by bundlers and are incompatible with the isolatedModules mode. Their use can lead to import nonexistent values (because const enums are erased).")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -6,32 +6,32 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var a = test.__iterator__;
    ·         ─────────────────
    ╰────
-  help: Disallow the use of the `__iterator__` property.
+  help: Consider using [Symbol.iterator] instead
 
   ⚠ eslint(no-iterator): Reserved name '__iterator__'
    ╭─[no_iterator.tsx:1:1]
  1 │ Foo.prototype.__iterator__ = function() {};
    · ──────────────────────────
    ╰────
-  help: Disallow the use of the `__iterator__` property.
+  help: Consider using [Symbol.iterator] instead
 
   ⚠ eslint(no-iterator): Reserved name '__iterator__'
    ╭─[no_iterator.tsx:1:9]
  1 │ var a = test['__iterator__'];
    ·         ────────────────────
    ╰────
-  help: Disallow the use of the `__iterator__` property.
+  help: Consider using [Symbol.iterator] instead
 
   ⚠ eslint(no-iterator): Reserved name '__iterator__'
    ╭─[no_iterator.tsx:1:9]
  1 │ var a = test[`__iterator__`];
    ·         ────────────────────
    ╰────
-  help: Disallow the use of the `__iterator__` property.
+  help: Consider using [Symbol.iterator] instead
 
   ⚠ eslint(no-iterator): Reserved name '__iterator__'
    ╭─[no_iterator.tsx:1:1]
  1 │ test[`__iterator__`] = function () {};
    · ────────────────────
    ╰────
-  help: Disallow the use of the `__iterator__` property.
+  help: Consider using [Symbol.iterator] instead

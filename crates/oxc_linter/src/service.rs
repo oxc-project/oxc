@@ -10,7 +10,7 @@ use std::{
 use dashmap::DashMap;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -19,18 +19,58 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
+    utils::read_to_string,
     Fixer, Linter, Message,
 };
 
 pub struct LintServiceOptions {
     /// Current working directory
-    pub cwd: Box<Path>,
+    cwd: Box<Path>,
 
     /// All paths to lint
-    pub paths: Vec<Box<Path>>,
+    paths: Vec<Box<Path>>,
 
     /// TypeScript `tsconfig.json` path for reading path alias and project references
-    pub tsconfig: Option<PathBuf>,
+    tsconfig: Option<PathBuf>,
+
+    cross_module: bool,
+}
+
+impl LintServiceOptions {
+    #[must_use]
+    pub fn new<T>(cwd: T, paths: Vec<Box<Path>>) -> Self
+    where
+        T: Into<Box<Path>>,
+    {
+        Self { cwd: cwd.into(), paths, tsconfig: None, cross_module: false }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_tsconfig<T>(mut self, tsconfig: T) -> Self
+    where
+        T: Into<PathBuf>,
+    {
+        let tsconfig = tsconfig.into();
+        // Should this be canonicalized?
+        let tsconfig = if tsconfig.is_relative() { self.cwd.join(tsconfig) } else { tsconfig };
+        debug_assert!(tsconfig.is_file());
+
+        self.tsconfig = Some(tsconfig);
+        self
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn with_cross_module(mut self, cross_module: bool) -> Self {
+        self.cross_module = cross_module;
+        self
+    }
+
+    #[inline]
+    pub fn cwd(&self) -> &Path {
+        &self.cwd
+    }
 }
 
 #[derive(Clone)]
@@ -134,7 +174,7 @@ pub struct Runtime {
 
 impl Runtime {
     fn new(linter: Linter, options: LintServiceOptions) -> Self {
-        let resolver = linter.options().import_plugin.then(|| {
+        let resolver = options.cross_module.then(|| {
             Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
         });
         Self {
@@ -176,7 +216,7 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let file_result = fs::read_to_string(path).map_err(|e| {
+        let file_result = read_to_string(path).map_err(|e| {
             Error::new(OxcDiagnostic::error(format!(
                 "Failed to open file {path:?} with error \"{e}\""
             )))
@@ -235,7 +275,7 @@ impl Runtime {
 
             if !messages.is_empty() {
                 self.ignore_path(path);
-                let errors = messages.into_iter().map(|m| m.error).collect();
+                let errors = messages.into_iter().map(Into::into).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
                 let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
                 tx_error.send(Some(diagnostics)).unwrap();
@@ -254,7 +294,11 @@ impl Runtime {
         tx_error: &DiagnosticSender,
     ) -> Vec<Message<'a>> {
         let ret = Parser::new(allocator, source_text, source_type)
-            .allow_return_outside_function(true)
+            .with_options(ParseOptions {
+                parse_regular_expression: true,
+                allow_return_outside_function: true,
+                ..ParseOptions::default()
+            })
             .parse();
 
         if !ret.errors.is_empty() {
@@ -267,15 +311,15 @@ impl Runtime {
 
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
-        let semantic_builder = SemanticBuilder::new(source_text, source_type)
+        let semantic_builder = SemanticBuilder::new(source_text)
             .with_cfg(true)
             .with_build_jsdoc(true)
             .with_trivias(trivias)
             .with_check_syntax_error(check_syntax_errors)
-            .build_module_record(path.to_path_buf(), program);
+            .build_module_record(path, program);
         let module_record = semantic_builder.module_record();
 
-        if self.linter.options().import_plugin {
+        if self.resolver.is_some() {
             self.module_map.insert(
                 path.to_path_buf().into_boxed_path(),
                 ModuleState::Resolved(Arc::clone(&module_record)),
@@ -357,7 +401,7 @@ impl Runtime {
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {
-        if !self.linter.options().import_plugin {
+        if self.resolver.is_none() {
             return false;
         }
 
@@ -412,7 +456,7 @@ impl Runtime {
     }
 
     fn ignore_path(&self, path: &Path) {
-        if self.linter.options().import_plugin {
+        if self.resolver.is_some() {
             self.module_map.insert(path.to_path_buf().into_boxed_path(), ModuleState::Ignored);
             self.update_cache_state(path);
         }

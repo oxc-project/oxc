@@ -9,18 +9,22 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn bad_bitwise_operator_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn bad_bitwise_operator_diagnostic(
+    bad_operator: &str,
+    suggestion: &str,
+    span2: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad bitwise operator")
         .with_help(format!(
-            "Bitwise operator '{x0}' seems unintended. Did you mean logical operator '{x1}'?"
+            "Bitwise operator '{bad_operator}' seems unintended. Did you mean logical operator '{suggestion}'?"
         ))
         .with_label(span2)
 }
 
-fn bad_bitwise_or_operator_diagnostic(span0: Span) -> OxcDiagnostic {
+fn bad_bitwise_or_operator_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad bitwise operator")
         .with_help("Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,6 +56,7 @@ declare_oxc_lint!(
     BadBitwiseOperator,
     restriction // Restricted because there are false positives for enum bitflags in TypeScript,
                 // e.g. in the vscode repo
+    pending
 );
 
 impl Rule for BadBitwiseOperator {

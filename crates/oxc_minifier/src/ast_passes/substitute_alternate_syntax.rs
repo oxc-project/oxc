@@ -1,25 +1,24 @@
-use oxc_ast::{ast::*, AstBuilder};
+use oxc_ast::ast::*;
 use oxc_span::SPAN;
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
 };
-use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
+use oxc_traverse::{Traverse, TraverseCtx};
 
-use crate::{CompressOptions, CompressorPass};
+use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
-pub struct SubstituteAlternateSyntax<'a> {
-    ast: AstBuilder<'a>,
+pub struct SubstituteAlternateSyntax {
     options: CompressOptions,
     in_define_export: bool,
 }
 
-impl<'a> CompressorPass<'a> for SubstituteAlternateSyntax<'a> {}
+impl<'a> CompressorPass<'a> for SubstituteAlternateSyntax {}
 
-impl<'a> Traverse<'a> for SubstituteAlternateSyntax<'a> {
+impl<'a> Traverse<'a> for SubstituteAlternateSyntax {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.compress_block(stmt);
         // self.compress_while(stmt);
@@ -56,10 +55,7 @@ impl<'a> Traverse<'a> for SubstituteAlternateSyntax<'a> {
         call_expr: &mut CallExpression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // Check if this call expression is a top level `ExpressionStatement`.
-        // NB: 1 = global, 2 = Program, 3 = ExpressionStatement
-        if ctx.ancestors_depth() == 3
-            && matches!(ctx.parent(), Ancestor::ExpressionStatementExpression(_))
+        if ctx.parent().is_expression_statement()
             && Self::is_object_define_property_exports(call_expr)
         {
             self.in_define_export = true;
@@ -70,38 +66,34 @@ impl<'a> Traverse<'a> for SubstituteAlternateSyntax<'a> {
         self.in_define_export = false;
     }
 
-    fn enter_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if !self.compress_undefined(expr) {
-            self.compress_boolean(expr);
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if !self.compress_undefined(expr, ctx) {
+            self.compress_boolean(expr, ctx);
         }
     }
 
     fn exit_binary_expression(
         &mut self,
         expr: &mut BinaryExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.compress_typeof_undefined(expr);
+        self.compress_typeof_undefined(expr, ctx);
     }
 }
 
-impl<'a> SubstituteAlternateSyntax<'a> {
-    pub fn new(ast: AstBuilder<'a>, options: CompressOptions) -> Self {
-        Self { ast, options, in_define_export: false }
+impl<'a> SubstituteAlternateSyntax {
+    pub fn new(options: CompressOptions) -> Self {
+        Self { options, in_define_export: false }
     }
 
     /* Utilities */
 
     /// Transforms `undefined` => `void 0`
-    fn compress_undefined(&self, expr: &mut Expression<'a>) -> bool {
-        let Expression::Identifier(ident) = expr else { return false };
-        if ident.name == "undefined" {
-            // if let Some(reference_id) = ident.reference_id.get() {
-            // && self.semantic.symbols().is_global_reference(reference_id)
-            *expr = self.ast.void_0();
+    fn compress_undefined(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
+        if ctx.is_expression_undefined(expr) {
+            *expr = ctx.ast.void_0();
             return true;
-            // }
-        }
+        };
         false
     }
 
@@ -144,10 +136,10 @@ impl<'a> SubstituteAlternateSyntax<'a> {
     // fn compress_while(&mut self, stmt: &mut Statement<'a>) {
     // let Statement::WhileStatement(while_stmt) = stmt else { return };
     // if self.options.loops {
-    // let dummy_test = self.ast.expression_this(SPAN);
+    // let dummy_test = ctx.ast.expression_this(SPAN);
     // let test = std::mem::replace(&mut while_stmt.test, dummy_test);
-    // let body = self.ast.move_statement(&mut while_stmt.body);
-    // *stmt = self.ast.statement_for(SPAN, None, Some(test), None, body);
+    // let body = ctx.ast.move_statement(&mut while_stmt.body);
+    // *stmt = ctx.ast.statement_for(SPAN, None, Some(test), None, body);
     // }
     // }
 
@@ -156,16 +148,16 @@ impl<'a> SubstituteAlternateSyntax<'a> {
     /// Transforms boolean expression `true` => `!0` `false` => `!1`.
     /// Enabled by `compress.booleans`.
     /// Do not compress `true` in `Object.defineProperty(exports, 'Foo', {enumerable: true, ...})`.
-    fn compress_boolean(&mut self, expr: &mut Expression<'a>) -> bool {
+    fn compress_boolean(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans && !self.in_define_export {
-            let num = self.ast.expression_numeric_literal(
+            let num = ctx.ast.expression_numeric_literal(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },
                 if lit.value { "0" } else { "1" },
                 NumberBase::Decimal,
             );
-            *expr = self.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num);
+            *expr = ctx.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num);
             return true;
         }
         false
@@ -173,7 +165,11 @@ impl<'a> SubstituteAlternateSyntax<'a> {
 
     /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>) {
+    fn compress_typeof_undefined(
+        &self,
+        expr: &mut BinaryExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if !self.options.typeofs {
             return;
         }
@@ -197,14 +193,14 @@ impl<'a> SubstituteAlternateSyntax<'a> {
         let Some((_void_exp, id_ref)) = pair else {
             return;
         };
-        let argument = self.ast.expression_from_identifier_reference(id_ref);
-        let left = self.ast.unary_expression(SPAN, UnaryOperator::Typeof, argument);
-        let right = self.ast.string_literal(SPAN, "u");
-        let binary_expr = self.ast.binary_expression(
+        let argument = ctx.ast.expression_from_identifier_reference(id_ref);
+        let left = ctx.ast.unary_expression(SPAN, UnaryOperator::Typeof, argument);
+        let right = ctx.ast.string_literal(SPAN, "u");
+        let binary_expr = ctx.ast.binary_expression(
             expr.span,
-            self.ast.expression_from_unary(left),
+            ctx.ast.expression_from_unary(left),
             BinaryOperator::GreaterThan,
-            self.ast.expression_from_string_literal(right),
+            ctx.ast.expression_from_string_literal(right),
         );
         *expr = binary_expr;
     }

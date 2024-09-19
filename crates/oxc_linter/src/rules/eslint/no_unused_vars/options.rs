@@ -50,7 +50,10 @@ pub struct NoUnusedVarsOptions {
     /// Specifies exceptions to this rule for unused arguments. Arguments whose
     /// names match this pattern will be ignored.
     ///
-    /// By default this pattern is [`None`].
+    /// By default, this pattern is `^_` unless options are configured with an
+    /// object. In this case it will default to [`None`]. Note that this
+    /// behavior deviates from both ESLint and TypeScript-ESLint, which never
+    /// provide a default pattern.
     ///
     /// ## Example
     ///
@@ -206,11 +209,12 @@ pub struct NoUnusedVarsOptions {
 
 impl Default for NoUnusedVarsOptions {
     fn default() -> Self {
+        let underscore = Some(Regex::new("^_").unwrap());
         Self {
             vars: VarsOption::default(),
-            vars_ignore_pattern: Some(Regex::new("^_").unwrap()),
+            vars_ignore_pattern: underscore.clone(),
             args: ArgsOption::default(),
-            args_ignore_pattern: None,
+            args_ignore_pattern: underscore,
             ignore_rest_siblings: false,
             caught_errors: CaughtErrors::default(),
             caught_errors_ignore_pattern: None,
@@ -253,10 +257,12 @@ impl ArgsOption {
     pub const fn is_after_used(&self) -> bool {
         matches!(self, Self::AfterUsed)
     }
+
     #[inline]
     pub const fn is_all(&self) -> bool {
         matches!(self, Self::All)
     }
+
     #[inline]
     pub const fn is_none(&self) -> bool {
         matches!(self, Self::None)
@@ -277,6 +283,7 @@ impl CaughtErrors {
     pub const fn all() -> Self {
         Self(true)
     }
+
     pub const fn none() -> Self {
         Self(false)
     }
@@ -403,18 +410,14 @@ impl From<Value> for NoUnusedVarsOptions {
         let Some(config) = value.get(0) else { return Self::default() };
         match config {
             Value::String(vars) => {
-                let vars: VarsOption = vars
-                    .try_into()
-                    .unwrap();
+                let vars: VarsOption = vars.try_into().unwrap();
                 Self { vars, ..Default::default() }
             }
             Value::Object(config) => {
                 let vars = config
                     .get("vars")
                     .map(|vars| {
-                        let vars: VarsOption = vars
-                            .try_into()
-                            .unwrap();
+                        let vars: VarsOption = vars.try_into().unwrap();
                         vars
                     })
                     .unwrap_or_default();
@@ -428,9 +431,7 @@ impl From<Value> for NoUnusedVarsOptions {
                 let args: ArgsOption = config
                     .get("args")
                     .map(|args| {
-                        let args: ArgsOption = args
-                            .try_into()
-                            .unwrap();
+                        let args: ArgsOption = args.try_into().unwrap();
                         args
                     })
                     .unwrap_or_default();
@@ -441,9 +442,7 @@ impl From<Value> for NoUnusedVarsOptions {
                 let caught_errors: CaughtErrors = config
                     .get("caughtErrors")
                     .map(|caught_errors| {
-                        let caught_errors: CaughtErrors = caught_errors
-                            .try_into()
-                            .unwrap();
+                        let caught_errors: CaughtErrors = caught_errors.try_into().unwrap();
                         caught_errors
                     })
                     .unwrap_or_default();
@@ -483,7 +482,7 @@ impl From<Value> for NoUnusedVarsOptions {
                     caught_errors_ignore_pattern,
                     destructured_array_ignore_pattern,
                     ignore_class_with_static_init_block,
-                    report_used_ignore_pattern
+                    report_used_ignore_pattern,
                 }
             }
             Value::Null => Self::default(),
@@ -506,7 +505,7 @@ mod tests {
         assert_eq!(rule.vars, VarsOption::All);
         assert!(rule.vars_ignore_pattern.is_some_and(|v| v.as_str() == "^_"));
         assert_eq!(rule.args, ArgsOption::AfterUsed);
-        assert!(rule.args_ignore_pattern.is_none());
+        assert!(rule.args_ignore_pattern.is_some_and(|v| v.as_str() == "^_"));
         assert_eq!(rule.caught_errors, CaughtErrors::all());
         assert!(rule.caught_errors_ignore_pattern.is_none());
         assert!(rule.destructured_array_ignore_pattern.is_none());
@@ -564,6 +563,30 @@ mod tests {
         // option object provided, no default varsIgnorePattern
         assert!(rule.vars_ignore_pattern.is_none());
         assert!(rule.args_ignore_pattern.unwrap().as_str() == "^_");
+
+        let rule: NoUnusedVarsOptions = json!([
+            {
+                "varsIgnorePattern": "^_",
+            }
+        ])
+        .into();
+
+        // option object provided, no default argsIgnorePattern
+        assert!(rule.vars_ignore_pattern.unwrap().as_str() == "^_");
+        assert!(rule.args_ignore_pattern.is_none());
+    }
+
+    #[test]
+    fn test_ignore_rest_siblings_only() {
+        let rule: NoUnusedVarsOptions = json!([
+            {
+                "ignoreRestSiblings": true,
+            }
+        ])
+        .into();
+        assert!(rule.ignore_rest_siblings);
+        // an options object is provided, so no default pattern is set.
+        assert!(rule.vars_ignore_pattern.is_none());
     }
 
     #[test]
@@ -574,8 +597,7 @@ mod tests {
         assert!(default.vars_ignore_pattern.unwrap().as_str() == "^_");
 
         assert_eq!(opts.args, default.args);
-        assert!(opts.args_ignore_pattern.is_none());
-        assert!(default.args_ignore_pattern.is_none());
+        assert!(default.args_ignore_pattern.unwrap().as_str() == "^_");
 
         assert_eq!(opts.caught_errors, default.caught_errors);
         assert!(opts.caught_errors_ignore_pattern.is_none());

@@ -1,14 +1,14 @@
-use oxc_ast::AstKind;
+use oxc_ast::{ast::BlockStatement, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_empty_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow empty block statements")
-        .with_help(format!("Add comment inside empty {x0} statement"))
-        .with_label(span1.label(format!("Empty {x0} statement")))
+fn no_empty_diagnostic(stmt_kind: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected empty block statements")
+        .with_help(format!("Remove this {stmt_kind} or add a comment inside it"))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// ```
     NoEmpty,
     restriction,
-    pending // a suggestion could be added to remove the empty statement
+    suggestion
 );
 
 impl Rule for NoEmpty {
@@ -49,16 +49,25 @@ impl Rule for NoEmpty {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
-                if self.allow_empty_catch
-                    && matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::CatchClause(_)))
-                {
+                let parent = ctx.nodes().parent_kind(node.id());
+                if self.allow_empty_catch && matches!(parent, Some(AstKind::CatchClause(_))) {
                     return;
                 }
 
                 if ctx.semantic().trivias().has_comments_between(block.span) {
                     return;
                 }
-                ctx.diagnostic(no_empty_diagnostic("block", block.span));
+                ctx.diagnostic_with_suggestion(no_empty_diagnostic("block", block.span), |fixer| {
+                    if let Some(parent) = parent {
+                        if matches!(parent, AstKind::CatchClause(_)) {
+                            fixer.noop()
+                        } else {
+                            fixer.delete(&parent)
+                        }
+                    } else {
+                        fixer.noop()
+                    }
+                });
             }
             // The visitor does not visit the `BlockStatement` inside the `FinallyClause`.
             // See `Visit::visit_finally_clause`.
@@ -66,14 +75,68 @@ impl Rule for NoEmpty {
                 if ctx.semantic().trivias().has_comments_between(finally_clause.span) {
                     return;
                 }
-                ctx.diagnostic(no_empty_diagnostic("block", finally_clause.span));
+                ctx.diagnostic_with_suggestion(
+                    no_empty_diagnostic("block", finally_clause.span),
+                    |fixer| {
+                        let parent = ctx
+                            .nodes()
+                            .parent_kind(node.id())
+                            .expect("finally clauses must have a parent node");
+
+                        let AstKind::TryStatement(parent) = parent else {
+                            unreachable!("finally clauses must be children of a try statement");
+                        };
+
+                        // if there's no `catch`, we can't remove the `finally` block
+                        if parent.handler.is_none() {
+                            return fixer.noop();
+                        }
+
+                        if let Some(finally_kw_start) = find_finally_start(ctx, finally_clause) {
+                            fixer.delete_range(Span::new(finally_kw_start, finally_clause.span.end))
+                        } else {
+                            fixer.noop()
+                        }
+                    },
+                );
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
-                ctx.diagnostic(no_empty_diagnostic("switch", switch.span));
+                ctx.diagnostic_with_suggestion(
+                    no_empty_diagnostic("switch", switch.span),
+                    |fixer| fixer.delete(switch),
+                );
             }
             _ => {}
         }
     }
+}
+
+fn find_finally_start(ctx: &LintContext, finally_clause: &BlockStatement) -> Option<u32> {
+    let src = ctx.source_text();
+    let finally_start = finally_clause.span.start as usize - 1;
+    let mut start = finally_start;
+
+    let src_chars: Vec<char> = src.chars().collect();
+
+    while start > 0 {
+        if let Some(&ch) = src_chars.get(start) {
+            if !ch.is_whitespace() {
+                if ch == 'y'
+                    && "finally".chars().rev().skip(1).all(|c| {
+                        start -= 1;
+                        src_chars.get(start) == Some(&c)
+                    })
+                {
+                    #[allow(clippy::cast_possible_truncation)]
+                    return Some(start as u32);
+                }
+                return None;
+            }
+        }
+        start = start.saturating_sub(1);
+    }
+
+    None
 }
 
 #[test]
@@ -125,5 +188,29 @@ fn test() {
         ("try { foo(); } catch (ex) {} finally {}", None),
     ];
 
-    Tester::new(NoEmpty::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("try {} catch (ex) {throw ex}", "", None),
+        (
+            "try { foo() } catch (ex) {throw ex} finally {}",
+            "try { foo() } catch (ex) {throw ex} ",
+            None,
+        ),
+        // we can't fix this because removing the `catch` block would change the semantics of the code
+        ("try { foo() } catch (ex) {}", "try { foo() } catch (ex) {}", None),
+        ("if (foo) {}", "", None),
+        ("while (foo) {}", "", None),
+        ("for (;foo;) {}", "", None),
+        ("switch(foo) {}", "", None),
+        ("switch (foo) { /* empty */ }", "", None),
+        ("try {} catch (ex) {}", "", Some(json!([ { "allowEmptyCatch": true }]))),
+        (
+            "try { foo(); } catch (ex) {} finally {}",
+            "try { foo(); } catch (ex) {} ",
+            Some(json!([ { "allowEmptyCatch": true }])),
+        ),
+        ("try {} catch (ex) {} finally {}", "", Some(json!([ { "allowEmptyCatch": true }]))),
+        ("try { foo(); } catch (ex) {} finally {}", "try { foo(); } catch (ex) {} ", None),
+    ];
+
+    Tester::new(NoEmpty::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

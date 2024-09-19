@@ -70,6 +70,7 @@
 //! shared_enum_variants!(
 //!     Expression, MemberExpression,
 //!     is_member_expression,
+//!     into_member_expression,
 //!     as_member_expression, as_member_expression_mut,
 //!     to_member_expression, to_member_expression_mut,
 //!     [ComputedMemberExpression, StaticMemberExpression, PrivateFieldExpression]
@@ -174,16 +175,13 @@
 //!
 //! If you are seeing compile-time errors in `src/ast/macros.rs`, this will be the cause.
 
-mod js;
-mod jsx;
-mod literal;
-mod macros;
-mod ts;
+pub(crate) mod js;
+pub(crate) mod jsx;
+pub(crate) mod literal;
+pub(crate) mod macros;
+pub(crate) mod ts;
 
 use macros::inherit_variants;
-
-pub use self::{js::*, jsx::*, literal::*, ts::*};
-
 // Re-export AST types from other crates
 pub use oxc_span::{Atom, Language, LanguageVariant, ModuleKind, SourceType, Span};
 pub use oxc_syntax::{
@@ -192,3 +190,5 @@ pub use oxc_syntax::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
 };
+
+pub use self::{js::*, jsx::*, literal::*, ts::*};

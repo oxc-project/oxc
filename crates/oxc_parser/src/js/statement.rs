@@ -41,6 +41,11 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
+
+            if is_top_level && stmt.is_module_declaration() {
+                self.set_source_type_to_module_if_unambiguous();
+            }
+
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
             // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
@@ -125,7 +130,7 @@ impl<'a> ParserImpl<'a> {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
-                let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
+                let label = self.ast.label_identifier(ident.span, ident.name.clone());
                 let body = self.parse_statement_list_item(StatementContext::Label)?;
                 return Ok(self.ast.statement_labeled(self.end_span(span), label, body));
             }
@@ -308,7 +313,7 @@ impl<'a> ParserImpl<'a> {
         let using_decl = self.parse_using_declaration(StatementContext::For)?;
 
         if matches!(self.cur_kind(), Kind::In) {
-            if using_decl.is_await {
+            if using_decl.kind.is_await() {
                 self.error(diagnostics::await_using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
@@ -320,11 +325,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         if matches!(self.cur_kind(), Kind::In | Kind::Of) {
-            let init = ForStatementLeft::UsingDeclaration(self.ast.alloc(using_decl));
+            let init = ForStatementLeft::VariableDeclaration(self.ast.alloc(using_decl));
             return self.parse_for_in_or_of_loop(span, r#await, init);
         }
 
-        let init = Some(ForStatementInit::UsingDeclaration(self.ast.alloc(using_decl)));
+        let init = Some(ForStatementInit::VariableDeclaration(self.ast.alloc(using_decl)));
         self.parse_for_loop(span, init, r#await)
     }
 

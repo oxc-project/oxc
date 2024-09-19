@@ -4,7 +4,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNonNullAssertedNullishCoalescing;
@@ -27,10 +31,10 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn no_non_null_asserted_nullish_coalescing_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_non_null_asserted_nullish_coalescing_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("'Disallow non-null assertions in the left operand of a nullish coalescing operator")
         .with_help("The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for NoNonNullAssertedNullishCoalescing {
@@ -48,7 +52,7 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
         ctx.diagnostic(no_non_null_asserted_nullish_coalescing_diagnostic(ts_non_null_expr.span));
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

@@ -1,14 +1,16 @@
 use std::borrow::Cow;
 
-use oxc_ast::ast::{
-    AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
-    FunctionType, MethodDefinitionKind, PropertyKey, PropertyKind,
+use oxc_ast::{
+    ast::{
+        AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
+        FunctionType, MethodDefinitionKind, PropertyKey, PropertyKind,
+    },
+    AstKind,
 };
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, Span};
+use oxc_semantic::NodeId;
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name;
 use phf::phf_set;
 
@@ -42,7 +44,7 @@ enum FuncNamesConfig {
 
 impl FuncNamesConfig {
     fn is_invalid_function(self, func: &Function, parent_node: &AstNode<'_>) -> bool {
-        let func_name = get_function_name(func);
+        let func_name = func.name();
 
         match self {
             Self::Never => func_name.is_some() && func.r#type != FunctionType::FunctionDeclaration,
@@ -230,13 +232,6 @@ fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     func.id.as_ref().map(|id| &id.span)
 }
 
-/**
- * Gets the identifier name of the function
- */
-fn get_function_name<'f, 'a>(func: &'f Function<'a>) -> Option<&'f Atom<'a>> {
-    func.id.as_ref().map(|id| &id.name)
-}
-
 fn get_property_key_name<'a>(key: &PropertyKey<'a>) -> Option<Cow<'a, str>> {
     if matches!(key, PropertyKey::NullLiteral(_)) {
         return Some("null".into());
@@ -342,14 +337,14 @@ fn get_function_name_with_kind<'a>(func: &Function<'a>, parent_node: &AstNode<'a
                 }
             } else if let Some(static_name) = get_static_property_name(parent_node) {
                 tokens.push(static_name);
-            } else if let Some(name) = get_function_name(func) {
+            } else if let Some(name) = func.name() {
                 tokens.push(Cow::Borrowed(name.as_str()));
             }
         }
         _ => {
             if let Some(static_name) = get_static_property_name(parent_node) {
                 tokens.push(static_name);
-            } else if let Some(name) = get_function_name(func) {
+            } else if let Some(name) = func.name() {
                 tokens.push(Cow::Borrowed(name.as_str()));
             }
         }
@@ -399,8 +394,8 @@ impl Rule for FuncNames {
                         // check at first if the callee calls an invalid function
                         if !invalid_funcs
                             .iter()
-                            .filter_map(|(func, _)| get_function_name(func))
-                            .any(|func_name| func_name == &identifier.name)
+                            .filter_map(|(func, _)| func.name())
+                            .any(|func_name| func_name == identifier.name)
                         {
                             continue;
                         }
@@ -409,11 +404,9 @@ impl Rule for FuncNames {
                         let ast_span = ctx.nodes().iter_parents(node.id()).skip(1).find_map(|p| {
                             match p.kind() {
                                 AstKind::Function(func) => {
-                                    let func_name = get_function_name(func);
+                                    let func_name = func.name()?;
 
-                                    func_name?;
-
-                                    if *func_name.unwrap() == identifier.name {
+                                    if func_name == identifier.name {
                                         return Some(func.span);
                                     }
 
@@ -434,28 +427,59 @@ impl Rule for FuncNames {
         }
 
         for (func, parent_node) in &invalid_funcs {
-            let func_name = get_function_name(func);
             let func_name_complete = get_function_name_with_kind(func, parent_node);
 
-            let span = Span::new(func.span.start, func.params.span.start);
-            if func_name.is_some() {
+            let report_span = Span::new(func.span.start, func.params.span.start);
+            let replace_span = Span::new(
+                func.span.start,
+                func.type_parameters
+                    .as_ref()
+                    .map_or_else(|| func.params.span.start, |tp| tp.span.start),
+            );
+            if let Some(id) = func.id.as_ref() {
                 ctx.diagnostic_with_suggestion(
-                    named_diagnostic(&func_name_complete, span),
-                    |fixer| func.id.as_ref().map_or(fixer.noop(), |id| fixer.delete(id)),
+                    named_diagnostic(&func_name_complete, report_span),
+                    |fixer| fixer.delete(id),
                 );
             } else {
-                ctx.diagnostic_with_fix(unnamed_diagnostic(&func_name_complete, span), |fixer| {
-                    guess_function_name(ctx, parent_node.id()).map_or_else(
-                        || fixer.noop(),
-                        |name| fixer.insert_text_after(&span, format!(" {name}")),
-                    )
-                });
+                ctx.diagnostic_with_fix(
+                    unnamed_diagnostic(&func_name_complete, report_span),
+                    |fixer| {
+                        guess_function_name(ctx, parent_node.id()).map_or_else(
+                            || fixer.noop(),
+                            |name| {
+                                // if this name shadows a variable in the outer scope **and** that name is referenced
+                                // inside the function body, it is unsafe to add a name to this function
+                                if ctx
+                                    .scopes()
+                                    .find_binding(func.scope_id.get().unwrap(), &name)
+                                    .map_or(false, |shadowed_var| {
+                                        ctx.semantic().symbol_references(shadowed_var).any(
+                                            |reference| {
+                                                func.span.contains_inclusive(
+                                                    ctx.nodes()
+                                                        .get_node(reference.node_id())
+                                                        .kind()
+                                                        .span(),
+                                                )
+                                            },
+                                        )
+                                    })
+                                {
+                                    return fixer.noop();
+                                }
+
+                                fixer.insert_text_after(&replace_span, format!(" {name}"))
+                            },
+                        )
+                    },
+                );
             }
         }
     }
 }
 
-fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: AstNodeId) -> Option<Cow<'a, str>> {
+fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: NodeId) -> Option<Cow<'a, str>> {
     for parent_kind in ctx.nodes().iter_parents(parent_id).map(AstNode::kind) {
         match parent_kind {
             AstKind::ParenthesizedExpression(_)
@@ -463,10 +487,10 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: AstNodeId) -> Optio
             | AstKind::TSNonNullExpression(_)
             | AstKind::TSSatisfiesExpression(_) => continue,
             AstKind::AssignmentExpression(assign) => {
-                return assign.left.get_identifier().map(Cow::Borrowed)
+                return assign.left.get_identifier().map(Cow::Borrowed);
             }
             AstKind::VariableDeclarator(decl) => {
-                return decl.id.get_identifier().as_ref().map(Atom::as_str).map(Cow::Borrowed)
+                return decl.id.get_identifier().as_ref().map(Atom::as_str).map(Cow::Borrowed);
             }
             AstKind::ObjectProperty(prop) => {
                 return prop.key.static_name().and_then(|name| {
@@ -475,7 +499,7 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: AstNodeId) -> Optio
                     } else {
                         None
                     }
-                })
+                });
             }
             AstKind::PropertyDefinition(prop) => {
                 return prop.key.static_name().and_then(|name| {
@@ -484,7 +508,7 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, parent_id: AstNodeId) -> Optio
                     } else {
                         None
                     }
-                })
+                });
             }
             _ => return None,
         }
@@ -510,8 +534,9 @@ fn is_valid_identifier_name(name: &str) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let always = Some(json!(["always"]));
     let as_needed = Some(json!(["as-needed"]));
@@ -729,6 +754,50 @@ fn test() {
             never.clone(),
         ),
         ("class C { foo = function foo() {} }", "class C { foo = function () {} }", never.clone()),
+        (
+            "const restoreGracefully = function <T>(entries: T[]) { }",
+            "const restoreGracefully = function  restoreGracefully<T>(entries: T[]) { }",
+            None,
+        ),
+        ("const foo = async function() {}", "const foo = async function foo() {}", always.clone()),
+        (
+            "const foo = async function            () {}",
+            "const foo = async function             foo() {}",
+            always.clone(),
+        ),
+        (
+            "const foo =      async          function      <T>      ()           {}",
+            "const foo =      async          function       foo<T>      ()           {}",
+            always.clone(),
+        ),
+        (
+            "const foo =      async          function      <T           >      ()           {}",
+            "const foo =      async          function       foo<T           >      ()           {}",
+            always.clone(),
+        ),
+        ("const foo = function* () {}", "const foo = function*  foo() {}", always.clone()),
+        (
+            "const foo = async function* (){}",
+            "const foo = async function*  foo(){}",
+            always.clone(),
+        ),
+        (
+            "const foo = async function* <T extends foo>(){}",
+            "const foo = async function*  foo<T extends foo>(){}",
+            always.clone(),
+        ),
+        // we can't fix this case because adding a name would cause the
+        (
+            "const setState = Component.prototype.setState;
+             Component.prototype.setState = function (update, callback) {
+	             return setState.call(this, update, callback);
+            };",
+            "const setState = Component.prototype.setState;
+             Component.prototype.setState = function (update, callback) {
+	             return setState.call(this, update, callback);
+            };",
+            always.clone(),
+        ),
     ];
 
     Tester::new(FuncNames::NAME, pass, fail).expect_fix(fix).test_and_snapshot();

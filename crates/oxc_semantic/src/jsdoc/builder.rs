@@ -1,11 +1,13 @@
 use std::collections::BTreeMap;
 
-use oxc_ast::{AstKind, Comment, Trivias};
-use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
-use super::parser::JSDoc;
+use oxc_ast::{AstKind, Comment, Trivias};
+use oxc_span::{GetSpan, Span};
+
 use crate::jsdoc::JSDocFinder;
+
+use super::parser::JSDoc;
 
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,
@@ -145,7 +147,7 @@ impl<'a> JSDocBuilder<'a> {
     }
 
     fn parse_if_jsdoc_comment(&self, comment: &Comment) -> Option<JSDoc<'a>> {
-        if !comment.kind.is_multi_line() {
+        if !comment.is_block() {
             return None;
         }
 
@@ -199,8 +201,6 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
         | AstKind::VariableDeclaration(_)
         | AstKind::VariableDeclarator(_)
 
-        | AstKind::UsingDeclaration(_)
-
         // This is slow
         // | AstKind::IdentifierName(_)
 
@@ -246,7 +246,7 @@ mod test {
         let source_type = source_type.unwrap_or_default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new(source_text, source_type)
+        let semantic = SemanticBuilder::new(source_text)
             .with_trivias(ret.trivias)
             .with_build_jsdoc(true)
             .build(program)

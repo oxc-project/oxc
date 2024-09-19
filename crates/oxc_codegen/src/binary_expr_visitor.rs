@@ -4,13 +4,12 @@
 use std::ops::Not;
 
 use oxc_ast::ast::{BinaryExpression, Expression, LogicalExpression};
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
-use oxc_syntax::precedence::{GetPrecedence, Precedence};
-
-use crate::{
-    gen::{Gen, GenExpr},
-    Codegen, Context,
+use oxc_syntax::{
+    operator::{BinaryOperator, LogicalOperator},
+    precedence::{GetPrecedence, Precedence},
 };
+
+use crate::{gen::GenExpr, Codegen, Context, Operator};
 
 #[derive(Clone, Copy)]
 pub enum Binaryish<'a> {
@@ -21,15 +20,15 @@ pub enum Binaryish<'a> {
 impl<'a> Binaryish<'a> {
     pub fn left(&self) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.left.without_parenthesized(),
-            Self::Logical(e) => e.left.without_parenthesized(),
+            Self::Binary(e) => e.left.without_parentheses(),
+            Self::Logical(e) => e.left.without_parentheses(),
         }
     }
 
     pub fn right(&self) -> &'a Expression<'a> {
         match self {
-            Self::Binary(e) => e.right.without_parenthesized(),
-            Self::Logical(e) => e.right.without_parenthesized(),
+            Self::Binary(e) => e.right.without_parentheses(),
+            Self::Logical(e) => e.right.without_parentheses(),
         }
     }
 
@@ -47,11 +46,25 @@ pub enum BinaryishOperator {
     Logical(LogicalOperator),
 }
 
-impl<const MINIFY: bool> Gen<MINIFY> for BinaryishOperator {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
+    let operator = op.as_str();
+    if op.is_keyword() {
+        p.print_space_before_identifier();
+        p.print_str(operator);
+    } else {
+        let op: Operator = op.into();
+        p.print_space_before_operator(op);
+        p.print_str(operator);
+        p.prev_op = Some(op);
+        p.prev_op_end = p.code().len();
+    }
+}
+
+impl BinaryishOperator {
+    fn gen(self, p: &mut Codegen) {
         match self {
-            Self::Binary(op) => op.gen(p, ctx),
-            Self::Logical(op) => op.gen(p, ctx),
+            Self::Binary(op) => print_binary_operator(op, p),
+            Self::Logical(op) => p.print_str(op.as_str()),
         }
     }
 }
@@ -89,7 +102,7 @@ pub struct BinaryExpressionVisitor<'a> {
 }
 
 impl<'a> BinaryExpressionVisitor<'a> {
-    pub fn gen_expr<const MINIFY: bool>(v: Self, p: &mut Codegen<'a, { MINIFY }>) {
+    pub fn gen_expr(v: Self, p: &mut Codegen<'a>) {
         let mut v = v;
         let stack_bottom = p.binary_expr_stack.len();
         loop {
@@ -133,7 +146,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         }
     }
 
-    pub fn check_and_prepare<const MINIFY: bool>(&mut self, p: &mut Codegen<{ MINIFY }>) -> bool {
+    pub fn check_and_prepare(&mut self, p: &mut Codegen) -> bool {
         let e = self.e;
         self.operator = e.operator();
 
@@ -181,9 +194,9 @@ impl<'a> BinaryExpressionVisitor<'a> {
         true
     }
 
-    pub fn visit_right_and_finish<const MINIFY: bool>(&self, p: &mut Codegen<{ MINIFY }>) {
+    pub fn visit_right_and_finish(&self, p: &mut Codegen) {
         p.print_soft_space();
-        self.operator.gen(p, Context::empty());
+        self.operator.gen(p);
         p.print_soft_space();
         self.e.right().gen_expr(p, self.right_precedence, self.ctx & Context::FORBID_IN);
         if self.wrap {

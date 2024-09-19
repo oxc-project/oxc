@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{
         match_expression, Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
         BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
-        ObjectPropertyKind, PropertyKey, VariableDeclarator,
+        ObjectPropertyKind, PropertyKey,
     },
     AstKind,
 };
@@ -12,22 +12,22 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn object(span0: Span) -> OxcDiagnostic {
+fn object(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not add `then` to an object.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn export(span0: Span) -> OxcDiagnostic {
+fn export(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not export `then`.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn class(span0: Span) -> OxcDiagnostic {
+fn class(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Do not add `then` to a class.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -239,18 +239,17 @@ fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span
             ident.reference_id.get().and_then(|ref_id| {
                 tab.get_reference(ref_id).symbol_id().and_then(|symbol_id| {
                     let decl = ctx.semantic().nodes().get_node(tab.get_declaration(symbol_id));
-                    if let AstKind::VariableDeclarator(VariableDeclarator {
-                        init: Some(Expression::StringLiteral(ref lit)),
-                        ..
-                    }) = decl.kind()
-                    {
-                        if lit.value == "then" {
-                            Some(lit.span)
-                        } else {
-                            None
+                    let var_decl = decl.kind().as_variable_declarator()?;
+
+                    match var_decl.init {
+                        Some(Expression::StringLiteral(ref lit)) => {
+                            if lit.value == "then" {
+                                Some(lit.span)
+                            } else {
+                                None
+                            }
                         }
-                    } else {
-                        None
+                        _ => None,
                     }
                 })
             })

@@ -1,15 +1,11 @@
 {
   "name": "@oxc-parser/binding",
+  "packageManager": "pnpm@9.9.0",
   "private": true,
   "scripts": {
     "build": "napi build --platform --release",
     "test": "node test.mjs",
     "bench": "node parse.bench.mjs"
-  },
-  "devDependencies": {
-    "@napi-rs/cli": "3.0.0-alpha.61",
-    "es-module-lexer": "^1.4.1",
-    "tinybench": "^2.6.0"
   },
   "engines": {
     "node": ">=14.*"
@@ -26,5 +22,10 @@
       "x86_64-apple-darwin",
       "aarch64-apple-darwin"
     ]
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "catalog:",
+    "es-module-lexer": "^1.4.1",
+    "tinybench": "^2.6.0"
   }
 }

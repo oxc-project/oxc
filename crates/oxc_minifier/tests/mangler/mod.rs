@@ -2,16 +2,16 @@ use std::fmt::Write;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
-use oxc_mangler::ManglerBuilder;
+use oxc_mangler::Mangler;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 fn mangle(source_text: &str) -> String {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true);
+    let source_type = SourceType::mjs();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
-    let mangler = ManglerBuilder::default().build(&program);
+    let mangler = Mangler::new().build(&program);
     CodeGenerator::new().with_mangler(Some(mangler)).build(&program).source_text
 }
 

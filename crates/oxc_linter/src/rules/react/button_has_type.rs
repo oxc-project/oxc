@@ -10,22 +10,22 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
     AstNode,
 };
 
-fn missing_type_prop(span0: Span) -> OxcDiagnostic {
+fn missing_type_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have an explicit `type` attribute.")
         .with_help("Add a `type` attribute to the `button` element.")
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn invalid_type_prop(span0: Span) -> OxcDiagnostic {
+fn invalid_type_prop(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("`button` elements must have a valid `type` attribute.")
         .with_help("Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Clone)]
@@ -53,12 +53,15 @@ declare_oxc_lint!(
     /// unexpected page reloads.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// // Bad
     /// <button />
     /// <button type="foo" />
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
     /// <button type="button" />
     /// <button type="submit" />
     /// ```
@@ -149,7 +152,7 @@ impl Rule for ButtonHasType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }
@@ -172,7 +175,7 @@ impl ButtonHasType {
     }
 
     fn is_valid_button_type_prop_expression(&self, expr: &Expression) -> bool {
-        match expr.without_parenthesized() {
+        match expr.without_parentheses() {
             Expression::StringLiteral(str) => {
                 self.is_valid_button_type_prop_string_literal(str.value.as_str())
             }

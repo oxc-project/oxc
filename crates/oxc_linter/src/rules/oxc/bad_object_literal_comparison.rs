@@ -6,18 +6,18 @@ use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn object_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
+fn object_comparison(span: Span, const_result: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected object literal comparison.")
         .with_help(format!(
-            "This comparison will always return {x1:?} as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths."
+            "This comparison will always return {const_result:?} as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths."
         ))
-        .with_label(span0)
+        .with_label(span)
 }
 
-fn array_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
+fn array_comparison(span: Span, const_result: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected array literal comparison.")
-        .with_help(format!("This comparison will always return {x1:?} as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended."))
-        .with_label(span0)
+        .with_help(format!("This comparison will always return {const_result:?} as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -35,13 +35,15 @@ declare_oxc_lint!(
     /// If you want to check if an object or array is empty, use `Object.entries()` or `Object.keys()` and their lengths.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// if (x === {}) { }
     /// if (arr !== []) { }
+    /// ```
     ///
-    ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// if (typeof x === 'object' && Object.keys(x).length === 0) { }
     /// if (Array.isArray(x) && x.length === 0) { }
     /// ```

@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, AstNodeId};
+use oxc_semantic::{AstNode, NodeId};
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
@@ -14,10 +14,10 @@ use crate::{
     },
 };
 
-fn no_conditional_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_conditional_expect_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected conditional expect")
         .with_help("Avoid calling `expect` conditionally`")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -98,7 +98,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
 fn check_parents<'a>(
     node: &AstNode<'a>,
-    visited: &mut FxHashSet<AstNodeId>,
+    visited: &mut FxHashSet<NodeId>,
     in_conditional: InConditional,
     ctx: &LintContext<'a>,
 ) -> InConditional {

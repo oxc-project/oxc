@@ -14,7 +14,7 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     ast_util::outermost_paren_parent,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::eslint::array_callback_return::return_checker::{
         check_statement, StatementReturnStatus,
@@ -109,10 +109,11 @@ declare_oxc_lint!(
     restriction,
 );
 
-fn explicit_function_return_type_diagnostic(span0: Span) -> OxcDiagnostic {
+fn explicit_function_return_type_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Missing return type on function.")
+        // TODO: actually provide a helpful message.
         .with_help("Require explicit return types on functions and class methods.")
-        .with_label(span0)
+        .with_label(span)
 }
 
 impl Rule for ExplicitFunctionReturnType {
@@ -163,7 +164,7 @@ impl Rule for ExplicitFunctionReturnType {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) => {
-                if !func.is_declaration() & !func.is_expression() {
+                if !func.is_declaration() && !func.is_expression() {
                     return;
                 }
 
@@ -299,7 +300,7 @@ impl Rule for ExplicitFunctionReturnType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }
@@ -548,7 +549,7 @@ fn is_function_argument(parent: &AstNode, callee: Option<&AstNode>) -> bool {
         return true;
     }
 
-    match call_expr.callee.without_parenthesized() {
+    match call_expr.callee.without_parentheses() {
         Expression::FunctionExpression(func_expr) => {
             let AstKind::Function(callee_func_expr) = callee.unwrap().kind() else { return false };
             func_expr.span != callee_func_expr.span

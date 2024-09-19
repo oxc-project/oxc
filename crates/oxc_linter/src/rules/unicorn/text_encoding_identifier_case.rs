@@ -1,16 +1,21 @@
+use cow_utils::CowUtils;
 use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
+    ast::{JSXAttributeItem, JSXAttributeName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodeId;
+use oxc_semantic::NodeId;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn text_encoding_identifier_case_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`.")).with_label(span0)
+fn text_encoding_identifier_case_diagnostic(
+    span: Span,
+    good_encoding: &str,
+    bad_encoding: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{good_encoding}` over `{bad_encoding}`.")).with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -46,7 +51,7 @@ declare_oxc_lint!(
     /// ```
     TextEncodingIdentifierCase,
     style,
-    pending
+    fix
 );
 
 impl Rule for TextEncodingIdentifierCase {
@@ -72,7 +77,10 @@ impl Rule for TextEncodingIdentifierCase {
             return;
         }
 
-        ctx.diagnostic(text_encoding_identifier_case_diagnostic(span, replacement, s));
+        ctx.diagnostic_with_fix(
+            text_encoding_identifier_case_diagnostic(span, replacement, s),
+            |fixer| fixer.replace(Span::new(span.start + 1, span.end - 1), replacement),
+        );
     }
 }
 
@@ -81,7 +89,7 @@ fn get_replacement(node: &str) -> Option<&'static str> {
         return None;
     }
 
-    let node_lower = node.to_ascii_lowercase();
+    let node_lower = node.cow_to_ascii_lowercase();
 
     if node_lower == "utf-8" || node_lower == "utf8" {
         return Some("utf8");
@@ -94,7 +102,7 @@ fn get_replacement(node: &str) -> Option<&'static str> {
     None
 }
 
-fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool {
+fn is_jsx_meta_elem_with_charset_attr(id: NodeId, ctx: &LintContext) -> bool {
     let Some(parent) = ctx.nodes().parent_node(id) else {
         return false;
     };
@@ -115,11 +123,9 @@ fn is_jsx_meta_elem_with_charset_attr(id: AstNodeId, ctx: &LintContext) -> bool 
         return false;
     };
 
-    let JSXElementName::Identifier(name) = &opening_elem.name else {
-        return false;
-    };
+    let Some(tag_name) = opening_elem.name.get_identifier_name() else { return false };
 
-    if !name.name.eq_ignore_ascii_case("meta") {
+    if !tag_name.eq_ignore_ascii_case("meta") {
         return false;
     }
 
@@ -169,5 +175,31 @@ fn test() {
         r#"<META CHARSET="ASCII" />"#,
     ];
 
-    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#""UTF-8""#, r#""utf8""#),
+        (r#""utf-8""#, r#""utf8""#),
+        (r"'utf-8'", r"'utf8'"),
+        (r#""Utf8""#, r#""utf8""#),
+        (r#""ASCII""#, r#""ascii""#),
+        (r#"fs.readFile?.(file, "UTF-8")"#, r#"fs.readFile?.(file, "utf8")"#),
+        (r#"fs?.readFile(file, "UTF-8")"#, r#"fs?.readFile(file, "utf8")"#),
+        (r#"readFile(file, "UTF-8")"#, r#"readFile(file, "utf8")"#),
+        (r#"fs.readFile(...file, "UTF-8")"#, r#"fs.readFile(...file, "utf8")"#),
+        (r#"new fs.readFile(file, "UTF-8")"#, r#"new fs.readFile(file, "utf8")"#),
+        (r#"fs.readFile(file, {encoding: "UTF-8"})"#, r#"fs.readFile(file, {encoding: "utf8"})"#),
+        (r#"fs.readFile("UTF-8")"#, r#"fs.readFile("utf8")"#),
+        (r#"fs.readFile(file, "UTF-8", () => {})"#, r#"fs.readFile(file, "utf8", () => {})"#),
+        (r#"fs.readFileSync(file, "UTF-8")"#, r#"fs.readFileSync(file, "utf8")"#),
+        (r#"fs[readFile](file, "UTF-8")"#, r#"fs[readFile](file, "utf8")"#),
+        (r#"fs["readFile"](file, "UTF-8")"#, r#"fs["readFile"](file, "utf8")"#),
+        (r#"await fs.readFile(file, "UTF-8",)"#, r#"await fs.readFile(file, "utf8",)"#),
+        (r#"fs.promises.readFile(file, "UTF-8",)"#, r#"fs.promises.readFile(file, "utf8",)"#),
+        (r#"whatever.readFile(file, "UTF-8",)"#, r#"whatever.readFile(file, "utf8",)"#),
+        (r#"<not-meta charset="utf-8" />"#, r#"<not-meta charset="utf8" />"#),
+        (r#"<meta not-charset="utf-8" />"#, r#"<meta not-charset="utf8" />"#),
+        (r#"<meta charset="ASCII" />"#, r#"<meta charset="ascii" />"#),
+        (r#"<META CHARSET="ASCII" />"#, r#"<META CHARSET="ascii" />"#),
+    ];
+
+    Tester::new(TextEncodingIdentifierCase::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

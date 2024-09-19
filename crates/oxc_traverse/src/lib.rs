@@ -64,14 +64,17 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_semantic::{ScopeTree, SymbolTable};
 
-pub mod ancestor;
-pub use ancestor::Ancestor;
 mod context;
 pub use context::{TraverseAncestry, TraverseCtx, TraverseScoping};
-#[allow(clippy::module_inception)]
-mod traverse;
-pub use traverse::Traverse;
-mod walk;
+
+mod generated {
+    pub mod ancestor;
+    pub(super) mod scopes_collector;
+    pub mod traverse;
+    pub(super) mod walk;
+}
+pub use generated::{ancestor, ancestor::Ancestor, traverse::Traverse};
+use generated::{scopes_collector, walk};
 
 mod compile_fail_tests;
 
@@ -128,7 +131,7 @@ mod compile_fail_tests;
 ///         }
 ///
 ///         // Read grandparent
-///         if let Some(Ancestor::ExpressionStatementExpression(stmt_ref)) = ctx.ancestor(2) {
+///         if let Ancestor::ExpressionStatementExpression(stmt_ref) = ctx.ancestor(1) {
 ///             // This is legal
 ///             println!("expression stmt's span: {:?}", stmt_ref.span());
 ///
@@ -158,5 +161,5 @@ pub fn walk_program<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     // SAFETY: Walk functions are constructed to avoid unsoundness
-    unsafe { walk::walk_program(traverser, program as *mut Program, ctx) };
+    unsafe { walk::walk_program(traverser, std::ptr::from_mut(program), ctx) };
 }

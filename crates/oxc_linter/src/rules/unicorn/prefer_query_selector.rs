@@ -6,10 +6,14 @@ use phf::phf_map;
 
 use crate::{context::LintContext, rule::Rule, utils::is_node_value_not_dom_node, AstNode};
 
-fn prefer_query_selector_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Prefer `.{x0}()` over `.{x1}()`."))
+fn prefer_query_selector_diagnostic(
+    good_method: &str,
+    bad_method: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `.{good_method}()` over `.{bad_method}()`."))
         .with_help("It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).")
-        .with_label(span2)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,14 +31,17 @@ declare_oxc_lint!(
     /// Prefer `.querySelector()` over `.getElementById()`, `.querySelectorAll()` over `.getElementsByClassName()` and `.getElementsByTagName()`.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// // Bad
     /// document.getElementById('foo');
     /// document.getElementsByClassName('foo bar');
     /// document.getElementsByTagName('main');
     /// document.getElementsByClassName(fn());
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// document.querySelector('#foo');
     /// document.querySelector('.bar');
     /// document.querySelector('main #foo .bar');

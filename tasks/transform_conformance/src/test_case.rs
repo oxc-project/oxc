@@ -3,19 +3,21 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
-use oxc_diagnostics::{Error, OxcDiagnostic};
-use oxc_parser::Parser;
-use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, print_diff_in_terminal};
-use oxc_transformer::{BabelOptions, TransformOptions, Transformer};
+use cow_utils::CowUtils;
+use oxc::{
+    allocator::Allocator,
+    codegen::CodeGenerator,
+    diagnostics::{Error, NamedSource, OxcDiagnostic},
+    parser::Parser,
+    span::{SourceType, VALID_EXTENSIONS},
+    transformer::{BabelOptions, TransformOptions},
+};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
-    fixture_root, packages_root,
-    semantic::SemanticTester,
-    TestRunnerEnv,
+    driver::Driver,
+    fixture_root, packages_root, TestRunnerEnv,
 };
 
 #[derive(Debug)]
@@ -66,10 +68,17 @@ impl TestCaseKind {
         }
     }
 
-    pub fn test(&self, filter: bool) -> bool {
+    pub fn test(&mut self, filter: bool) {
         match self {
             Self::Transform(test_case) => test_case.test(filter),
             Self::Exec(test_case) => test_case.test(filter),
+        }
+    }
+
+    pub fn errors(&self) -> &Vec<OxcDiagnostic> {
+        match self {
+            Self::Transform(test_case) => test_case.errors(),
+            Self::Exec(test_case) => test_case.errors(),
         }
     }
 }
@@ -85,7 +94,9 @@ pub trait TestCase {
 
     fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>>;
 
-    fn test(&self, filtered: bool) -> bool;
+    fn test(&mut self, filtered: bool);
+
+    fn errors(&self) -> &Vec<OxcDiagnostic>;
 
     fn path(&self) -> &Path;
 
@@ -150,43 +161,26 @@ pub trait TestCase {
         false
     }
 
-    fn transform(&self, path: &Path) -> Result<String, Vec<OxcDiagnostic>> {
+    fn transform(&self, path: &Path) -> Result<Driver, OxcDiagnostic> {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
-                return Err(vec![OxcDiagnostic::error(format!("{json_err:?}"))]);
+                return Err(OxcDiagnostic::error(format!("{json_err:?}")));
             }
         };
 
-        let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
         // Some babel test cases have a js extension, but contain typescript code.
         // Therefore, if the typescript plugin exists, enable typescript.
-        let mut source_type = SourceType::from_path(path).unwrap();
-        if !source_type.is_typescript()
-            && (self.options().get_plugin("transform-typescript").is_some()
-                || self.options().get_plugin("syntax-typescript").is_some())
-        {
-            source_type = source_type.with_typescript(true);
-        }
+        let source_type = SourceType::from_path(path).unwrap().with_typescript(
+            self.options().get_plugin("transform-typescript").is_some()
+                || self.options().get_plugin("syntax-typescript").is_some(),
+        );
 
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let mut program = ret.program;
-        let result = Transformer::new(
-            &allocator,
-            path,
-            source_type,
-            &source_text,
-            ret.trivias.clone(),
-            transform_options.clone(),
-        )
-        .build(&mut program);
-        if result.errors.is_empty() {
-            Ok(CodeGenerator::new().build(&program).source_text)
-        } else {
-            Err(result.errors)
-        }
+        let driver =
+            Driver::new(false, transform_options.clone()).execute(&source_text, source_type, path);
+        Ok(driver)
     }
 }
 
@@ -195,6 +189,7 @@ pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
     transform_options: Result<TransformOptions, Vec<Error>>,
+    errors: Vec<OxcDiagnostic>,
 }
 
 impl TestCase for ConformanceTestCase {
@@ -202,7 +197,7 @@ impl TestCase for ConformanceTestCase {
         let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
-        Self { path: path.to_path_buf(), options, transform_options }
+        Self { path: path.to_path_buf(), options, transform_options, errors: vec![] }
     }
 
     fn options(&self) -> &BabelOptions {
@@ -217,8 +212,12 @@ impl TestCase for ConformanceTestCase {
         &self.path
     }
 
+    fn errors(&self) -> &Vec<OxcDiagnostic> {
+        &self.errors
+    }
+
     /// Test conformance by comparing the parsed babel code and transformed code.
-    fn test(&self, filtered: bool) -> bool {
+    fn test(&mut self, filtered: bool) {
         let output_path = self.path.parent().unwrap().read_dir().unwrap().find_map(|entry| {
             let path = entry.ok()?.path();
             let file_stem = path.file_stem()?;
@@ -227,101 +226,99 @@ impl TestCase for ConformanceTestCase {
 
         let allocator = Allocator::default();
         let input = fs::read_to_string(&self.path).unwrap();
-        let input_is_js = self.path.extension().and_then(std::ffi::OsStr::to_str) == Some("js");
-        let output_is_js = output_path
-            .as_ref()
-            .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
 
-        let mut source_type = SourceType::from_path(&self.path)
-            .unwrap()
-            .with_script(if self.options.source_type.is_some() {
-                !self.options.is_module()
-            } else {
-                input_is_js && output_is_js
-            })
-            .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
-        if !source_type.is_typescript()
-            && (self.options.get_plugin("transform-typescript").is_some()
-                || self.options.get_plugin("syntax-typescript").is_some())
-        {
-            source_type = source_type.with_typescript(true);
-        }
+        let source_type = {
+            let mut source_type = SourceType::from_path(&self.path)
+                .unwrap()
+                .with_script(true)
+                .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
+
+            source_type = match self.options.source_type.as_deref() {
+                Some("unambiguous") => source_type.with_unambiguous(true),
+                Some("script") => source_type.with_script(true),
+                Some("module") => source_type.with_module(true),
+                Some(s) => panic!("Unexpected source type {s}"),
+                None => source_type,
+            };
+
+            source_type = source_type.with_typescript(
+                self.options.get_plugin("transform-typescript").is_some()
+                    || self.options.get_plugin("syntax-typescript").is_some(),
+            );
+
+            source_type
+        };
 
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("output_path: {output_path:?}");
         }
 
+        let project_root = project_root();
         let mut transformed_code = String::new();
-        let mut actual_errors = String::new();
-        let mut semantic_errors = Vec::default();
+        let mut actual_errors = None;
+        let mut transform_options = None;
 
-        let transform_options = match self.transform_options() {
-            Ok(transform_options) => {
-                let ret = Parser::new(&allocator, &input, source_type).parse();
-                if ret.errors.is_empty() {
-                    let mut program = ret.program;
-                    let transformer = Transformer::new(
-                        &allocator,
-                        &self.path,
-                        source_type,
-                        &input,
-                        ret.trivias.clone(),
-                        transform_options.clone(),
-                    );
-                    let ret = transformer.build(&mut program);
-
-                    semantic_errors = SemanticTester::new(ret.scopes, ret.symbols).test(&program);
-
-                    if ret.errors.is_empty() {
-                        transformed_code = CodeGenerator::new().build(&program).source_text;
-                    } else {
-                        let error = ret
-                            .errors
-                            .into_iter()
-                            .map(|e| Error::from(e).to_string())
-                            .collect::<Vec<_>>()
-                            .join("\n");
-                        actual_errors = get_babel_error(&error);
-                    }
-                } else {
-                    let error = ret
-                        .errors
-                        .into_iter()
-                        .map(|err| err.to_string())
-                        .collect::<Vec<_>>()
-                        .join("\n");
-                    actual_errors = get_babel_error(&error);
-                }
-                Some(transform_options.clone())
-            }
+        match self.transform_options() {
             Err(json_err) => {
                 let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
-                actual_errors = get_babel_error(&error);
-                None
+                actual_errors.replace(get_babel_error(&error));
             }
-        };
+            Ok(options) => {
+                transform_options.replace(options.clone());
+                let mut driver =
+                    Driver::new(false, options.clone()).execute(&input, source_type, &self.path);
+                transformed_code = driver.printed();
+                let errors = driver.errors();
+                if !errors.is_empty() {
+                    let source = NamedSource::new(
+                        self.path.strip_prefix(project_root).unwrap().to_string_lossy(),
+                        input.to_string(),
+                    );
+                    let error = errors
+                        .into_iter()
+                        .map(|err| format!("{:?}", err.with_source_code(source.clone())))
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                    actual_errors.replace(get_babel_error(&error));
+                }
+            }
+        }
 
         let babel_options = self.options();
 
-        // Get output.js by using our code gen so code comparison can match.
-        let output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
-            || {
-                if let Some(throws) = &babel_options.throws {
-                    return throws.to_string().replace(" (1:6)", "");
-                }
-                String::default()
-            },
-            |output| {
-                // Get expected code by parsing the source text, so we can get the same code generated result.
-                let ret = Parser::new(&allocator, &output, source_type).parse();
-                CodeGenerator::new().build(&ret.program).source_text
-            },
-        );
+        let output;
+        let passed = if let Some(throws) = &babel_options.throws {
+            output = throws.cow_replace(" (1:6)", "").into_owned();
+            !output.is_empty()
+                && actual_errors.as_ref().is_some_and(|errors| errors.contains(&output))
+        } else {
+            // Get output.js by using our code gen so code comparison can match.
+            output = output_path.and_then(|path| fs::read_to_string(path).ok()).map_or_else(
+                String::default,
+                |output| {
+                    // Get expected code by parsing the source text, so we can get the same code generated result.
+                    let ret = Parser::new(&allocator, &output, source_type).parse();
+                    CodeGenerator::new()
+                        // .enable_comment(
+                        // &output,
+                        // ret.trivias,
+                        // CommentOptions { preserve_annotate_comments: true },
+                        // )
+                        .build(&ret.program)
+                        .source_text
+                },
+            );
 
-        let passed = semantic_errors.is_empty()
-            && (transformed_code == output
-                || (!output.is_empty() && actual_errors.contains(&output)));
+            if transformed_code == output {
+                actual_errors.is_none()
+            } else {
+                if actual_errors.is_none() {
+                    actual_errors.replace("x Output mismatch".to_string());
+                }
+                false
+            }
+        };
 
         if filtered {
             println!("Options:");
@@ -332,10 +329,12 @@ impl TestCase for ConformanceTestCase {
                 println!("Expected Errors:\n");
                 println!("{output}\n");
                 println!("Actual Errors:\n");
-                println!("{actual_errors}\n");
-                if !passed {
-                    println!("Diff:\n");
-                    print_diff_in_terminal(&output, &actual_errors);
+                if let Some(actual_errors) = &actual_errors {
+                    println!("{actual_errors}\n");
+                    if !passed {
+                        println!("Diff:\n");
+                        print_diff_in_terminal(&output, actual_errors);
+                    }
                 }
             } else {
                 println!("Expected:\n");
@@ -343,20 +342,29 @@ impl TestCase for ConformanceTestCase {
                 println!("Transformed:\n");
                 println!("{transformed_code}");
                 println!("Errors:\n");
-                println!("{actual_errors}\n");
+                if let Some(actual_errors) = &actual_errors {
+                    println!("{actual_errors}\n");
+                }
                 if !passed {
                     println!("Diff:\n");
                     print_diff_in_terminal(&output, &transformed_code);
                 }
             }
 
-            if !semantic_errors.is_empty() {
-                println!("\nSemantic Errors:\n\n{}\n", semantic_errors.join("\n"));
-            }
-
             println!("Passed: {passed}");
         }
-        passed
+
+        if passed {
+            if let Some(options) = transform_options {
+                let mismatch_errors =
+                    Driver::new(/* check transform mismatch */ true, options)
+                        .execute(&input, source_type, &self.path)
+                        .errors();
+                self.errors.extend(mismatch_errors);
+            }
+        } else if let Some(actual_errors) = actual_errors {
+            self.errors.push(OxcDiagnostic::error(actual_errors));
+        }
     }
 }
 
@@ -365,6 +373,7 @@ pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
     transform_options: Result<TransformOptions, Vec<Error>>,
+    errors: Vec<OxcDiagnostic>,
 }
 
 impl ExecTestCase {
@@ -398,7 +407,7 @@ impl TestCase for ExecTestCase {
         let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
-        Self { path: path.to_path_buf(), options, transform_options }
+        Self { path: path.to_path_buf(), options, transform_options, errors: vec![] }
     }
 
     fn options(&self) -> &BabelOptions {
@@ -413,22 +422,23 @@ impl TestCase for ExecTestCase {
         &self.path
     }
 
-    fn test(&self, filtered: bool) -> bool {
+    fn errors(&self) -> &Vec<OxcDiagnostic> {
+        &self.errors
+    }
+
+    fn test(&mut self, filtered: bool) {
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
         }
 
         let result = match self.transform(&self.path) {
-            Ok(result) => result,
+            Ok(mut driver) => driver.printed(),
             Err(error) => {
                 if filtered {
-                    println!(
-                        "Transform Errors:\n{}\n",
-                        error.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n")
-                    );
+                    println!("Transform Errors:\n{error:?}\n",);
                 }
-                return false;
+                return;
             }
         };
         let target_path = self.write_to_test_files(&result);
@@ -439,7 +449,9 @@ impl TestCase for ExecTestCase {
             println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
         }
 
-        passed
+        if !passed {
+            self.errors.push(OxcDiagnostic::error("exec failed"));
+        }
     }
 }
 

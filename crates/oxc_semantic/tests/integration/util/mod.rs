@@ -25,6 +25,8 @@ pub struct SemanticTester<'a> {
     ///
     /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     cfg: bool,
+    /// Build a child ids for scope tree?
+    scope_tree_child_ids: bool,
     /// Expect semantic analysis to produce errors.
     ///
     /// Default is `false`.
@@ -36,7 +38,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// Use [`SemanticTester::js`] for JavaScript test cases.
     pub fn ts(source_text: &'static str) -> Self {
-        Self::new(source_text, SourceType::default().with_module(true).with_typescript(true))
+        Self::new(source_text, SourceType::ts())
     }
 
     /// Create a new tester for a TypeScript test case with JSX.
@@ -50,7 +52,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases.
     pub fn js(source_text: &'static str) -> Self {
-        Self::new(source_text, SourceType::default().with_module(true))
+        Self::new(source_text, SourceType::mjs())
     }
 
     /// Create a new tester for some source text.
@@ -63,6 +65,7 @@ impl<'a> SemanticTester<'a> {
             source_type,
             source_text,
             cfg: false,
+            scope_tree_child_ids: false,
             expect_errors: false,
         }
     }
@@ -92,6 +95,11 @@ impl<'a> SemanticTester<'a> {
     /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     pub fn with_cfg(mut self, yes: bool) -> Self {
         self.cfg = yes;
+        self
+    }
+
+    pub fn with_scope_tree_child_ids(mut self, yes: bool) -> Self {
+        self.scope_tree_child_ids = yes;
         self
     }
 
@@ -159,10 +167,11 @@ impl<'a> SemanticTester<'a> {
         );
 
         let program = self.allocator.alloc(parse.program);
-        SemanticBuilder::new(self.source_text, self.source_type)
+        SemanticBuilder::new(self.source_text)
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
             .with_cfg(self.cfg)
+            .with_scope_tree_child_ids(self.scope_tree_child_ids)
             .build(program)
     }
 

@@ -8,10 +8,10 @@ use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_empty_character_class_diagnostic(span0: Span) -> OxcDiagnostic {
+fn no_empty_character_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty character class")
         .with_help("Try to remove empty character class `[]` in regexp literal")
-        .with_label(span0)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -49,7 +49,9 @@ impl Rule for NoEmptyCharacterClass {
         }
 
         if let AstKind::RegExpLiteral(lit) = node.kind() {
-            if !NO_EMPTY_CLASS_REGEX_PATTERN.is_match(&lit.regex.pattern) {
+            if !NO_EMPTY_CLASS_REGEX_PATTERN
+                .is_match(lit.regex.pattern.source_text(ctx.source_text()).as_ref())
+            {
                 ctx.diagnostic(no_empty_character_class_diagnostic(lit.span));
             }
         }

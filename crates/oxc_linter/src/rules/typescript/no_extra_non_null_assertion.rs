@@ -3,10 +3,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{ContextHost, LintContext},
+    rule::Rule,
+    AstNode,
+};
 
-fn no_extra_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("extra non-null assertion").with_label(span0)
+fn no_extra_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("extra non-null assertion").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -33,8 +37,7 @@ impl Rule for NoExtraNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let expr = match node.kind() {
             AstKind::TSNonNullExpression(expr) => {
-                if let Expression::TSNonNullExpression(expr) =
-                    expr.expression.without_parenthesized()
+                if let Expression::TSNonNullExpression(expr) = expr.expression.without_parentheses()
                 {
                     Some(expr)
                 } else {
@@ -42,15 +45,14 @@ impl Rule for NoExtraNonNullAssertion {
                 }
             }
             AstKind::MemberExpression(expr) if expr.optional() => {
-                if let Expression::TSNonNullExpression(expr) = expr.object().without_parenthesized()
-                {
+                if let Expression::TSNonNullExpression(expr) = expr.object().without_parentheses() {
                     Some(expr)
                 } else {
                     None
                 }
             }
             AstKind::CallExpression(expr) if expr.optional => {
-                if let Expression::TSNonNullExpression(expr) = expr.callee.without_parenthesized() {
+                if let Expression::TSNonNullExpression(expr) = expr.callee.without_parentheses() {
                     Some(expr)
                 } else {
                     None
@@ -65,7 +67,7 @@ impl Rule for NoExtraNonNullAssertion {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_typescript()
     }
 }

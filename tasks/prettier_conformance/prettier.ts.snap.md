@@ -1,9 +1,6 @@
-ts compatibility: 48/528 (9.09%)
+ts compatibility: 173/526 (32.89%)
 
 # Failed
-
-### abstract-property
-* abstract-property/semicolon.ts
 
 ### ambient
 * ambient/ambient.ts
@@ -20,7 +17,6 @@ ts compatibility: 48/528 (9.09%)
 
 ### array
 * array/comment.ts
-* array/key.ts
 
 ### arrow
 * arrow/arrow_regression.ts
@@ -35,7 +31,6 @@ ts compatibility: 48/528 (9.09%)
 * as/array-pattern.ts
 * as/as-const-embedded.ts
 * as/as.ts
-* as/assignment.ts
 * as/assignment2.ts
 * as/export_default_as.ts
 * as/expression-statement.ts
@@ -52,14 +47,9 @@ ts compatibility: 48/528 (9.09%)
 * assignment/issue-10848.tsx
 * assignment/issue-10850.ts
 * assignment/issue-12413.ts
-* assignment/issue-2322.ts
 * assignment/issue-2482.ts
-* assignment/issue-2485.ts
 * assignment/issue-3122.ts
-* assignment/issue-5370.ts
 * assignment/issue-6783.ts
-* assignment/issue-8619.ts
-* assignment/issue-9172.ts
 * assignment/lone-arg.ts
 * assignment/parenthesized.ts
 
@@ -83,18 +73,12 @@ ts compatibility: 48/528 (9.09%)
 
 ### class
 * class/constructor.ts
-* class/declare-readonly-field-initializer-w-annotation.ts
-* class/declare-readonly-field-initializer.ts
-* class/dunder.ts
-* class/duplicates-access-modifier.ts
 * class/empty-method-body.ts
 * class/extends_implements.ts
 * class/generics.ts
 * class/methods.ts
-* class/optional.ts
 * class/parameter-properties.ts
 * class/quoted-property.ts
-* class/standard_private_fields.ts
 
 ### class-comment
 * class-comment/class-implements.ts
@@ -130,13 +114,11 @@ ts compatibility: 48/528 (9.09%)
 * comments-2/last-arg.ts
 
 ### compiler
-* compiler/anyIsAssignableToObject.ts
 * compiler/castOfAwait.ts
 * compiler/castParentheses.ts
 * compiler/castTest.ts
 * compiler/checkInfiniteExpansionTermination.ts
 * compiler/commentInNamespaceDeclarationWithIdentifierPathName.ts
-* compiler/commentsInterface.ts
 * compiler/contextualSignatureInstantiation2.ts
 * compiler/declareDottedModuleName.ts
 * compiler/es5ExportDefaultClassDeclaration4.ts
@@ -155,49 +137,19 @@ ts compatibility: 48/528 (9.09%)
 * conditional-types/new-ternary-spec.ts
 * conditional-types/parentheses.ts
 
-### conformance/ambient
-* conformance/ambient/ambientDeclarations.ts
-
 ### conformance/classes
-* conformance/classes/abstract.ts
 * conformance/classes/mixinAccessModifiers.ts
 * conformance/classes/mixinClassesAnnotated.ts
 * conformance/classes/mixinClassesAnonymous.ts
-* conformance/classes/mixinClassesMembers.ts
-* conformance/classes/nestedClassDeclaration.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractFactoryFunction.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractGeneric.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractImportInstantiation.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
-### conformance/classes/classDeclarations/classHeritageSpecification
-* conformance/classes/classDeclarations/classHeritageSpecification/classAppearsToHaveMembersOfObject.ts
-* conformance/classes/classDeclarations/classHeritageSpecification/classExtendingClass.ts
-* conformance/classes/classDeclarations/classHeritageSpecification/classExtendsItselfIndirectly.ts
-* conformance/classes/classDeclarations/classHeritageSpecification/classIsSubtypeOfBaseType.ts
-
 ### conformance/classes/constructorDeclarations/constructorParameters
-* conformance/classes/constructorDeclarations/constructorParameters/constructorDefaultValuesReferencingThis.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithDefaultValues.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorOverloadsWithOptionalParameters.ts
 * conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties.ts
-* conformance/classes/constructorDeclarations/constructorParameters/constructorParameterProperties2.ts
-* conformance/classes/constructorDeclarations/constructorParameters/declarationEmitReadonly.ts
-* conformance/classes/constructorDeclarations/constructorParameters/readonlyConstructorAssignment.ts
-* conformance/classes/constructorDeclarations/constructorParameters/readonlyInConstructorParameters.ts
-* conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts
 
 ### conformance/comments
 * conformance/comments/comments.ts
@@ -223,9 +175,7 @@ ts compatibility: 48/528 (9.09%)
 ### conformance/internalModules/importDeclarations
 * conformance/internalModules/importDeclarations/circularImportAlias.ts
 * conformance/internalModules/importDeclarations/exportImportAlias.ts
-* conformance/internalModules/importDeclarations/exportInterface.ts
 * conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
-* conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts
 * conformance/internalModules/importDeclarations/shadowedInternalModule.ts
 
 ### conformance/parser/ecmascript5/Statements
@@ -240,39 +190,18 @@ ts compatibility: 48/528 (9.09%)
 * conformance/types/any/anyAsConstructor.ts
 * conformance/types/any/anyAsGenericFunctionCall.ts
 
-### conformance/types/constKeyword
-* conformance/types/constKeyword/constKeyword.ts
-
-### conformance/types/enumDeclaration
-* conformance/types/enumDeclaration/enumDeclaration.ts
-
 ### conformance/types/firstTypeNode
 * conformance/types/firstTypeNode/firstTypeNode.ts
 
 ### conformance/types/functions
-* conformance/types/functions/TSFunctionTypeNoUnnecessaryParentheses.ts
-* conformance/types/functions/functionImplementationErrors.ts
 * conformance/types/functions/functionImplementations.ts
-* conformance/types/functions/functionOverloadCompatibilityWithVoid01.ts
-* conformance/types/functions/functionOverloadCompatibilityWithVoid02.ts
-* conformance/types/functions/functionOverloadCompatibilityWithVoid03.ts
 * conformance/types/functions/functionOverloadErrorsSyntax.ts
-* conformance/types/functions/functionTypeTypeParameters.ts
-
-### conformance/types/interfaceDeclaration
-* conformance/types/interfaceDeclaration/interfaceDeclaration.ts
 
 ### conformance/types/intersectionType
 * conformance/types/intersectionType/intersectionType.ts
 
-### conformance/types/lastTypeNode
-* conformance/types/lastTypeNode/lastTypeNode.ts
-
 ### conformance/types/mappedType
 * conformance/types/mappedType/mappedType.ts
-
-### conformance/types/methodSignature
-* conformance/types/methodSignature/methodSignature.ts
 
 ### conformance/types/moduleDeclaration
 * conformance/types/moduleDeclaration/kind-detection.ts
@@ -281,32 +210,16 @@ ts compatibility: 48/528 (9.09%)
 ### conformance/types/namespaceExportDeclaration
 * conformance/types/namespaceExportDeclaration/exportAsNamespace.d.ts
 
-### conformance/types/never
-* conformance/types/never/never.ts
-
 ### conformance/types/nonNullExpression
 * conformance/types/nonNullExpression/nonNullExpression.ts
 
 ### conformance/types/parameterProperty
 * conformance/types/parameterProperty/parameterProperty.ts
 
-### conformance/types/symbol
-* conformance/types/symbol/symbol.ts
-
-### conformance/types/thisType
-* conformance/types/thisType/thisType.ts
-
 ### conformance/types/tuple
 * conformance/types/tuple/contextualTypeWithTuple.ts
 * conformance/types/tuple/indexerWithTuple.ts
-* conformance/types/tuple/tupleElementTypes1.ts
-* conformance/types/tuple/tupleElementTypes2.ts
 * conformance/types/tuple/typeInferenceWithTupleType.ts
-* conformance/types/tuple/wideningTuples1.ts
-* conformance/types/tuple/wideningTuples2.ts
-* conformance/types/tuple/wideningTuples3.ts
-* conformance/types/tuple/wideningTuples4.ts
-* conformance/types/tuple/wideningTuples7.ts
 
 ### conformance/types/typeOperator
 * conformance/types/typeOperator/typeOperator.ts
@@ -317,14 +230,6 @@ ts compatibility: 48/528 (9.09%)
 ### conformance/types/typeParameters/typeParameterLists
 * conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne.ts
 * conformance/types/typeParameters/typeParameterLists/innerTypeParameterShadowingOuterOne2.ts
-* conformance/types/typeParameters/typeParameterLists/staticMembersUsingClassTypeParameter.ts
-* conformance/types/typeParameters/typeParameterLists/typeParametersAvailableInNestedScope2.ts
-
-### conformance/types/typeReference
-* conformance/types/typeReference/typeReference.ts
-
-### conformance/types/undefined
-* conformance/types/undefined/undefined.ts
 
 ### conformance/types/union
 * conformance/types/union/unionTypeCallSignatures.ts
@@ -334,10 +239,6 @@ ts compatibility: 48/528 (9.09%)
 * conformance/types/union/unionTypeEquivalence.ts
 * conformance/types/union/unionTypeFromArrayLiteral.ts
 * conformance/types/union/unionTypeIndexSignature.ts
-* conformance/types/union/unionTypePropertyAccessibility.ts
-
-### conformance/types/variableDeclarator
-* conformance/types/variableDeclarator/variableDeclarator.ts
 
 ### const
 * const/initializer-ambient-context.ts
@@ -356,17 +257,12 @@ ts compatibility: 48/528 (9.09%)
 
 ### custom/abstract
 * custom/abstract/abstractNewlineHandling.ts
-* custom/abstract/abstractProperties.ts
 
 ### custom/call
 * custom/call/callSignature.ts
 
 ### custom/computedProperties
-* custom/computedProperties/string.ts
 * custom/computedProperties/symbol.ts
-
-### custom/declare
-* custom/declare/declareModifier.d.ts
 
 ### custom/modifiers
 * custom/modifiers/minustoken.ts
@@ -392,19 +288,9 @@ ts compatibility: 48/528 (9.09%)
 * custom/typeParameters/variables.ts
 
 ### declare
-* declare/declare-get-set-field.ts
-* declare/declare_class_fields.ts
-* declare/declare_enum.ts
 * declare/declare_function.ts
-* declare/declare_function_with_body.ts
 * declare/declare_interface.ts
-* declare/declare_module.ts
-* declare/declare_namespace.ts
-* declare/declare_var.ts
 * declare/object-type-in-declare-function.ts
-
-### declare/trailing-comma
-* declare/trailing-comma/function-rest-trailing-comma.ts
 
 ### decorator-auto-accessors
 * decorator-auto-accessors/decorator-auto-accessors-type-annotations.ts
@@ -424,7 +310,6 @@ ts compatibility: 48/528 (9.09%)
 ### decorators-ts
 * decorators-ts/accessor-decorator.ts
 * decorators-ts/angular.ts
-* decorators-ts/class-decorator.ts
 * decorators-ts/method-decorator.ts
 * decorators-ts/mobx.ts
 * decorators-ts/multiple.ts
@@ -436,43 +321,28 @@ ts compatibility: 48/528 (9.09%)
 * definite/definite.ts
 * definite/without-annotation.ts
 
-### destructuring
-* destructuring/destructuring.ts
-
 ### end-of-line
 * end-of-line/multiline.ts
 
 ### enum
-* enum/computed-members.ts
 * enum/enum.ts
-* enum/multiline.ts
 
 ### error-recovery
 * error-recovery/generic.ts
 * error-recovery/index-signature.ts
 * error-recovery/jsdoc_only_types.ts
 
-### explicit-resource-management
-* explicit-resource-management/await-using-with-type-declaration.ts
-* explicit-resource-management/using-with-type-declaration.ts
-
 ### export
 * export/comment.ts
-* export/default.ts
 * export/export-class.ts
 * export/export-type-star-from-2.ts
 * export/export-type-star-from.ts
-* export/export.ts
 
 ### export-default
 * export-default/function_as.ts
 
-### function
-* function/single_expand.ts
-
 ### function-type
 * function-type/consistent.ts
-* function-type/single-parameter.ts
 * function-type/type-annotation.ts
 
 ### functional-composition
@@ -482,7 +352,6 @@ ts compatibility: 48/528 (9.09%)
 ### generic
 * generic/arrow-return-type.ts
 * generic/issue-6899.ts
-* generic/object-method.ts
 * generic/ungrouped-parameters.ts
 
 ### import-export
@@ -508,16 +377,12 @@ ts compatibility: 48/528 (9.09%)
 * instantiation-expression/logical-expr.ts
 * instantiation-expression/new.ts
 * instantiation-expression/property-access.ts
-* instantiation-expression/typeof.ts
 
 ### interface
 * interface/comments-generic.ts
-* interface/comments.ts
 * interface/generic.ts
 * interface/ignore.ts
 * interface/long-extends.ts
-* interface/pattern-parameters.ts
-* interface/separator.ts
 
 ### interface/long-type-parameters
 * interface/long-type-parameters/long-type-parameters.ts
@@ -525,7 +390,6 @@ ts compatibility: 48/528 (9.09%)
 ### interface2
 * interface2/comments-declare.ts
 * interface2/comments.ts
-* interface2/module.ts
 
 ### interface2/break
 * interface2/break/break.ts
@@ -536,9 +400,6 @@ ts compatibility: 48/528 (9.09%)
 ### intersection/consistent-with-flow
 * intersection/consistent-with-flow/comment.ts
 * intersection/consistent-with-flow/intersection-parens.ts
-
-### intrinsic
-* intrinsic/intrinsic.ts
 
 ### key-remapping-in-mapped-types
 * key-remapping-in-mapped-types/key-remapping.ts
@@ -551,8 +412,6 @@ ts compatibility: 48/528 (9.09%)
 * keyword-types/keyword-types-with-parens-comments.ts
 
 ### keywords
-* keywords/keywords-2.ts
-* keywords/keywords.ts
 * keywords/module.ts
 
 ### last-argument-expansion
@@ -571,7 +430,6 @@ ts compatibility: 48/528 (9.09%)
 
 ### method
 * method/issue-10352-consistency.ts
-* method/method-signature-with-wrapped-return-type.ts
 * method/method-signature.ts
 * method/semi.ts
 * method/type_literal_optional_method.ts
@@ -584,14 +442,10 @@ ts compatibility: 48/528 (9.09%)
 * module/global.ts
 * module/keyword.ts
 * module/module_nested.ts
-* module/namespace_function.ts
 * module/namespace_nested.ts
 
 ### multiparser-css
 * multiparser-css/issue-6259.ts
-
-### namespace
-* namespace/invalid-await.ts
 
 ### never
 * never/type-argument.src.ts
@@ -616,20 +470,12 @@ ts compatibility: 48/528 (9.09%)
 ### optional-call
 * optional-call/type-parameters.ts
 
-### optional-method
-* optional-method/optional-method.ts
-
 ### optional-type
 * optional-type/complex.ts
-* optional-type/simple.ts
 
 ### optional-variance
 * optional-variance/basic.ts
 * optional-variance/with-jsx.tsx
-
-### override-modifiers
-* override-modifiers/override-modifier.ts
-* override-modifiers/parameter-property.ts
 
 ### predicate-types
 * predicate-types/predicate-types.ts
@@ -643,22 +489,14 @@ ts compatibility: 48/528 (9.09%)
 ### private-fields-in-in
 * private-fields-in-in/basic.ts
 
-### quote-props
-* quote-props/types.ts
-
 ### range
 * range/export-assignment.ts
 * range/issue-4926.ts
 * range/issue-7148.ts
 
-### readonly
-* readonly/array.ts
-* readonly/readonly.ts
-
 ### rest-type
 * rest-type/complex.ts
 * rest-type/infer-type.ts
-* rest-type/simple.ts
 
 ### satisfies-operators
 * satisfies-operators/argument-expansion.ts
@@ -684,12 +522,6 @@ ts compatibility: 48/528 (9.09%)
 ### static-blocks
 * static-blocks/nested.ts
 
-### symbol
-* symbol/symbol.ts
-
-### template-literal-types
-* template-literal-types/template-literal-types.ts
-
 ### template-literals
 * template-literals/as-expression.ts
 * template-literals/expressions.ts
@@ -707,12 +539,9 @@ ts compatibility: 48/528 (9.09%)
 * trailing-comma/type-parameters-vs-arguments.ts
 
 ### tsx
-* tsx/generic-component.tsx
-* tsx/keyword.tsx
 * tsx/member-expression.tsx
 * tsx/not-react.ts
 * tsx/react.tsx
-* tsx/this.tsx
 * tsx/type-parameters.tsx
 * tsx/url.tsx
 
@@ -721,14 +550,12 @@ ts compatibility: 48/528 (9.09%)
 * tuple/trailing-comma-trailing-rest.ts
 * tuple/trailing-comma.ts
 * tuple/tuple-labeled.ts
-* tuple/tuple-rest-not-last.ts
 * tuple/tuple.ts
 
 ### type-alias
 * type-alias/conditional.ts
 * type-alias/issue-100857.ts
 * type-alias/issue-9874.ts
-* type-alias/pattern-parameter.ts
 
 ### type-arguments-bit-shift-left-like
 * type-arguments-bit-shift-left-like/1.ts
@@ -747,10 +574,6 @@ ts compatibility: 48/528 (9.09%)
 ### typeof
 * typeof/typeof.ts
 
-### typeof-this
-* typeof-this/decorators.ts
-* typeof-this/typeof-this.ts
-
 ### typeparams
 * typeparams/class-method.ts
 * typeparams/const.ts
@@ -758,13 +581,6 @@ ts compatibility: 48/528 (9.09%)
 * typeparams/line-breaking-after-extends.ts
 * typeparams/long-function-arg.ts
 * typeparams/tagged-template-expression.ts
-
-### typeparams/consistent
-* typeparams/consistent/flow-only.ts
-* typeparams/consistent/issue-9501.ts
-* typeparams/consistent/simple-types.ts
-* typeparams/consistent/template-literal-types.ts
-* typeparams/consistent/typescript-only.ts
 
 ### typeparams/empty-parameters-with-arrow-function
 * typeparams/empty-parameters-with-arrow-function/issue-13817.ts
@@ -790,9 +606,6 @@ ts compatibility: 48/528 (9.09%)
 
 ### union/single-type
 * union/single-type/single-type.ts
-
-### unique-symbol
-* unique-symbol/unique-symbol.ts
 
 ### update-expression
 * update-expression/update-expressions.ts

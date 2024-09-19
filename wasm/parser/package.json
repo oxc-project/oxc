@@ -1,7 +1,8 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.24.0",
+  "version": "0.29.0",
   "description": "Wasm target for the oxc parser.",
+  "packageManager": "pnpm@9.9.0",
   "keywords": [
     "JavaScript",
     "TypeScript",
@@ -33,8 +34,5 @@
     "copy-files": "cp ./package.json ../../npm/parser-wasm/package.json && cp ./README.md ../../npm/parser-wasm/README.md",
     "clean-files": "rm ../../npm/parser-wasm/*/.gitignore",
     "test": "node ./test-node.mjs"
-  },
-  "devDependencies": {
-    "wasm-pack": "^0.13.0"
   }
 }

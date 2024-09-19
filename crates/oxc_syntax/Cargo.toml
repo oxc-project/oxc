@@ -1,17 +1,17 @@
 [package]
-name                   = "oxc_syntax"
-version                = "0.24.0"
-publish                = true
-authors.workspace      = true
-description.workspace  = true
-edition.workspace      = true
-homepage.workspace     = true
-keywords.workspace     = true
-license.workspace      = true
-repository.workspace   = true
+name = "oxc_syntax"
+version = "0.29.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+publish = true
+repository.workspace = true
 rust-version.workspace = true
-categories.workspace   = true
-include                = ["/src"]
+description.workspace = true
 
 [lints]
 workspace = true
@@ -20,27 +20,28 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_index      = { workspace = true }
-oxc_span       = { workspace = true }
+oxc_allocator = { workspace = true }
 oxc_ast_macros = { workspace = true }
-oxc_allocator  = { workspace = true }
+oxc_index = { workspace = true }
+oxc_span = { workspace = true }
 
+assert-unchecked = { workspace = true }
+bitflags = { workspace = true }
+dashmap = { workspace = true }
+nonmax = { workspace = true }
+phf = { workspace = true, features = ["macros"] }
+rustc-hash = { workspace = true }
 unicode-id-start = { workspace = true }
-bitflags         = { workspace = true }
-rustc-hash       = { workspace = true }
-dashmap          = { workspace = true }
-phf              = { workspace = true, features = ["macros"] }
-nonmax           = { workspace = true }
 
-ryu-js       = { workspace = true, optional = true }
-serde        = { workspace = true, features = ["derive"], optional = true }
-tsify        = { workspace = true, optional = true }
+ryu-js = { workspace = true, optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
+tsify = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
 [features]
-default      = []
+default = []
 to_js_string = ["dep:ryu-js"]
-serialize    = ["bitflags/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize"]
+serialize = ["bitflags/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_index/serialize"]
 
 [package.metadata.cargo-shear]
 # We use `oxc_ast_macros::CloneIn` which expands to use `oxc_allocator`.

@@ -5,10 +5,10 @@ use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_const_assign_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected re-assignment of const variable {x0}")).with_labels([
-        span1.label(format!("{x0} is declared here as const")),
-        span2.label(format!("{x0} is re-assigned here")),
+fn no_const_assign_diagnostic(name: &str, decl_span: Span, assign_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected re-assignment of const variable {name}")).with_labels([
+        decl_span.label(format!("{name} is declared here as const")),
+        assign_span.label(format!("{name} is re-assigned here")),
     ])
 }
 
@@ -17,16 +17,30 @@ pub struct NoConstAssign;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Disallow reassigning const variables
+    /// Disallow reassigning `const` variables.
     ///
     /// ### Why is this bad?
     /// We cannot modify variables that are declared using const keyword.
     /// It will raise a runtime error.
     ///
     /// ### Example
-    /// ```javascript
+    ///
+    /// Examples of **incorrect** code for this rule:
+    /// ```js
     /// const a = 0;
     /// a = 1;
+    ///
+    /// const b = 0;
+    /// b += 1;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```js
+    /// const a = 0;
+    /// console.log(a);
+    ///
+    /// var b = 0;
+    /// b += 1;
     /// ```
     NoConstAssign,
     correctness
@@ -35,7 +49,7 @@ declare_oxc_lint!(
 impl Rule for NoConstAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flag(symbol_id).is_const_variable() {
+        if symbol_table.get_flags(symbol_id).is_const_variable() {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(no_const_assign_diagnostic(

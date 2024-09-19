@@ -4,18 +4,18 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
     AstNode,
 };
 
-fn unexpected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use createClass instead of ES6 class.").with_label(span0)
+fn unexpected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Components should use createClass instead of ES6 class.").with_label(span)
 }
 
-fn expected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Components should use es6 class instead of createClass.").with_label(span0)
+fn expected_es6_class_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Components should use es6 class instead of createClass.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -75,7 +75,7 @@ impl Rule for PreferEs6Class {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &ContextHost) -> bool {
         ctx.source_type().is_jsx()
     }
 }

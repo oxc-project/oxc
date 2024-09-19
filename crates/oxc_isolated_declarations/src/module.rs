@@ -8,18 +8,18 @@ use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_export_named_declaration(
         &mut self,
-        decl: &ExportNamedDeclaration<'a>,
+        prev_decl: &ExportNamedDeclaration<'a>,
     ) -> Option<ExportNamedDeclaration<'a>> {
-        let decl = self.transform_declaration(decl.declaration.as_ref()?, false)?;
+        let decl = self.transform_declaration(prev_decl.declaration.as_ref()?, false)?;
 
-        Some(ExportNamedDeclaration {
-            span: decl.span(),
-            declaration: Some(decl),
-            specifiers: self.ast.vec(),
-            source: None,
-            export_kind: ImportOrExportKind::Value,
-            with_clause: None,
-        })
+        Some(self.ast.export_named_declaration(
+            prev_decl.span,
+            Some(decl),
+            self.ast.vec(),
+            None,
+            ImportOrExportKind::Value,
+            None::<WithClause>,
+        ))
     }
 
     pub fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
@@ -44,7 +44,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 .transform_class(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
-                Some((None, self.ast.copy(&decl.declaration)))
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                Some((None, unsafe { self.ast.copy(&decl.declaration) }))
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => {
                 let expr = expr.to_expression();
@@ -68,12 +69,12 @@ impl<'a> IsolatedDeclarations<'a> {
                         self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, true));
 
                     Some((
-                        Some(VariableDeclaration {
-                            span: SPAN,
+                        Some(self.ast.variable_declaration(
+                            SPAN,
                             kind,
                             declarations,
-                            declare: self.is_declare(),
-                        }),
+                            self.is_declare(),
+                        )),
                         ExportDefaultDeclarationKind::from(
                             self.ast.expression_identifier_reference(SPAN, &name),
                         ),
@@ -85,7 +86,7 @@ impl<'a> IsolatedDeclarations<'a> {
         declaration.map(|(var_decl, declaration)| {
             let exported =
                 ModuleExportName::IdentifierName(self.ast.identifier_name(SPAN, "default"));
-            (var_decl, ExportDefaultDeclaration { span: decl.span, declaration, exported })
+            (var_decl, self.ast.export_default_declaration(decl.span, declaration, exported))
         })
     }
 
@@ -95,7 +96,8 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<Box<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
-        let mut specifiers = self.ast.copy(specifiers);
+        // SAFETY: `ast.copy` is unsound! We need to fix.
+        let mut specifiers = unsafe { self.ast.copy(specifiers) };
         specifiers.retain(|specifier| match specifier {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                 self.scope.has_reference(&specifier.local.name)
@@ -114,8 +116,10 @@ impl<'a> IsolatedDeclarations<'a> {
             Some(self.ast.alloc_import_declaration(
                 decl.span,
                 Some(specifiers),
-                self.ast.copy(&decl.source),
-                self.ast.copy(&decl.with_clause),
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&decl.source) },
+                // SAFETY: `ast.copy` is unsound! We need to fix.
+                unsafe { self.ast.copy(&decl.with_clause) },
                 decl.import_kind,
             ))
         }

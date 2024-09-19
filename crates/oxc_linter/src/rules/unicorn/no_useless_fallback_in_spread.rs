@@ -7,7 +7,7 @@ use oxc_syntax::operator::LogicalOperator;
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_fallback_in_spread_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow useless fallback when spreading in object literals")
+    OxcDiagnostic::warn("Empty fallbacks in spreads are unnecessary")
         .with_help("Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.")
         .with_label(span)
 }
@@ -24,15 +24,17 @@ declare_oxc_lint!(
     ///
     /// Spreading [falsy values](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
     ///
-    /// ### Example
-    /// ```javascript
-    /// // bad
-    /// const object = { ...(foo || {}) }
+    /// ### Examples
     ///
-    /// // good
+    /// Examples of **incorrect** code for this rule:
+    /// ```javascript
+    /// const object = { ...(foo || {}) }
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// const object = { ...foo }
     /// const object = { ...(foo || { not: "empty" }) }
-    ///
     /// ```
     NoUselessFallbackInSpread,
     correctness,
@@ -50,7 +52,7 @@ impl Rule for NoUselessFallbackInSpread {
         }
 
         let Expression::ObjectExpression(object_expression) =
-            &logical_expression.right.without_parenthesized()
+            &logical_expression.right.without_parentheses()
         else {
             return;
         };
@@ -90,7 +92,7 @@ impl Rule for NoUselessFallbackInSpread {
 
 fn can_fix(left: &Expression<'_>) -> bool {
     const BANNED_IDENTIFIERS: [&str; 3] = ["undefined", "NaN", "Infinity"];
-    match left.without_parenthesized() {
+    match left.without_parentheses() {
         Expression::Identifier(ident) => !BANNED_IDENTIFIERS.contains(&ident.name.as_str()),
         Expression::LogicalExpression(expr) => can_fix(&expr.left),
         Expression::ObjectExpression(_)

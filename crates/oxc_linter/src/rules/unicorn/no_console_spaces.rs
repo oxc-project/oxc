@@ -12,10 +12,14 @@ use crate::{
     AstNode,
 };
 
-fn no_console_spaces_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not use {x0} spaces with `console.{x1}` parameters"))
+fn no_console_spaces_diagnostic(
+    leading_or_trailing: &str,
+    method_name: &str,
+    span: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use {leading_or_trailing} spaces with `console.{method_name}` parameters"))
         .with_help("The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.")
-        .with_label(span2)
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -31,14 +35,15 @@ declare_oxc_lint!(
     /// The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    ///
-    /// // Bad
     /// console.log("abc ", "def");
+    /// ```
     ///
-    /// // Good
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
     /// console.log("abc", "def");
-    ///
     /// ```
     NoConsoleSpaces,
     style,
