@@ -302,10 +302,10 @@ impl<'a> Gen for ForOfStatement<'a> {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str("for");
-        p.print_soft_space();
         if self.r#await {
             p.print_str(" await");
         }
+        p.print_soft_space();
         p.print_char(b'(');
         self.left.print(p, ctx);
         p.print_soft_space();
