@@ -376,6 +376,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         continue;
                     }
 
+                    let errors_length = self.errors.borrow().len();
+
                     let inferred_accessor_types = self.collect_inferred_accessor_types(decl);
                     let function = &method.value;
                     let params = if method.kind.is_set() {
@@ -404,6 +406,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
 
                     if method.accessibility.is_some_and(TSAccessibility::is_private) {
+                        self.errors.borrow_mut().truncate(errors_length);
                         elements.push(self.transform_private_modifier_method(method));
                         continue;
                     }

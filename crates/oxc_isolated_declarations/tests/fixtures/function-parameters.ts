@@ -14,6 +14,10 @@ const x = 42;
 const y = '';
 export function fooGood3({a = x, b: [{c = y}]}: object): void {}
 
+export class Foo {
+  private good(a): void {}
+}
+
 // Incorrect
 export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
 export function fnDeclBad2<T>(p: T = [], r2: T): void { }
@@ -25,4 +29,8 @@ export function fooBad([a, b] = [1, 2]): number {
 
 export const fooBad2 = ({a, b} = { a: 1, b: 2 }): number => {
   return 2;
+}
+
+export class Bar {
+  public bad(a): void {}
 }
