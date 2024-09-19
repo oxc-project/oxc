@@ -13,9 +13,8 @@ pub struct IsolatedDeclarationsResult {
     pub errors: Vec<String>,
 }
 
-#[derive(Debug, Default)]
 #[napi(object)]
-#[derive(Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct IsolatedDeclarationsOptions {
     /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
     /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
