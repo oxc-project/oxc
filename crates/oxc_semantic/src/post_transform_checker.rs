@@ -117,6 +117,11 @@ pub fn check_semantic_after_transform(
 ) -> Option<Vec<OxcDiagnostic>> {
     let mut errors = Errors::default();
 
+    let source_type = program.source_type;
+    if !source_type.is_typescript_definition() && !source_type.is_javascript() {
+        errors.push(format!("SourceType is not javascript: {:?}", program.source_type));
+    }
+
     // Collect `ScopeId`s, `SymbolId`s and `ReferenceId`s from AST after transformer
     let scoping_after_transform =
         Scoping { symbols: symbols_after_transform, scopes: scopes_after_transform };
