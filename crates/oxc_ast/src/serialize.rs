@@ -9,8 +9,8 @@ use crate::ast::{
     ArrayAssignmentTarget, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
     AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement,
     Directive, Elision, FormalParameter, FormalParameterKind, FormalParameters, JSXElementName,
-    JSXIdentifier, ObjectAssignmentTarget, ObjectPattern, Program, RegExpFlags, Statement,
-    StringLiteral, TSModuleBlock, TSTypeAnnotation,
+    JSXIdentifier, JSXMemberExpressionObject, ObjectAssignmentTarget, ObjectPattern, Program,
+    RegExpFlags, Statement, StringLiteral, TSModuleBlock, TSTypeAnnotation,
 };
 
 pub struct EcmaFormatter;
@@ -258,6 +258,20 @@ impl<'a> Serialize for JSXElementName<'a> {
                 JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
             }
             Self::NamespacedName(name) => name.serialize(serializer),
+            Self::MemberExpression(expr) => expr.serialize(serializer),
+            Self::ThisExpression(expr) => {
+                JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
+            }
+        }
+    }
+}
+
+impl<'a> Serialize for JSXMemberExpressionObject<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::IdentifierReference(ident) => {
+                JSXIdentifier { span: ident.span, name: ident.name.clone() }.serialize(serializer)
+            }
             Self::MemberExpression(expr) => expr.serialize(serializer),
             Self::ThisExpression(expr) => {
                 JSXIdentifier { span: expr.span, name: "this".into() }.serialize(serializer)
