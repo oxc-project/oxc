@@ -359,6 +359,10 @@ impl<'a> IsolatedDeclarations<'a> {
             match element {
                 ClassElement::StaticBlock(_) => {}
                 ClassElement::MethodDefinition(ref method) => {
+                    if self.has_internal_annotation(method.span) {
+                        continue;
+                    }
+
                     if !(method.r#type.is_abstract() || method.optional)
                         && method.value.body.is_none()
                     {
@@ -439,6 +443,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     elements.push(new_element);
                 }
                 ClassElement::PropertyDefinition(property) => {
+                    if self.has_internal_annotation(property.span) {
+                        continue;
+                    }
+
                     if self.report_property_key(&property.key, property.computed) {
                         continue;
                     }
@@ -450,6 +458,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                 }
                 ClassElement::AccessorProperty(property) => {
+                    if self.has_internal_annotation(property.span) {
+                        continue;
+                    }
+
                     if self.report_property_key(&property.key, property.computed) {
                         return None;
                     }
@@ -476,7 +488,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     );
                     elements.push(new_element);
                 }
-                ClassElement::TSIndexSignature(_) => elements.push({
+                ClassElement::TSIndexSignature(signature) => elements.push({
+                    if self.has_internal_annotation(signature.span) {
+                        continue;
+                    }
                     // SAFETY: `ast.copy` is unsound! We need to fix.
                     unsafe { self.ast.copy(element) }
                 }),
