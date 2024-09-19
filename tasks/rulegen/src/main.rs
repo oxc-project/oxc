@@ -589,6 +589,7 @@ pub enum RuleKind {
     TreeShaking,
     Promise,
     Vitest,
+    Security,
 }
 
 impl RuleKind {
@@ -607,6 +608,7 @@ impl RuleKind {
             "tree-shaking" => Self::TreeShaking,
             "promise" => Self::Promise,
             "vitest" => Self::Vitest,
+            "security" => Self::Security,
             _ => Self::ESLint,
         }
     }
@@ -629,6 +631,7 @@ impl Display for RuleKind {
             Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
             Self::Promise => write!(f, "eslint-plugin-promise"),
             Self::Vitest => write!(f, "eslint-plugin-vitest"),
+            Self::Security => write!(f, "security"),
         }
     }
 }
@@ -657,7 +660,7 @@ fn main() {
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Vitest => format!("{VITEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Oxc => String::new(),
+        RuleKind::Oxc | RuleKind::Security => String::new(),
     };
     let language = match rule_kind {
         RuleKind::Typescript | RuleKind::Oxc => "ts",

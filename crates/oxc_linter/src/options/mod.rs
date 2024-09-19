@@ -179,6 +179,12 @@ impl OxlintOptions {
         self.plugins.node = yes;
         self
     }
+
+    #[must_use]
+    pub fn with_security_plugin(mut self, yes: bool) -> Self {
+        self.plugins.security = yes;
+        self
+    }
 }
 
 impl OxlintOptions {
@@ -287,6 +293,7 @@ impl OxlintOptions {
                 "eslint" | "tree_shaking" => true,
                 "promise" => self.plugins.promise,
                 "node" => self.plugins.node,
+                "security" => self.plugins.security,
                 name => panic!("Unhandled plugin: {name}"),
             })
             .cloned()

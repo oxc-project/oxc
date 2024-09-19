@@ -43,6 +43,7 @@ Enable Plugins
                               problems
         --promise-plugin      Enable the promise plugin and detect promise usage problems
         --node-plugin         Enable the node plugin and detect node usage problems
+        --security-plugin     Enable the security plugin and detect security problems
 
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in

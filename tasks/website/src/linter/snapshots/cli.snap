@@ -67,6 +67,8 @@ Arguments:
   Enable the promise plugin and detect promise usage problems
 - **`    --node-plugin`** &mdash; 
   Enable the node plugin and detect node usage problems
+- **`    --security-plugin`** &mdash; 
+  Enable the security plugin and detect security problems
 
 
 
