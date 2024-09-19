@@ -42,7 +42,7 @@ export interface IsolatedDeclarationsResult {
 /**
  * Configure how TSX and JSX are transformed.
  *
- * @see [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx#options)
+ * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
  */
 export interface ReactBindingOptions {
   /**
@@ -59,7 +59,7 @@ export interface ReactBindingOptions {
    *
    * @default false
    *
-   * @see [@babel/plugin-transform-react-jsx-development](https://babeljs.io/docs/babel-plugin-transform-react-jsx-development)
+   * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx-development}
    */
   development?: boolean
   /**
@@ -73,9 +73,11 @@ export interface ReactBindingOptions {
    */
   throwIfNamespace?: boolean
   /**
-   * Enables [@babel/plugin-transform-react-pure-annotations](https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations).
+   * Enables `@babel/plugin-transform-react-pure-annotations`.
    *
    * It will mark top-level React method calls as pure for tree shaking.
+   *
+   * @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
    *
    * @default true
    */
