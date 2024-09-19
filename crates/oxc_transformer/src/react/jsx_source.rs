@@ -1,3 +1,38 @@
+//! React JSX Source
+//!
+//! This plugin adds `__source` attribute to JSX elements.
+//!
+//! > This plugin is included in `preset-react`.
+//!
+//! ## Example
+//!
+//! Input:
+//! ```js
+//! <div>foo</div>;
+//! <Bar>foo</Bar>;
+//! <>foo</>;
+//! ```
+//!
+//! Output:
+//! ```js
+//! var _jsxFileName = "<CWD>/test.js";
+//! <div __source={
+//!     { fileName: _jsxFileName, lineNumber: 1, columnNumber: 1 }
+//! }>foo</div>;
+//! <Bar __source={
+//!     { fileName: _jsxFileName, lineNumber: 2, columnNumber: 1 }
+//! }>foo</Bar>;
+//! <>foo</>;
+//! ```
+//!
+//! ## Implementation
+//!
+//! Implementation based on [@babel/plugin-transform-react-jsx-source](https://babeljs.io/docs/babel-plugin-transform-react-jsx-source).
+//!
+//! ## References:
+//!
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-jsx-source/src/index.ts>
+
 use oxc_ast::{ast::*, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
@@ -11,14 +46,6 @@ use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";
 
-/// [plugin-transform-react-jsx-source](https://babeljs.io/docs/babel-plugin-transform-react-jsx-source)
-///
-/// This plugin is included in `preset-react` and only enabled in development mode.
-///
-/// ## Example
-///
-/// In: `<sometag />`
-/// Out: `<sometag __source={ { fileName: 'this/file.js', lineNumber: 10, columnNumber: 1 } } />`
 pub struct ReactJsxSource<'a> {
     filename_var: Option<BoundIdentifier<'a>>,
     source_rope: Option<Rope>,

@@ -1,3 +1,93 @@
+//! React JSX
+//!
+//! This plugin transforms React JSX to JS.
+//!
+//! > This plugin is included in `preset-react`.
+//!
+//! Has two modes which create different output:
+//! 1. Automatic
+//! 2. Classic
+//!
+//! And also prod/dev modes:
+//! 1. Production
+//! 2. Development
+//!
+//! ## Example
+//!
+//! ### Automatic
+//!
+//! Input:
+//! ```js
+//! <div>foo</div>;
+//! <Bar>foo</Bar>;
+//! <>foo</>;
+//! ```
+//!
+//! Output:
+//! ```js
+//! // Production mode
+//! import { jsx as _jsx, Fragment as _Fragment } from "react/jsx-runtime";
+//! _jsx("div", { children: "foo" });
+//! _jsx(Bar, { children: "foo" });
+//! _jsx(_Fragment, { children: "foo" });
+//! ```
+//!
+//! ```js
+//! // Development mode
+//! var _jsxFileName = "<CWD>/test.js";
+//! import { jsxDEV as _jsxDEV, Fragment as _Fragment } from "react/jsx-dev-runtime";
+//! _jsxDEV(
+//!     "div", { children: "foo" }, void 0, false,
+//!     { fileName: _jsxFileName, lineNumber: 1, columnNumber: 1 },
+//!     this
+//! );
+//! _jsxDEV(
+//!     Bar, { children: "foo" }, void 0, false,
+//!     { fileName: _jsxFileName, lineNumber: 2, columnNumber: 1 },
+//!     this
+//! );
+//! _jsxDEV(_Fragment, { children: "foo" }, void 0, false);
+//! ```
+//!
+//! ### Classic
+//!
+//! Input:
+//! ```js
+//! <div>foo</div>;
+//! <Bar>foo</Bar>;
+//! <>foo</>;
+//! ```
+//!
+//! Output:
+//! ```js
+//! // Production mode
+//! React.createElement("div", null, "foo");
+//! React.createElement(Bar, null, "foo");
+//! React.createElement(React.Fragment, null, "foo");
+//! ```
+//!
+//! ```js
+//! // Development mode
+//! var _jsxFileName = "<CWD>/test.js";
+//! React.createElement("div", {
+//!     __self: this,
+//!     __source: { fileName: _jsxFileName, lineNumber: 1, columnNumber: 1 }
+//! }, "foo");
+//! React.createElement(Bar, {
+//!     __self: this,
+//!     __source: { fileName: _jsxFileName, lineNumber: 2, columnNumber: 1 }
+//! }, "foo");
+//! React.createElement(React.Fragment, null, "foo");
+//! ```
+//!
+//! ## Implementation
+//!
+//! Implementation based on [@babel/plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx).
+//!
+//! ## References:
+//!
+//! * Babel plugin implementation: <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
+
 use std::rc::Rc;
 
 use oxc_allocator::Vec;
@@ -22,16 +112,6 @@ use crate::{
     helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
 };
 
-/// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)
-///
-/// This plugin generates production-ready JS code.
-///
-/// This plugin is included in `preset-react`.
-///
-/// References:
-///
-/// * <https://babeljs.io/docs/babel-plugin-transform-react-jsx>
-/// * <https://github.com/babel/babel/tree/main/packages/babel-helper-builder-react-jsx>
 pub struct ReactJsx<'a> {
     options: ReactOptions,
 
@@ -417,25 +497,6 @@ impl<'a> ReactJsx<'a> {
         program.body.splice(index..index, imports);
     }
 
-    /// ## Automatic
-    /// ### Element
-    /// Builds JSX into:
-    /// - Production: React.jsx(type, arguments, key)
-    /// - Development: React.jsxDEV(type, arguments, key, isStaticChildren, source, self)
-    ///
-    /// ### Fragment
-    /// Builds JSX Fragment <></> into
-    /// - Production: React.jsx(type, arguments)
-    /// - Development: React.jsxDEV(type, { children })
-    ///
-    /// ## Classic
-    /// ### Element
-    /// - Production: React.createElement(type, arguments, children)
-    /// - Development: React.createElement(type, arguments, children, source, self)
-    ///
-    /// ### Fragment
-    /// React.createElement(React.Fragment, null, ...children)
-    ///
     fn transform_jsx<'b>(
         &mut self,
         e: &JSXElementOrFragment<'a, 'b>,

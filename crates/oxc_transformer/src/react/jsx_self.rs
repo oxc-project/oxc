@@ -1,3 +1,33 @@
+//! React JSX Self
+//!
+//! This plugin adds `__self` attribute to JSX elements.
+//!
+//! > This plugin is included in `preset-react`.
+//!
+//! ## Example
+//!
+//! Input:
+//! ```js
+//! <div>foo</div>;
+//! <Bar>foo</Bar>;
+//! <>foo</>;
+//! ```
+//!
+//! Output:
+//! ```js
+//! <div __self={this}>foo</div>;
+//! <Bar __self={this}>foo</Bar>;
+//! <>foo</>;
+//! ```
+//!
+//! ## Implementation
+//!
+//! Implementation based on [@babel/plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self).
+//!
+//! ## References:
+//!
+//! * Babel plugin implementation: <https://github.com/babel/babel/blob/main/packages/babel-plugin-transform-react-jsx-self/src/index.ts>
+
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
@@ -7,14 +37,6 @@ use crate::context::Ctx;
 
 const SELF: &str = "__self";
 
-/// [plugin-transform-react-jsx-self](https://babeljs.io/docs/babel-plugin-transform-react-jsx-self)
-///
-/// This plugin is included in `preset-react` and only enabled in development mode.
-///
-/// ## Example
-///
-/// In: `<sometag />`
-/// Out: `<sometag __self={this} />`
 pub struct ReactJsxSelf<'a> {
     ctx: Ctx<'a>,
 }
