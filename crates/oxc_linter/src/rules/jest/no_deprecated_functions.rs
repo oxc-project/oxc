@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -15,7 +13,7 @@ fn deprecated_function(deprecated: &str, new: &str, span: Span) -> OxcDiagnostic
 
 #[derive(Debug, Default, Clone)]
 pub struct JestConfig {
-    version: String,
+    version: usize,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -102,7 +100,7 @@ impl Rule for NoDeprecatedFunctions {
         let major: Vec<&str> = version.split('.').collect();
 
         Self(Box::new(NoDeprecatedFunctionsConfig {
-            jest: JestConfig { version: major[0].to_string() },
+            jest: JestConfig { version: major[0].parse().unwrap_or(29) },
         }))
     }
 
@@ -110,21 +108,21 @@ impl Rule for NoDeprecatedFunctions {
         let AstKind::MemberExpression(mem_expr) = node.kind() else {
             return;
         };
-        let mut chain: Vec<Cow<'a, str>> = Vec::new();
+
+        let mut chain = String::new();
         if let Expression::Identifier(ident) = mem_expr.object() {
-            chain.push(Cow::Borrowed(ident.name.as_str()));
+            chain.push_str(ident.name.as_str());
         }
 
         if let Some(name) = mem_expr.static_property_name() {
-            chain.push(Cow::Borrowed(name));
+            chain.push('.');
+            chain.push_str(name);
         }
 
-        let node_name = chain.join(".");
-        // Todo: read from configuration
-        let jest_version_num: usize = self.jest.version.parse().unwrap_or(29);
+        let node_name = chain.as_str();
 
         if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name) {
-            if jest_version_num >= *base_version {
+            if self.jest.version >= *base_version {
                 ctx.diagnostic_with_fix(
                     deprecated_function(&node_name, replacement, mem_expr.span()),
                     |fixer| fixer.replace(mem_expr.span(), *replacement),
