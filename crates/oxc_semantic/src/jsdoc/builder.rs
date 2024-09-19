@@ -15,10 +15,7 @@ pub struct JSDocBuilder<'a> {
 impl<'a> JSDocBuilder<'a> {
     pub fn new(source_text: &'a str, trivias: &Trivias) -> Self {
         let mut not_attached_docs: FxHashMap<u32, Vec<_>> = FxHashMap::default();
-        for comment in trivias
-            .comments()
-            .filter(|comment| comment.is_leading() && comment.is_jsdoc(source_text))
-        {
+        for comment in trivias.comments().filter(|comment| comment.is_jsdoc(source_text)) {
             not_attached_docs
                 .entry(comment.attached_to)
                 .or_default()

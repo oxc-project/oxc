@@ -463,20 +463,6 @@ impl<'a> ReactJsx<'a> {
             let attributes = &e.opening_element.attributes;
             for attribute in attributes {
                 match attribute {
-                    // optimize `{...prop}` to `prop` in static mode
-                    JSXAttributeItem::SpreadAttribute(spread)
-                        if is_classic && attributes.len() == 1 =>
-                    {
-                        // deopt if spreading an object with `__proto__` key
-                        if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
-                        {
-                            arguments.push(Argument::from({
-                                // SAFETY: `ast.copy` is unsound! We need to fix.
-                                unsafe { self.ast().copy(&spread.argument) }
-                            }));
-                            continue;
-                        }
-                    }
                     JSXAttributeItem::Attribute(attr) => {
                         if attr.is_identifier("__self") {
                             self_attr_span = Some(attr.name.span());
@@ -495,12 +481,47 @@ impl<'a> ReactJsx<'a> {
                                 continue;
                             }
                         }
-                    }
-                    JSXAttributeItem::SpreadAttribute(_) => {}
-                }
 
-                // Add attribute to prop object
-                self.transform_jsx_attribute_item(&mut properties, attribute, ctx);
+                        // Add attribute to prop object
+                        let kind = PropertyKind::Init;
+                        let key = self.get_attribute_name(&attr.name);
+                        let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
+                        let object_property = self.ast().object_property_kind_object_property(
+                            attr.span, kind, key, value, None, false, false, false,
+                        );
+                        properties.push(object_property);
+                    }
+                    // optimize `{...prop}` to `prop` in static mode
+                    JSXAttributeItem::SpreadAttribute(spread) => {
+                        if is_classic && attributes.len() == 1 {
+                            // deopt if spreading an object with `__proto__` key
+                            if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
+                            {
+                                arguments.push(Argument::from({
+                                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                                    unsafe { self.ast().copy(&spread.argument) }
+                                }));
+                                continue;
+                            }
+                        }
+
+                        // Add attribute to prop object
+                        match &spread.argument {
+                            Expression::ObjectExpression(expr) if !expr.has_proto() => {
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                properties.extend(unsafe { self.ast().copy(&expr.properties) });
+                            }
+                            expr => {
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                let argument = unsafe { self.ast().copy(expr) };
+                                let object_property = self
+                                    .ast()
+                                    .object_property_kind_spread_element(spread.span, argument);
+                                properties.push(object_property);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -511,20 +532,17 @@ impl<'a> ReactJsx<'a> {
 
         // Append children to object properties in automatic mode
         if is_automatic {
-            let allocator = self.ast().allocator;
-            let mut children = Vec::from_iter_in(
+            let mut children = self.ast().vec_from_iter(
                 children.iter().filter_map(|child| self.transform_jsx_child(child, ctx)),
-                allocator,
             );
             children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
                     children.pop().unwrap()
                 } else {
-                    let elements = Vec::from_iter_in(
-                        children.into_iter().map(ArrayExpressionElement::from),
-                        allocator,
-                    );
+                    let elements = self
+                        .ast()
+                        .vec_from_iter(children.into_iter().map(ArrayExpressionElement::from));
                     need_jsxs = true;
                     self.ast().expression_array(SPAN, elements, None)
                 };
@@ -731,38 +749,6 @@ impl<'a> ReactJsx<'a> {
         };
         let property = IdentifierName::new(expr.property.span, expr.property.name.clone());
         self.ast().member_expression_static(expr.span, object, property, false).into()
-    }
-
-    fn transform_jsx_attribute_item(
-        &mut self,
-        properties: &mut Vec<'a, ObjectPropertyKind<'a>>,
-        attribute: &JSXAttributeItem<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        match attribute {
-            JSXAttributeItem::Attribute(attr) => {
-                let kind = PropertyKind::Init;
-                let key = self.get_attribute_name(&attr.name);
-                let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
-                let object_property = self.ast().object_property_kind_object_property(
-                    attr.span, kind, key, value, None, false, false, false,
-                );
-                properties.push(object_property);
-            }
-            JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
-                Expression::ObjectExpression(expr) if !expr.has_proto() => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    properties.extend(unsafe { self.ast().copy(&expr.properties) });
-                }
-                expr => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    let argument = unsafe { self.ast().copy(expr) };
-                    let object_property =
-                        self.ast().object_property_kind_spread_element(attr.span, argument);
-                    properties.push(object_property);
-                }
-            },
-        }
     }
 
     fn transform_jsx_attribute_value(
