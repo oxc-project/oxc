@@ -481,6 +481,15 @@ impl<'a> ReactJsx<'a> {
                                 continue;
                             }
                         }
+
+                        // Add attribute to prop object
+                        let kind = PropertyKind::Init;
+                        let key = self.get_attribute_name(&attr.name);
+                        let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
+                        let object_property = self.ast().object_property_kind_object_property(
+                            attr.span, kind, key, value, None, false, false, false,
+                        );
+                        properties.push(object_property);
                     }
                     // optimize `{...prop}` to `prop` in static mode
                     JSXAttributeItem::SpreadAttribute(spread) => {
@@ -495,11 +504,24 @@ impl<'a> ReactJsx<'a> {
                                 continue;
                             }
                         }
+
+                        // Add attribute to prop object
+                        match &spread.argument {
+                            Expression::ObjectExpression(expr) if !expr.has_proto() => {
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                properties.extend(unsafe { self.ast().copy(&expr.properties) });
+                            }
+                            expr => {
+                                // SAFETY: `ast.copy` is unsound! We need to fix.
+                                let argument = unsafe { self.ast().copy(expr) };
+                                let object_property = self
+                                    .ast()
+                                    .object_property_kind_spread_element(spread.span, argument);
+                                properties.push(object_property);
+                            }
+                        }
                     }
                 }
-
-                // Add attribute to prop object
-                self.transform_jsx_attribute_item(&mut properties, attribute, ctx);
             }
         }
 
@@ -730,38 +752,6 @@ impl<'a> ReactJsx<'a> {
         };
         let property = IdentifierName::new(expr.property.span, expr.property.name.clone());
         self.ast().member_expression_static(expr.span, object, property, false).into()
-    }
-
-    fn transform_jsx_attribute_item(
-        &mut self,
-        properties: &mut Vec<'a, ObjectPropertyKind<'a>>,
-        attribute: &JSXAttributeItem<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        match attribute {
-            JSXAttributeItem::Attribute(attr) => {
-                let kind = PropertyKind::Init;
-                let key = self.get_attribute_name(&attr.name);
-                let value = self.transform_jsx_attribute_value(attr.value.as_ref(), ctx);
-                let object_property = self.ast().object_property_kind_object_property(
-                    attr.span, kind, key, value, None, false, false, false,
-                );
-                properties.push(object_property);
-            }
-            JSXAttributeItem::SpreadAttribute(attr) => match &attr.argument {
-                Expression::ObjectExpression(expr) if !expr.has_proto() => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    properties.extend(unsafe { self.ast().copy(&expr.properties) });
-                }
-                expr => {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    let argument = unsafe { self.ast().copy(expr) };
-                    let object_property =
-                        self.ast().object_property_kind_spread_element(attr.span, argument);
-                    properties.push(object_property);
-                }
-            },
-        }
     }
 
     fn transform_jsx_attribute_value(
