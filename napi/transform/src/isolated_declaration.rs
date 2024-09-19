@@ -13,9 +13,10 @@ pub struct IsolatedDeclarationsResult {
     pub errors: Vec<String>,
 }
 
+#[derive(Debug, Default)]
 #[napi(object)]
 pub struct IsolatedDeclarationsOptions {
-    pub sourcemap: bool,
+    pub sourcemap: Option<bool>,
 }
 
 /// TypeScript Isolated Declarations for Standalone DTS Emit
@@ -24,22 +25,23 @@ pub struct IsolatedDeclarationsOptions {
 pub fn isolated_declaration(
     filename: String,
     source_text: String,
-    options: IsolatedDeclarationsOptions,
+    options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
     let source_type = SourceType::from_path(&filename).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
+    let options = options.unwrap_or_default();
     let ctx = TransformContext::new(
         &allocator,
         &filename,
         &source_text,
         source_type,
-        Some(TransformOptions { sourcemap: Some(options.sourcemap), ..Default::default() }),
+        Some(TransformOptions { sourcemap: options.sourcemap, ..Default::default() }),
     );
     let transformed_ret = build_declarations(&ctx);
 
     IsolatedDeclarationsResult {
         code: transformed_ret.source_text,
-        map: options.sourcemap.then(|| transformed_ret.source_map.map(Into::into)).flatten(),
+        map: options.sourcemap.and_then(|_| transformed_ret.source_map.map(Into::into)),
         errors: ctx.take_and_render_reports(),
     }
 }

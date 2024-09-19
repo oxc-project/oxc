@@ -18,10 +18,10 @@ export interface Es2015BindingOptions {
 }
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
-export declare function isolatedDeclaration(filename: string, sourceText: string, options: IsolatedDeclarationsOptions): IsolatedDeclarationsResult
+export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
 
 export interface IsolatedDeclarationsOptions {
-  sourcemap: boolean
+  sourcemap?: boolean
 }
 
 export interface IsolatedDeclarationsResult {
