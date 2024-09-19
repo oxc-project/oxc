@@ -7,6 +7,8 @@ use oxc_transformer::{
     RewriteExtensionsMode, TypeScriptOptions,
 };
 
+use crate::IsolatedDeclarationsOptions;
+
 #[napi(object)]
 #[derive(Default)]
 pub struct TypeScriptBindingOptions {
@@ -22,7 +24,7 @@ pub struct TypeScriptBindingOptions {
     /// requirements.
     ///
     /// @default false
-    pub declaration: Option<bool>,
+    pub declaration: Option<IsolatedDeclarationsOptions>,
     /// Rewrite or remove TypeScript import/export declaration extensions.
     ///
     /// - When set to `rewrite`, it will change `.ts`, `.mts`, `.cts` extensions to `.js`, `.mjs`, `.cjs` respectively.

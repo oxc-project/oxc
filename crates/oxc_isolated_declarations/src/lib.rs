@@ -24,12 +24,20 @@ use std::{cell::RefCell, collections::VecDeque, mem};
 use diagnostics::function_with_assigning_properties;
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstBuilder, Visit, NONE};
+use oxc_ast::{ast::*, AstBuilder, Trivias, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::scope::ScopeTree;
+
+#[derive(Debug, Clone, Copy)]
+pub struct IsolatedDeclarationsOptions {
+    /// Do not emit declarations for code that has an @internal annotation in its JSDoc comment.
+    /// This is an internal compiler option; use at your own risk, because the compiler does not check that the result is valid.
+    /// <https://www.typescriptlang.org/tsconfig/#stripInternal>
+    pub strip_internal: bool,
+}
 
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
@@ -38,15 +46,27 @@ pub struct IsolatedDeclarationsReturn<'a> {
 
 pub struct IsolatedDeclarations<'a> {
     ast: AstBuilder<'a>,
+
     // state
     scope: ScopeTree<'a>,
     errors: RefCell<Vec<OxcDiagnostic>>,
+
+    /// Start position of `@internal` jsdoc markers.
+    is_internal_set: Option<FxHashSet<u32>>,
 }
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source_text: &str,
+        trivias: &Trivias,
+        options: IsolatedDeclarationsOptions,
+    ) -> Self {
         Self {
             ast: AstBuilder::new(allocator),
+            is_internal_set: options
+                .strip_internal
+                .then(|| Self::build_is_internal_set(source_text, trivias)),
             scope: ScopeTree::new(allocator),
             errors: RefCell::new(vec![]),
         }
@@ -70,6 +90,30 @@ impl<'a> IsolatedDeclarations<'a> {
     /// Add an Error
     fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error);
+    }
+
+    /// Build the lookup table for jsdoc `@internal`.
+    fn build_is_internal_set(source_text: &str, trivias: &Trivias) -> FxHashSet<u32> {
+        let mut set = FxHashSet::default();
+        for comment in trivias.comments().filter(|c| c.is_jsdoc(source_text)) {
+            let has_internal = comment
+                .span
+                .source_text(source_text)
+                .lines()
+                .filter_map(|s| s.trim_start().strip_prefix('*').map(str::trim_start))
+                .filter_map(|s| s.split_whitespace().next())
+                .any(|s| s == "@internal");
+            // Use the first jsdoc comment if there are multiple jsdoc comments for the same node.
+            if has_internal && !set.contains(&comment.attached_to) {
+                set.insert(comment.attached_to);
+            }
+        }
+        set
+    }
+
+    #[allow(unused)]
+    fn is_internal(&self, span: Span) -> bool {
+        self.is_internal_set.as_ref().map_or(false, |set| set.contains(&span.start))
     }
 }
 
