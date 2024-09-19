@@ -18,6 +18,8 @@ pub struct OxcOptions {
     pub codegen: Option<OxcCodegenOptions>,
     #[tsify(optional)]
     pub minifier: Option<OxcMinifierOptions>,
+    #[tsify(optional)]
+    pub control_flow: Option<OxcControlFlowOptions>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
@@ -80,6 +82,14 @@ pub struct OxcCodegenOptions {
     pub indentation: Option<u8>,
     #[tsify(optional)]
     pub enable_typescript: Option<bool>,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, Tsify)]
+#[tsify(from_wasm_abi)]
+#[serde(rename_all = "camelCase")]
+pub struct OxcControlFlowOptions {
+    #[tsify(optional)]
+    pub verbose: Option<bool>,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
