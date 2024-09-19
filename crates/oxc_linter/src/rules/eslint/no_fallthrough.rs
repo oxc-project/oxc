@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use aho_corasick::AhoCorasick;
 use itertools::Itertools;
 use oxc_ast::{
     ast::{Statement, SwitchCase, SwitchStatement},
@@ -35,11 +36,13 @@ fn no_unused_fallthrough_diagnostic(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-const DEFAULT_FALLTHROUGH_COMMENT_PATTERN: &str = r"falls?\s?through";
+const DEFAULT_FALLTHROUGH_COMMENT_PATTERNS: [&str; 4] =
+    ["fall through", "falls through", "fallthrough", "fallsthrough"];
 
 #[derive(Debug, Clone)]
 struct Config {
-    comment_pattern: Regex,
+    default_comment_pattern: AhoCorasick,
+    custom_comment_pattern: Option<Regex>,
     allow_empty_case: bool,
     report_unused_fallthrough_comment: bool,
 }
@@ -53,9 +56,18 @@ impl NoFallthrough {
         allow_empty_case: Option<bool>,
         report_unused_fallthrough_comment: Option<bool>,
     ) -> Self {
-        let comment_pattern = comment_pattern.unwrap_or(DEFAULT_FALLTHROUGH_COMMENT_PATTERN);
+        let custom_comment_pattern = if let Some(pattern) = comment_pattern {
+            Some(Regex::new(format!("(?iu){pattern}").as_str()).unwrap())
+        } else {
+            None
+        };
+
         Self(Box::new(Config {
-            comment_pattern: Regex::new(format!("(?iu){comment_pattern}").as_str()).unwrap(),
+            custom_comment_pattern,
+            default_comment_pattern: AhoCorasick::builder()
+                .ascii_case_insensitive(true)
+                .build(DEFAULT_FALLTHROUGH_COMMENT_PATTERNS)
+                .expect("Could not build AhoCorasick for default comment patterns"),
             allow_empty_case: allow_empty_case.unwrap_or(false),
             report_unused_fallthrough_comment: report_unused_fallthrough_comment.unwrap_or(false),
         }))
@@ -370,6 +382,14 @@ impl NoFallthrough {
         in_between.bytes().filter(|it| *it == b'\n').nth(1).is_some()
     }
 
+    fn matches_comment_pattern(&self, comment: &str) -> bool {
+        if let Some(ref regex) = self.0.custom_comment_pattern {
+            regex.is_match(comment)
+        } else {
+            self.0.default_comment_pattern.is_match(comment)
+        }
+    }
+
     fn maybe_allow_fallthrough_trivia(
         &self,
         ctx: &LintContext,
@@ -389,7 +409,7 @@ impl NoFallthrough {
 
             comment.is_some_and(|comment| {
                 (!comment.starts_with("oxlint-") && !comment.starts_with("eslint-"))
-                    && self.0.comment_pattern.is_match(comment)
+                    && self.matches_comment_pattern(comment)
             })
         };
 
