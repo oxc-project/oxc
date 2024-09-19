@@ -313,8 +313,8 @@ impl Runtime {
         // The semantic model is not built at this stage.
         let semantic_builder = SemanticBuilder::new(source_text)
             .with_cfg(true)
-            .with_build_jsdoc(true)
             .with_trivias(trivias)
+            .with_build_jsdoc(true)
             .with_check_syntax_error(check_syntax_errors)
             .build_module_record(path, program);
         let module_record = semantic_builder.module_record();

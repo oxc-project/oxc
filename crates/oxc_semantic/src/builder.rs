@@ -157,8 +157,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = trivias.clone();
-        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
+        self.trivias = trivias;
         self
     }
 
@@ -176,8 +175,10 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     /// Enable/disable JSDoc parsing.
+    /// `with_trivias` must be called prior to this call.
     #[must_use]
     pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
+        self.jsdoc = JSDocBuilder::new(self.source_text, self.trivias.clone());
         self.build_jsdoc = yes;
         self
     }
