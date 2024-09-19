@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use rustc_hash::FxHashMap;
 
 use oxc_span::{GetSpan, Span};
 
@@ -9,12 +9,12 @@ use super::parser::JSDoc;
 #[derive(Debug, Default)]
 pub struct JSDocFinder<'a> {
     /// JSDocs by Span
-    attached: BTreeMap<Span, Vec<JSDoc<'a>>>,
+    attached: FxHashMap<u32, Vec<JSDoc<'a>>>,
     not_attached: Vec<JSDoc<'a>>,
 }
 
 impl<'a> JSDocFinder<'a> {
-    pub fn new(attached: BTreeMap<Span, Vec<JSDoc<'a>>>, not_attached: Vec<JSDoc<'a>>) -> Self {
+    pub fn new(attached: FxHashMap<u32, Vec<JSDoc<'a>>>, not_attached: Vec<JSDoc<'a>>) -> Self {
         Self { attached, not_attached }
     }
 
@@ -36,7 +36,7 @@ impl<'a> JSDocFinder<'a> {
     }
 
     pub fn get_all_by_span<'b>(&'b self, span: Span) -> Option<Vec<JSDoc<'a>>> {
-        self.attached.get(&span).cloned()
+        self.attached.get(&span.start).cloned()
     }
 
     pub fn iter_all<'b>(&'b self) -> impl Iterator<Item = &JSDoc<'a>> + 'b {
