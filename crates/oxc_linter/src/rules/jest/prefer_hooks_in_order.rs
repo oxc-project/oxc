@@ -142,7 +142,7 @@ impl Rule for PreferHooksInOrder {
     fn run_once(&self, ctx: &LintContext) {
         let mut hook_groups: FxHashMap<ScopeId, Vec<AstNode>> = FxHashMap::default();
 
-        for node in ctx.nodes().iter() {
+        for node in ctx.nodes() {
             hook_groups.entry(node.scope_id()).or_default().push(*node);
         }
 

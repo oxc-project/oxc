@@ -266,6 +266,15 @@ impl<'a> AstNodes<'a> {
     }
 }
 
+impl<'ast, 'a> IntoIterator for &'ast AstNodes<'a> {
+    type Item = &'ast AstNode<'a>;
+    type IntoIter = std::slice::Iter<'ast, AstNode<'a>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.nodes.iter()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct AstNodeParentIter<'s, 'a> {
     current_node_id: Option<NodeId>,

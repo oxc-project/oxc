@@ -34,7 +34,7 @@ fn main() -> std::io::Result<()> {
 
     let mut errors: Vec<OxcDiagnostic> = vec![];
 
-    for node in semantic_ret.semantic.nodes().iter() {
+    for node in semantic_ret.semantic.nodes() {
         match node.kind() {
             AstKind::DebuggerStatement(stmt) => {
                 errors.push(no_debugger(stmt.span));

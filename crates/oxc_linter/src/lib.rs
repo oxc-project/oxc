@@ -136,7 +136,7 @@ impl Linter {
             }
         }
 
-        for node in semantic.nodes().iter() {
+        for node in semantic.nodes() {
             for (rule, ctx) in &rules {
                 rule.run(node, ctx);
             }

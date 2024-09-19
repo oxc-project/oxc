@@ -114,7 +114,7 @@ impl Rule for NoNamedAsDefaultMember {
             };
         };
 
-        for item in ctx.semantic().nodes().iter() {
+        for item in ctx.semantic().nodes() {
             match item.kind() {
                 AstKind::MemberExpression(member_expr) => process_member_expr(member_expr),
                 AstKind::VariableDeclarator(decl) => {

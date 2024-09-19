@@ -124,7 +124,7 @@ impl Rule for NoUnreachable {
                 _ => Control::Continue,
             });
         }
-        for node in ctx.nodes().iter() {
+        for node in ctx.nodes() {
             // exit early if we are not visiting a statement.
             if !node.kind().is_statement() {
                 continue;

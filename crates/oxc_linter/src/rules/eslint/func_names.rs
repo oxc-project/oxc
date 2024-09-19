@@ -372,7 +372,7 @@ impl Rule for FuncNames {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let mut invalid_funcs: Vec<(&Function, &AstNode)> = vec![];
 
-        for node in ctx.nodes().iter() {
+        for node in ctx.nodes() {
             match node.kind() {
                 // check function if it invalid, do not report it because maybe later the function is calling itself
                 AstKind::Function(func) => {

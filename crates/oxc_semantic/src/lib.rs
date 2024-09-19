@@ -288,7 +288,7 @@ mod tests {
         ";
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
-        for node in semantic.nodes().iter() {
+        for node in semantic.nodes() {
             if let AstKind::IdentifierReference(id) = node.kind() {
                 assert!(!semantic.is_reference_to_global_variable(id));
             }

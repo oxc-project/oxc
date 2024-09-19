@@ -77,7 +77,7 @@ fn main() -> std::io::Result<()> {
         .expect("we set semantic to build the control flow (`with_cfg`) for us so it should always be `Some`");
 
     let mut ast_nodes_by_block = HashMap::<_, Vec<_>>::new();
-    for node in semantic.semantic.nodes().iter() {
+    for node in semantic.semantic.nodes() {
         let block = node.cfg_id();
         let block_ix = cfg.graph.node_weight(block).unwrap();
         ast_nodes_by_block.entry(*block_ix).or_default().push(node);
