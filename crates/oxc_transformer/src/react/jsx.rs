@@ -463,20 +463,6 @@ impl<'a> ReactJsx<'a> {
             let attributes = &e.opening_element.attributes;
             for attribute in attributes {
                 match attribute {
-                    // optimize `{...prop}` to `prop` in static mode
-                    JSXAttributeItem::SpreadAttribute(spread) => {
-                        if is_classic && attributes.len() == 1 {
-                            // deopt if spreading an object with `__proto__` key
-                            if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
-                            {
-                                arguments.push(Argument::from({
-                                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                                    unsafe { self.ast().copy(&spread.argument) }
-                                }));
-                                continue;
-                            }
-                        }
-                    }
                     JSXAttributeItem::Attribute(attr) => {
                         if attr.is_identifier("__self") {
                             self_attr_span = Some(attr.name.span());
@@ -492,6 +478,20 @@ impl<'a> ReactJsx<'a> {
                             // and add it to the third argument later.
                             if is_automatic {
                                 key_prop = attr.value.as_ref();
+                                continue;
+                            }
+                        }
+                    }
+                    // optimize `{...prop}` to `prop` in static mode
+                    JSXAttributeItem::SpreadAttribute(spread) => {
+                        if is_classic && attributes.len() == 1 {
+                            // deopt if spreading an object with `__proto__` key
+                            if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())
+                            {
+                                arguments.push(Argument::from({
+                                    // SAFETY: `ast.copy` is unsound! We need to fix.
+                                    unsafe { self.ast().copy(&spread.argument) }
+                                }));
                                 continue;
                             }
                         }
