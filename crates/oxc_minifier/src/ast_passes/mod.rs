@@ -3,6 +3,7 @@ mod fold_constants;
 mod minimize_conditions;
 mod remove_dead_code;
 mod remove_syntax;
+mod statement_fusion;
 mod substitute_alternate_syntax;
 
 pub use collapse::Collapse;
@@ -10,6 +11,7 @@ pub use fold_constants::FoldConstants;
 pub use minimize_conditions::MinimizeConditions;
 pub use remove_dead_code::RemoveDeadCode;
 pub use remove_syntax::RemoveSyntax;
+pub use statement_fusion::StatementFusion;
 pub use substitute_alternate_syntax::SubstituteAlternateSyntax;
 
 use oxc_ast::ast::Program;

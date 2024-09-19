@@ -5,6 +5,7 @@ mod fold_constants;
 mod minimize_conditions;
 mod remove_syntax;
 mod reorder_constant_expression;
+mod statement_fusion;
 mod substitute_alternate_syntax;
 
 // Oxc Integration Tests

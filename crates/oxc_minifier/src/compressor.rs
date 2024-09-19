@@ -5,7 +5,7 @@ use oxc_traverse::TraverseCtx;
 
 use crate::{
     ast_passes::{
-        Collapse, FoldConstants, MinimizeConditions, RemoveDeadCode, RemoveSyntax,
+        Collapse, FoldConstants, MinimizeConditions, RemoveDeadCode, RemoveSyntax, StatementFusion,
         SubstituteAlternateSyntax,
     },
     CompressOptions, CompressorPass,
@@ -40,7 +40,7 @@ impl<'a> Compressor<'a> {
         self.fold_constants(program, &mut ctx);
         self.minimize_conditions(program, &mut ctx);
         self.remove_dead_code(program, &mut ctx);
-        // TODO: StatementFusion
+        self.statement_fusion(program, &mut ctx);
         self.substitute_alternate_syntax(program, &mut ctx);
         self.collapse(program, &mut ctx);
     }
@@ -72,6 +72,12 @@ impl<'a> Compressor<'a> {
     fn remove_dead_code(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_dead_code {
             RemoveDeadCode::new().build(program, ctx);
+        }
+    }
+
+    fn statement_fusion(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.statement_fusion {
+            StatementFusion::new().build(program, ctx);
         }
     }
 

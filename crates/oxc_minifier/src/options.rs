@@ -5,6 +5,7 @@ pub struct CompressOptions {
     pub substitute_alternate_syntax: bool,
     pub fold_constants: bool,
     pub remove_dead_code: bool,
+    pub statement_fusion: bool,
     pub collapse: bool,
 
     /// Various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`.
@@ -58,6 +59,7 @@ impl CompressOptions {
             substitute_alternate_syntax: true,
             fold_constants: true,
             remove_dead_code: true,
+            statement_fusion: true,
             collapse: true,
             booleans: true,
             drop_debugger: true,
@@ -76,6 +78,7 @@ impl CompressOptions {
             substitute_alternate_syntax: false,
             fold_constants: false,
             remove_dead_code: false,
+            statement_fusion: false,
             collapse: false,
             booleans: false,
             drop_debugger: false,
