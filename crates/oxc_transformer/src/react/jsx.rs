@@ -532,20 +532,17 @@ impl<'a> ReactJsx<'a> {
 
         // Append children to object properties in automatic mode
         if is_automatic {
-            let allocator = self.ast().allocator;
-            let mut children = Vec::from_iter_in(
+            let mut children = self.ast().vec_from_iter(
                 children.iter().filter_map(|child| self.transform_jsx_child(child, ctx)),
-                allocator,
             );
             children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
                     children.pop().unwrap()
                 } else {
-                    let elements = Vec::from_iter_in(
-                        children.into_iter().map(ArrayExpressionElement::from),
-                        allocator,
-                    );
+                    let elements = self
+                        .ast()
+                        .vec_from_iter(children.into_iter().map(ArrayExpressionElement::from));
                     need_jsxs = true;
                     self.ast().expression_array(SPAN, elements, None)
                 };
