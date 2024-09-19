@@ -109,7 +109,7 @@ impl Rule for NoDeprecatedFunctions {
             return;
         };
 
-        let mut chain = String::new();
+        let mut chain = String::with_capacity(64);
         if let Expression::Identifier(ident) = mem_expr.object() {
             chain.push_str(ident.name.as_str());
         }
