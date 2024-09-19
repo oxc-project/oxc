@@ -3,6 +3,9 @@ use std::io::{BufWriter, ErrorKind, Stdout, Write};
 use super::{writer, DiagnosticReporter};
 use crate::{Error, GraphicalReportHandler};
 
+/// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
+///
+/// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
 pub struct GraphicalReporter {
     handler: GraphicalReportHandler,
     writer: BufWriter<Stdout>,

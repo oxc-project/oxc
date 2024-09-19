@@ -18,14 +18,36 @@ use crate::graphical_theme::GraphicalTheme;
 
 #[derive(Debug, Clone)]
 pub struct GraphicalReportHandler {
+    /// How to render links.
+    ///
+    /// Default: [`LinkStyle::Link`]
     pub(crate) links: LinkStyle,
+    /// Terminal width to wrap at.
+    ///
+    /// Default: `400`
     pub(crate) termwidth: usize,
+    /// How to style reports
     pub(crate) theme: GraphicalTheme,
     pub(crate) footer: Option<String>,
+    /// Number of source lines to render before/after the line(s) covered by errors.
+    ///
+    /// Default: `1`
     pub(crate) context_lines: usize,
+    /// Tab print width
+    ///
+    /// Default: `4`
     pub(crate) tab_width: usize,
+    /// Unused.
     pub(crate) with_cause_chain: bool,
+    /// Whether to wrap lines to fit the width.
+    ///
+    /// Default: `true`
     pub(crate) wrap_lines: bool,
+    /// Whether to break words during wrapping.
+    ///
+    /// When `false`, line breaks will happen before the first word that would overflow `termwidth`.
+    ///
+    /// Default: `true`
     pub(crate) break_words: bool,
     pub(crate) word_separator: Option<textwrap::WordSeparator>,
     pub(crate) word_splitter: Option<textwrap::WordSplitter>,

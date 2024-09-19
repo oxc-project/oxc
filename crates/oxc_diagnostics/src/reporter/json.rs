@@ -3,6 +3,10 @@ use miette::JSONReportHandler;
 use super::DiagnosticReporter;
 use crate::Error;
 
+/// Renders reports as a JSON array of objects.
+///
+/// Note that, due to syntactic restrictions of JSON arrays, this reporter waits until all
+/// diagnostics have been reported before writing them to the output stream.
 #[derive(Default)]
 pub struct JsonReporter {
     diagnostics: Vec<Error>,

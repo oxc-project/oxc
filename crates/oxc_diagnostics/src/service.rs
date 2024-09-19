@@ -16,6 +16,38 @@ pub type DiagnosticTuple = (PathBuf, Vec<Error>);
 pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 
+/// Listens for diagnostics sent over a [channel](DiagnosticSender) by some job, and
+/// formats/reports them to the user.
+///
+/// [`DiagnosticService`] is designed to support multi-threaded jobs that may produce
+/// reports. These jobs can send [messages](DiagnosticTuple) to the service over its
+/// multi-producer, single-consumer [channel](DiagnosticService::sender).
+///
+/// # Example
+/// ```rust
+/// use std::thread;
+/// use oxc_diagnostics::{Error, OxcDiagnostic, DiagnosticService};
+///
+/// // By default, services will pretty-print diagnostics to the console
+/// let mut service = DiagnosticService::default();
+/// // Get a clone of the sender to send diagnostics to the service
+/// let mut sender = service.sender().clone();
+///
+/// // Spawn a thread that does work and reports diagnostics
+/// thread::spawn(move || {
+///     sender.send(Some((
+///         PathBuf::from("file.txt"),
+///         vec![Error::new(OxcDiagnostic::error("Something went wrong"))],
+///     )));
+///
+///     // Send `None` to have the service stop listening for messages.
+///     // If you don't ever send `None`, the service will poll forever.
+///     sender.send(None);
+/// });
+///
+/// // Listen for and process messages
+/// service.run()
+/// ```
 pub struct DiagnosticService {
     reporter: Box<dyn DiagnosticReporter>,
 
@@ -41,9 +73,20 @@ pub struct DiagnosticService {
 
 impl Default for DiagnosticService {
     fn default() -> Self {
+        Self::new(GraphicalReporter::default())
+    }
+}
+
+impl DiagnosticService {
+    /// Create a new [`DiagnosticService`] that will render and report diagnostics using the
+    /// provided [`DiagnosticReporter`].
+    ///
+    /// TODO(@DonIsaac): make `DiagnosticReporter` public so oxc consumers can create their own
+    /// implementations.
+    pub(crate) fn new<R: DiagnosticReporter + 'static>(reporter: R) -> Self {
         let (sender, receiver) = mpsc::channel();
         Self {
-            reporter: Box::<GraphicalReporter>::default(),
+            reporter: Box::new(reporter) as Box<dyn DiagnosticReporter>,
             quiet: false,
             silent: false,
             max_warnings: None,
@@ -53,9 +96,8 @@ impl Default for DiagnosticService {
             receiver,
         }
     }
-}
 
-impl DiagnosticService {
+    /// Configure this service to format reports as a JSON array of objects.
     pub fn set_json_reporter(&mut self) {
         self.reporter = Box::<JsonReporter>::default();
     }
@@ -68,49 +110,83 @@ impl DiagnosticService {
         self.reporter = Box::<CheckstyleReporter>::default();
     }
 
+    /// Configure this service to formats reports using [GitHub Actions
+    /// annotations](https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-error-message).
     pub fn set_github_reporter(&mut self) {
         self.reporter = Box::<GithubReporter>::default();
     }
 
+    /// Set to `true` to only report errors and ignore warnings.
+    ///
+    /// Use [`with_silent`](DiagnosticService::with_silent) to disable reporting entirely.
+    ///
+    /// Default: `false`
     #[must_use]
     pub fn with_quiet(mut self, yes: bool) -> Self {
         self.quiet = yes;
         self
     }
 
+    /// Set to `true` to disable reporting entirely.
+    ///
+    /// Use [`with_quiet`](DiagnosticService::with_quiet) to only disable reporting on warnings.
+    ///
+    /// Default is `false`.
     #[must_use]
     pub fn with_silent(mut self, yes: bool) -> Self {
         self.silent = yes;
         self
     }
 
+    /// Specify a warning threshold, which can be used to force exit with an error status if there
+    /// are too many warning-level rule violations in your project. Errors do not count towards the
+    /// warning limit.
+    ///
+    /// Use [`max_warnings_exceeded`](DiagnosticService::max_warnings_exceeded) to check if too
+    /// many warnings have been received.
+    ///
+    /// Default: [`None`]
     #[must_use]
     pub fn with_max_warnings(mut self, max_warnings: Option<usize>) -> Self {
         self.max_warnings = max_warnings;
         self
     }
 
+    /// Channel for sending [diagnostic messages] to the service.
+    ///
+    /// The service will only start processing diagnostics after [`run`](DiagnosticService::run)
+    /// has been called.
+    ///
+    /// [diagnostics]: DiagnosticTuple
     pub fn sender(&self) -> &DiagnosticSender {
         &self.sender
     }
 
+    /// Get the number of warning-level diagnostics received.
     pub fn warnings_count(&self) -> usize {
         self.warnings_count.get()
     }
 
+    /// Get the number of error-level diagnostics received.
     pub fn errors_count(&self) -> usize {
         self.errors_count.get()
     }
 
+    /// Check if the max warning threshold, as set by
+    /// [`with_max_warnings`](DiagnosticService::with_max_warnings), has been exceeded.
     pub fn max_warnings_exceeded(&self) -> bool {
         self.max_warnings.map_or(false, |max_warnings| self.warnings_count.get() > max_warnings)
     }
 
-    pub fn wrap_diagnostics(
-        path: &Path,
+    /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.
+    ///
+    /// [diagnostics]: OxcDiagnostic
+    pub fn wrap_diagnostics<P: AsRef<Path>>(
+        path: P,
         source_text: &str,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> (PathBuf, Vec<Error>) {
+        let path = path.as_ref();
         let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
         let diagnostics = diagnostics
             .into_iter()
