@@ -168,7 +168,7 @@ pub struct JSXClosingFragment {
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, GetSpan, GetSpanMut, ContentEq, ContentHash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[serde(untagged)]
 pub enum JSXElementName<'a> {
     /// `<div />`
