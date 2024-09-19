@@ -278,9 +278,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                     }
 
-                    if !self.has_internal_annotation(stmt.span()) {
-                        new_stmts.push(stmt);
-                    }
+                    new_stmts.push(stmt);
                 }
                 _ => {}
             }
