@@ -121,10 +121,10 @@ impl Rule for NoDeprecatedFunctions {
 
         let node_name = chain.as_str();
 
-        if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(&node_name) {
+        if let Some((base_version, replacement)) = DEPRECATED_FUNCTIONS_MAP.get(node_name) {
             if self.jest.version >= *base_version {
                 ctx.diagnostic_with_fix(
-                    deprecated_function(&node_name, replacement, mem_expr.span()),
+                    deprecated_function(node_name, replacement, mem_expr.span()),
                     |fixer| fixer.replace(mem_expr.span(), *replacement),
                 );
             }
