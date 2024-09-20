@@ -2,6 +2,7 @@
 source: crates/oxc_isolated_declarations/tests/mod.rs
 input_file: crates/oxc_isolated_declarations/tests/fixtures/infer-template-literal.ts
 ---
+```
 ==================== .D.TS ====================
 
 export declare const CSS_VARS_HELPER = "useCssVars";
@@ -33,3 +34,6 @@ export declare let BAD2: unknown;
  14 | export let BAD2 = `useCssV${v}ars` as const
     :            ^^^^
     `----
+
+
+```
