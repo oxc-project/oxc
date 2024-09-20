@@ -51,9 +51,9 @@ fn main() {
     println!("Dts Emit:\n");
     println!("{printed}\n");
 
-    if !ret.errors.is_empty() {
+    if !id_ret.errors.is_empty() {
         println!("Transformed dts failed:\n");
-        for error in ret.errors {
+        for error in id_ret.errors {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
         }
