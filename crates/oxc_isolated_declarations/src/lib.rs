@@ -253,7 +253,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             transformed_spans.insert(decl.span);
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 *decl = self.ast.alloc(new_decl);
-                            } else {
+                            } else if decl.declaration.is_none() {
                                 need_empty_export_marker = false;
                             }
                             self.scope.visit_export_named_declaration(decl);

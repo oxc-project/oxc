@@ -6,4 +6,6 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/empty-export.ts
 
 type A = string;
 export declare function a(): A;
+export declare const ShallowReactiveMarker: unique symbol;
+export type ShallowReactive<T> = T & { [ShallowReactiveMarker]?: true };
 export {};
