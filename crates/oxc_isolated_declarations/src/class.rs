@@ -152,6 +152,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn create_class_property(
         &self,
         r#type: PropertyDefinitionType,
+        span: Span,
         key: PropertyKey<'a>,
         r#static: bool,
         r#override: bool,
@@ -159,7 +160,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ClassElement<'a> {
         self.ast.class_element_property_definition(
             r#type,
-            SPAN,
+            span,
             self.ast.vec(),
             key,
             None,
@@ -216,6 +217,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 };
                 self.create_class_property(
                     r#type,
+                    method.span,
                     // SAFETY: `ast.copy` is unsound! We need to fix.
                     unsafe { self.ast.copy(&method.key) },
                     method.r#static,
