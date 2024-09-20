@@ -23,3 +23,10 @@ export interface I {
 	set value(_: string);
 	get value(): string;
 }
+export interface Ref<
+	T = any,
+	S = T
+> {
+	get value(): T;
+	set value(_: S);
+}
