@@ -1110,16 +1110,17 @@ impl<'a> Gen for NumericLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Codegen, _ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.value != f64::INFINITY && (p.options.minify || self.raw.is_empty()) {
+        if !p.options.minify && !self.raw.is_empty() {
+            p.print_str(self.raw);
+            need_space_before_dot(self.raw, p);
+        } else if self.value != f64::INFINITY {
             p.print_space_before_identifier();
             let abs_value = self.value.abs();
-
             if self.value.is_sign_negative() {
                 p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
                 p.print_str("-");
             }
-
-            let result = print_non_negative_float(abs_value, p);
+            let result = get_minified_number(abs_value);
             let bytes = result.as_str();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
@@ -1133,78 +1134,51 @@ impl<'a> Gen for NumericLiteral<'a> {
     }
 }
 
-// TODO: refactor this with less allocations
-// <https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_printer/js_printer.go#L3472>
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn print_non_negative_float(value: f64, p: &Codegen) -> String {
+// https://github.com/terser/terser/blob/c5315c3fd6321d6b2e076af35a70ef532f498505/lib/output.js#L2418
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_possible_wrap)]
+fn get_minified_number(num: f64) -> String {
     use oxc_syntax::number::ToJsString;
-    if value < 1000.0 && value.fract() == 0.0 {
-        return value.to_js_string();
-    }
-    let mut result = format!("{value:e}");
-    let chars = result.as_bytes();
-    let len = chars.len();
-    let dot = chars.iter().position(|&c| c == b'.');
-    let u8_to_string = |num: &[u8]| {
-        // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        unsafe { String::from_utf8_unchecked(num.to_vec()) }
-    };
-
-    if dot == Some(1) && chars[0] == b'0' {
-        // Strip off the leading zero when minifying
-        // "0.5" => ".5"
-        let stripped_result = &chars[1..];
-        // after stripping the leading zero, the after dot position will be start from 1
-        let after_dot = 1;
-
-        // Try using an exponent
-        // "0.001" => "1e-3"
-        if stripped_result[after_dot] == b'0' {
-            let mut i = after_dot + 1;
-            while stripped_result[i] == b'0' {
-                i += 1;
-            }
-            let remaining = &stripped_result[i..];
-            let exponent = format!("-{}", remaining.len() - after_dot + i);
-
-            // Only switch if it's actually shorter
-            if stripped_result.len() > remaining.len() + 1 + exponent.len() {
-                result = format!("{}e{}", u8_to_string(remaining), exponent);
-            } else {
-                result = u8_to_string(stripped_result);
-            }
-        } else {
-            result = u8_to_string(stripped_result);
-        }
-    } else if chars[len - 1] == b'0' {
-        // Simplify numbers ending with "0" by trying to use an exponent
-        // "1000" => "1e3"
-        let mut i = len - 1;
-        while i > 0 && chars[i - 1] == b'0' {
-            i -= 1;
-        }
-        let remaining = &chars[0..i];
-        let exponent = format!("{}", chars.len() - i);
-
-        // Only switch if it's actually shorter
-        if chars.len() > remaining.len() + 1 + exponent.len() {
-            result = format!("{}e{}", u8_to_string(remaining), exponent);
-        } else {
-            result = u8_to_string(chars);
-        }
+    if num < 1000.0 && num.fract() == 0.0 {
+        return num.to_js_string();
     }
 
-    if p.options.minify && value.fract() == 0.0 {
-        let value = value as u64;
-        if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
-            let hex = format!("{value:#x}");
-            if hex.len() < result.len() {
-                result = hex;
-            }
-        }
+    let mut s = num.to_js_string();
+
+    if s.starts_with("0.") {
+        s = s[1..].to_string();
     }
 
-    result
+    s = s.cow_replacen("e+", "e", 1).to_string();
+
+    let mut candidates = vec![s.clone()];
+
+    if num.fract() == 0.0 {
+        candidates.push(format!("0x{:x}", num as u128));
+    }
+
+    if s.starts_with(".0") {
+        // create `1e-2`
+        if let Some((i, _)) = s[1..].bytes().enumerate().find(|(_, c)| *c != b'0') {
+            let len = i + 1; // `+1` to include the dot.
+            let digits = &s[len..];
+            candidates.push(format!("{digits}e-{}", digits.len() + len - 1));
+        }
+    } else if s.ends_with('0') {
+        // create 1e2
+        if let Some((len, _)) = s.bytes().rev().enumerate().find(|(_, c)| *c != b'0') {
+            candidates.push(format!("{}e{len}", &s[0..s.len() - len]));
+        }
+    } else if let Some((integer, point, exponent)) =
+        s.split_once('.').and_then(|(a, b)| b.split_once('e').map(|e| (a, e.0, e.1)))
+    {
+        // `1.2e101` -> ("1", "2", "101")
+        candidates.push(format!(
+            "{integer}{point}e{}",
+            exponent.parse::<isize>().unwrap() - point.len() as isize
+        ));
+    }
+
+    candidates.into_iter().min_by_key(String::len).unwrap()
 }
 
 impl<'a> Gen for BigIntLiteral<'a> {
