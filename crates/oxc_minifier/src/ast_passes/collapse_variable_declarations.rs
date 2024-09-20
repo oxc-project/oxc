@@ -4,10 +4,9 @@ use oxc_traverse::{Traverse, TraverseCtx};
 
 use crate::{CompressOptions, CompressorPass};
 
-/// Collapse variable declarations (TODO: and assignments).
+/// Collapse variable declarations.
 ///
 /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
-/// TODO: `a = null; b = null;` => `a = b = null`
 pub struct CollapseVariableDeclarations {
     options: CompressOptions,
 }

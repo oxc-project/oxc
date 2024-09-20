@@ -5,8 +5,9 @@ use oxc_traverse::TraverseCtx;
 
 use crate::{
     ast_passes::{
-        CollapseVariableDeclarations, PeepholeFoldConstants, PeepholeMinimizeConditions,
-        PeepholeRemoveDeadCode, PeepholeSubstituteAlternateSyntax, RemoveSyntax,
+        CollapseVariableDeclarations, ExploitAssigns, PeepholeFoldConstants,
+        PeepholeMinimizeConditions, PeepholeRemoveDeadCode, PeepholeSubstituteAlternateSyntax,
+        RemoveSyntax, StatementFusion,
     },
     CompressOptions, CompressorPass,
 };
@@ -41,13 +42,13 @@ impl<'a> Compressor<'a> {
             return;
         }
 
-        // TODO: inline variables
         self.fold_constants(program, &mut ctx);
         self.minimize_conditions(program, &mut ctx);
         self.remove_dead_code(program, &mut ctx);
-        // TODO: StatementFusion
+        self.statement_fusion(program, &mut ctx);
         self.substitute_alternate_syntax(program, &mut ctx);
-        self.collapse(program, &mut ctx);
+        self.collapse_variable_declarations(program, &mut ctx);
+        self.exploit_assigns(program, &mut ctx);
     }
 
     fn dead_code_elimination(self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -76,7 +77,15 @@ impl<'a> Compressor<'a> {
         PeepholeRemoveDeadCode::new().build(program, ctx);
     }
 
-    fn collapse(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+    fn statement_fusion(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        StatementFusion::new().build(program, ctx);
+    }
+
+    fn collapse_variable_declarations(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         CollapseVariableDeclarations::new(self.options).build(program, ctx);
+    }
+
+    fn exploit_assigns(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        ExploitAssigns::new().build(program, ctx);
     }
 }
