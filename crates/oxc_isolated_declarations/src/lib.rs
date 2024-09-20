@@ -22,7 +22,7 @@ mod types;
 use std::{cell::RefCell, collections::VecDeque, mem};
 
 use diagnostics::function_with_assigning_properties;
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, CloneIn};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, Trivias, Visit, NONE};
 use oxc_diagnostics::OxcDiagnostic;
@@ -147,30 +147,39 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
-        let mut new_ast_stmts = self.ast.vec::<Statement<'a>>();
-        // SAFETY: `ast.copy` is unsound! We need to fix.
-        for stmt in Self::remove_function_overloads_implementation(unsafe { self.ast.copy(stmts) })
-        {
-            if let Some(decl) = stmt.as_declaration() {
+        self.report_error_for_expando_function(stmts);
+
+        let filtered_stmts = stmts.iter().filter_map(|stmt| {
+            if stmt.is_declaration() {
+                Some(stmt.clone_in(self.ast.allocator))
+            } else {
+                None
+            }
+        });
+
+        let filtered_stmts = Self::remove_function_overloads_implementation(filtered_stmts);
+
+        let mut stmts = self.ast.vec_from_iter(filtered_stmts);
+        for stmt in stmts.iter_mut() {
+            if let Some(decl) = stmt.as_declaration_mut() {
                 if self.has_internal_annotation(decl.span()) {
                     continue;
                 }
-                if let Some(decl) = self.transform_declaration(decl, false) {
-                    new_ast_stmts.push(Statement::from(decl));
-                } else {
-                    // SAFETY: `ast.copy` is unsound! We need to fix.
-                    new_ast_stmts.push(Statement::from(unsafe { self.ast.copy(decl) }));
+                if let Some(new_decl) = self.transform_declaration(decl, false) {
+                    *decl = new_decl;
                 }
             }
         }
-        self.report_error_for_expando_function(stmts);
-        new_ast_stmts
+
+        stmts
     }
 
     pub fn transform_statements_on_demand(
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        self.report_error_for_expando_function(stmts);
+
         // https://github.com/microsoft/TypeScript/pull/58912
         let mut need_empty_export_marker = true;
 
@@ -178,13 +187,22 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut variables_declarations = VecDeque::new();
         let mut variable_transformed_indexes = VecDeque::new();
         let mut transformed_indexes = FxHashSet::default();
+
+        let filtered_stmts = stmts.iter().filter_map(|stmt| {
+            if stmt.is_declaration() || stmt.is_module_declaration() {
+                Some(stmt.clone_in(self.ast.allocator))
+            } else {
+                None
+            }
+        });
+
+        let filtered_stmts = Self::remove_function_overloads_implementation(filtered_stmts);
+
         // 1. Collect all declarations, module declarations
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
         // 4. Collect transformed indexes
-        // SAFETY: `ast.copy` is unsound! We need to fix.
-        for stmt in Self::remove_function_overloads_implementation(unsafe { self.ast.copy(stmts) })
-        {
+        for mut stmt in filtered_stmts {
             match stmt {
                 match_declaration!(Statement) => {
                     match stmt.to_declaration() {
@@ -219,7 +237,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                 }
                 match_module_declaration!(Statement) => {
-                    match stmt.to_module_declaration() {
+                    match stmt.to_module_declaration_mut() {
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
                             if self.has_internal_annotation(decl.span) {
                                 continue;
@@ -229,7 +247,6 @@ impl<'a> IsolatedDeclarations<'a> {
                                 self.transform_export_default_declaration(decl)
                             {
                                 if let Some(var_decl) = var_decl {
-                                    need_empty_export_marker = false;
                                     self.scope.visit_variable_declaration(&var_decl);
                                     new_stmts.push(Statement::VariableDeclaration(
                                         self.ast.alloc(var_decl),
@@ -238,10 +255,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 }
 
                                 self.scope.visit_export_default_declaration(&new_decl);
-                                new_stmts.push(Statement::ExportDefaultDeclaration(
-                                    self.ast.alloc(new_decl),
-                                ));
-                                continue;
+                                *decl = self.ast.alloc(new_decl);
                             }
 
                             need_empty_export_marker = false;
@@ -254,16 +268,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                             transformed_indexes.insert(new_stmts.len());
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
-                                self.scope.visit_declaration(
-                                    new_decl.declaration.as_ref().unwrap_or_else(|| unreachable!()),
-                                );
-
-                                new_stmts.push(Statement::ExportNamedDeclaration(
-                                    self.ast.alloc(new_decl),
-                                ));
-                                continue;
+                                *decl = self.ast.alloc(new_decl);
+                            } else {
+                                need_empty_export_marker = false;
                             }
-                            need_empty_export_marker = false;
                             self.scope.visit_export_named_declaration(decl);
                         }
                         ModuleDeclaration::ImportDeclaration(_) => {
@@ -382,17 +390,19 @@ impl<'a> IsolatedDeclarations<'a> {
                 .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         }
 
-        self.report_error_for_expando_function(stmts);
         new_ast_stmts
     }
 
-    pub fn remove_function_overloads_implementation(
-        stmts: oxc_allocator::Vec<'a, Statement<'a>>,
-    ) -> impl Iterator<Item = Statement<'a>> + '_ {
+    pub fn remove_function_overloads_implementation<T>(
+        stmts: T,
+    ) -> impl Iterator<Item = Statement<'a>>
+    where
+        T: Iterator<Item = Statement<'a>>,
+    {
         let mut last_function_name: Option<Atom<'a>> = None;
         let mut is_export_default_function_overloads = false;
 
-        stmts.into_iter().filter_map(move |stmt| match stmt {
+        stmts.filter_map(move |stmt| match stmt {
             Statement::FunctionDeclaration(ref func) => {
                 let name = &func
                     .id
