@@ -33,7 +33,6 @@ futures = { workspace = true }
 lazy_static = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 pico-args = { workspace = true }
-project-root = { workspace = true }
 rayon = { workspace = true }
 regex = { workspace = true }
 saphyr = { workspace = true }

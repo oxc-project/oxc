@@ -1556,7 +1556,6 @@ dependencies = [
  "oxc_tasks_common",
  "phf 0.11.2",
  "pico-args",
- "project-root",
  "rayon",
  "regex",
  "saphyr",
