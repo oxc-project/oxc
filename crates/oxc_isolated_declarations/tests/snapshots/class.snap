@@ -21,29 +21,17 @@ export declare abstract class Qux {
 	baz(): void;
 }
 export declare class Baz {
-	/**
-	* Just a comment
-	*/
+	/** Just a comment */
 	readonly prop1 = "some string";
-	/**
-	* Just a comment
-	*/
+	/** Just a comment */
 	prop2: string;
-	/**
-	* Just a comment
-	*/
+	/** Just a comment */
 	private prop3;
-	/**
-	* Just a comment
-	*/
+	/** Just a comment */
 	private prop4;
-	/**
-	* Just a comment
-	*/
+	/** Just a comment */
 	private static prop5;
-	/**
-	* Just a comment
-	*/
+	/** Just a comment */
 	private static prop6;
 }
 export declare class Boo {
