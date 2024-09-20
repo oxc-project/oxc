@@ -404,7 +404,7 @@ pub fn check_module_declaration<'a>(
     };
     let start = decl.span().start;
     let span = Span::new(start, start + 6);
-    match ctx.source_type.module_kind() {
+    match ctx.source_type.module_kind {
         ModuleKind::Unambiguous => {
             #[cfg(debug_assertions)]
             panic!("Technically unreachable, omit to avoid panic.");

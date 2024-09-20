@@ -71,7 +71,7 @@ impl<'a> React<'a> {
 impl<'a> Traverse<'a> for React<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.jsx_plugin {
-            program.source_type = program.source_type.with_standard(true);
+            program.source_type = program.source_type.unset_jsx();
         }
         if self.refresh_plugin {
             self.refresh.enter_program(program, ctx);

@@ -36,7 +36,10 @@ fn get_result(
     };
     // Second pass with only JavaScript syntax
     let transformed2 = {
-        driver.run(&transformed1, SourceType::default().with_module(source_type.is_module()));
+        driver.run(
+            &transformed1,
+            if source_type.is_module() { SourceType::mjs() } else { SourceType::cjs() },
+        );
         driver.printed.clone()
     };
     if transformed1 == transformed2 {
@@ -88,7 +91,7 @@ impl Case for TransformerTest262Case {
     fn run(&mut self) {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let source_type = SourceType::default().with_module(is_module);
+        let source_type = if is_module { SourceType::mjs() } else { SourceType::cjs() };
         let result = get_result(source_text, source_type, self.path(), None);
         self.base.set_result(result);
     }
@@ -157,7 +160,7 @@ impl Case for TransformerTypeScriptCase {
         let mut source_type = source_type;
         // handle @jsx: react, `react` of behavior is match babel following options
         if self.base.settings.jsx.last().is_some_and(|jsx| jsx == "react") {
-            source_type = source_type.with_module(true);
+            source_type = source_type.set_module();
             options.react.runtime = ReactJsxRuntime::Classic;
         }
         get_result(self.base.code(), source_type, self.path(), Some(options))

@@ -145,7 +145,7 @@ impl TestCaseContent {
             .filter_map(|mut unit| {
                 let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
                 if is_module {
-                    source_type = source_type.with_module(true);
+                    source_type = source_type.set_module();
                 }
                 unit.source_type = source_type;
                 Some(unit)
@@ -157,10 +157,10 @@ impl TestCaseContent {
     }
 
     fn get_source_type(path: &Path, options: &CompilerSettings) -> Option<SourceType> {
-        let source_type = SourceType::from_path(path)
-            .ok()?
-            .with_jsx(!options.jsx.is_empty())
-            .with_unambiguous(true);
+        let mut source_type = SourceType::from_path(path).ok()?.set_unambiguous();
+        if !options.jsx.is_empty() {
+            source_type = source_type.set_jsx();
+        }
         Some(source_type)
     }
 

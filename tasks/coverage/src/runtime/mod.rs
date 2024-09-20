@@ -136,7 +136,7 @@ impl Case for CodegenRuntimeTest262Case {
                 let source_text = self.base.code();
                 let is_module = self.base.meta().flags.contains(&TestFlag::Module);
                 let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
-                let source_type = SourceType::default().with_module(is_module);
+                let source_type = if is_module { SourceType::mjs() } else { SourceType::cjs() };
                 let allocator = Allocator::default();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let mut text = CodeGenerator::new().build(&ret.program).source_text;

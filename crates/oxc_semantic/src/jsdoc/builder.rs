@@ -361,7 +361,7 @@ mod test {
             "bar: string;",
         )];
 
-        let source_type = SourceType::default().with_typescript(true);
+        let source_type = SourceType::ts();
         for (source_text, target) in source_texts {
             test_jsdoc_found(source_text, target, Some(source_type));
         }

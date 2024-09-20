@@ -66,13 +66,15 @@ pub fn transform(
         let mut source_type = SourceType::from_path(&filename).unwrap_or_default();
         // Force `script` or `module`
         match options.as_ref().and_then(|options| options.source_type.as_deref()) {
-            Some("script") => source_type = source_type.with_script(true),
-            Some("module") => source_type = source_type.with_module(true),
+            Some("script") => source_type = source_type.set_script(),
+            Some("module") => source_type = source_type.set_module(),
             _ => {}
         }
         // Force `jsx`
         if let Some(jsx) = options.as_ref().and_then(|options| options.jsx.as_ref()) {
-            source_type = source_type.with_jsx(*jsx);
+            if *jsx {
+                source_type = source_type.set_jsx();
+            }
         }
         source_type
     };

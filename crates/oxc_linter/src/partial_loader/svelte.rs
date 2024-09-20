@@ -41,7 +41,10 @@ impl<'a> SveltePartialLoader<'a> {
         let js_end = pointer + offset;
 
         let source_text = &self.source_text[js_start..js_end];
-        let source_type = SourceType::mjs().with_typescript(is_ts);
+        let mut source_type = SourceType::mjs();
+        if is_ts {
+            source_type = source_type.set_ts();
+        }
         Some(JavaScriptSource::new(source_text, source_type, js_start))
     }
 }

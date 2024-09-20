@@ -45,7 +45,7 @@ impl<'a> SemanticTester<'a> {
     ///
     /// Use [`SemanticTester::ts`] for TypeScript test cases without JSX.
     pub fn tsx(source_text: &'static str) -> Self {
-        Self::ts(source_text).with_jsx(true)
+        Self::ts(source_text).set_jsx()
     }
 
     /// Create a new tester for a JavaScript test case.
@@ -71,22 +71,27 @@ impl<'a> SemanticTester<'a> {
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
-    pub fn with_typescript(mut self, yes: bool) -> Self {
-        self.source_type = SourceType::default().with_typescript(yes);
+    pub fn set_typescript(mut self) -> Self {
+        self.source_type = self.source_type.set_ts();
         self
     }
 
     /// Mark the [`SourceType`] as JSX
     ///
     /// If the source is currently TypeScript, it will become TSX.
-    pub fn with_jsx(mut self, yes: bool) -> Self {
-        self.source_type = self.source_type.with_jsx(yes);
+    pub fn set_jsx(mut self) -> Self {
+        self.source_type = self.source_type.set_jsx();
         self
     }
 
     /// Mark the [`SourceType`] as an ESM module.
-    pub fn with_module(mut self, yes: bool) -> Self {
-        self.source_type = self.source_type.with_module(yes);
+    pub fn set_module(mut self) -> Self {
+        self.source_type = self.source_type.set_module();
+        self
+    }
+
+    pub fn set_script(mut self) -> Self {
+        self.source_type = self.source_type.set_script();
         self
     }
 

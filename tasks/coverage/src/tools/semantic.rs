@@ -82,7 +82,7 @@ impl Case for SemanticTest262Case {
     fn run(&mut self) {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let source_type = SourceType::default().with_module(is_module);
+        let source_type = if is_module { SourceType::mjs() } else { SourceType::cjs() };
         let result = get_result(source_text, source_type, self.path(), None);
         self.base.set_result(result);
     }
@@ -151,7 +151,7 @@ impl Case for SemanticTypeScriptCase {
         let mut source_type = source_type;
         // handle @jsx: react, `react` of behavior is match babel following options
         if self.base.settings.jsx.last().is_some_and(|jsx| jsx == "react") {
-            source_type = source_type.with_module(true);
+            source_type = source_type.set_module();
             options.react.runtime = ReactJsxRuntime::Classic;
         }
         get_result(self.base.code(), source_type, self.path(), Some(options))

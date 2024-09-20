@@ -35,7 +35,7 @@ pub fn isolated_declaration(
     source_text: String,
     options: Option<IsolatedDeclarationsOptions>,
 ) -> IsolatedDeclarationsResult {
-    let source_type = SourceType::from_path(&filename).unwrap_or_default().with_typescript(true);
+    let source_type = SourceType::from_path(&filename).unwrap_or_default().set_script();
     let allocator = Allocator::default();
     let options = options.unwrap_or_default();
     let ctx = TransformContext::new(

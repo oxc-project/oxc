@@ -173,8 +173,8 @@ impl Oxc {
         );
         let source_type = SourceType::from_path(&path).unwrap_or_default();
         let source_type = match parser_options.source_type.as_deref() {
-            Some("script") => source_type.with_script(true),
-            Some("module") => source_type.with_module(true),
+            Some("script") => source_type.set_script(),
+            Some("module") => source_type.set_module(),
             _ => source_type,
         };
 

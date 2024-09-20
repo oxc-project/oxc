@@ -56,7 +56,13 @@ impl<'a> VuePartialLoader<'a> {
         *pointer += offset + SCRIPT_END.len();
 
         let source_text = &self.source_text[js_start..js_end];
-        let source_type = SourceType::mjs().with_typescript(is_ts).with_jsx(is_jsx);
+        let mut source_type = SourceType::mjs();
+        if is_ts {
+            source_type = source_type.set_ts();
+        }
+        if is_jsx {
+            source_type = source_type.set_jsx();
+        }
         Some(JavaScriptSource::new(source_text, source_type, js_start))
     }
 }

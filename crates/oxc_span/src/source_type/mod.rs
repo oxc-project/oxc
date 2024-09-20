@@ -20,13 +20,13 @@ pub use error::UnknownExtension;
 #[serde(rename_all = "camelCase")]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
-    pub(super) language: Language,
+    pub language: Language,
 
     /// Script or Module, default Module
-    pub(super) module_kind: ModuleKind,
+    pub module_kind: ModuleKind,
 
     /// Support JSX for JavaScript and TypeScript? default without JSX
-    pub(super) variant: LanguageVariant,
+    pub variant: LanguageVariant,
 }
 
 /// JavaScript or TypeScript
@@ -160,7 +160,7 @@ impl SourceType {
     ///
     /// [`JavaScript`]: Language::JavaScript
     pub const fn jsx() -> Self {
-        Self::mjs().with_jsx(true)
+        Self::mjs().set_jsx()
     }
 
     /// Creates a [`SourceType`] representing a [`TypeScript`] file.
@@ -206,7 +206,7 @@ impl SourceType {
     /// [`TypeScript`]: Language::TypeScript
     /// [`JSX`]: LanguageVariant::Jsx
     pub const fn tsx() -> Self {
-        Self::ts().with_jsx(true)
+        Self::ts().set_jsx()
     }
 
     /// Creates a [`SourceType`] representing a [`TypeScript definition`] file.
@@ -241,10 +241,6 @@ impl SourceType {
         self.module_kind == ModuleKind::Unambiguous
     }
 
-    pub fn module_kind(self) -> ModuleKind {
-        self.module_kind
-    }
-
     pub fn is_javascript(self) -> bool {
         self.language == Language::JavaScript
     }
@@ -269,68 +265,50 @@ impl SourceType {
     }
 
     #[must_use]
-    pub const fn with_script(mut self, yes: bool) -> Self {
-        if yes {
-            self.module_kind = ModuleKind::Script;
-        }
+    pub const fn set_script(mut self) -> Self {
+        self.module_kind = ModuleKind::Script;
         self
     }
 
     #[must_use]
-    pub const fn with_module(mut self, yes: bool) -> Self {
-        if yes {
-            self.module_kind = ModuleKind::Module;
-        } else {
-            self.module_kind = ModuleKind::Script;
-        }
+    pub const fn set_module(mut self) -> Self {
+        self.module_kind = ModuleKind::Module;
         self
     }
 
     #[must_use]
-    pub const fn with_unambiguous(mut self, yes: bool) -> Self {
-        if yes {
-            self.module_kind = ModuleKind::Unambiguous;
-        }
+    pub const fn set_unambiguous(mut self) -> Self {
+        self.module_kind = ModuleKind::Unambiguous;
         self
     }
 
     #[must_use]
-    pub const fn with_javascript(mut self, yes: bool) -> Self {
-        if yes {
-            self.language = Language::JavaScript;
-        }
+    pub const fn set_js(mut self) -> Self {
+        self.language = Language::JavaScript;
         self
     }
 
     #[must_use]
-    pub const fn with_typescript(mut self, yes: bool) -> Self {
-        if yes {
-            self.language = Language::TypeScript;
-        }
+    pub const fn set_ts(mut self) -> Self {
+        self.language = Language::TypeScript;
         self
     }
 
     #[must_use]
-    pub const fn with_typescript_definition(mut self, yes: bool) -> Self {
-        if yes {
-            self.language = Language::TypeScriptDefinition;
-        }
+    pub const fn set_dts(mut self) -> Self {
+        self.language = Language::TypeScriptDefinition;
         self
     }
 
     #[must_use]
-    pub const fn with_jsx(mut self, yes: bool) -> Self {
-        if yes {
-            self.variant = LanguageVariant::Jsx;
-        }
+    pub const fn set_jsx(mut self) -> Self {
+        self.variant = LanguageVariant::Jsx;
         self
     }
 
     #[must_use]
-    pub const fn with_standard(mut self, yes: bool) -> Self {
-        if yes {
-            self.variant = LanguageVariant::Standard;
-        }
+    pub const fn unset_jsx(mut self) -> Self {
+        self.variant = LanguageVariant::Standard;
         self
     }
 
@@ -524,7 +502,7 @@ mod tests {
         }
 
         assert_eq!(SourceType::jsx(), js);
-        assert_eq!(SourceType::jsx().with_module(true), jsx);
+        assert_eq!(SourceType::jsx().set_module(), jsx);
 
         assert!(js.is_module());
         assert!(mjs.is_module());

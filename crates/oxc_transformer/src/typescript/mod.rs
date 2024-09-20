@@ -77,7 +77,7 @@ impl<'a> Traverse<'a> for TypeScript<'a> {
             program.hashbang = None;
             program.body.clear();
         } else {
-            program.source_type = program.source_type.with_javascript(true);
+            program.source_type = program.source_type.set_js();
             self.namespace.enter_program(program, ctx);
         }
     }

@@ -63,7 +63,7 @@ fn test_top_level_strict() {
     }
     "#,
     )
-    .with_module(false)
+    .set_module()
     .has_root_symbol("foo")
     .is_in_scope(ScopeFlags::Top | ScopeFlags::StrictMode)
     .test();
@@ -76,7 +76,7 @@ fn test_top_level_strict() {
     }
     ",
     )
-    .with_module(false)
+    .set_script()
     .has_root_symbol("foo")
     .is_in_scope(ScopeFlags::Top)
     .is_not_in_scope(ScopeFlags::StrictMode)
@@ -94,7 +94,7 @@ fn test_function_level_strict() {
     }
     "#,
     )
-    .with_module(false);
+    .set_script();
 
     tester.has_some_symbol("x")
         .is_in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)

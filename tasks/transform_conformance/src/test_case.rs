@@ -173,10 +173,12 @@ pub trait TestCase {
 
         // Some babel test cases have a js extension, but contain typescript code.
         // Therefore, if the typescript plugin exists, enable typescript.
-        let source_type = SourceType::from_path(path).unwrap().with_typescript(
-            self.options().get_plugin("transform-typescript").is_some()
-                || self.options().get_plugin("syntax-typescript").is_some(),
-        );
+        let mut source_type = SourceType::from_path(path).unwrap();
+        if self.options().get_plugin("transform-typescript").is_some()
+            || self.options().get_plugin("syntax-typescript").is_some()
+        {
+            source_type = source_type.set_ts();
+        }
 
         let driver =
             Driver::new(false, transform_options.clone()).execute(&source_text, source_type, path);
@@ -228,23 +230,24 @@ impl TestCase for ConformanceTestCase {
         let input = fs::read_to_string(&self.path).unwrap();
 
         let source_type = {
-            let mut source_type = SourceType::from_path(&self.path)
-                .unwrap()
-                .with_script(true)
-                .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
+            let mut source_type = SourceType::from_path(&self.path).unwrap().set_script();
+            if self.options.get_plugin("syntax-jsx").is_some() {
+                source_type = source_type.set_jsx();
+            }
 
             source_type = match self.options.source_type.as_deref() {
-                Some("unambiguous") => source_type.with_unambiguous(true),
-                Some("script") => source_type.with_script(true),
-                Some("module") => source_type.with_module(true),
+                Some("unambiguous") => source_type.set_unambiguous(),
+                Some("script") => source_type.set_script(),
+                Some("module") => source_type.set_module(),
                 Some(s) => panic!("Unexpected source type {s}"),
                 None => source_type,
             };
 
-            source_type = source_type.with_typescript(
-                self.options.get_plugin("transform-typescript").is_some()
-                    || self.options.get_plugin("syntax-typescript").is_some(),
-            );
+            if self.options.get_plugin("transform-typescript").is_some()
+                || self.options.get_plugin("syntax-typescript").is_some()
+            {
+                source_type = source_type.set_ts();
+            }
 
             source_type
         };

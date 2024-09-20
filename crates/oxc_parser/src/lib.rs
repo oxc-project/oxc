@@ -452,7 +452,7 @@ impl<'a> ParserImpl<'a> {
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
-        if source_type.module_kind() == ModuleKind::Module {
+        if source_type.module_kind == ModuleKind::Module {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
@@ -515,13 +515,13 @@ impl<'a> ParserImpl<'a> {
 
     fn set_source_type_to_module_if_unambiguous(&mut self) {
         if self.source_type.is_unambiguous() {
-            self.source_type = self.source_type.with_module(true);
+            self.source_type = self.source_type.set_module();
         }
     }
 
     fn set_source_type_to_script_if_unambiguous(&mut self) {
         if self.source_type.is_unambiguous() {
-            self.source_type = self.source_type.with_script(true);
+            self.source_type = self.source_type.set_script();
         }
     }
 }
@@ -602,7 +602,7 @@ mod test {
     #[test]
     fn comments() {
         let allocator = Allocator::default();
-        let source_type = SourceType::default().with_typescript(true);
+        let source_type = SourceType::ts();
         let sources = [
             ("// line comment", CommentKind::Line),
             ("/* line comment */", CommentKind::Block),

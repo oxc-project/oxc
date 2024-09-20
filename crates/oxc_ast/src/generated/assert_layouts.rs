@@ -1402,6 +1402,9 @@ const _: () = {
 
     assert!(size_of::<SourceType>() == 3usize);
     assert!(align_of::<SourceType>() == 1usize);
+    assert!(offset_of!(SourceType, language) == 0usize);
+    assert!(offset_of!(SourceType, module_kind) == 1usize);
+    assert!(offset_of!(SourceType, variant) == 2usize);
 
     assert!(size_of::<Language>() == 1usize);
     assert!(align_of::<Language>() == 1usize);
@@ -2957,6 +2960,9 @@ const _: () = {
 
     assert!(size_of::<SourceType>() == 3usize);
     assert!(align_of::<SourceType>() == 1usize);
+    assert!(offset_of!(SourceType, language) == 0usize);
+    assert!(offset_of!(SourceType, module_kind) == 1usize);
+    assert!(offset_of!(SourceType, variant) == 2usize);
 
     assert!(size_of::<Language>() == 1usize);
     assert!(align_of::<Language>() == 1usize);

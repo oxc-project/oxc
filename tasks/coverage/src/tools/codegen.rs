@@ -59,7 +59,7 @@ impl Case for CodegenTest262Case {
     fn run(&mut self) {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let source_type = SourceType::default().with_module(is_module);
+        let source_type = if is_module { SourceType::mjs() } else { SourceType::cjs() };
         let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }

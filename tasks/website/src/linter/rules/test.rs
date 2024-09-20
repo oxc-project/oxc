@@ -107,7 +107,7 @@ fn source_type_from_code_element(code: ElementRef) -> Option<SourceType> {
 
     match *lang {
         "javascript" | "js" => Some(SourceType::default()),
-        "typescript" | "ts" => Some(SourceType::default().with_typescript(true)),
+        "typescript" | "ts" => Some(SourceType::default().set_ts()),
         "tsx" => Some(SourceType::tsx()),
         // FIXME: lots of jsx examples are usefully succinct but not valid JSX.
         // "jsx" => Some(SourceType::default().with_jsx(true).with_always_strict(true)),
