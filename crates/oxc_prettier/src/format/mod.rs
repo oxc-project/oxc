@@ -1298,14 +1298,17 @@ impl<'a> Format<'a> for TSModuleDeclaration<'a> {
         parts.push(ss!(" {"));
 
         if let Some(body) = &self.body {
-            let mut indent_parts = p.vec();
+            if !body.is_empty() {
+                let mut indent_parts = p.vec();
 
-            indent_parts.extend(hardline!());
-            indent_parts.push(body.format(p));
-            parts.push(Doc::Indent(indent_parts));
+                indent_parts.extend(hardline!());
+                indent_parts.push(body.format(p));
+
+                parts.push(Doc::Indent(indent_parts));
+                parts.extend(hardline!());
+            }
         }
 
-        parts.extend(hardline!());
         parts.push(ss!("}"));
 
         Doc::Array(parts)

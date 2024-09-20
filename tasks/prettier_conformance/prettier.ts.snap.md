@@ -1,4 +1,4 @@
-ts compatibility: 190/526 (36.12%)
+ts compatibility: 214/526 (40.68%)
 
 # Failed
 
@@ -44,14 +44,9 @@ ts compatibility: 190/526 (36.12%)
 * assignment/issue-10846.ts
 * assignment/issue-10848.tsx
 * assignment/issue-10850.ts
-* assignment/issue-12413.ts
 * assignment/issue-2482.ts
 * assignment/issue-3122.ts
-* assignment/issue-6783.ts
 * assignment/parenthesized.ts
-
-### break-calls
-* break-calls/type_args.ts
 
 ### call-signature
 * call-signature/call-signature.ts
@@ -72,7 +67,6 @@ ts compatibility: 190/526 (36.12%)
 * class/empty-method-body.ts
 * class/extends_implements.ts
 * class/generics.ts
-* class/methods.ts
 * class/parameter-properties.ts
 * class/quoted-property.ts
 
@@ -118,7 +112,6 @@ ts compatibility: 190/526 (36.12%)
 * compiler/declareDottedModuleName.ts
 * compiler/es5ExportDefaultClassDeclaration4.ts
 * compiler/functionOverloadsOnGenericArity1.ts
-* compiler/globalIsContextualKeyword.ts
 * compiler/indexSignatureWithInitializer.ts
 * compiler/mappedTypeWithCombinedTypeMappers.ts
 * compiler/privacyGloImport.ts
@@ -137,8 +130,6 @@ ts compatibility: 190/526 (36.12%)
 * conformance/classes/mixinClassesAnonymous.ts
 
 ### conformance/classes/classDeclarations/classAbstractKeyword
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractImportInstantiation.ts
-* conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInAModule.ts
 * conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts
 
 ### conformance/classes/constructorDeclarations/constructorParameters
@@ -147,9 +138,6 @@ ts compatibility: 190/526 (36.12%)
 
 ### conformance/comments
 * conformance/comments/comments.ts
-
-### conformance/declarationEmit/typePredicates
-* conformance/declarationEmit/typePredicates/declarationEmitThisPredicatesWithPrivateName01.ts
 
 ### conformance/es6/Symbols
 * conformance/es6/Symbols/symbolProperty15.ts
@@ -177,13 +165,6 @@ ts compatibility: 190/526 (36.12%)
 * conformance/parser/ecmascript5/Statements/parserES5ForOfStatement21.ts
 * conformance/parser/ecmascript5/Statements/parserForInStatement2.ts
 
-### conformance/types/ambient
-* conformance/types/ambient/ambientDeclarations.ts
-
-### conformance/types/any
-* conformance/types/any/anyAsConstructor.ts
-* conformance/types/any/anyAsGenericFunctionCall.ts
-
 ### conformance/types/firstTypeNode
 * conformance/types/firstTypeNode/firstTypeNode.ts
 
@@ -199,7 +180,6 @@ ts compatibility: 190/526 (36.12%)
 
 ### conformance/types/moduleDeclaration
 * conformance/types/moduleDeclaration/kind-detection.ts
-* conformance/types/moduleDeclaration/moduleDeclaration.ts
 
 ### conformance/types/parameterProperty
 * conformance/types/parameterProperty/parameterProperty.ts
@@ -243,12 +223,6 @@ ts compatibility: 190/526 (36.12%)
 * cursor/property-signature.ts
 * cursor/rest.ts
 
-### custom/abstract
-* custom/abstract/abstractNewlineHandling.ts
-
-### custom/call
-* custom/call/callSignature.ts
-
 ### custom/computedProperties
 * custom/computedProperties/symbol.ts
 
@@ -259,7 +233,6 @@ ts compatibility: 190/526 (36.12%)
 
 ### custom/module
 * custom/module/global.ts
-* custom/module/moduleNamespace.ts
 * custom/module/nestedNamespace.ts
 
 ### custom/new
@@ -314,13 +287,11 @@ ts compatibility: 190/526 (36.12%)
 * enum/enum.ts
 
 ### error-recovery
-* error-recovery/generic.ts
 * error-recovery/index-signature.ts
 * error-recovery/jsdoc_only_types.ts
 
 ### export
 * export/comment.ts
-* export/export-class.ts
 * export/export-type-star-from-2.ts
 * export/export-type-star-from.ts
 
@@ -354,10 +325,7 @@ ts compatibility: 190/526 (36.12%)
 * infer-extends/basic.ts
 
 ### instantiation-expression
-* instantiation-expression/binary-expr.ts
 * instantiation-expression/inferface-asi.ts
-* instantiation-expression/logical-expr.ts
-* instantiation-expression/new.ts
 * instantiation-expression/property-access.ts
 
 ### interface
@@ -429,9 +397,6 @@ ts compatibility: 190/526 (36.12%)
 ### multiparser-css
 * multiparser-css/issue-6259.ts
 
-### never
-* never/type-argument.src.ts
-
 ### new
 * new/new-signature.ts
 
@@ -446,9 +411,6 @@ ts compatibility: 190/526 (36.12%)
 
 ### nosemi
 * nosemi/type.ts
-
-### optional-call
-* optional-call/type-parameters.ts
 
 ### optional-type
 * optional-type/complex.ts
@@ -532,11 +494,9 @@ ts compatibility: 190/526 (36.12%)
 
 ### type-arguments-bit-shift-left-like
 * type-arguments-bit-shift-left-like/1.ts
-* type-arguments-bit-shift-left-like/2.ts
 * type-arguments-bit-shift-left-like/3.ts
 * type-arguments-bit-shift-left-like/4.ts
 * type-arguments-bit-shift-left-like/5.tsx
-* type-arguments-bit-shift-left-like/6.ts
 
 ### type-member-get-set
 * type-member-get-set/type-member-get-set.ts
