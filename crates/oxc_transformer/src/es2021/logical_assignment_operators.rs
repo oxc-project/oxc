@@ -158,7 +158,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
 
         let assign_target =
             AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                ctx.clone_identifier_reference(ident, ReferenceFlags::Write),
+                ctx.clone_identifier_reference(ident, ReferenceFlags::read_write()),
             ));
         (left_expr, assign_target)
     }
@@ -173,7 +173,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
             let right = ctx.ast.move_expression(&mut static_expr.object);
             let target =
                 AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
+                    ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
                 ));
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
@@ -185,6 +185,9 @@ impl<'a> LogicalAssignmentOperators<'a> {
             ));
 
             // (_o.a = 1)
+            let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
+            *reference.flags_mut() = ReferenceFlags::Read;
+
             let assign_expr = ctx.ast.member_expression_static(
                 SPAN,
                 ctx.ast.expression_from_identifier_reference(ident),
@@ -238,7 +241,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
             let right = ctx.ast.move_expression(&mut computed_expr.object);
             let target =
                 AssignmentTarget::from(ctx.ast.simple_assignment_target_from_identifier_reference(
-                    ctx.clone_identifier_reference(&ident, ReferenceFlags::Write),
+                    ctx.clone_identifier_reference(&ident, ReferenceFlags::read_write()),
                 ));
             let object =
                 ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, right);
@@ -251,7 +254,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
             if let Some(ref property) = property {
                 let left = AssignmentTarget::from(
                     ctx.ast.simple_assignment_target_from_identifier_reference(
-                        ctx.clone_identifier_reference(property, ReferenceFlags::Write),
+                        ctx.clone_identifier_reference(property, ReferenceFlags::read_write()),
                     ),
                 );
                 expression = ctx.ast.expression_assignment(
@@ -270,7 +273,12 @@ impl<'a> LogicalAssignmentOperators<'a> {
                 ),
                 property.map_or_else(
                     || expression.clone_in(ctx.ast.allocator),
-                    |ident| ctx.ast.expression_from_identifier_reference(ident),
+                    |ident| {
+                        let reference =
+                            ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
+                        *reference.flags_mut() = ReferenceFlags::Read;
+                        ctx.ast.expression_from_identifier_reference(ident)
+                    },
                 ),
                 false,
             ));
@@ -299,7 +307,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
                             ctx.ast.simple_assignment_target_from_identifier_reference(
                                 ctx.clone_identifier_reference(
                                     property_ident,
-                                    ReferenceFlags::Write,
+                                    ReferenceFlags::read_write(),
                                 ),
                             ),
                         );
@@ -326,6 +334,10 @@ impl<'a> LogicalAssignmentOperators<'a> {
                 object,
                 {
                     if let Some(property_ident) = property_ident {
+                        let reference = ctx
+                            .symbols_mut()
+                            .get_reference_mut(property_ident.reference_id().unwrap());
+                        *reference.flags_mut() = ReferenceFlags::Read;
                         ctx.ast.expression_from_identifier_reference(property_ident)
                     } else {
                         expression
