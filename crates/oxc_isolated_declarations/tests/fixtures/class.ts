@@ -23,15 +23,15 @@ export class Baz {
   /**
    * Just a comment
    */
-  readonly prop1 = 'some string';
+  readonly prop1 = "some string";
   /**
    * Just a comment
    */
-  prop2 = 'another string';
+  prop2 = "another string";
   /**
    * Just a comment
    */
-  private prop3 = 'yet another string';
+  private prop3 = "yet another string";
   /**
    * Just a comment
    */
@@ -39,7 +39,7 @@ export class Baz {
   /**
    * Just a comment
    */
-  private static prop5 = 'yet another string';
+  private static prop5 = "yet another string";
   /**
    * Just a comment
    */
