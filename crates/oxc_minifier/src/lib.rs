@@ -11,6 +11,9 @@ mod plugins;
 mod tri;
 mod ty;
 
+#[cfg(test)]
+mod tester;
+
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;

@@ -245,3 +245,45 @@ impl<'a> PeepholeSubstituteAlternateSyntax {
         }
     }
 }
+
+/// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeSubstituteAlternateSyntax.java>
+#[cfg(test)]
+mod test {
+    use oxc_allocator::Allocator;
+
+    use crate::{tester, CompressOptions};
+
+    fn test(source_text: &str, expected: &str) {
+        let allocator = Allocator::default();
+        let mut pass = super::PeepholeSubstituteAlternateSyntax::new(CompressOptions::default());
+        tester::test(&allocator, source_text, expected, &mut pass);
+    }
+
+    fn test_same(source_text: &str) {
+        test(source_text, source_text);
+    }
+
+    #[test]
+    fn fold_return_result() {
+        test("function f(){return !1;}", "function f(){return !1}");
+        test("function f(){return null;}", "function f(){return null}");
+        test("function f(){return void 0;}", "function f(){return}");
+        test("function f(){return void foo();}", "function f(){return void foo()}");
+        test("function f(){return undefined;}", "function f(){return}");
+        test("function f(){if(a()){return undefined;}}", "function f(){if(a())return}");
+    }
+
+    #[test]
+    fn undefined() {
+        test("var x = undefined", "var x");
+        test_same("var undefined = 1;function f() {var undefined=2;var x;}");
+        test("function f(undefined) {}", "function f(undefined){}");
+        test("try {} catch(undefined) {}", "try{}catch(undefined){}");
+        test("for (undefined in {}) {}", "for(undefined in {}){}");
+        test("undefined++", "undefined++");
+        test("undefined += undefined", "undefined+=void 0");
+
+        // shadowd
+        test_same("(function(undefined) { let x = typeof undefined; })()");
+    }
+}

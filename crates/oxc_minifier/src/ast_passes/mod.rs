@@ -28,7 +28,7 @@ impl<'a> NodeUtil for TraverseCtx<'a> {
     }
 }
 
-pub trait CompressorPass<'a> {
+pub trait CompressorPass<'a>: Traverse<'a> {
     fn build(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>)
     where
         Self: Traverse<'a>,

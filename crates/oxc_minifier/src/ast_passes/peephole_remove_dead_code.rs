@@ -115,3 +115,21 @@ impl<'a> PeepholeRemoveDeadCode {
         }
     }
 }
+
+// /// <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeRemoveDeadCode.java>
+// #[cfg(test)]
+// mod test {
+// use oxc_allocator::Allocator;
+
+// use crate::{tester, CompressOptions};
+
+// fn test(source_text: &str, expected: &str) {
+// let allocator = Allocator::default();
+// let mut pass = super::PeepholeRemoveDeadCode::new();
+// tester::test(&allocator, source_text, expected, &mut pass);
+// }
+
+// fn test_same(source_text: &str) {
+// test(source_text, source_text);
+// }
+// }

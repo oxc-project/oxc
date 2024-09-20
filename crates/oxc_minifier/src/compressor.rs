@@ -34,9 +34,14 @@ impl<'a> Compressor<'a> {
         program: &mut Program<'a>,
     ) {
         let mut ctx = TraverseCtx::new(scopes, symbols, self.allocator);
-        // Run separate AST passes
-        // TODO: inline variables
         self.remove_syntax(program, &mut ctx);
+
+        if self.options.dead_code_elimination {
+            self.dead_code_elimination(program, &mut ctx);
+            return;
+        }
+
+        // TODO: inline variables
         self.fold_constants(program, &mut ctx);
         self.minimize_conditions(program, &mut ctx);
         self.remove_dead_code(program, &mut ctx);
@@ -45,39 +50,33 @@ impl<'a> Compressor<'a> {
         self.collapse(program, &mut ctx);
     }
 
+    fn dead_code_elimination(self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.fold_constants(program, ctx);
+        self.minimize_conditions(program, ctx);
+        self.remove_dead_code(program, ctx);
+    }
+
     fn remove_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.remove_syntax {
-            RemoveSyntax::new(self.options).build(program, ctx);
-        }
+        RemoveSyntax::new(self.options).build(program, ctx);
     }
 
     fn minimize_conditions(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.minimize_conditions {
-            PeepholeMinimizeConditions::new().build(program, ctx);
-        }
+        PeepholeMinimizeConditions::new().build(program, ctx);
     }
 
     fn fold_constants(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.fold_constants {
-            PeepholeFoldConstants::new().with_evaluate(self.options.evaluate).build(program, ctx);
-        }
+        PeepholeFoldConstants::new().with_evaluate(self.options.evaluate).build(program, ctx);
     }
 
     fn substitute_alternate_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.substitute_alternate_syntax {
-            PeepholeSubstituteAlternateSyntax::new(self.options).build(program, ctx);
-        }
+        PeepholeSubstituteAlternateSyntax::new(self.options).build(program, ctx);
     }
 
     fn remove_dead_code(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.remove_dead_code {
-            PeepholeRemoveDeadCode::new().build(program, ctx);
-        }
+        PeepholeRemoveDeadCode::new().build(program, ctx);
     }
 
     fn collapse(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.collapse {
-            CollapseVariableDeclarations::new(self.options).build(program, ctx);
-        }
+        CollapseVariableDeclarations::new(self.options).build(program, ctx);
     }
 }
