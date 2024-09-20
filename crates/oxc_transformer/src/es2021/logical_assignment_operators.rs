@@ -330,8 +330,8 @@ impl<'a> LogicalAssignmentOperators<'a> {
     ///
     /// If it is an identifier, clone the identifier by [TraverseCtx::clone_identifier_reference], otherwise, use [CloneIn].
     ///
-    /// TODO: remove this until <https://github.com/oxc-project/oxc/issues/4804> is resolved.
-    pub fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
+    /// TODO: remove this once <https://github.com/oxc-project/oxc/issues/4804> is resolved.
+    fn clone_expression(expr: &Expression<'a>, ctx: &mut TraverseCtx<'a>) -> Expression<'a> {
         match expr {
             Expression::Identifier(ident) => ctx.ast.expression_from_identifier_reference(
                 ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
@@ -340,7 +340,7 @@ impl<'a> LogicalAssignmentOperators<'a> {
         }
     }
 
-    pub fn maybe_generate_memoised(
+    fn maybe_generate_memoised(
         &mut self,
         expr: &Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
