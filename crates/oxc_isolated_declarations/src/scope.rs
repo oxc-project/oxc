@@ -137,7 +137,8 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         if let Some(declaration) = &decl.declaration {
             walk_declaration(self, declaration);
-        } else {
+        } else if decl.source.is_none() {
+            // export { ... }
             for specifier in &decl.specifiers {
                 if let Some(name) = specifier.local.identifier_name() {
                     self.add_type_reference(name.clone());

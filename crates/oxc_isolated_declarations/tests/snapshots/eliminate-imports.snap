@@ -12,3 +12,4 @@ export declare function foo(this: ThisType1 ): void;
 export declare const bar: (this: ThisType2 ) => void;
 import { type InferType1, type InferType2 } from "infer";
 export type F<X extends InferType1> = X extends infer U extends InferType2 ? U : never;
+export { Unused } from "./unused";
