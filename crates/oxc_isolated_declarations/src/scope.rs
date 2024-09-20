@@ -55,11 +55,6 @@ impl<'a> ScopeTree<'a> {
         scope.value_references.contains(name) || scope.type_references.contains(name)
     }
 
-    pub fn references_len(&self) -> usize {
-        let scope = self.levels.last().unwrap();
-        scope.value_references.len() + scope.type_references.len()
-    }
-
     fn add_value_binding(&mut self, ident: Atom<'a>) {
         let scope = self.levels.last_mut().unwrap();
         scope.value_bindings.insert(ident);
