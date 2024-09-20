@@ -11,6 +11,7 @@ target/
 
 /editors/vscode/out/
 /editors/vscode/*.vsix
+.idea/
 
 npm/cli-*
 
