@@ -4,7 +4,7 @@
 
 This test runner uses the transformation plugin test suite from the babel repository.
 
-The failing test cases are listed in [./babel.snap.md](./babel.snap.md)
+The failing test cases are listed in [babel.snap.md](./snapshots/babel.snap.md)
 
 To get started, run
 
@@ -40,4 +40,4 @@ Once `bun` is installed, apply the `--exec` flag:
 cargo run -p oxc_transform_conformance -- --exec
 ```
 
-The failing test cases are listed in [./babel_exec.snap.md](./babel_exec.snap.md).
+The failing test cases are listed in [babel_exec.snap.md](./snapshots/babel_exec.snap.md).

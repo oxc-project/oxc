@@ -42,16 +42,20 @@ fn packages_root() -> PathBuf {
     babel_root().join("packages")
 }
 
-fn snap_root() -> PathBuf {
+fn conformance_root() -> PathBuf {
     project_root().join("tasks/transform_conformance")
 }
 
+fn snap_root() -> PathBuf {
+    conformance_root().join("snapshots")
+}
+
 fn oxc_test_root() -> PathBuf {
-    snap_root().join("tests")
+    conformance_root().join("tests")
 }
 
 fn fixture_root() -> PathBuf {
-    snap_root().join("fixtures")
+    conformance_root().join("fixtures")
 }
 
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
