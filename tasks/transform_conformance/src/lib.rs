@@ -43,7 +43,7 @@ fn packages_root() -> PathBuf {
 }
 
 fn conformance_root() -> PathBuf {
-    project_root().join("tasks/transform_conformance")
+    project_root().join("tasks").join("transform_conformance")
 }
 
 fn snap_root() -> PathBuf {
