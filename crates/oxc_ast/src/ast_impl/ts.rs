@@ -55,7 +55,9 @@ impl<'a> TSType<'a> {
     /// Check if type maybe `undefined`
     pub fn is_maybe_undefined(&self) -> bool {
         match self {
-            TSType::TSUndefinedKeyword(_) => true,
+            TSType::TSAnyKeyword(_)
+            | TSType::TSUnknownKeyword(_)
+            | TSType::TSUndefinedKeyword(_) => true,
             TSType::TSUnionType(un) => un.types.iter().any(Self::is_maybe_undefined),
             _ => false,
         }
