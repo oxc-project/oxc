@@ -59,6 +59,12 @@ impl<'a> ReactJsxSource<'a> {
 }
 
 impl<'a> Traverse<'a> for ReactJsxSource<'a> {
+    fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
+        if let Some(stmt) = self.get_var_file_name_statement() {
+            program.body.insert(0, stmt);
+        }
+    }
+
     fn enter_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,

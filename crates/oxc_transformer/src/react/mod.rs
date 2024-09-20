@@ -84,6 +84,8 @@ impl<'a> Traverse<'a> for React<'a> {
         }
         if self.jsx_plugin {
             self.jsx.exit_program(program, ctx);
+        } else if self.jsx_source_plugin {
+            self.jsx.jsx_source.exit_program(program, ctx);
         }
     }
 
