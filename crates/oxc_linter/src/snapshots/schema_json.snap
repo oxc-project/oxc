@@ -28,6 +28,19 @@ expression: json
         }
       ]
     },
+    "plugins": {
+      "default": [
+        "react",
+        "unicorn",
+        "typescript",
+        "oxc"
+      ],
+      "allOf": [
+        {
+          "$ref": "#/definitions/LintPlugins"
+        }
+      ]
+    },
     "rules": {
       "description": "See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).",
       "default": {},
@@ -220,6 +233,12 @@ expression: json
             "null"
           ]
         }
+      }
+    },
+    "LintPlugins": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
     "NextPluginSettings": {

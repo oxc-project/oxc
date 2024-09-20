@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules, settings::OxlintSettings};
 
-use crate::utils::read_to_string;
+use crate::{options::LintPlugins, utils::read_to_string};
 
 /// Oxlint Configuration File
 ///
@@ -42,7 +42,9 @@ use crate::utils::read_to_string;
 /// ```
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(default)]
+#[non_exhaustive]
 pub struct Oxlintrc {
+    pub plugins: LintPlugins,
     /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html).
     pub rules: OxlintRules,
     pub settings: OxlintSettings,

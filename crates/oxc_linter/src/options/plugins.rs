@@ -6,6 +6,8 @@ bitflags! {
     // NOTE: may be increased to a u32 if needed
     #[derive(Debug, Clone, Copy, PartialEq, Hash)]
     pub struct LintPlugins: u16 {
+        /// Not really a plugin. Included for completeness.
+        const ESLINT = 0;
         /// `eslint-plugin-react`, plus `eslint-plugin-react-hooks`
         const REACT = 1 << 0;
         /// `eslint-plugin-unicorn`
@@ -66,6 +68,12 @@ impl LintPlugins {
     #[inline]
     pub fn has_vitest(self) -> bool {
         self.contains(LintPlugins::VITEST)
+    }
+
+    /// Returns `true` if the Jest plugin is enabled.
+    #[inline]
+    pub fn has_jest(self) -> bool {
+        self.contains(LintPlugins::JEST)
     }
 
     /// Returns `true` if Jest or Vitest plugins are enabled.
