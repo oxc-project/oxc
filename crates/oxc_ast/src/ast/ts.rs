@@ -1073,6 +1073,15 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
+impl TSModuleDeclarationBody<'_> {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            TSModuleDeclarationBody::TSModuleDeclaration(declaration) => declaration.body.is_none(),
+            TSModuleDeclarationBody::TSModuleBlock(block) => block.body.len() == 0,
+        }
+    }
+}
+
 // See serializer in serialize.rs
 #[ast(visit)]
 #[derive(Debug)]
