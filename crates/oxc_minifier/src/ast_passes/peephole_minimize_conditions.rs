@@ -10,17 +10,17 @@ use crate::{node_util::NodeUtil, tri::Tri, CompressorPass};
 /// with `? :` and short-circuit binary operators.
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java>
-pub struct MinimizeConditions;
+pub struct PeepholeMinimizeConditions;
 
-impl<'a> CompressorPass<'a> for MinimizeConditions {}
+impl<'a> CompressorPass<'a> for PeepholeMinimizeConditions {}
 
-impl<'a> Traverse<'a> for MinimizeConditions {
+impl<'a> Traverse<'a> for PeepholeMinimizeConditions {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.fold_expression(expr, ctx);
     }
 }
 
-impl<'a> MinimizeConditions {
+impl<'a> PeepholeMinimizeConditions {
     pub fn new() -> Self {
         Self
     }

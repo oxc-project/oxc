@@ -11,14 +11,14 @@ use crate::{node_util::NodeUtil, CompressOptions, CompressorPass};
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
 /// with literals, and simplifying returns.
-pub struct SubstituteAlternateSyntax {
+pub struct PeepholeSubstituteAlternateSyntax {
     options: CompressOptions,
     in_define_export: bool,
 }
 
-impl<'a> CompressorPass<'a> for SubstituteAlternateSyntax {}
+impl<'a> CompressorPass<'a> for PeepholeSubstituteAlternateSyntax {}
 
-impl<'a> Traverse<'a> for SubstituteAlternateSyntax {
+impl<'a> Traverse<'a> for PeepholeSubstituteAlternateSyntax {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.compress_block(stmt);
         // self.compress_while(stmt);
@@ -81,7 +81,7 @@ impl<'a> Traverse<'a> for SubstituteAlternateSyntax {
     }
 }
 
-impl<'a> SubstituteAlternateSyntax {
+impl<'a> PeepholeSubstituteAlternateSyntax {
     pub fn new(options: CompressOptions) -> Self {
         Self { options, in_define_export: false }
     }

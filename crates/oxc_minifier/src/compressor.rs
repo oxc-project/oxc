@@ -5,8 +5,8 @@ use oxc_traverse::TraverseCtx;
 
 use crate::{
     ast_passes::{
-        Collapse, FoldConstants, MinimizeConditions, RemoveDeadCode, RemoveSyntax,
-        SubstituteAlternateSyntax,
+        CollapseVariableDeclarations, PeepholeFoldConstants, PeepholeMinimizeConditions,
+        PeepholeRemoveDeadCode, PeepholeSubstituteAlternateSyntax, RemoveSyntax,
     },
     CompressOptions, CompressorPass,
 };
@@ -53,31 +53,31 @@ impl<'a> Compressor<'a> {
 
     fn minimize_conditions(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.minimize_conditions {
-            MinimizeConditions::new().build(program, ctx);
+            PeepholeMinimizeConditions::new().build(program, ctx);
         }
     }
 
     fn fold_constants(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.fold_constants {
-            FoldConstants::new().with_evaluate(self.options.evaluate).build(program, ctx);
+            PeepholeFoldConstants::new().with_evaluate(self.options.evaluate).build(program, ctx);
         }
     }
 
     fn substitute_alternate_syntax(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.substitute_alternate_syntax {
-            SubstituteAlternateSyntax::new(self.options).build(program, ctx);
+            PeepholeSubstituteAlternateSyntax::new(self.options).build(program, ctx);
         }
     }
 
     fn remove_dead_code(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.remove_dead_code {
-            RemoveDeadCode::new().build(program, ctx);
+            PeepholeRemoveDeadCode::new().build(program, ctx);
         }
     }
 
     fn collapse(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.collapse {
-            Collapse::new(self.options).build(program, ctx);
+            CollapseVariableDeclarations::new(self.options).build(program, ctx);
         }
     }
 }

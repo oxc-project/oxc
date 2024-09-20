@@ -16,10 +16,7 @@ use oxc_ast::ast::Program;
 use oxc_mangler::Mangler;
 
 pub use crate::{
-    ast_passes::{CompressorPass, RemoveDeadCode, RemoveSyntax},
-    compressor::Compressor,
-    options::CompressOptions,
-    plugins::*,
+    ast_passes::CompressorPass, compressor::Compressor, options::CompressOptions, plugins::*,
 };
 
 #[derive(Debug, Clone, Copy)]

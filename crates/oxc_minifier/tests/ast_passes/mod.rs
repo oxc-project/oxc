@@ -1,11 +1,11 @@
 mod collapse_variable_declarations;
 mod dead_code_elimination;
 mod fold_conditions;
-mod fold_constants;
-mod minimize_conditions;
+mod peephole_fold_constants;
+mod peephole_minimize_conditions;
+mod peephole_substitute_alternate_syntax;
 mod remove_syntax;
 mod reorder_constant_expression;
-mod substitute_alternate_syntax;
 
 // Oxc Integration Tests
 

@@ -8,13 +8,13 @@ use crate::{CompressOptions, CompressorPass};
 ///
 /// `var a; var b = 1; var c = 2` => `var a, b = 1; c = 2`
 /// TODO: `a = null; b = null;` => `a = b = null`
-pub struct Collapse {
+pub struct CollapseVariableDeclarations {
     options: CompressOptions,
 }
 
-impl<'a> CompressorPass<'a> for Collapse {}
+impl<'a> CompressorPass<'a> for CollapseVariableDeclarations {}
 
-impl<'a> Traverse<'a> for Collapse {
+impl<'a> Traverse<'a> for CollapseVariableDeclarations {
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
         if self.options.join_vars {
             self.join_vars(stmts, ctx);
@@ -22,7 +22,7 @@ impl<'a> Traverse<'a> for Collapse {
     }
 }
 
-impl<'a> Collapse {
+impl<'a> CollapseVariableDeclarations {
     pub fn new(options: CompressOptions) -> Self {
         Self { options }
     }

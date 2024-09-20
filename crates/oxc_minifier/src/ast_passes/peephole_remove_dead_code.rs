@@ -10,11 +10,11 @@ use crate::{keep_var::KeepVar, node_util::NodeUtil, tri::Tri, CompressorPass};
 /// Terser option: `dead_code: true`.
 ///
 /// See `KeepVar` at the end of this file for `var` hoisting logic.
-pub struct RemoveDeadCode;
+pub struct PeepholeRemoveDeadCode;
 
-impl<'a> CompressorPass<'a> for RemoveDeadCode {}
+impl<'a> CompressorPass<'a> for PeepholeRemoveDeadCode {}
 
-impl<'a> Traverse<'a> for RemoveDeadCode {
+impl<'a> Traverse<'a> for PeepholeRemoveDeadCode {
     fn enter_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         Self::fold_if_statement(stmt, ctx);
     }
@@ -25,7 +25,7 @@ impl<'a> Traverse<'a> for RemoveDeadCode {
     }
 }
 
-impl<'a> RemoveDeadCode {
+impl<'a> PeepholeRemoveDeadCode {
     pub fn new() -> Self {
         Self {}
     }

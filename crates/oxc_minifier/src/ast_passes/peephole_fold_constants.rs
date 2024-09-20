@@ -21,19 +21,19 @@ use crate::{
 /// Constant Folding
 ///
 /// <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
-pub struct FoldConstants {
+pub struct PeepholeFoldConstants {
     evaluate: bool,
 }
 
-impl<'a> CompressorPass<'a> for FoldConstants {}
+impl<'a> CompressorPass<'a> for PeepholeFoldConstants {}
 
-impl<'a> Traverse<'a> for FoldConstants {
+impl<'a> Traverse<'a> for PeepholeFoldConstants {
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.fold_expression(expr, ctx);
     }
 }
 
-impl<'a> FoldConstants {
+impl<'a> PeepholeFoldConstants {
     pub fn new() -> Self {
         Self { evaluate: false }
     }
