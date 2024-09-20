@@ -15,8 +15,6 @@ fn test_same(source_text: &str) {
     test(source_text, source_text);
 }
 
-// Google Closure Compiler
-
 #[test]
 fn undefined_comparison1() {
     test("undefined == undefined", "true");
