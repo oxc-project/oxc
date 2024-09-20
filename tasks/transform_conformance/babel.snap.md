@@ -1442,31 +1442,25 @@ x Output mismatch
 
 # babel-plugin-transform-logical-assignment-operators (0/6)
 * logical-assignment/anonymous-functions-transform/input.js
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
 Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
+after transform: ReferenceId(3): ReferenceFlags(Write)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
+after transform: ReferenceId(4): ReferenceFlags(Write)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
+after transform: ReferenceId(5): ReferenceFlags(Write)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 * logical-assignment/arrow-functions-transform/input.js
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
 Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
+after transform: ReferenceId(3): ReferenceFlags(Write)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
+after transform: ReferenceId(4): ReferenceFlags(Write)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
+after transform: ReferenceId(5): ReferenceFlags(Write)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 * logical-assignment/general-semantics/input.js
@@ -1568,17 +1562,14 @@ after transform: ReferenceId(134): ReferenceFlags(Write)
 rebuilt        : ReferenceId(128): ReferenceFlags(Read)
 
 * logical-assignment/named-functions-transform/input.js
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5)]
 Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
+after transform: ReferenceId(3): ReferenceFlags(Write)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
+after transform: ReferenceId(4): ReferenceFlags(Write)
 rebuilt        : ReferenceId(3): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
+after transform: ReferenceId(5): ReferenceFlags(Write)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 
 * logical-assignment/null-coalescing/input.js
@@ -1586,28 +1577,25 @@ x Output mismatch
 
 * logical-assignment/null-coalescing-without-other/input.js
 Symbol reference IDs mismatch:
-after transform: SymbolId(2): [ReferenceId(7), ReferenceId(8), ReferenceId(11)]
+after transform: SymbolId(2): [ReferenceId(6), ReferenceId(7), ReferenceId(10)]
 rebuilt        : SymbolId(1): [ReferenceId(5), ReferenceId(8)]
-Symbol reference IDs mismatch:
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
-rebuilt        : SymbolId(3): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(6)]
 Reference flags mismatch:
-after transform: ReferenceId(4): ReferenceFlags(Write)
+after transform: ReferenceId(3): ReferenceFlags(Write)
 rebuilt        : ReferenceId(1): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(6): ReferenceFlags(Write)
+after transform: ReferenceId(5): ReferenceFlags(Write)
 rebuilt        : ReferenceId(2): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(5): ReferenceFlags(Write)
+after transform: ReferenceId(4): ReferenceFlags(Write)
 rebuilt        : ReferenceId(4): ReferenceFlags(Read)
 Reference flags mismatch:
-after transform: ReferenceId(8): ReferenceFlags(Write)
+after transform: ReferenceId(7): ReferenceFlags(Write)
 rebuilt        : ReferenceId(5): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(10): ReferenceFlags(Write)
+after transform: ReferenceId(9): ReferenceFlags(Write)
 rebuilt        : ReferenceId(7): ReferenceFlags(Read | Write)
 Reference flags mismatch:
-after transform: ReferenceId(9): ReferenceFlags(Write)
+after transform: ReferenceId(8): ReferenceFlags(Write)
 rebuilt        : ReferenceId(9): ReferenceFlags(Read)
 
 

@@ -118,9 +118,10 @@ impl<'a> Traverse<'a> for LogicalAssignmentOperators<'a> {
         // TODO: refactor this block, add tests, cover private identifier
         match &mut assignment_expr.left {
             AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                left_expr = ctx.ast.expression_from_identifier_reference(
-                    ctx.clone_identifier_reference(ident, ReferenceFlags::Read),
-                );
+                let reference = ctx.symbols_mut().get_reference_mut(ident.reference_id().unwrap());
+                *reference.flags_mut() = ReferenceFlags::Read;
+                left_expr = ctx.ast.expression_from_identifier_reference(ident.clone());
+
                 assign_target = AssignmentTarget::from(
                     ctx.ast.simple_assignment_target_from_identifier_reference(
                         ctx.clone_identifier_reference(ident, ReferenceFlags::Write),
