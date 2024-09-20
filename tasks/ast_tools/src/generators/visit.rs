@@ -175,14 +175,6 @@ impl<'a> VisitBuilder<'a> {
         }
     }
 
-    fn get_iter(&self) -> TokenStream {
-        if self.is_mut {
-            quote!(iter_mut)
-        } else {
-            quote!(iter)
-        }
-    }
-
     fn get_visitor(
         &mut self,
         def: &TypeDef,
@@ -262,8 +254,7 @@ impl<'a> VisitBuilder<'a> {
 
         let (walk_body, may_inline) = if collection {
             let singular_visit = self.get_visitor(def, false, None);
-            let iter = self.get_iter();
-            let iter = if self.is_mut { quote!(it.#iter()) } else { quote!(it) };
+            let iter = if self.is_mut { quote!(it.iter_mut()) } else { quote!(it) };
             (
                 quote! {
                     for el in #iter {
@@ -511,7 +502,7 @@ impl<'a> VisitBuilder<'a> {
                         }
                     },
                     TypeWrapper::VecOpt => {
-                        let iter = self.get_iter();
+                        let iter = if self.is_mut { quote!(iter_mut) } else { quote!(iter) };
                         quote! {
                             for #name in it.#name.#iter().flatten() {
                                 visitor.#visit(#name #(#args)*);
