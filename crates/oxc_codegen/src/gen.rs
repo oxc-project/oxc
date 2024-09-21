@@ -6,7 +6,6 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
-    keyword::is_reserved_keyword_or_global_object,
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
 };
@@ -1322,7 +1321,11 @@ impl<'a> GenExpr for MemberExpression<'a> {
 
 impl<'a> GenExpr for ComputedMemberExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
-        self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+        // `(let[0] = 100);` -> `(let)[0] = 100`;
+        let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
+        p.wrap(wrap, |p| {
+            self.object.print_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
+        });
         if self.optional {
             p.print_str("?.");
         }
@@ -1749,31 +1752,10 @@ impl<'a> GenExpr for ConditionalExpression<'a> {
 
 impl<'a> GenExpr for AssignmentExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        // Destructuring assignment
         let n = p.code_len();
-
-        let identifier_is_keyword = match &self.left {
-            AssignmentTarget::AssignmentTargetIdentifier(target) => {
-                is_reserved_keyword_or_global_object(target.name.as_str())
-            }
-            AssignmentTarget::ComputedMemberExpression(expression) => match &expression.object {
-                Expression::Identifier(ident) => {
-                    is_reserved_keyword_or_global_object(ident.name.as_str())
-                }
-                _ => false,
-            },
-            AssignmentTarget::StaticMemberExpression(expression) => {
-                is_reserved_keyword_or_global_object(expression.property.name.as_str())
-            }
-            AssignmentTarget::PrivateFieldExpression(expression) => {
-                is_reserved_keyword_or_global_object(expression.field.name.as_str())
-            }
-            _ => false,
-        };
-
-        let wrap = ((p.start_of_stmt == n || p.start_of_arrow_expr == n)
-            && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_)))
-            || identifier_is_keyword;
+        // Destructuring assignments must be parenthesized
+        let wrap = (p.start_of_stmt == n || p.start_of_arrow_expr == n)
+            && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_));
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             self.left.print(p, ctx);
             p.print_soft_space();

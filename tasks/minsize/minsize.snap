@@ -6,13 +6,13 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 287.63 kB  | 92.91 kB   | 90.07 kB   | 32.33 kB   | 31.95 kB   | jquery.js 
 
-342.15 kB  | 122.97 kB  | 118.14 kB  | 45.05 kB   | 44.37 kB   | vue.js    
+342.15 kB  | 122.95 kB  | 118.14 kB  | 45.03 kB   | 44.37 kB   | vue.js    
 
 544.10 kB  | 73.57 kB   | 72.48 kB   | 26.15 kB   | 26.20 kB   | lodash.js 
 
 555.77 kB  | 274.81 kB  | 270.13 kB  | 91.40 kB   | 90.80 kB   | d3.js     
 
-1.01 MB    | 471.70 kB  | 458.89 kB  | 127.56 kB  | 126.71 kB  | bundle.min.js
+1.01 MB    | 471.67 kB  | 458.89 kB  | 127.55 kB  | 126.71 kB  | bundle.min.js
 
 1.25 MB    | 673.75 kB  | 646.76 kB  | 166.76 kB  | 163.73 kB  | three.js  
 
@@ -22,5 +22,5 @@ Original   | Minified   | esbuild    | Gzip       | esbuild
 
 6.69 MB    | 2.42 MB    | 2.31 MB    | 503.16 kB  | 488.28 kB  | antd.js   
 
-10.95 MB   | 3.57 MB    | 3.49 MB    | 912.37 kB  | 915.50 kB  | typescript.js
+10.95 MB   | 3.57 MB    | 3.49 MB    | 912.34 kB  | 915.50 kB  | typescript.js
 
