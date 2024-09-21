@@ -81,9 +81,15 @@ impl<'a, 'b> ObjectLike<'a, 'b> {
         }
     }
 
-    fn member_seperator(self) -> &'a str {
+    fn member_separator(self, p: &'b Prettier<'a>) -> &'a str {
         match self {
-            Self::TSTypeLiteral(_) => ";",
+            Self::TSTypeLiteral(_) => {
+                if p.semi().is_some() {
+                    ";"
+                } else {
+                    ""
+                }
+            }
             _ => ",",
         }
     }
@@ -97,6 +103,7 @@ pub(super) fn print_object_properties<'a>(
     let right_brace = ss!("}");
 
     let should_break = false;
+    let member_separator = object.member_separator(p);
 
     let content = if object.is_empty() {
         group![p, left_brace, softline!(), right_brace]
@@ -107,13 +114,15 @@ pub(super) fn print_object_properties<'a>(
             let len = object.len();
             let has_rest = object.has_rest();
             let mut indent_parts = p.vec();
+
             indent_parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
             for (i, doc) in object.iter(p).enumerate() {
                 indent_parts.push(doc);
                 if i == len - 1 && !has_rest {
                     break;
                 }
-                indent_parts.push(ss!(object.member_seperator()));
+
+                indent_parts.push(ss!(member_separator));
                 indent_parts.push(line!());
             }
             match object {
@@ -139,7 +148,7 @@ pub(super) fn print_object_properties<'a>(
                 _ => true,
             }
         {
-            parts.push(if_break!(p, object.member_seperator(), "", None));
+            parts.push(if_break!(p, member_separator, "", None));
         }
         parts.push(if p.options.bracket_spacing { line!() } else { softline!() });
         parts.push(ss!("}"));

@@ -1,4 +1,4 @@
-ts compatibility: 184/526 (34.98%)
+ts compatibility: 185/526 (35.17%)
 
 # Failed
 
@@ -368,7 +368,6 @@ ts compatibility: 184/526 (34.98%)
 * interface/generic.ts
 * interface/ignore.ts
 * interface/long-extends.ts
-* interface/separator.ts
 
 ### interface/long-type-parameters
 * interface/long-type-parameters/long-type-parameters.ts
