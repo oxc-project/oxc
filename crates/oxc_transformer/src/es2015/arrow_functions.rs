@@ -74,7 +74,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
-use oxc_traverse::{Traverse, TraverseCtx};
+use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use serde::Deserialize;
 
 use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
@@ -174,17 +174,9 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         self.inside_arrow_function_stack.pop().unwrap();
     }
 
-    fn enter_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.inside_arrow_function_stack.push(false);
-    }
-
-    fn exit_class(&mut self, _class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.inside_arrow_function_stack.pop().unwrap();
-    }
-
     fn enter_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.this_var_stack.push(None);
-        // No need to push to `inside_arrow_function_stack` because `enter_class` already pushed `false`
+        self.inside_arrow_function_stack.push(false);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -192,6 +184,8 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         if let Some(this_var) = this_var {
             self.insert_this_var_statement_at_the_top_of_statements(&mut block.body, &this_var);
         }
+
+        self.inside_arrow_function_stack.pop().unwrap();
     }
 
     fn enter_jsx_element_name(
@@ -225,6 +219,45 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        // `this` inside a class resolves to `this` *outside* the class in:
+        // * `extends` clause
+        // * Computed method key
+        // * Computed property key
+        //
+        // ```js
+        // // All these `this` refer to global `this`
+        // class C extends this {
+        //     [this] = 123;
+        //     static [this] = 123;
+        //     [this]() {}
+        //     static [this]() {}
+        // }
+        // ```
+        //
+        // `this` resolves to the class / class instance (i.e. `this` defined *within* the class) in:
+        // * Class method bodies
+        // * Class property bodies
+        // * Class static blocks
+        //
+        // ```js
+        // // All these `this` refer to `this` defined within the class
+        // class C {
+        //     a = this;
+        //     static b = this;
+        //     #c = this;
+        //     d() { this }
+        //     static e() { this }
+        //     #f() { this }
+        //     static { this }
+        // }
+        // ```
+        //
+        // Class method bodies are caught by `enter_function`, static blocks caught by `enter_static_block`.
+        // Handle property bodies here.
+        if matches!(ctx.parent(), Ancestor::PropertyDefinitionValue(_)) {
+            self.inside_arrow_function_stack.push(false);
+        }
+
         if let Expression::ThisExpression(this_expr) = expr {
             if !self.is_inside_arrow_function() {
                 return;
@@ -244,6 +277,11 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
             };
 
             *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
+        }
+
+        // See comment in `enter_expression`
+        if matches!(ctx.parent(), Ancestor::PropertyDefinitionValue(_)) {
+            self.inside_arrow_function_stack.pop().unwrap();
         }
     }
 }

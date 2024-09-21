@@ -83,18 +83,6 @@ impl<'a> Traverse<'a> for ES2015<'a> {
         }
     }
 
-    fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.enter_class(class, ctx);
-        }
-    }
-
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.exit_class(class, ctx);
-        }
-    }
-
     fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.enter_static_block(block, ctx);

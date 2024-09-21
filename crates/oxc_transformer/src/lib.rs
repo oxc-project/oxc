@@ -156,11 +156,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.enter_class(class, ctx);
-        self.x3_es2015.enter_class(class, ctx);
-    }
-
-    fn exit_class(&mut self, class: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.exit_class(class, ctx);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, ctx: &mut TraverseCtx<'a>) {
