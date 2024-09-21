@@ -10,6 +10,8 @@
 //!
 //! * Handle `arguments` in arrow functions.
 //! * Handle `new.target` in arrow functions.
+//! * Handle arrow function in function params (`function f(g = () => this) {}`).
+//!   Babel gets this wrong: <https://babeljs.io/repl#?code_lz=GYVwdgxgLglg9mABMOcAUAPRBeRaCUOAfIlABYwDOhA3gL5A&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
 //! * Error on arrow functions in class properties.
 //!   <https://babeljs.io/repl#?code_lz=MYGwhgzhAEDC0G8BQ1oDMD2HoF5oAoBKXAPmgBcALASwgG4kBfJIA&presets=&externalPlugins=%40babel%2Fplugin-transform-arrow-functions%407.24.7>
 //! * Error on `super` in arrow functions.
