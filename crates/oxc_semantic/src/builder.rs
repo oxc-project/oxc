@@ -2003,14 +2003,7 @@ impl<'a> SemanticBuilder<'a> {
                 }
                 self.current_reference_flags -= ReferenceFlags::Write;
             }
-            AstKind::AssignmentExpression(expr) => {
-                if expr.operator != AssignmentOperator::Assign
-                    || self.is_not_expression_statement_parent()
-                {
-                    self.current_reference_flags -= ReferenceFlags::Read;
-                }
-            }
-            AstKind::ExportNamedDeclaration(_)
+            AstKind::AssignmentExpression(_) | AstKind::ExportNamedDeclaration(_)
             | AstKind::TSTypeQuery(_)
             // Clear the reference flags that are set in AstKind::PropertySignature
             | AstKind::PropertyKey(_) => {
