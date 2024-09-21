@@ -402,7 +402,8 @@ impl<'a> IsolatedDeclarations<'a> {
                     };
 
                     if let MethodDefinitionKind::Constructor = method.kind {
-                        elements.extend(
+                        elements.splice(
+                            0..0,
                             self.transform_constructor_params_to_class_properties(
                                 function, &params,
                             ),

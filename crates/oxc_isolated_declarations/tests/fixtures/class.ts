@@ -49,3 +49,8 @@ export class Bux {
     readonly prop3: number = 1,
   ) {}
 }
+
+export class PrivateFieldsWithConstructorAssignments {
+  private second = 0;
+  constructor(public first: number) {}
+}
