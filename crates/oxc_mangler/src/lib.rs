@@ -131,7 +131,7 @@ impl Mangler {
         let generate_name = if self.options.debug { debug_name } else { base54 };
         let mut count = 0;
         for _ in 0..total_number_of_slots {
-            names.push(loop {
+            let name = loop {
                 let name = generate_name(count);
                 count += 1;
                 // Do not mangle keywords and unresolved references
@@ -140,7 +140,8 @@ impl Mangler {
                 {
                     break name;
                 }
-            });
+            };
+            names.push(name);
         }
 
         // Group similar symbols for smaller gzipped file
@@ -173,7 +174,7 @@ impl Mangler {
             // sorting by slot enables us to sort by the order at which the vars first appear in the source
             // (this is possible because the slots are discovered currently in a DFS method which is the same order
             //  as variables appear in the source code)
-            symbols_renamed_in_this_batch.sort_by(|a, b| a.slot.cmp(&b.slot));
+            symbols_renamed_in_this_batch.sort_unstable_by_key(|a| a.slot);
 
             // here we just zip the iterator of symbols to rename with the iterator of new names for the next for loop
             let symbols_to_rename_with_new_names =
@@ -209,7 +210,7 @@ impl Mangler {
                 symbol_table.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
-        frequencies.sort_by_key(|x| (std::cmp::Reverse(x.frequency)));
+        frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         frequencies
     }
 }
