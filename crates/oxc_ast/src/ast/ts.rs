@@ -1073,11 +1073,20 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
-impl TSModuleDeclarationBody<'_> {
+impl<'a> TSModuleDeclarationBody<'a> {
     pub fn is_empty(&self) -> bool {
         match self {
             TSModuleDeclarationBody::TSModuleDeclaration(declaration) => declaration.body.is_none(),
             TSModuleDeclarationBody::TSModuleBlock(block) => block.body.len() == 0,
+        }
+    }
+
+    pub fn as_module_block_mut(&mut self) -> Option<&mut TSModuleBlock<'a>> {
+        match self {
+            TSModuleDeclarationBody::TSModuleBlock(block) => Some(block.as_mut()),
+            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                decl.body.as_mut().and_then(|body| body.as_module_block_mut())
+            }
         }
     }
 }

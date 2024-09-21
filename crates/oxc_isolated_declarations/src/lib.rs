@@ -204,16 +204,27 @@ impl<'a> IsolatedDeclarations<'a> {
         for mut stmt in filtered_stmts {
             match stmt {
                 match_declaration!(Statement) => {
-                    if let Declaration::TSModuleDeclaration(decl) = stmt.to_declaration() {
+                    if let Statement::TSModuleDeclaration(ref mut decl) = stmt {
                         if self.has_internal_annotation(decl.span) {
                             continue;
                         }
-                        // declare global { ... } or declare module "foo" { ... }
+                        // `declare global { ... }` or `declare module "foo" { ... }`
                         // We need to emit it anyway
-                        if decl.kind.is_global() || decl.id.is_string_literal() {
+                        let is_global = decl.kind.is_global();
+                        if is_global || decl.id.is_string_literal() {
+                            transformed_spans.insert(decl.span);
+
+                            // Remove export keyword from all statements in `declare module "xxx" { ... }`
+                            if !is_global {
+                                if let Some(body) =
+                                    decl.body.as_mut().and_then(|body| body.as_module_block_mut())
+                                {
+                                    self.strip_export_keyword(&mut body.body);
+                                }
+                            }
+
                             // We need to visit the module declaration to collect all references
                             self.scope.visit_ts_module_declaration(decl);
-                            transformed_spans.insert(decl.span);
                         }
                     }
                     if !self.has_internal_annotation(stmt.span()) {
@@ -367,6 +378,10 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, NONE);
             new_stmts
                 .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
+        } else if self.scope.is_ts_module_block() {
+            // If we are in a module block and we don't need to add `export {}`, in that case we need to remove `export` keyword from all ExportNamedDeclaration
+            // <https://github.com/microsoft/TypeScript/blob/a709f9899c2a544b6de65a0f2623ecbbe1394eab/src/compiler/transformers/declarations.ts#L1556-L1563>
+            self.strip_export_keyword(&mut new_stmts);
         }
 
         new_stmts
@@ -600,6 +615,6 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn is_declare(&self) -> bool {
         // If we are in a module block, we don't need to add declare
-        !self.scope.is_ts_module_block_flag()
+        !self.scope.is_ts_module_block()
     }
 }

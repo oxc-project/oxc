@@ -45,7 +45,7 @@ impl<'a> ScopeTree<'a> {
         Self { levels }
     }
 
-    pub fn is_ts_module_block_flag(&self) -> bool {
+    pub fn is_ts_module_block(&self) -> bool {
         let scope = self.levels.last().unwrap();
         scope.flags.contains(ScopeFlags::TsModuleBlock)
     }
