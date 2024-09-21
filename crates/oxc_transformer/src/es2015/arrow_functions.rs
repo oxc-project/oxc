@@ -73,7 +73,10 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, NONE};
 use oxc_span::SPAN;
-use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
+use oxc_syntax::{
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolFlags,
+};
 use oxc_traverse::{Ancestor, Traverse, TraverseCtx};
 use serde::Deserialize;
 
@@ -93,8 +96,6 @@ pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
     this_var_stack: std::vec::Vec<Option<BoundIdentifier<'a>>>,
-    /// Stack to keep track of whether we are inside an arrow function or not.
-    inside_arrow_function_stack: std::vec::Vec<bool>,
 }
 
 impl<'a> ArrowFunctions<'a> {
@@ -102,9 +103,8 @@ impl<'a> ArrowFunctions<'a> {
         Self {
             ctx,
             _options: options,
-            // Initial entries for `Program` scope
+            // Initial entry for `Program` scope
             this_var_stack: vec![None],
-            inside_arrow_function_stack: vec![false],
         }
     }
 }
@@ -115,8 +115,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
 
     /// Insert `var _this = this;` for the global scope.
     fn exit_program(&mut self, program: &mut Program<'a>, _ctx: &mut TraverseCtx<'a>) {
-        debug_assert!(self.inside_arrow_function_stack.len() == 1);
-
         assert!(self.this_var_stack.len() == 1);
         let this_var = self.this_var_stack.pop().unwrap();
         if let Some(this_var) = this_var {
@@ -127,7 +125,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         if func.body.is_some() {
             self.this_var_stack.push(None);
-            self.inside_arrow_function_stack.push(false);
         }
     }
 
@@ -154,29 +151,10 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
                 &this_var,
             );
         }
-
-        self.inside_arrow_function_stack.pop().unwrap();
-    }
-
-    fn enter_arrow_function_expression(
-        &mut self,
-        _arrow: &mut ArrowFunctionExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.inside_arrow_function_stack.push(true);
-    }
-
-    fn exit_arrow_function_expression(
-        &mut self,
-        _arrow: &mut ArrowFunctionExpression<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.inside_arrow_function_stack.pop().unwrap();
     }
 
     fn enter_static_block(&mut self, _block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.this_var_stack.push(None);
-        self.inside_arrow_function_stack.push(false);
     }
 
     fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -184,8 +162,6 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         if let Some(this_var) = this_var {
             self.insert_this_var_statement_at_the_top_of_statements(&mut block.body, &this_var);
         }
-
-        self.inside_arrow_function_stack.pop().unwrap();
     }
 
     fn enter_jsx_element_name(
@@ -194,12 +170,9 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let JSXElementName::ThisExpression(this) = element_name {
-            if !self.is_inside_arrow_function() {
-                return;
+            if let Some(ident) = self.get_this_identifier(this.span, ctx) {
+                *element_name = self.ctx.ast.jsx_element_name_from_identifier_reference(ident);
             }
-
-            let ident = self.get_this_identifier(this.span, ctx);
-            *element_name = self.ctx.ast.jsx_element_name_from_identifier_reference(ident);
         };
     }
 
@@ -209,16 +182,76 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let JSXMemberExpressionObject::ThisExpression(this) = object {
-            if !self.is_inside_arrow_function() {
-                return;
+            if let Some(ident) = self.get_this_identifier(this.span, ctx) {
+                *object =
+                    self.ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
             }
-
-            let ident = self.get_this_identifier(this.span, ctx);
-            *object = self.ctx.ast.jsx_member_expression_object_from_identifier_reference(ident);
         }
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::ThisExpression(this) = expr {
+            if let Some(ident) = self.get_this_identifier(this.span, ctx) {
+                *expr = self.ctx.ast.expression_from_identifier_reference(ident);
+            }
+        }
+    }
+
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if let Expression::ArrowFunctionExpression(_) = expr {
+            let Expression::ArrowFunctionExpression(arrow_function_expr) =
+                ctx.ast.move_expression(expr)
+            else {
+                unreachable!()
+            };
+
+            *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
+        }
+    }
+}
+
+impl<'a> ArrowFunctions<'a> {
+    fn get_this_identifier(
+        &mut self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<IdentifierReference<'a>> {
+        // Find arrow function we are currently in (if we are)
+        let arrow_scope_id = Self::get_arrow_function_scope(ctx)?;
+
+        // TODO(improve-on-babel): We create a new UID for every scope. This is pointless, as only one
+        // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
+        // scope. But this does not match output for some of Babel's test cases.
+        // <https://github.com/oxc-project/oxc/pull/5840>
+        let this_var = self.this_var_stack.last_mut().unwrap();
+        if this_var.is_none() {
+            let target_scope_id = ctx
+                .scopes()
+                .ancestors(arrow_scope_id)
+                // Skip arrow function scope
+                .skip(1)
+                .find(|&scope_id| {
+                    let scope_flags = ctx.scopes().get_flags(scope_id);
+                    scope_flags.intersects(
+                        ScopeFlags::Function | ScopeFlags::Top | ScopeFlags::ClassStaticBlock,
+                    ) && !scope_flags.contains(ScopeFlags::Arrow)
+                })
+                .unwrap();
+
+            this_var.replace(BoundIdentifier::new_uid(
+                "this",
+                target_scope_id,
+                SymbolFlags::FunctionScopedVariable,
+                ctx,
+            ));
+        }
+        let this_var = this_var.as_ref().unwrap();
+        Some(this_var.create_spanned_read_reference(span, ctx))
+    }
+
+    /// Find arrow function we are currently in, if it's between current node, and where `this` is bound.
+    /// Return its `ScopeId`.
+    fn get_arrow_function_scope(ctx: &mut TraverseCtx<'a>) -> Option<ScopeId> {
         // `this` inside a class resolves to `this` *outside* the class in:
         // * `extends` clause
         // * Computed method key
@@ -252,79 +285,37 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         // }
         // ```
         //
-        // Class method bodies are caught by `enter_function`, static blocks caught by `enter_static_block`.
-        // Handle property bodies here.
-        if matches!(ctx.parent(), Ancestor::PropertyDefinitionValue(_)) {
-            self.inside_arrow_function_stack.push(false);
-        }
-
-        if let Expression::ThisExpression(this_expr) = expr {
-            if !self.is_inside_arrow_function() {
-                return;
+        // So in this loop, we only exit when we encounter one of the above.
+        for ancestor in ctx.ancestors() {
+            match ancestor {
+                // Top level
+                Ancestor::ProgramBody(_)
+                // Function (includes class method body)
+                | Ancestor::FunctionTypeParameters(_)
+                | Ancestor::FunctionThisParam(_)
+                | Ancestor::FunctionParams(_)
+                | Ancestor::FunctionReturnType(_)
+                | Ancestor::FunctionBody(_)
+                // Class property body 
+                | Ancestor::PropertyDefinitionValue(_)
+                // Class static block
+                | Ancestor::StaticBlockBody(_) => return None,
+                Ancestor::ArrowFunctionExpressionTypeParameters(func) => {
+                    return Some(func.scope_id().get().unwrap())
+                }
+                Ancestor::ArrowFunctionExpressionParams(func) => {
+                    return Some(func.scope_id().get().unwrap())
+                }
+                Ancestor::ArrowFunctionExpressionReturnType(func) => {
+                    return Some(func.scope_id().get().unwrap())
+                }
+                Ancestor::ArrowFunctionExpressionBody(func) => {
+                    return Some(func.scope_id().get().unwrap())
+                }
+                _ => {}
             }
-
-            let ident = self.get_this_identifier(this_expr.span, ctx);
-            *expr = self.ctx.ast.expression_from_identifier_reference(ident);
         }
-    }
-
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if let Expression::ArrowFunctionExpression(_) = expr {
-            let Expression::ArrowFunctionExpression(arrow_function_expr) =
-                ctx.ast.move_expression(expr)
-            else {
-                unreachable!()
-            };
-
-            *expr = self.transform_arrow_function_expression(arrow_function_expr.unbox(), ctx);
-        }
-
-        // See comment in `enter_expression`
-        if matches!(ctx.parent(), Ancestor::PropertyDefinitionValue(_)) {
-            self.inside_arrow_function_stack.pop().unwrap();
-        }
-    }
-}
-
-impl<'a> ArrowFunctions<'a> {
-    fn is_inside_arrow_function(&self) -> bool {
-        *self.inside_arrow_function_stack.last().unwrap()
-    }
-
-    fn get_this_identifier(
-        &mut self,
-        span: Span,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> IdentifierReference<'a> {
-        // TODO(improve-on-babel): We create a new UID for every scope. This is pointless, as only one
-        // `this` can be in scope at a time. We could create a single `_this` UID and reuse it in each
-        // scope. But this does not match output for some of Babel's test cases.
-        // <https://github.com/oxc-project/oxc/pull/5840>
-        let this_var = self.this_var_stack.last_mut().unwrap();
-        if this_var.is_none() {
-            let target_scope_id = ctx
-                .scopes()
-                .ancestors(ctx.current_scope_id())
-                // We're inside arrow function, so parent scope can't be what we're looking for.
-                // It's either the arrow function, or a block nested within arrow function.
-                .skip(1)
-                .find(|&scope_id| {
-                    let scope_flags = ctx.scopes().get_flags(scope_id);
-                    scope_flags.intersects(
-                        ScopeFlags::Function | ScopeFlags::Top | ScopeFlags::ClassStaticBlock,
-                    ) && !scope_flags.contains(ScopeFlags::Arrow)
-                })
-                .unwrap();
-
-            this_var.replace(BoundIdentifier::new_uid(
-                "this",
-                target_scope_id,
-                SymbolFlags::FunctionScopedVariable,
-                ctx,
-            ));
-        }
-        let this_var = this_var.as_ref().unwrap();
-        this_var.create_spanned_read_reference(span, ctx)
+        unreachable!();
     }
 
     fn transform_arrow_function_expression(

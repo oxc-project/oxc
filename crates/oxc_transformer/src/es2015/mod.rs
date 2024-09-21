@@ -51,26 +51,6 @@ impl<'a> Traverse<'a> for ES2015<'a> {
         }
     }
 
-    fn enter_arrow_function_expression(
-        &mut self,
-        arrow: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.enter_arrow_function_expression(arrow, ctx);
-        }
-    }
-
-    fn exit_arrow_function_expression(
-        &mut self,
-        arrow: &mut ArrowFunctionExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.exit_arrow_function_expression(arrow, ctx);
-        }
-    }
-
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.enter_expression(expr, ctx);
