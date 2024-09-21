@@ -4,6 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_regular_expression::ast::{BoundaryAssertionKind, Term};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -146,24 +147,33 @@ fn check_regex(regexp_lit: &RegExpLiteral, pattern_text: &str) -> Option<ErrorKi
         return None;
     }
 
-    if pattern_text.starts_with('^')
-        && is_simple_string(&pattern_text[1..regexp_lit.regex.pattern.len()])
-    {
-        return Some(ErrorKind::StartsWith);
+    let alternatives = regexp_lit.regex.pattern.as_pattern().map(|pattern| &pattern.body.body)?;
+    // Must not be something with multiple alternatives like `/^a|b/`
+    if alternatives.len() > 1 {
+        return None;
+    }
+    let pattern_terms = alternatives.first().map(|it| &it.body)?;
+
+    if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.first() {
+        if boundary_assert.kind == BoundaryAssertionKind::Start
+            && pattern_terms.iter().skip(1).all(|term| matches!(term, Term::Character(_)))
+        {
+            return Some(ErrorKind::StartsWith);
+        }
     }
 
-    if pattern_text.ends_with('$')
-        && is_simple_string(&pattern_text[0..regexp_lit.regex.pattern.len() - 1])
-    {
-        return Some(ErrorKind::EndsWith);
+    if let Some(Term::BoundaryAssertion(boundary_assert)) = pattern_terms.last() {
+        if boundary_assert.kind == BoundaryAssertionKind::End
+            && pattern_terms
+                .iter()
+                .take(pattern_terms.len() - 1)
+                .all(|term| matches!(term, Term::Character(_)))
+        {
+            return Some(ErrorKind::EndsWith);
+        }
     }
 
     None
-}
-
-fn is_simple_string(str: &str) -> bool {
-    str.chars()
-        .all(|c| !matches!(c, '^' | '$' | '+' | '[' | '{' | '(' | '\\' | '.' | '?' | '*' | '|'))
 }
 
 // `/^#/i` => `true` (the `i` flag is useless)
