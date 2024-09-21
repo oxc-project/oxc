@@ -1028,27 +1028,7 @@ impl<'a> Format<'a> for TSTupleType<'a> {
 
 impl<'a> Format<'a> for TSTypeLiteral<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
-        let mut parts = p.vec();
-
-        parts.push(ss!("{"));
-        if self.members.len() > 0 {
-            let mut indent_parts = p.vec();
-
-            for member in &self.members {
-                indent_parts.extend(hardline!());
-                indent_parts.push(member.format(p));
-
-                if let Some(semi) = p.semi() {
-                    indent_parts.push(semi);
-                }
-            }
-
-            parts.push(Doc::Indent(indent_parts));
-            parts.extend(hardline!());
-        }
-        parts.push(ss!("}"));
-
-        Doc::Array(parts)
+        object::print_object_properties(p, ObjectLike::TSTypeLiteral(self))
     }
 }
 

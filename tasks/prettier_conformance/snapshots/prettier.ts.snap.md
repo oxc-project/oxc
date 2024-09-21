@@ -1,4 +1,4 @@
-ts compatibility: 177/526 (33.65%)
+ts compatibility: 185/526 (35.17%)
 
 # Failed
 
@@ -45,7 +45,6 @@ ts compatibility: 177/526 (33.65%)
 * assignment/issue-10848.tsx
 * assignment/issue-10850.ts
 * assignment/issue-2482.ts
-* assignment/issue-3122.ts
 * assignment/parenthesized.ts
 
 ### call-signature
@@ -165,9 +164,6 @@ ts compatibility: 177/526 (33.65%)
 ### conformance/expressions/functionCalls
 * conformance/expressions/functionCalls/callWithSpreadES6.ts
 
-### conformance/interfaces/interfaceDeclarations
-* conformance/interfaces/interfaceDeclarations/interfaceWithMultipleBaseTypes2.ts
-
 ### conformance/internalModules/importDeclarations
 * conformance/internalModules/importDeclarations/circularImportAlias.ts
 * conformance/internalModules/importDeclarations/exportImportAlias.ts
@@ -193,9 +189,6 @@ ts compatibility: 177/526 (33.65%)
 * conformance/types/functions/functionImplementations.ts
 * conformance/types/functions/functionOverloadErrorsSyntax.ts
 * conformance/types/functions/parameterInitializersForwardReferencing.ts
-
-### conformance/types/intersectionType
-* conformance/types/intersectionType/intersectionType.ts
 
 ### conformance/types/mappedType
 * conformance/types/mappedType/mappedType.ts
@@ -423,9 +416,6 @@ ts compatibility: 177/526 (33.65%)
 
 ### method
 * method/issue-10352-consistency.ts
-* method/method-signature.ts
-* method/semi.ts
-* method/type_literal_optional_method.ts
 
 ### method-chain
 * method-chain/comment.ts
@@ -460,10 +450,6 @@ ts compatibility: 177/526 (33.65%)
 
 ### optional-type
 * optional-type/complex.ts
-
-### optional-variance
-* optional-variance/basic.ts
-* optional-variance/with-jsx.tsx
 
 ### prettier-ignore
 * prettier-ignore/issue-14238.ts
