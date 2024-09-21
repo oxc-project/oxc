@@ -45,7 +45,7 @@ impl<'a> Compressor<'a> {
         self.fold_constants(program, &mut ctx);
         self.minimize_conditions(program, &mut ctx);
         self.remove_dead_code(program, &mut ctx);
-        self.statement_fusion(program, &mut ctx);
+        // self.statement_fusion(program, &mut ctx);
         self.substitute_alternate_syntax(program, &mut ctx);
         self.collapse_variable_declarations(program, &mut ctx);
         self.exploit_assigns(program, &mut ctx);
@@ -77,6 +77,7 @@ impl<'a> Compressor<'a> {
         PeepholeRemoveDeadCode::new().build(program, ctx);
     }
 
+    #[allow(unused)]
     fn statement_fusion(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         StatementFusion::new().build(program, ctx);
     }
