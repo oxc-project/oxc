@@ -370,3 +370,64 @@ pub struct NamedReference<'a> {
     pub span: Span,
     pub name: Atom<'a>,
 }
+
+impl Pattern<'_> {
+    /// Calls the given closure on every [`Term`] in the [`Pattern`].
+    ///
+    /// ## Example
+    /// ```rust
+    /// use oxc_allocator::Allocator;
+    /// use oxc_regular_expression::{Parser, ParserOptions};
+    ///
+    /// let allocator = Allocator::default();
+    /// let parser = Parser::new(&allocator, r"/a|b+|c/i", ParserOptions::default());
+    /// let regex = parser.parse().unwrap();
+    ///
+    /// regex.pattern.visit_terms(&mut |term| {
+    ///    dbg!(term);
+    /// });
+    /// ```
+    pub fn visit_terms<'a, F: FnMut(&'a Term<'a>)>(&'a self, f: &mut F) {
+        self.visit_terms_disjunction(&self.body, f);
+    }
+
+    /// Calls the given closure on every [`Term`] in the [`Disjunction`].
+    fn visit_terms_disjunction<'a, F: FnMut(&'a Term<'a>)>(
+        &'a self,
+        disjunction: &'a Disjunction,
+        f: &mut F,
+    ) {
+        for alternative in &disjunction.body {
+            self.visit_terms_alternative(alternative, f);
+        }
+    }
+
+    /// Calls the given closure on every [`Term`] in the [`Alternative`].
+    fn visit_terms_alternative<'a, F: FnMut(&'a Term<'a>)>(
+        &'a self,
+        alternative: &'a Alternative,
+        f: &mut F,
+    ) {
+        for term in &alternative.body {
+            match term {
+                Term::LookAroundAssertion(lookaround) => {
+                    f(term);
+                    self.visit_terms_disjunction(&lookaround.body, f);
+                }
+                Term::Quantifier(quant) => {
+                    f(term);
+                    f(&quant.body);
+                }
+                Term::CapturingGroup(group) => {
+                    f(term);
+                    self.visit_terms_disjunction(&group.body, f);
+                }
+                Term::IgnoreGroup(group) => {
+                    f(term);
+                    self.visit_terms_disjunction(&group.body, f);
+                }
+                _ => f(term),
+            }
+        }
+    }
+}
