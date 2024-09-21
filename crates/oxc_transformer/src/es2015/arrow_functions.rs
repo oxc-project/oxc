@@ -268,9 +268,10 @@ impl<'a> ArrowFunctions<'a> {
         // ```
         //
         // `this` resolves to the class / class instance (i.e. `this` defined *within* the class) in:
-        // * Class method bodies
-        // * Class property bodies
-        // * Class static blocks
+        // * Method body
+        // * Method param
+        // * Property value
+        // * Static block
         //
         // ```js
         // // All these `this` refer to `this` defined within the class
@@ -281,6 +282,7 @@ impl<'a> ArrowFunctions<'a> {
         //     d() { this }
         //     static e() { this }
         //     #f() { this }
+        //     g(x = this) {}
         //     static { this }
         // }
         // ```
@@ -291,22 +293,13 @@ impl<'a> ArrowFunctions<'a> {
                 // Top level
                 Ancestor::ProgramBody(_)
                 // Function (includes class method body)
-                | Ancestor::FunctionTypeParameters(_)
-                | Ancestor::FunctionThisParam(_)
                 | Ancestor::FunctionParams(_)
-                | Ancestor::FunctionReturnType(_)
                 | Ancestor::FunctionBody(_)
                 // Class property body 
                 | Ancestor::PropertyDefinitionValue(_)
                 // Class static block
                 | Ancestor::StaticBlockBody(_) => return None,
-                Ancestor::ArrowFunctionExpressionTypeParameters(func) => {
-                    return Some(func.scope_id().get().unwrap())
-                }
                 Ancestor::ArrowFunctionExpressionParams(func) => {
-                    return Some(func.scope_id().get().unwrap())
-                }
-                Ancestor::ArrowFunctionExpressionReturnType(func) => {
                     return Some(func.scope_id().get().unwrap())
                 }
                 Ancestor::ArrowFunctionExpressionBody(func) => {
