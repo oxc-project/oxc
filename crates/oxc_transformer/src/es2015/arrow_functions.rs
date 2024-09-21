@@ -122,10 +122,8 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
         }
     }
 
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        if func.body.is_some() {
-            self.this_var_stack.push(None);
-        }
+    fn enter_function(&mut self, _func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.this_var_stack.push(None);
     }
 
     /// ```ts
@@ -140,12 +138,10 @@ impl<'a> Traverse<'a> for ArrowFunctions<'a> {
     /// ```
     /// Insert the var _this = this; statement outside the arrow function
     fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
-        let Some(body) = func.body.as_mut() else {
-            return;
-        };
-
         let this_var = self.this_var_stack.pop().unwrap();
         if let Some(this_var) = this_var {
+            let Some(body) = &mut func.body else { unreachable!() };
+
             self.insert_this_var_statement_at_the_top_of_statements(
                 &mut body.statements,
                 &this_var,
